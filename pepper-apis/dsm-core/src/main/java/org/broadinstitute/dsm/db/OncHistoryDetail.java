@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -459,7 +460,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     @Override
-    public long extractDdpInstanceId() {
-        return getDdpInstanceId();
+    public Optional<Long> extractDdpInstanceId() {
+        return Optional.ofNullable(getDdpInstanceId());
     }
 }
