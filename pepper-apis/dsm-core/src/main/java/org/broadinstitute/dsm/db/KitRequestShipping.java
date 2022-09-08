@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -1722,8 +1723,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     @Override
-    public long extractDdpInstanceId() {
-        return getDdpInstanceId();
+    public Optional<Long> extractDdpInstanceId() {
+        return Optional.of(ddpInstanceId);
     }
 
     public boolean isBloodKit() {

@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.filter.postfilter;
 
+import java.util.Optional;
+
 public interface HasDdpInstanceId {
-    long extractDdpInstanceId();
+    Optional<Long> extractDdpInstanceId();
 }
