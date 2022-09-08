@@ -14,10 +14,12 @@ public class StudyTest {
         String lms = "lms";
         String atcp = "atcp";
         String cmiLms = "cmi-lms";
+        String angio = "angio";
         assertTrue(Study.isPECGS(osteo2));
         assertTrue(Study.isPECGS(lms));
         assertFalse(Study.isPECGS(atcp));
         assertTrue(Study.isPECGS(cmiLms));
+        assertFalse(Study.isPECGS(angio));
     }
 
 
