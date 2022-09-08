@@ -105,12 +105,9 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
                     .getParticipantById(instance.getEsParticipantIndex(), oldOsteoDdpParticipantId);
             int newOsteoParticipantId = maybeNewOsteoParticipantId.orElseThrow();
             esPtDto.getDsm().ifPresentOrElse(
-                    esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
+                    esDsm -> updateDsmAndWriteToES(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
                     ()    -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
             );
-            Map<String, Object> esPtDtoAsMap = ObjectMapperSingleton
-                    .readValue(GSON.toJson(esPtDto), new TypeReference<Map<String, Object>>() {});
-            writeDataToES(esPtDtoAsMap);
         } else {
             logger.warn(String.format("Participant with id %s does not exist", ddpParticipantId));
         }
@@ -125,11 +122,12 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
     }
 
     private void writeDataToES(Map<String, Object> esPtDtoAsMap) {
+        logger.info("Attempting to write `dsm` object in ES");
         elasticDataExportAdapter.setSource(esPtDtoAsMap);
         elasticDataExportAdapter.export();
     }
 
-    private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, Dsm dsm) {
+    private void updateDsmAndWriteToES(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, Dsm dsm) {
         logger.info("Attempting to update the `dsm` object in ES");
         dsm.getParticipant().ifPresent(oldOsteoPt -> updateNewOsteoParticipant(newOsteoParticipantId, dsm, oldOsteoPt));
         dsm.setCohortTag(Stream.concat(dsm.getCohortTag().stream(), Stream.of(newCohortTag)).collect(Collectors.toList()));
@@ -138,6 +136,10 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
                 .collect(Collectors.toList());
         dsm.setMedicalRecord(updatedMedicalRecords);
         logger.info("`dsm` object was updated successfully");
+        Map<String, Object> dsmAsMap =
+                ObjectMapperSingleton.readValue(ObjectMapperSingleton.writeValueAsString(dsm),
+                        new TypeReference<Map<String, Object>>() {});
+        writeDataToES(dsmAsMap);
     }
 
     private void updateNewOsteoParticipant(long newOsteoParticipantId, Dsm dsm, Participant oldOsteoPt) {
