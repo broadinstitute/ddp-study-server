@@ -42,7 +42,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 if (kitRequestShipping.hasTrackingScan()) {
                     if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
                             || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
-                        result = updateKitRequest(kitLabel, ddpLabel, kitRequestShipping.getBspCollaboratorParticipantId());
+                        result = updateKitRequest(kitLabel, ddpLabel, getBspCollaboratorParticipantId(kitRequestShipping));
                         trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
                         this.writeSampleSentToES(kitRequestShipping);
                     } else {
@@ -55,7 +55,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             } else {
                 if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
                         || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
-                    result = updateKitRequest(kitLabel, ddpLabel, kitRequestShipping.getBspCollaboratorParticipantId());
+                    result = updateKitRequest(kitLabel, ddpLabel, getBspCollaboratorParticipantId(kitRequestShipping));
                 } else {
                     result = Optional.of(
                             new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
@@ -93,6 +93,10 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
 
     private boolean isSalivaKit(String ddpLabel) {
         return !kitDao.isBloodKit(ddpLabel);
+    }
+
+    private String getBspCollaboratorParticipantId(KitRequestShipping kitRequestShipping) {
+        return StringUtils.isEmpty(kitRequestShipping.getKitLabel()) ? null : kitRequestShipping.getBspCollaboratorParticipantId();
     }
 
 }
