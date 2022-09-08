@@ -90,6 +90,12 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         }
 
         String templateId = message.getTemplateKey();
+        var context = String.format("id:%s,study:%s,participant:%s,template:%s",
+                message.getEventConfigurationId(),
+                studyGuid,
+                participantGuid,
+                templateId);
+
         Email fromEmail = new Email(message.getFromEmail(), message.getFromName());
 
         Mail mail = new Mail();
@@ -131,12 +137,20 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
 
         var versionResult = sendGrid.getTemplateActiveVersionId(templateId);
         if (versionResult.hasThrown() || versionResult.getStatusCode() != 200) {
-            String msg = String.format("[%s] error looking up version of template '%s': %s",
-                    versionResult.getStatusCode(), templateId, versionResult.getError());
-            if (versionResult.hasThrown()) {
-                throw new MessageHandlingException(msg, versionResult.getThrown(), true);
+            var details = String.format("Template could not be fetched from SendGrid [code:%s,%s]",
+                    versionResult.getStatusCode(),
+                    context);
+            
+            if (versionResult.hasError()) {
+                log.error("{} with response: {}", details, versionResult.getError());
             } else {
-                throw new MessageHandlingException(msg, true);
+                log.error(details);
+            }
+
+            if (versionResult.hasThrown()) {
+                throw new MessageHandlingException(details, versionResult.getThrown(), true);
+            } else {
+                throw new MessageHandlingException(details, true);
             }
         }
 
@@ -154,8 +168,9 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             new StackdriverMetricsTracker(StackdriverCustomMetric.EMAILS_SENT, studyGuid,
                     PointsReducerFactory.buildSumReducer()).addPoint(1, Instant.now().toEpochMilli());
         } else {
-            throw new MessageHandlingException("Attempt to send template " + templateId + " to " + distributionList
-                    + " failed with " + sendResult.getStatusCode() + ":" + sendResult.getError(), true);
+            var details = String.format("Failed to send email to %s [%s,%s]", distributionList, sendResult.getStatusCode(), context);
+            log.error("{} with response: {}", details, sendResult.getError());
+            throw new MessageHandlingException(details, true);
         }
     }
 
