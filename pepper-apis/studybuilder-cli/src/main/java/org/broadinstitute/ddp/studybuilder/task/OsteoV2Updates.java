@@ -45,11 +45,11 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoAboutYouChildTitleUpdates());
 
         // Last
-        tasks.add(new OsteoNewFamilyHistory());
+        //tasks.add(new OsteoNewFamilyHistory()); //not needed, no FAMILY_HISTORY
         tasks.add(new OsteoPdfUpdates());
         tasks.add(new UpdateStudyNonSyncEvents());
         tasks.add(new OsteoInsertSyncEvents());
-        tasks.add(new UpdateStudyWorkflows());
+        tasks.add(new UpdateStudyWorkflows()); //updated conf file to remove FAMILY_HISTORY reference
 
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
