@@ -96,8 +96,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
     }
 
     private String getBspCollaboratorParticipantId(KitRequestShipping kitRequestShipping) {
-        return StringUtils.isEmpty(kitRequestShipping.getKitLabel()) ? null :
-                kitRequestShipping.getBspCollaboratorParticipantId();
+        return StringUtils.isEmpty(kitRequestShipping.getKitLabel()) ? null : kitRequestShipping.getBspCollaboratorParticipantId();
     }
 
 }
