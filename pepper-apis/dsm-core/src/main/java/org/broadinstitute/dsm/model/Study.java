@@ -20,11 +20,12 @@ public enum Study {
                 .replace(CMI_PREFIX, StringUtils.EMPTY)
                 .toUpperCase();
 
-        for (Study study : Study.values()) {
-            if (study.equals(instanceName)) {
-                return PE_CGS.contains(study);
-            }
+        try {
+            Study study = valueOf(instanceName);
+            return PE_CGS.contains(study);
+        } catch (IllegalArgumentException iae) {
+            return false;
         }
-        return false;
+
     }
 }
