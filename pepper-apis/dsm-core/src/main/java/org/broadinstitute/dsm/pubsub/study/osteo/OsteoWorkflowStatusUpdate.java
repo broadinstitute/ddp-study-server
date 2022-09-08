@@ -33,6 +33,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.pubsub.study.HasWorkflowStatusUpdate;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
@@ -139,7 +140,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         Map<String, Object> dsmAsMap =
                 ObjectMapperSingleton.readValue(ObjectMapperSingleton.writeValueAsString(dsm),
                         new TypeReference<Map<String, Object>>() {});
-        writeDataToES(dsmAsMap);
+        writeDataToES(Map.of(ESObjectConstants.DSM, dsmAsMap));
     }
 
     private void updateNewOsteoParticipant(long newOsteoParticipantId, Dsm dsm, Participant oldOsteoPt) {
