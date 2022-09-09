@@ -935,8 +935,8 @@ public class DSMServer {
             post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
         }
 
-        FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
-        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
+//        FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
+//        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
 
         post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
 
