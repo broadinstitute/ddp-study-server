@@ -33,3 +33,4 @@ appengine/deploy/*.conf
 
 appengine
 .idea
+/config/dev-gcloud-creds.json
