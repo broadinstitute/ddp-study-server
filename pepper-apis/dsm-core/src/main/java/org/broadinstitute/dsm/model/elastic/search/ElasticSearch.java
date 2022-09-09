@@ -335,7 +335,8 @@ public class ElasticSearch implements ElasticSearchable {
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
             searchSourceBuilder.size(legacyAltPids.size());
             searchSourceBuilder.fetchSource(
-                    new String[] {ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES}, null);
+                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+            );
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
@@ -343,8 +344,10 @@ public class ElasticSearch implements ElasticSearchable {
         }
         SearchHit[] records = response.getHits().getHits();
         logger.info("Got " + records.length + " participants from ES for instance " + esParticipantsIndex);
-        SearchHitProxy[] searchHitProxies =
-                Arrays.stream(records).map(SearchHitProxy::new).collect(Collectors.toList()).toArray(new SearchHitProxy[] {});
+        SearchHitProxy[] searchHitProxies = Arrays.stream(records)
+                .map(SearchHitProxy::new)
+                .collect(Collectors.toList())
+                .toArray(new SearchHitProxy[] {});
         return extractLegacyAltPidGuidPair(searchHitProxies);
     }
 
@@ -388,9 +391,14 @@ public class ElasticSearch implements ElasticSearchable {
 
     Map<String, String> extractLegacyAltPidGuidPair(SearchHitProxy[] records) {
         Set<String> parentsGuids = getParents(records);
-        return Arrays.stream(records).map(SearchHitProxy::getSourceAsMap).filter(this::hasProfile).map(this::getProfile).collect(
-                Collectors.toMap(profileMap -> profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID),
-                        profileMap -> profileMap.get(ESObjectConstants.GUID), (prevGuid, currGuid) -> {
+        return Arrays.stream(records)
+                .map(SearchHitProxy::getSourceAsMap)
+                .filter(this::hasProfile)
+                .map(this::getProfile)
+                .collect(Collectors.toMap(profileMap ->
+                        profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID),
+                        profileMap -> profileMap.get(ESObjectConstants.GUID),
+                        (prevGuid, currGuid) -> {
                             if (isParentGuid(parentsGuids, prevGuid)) {
                                 return currGuid;
                             } else {
@@ -404,9 +412,11 @@ public class ElasticSearch implements ElasticSearchable {
     }
 
     private Set<String> getParents(SearchHitProxy[] records) {
-        return Arrays.stream(records).map(SearchHitProxy::getSourceAsMap)
+        return Arrays.stream(records)
+                .map(SearchHitProxy::getSourceAsMap)
                 .filter(sourceMap -> sourceMap.containsKey(ElasticSearchUtil.PROXIES))
-                .flatMap(sourceMap -> ((List<String>) sourceMap.get(ElasticSearchUtil.PROXIES)).stream()).collect(Collectors.toSet());
+                .flatMap(sourceMap -> ((List<String>) sourceMap.get(ElasticSearchUtil.PROXIES)).stream())
+                .collect(Collectors.toSet());
     }
 
     private Map<String, String> getProfile(Map<String, Object> sourceMap) {
