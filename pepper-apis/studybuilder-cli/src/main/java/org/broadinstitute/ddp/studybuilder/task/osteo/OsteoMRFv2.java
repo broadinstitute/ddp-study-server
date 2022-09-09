@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -16,6 +18,7 @@ import org.broadinstitute.ddp.db.dao.PdfSql;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
@@ -31,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfTemplate;
@@ -45,6 +49,7 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -52,6 +57,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -81,6 +88,8 @@ public class OsteoMRFv2 implements CustomTask {
     private SectionBlockDao sectionBlockDao;
     private PdfDao pdfDao;
     private PdfSql pdfSql;
+    private ActivityInstanceStatusDao statusDao;
+    private AnswerDao answerDao;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -111,7 +120,8 @@ public class OsteoMRFv2 implements CustomTask {
         this.sectionBlockDao = handle.attach(SectionBlockDao.class);
         this.pdfDao = handle.attach(PdfDao.class);
         this.pdfSql = handle.attach(PdfSql.class);
-
+        this.statusDao = handle.attach(ActivityInstanceStatusDao.class);
+        this.answerDao = handle.attach(AnswerDao.class);
         for (var activityCfg : activityDataCfg.getConfigList("updateActivities")) {
             updateActivity(activityCfg);
         }
@@ -265,6 +275,20 @@ public class OsteoMRFv2 implements CustomTask {
                     pdfV2.getId(), pdfV2.getConfigName(), pdfV2.getFilename(),
                     pdfV2.getDisplayName(), versionId, pdfV2.getVersion().getVersionTag());
         }
+        List<Long> activityInstances = helper.findMedicalRecordActivityInstances(studyDto.getGuid(), activityCode);
+        Set<Long> toHide = activityInstances.stream().filter(this::isIncompleteActivity)
+                .collect(Collectors.toSet());
+        if (!toHide.isEmpty()) {
+            statusDao.deleteAllByInstanceIds(toHide);
+            answerDao.deleteAllByInstanceIds(toHide);
+            int numHidden = helper.deleteInstances(toHide);
+            log.info("{} incomplete '{}' instances deleted", numHidden, activityCode);
+        }
+    }
+
+    private boolean isIncompleteActivity(Long id) {
+        Optional<ActivityInstanceStatusDto> currentStatus = statusDao.getCurrentStatus(id);
+        return currentStatus.isPresent() && currentStatus.get().getType() != InstanceStatusType.COMPLETE;
     }
 
     private void updateActivityDetails(long activityId, Config activityCfg) {
@@ -323,5 +347,16 @@ public class OsteoMRFv2 implements CustomTask {
                 + "join block b on bc.block_id = b.block_id "
                 + "where b.block_id = :blockId; ")
         int findComponentIdByBlockId(@Bind("blockId") long blockId);
+
+        @SqlQuery("select ai.activity_instance_id from activity_instance ai"
+                + "                    join study_activity su on ai.study_activity_id = su.study_activity_id"
+                + "                    join umbrella_study us on su.study_id = us.umbrella_study_id"
+                + "                    where us.guid = :studyGuid and"
+                + "                          su.study_activity_code = :activityCode")
+        List<Long> findMedicalRecordActivityInstances(@Bind("studyGuid")String studyGuid,
+                                                      @Bind("activityCode") String activityCode);
+
+        @SqlUpdate("delete from activity_instance where activity_instance_id in (<instanceIds>) ")
+        int deleteInstances(@BindList("instanceIds") Set<Long> toHide);
     }
 }
