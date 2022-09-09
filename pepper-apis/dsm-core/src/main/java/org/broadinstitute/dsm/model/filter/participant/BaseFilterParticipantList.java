@@ -1,9 +1,11 @@
 package org.broadinstitute.dsm.model.filter.participant;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
@@ -52,7 +54,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     }
 
 
-    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
+    public ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload.Builder participantWrapperPayload =
@@ -61,6 +63,34 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         if (deserializer != null) {
             elasticSearch.setDeserializer(deserializer);
         }
+
+        if (isStudyPreFilterPresent(ddpInstanceDto)) {
+            filters = Objects.isNull(filters) ? new Filter[] {} : filters;
+            ViewFilter viewFilter = ViewFilter.parseFilteringQuery(ddpInstanceDto.getQueryItems(), new ViewFilter());
+            filters = Stream.of(filters, viewFilter.getFilters()).flatMap(Stream::of).toArray(Filter[]::new);
+            //queryConditions = updateQueryConditions(queryConditions, ddpInstanceDto);
+        }
+        separateQueryConditions(filters, columnNameMap, queryConditions);
+
+        if (!queryConditions.isEmpty()) {
+            // combine queries
+            Map<String, String> mergeConditions = new HashMap<>();
+            for (String filter : queryConditions.keySet()) {
+                if (DBConstants.DDP_PARTICIPANT_EXIT_ALIAS.equals(filter)) {
+                    String exitFilter = queryConditions.get(filter).replace("ex.", "p.");
+                    mergeConditions.merge(DBConstants.DDP_PARTICIPANT_ALIAS, exitFilter, String::concat);
+                } else {
+                    mergeConditions.merge(filter, queryConditions.get(filter), String::concat);
+                }
+            }
+            logger.info("Found query conditions for " + mergeConditions.size() + " tables");
+            return new ParticipantWrapper(participantWrapperPayload.withFilter(mergeConditions).build(), elasticSearch).getFilteredList();
+        } else {
+            return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList();
+        }
+    }
+
+    private void separateQueryConditions(Filter[] filters, Map<String, DBElement> columnNameMap, Map<String, String> queryConditions) {
         if (filters != null && columnNameMap != null && !columnNameMap.isEmpty()) {
             for (Filter filter : filters) {
                 if (filter != null) {
@@ -93,27 +123,6 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                     }
                 }
             }
-        }
-
-        if (isStudyPreFilterPresent(ddpInstanceDto)) {
-            queryConditions = updateQueryConditions(queryConditions, ddpInstanceDto);
-        }
-
-        if (!queryConditions.isEmpty()) {
-            // combine queries
-            Map<String, String> mergeConditions = new HashMap<>();
-            for (String filter : queryConditions.keySet()) {
-                if (DBConstants.DDP_PARTICIPANT_EXIT_ALIAS.equals(filter)) {
-                    String exitFilter = queryConditions.get(filter).replace("ex.", "p.");
-                    mergeConditions.merge(DBConstants.DDP_PARTICIPANT_ALIAS, exitFilter, String::concat);
-                } else {
-                    mergeConditions.merge(filter, queryConditions.get(filter), String::concat);
-                }
-            }
-            logger.info("Found query conditions for " + mergeConditions.size() + " tables");
-            return new ParticipantWrapper(participantWrapperPayload.withFilter(mergeConditions).build(), elasticSearch).getFilteredList();
-        } else {
-            return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList();
         }
     }
 
