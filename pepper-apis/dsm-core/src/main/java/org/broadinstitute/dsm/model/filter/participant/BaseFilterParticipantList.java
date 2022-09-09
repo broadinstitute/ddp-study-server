@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.model.filter.participant;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -21,7 +20,6 @@ import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.BaseFilter;
 import org.broadinstitute.dsm.model.filter.Filterable;
-import org.broadinstitute.dsm.model.filter.prefilter.BasicPreFilterQueryProcessor;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
@@ -53,7 +51,6 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         return filter(queryParamsMap);
     }
 
-
     public ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
@@ -67,9 +64,9 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         if (isStudyPreFilterPresent(ddpInstanceDto)) {
             filters = Objects.isNull(filters) ? new Filter[] {} : filters;
             ViewFilter viewFilter = ViewFilter.parseFilteringQuery(ddpInstanceDto.getQueryItems(), new ViewFilter());
-            filters = Stream.of(filters, viewFilter.getFilters()).flatMap(Stream::of).toArray(Filter[]::new);
-            //queryConditions = updateQueryConditions(queryConditions, ddpInstanceDto);
+            filters = joinFilters(filters, viewFilter.getFilters());
         }
+
         separateQueryConditions(filters, columnNameMap, queryConditions);
 
         if (!queryConditions.isEmpty()) {
@@ -88,6 +85,10 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         } else {
             return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList();
         }
+    }
+
+    private static Filter[] joinFilters(Filter[] filters, Filter[] preFilters) {
+        return Stream.of(filters, preFilters).flatMap(Stream::of).toArray(Filter[]::new);
     }
 
     private void separateQueryConditions(Filter[] filters, Map<String, DBElement> columnNameMap, Map<String, String> queryConditions) {
@@ -124,11 +125,6 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                 }
             }
         }
-    }
-
-    private static Map<String, String> updateQueryConditions(Map<String, String> queryConditions, DDPInstanceDto ddpInstanceDto) {
-        return new BasicPreFilterQueryProcessor(queryConditions)
-                .update(ddpInstanceDto.getQueryItems());
     }
 
     private static boolean isStudyPreFilterPresent(DDPInstanceDto ddpInstanceDto) {

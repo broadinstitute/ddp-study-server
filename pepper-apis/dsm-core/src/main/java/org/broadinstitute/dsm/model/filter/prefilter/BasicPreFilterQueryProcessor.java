@@ -2,12 +2,8 @@ package org.broadinstitute.dsm.model.filter.prefilter;
 
 import java.util.Map;
 
-import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.filter.participant.SavedFilterParticipantList;
-import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.PatchUtil;
 
 // The purpose of this class is to add a new filter if it's not in the original filters
 // or concatenate it with the existing filter yielding the joined filter for the specific key
