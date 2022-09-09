@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
@@ -98,6 +99,11 @@ public class ElasticSearchParticipantDto {
 
     public Optional<Dsm> getDsm() {
         return Optional.ofNullable(dsm);
+    }
+
+    @JsonGetter("dsm")
+    private Dsm dsm() {
+        return dsm;
     }
 
     public Optional<ESComputed> getComputed() {

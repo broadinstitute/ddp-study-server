@@ -15,11 +15,6 @@ public class CollectionMappingGenerator extends MappingGenerator {
     }
 
     @Override
-    protected Map<String, Object> getElement(Object type) {
-        return new HashMap<>(Map.of(getFieldName(), type));
-    }
-
-    @Override
     public Map<String, Object> construct() {
         return new HashMap<>(Map.of(TYPE, NESTED, PROPERTIES, collect()));
     }

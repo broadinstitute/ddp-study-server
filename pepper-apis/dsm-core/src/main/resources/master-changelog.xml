@@ -90,12 +90,8 @@
     <include file="liquibase/rgp/DDP-7837_more_missing_field_settings.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/at/DDP-7837_AT_missing_field_settings.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-7641_set_kit_request_settings_id_to_auto_increment.xml" relativeToChangelogFile="true"/>
-    <include file="liquibase/CMI/DDP-7641_addOS2.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8019_cohort_tagging.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7556_mercury_sequencing.xml" relativeToChangelogFile="true"/>
-    <include file="liquibase/CMI/DDP-7641_bookmark_osteo2.xml" relativeToChangelogFile="true"/>
-    <include file="liquibase/CMI/DDP-7641_apply_OS_tag_to_old_osteo_pts.xml" relativeToChangelogFile="true"/>
-    <include file="liquibase/CMI/DDP-7641_kit_participant_notifications_activated_osteo2.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7556_mercury_sequencing_roles.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8239_created_created_by_cohort_tags.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-8249_singularParticipantFields.xml" relativeToChangelogFile="true"/>
@@ -104,4 +100,6 @@
     <include file="liquibase/singular/DDP-6584_download_participant_file.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8217_sm_id_receive_fields.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-8612_NA_Checkbox_options.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-8113_invitaeTab.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-8569_sampleNotes.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

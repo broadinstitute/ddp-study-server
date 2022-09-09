@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,7 +23,7 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
+import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -459,7 +460,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     @Override
-    public long extractDdpInstanceId() {
-        return getDdpInstanceId();
+    public Optional<Long> extractDdpInstanceId() {
+        return Optional.ofNullable(getDdpInstanceId());
     }
 }

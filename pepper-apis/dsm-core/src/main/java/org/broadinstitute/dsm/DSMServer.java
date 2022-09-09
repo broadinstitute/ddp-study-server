@@ -95,10 +95,12 @@ import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
 import org.broadinstitute.dsm.route.KitExpressRoute;
+import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.KitLabelRoute;
 import org.broadinstitute.dsm.route.KitRequestRoute;
 import org.broadinstitute.dsm.route.KitSearchRoute;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
+import org.broadinstitute.dsm.route.kit.KitTrackingScanRoute;
 import org.broadinstitute.dsm.route.KitTypeRoute;
 import org.broadinstitute.dsm.route.KitUploadRoute;
 import org.broadinstitute.dsm.route.LabelSettingRoute;
@@ -111,7 +113,8 @@ import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
-import org.broadinstitute.dsm.route.StoolUploadRoute;
+import org.broadinstitute.dsm.route.kit.ReceivedKitsRoute;
+import org.broadinstitute.dsm.route.kit.SentKitRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
@@ -193,7 +196,6 @@ public class DSMServer {
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     public static final String SIGNER = "org.broadinstitute.kdux";
-    public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS =
             new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
@@ -542,7 +544,7 @@ public class DSMServer {
 
         //  capture basic route info for logging
         //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
-        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, BSP_SIGNER, bspSecretEncoded));
+        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, null, bspSecretEncoded));
         before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
@@ -757,11 +759,11 @@ public class DSMServer {
                                      @NonNull String auth0Domain) {
         get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
-        KitStatusChangeRoute kitStatusChangeRoute = new KitStatusChangeRoute(notificationUtil);
-        post(UI_ROOT + RoutePath.FINAL_SCAN_REQUEST, kitStatusChangeRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.TRACKING_SCAN_REQUEST, kitStatusChangeRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.SENT_KIT_REQUEST, kitStatusChangeRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.RECEIVED_KIT_REQUEST, kitStatusChangeRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.FINAL_SCAN_REQUEST, new KitFinalScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new JsonTransformer());
+        post(UI_ROOT + RoutePath.INITIAL_SCAN_REQUEST, new KitInitialScanRoute(), new JsonTransformer());
 
         KitDeactivationRoute kitDeactivationRoute = new KitDeactivationRoute(notificationUtil);
         patch(UI_ROOT + RoutePath.DEACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
@@ -778,7 +780,6 @@ public class DSMServer {
         patch(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
 
         post(UI_ROOT + RoutePath.KIT_UPLOAD_REQUEST, new KitUploadRoute(notificationUtil), new JsonTransformer());
-        post(UI_ROOT + RoutePath.STOOL_UPLOAD_REQUEST, new StoolUploadRoute(), new JsonTransformer());
 
         KitLabelRoute kitLabelRoute = new KitLabelRoute();
         get(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());

@@ -1,18 +1,18 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+
 public class PickListValueProvider extends TextValueProvider {
     @Override
     public List<String> formatRawValues(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        if (filterConfig.getOptions() == null || filterConfig.isSplitOptionsIntoColumns() || filterConfig.isStableIdsForOptions() ) {
+        if (filterConfig.getOptions() == null || filterConfig.isSplitOptionsIntoColumns() || filterConfig.isStableIdsForOptions()) {
             // return the text as-is (which are stableIds), so they can be matched for the multicolumn format or rendered directly
             return super.formatRawValues(rawValues, filterConfig, formMap);
         }

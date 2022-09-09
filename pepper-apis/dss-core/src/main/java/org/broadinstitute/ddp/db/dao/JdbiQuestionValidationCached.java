@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
@@ -96,5 +97,10 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     @Override
     public Stream<RuleDto> findDtosByQuestionIdsAndTimestamp(Iterable<Long> questionIds, long timestamp) {
         return delegate.findDtosByQuestionIdsAndTimestamp(questionIds, timestamp);
+    }
+
+    @Override
+    public boolean deleteForQuestion(long questionId) {
+        throw new NotImplementedException("Not implemented yet in cached version");
     }
 }

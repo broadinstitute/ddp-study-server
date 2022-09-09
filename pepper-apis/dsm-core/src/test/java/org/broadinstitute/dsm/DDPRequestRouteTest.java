@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.route.KitRequestRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -59,7 +60,7 @@ public class DDPRequestRouteTest extends TestHelper {
         kitRequests = new ArrayList<>();
         inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(
-                    KitRequestShipping.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE)
+                    KitDaoImpl.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE)
                             .concat(" and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and label_date is null"))) {
                 stmt.setString(1, TEST_DDP);
                 stmt.setString(2, "SALIVA");
@@ -112,7 +113,7 @@ public class DDPRequestRouteTest extends TestHelper {
                             "9405536897846100551129", "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
                             null, 12L, false, "", 12L, null, 12L, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d",
                             12L, null, "44445", false, "NOT FOUND", null, null, null, null, 0L, false, "STANDALONE", null, null, null,
-                            null, null));
+                            null, null, null, null));
             addedDefaultKitRequest = true;
             counter = 1;
         } else {
@@ -128,7 +129,8 @@ public class DDPRequestRouteTest extends TestHelper {
                                 "", "794685038506", "9405536897846100551129",
                                 "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl", null, 12L, false, "",
                                 12L, null, 12L, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d", 12L, null,
-                                "44445", false, "NOT FOUND", null, null, null, null, 0L, false, null, null, null, null, null, null));
+                                "44445", false, "NOT FOUND", null, null, null, null, 0L, false, null, null, null, null, null, null, null,
+                                null));
                 counter++;
             }
         }

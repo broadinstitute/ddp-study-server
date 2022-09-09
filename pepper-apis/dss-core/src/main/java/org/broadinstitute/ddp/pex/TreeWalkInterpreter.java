@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +71,9 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
 import org.broadinstitute.ddp.pex.lang.PexParser.AgeAtLeastPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.AgeAtMostPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.AgeGreaterPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.AgeLessPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.AnswerQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.DefaultLatestAnswerQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.FormPredicateContext;
@@ -716,12 +720,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
      * @return true if dateValue is present and is at least minimumAge. False otherwise, including if dateValue is empty
      */
     private boolean isOldEnough(Optional<DateValue> dateValue, ChronoUnit timeUnit, long minimumAge) {
-        boolean isOldEnough = false;
-        if (dateValue.isPresent()) {
-            long age = dateValue.get().between(timeUnit, LocalDate.now());  // Instant is zoneless; use LocalDate.
-            isOldEnough = age >= minimumAge;
-        }
-        return isOldEnough;
+        return dateValue.isPresent() && (dateValue.get().between(timeUnit, LocalDate.now()) >= minimumAge);
+    }
+
+    private boolean hasRightAge(Optional<DateValue> dateValue, ChronoUnit timeUnit, long age, BiFunction<Long, Long, Boolean> comparator) {
+        return dateValue.isPresent() && comparator.apply(dateValue.get().between(timeUnit, LocalDate.now()), age);
     }
 
     private Object applyDateAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
@@ -740,7 +743,37 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
 
-            return isOldEnough(dateValue, timeUnit, minimumAge);
+            return hasRightAge(dateValue, timeUnit, minimumAge, (a, b) -> a >= b);
+        } else if (predicateCtx instanceof PexParser.AgeAtMostPredicateContext) {
+            AgeAtMostPredicateContext predCtx = (AgeAtMostPredicateContext) predicateCtx;
+            long maximalAge = extractLong(predCtx.INT());
+            ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
+
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+
+            return hasRightAge(dateValue, timeUnit, maximalAge, (a, b) -> a <= b);
+        } else if (predicateCtx instanceof PexParser.AgeGreaterPredicateContext) {
+            AgeGreaterPredicateContext predCtx = (AgeGreaterPredicateContext) predicateCtx;
+            long minimalAge = extractLong(predCtx.INT());
+            ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
+
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+
+            return hasRightAge(dateValue, timeUnit, minimalAge, (a, b) -> a > b);
+        } else if (predicateCtx instanceof PexParser.AgeLessPredicateContext) {
+            AgeLessPredicateContext predCtx = (AgeLessPredicateContext) predicateCtx;
+            long maximalAge = extractLong(predCtx.INT());
+            ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
+
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+
+            return hasRightAge(dateValue, timeUnit, maximalAge, (a, b) -> a < b);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
                     ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
@@ -777,7 +810,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
             return childAnswers.stream()
                     .map(child -> ((DateAnswer) child).getValue())
-                    .anyMatch(dateValue -> isOldEnough(Optional.ofNullable(dateValue), timeUnit, minimumAge));
+                    .anyMatch(dateValue -> hasRightAge(Optional.ofNullable(dateValue), timeUnit, minimumAge, (a, b) -> a >= b));
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting date answer value of child question is currently not supported");
         } else {
