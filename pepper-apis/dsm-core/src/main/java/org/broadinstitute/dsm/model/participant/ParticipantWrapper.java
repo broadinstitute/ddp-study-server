@@ -140,11 +140,8 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(
-            ElasticSearchParticipantDto elasticSearchParticipantDto,
-            List<ParticipantWrapperDto> result,
-            DDPInstanceDto ddpInstanceDto
-    ) {
+    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result,
+                                  DDPInstanceDto ddpInstanceDto) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
@@ -166,7 +163,7 @@ public class ParticipantWrapper {
                 participant.setCreated(oncHistory.getCreated());
                 participant.setReviewed(oncHistory.getReviewed());
             });
-                    
+
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
             List<Tissue> tissues = esDsm.getTissue();

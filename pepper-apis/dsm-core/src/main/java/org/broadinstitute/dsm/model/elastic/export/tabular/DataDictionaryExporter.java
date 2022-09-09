@@ -1,5 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -8,14 +15,8 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-/** Writes a data dictionary file based on the given configs.
+/**
+ * Writes a data dictionary file based on the given configs.
  * columns include variable name, type, description, and options
  */
 public class DataDictionaryExporter extends ExcelParticipantExporter {
@@ -27,15 +28,9 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
     private final CellStyle wrapStyle;
     private final CellStyle boldStyle;
     private final CellStyle boldUnderlineStyle;
-    private static final Map<String, String> QUESTION_TYPE_TO_DATA_TYPE = Map.of(
-            "DATE", "datetime",
-            "DATE_SHORT", "date",
-            "AGREEMENT", "boolean",
-            "BOOLEAN", "boolean",
-            "NUMERIC", "number",
-            "CHECKBOX", "boolean",
-            "NUMBER", "number"
-    );
+    private static final Map<String, String> QUESTION_TYPE_TO_DATA_TYPE =
+            Map.of("DATE", "datetime", "DATE_SHORT", "date", "AGREEMENT", "boolean", "BOOLEAN", "boolean", "NUMERIC", "number", "CHECKBOX",
+                    "boolean", "NUMBER", "number");
 
     private static final int VARIABLE_NAME_COL_NUMBER = 0;
     private static final int DATATYPE_COL_NUMBER = 1;
@@ -67,7 +62,9 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         boldUnderlineStyle.setFont(boldUnderlineFont);
     }
 
-    /** writes the dictionary */
+    /**
+     * writes the dictionary
+     */
     public void export(OutputStream os) throws IOException {
         sheet.setColumnWidth(VARIABLE_NAME_COL_NUMBER, 40 * 256);
         sheet.setColumnWidth(DATATYPE_COL_NUMBER, 10 * 256);
@@ -85,12 +82,8 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         String previousQuestionId = null;
         String previousParentQuestionId = null;
 
-        public void apply(FilterExportConfig filterConfig,
-                          int activityRepeatNum,
-                          int questionRepeatNum,
-                          Map<String, Object> option,
-                          String detailName,
-                          FilterExportConfig parentConfig) {
+        public void apply(FilterExportConfig filterConfig, int activityRepeatNum, int questionRepeatNum, Map<String, Object> option,
+                          String detailName, FilterExportConfig parentConfig) {
             // we don't make separate entries for each iteration of a variable
             if (!isFirstQuestionIteration(activityRepeatNum, questionRepeatNum)) {
                 return;
@@ -155,72 +148,43 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         }
         sheet.addMergedRegion(new CellRangeAddress(currentRowNum, currentRowNum, DATATYPE_COL_NUMBER, OPTIONS_COL_NUMBER));
 
-        SXSSFRow columnHeaders = addRowToSheet("Variable Name", "Data type",
-                "Question type", "Description", "Options");
+        SXSSFRow columnHeaders = addRowToSheet("Variable Name", "Data type", "Question type", "Description", "Options");
         columnHeaders.setRowStyle(boldUnderlineStyle);
     }
 
     private void addModuleRepeatDescription(String moduleName, SXSSFRow moduleNameRow, ModuleExportConfig moduleExportConfig) {
-        String repeatString = "Up to " + moduleExportConfig.getNumMaxRepeats() +
-                " entries for this module exist for each participant.\n";
+        String repeatString = "Up to " + moduleExportConfig.getNumMaxRepeats() + " entries for this module exist for each participant.\n";
         repeatString += "Entries are indicated in reverse chronological order.\n";
-        repeatString += "The most recent entry has no suffix, the next-most-recent is suffixed with _2," +
-                " the next-most-recent is suffixed with _3, etc...\n ";
-        repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName +
-                "_2.QUESTION is the next-most recent completion.";
+        repeatString += "The most recent entry has no suffix, the next-most-recent is suffixed with _2,"
+                + " the next-most-recent is suffixed with _3, etc...\n ";
+        repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName
+                + "_2.QUESTION is the next-most recent completion.";
         moduleNameRow.createCell(DATATYPE_COL_NUMBER).setCellValue(repeatString);
     }
 
-    protected void addCompositeQuestionHeaderRow(FilterExportConfig filterConfig,
-                                        int activityRepeatNum,
-                                        int questionRepeatNum,
-                                        Map<String, Object> option,
-                                        String detailName,
-                                        FilterExportConfig parentConfig) {
+    protected void addCompositeQuestionHeaderRow(FilterExportConfig filterConfig, int activityRepeatNum, int questionRepeatNum,
+                                                 Map<String, Object> option, String detailName, FilterExportConfig parentConfig) {
 
-        String questionRootName = "[[" + getColumnName(parentConfig,
-                activityRepeatNum,
-                questionRepeatNum,
-                null,
-                null,
-                null) + "]]";
+        String questionRootName = "[[" + getColumnName(parentConfig, activityRepeatNum, questionRepeatNum, null, null, null) + "]]";
         String descriptionText = (String) parentConfig.getQuestionDef().get(ESObjectConstants.QUESTION_TEXT);
         if (parentConfig.getMaxRepeats() > 1) {
-            descriptionText += "\n May have up to " + parentConfig.getMaxRepeats() +
-                    " response variables for each question, denoted with _2, _3, etc. for each response after the first.";
+            descriptionText += "\n May have up to " + parentConfig.getMaxRepeats()
+                    + " response variables for each question, denoted with _2, _3, etc. for each response after the first.";
         }
         addRowToSheet(questionRootName, null, "COMPOSITE", descriptionText, null);
 
     }
 
-    protected void addSplitOptionsHeaderRow(FilterExportConfig filterConfig,
-                                            int activityRepeatNum,
-                                            int questionRepeatNum,
-                                            Map<String, Object> option,
-                                            String detailName,
-                                            FilterExportConfig parentConfig) {
-        String questionRootName = "[[" + getColumnName(filterConfig,
-                activityRepeatNum,
-                questionRepeatNum,
-                null,
-                null,
-                null) + "]]";
+    protected void addSplitOptionsHeaderRow(FilterExportConfig filterConfig, int activityRepeatNum, int questionRepeatNum,
+                                            Map<String, Object> option, String detailName, FilterExportConfig parentConfig) {
+        String questionRootName = "[[" + getColumnName(filterConfig, activityRepeatNum, questionRepeatNum, null, null, null) + "]]";
         String descriptionText = (String) filterConfig.getQuestionDef().get(ESObjectConstants.QUESTION_TEXT);
         addRowToSheet(questionRootName, "text", "MULTISELECT", descriptionText, null);
     }
 
-    protected void addRegularVariableRow(FilterExportConfig filterConfig,
-                                             int activityRepeatNum,
-                                             int questionRepeatNum,
-                                             Map<String, Object> option,
-                                             String detailName,
-                                             FilterExportConfig parentConfig) {
-        String variableName = getColumnName(filterConfig,
-                activityRepeatNum,
-                questionRepeatNum,
-                option,
-                detailName,
-                parentConfig);
+    protected void addRegularVariableRow(FilterExportConfig filterConfig, int activityRepeatNum, int questionRepeatNum,
+                                         Map<String, Object> option, String detailName, FilterExportConfig parentConfig) {
+        String variableName = getColumnName(filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig);
 
         String questionType = filterConfig.getQuestionType();
         if (questionType == null) {
@@ -234,51 +198,33 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
             descriptionText = StringUtils.isNotBlank(questionText) ? questionText : descriptionText;
         }
         if (descriptionText.contains("_")) {
-            descriptionText = Arrays.stream(descriptionText.split("_"))
-                    .map(word -> StringUtils.toRootLowerCase(word)).collect(Collectors.joining(" "));
+            descriptionText = Arrays.stream(descriptionText.split("_")).map(word -> StringUtils.toRootLowerCase(word))
+                    .collect(Collectors.joining(" "));
         }
         if (filterConfig.getMaxRepeats() > 1) {
-            descriptionText += "\n May have up to " + filterConfig.getMaxRepeats() +
-                    " response variables, denoted with _2, _3, etc. for each response after the first.";
+            descriptionText += "\n May have up to " + filterConfig.getMaxRepeats()
+                    + " response variables, denoted with _2, _3, etc. for each response after the first.";
         }
 
         String optionText = null;
         if (filterConfig.getOptions() != null && filterConfig.getCollationSuffix() == null) {
-            optionText = filterConfig.getOptions().stream().map(opt ->
-                    opt.get(ESObjectConstants.OPTION_STABLE_ID) + " - " + opt.get(ESObjectConstants.OPTION_TEXT)
-            ).collect(Collectors.joining("\n"));
+            optionText = filterConfig.getOptions().stream()
+                    .map(opt -> opt.get(ESObjectConstants.OPTION_STABLE_ID) + " - " + opt.get(ESObjectConstants.OPTION_TEXT))
+                    .collect(Collectors.joining("\n"));
         }
         addRowToSheet(variableName, dataType, questionType, descriptionText, optionText);
 
     }
 
-    protected void addAdditionalDetailRow(FilterExportConfig filterConfig,
-                                          int activityRepeatNum,
-                                          int questionRepeatNum,
-                                          Map<String, Object> option,
-                                          String detailName,
-                                          FilterExportConfig parentConfig) {
-        String variableName = getColumnName(filterConfig,
-                activityRepeatNum,
-                questionRepeatNum,
-                option,
-                detailName,
-                parentConfig);
+    protected void addAdditionalDetailRow(FilterExportConfig filterConfig, int activityRepeatNum, int questionRepeatNum,
+                                          Map<String, Object> option, String detailName, FilterExportConfig parentConfig) {
+        String variableName = getColumnName(filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig);
         addRowToSheet(variableName, "text", "TEXT", "additional detail", null);
     }
 
-    protected void addSplitOptionsRow(FilterExportConfig filterConfig,
-                                       int activityRepeatNum,
-                                       int questionRepeatNum,
-                                       Map<String, Object> option,
-                                       String detailName,
-                                       FilterExportConfig parentConfig) {
-        String variableName = getColumnName(filterConfig,
-                activityRepeatNum,
-                questionRepeatNum,
-                option,
-                detailName,
-                parentConfig);
+    protected void addSplitOptionsRow(FilterExportConfig filterConfig, int activityRepeatNum, int questionRepeatNum,
+                                      Map<String, Object> option, String detailName, FilterExportConfig parentConfig) {
+        String variableName = getColumnName(filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig);
         String descriptionText = (String) option.get(ESObjectConstants.OPTION_TEXT);
         String optionText = "0 - not selected; 1 - selected";
         addRowToSheet(variableName, null, null, descriptionText, optionText);
