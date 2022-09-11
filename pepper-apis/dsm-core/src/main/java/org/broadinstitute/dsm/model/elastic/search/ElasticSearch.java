@@ -244,12 +244,23 @@ public class ElasticSearch implements ElasticSearchable {
 
     private AbstractQueryBuilder addOsteo2Filter(AbstractQueryBuilder queryBuilder) {
         //just osteo2
+        BoolQueryBuilder osteo2QueryBuilder = new BoolQueryBuilder();
         BoolQueryBuilder queryBuilderConsentV2 = new BoolQueryBuilder();
         queryBuilderConsentV2.must(new MatchQueryBuilder("activities.activityCode", "CONSENT").operator(Operator.AND));
         queryBuilderConsentV2.must(QueryBuilders.matchQuery("activities.activityVersion", "v2").operator(Operator.AND));
         queryBuilderConsentV2.must(new BoolQueryBuilder().must(new ExistsQueryBuilder("activities.completedAt")));
-        NestedQueryBuilder expectedNestedQuery = new NestedQueryBuilder("activities", queryBuilderConsentV2, ScoreMode.Avg);
-        return ((BoolQueryBuilder) queryBuilder).must(expectedNestedQuery);
+        NestedQueryBuilder expectedNestedQueryConsent = new NestedQueryBuilder("activities", queryBuilderConsentV2, ScoreMode.Avg);
+        osteo2QueryBuilder.should(expectedNestedQueryConsent);
+
+        BoolQueryBuilder queryBuilderConsentAssentV2 = new BoolQueryBuilder();
+        queryBuilderConsentAssentV2.must(new MatchQueryBuilder("activities.activityCode", "CONSENT_ASSENT").operator(Operator.AND));
+        queryBuilderConsentAssentV2.must(QueryBuilders.matchQuery("activities.activityVersion", "v2").operator(Operator.AND));
+        queryBuilderConsentAssentV2.must(new BoolQueryBuilder().must(new ExistsQueryBuilder("activities.completedAt")));
+        NestedQueryBuilder expectedNestedQueryConsentAssent = new NestedQueryBuilder("activities", queryBuilderConsentAssentV2,
+                ScoreMode.Avg);
+        osteo2QueryBuilder.should(expectedNestedQueryConsentAssent);
+        ((BoolQueryBuilder) queryBuilder).must(osteo2QueryBuilder);
+        return queryBuilder;
     }
 
     @Override
