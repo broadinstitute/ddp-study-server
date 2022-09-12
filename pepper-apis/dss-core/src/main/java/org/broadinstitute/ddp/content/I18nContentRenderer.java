@@ -4,10 +4,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
 
 import java.io.StringWriter;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,6 +27,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -108,12 +106,13 @@ public class I18nContentRenderer {
         builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
 
-        final var instance = handle.attach(ActivityInstanceDao.class).findBaseResponseByInstanceId(activityInstanceId);
-        instance.ifPresent(activityResponse -> builder
-                .setActivityInstanceCreationDate(Instant
-                        .ofEpochMilli(activityResponse.getCreatedAt())
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()));
+        builder.setActivityInstanceCreationDate(handle.attach(ActivityInstanceDao.class)
+                .findBaseResponseByInstanceId(activityInstanceId)
+                .map(ActivityResponse::getFirstCompletedAt)
+                .map(Instant::ofEpochMilli)
+                .map(x -> x.atZone(ZoneId.systemDefault()))
+                .map(ZonedDateTime::toLocalDate)
+                .orElse(LocalDate.now(zone)));
 
         return builder;
     }
