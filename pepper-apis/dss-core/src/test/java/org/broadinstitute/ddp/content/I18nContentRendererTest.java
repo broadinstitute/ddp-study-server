@@ -77,7 +77,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
 
             RenderValueProvider valueProvider = new RenderValueProvider.Builder()
                     .setParticipantFirstName("John")
-                    .setFirstCompletionDate(LocalDate.of(2000, 1, 1))
+                    .setFirstCompletedDate(LocalDate.of(2000, 1, 1))
                     .setDate(LocalDate.of(1990, 1, 1))
                     .build();
 
