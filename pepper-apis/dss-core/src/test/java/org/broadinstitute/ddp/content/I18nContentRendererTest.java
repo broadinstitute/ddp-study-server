@@ -78,6 +78,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             RenderValueProvider valueProvider = new RenderValueProvider.Builder()
                     .setParticipantFirstName("John")
                     .setSubmissionDate(LocalDate.of(2000, 1, 1))
+                    .setDate(LocalDate.of(1990, 1, 1))
                     .build();
 
             Map<String, Object> context = new HashMap<>();
@@ -86,13 +87,45 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
-                            "Your name is $ddp.participantFirstName()? Submission date is $ddp.submissionDate(\"MM / dd / yyyy\")"))));
+                            "Your name is $ddp.participantFirstName()? Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
 
             long langId = LanguageStore.getDefault().getId();
             String expected = "<em>Your name is John? Submission date is 01 / 01 / 2000</em>";
+            Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
+                    langId, context, Instant.now().toEpochMilli());
+            assertEquals(expected, actual.get(tmpl.getTemplateId()));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testDoubleRenderPassWithDefaultValue() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            RenderValueProvider valueProvider = new RenderValueProvider.Builder()
+                    .setParticipantFirstName("John")
+                    .setDate(LocalDate.of(1990, 1, 1))
+                    .build();
+
+            Map<String, Object> context = new HashMap<>();
+            context.put(I18nTemplateConstants.DDP, valueProvider);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
+            tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
+                    new Translation("en",
+                            "Your name is $ddp.participantFirstName()? Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+            long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "<em>Your name is John? Submission date is 01 / 01 / 1990</em>";
             Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
                     langId, context, Instant.now().toEpochMilli());
             assertEquals(expected, actual.get(tmpl.getTemplateId()));
