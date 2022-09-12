@@ -22,6 +22,7 @@ public class ElasticDataExportAdapter extends BaseExporter {
         try {
             ElasticSearchUtil.getClientInstance().update(updateRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException("Error occurred while exporting data to ES", e);
         }
         logger.info("successfully exported data to ES");

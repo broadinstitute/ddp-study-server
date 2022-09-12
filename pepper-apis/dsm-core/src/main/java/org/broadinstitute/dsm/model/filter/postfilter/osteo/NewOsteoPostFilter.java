@@ -2,6 +2,7 @@
 package org.broadinstitute.dsm.model.filter.postfilter.osteo;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -20,7 +21,9 @@ public class NewOsteoPostFilter extends BaseStudyPostFilter {
 
     protected NewOsteoPostFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         super(elasticSearchParticipantDto, ddpInstanceDto);
-        this.matchByDdpInstanceId = hasDdpInstanceId -> hasDdpInstanceId.extractDdpInstanceId() == ddpInstanceDto.getDdpInstanceId();
+        this.matchByDdpInstanceId = hasDdpInstanceId -> hasDdpInstanceId.extractDdpInstanceId()
+                .filter(instanceId -> instanceId.longValue() == ddpInstanceDto.getDdpInstanceId())
+                .isPresent();
     }
 
     public static StudyPostFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
