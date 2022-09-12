@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class OsteoInsertSyncEvents extends InsertStudyEvents {
-    OsteoInsertSyncEvents() {
+    public OsteoInsertSyncEvents() {
         super("CMI-OSTEO", "patches/osteo-new-sync-events.conf");
     }
 
@@ -32,7 +32,7 @@ public class OsteoInsertSyncEvents extends InsertStudyEvents {
                 .count();
 
         log.info("Number of EXISTING sync events to DEACTIVATE: {}", amountOfOldEvents);
-        log.info("Successfully deactivated non sync events of {}.", studyGuid);
+        log.info("Successfully deactivated sync events of {}.", studyGuid);
     }
 
     private List<EventConfiguration> collectEvents(Handle handle, StudyDto studyDto) {
