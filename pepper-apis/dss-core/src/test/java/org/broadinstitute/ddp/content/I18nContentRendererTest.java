@@ -87,7 +87,8 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
-                            "Your name is $ddp.participantFirstName()? Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+                            "Your name is $ddp.participantFirstName()? "
+                                    + "Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
@@ -119,7 +120,8 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
-                            "Your name is $ddp.participantFirstName()? Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+                            "Your name is $ddp.participantFirstName()? "
+                                    + "Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
