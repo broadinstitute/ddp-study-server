@@ -105,9 +105,9 @@ public class RenderValueProvider {
     /**
      * Returns submission date in given format, if available.
      */
-    public String submissionDate(String format) {
+    public String submissionDate(String format, String defaultValue) {
         if (submissionDate == null) {
-            return null;
+            return defaultValue;
         }
         try {
             return DateTimeFormatter.ofPattern(format).format(submissionDate);
@@ -402,7 +402,7 @@ public class RenderValueProvider {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
         }
         if (submissionDate != null) {
-            snapshot.put(I18nTemplateConstants.Snapshot.DATE_ACTIVITY_INSTANCE_CREATED, submissionDate.toString());
+            snapshot.put(I18nTemplateConstants.Snapshot.DDP_SUBMISSION_DATE, submissionDate.toString());
         }
         if (kitRequestId != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
@@ -557,7 +557,7 @@ public class RenderValueProvider {
                 provider.date = LocalDate.parse(value);
             }
 
-            value = snapshot.get(I18nTemplateConstants.Snapshot.DATE_ACTIVITY_INSTANCE_CREATED);
+            value = snapshot.get(I18nTemplateConstants.Snapshot.DDP_SUBMISSION_DATE);
             if (value != null) {
                 provider.submissionDate = LocalDate.parse(value);
             }

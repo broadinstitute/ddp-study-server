@@ -106,13 +106,14 @@ public class I18nContentRenderer {
         builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
 
+        final var userZone = zone;
         builder.setSubmissionDate(handle.attach(ActivityInstanceDao.class)
                 .findBaseResponseByInstanceId(activityInstanceId)
                 .map(ActivityResponse::getFirstCompletedAt)
                 .map(Instant::ofEpochMilli)
-                .map(x -> x.atZone(ZoneId.systemDefault()))
+                .map(x -> x.atZone(userZone))
                 .map(ZonedDateTime::toLocalDate)
-                .orElse(LocalDate.now(zone)));
+                .orElse(null));
 
         return builder;
     }
