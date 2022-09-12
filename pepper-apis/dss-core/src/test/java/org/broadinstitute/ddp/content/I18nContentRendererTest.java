@@ -88,7 +88,8 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
                             "Your name is $ddp.participantFirstName()? "
-                                    + "This activity was first completed on $ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+                                    + "This activity was first completed on "
+                                    + "$ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
@@ -121,7 +122,8 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
                             "Your name is $ddp.participantFirstName()? "
-                                    + "This activity was first completed on $ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+                                    + "This activity was first completed on "
+                                    + "$ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
