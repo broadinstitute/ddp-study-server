@@ -95,7 +95,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             assertNotNull(tmpl.getTemplateId());
 
             long langId = LanguageStore.getDefault().getId();
-            String expected = "<em>Your name is John? Submission date is 01 / 01 / 2000</em>";
+            String expected = "<em>Your name is John? This activity was first completed on 01 / 01 / 2000</em>";
             Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
                     langId, context, Instant.now().toEpochMilli());
             assertEquals(expected, actual.get(tmpl.getTemplateId()));
@@ -129,7 +129,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             assertNotNull(tmpl.getTemplateId());
 
             long langId = LanguageStore.getDefault().getId();
-            String expected = "<em>Your name is John? Submission date is 01 / 01 / 1990</em>";
+            String expected = "<em>Your name is John? This activity was first completed on 01 / 01 / 1990</em>";
             Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
                     langId, context, Instant.now().toEpochMilli());
             assertEquals(expected, actual.get(tmpl.getTemplateId()));
