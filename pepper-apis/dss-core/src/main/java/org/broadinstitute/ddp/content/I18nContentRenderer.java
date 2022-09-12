@@ -51,7 +51,11 @@ public class I18nContentRenderer {
         }
     }
 
-    public static RenderValueProvider newValueProvider(Handle handle, long activityInstanceId, long participantUserId, String operatorGuid, String studyGuid) {
+    public static RenderValueProvider newValueProvider(Handle handle,
+                                                       long activityInstanceId,
+                                                       long participantUserId,
+                                                       String operatorGuid,
+                                                       String studyGuid) {
         return newValueProvider(handle, activityInstanceId, participantUserId, operatorGuid, studyGuid, new HashMap<>());
     }
 
@@ -106,7 +110,10 @@ public class I18nContentRenderer {
 
         final var instance = handle.attach(ActivityInstanceDao.class).findBaseResponseByInstanceId(activityInstanceId);
         instance.ifPresent(activityResponse -> builder
-                .setActivityInstanceCreationDate(Instant.ofEpochMilli(activityResponse.getCreatedAt()).atZone(ZoneId.systemDefault()).toLocalDate()));
+                .setActivityInstanceCreationDate(Instant
+                        .ofEpochMilli(activityResponse.getCreatedAt())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()));
 
         return builder;
     }
