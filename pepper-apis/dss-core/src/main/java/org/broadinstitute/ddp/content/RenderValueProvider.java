@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -44,6 +45,7 @@ public class RenderValueProvider {
     private String participantLastName;
     private LocalDate participantBirthDate;
     private ZoneId participantTimeZone;
+    private LocalDate activityInstanceCreationDate;
     private LocalDate date;
     private String kitRequestId;
     private KitReasonType kitReasonType;
@@ -114,6 +116,10 @@ public class RenderValueProvider {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public void setActivityInstanceCreationDate(LocalDate date) {
+        this.activityInstanceCreationDate = date;
     }
 
     public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
@@ -401,12 +407,9 @@ public class RenderValueProvider {
         return snapshot;
     }
 
+    @AllArgsConstructor
     public static final class Builder {
         private RenderValueProvider provider;
-
-        public Builder(RenderValueProvider provider) {
-            this.provider = cloneProvider(provider);
-        }
 
         public Builder() {
             provider = new RenderValueProvider();
@@ -439,6 +442,11 @@ public class RenderValueProvider {
 
         public Builder setDate(LocalDate date) {
             provider.date = date;
+            return this;
+        }
+
+        public Builder setActivityInstanceCreationDate(LocalDate date) {
+            provider.activityInstanceCreationDate = date;
             return this;
         }
 
@@ -531,6 +539,11 @@ public class RenderValueProvider {
                 provider.date = LocalDate.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.DATE_ACTIVITY_INSTANCE_CREATED);
+            if (value != null) {
+                provider.activityInstanceCreationDate = LocalDate.parse(value);
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID);
             if (value != null) {
                 provider.kitRequestId = value;
@@ -575,6 +588,7 @@ public class RenderValueProvider {
             copy.participantLastName = provider.participantLastName;
             copy.participantBirthDate = provider.participantBirthDate;
             copy.participantTimeZone = provider.participantTimeZone;
+            copy.activityInstanceCreationDate = provider.activityInstanceCreationDate;
             copy.date = provider.date;
             copy.kitRequestId = provider.kitRequestId;
             copy.kitReasonType = provider.kitReasonType;

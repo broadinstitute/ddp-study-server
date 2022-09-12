@@ -486,8 +486,10 @@ public class ActivityInstanceService {
             substitutions = substitutionStream
                     .collect(Collectors.toMap(SubstitutionsWrapper::getActivityInstanceId, SubstitutionsWrapper::unwrap));
         }
+
+        //TODO: Not sure if it is correct behaviour
         var sharedSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(handle, userId, operatorGuid, studyGuid)
+                .newValueProviderBuilder(handle, instanceIds.iterator().next(), userId, operatorGuid, studyGuid)
                 .build().getSnapshot();
 
         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
