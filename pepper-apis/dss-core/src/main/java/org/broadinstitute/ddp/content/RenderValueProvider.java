@@ -45,7 +45,7 @@ public class RenderValueProvider {
     private String participantLastName;
     private LocalDate participantBirthDate;
     private ZoneId participantTimeZone;
-    private LocalDate submissionDate;
+    private LocalDate firstCompletedDate;
     private LocalDate date;
     private String kitRequestId;
     private KitReasonType kitReasonType;
@@ -103,17 +103,24 @@ public class RenderValueProvider {
     }
 
     /**
-     * Returns submission date in given format, if available.
+     * If the current activity has been previously completed, returns the date of completion.
+     * 
+     * <p>See {@link java.time.format.DateTimeFormatter#ofPattern(String)} for more information
+     * about supported format strings.
+     * @param format The date format string to use. 
+     * @param defaultValue The string to return if there is no valid date
+     * @return the formatted date of first completion, or `defaultValue` if one does not exist
      */
-    public String submissionDate(String format, String defaultValue) {
-        if (submissionDate == null) {
+    public String firstCompletedDate(String format, String defaultValue) {
+        if (firstCompletedDate == null) {
             return defaultValue;
         }
+
         try {
-            return DateTimeFormatter.ofPattern(format).format(submissionDate);
+            return DateTimeFormatter.ofPattern(format).format(firstCompletedDate);
         } catch (Exception e) {
-            log.warn("Error formatting submission date value '{}' using format '{}'", submissionDate, format, e);
-            return submissionDate.toString();
+            log.warn("Error formatting submission date value '{}' using format '{}'", firstCompletedDate, format, e);
+            return firstCompletedDate.toString();
         }
     }
 
@@ -133,8 +140,8 @@ public class RenderValueProvider {
         this.date = date;
     }
 
-    public void setSubmissionDate(LocalDate date) {
-        this.submissionDate = date;
+    public void setFirstCompletedDate(LocalDate date) {
+        this.firstCompletedDate = date;
     }
 
     public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
@@ -401,8 +408,8 @@ public class RenderValueProvider {
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
         }
-        if (submissionDate != null) {
-            snapshot.put(I18nTemplateConstants.Snapshot.DDP_SUBMISSION_DATE, submissionDate.toString());
+        if (firstCompletedDate != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.DDP_FIRST_COMPLETED_DATE, firstCompletedDate.toString());
         }
         if (kitRequestId != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
@@ -463,8 +470,8 @@ public class RenderValueProvider {
             return this;
         }
 
-        public Builder setSubmissionDate(LocalDate date) {
-            provider.submissionDate = date;
+        public Builder setFirstCompletedDate(LocalDate date) {
+            provider.firstCompletedDate = date;
             return this;
         }
 
@@ -557,9 +564,9 @@ public class RenderValueProvider {
                 provider.date = LocalDate.parse(value);
             }
 
-            value = snapshot.get(I18nTemplateConstants.Snapshot.DDP_SUBMISSION_DATE);
+            value = snapshot.get(I18nTemplateConstants.Snapshot.DDP_FIRST_COMPLETED_DATE);
             if (value != null) {
-                provider.submissionDate = LocalDate.parse(value);
+                provider.firstCompletedDate = LocalDate.parse(value);
             }
 
             value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID);
@@ -606,7 +613,7 @@ public class RenderValueProvider {
             copy.participantLastName = provider.participantLastName;
             copy.participantBirthDate = provider.participantBirthDate;
             copy.participantTimeZone = provider.participantTimeZone;
-            copy.submissionDate = provider.submissionDate;
+            copy.firstCompletedDate = provider.firstCompletedDate;
             copy.date = provider.date;
             copy.kitRequestId = provider.kitRequestId;
             copy.kitReasonType = provider.kitReasonType;

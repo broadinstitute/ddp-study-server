@@ -111,7 +111,7 @@ public class I18nContentRenderer {
         builder.setDate(LocalDate.now(zone));
 
         final var userZone = zone;
-        builder.setSubmissionDate(handle.attach(ActivityInstanceDao.class)
+        builder.setFirstCompletedDate(handle.attach(ActivityInstanceDao.class)
                 .findBaseResponseByInstanceId(activityInstanceId)
                 .map(ActivityResponse::getFirstCompletedAt)
                 .map(Instant::ofEpochMilli)

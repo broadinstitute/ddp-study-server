@@ -77,7 +77,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
 
             RenderValueProvider valueProvider = new RenderValueProvider.Builder()
                     .setParticipantFirstName("John")
-                    .setSubmissionDate(LocalDate.of(2000, 1, 1))
+                    .setFirstCompletionDate(LocalDate.of(2000, 1, 1))
                     .setDate(LocalDate.of(1990, 1, 1))
                     .build();
 
@@ -88,7 +88,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
                             "Your name is $ddp.participantFirstName()? "
-                                    + "Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+                                    + "This activity was first completed on $ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
@@ -121,7 +121,7 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
                     new Translation("en",
                             "Your name is $ddp.participantFirstName()? "
-                                    + "Submission date is $ddp.submissionDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+                                    + "This activity was first completed on $ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());

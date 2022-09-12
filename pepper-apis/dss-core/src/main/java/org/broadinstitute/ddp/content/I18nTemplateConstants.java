@@ -11,7 +11,7 @@ public class I18nTemplateConstants {
         public static final String PARTICIPANT_LAST_NAME = "DDP_PARTICIPANT_LAST_NAME";
         public static final String PARTICIPANT_BIRTH_DATE = "DDP_PARTICIPANT_BIRTH_DATE";
         public static final String PARTICIPANT_TIME_ZONE = "DDP_PARTICIPANT_TIME_ZONE";
-        public static final String DDP_SUBMISSION_DATE = "DDP_SUBMISSION_DATE";
+        public static final String DDP_FIRST_COMPLETED_DATE = "DDP_FIRST_COMPLETED_DATE";
         public static final String DATE = "DDP_DATE";
         public static final String KIT_REQUEST_ID = "DDP_KIT_REQUEST_ID";
         public static final String KIT_REASON_TYPE = "DDP_KIT_REASON_TYPE";
