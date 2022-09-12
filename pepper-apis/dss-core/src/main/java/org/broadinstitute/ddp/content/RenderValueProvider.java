@@ -45,7 +45,7 @@ public class RenderValueProvider {
     private String participantLastName;
     private LocalDate participantBirthDate;
     private ZoneId participantTimeZone;
-    private LocalDate activityInstanceCreationDate;
+    private LocalDate submissionDate;
     private LocalDate date;
     private String kitRequestId;
     private KitReasonType kitReasonType;
@@ -118,8 +118,8 @@ public class RenderValueProvider {
         this.date = date;
     }
 
-    public void setActivityInstanceCreationDate(LocalDate date) {
-        this.activityInstanceCreationDate = date;
+    public void setSubmissionDate(LocalDate date) {
+        this.submissionDate = date;
     }
 
     public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
@@ -386,6 +386,9 @@ public class RenderValueProvider {
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
         }
+        if (submissionDate != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.DATE_ACTIVITY_INSTANCE_CREATED, submissionDate.toString());
+        }
         if (kitRequestId != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
         }
@@ -446,7 +449,7 @@ public class RenderValueProvider {
         }
 
         public Builder setActivityInstanceCreationDate(LocalDate date) {
-            provider.activityInstanceCreationDate = date;
+            provider.submissionDate = date;
             return this;
         }
 
@@ -541,7 +544,7 @@ public class RenderValueProvider {
 
             value = snapshot.get(I18nTemplateConstants.Snapshot.DATE_ACTIVITY_INSTANCE_CREATED);
             if (value != null) {
-                provider.activityInstanceCreationDate = LocalDate.parse(value);
+                provider.submissionDate = LocalDate.parse(value);
             }
 
             value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID);
@@ -588,7 +591,7 @@ public class RenderValueProvider {
             copy.participantLastName = provider.participantLastName;
             copy.participantBirthDate = provider.participantBirthDate;
             copy.participantTimeZone = provider.participantTimeZone;
-            copy.activityInstanceCreationDate = provider.activityInstanceCreationDate;
+            copy.submissionDate = provider.submissionDate;
             copy.date = provider.date;
             copy.kitRequestId = provider.kitRequestId;
             copy.kitReasonType = provider.kitReasonType;
