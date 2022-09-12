@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,14 +75,17 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             TemplateDao tmplDao = handle.attach(TemplateDao.class);
             JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
 
-            RenderValueProvider valueProvider = new RenderValueProvider.Builder().setParticipantFirstName("John").build();
+            RenderValueProvider valueProvider = new RenderValueProvider.Builder()
+                    .setParticipantFirstName("John")
+                    .setSubmissionDate(LocalDate.of(2000, 1, 1))
+                    .build();
 
             Map<String, Object> context = new HashMap<>();
             context.put(I18nTemplateConstants.DDP, valueProvider);
 
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
-                    new Translation("en", "Your name is $ddp.participantFirstName()?"))));
+                    new Translation("en", "Your name is $ddp.participantFirstName()? You were born on $dpp.submissionDate(\"MM / dd / yyyy\")"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());

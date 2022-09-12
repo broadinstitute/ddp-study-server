@@ -103,6 +103,21 @@ public class RenderValueProvider {
     }
 
     /**
+     * Returns submission date in given format, if available.
+     */
+    public String submissionDate(String format) {
+        if (submissionDate == null) {
+            return null;
+        }
+        try {
+            return DateTimeFormatter.ofPattern(format).format(submissionDate);
+        } catch (Exception e) {
+            log.warn("Error formatting submission date value '{}' using format '{}'", submissionDate, format, e);
+            return submissionDate.toString();
+        }
+    }
+
+    /**
      * Returns today's date in given format. Might return a snapshot-ed date.
      */
     public String date(String format) {
@@ -448,7 +463,7 @@ public class RenderValueProvider {
             return this;
         }
 
-        public Builder setActivityInstanceCreationDate(LocalDate date) {
+        public Builder setSubmissionDate(LocalDate date) {
             provider.submissionDate = date;
             return this;
         }

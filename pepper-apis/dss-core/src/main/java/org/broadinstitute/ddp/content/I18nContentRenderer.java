@@ -106,7 +106,7 @@ public class I18nContentRenderer {
         builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
 
-        builder.setActivityInstanceCreationDate(handle.attach(ActivityInstanceDao.class)
+        builder.setSubmissionDate(handle.attach(ActivityInstanceDao.class)
                 .findBaseResponseByInstanceId(activityInstanceId)
                 .map(ActivityResponse::getFirstCompletedAt)
                 .map(Instant::ofEpochMilli)
