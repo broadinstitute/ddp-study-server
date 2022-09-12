@@ -85,13 +85,13 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
 
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
-                    new Translation("en", "Your name is $ddp.participantFirstName()? You were born on $dpp.submissionDate(\"MM / dd / yyyy\")"))));
+                    new Translation("en", "Your name is $ddp.participantFirstName()? Submission date is $ddp.submissionDate(\"MM / dd / yyyy\")"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
 
             long langId = LanguageStore.getDefault().getId();
-            String expected = "<em>Your name is John?</em>";
+            String expected = "<em>Your name is John? Submission date is 01 / 01 / 2000</em>";
             Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
                     langId, context, Instant.now().toEpochMilli());
             assertEquals(expected, actual.get(tmpl.getTemplateId()));
