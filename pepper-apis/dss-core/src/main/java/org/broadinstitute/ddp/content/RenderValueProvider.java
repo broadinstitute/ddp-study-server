@@ -29,7 +29,7 @@ import org.broadinstitute.ddp.model.dsm.TestResult;
  * Provides methods that can be called within templates to get certain values from the system.
  */
 @Slf4j
-public class RenderValueProvider {
+public class RenderValueProvider implements Cloneable {
     /**
      * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
      * return pre-defined values:
@@ -64,6 +64,32 @@ public class RenderValueProvider {
 
     private RenderValueProvider() {
         // Use builder.
+    }
+
+    @Override
+    public RenderValueProvider clone() throws CloneNotSupportedException {
+        var newProvider = (RenderValueProvider)super.clone();
+
+        newProvider.participantGuid = participantGuid;
+        newProvider.participantFirstName = participantFirstName;
+        newProvider.participantLastName = participantLastName;
+        newProvider.participantBirthDate = participantBirthDate;
+        newProvider.participantTimeZone = participantTimeZone;
+        newProvider.firstCompletedDate = firstCompletedDate;
+        newProvider.date = date;
+        newProvider.kitRequestId = kitRequestId;
+        newProvider.kitReasonType = kitReasonType;
+        newProvider.testResultCode = testResultCode;
+        newProvider.testResultTimeCompleted = testResultTimeCompleted;
+        newProvider.activityInstanceNumber = activityInstanceNumber;
+        newProvider.formResponse = formResponse;
+        newProvider.formActivity = formActivity;
+        newProvider.isoLangCode = isoLangCode;
+        newProvider.formInstance = formInstance;
+        newProvider.governedParticipant = governedParticipant;
+        newProvider.addressGuid = addressGuid;
+        newProvider.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
+        return newProvider;
     }
 
     /**
@@ -603,31 +629,20 @@ public class RenderValueProvider {
         }
 
         public RenderValueProvider build() {
-            return cloneProvider(provider);
-        }
+            RenderValueProvider newProvider = null;
 
-        private RenderValueProvider cloneProvider(RenderValueProvider provider) {
-            RenderValueProvider copy = new RenderValueProvider();
-            copy.participantGuid = provider.participantGuid;
-            copy.participantFirstName = provider.participantFirstName;
-            copy.participantLastName = provider.participantLastName;
-            copy.participantBirthDate = provider.participantBirthDate;
-            copy.participantTimeZone = provider.participantTimeZone;
-            copy.firstCompletedDate = provider.firstCompletedDate;
-            copy.date = provider.date;
-            copy.kitRequestId = provider.kitRequestId;
-            copy.kitReasonType = provider.kitReasonType;
-            copy.testResultCode = provider.testResultCode;
-            copy.testResultTimeCompleted = provider.testResultTimeCompleted;
-            copy.activityInstanceNumber = provider.activityInstanceNumber;
-            copy.formResponse = provider.formResponse;
-            copy.formActivity = provider.formActivity;
-            copy.isoLangCode = provider.isoLangCode;
-            copy.formInstance = provider.formInstance;
-            copy.governedParticipant = provider.governedParticipant;
-            copy.addressGuid = provider.addressGuid;
-            copy.useDefaultsForDdpMethods = provider.useDefaultsForDdpMethods;
-            return copy;
+            try {
+                newProvider = (RenderValueProvider)provider.clone();
+            } catch (CloneNotSupportedException cloneException) {
+                // As of writing this comment, RenderValueProvider completely implements
+                // clone() and there shouldn't be any cases where a CloneNotSupportedException
+                // is thrown. That said, handle it just in case something changes.
+                // (bskinner - 2022.09.12)
+                var message = String.format("Failed to clone instance of %s", this.getClass().getName());
+                throw new DDPException(message, cloneException);
+            }
+
+            return newProvider;
         }
     }
 }
