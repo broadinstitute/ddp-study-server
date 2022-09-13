@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoActivityDetailsUpdate
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAdultConsentFixes;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoDdp7601;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoDobValidationsFix;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoGovernanceFix;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoLovedOneV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoMRDeleteIncomplete;
@@ -44,7 +45,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoLovedOneV2());
         tasks.add(new OsteoActivityDashboardOrdering());
         tasks.add(new OsteoAboutYouChildTitleUpdates());
-
+        tasks.add(new OsteoDobValidationsFix());
         // Last
         //tasks.add(new OsteoNewFamilyHistory()); //not needed, no FAMILY_HISTORY
         tasks.add(new OsteoPdfUpdates());
