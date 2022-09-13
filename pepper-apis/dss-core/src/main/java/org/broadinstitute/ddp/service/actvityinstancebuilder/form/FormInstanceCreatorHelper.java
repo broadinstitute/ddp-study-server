@@ -4,7 +4,6 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
@@ -119,7 +118,6 @@ public class FormInstanceCreatorHelper {
      *
      */
     private int setNumberables(List<FormBlock> blocks, int startingNumber) {
-        blocks = blocks.stream().filter(FormBlock::isShown).collect(Collectors.toList());
         for (FormBlock formBlock : blocks) {
             if (formBlock instanceof Numberable) {
                 Numberable numberable = (Numberable)formBlock;
