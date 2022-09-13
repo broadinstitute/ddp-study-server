@@ -333,7 +333,14 @@ public class FileUploadService {
                 FileUploadNotificationEmailFactory.create(study, user.map(User::getHruid).orElse(""), fileUploads));
 
         if (result.hasFailure()) {
-            log.error("Can't send an e-mail", result.getThrown());
+            String message;
+            if (result.hasError()) {
+                message = String.format("Failed to send file upload notification email: %s.", result.getError());
+            } else {
+                message = String.format("Failed to send file upload notification email due to an unknown error.");
+            }
+
+            log.error("{}", message, result.getThrown());
             return;
         }
 
