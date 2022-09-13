@@ -248,6 +248,7 @@ public class ElasticSearch implements ElasticSearchable {
         osteo2QueryBuilder.should(OsteoVersion2Surveys("CONSENT"));
         osteo2QueryBuilder.should(OsteoVersion2Surveys("CONSENT_ASSENT"));
         osteo2QueryBuilder.should(OsteoVersion2Surveys("PARENTAL_CONSENT"));
+        osteo2QueryBuilder.should(OsteoVersion2Surveys("LOVEDONE"));
         ((BoolQueryBuilder) queryBuilder).must(osteo2QueryBuilder);
         return queryBuilder;
     }
