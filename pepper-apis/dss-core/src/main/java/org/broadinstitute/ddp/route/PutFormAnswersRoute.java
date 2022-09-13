@@ -247,7 +247,7 @@ public class PutFormAnswersRoute implements Route {
             handle.attach(ActivityInstanceDao.class).saveSubstitutions(
                     form.getInstanceId(),
                     I18nContentRenderer.newValueProvider(
-                            handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
+                            handle, form.getInstanceId(), form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
         }
     }
 
