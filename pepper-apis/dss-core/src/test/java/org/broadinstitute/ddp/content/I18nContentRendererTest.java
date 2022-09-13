@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,20 +75,61 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             TemplateDao tmplDao = handle.attach(TemplateDao.class);
             JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
 
-            RenderValueProvider valueProvider = new RenderValueProvider.Builder().setParticipantFirstName("John").build();
+            RenderValueProvider valueProvider = new RenderValueProvider.Builder()
+                    .setParticipantFirstName("John")
+                    .setFirstCompletedDate(LocalDate.of(2000, 1, 1))
+                    .setDate(LocalDate.of(1990, 1, 1))
+                    .build();
 
             Map<String, Object> context = new HashMap<>();
             context.put(I18nTemplateConstants.DDP, valueProvider);
 
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
             tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
-                    new Translation("en", "Your name is $ddp.participantFirstName()?"))));
+                    new Translation("en",
+                            "Your name is $ddp.participantFirstName()? "
+                                    + "This activity was first completed on "
+                                    + "$ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
             long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
 
             long langId = LanguageStore.getDefault().getId();
-            String expected = "<em>Your name is John?</em>";
+            String expected = "<em>Your name is John? This activity was first completed on 01 / 01 / 2000</em>";
+            Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
+                    langId, context, Instant.now().toEpochMilli());
+            assertEquals(expected, actual.get(tmpl.getTemplateId()));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testDoubleRenderPassWithDefaultValue() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            RenderValueProvider valueProvider = new RenderValueProvider.Builder()
+                    .setParticipantFirstName("John")
+                    .setDate(LocalDate.of(1990, 1, 1))
+                    .build();
+
+            Map<String, Object> context = new HashMap<>();
+            context.put(I18nTemplateConstants.DDP, valueProvider);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
+            tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
+                    new Translation("en",
+                            "Your name is $ddp.participantFirstName()? "
+                                    + "This activity was first completed on "
+                                    + "$ddp.firstCompletedDate(\"MM / dd / yyyy\", $ddp.date(\"MM / dd / yyyy\"))"))));
+            long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "<em>Your name is John? This activity was first completed on 01 / 01 / 1990</em>";
             Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
                     langId, context, Instant.now().toEpochMilli());
             assertEquals(expected, actual.get(tmpl.getTemplateId()));
