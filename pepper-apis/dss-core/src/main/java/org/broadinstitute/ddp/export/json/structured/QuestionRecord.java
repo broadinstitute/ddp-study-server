@@ -40,7 +40,7 @@ public abstract class QuestionRecord {
             } else if (record instanceof CompositeQuestionRecord) {
                 questionAnswer = ((CompositeQuestionRecord) record).getAnswer();
             } else if (record instanceof MatrixQuestionRecord) {
-                questionAnswer = ((MatrixQuestionRecord) record).getSelected();
+                questionAnswer = ((MatrixQuestionRecord) record).getAnswer();
             } else if (record instanceof EquationQuestionRecord) {
                 questionAnswer = ((EquationQuestionRecord) record).getAnswer();
             }

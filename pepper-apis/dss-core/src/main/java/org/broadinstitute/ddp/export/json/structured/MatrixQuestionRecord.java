@@ -16,13 +16,18 @@ public final class MatrixQuestionRecord extends QuestionRecord {
     private List<String> matrixGroups = new ArrayList<>();
     @SerializedName("matrixSelected")
     private Map<String, String> selected = new HashMap<>();
+    @SerializedName("answer")
+    private Map<String, String> answer = new HashMap<>();
 
     public MatrixQuestionRecord(String stableId, List<SelectedMatrixCell> cells) {
         super(QuestionType.MATRIX, stableId);
         if (CollectionUtils.isNotEmpty(cells)) {
             for (SelectedMatrixCell cell : cells) {
                 if (!cell.getRowStableId().isBlank() && !cell.getOptionStableId().isBlank()) {
-                    selected.put(cell.getRowStableId(), cell.getOptionStableId());
+                    String rowStableId = cell.getRowStableId();
+                    String optionStableId = cell.getOptionStableId();
+                    selected.put(rowStableId, optionStableId);
+                    answer.put(rowStableId, optionStableId);
                 }
                 if (!cell.getGroupStableId().isBlank()) {
                     matrixGroups.add(cell.getGroupStableId());
@@ -33,5 +38,9 @@ public final class MatrixQuestionRecord extends QuestionRecord {
 
     public Map<String, String> getSelected() {
         return selected;
+    }
+
+    public Map<String, String> getAnswer() {
+        return answer;
     }
 }
