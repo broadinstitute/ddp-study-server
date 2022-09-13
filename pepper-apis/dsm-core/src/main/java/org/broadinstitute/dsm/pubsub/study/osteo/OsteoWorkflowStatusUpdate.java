@@ -109,23 +109,6 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
                     esDsm -> updateDsmAndWriteToES(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
                     ()    -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
             );
-        } else {
-            logger.info("Creating records for new participant in db");
-            int newCohortTagId = cohortTagDao.create(newCohortTag);
-            newCohortTag.setCohortTagId(newCohortTagId);
-            ElasticSearchParticipantDto esPtDto = elasticSearch
-                    .getParticipantById(instance.getEsParticipantIndex(), ddpParticipantId);
-            esPtDto.getDsm().ifPresentOrElse(
-                    dsm -> {
-                        logger.info("Attempting to update `dsm` object in ES");
-                        dsm.setCohortTag(Stream.concat(dsm.getCohortTag().stream(), Stream.of(newCohortTag)).collect(Collectors.toList()));
-                        Map<String, Object> dsmAsMap =
-                                ObjectMapperSingleton.readValue(ObjectMapperSingleton.writeValueAsString(dsm),
-                                        new TypeReference<Map<String, Object>>() {});
-                        writeDataToES(Map.of(ESObjectConstants.DSM, dsmAsMap));
-                    },
-                    () -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
-            );
         }
     }
 

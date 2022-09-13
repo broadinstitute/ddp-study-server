@@ -156,26 +156,5 @@ public class DSMtasksSubscription {
             consumer.ack();
         }
 
-
-
-//        Arrays.stream(Study.values()).filter(study -> study.toString().equals(studyGuid.toUpperCase())).findFirst()
-//                .ifPresentOrElse(study -> {
-//                    // CMI-OSTEO
-//                    Defaultable defaultable = DefaultableMaker.makeDefaultable(study);
-//                    boolean result = defaultable.generateDefaults(studyGuid, participantGuid);
-//                    if (!result) {
-//                        retryPerParticipant.merge(participantGuid, 1, Integer::sum);
-//                        if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
-//                            retryPerParticipant.remove(participantGuid);
-//                            consumer.ack();
-//                        } else {
-//                            consumer.nack();
-//                        }
-//                    } else {
-//                        retryPerParticipant.remove(participantGuid);
-//                        consumer.ack();
-//                    }
-//                }, consumer::ack);
-
     }
 }

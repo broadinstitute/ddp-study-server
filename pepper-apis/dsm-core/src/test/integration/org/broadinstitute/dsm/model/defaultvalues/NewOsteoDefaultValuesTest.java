@@ -4,6 +4,7 @@ package org.broadinstitute.dsm.model.defaultvalues;
 import java.util.Map;
 
 import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.Util;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
@@ -11,6 +12,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -36,7 +38,15 @@ public class NewOsteoDefaultValuesTest {
         TestHelper.setupDB();
         cohortTagDao = new CohortTagDaoImpl();
         elasticSearchable = new ElasticSearch();
-        elasticSearchable.createDocumentById(PARTICIPANTS_STRUCTURED_CMI_CMI_OSTEO, TEST_GUID, Map.of());
+        elasticSearchable.createDocumentById(PARTICIPANTS_STRUCTURED_CMI_CMI_OSTEO, TEST_GUID, Map.of(
+                ESObjectConstants.DSM, Map.of(),
+                ESObjectConstants.PROFILE, Map.of(ESObjectConstants.GUID, TEST_GUID)
+        ));
+        try {
+            Util.waitForCreationInElasticSearch();
+        } catch (InterruptedException e) {
+            Assert.fail();
+        }
     }
 
 
@@ -44,6 +54,11 @@ public class NewOsteoDefaultValuesTest {
     public void generateDefaults() {
         NewOsteoDefaultValues newOsteoDefaultValues = new NewOsteoDefaultValues();
         boolean isGenerated = newOsteoDefaultValues.generateDefaults(STUDY_GUID, TEST_GUID);
+        try {
+            Util.waitForCreationInElasticSearch();
+        } catch (InterruptedException e) {
+            Assert.fail();
+        }
         Assert.assertTrue(isGenerated);
         ElasticSearchParticipantDto participant =
                 elasticSearchable.getParticipantById(PARTICIPANTS_STRUCTURED_CMI_CMI_OSTEO, TEST_GUID);
