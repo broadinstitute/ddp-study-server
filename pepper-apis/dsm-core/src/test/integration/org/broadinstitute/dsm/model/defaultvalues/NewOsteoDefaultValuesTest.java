@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class NewOsteoDefaultValuesTest {
@@ -51,6 +52,7 @@ public class NewOsteoDefaultValuesTest {
 
 
     @Test
+    @Ignore
     public void generateDefaults() {
         NewOsteoDefaultValues newOsteoDefaultValues = new NewOsteoDefaultValues();
         boolean isGenerated = newOsteoDefaultValues.generateDefaults(STUDY_GUID, TEST_GUID);
