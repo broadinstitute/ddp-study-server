@@ -1,9 +1,12 @@
 package org.broadinstitute.dsm.model.patch;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
@@ -29,6 +32,9 @@ public class PatchFactory {
             } else if (isParticipantIdForRecord(patch)) {
                 patcher = new ParticipantRecordPatch(patch);
             }
+        } else if (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
+                    && StringUtils.isNotBlank(patch.getDdpParticipantId())) {
+            patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
             throw new RuntimeException("Id and parentId was null");
