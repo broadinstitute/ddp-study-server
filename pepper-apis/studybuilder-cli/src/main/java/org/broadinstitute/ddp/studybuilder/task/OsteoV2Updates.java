@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutCancerDeleteIncomplete;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouChildTitleUpdates;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutChildV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2;
@@ -51,6 +52,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new UpdateStudyNonSyncEvents());
         tasks.add(new OsteoInsertSyncEvents());
         tasks.add(new UpdateStudyWorkflows()); //updated conf file to remove FAMILY_HISTORY reference
+        tasks.add(new OsteoAboutCancerDeleteIncomplete());
 
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
