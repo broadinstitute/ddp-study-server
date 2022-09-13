@@ -59,7 +59,7 @@ public class OsteoAboutYouChildV2 implements CustomTask {
     public void run(Handle handle) {
         helper = handle.attach(SqlHelper.class);
         ActivityDao activityDao = handle.attach(ActivityDao.class);
-       SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
         var studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyCfg.getString("study.guid"));
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), ACTIVITY_CODE);
@@ -82,10 +82,10 @@ public class OsteoAboutYouChildV2 implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
         @SqlQuery("select question_stable_code_id from question_stable_code qsc "
-                + "where stable_id = :stableCode' and umbrella_study_id = :studyId")
+                + "where stable_id = :stableCode and umbrella_study_id = :studyId")
         int getQuestionStableIdByCode(@Bind("stableCode") String stableCode, @Bind("studyId") long studyId);
 
-        @SqlQuery("SELECT block_id from block__question bq join question q on bq.question_id = q.question_id" 
+        @SqlQuery("SELECT block_id from block__question bq join question q on bq.question_id = q.question_id "
                 + "where q.question_stable_code_id = :stableId")
         int getBlockIdByStableId(@Bind("stableId") long stableId);
 
