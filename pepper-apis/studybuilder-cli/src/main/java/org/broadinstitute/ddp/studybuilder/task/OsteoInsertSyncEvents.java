@@ -27,7 +27,7 @@ public class OsteoInsertSyncEvents extends InsertStudyEvents {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
         long amountOfOldEvents = collectEvents(handle, studyDto)
                 .stream()
-                .filter(e -> e.dispatchToHousekeeping() && e.getLabel() == null)
+                .filter(EventConfiguration::dispatchToHousekeeping)
                 .map(e -> handle.attach(JdbiEventConfiguration.class).updateIsActiveById(e.getEventConfigurationId(), false))
                 .count();
 
