@@ -486,13 +486,15 @@ public class ActivityInstanceService {
             substitutions = substitutionStream
                     .collect(Collectors.toMap(SubstitutionsWrapper::getActivityInstanceId, SubstitutionsWrapper::unwrap));
         }
-        var sharedSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(handle, userId, operatorGuid, studyGuid)
-                .build().getSnapshot();
 
         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
 
         for (var summary : summaries) {
+            var activityContext = I18nContentRenderer
+                    .newValueProviderBuilder(handle, summary.getActivityInstanceId(), userId, operatorGuid, studyGuid)
+                    .build()
+                    .getSnapshot();
+
             FormResponse formResponse = instanceResponses.get(summary.getActivityInstanceGuid());
             FormActivityDef formActivityDef = formResponse == null ? null
                     : getDefinitionForSummary(handle, activityDefStore, studyGuid, summary);
@@ -501,7 +503,7 @@ public class ActivityInstanceService {
             var provider = new RenderValueProvider.Builder()
                     .setActivityInstanceNumber(summary.getInstanceNumber())
                     .withFormResponse(formResponse, formActivityDef, summary.getIsoLanguageCode())
-                    .withSnapshot(sharedSnapshot)
+                    .withSnapshot(activityContext)
                     .withSnapshot(subs)
                     .build();
             Map<String, Object> context = new HashMap<>();
