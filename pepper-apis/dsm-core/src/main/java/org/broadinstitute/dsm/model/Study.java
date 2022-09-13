@@ -2,18 +2,25 @@ package org.broadinstitute.dsm.model;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.apache.commons.lang3.StringUtils;
 
 public enum Study {
-    ATCP,
-    RGP,
-    SINGULAR,
-    LMS,
-    OSTEO2;
+    ATCP("ATCP"),
+    RGP("RGP"),
+    SINGULAR("SINGULAR"),
+    LMS("LMS"),
+    OSTEO2("OSTEO2"),
+    CMI_OSTEO("CMI-OSTEO");
 
     private static final List<Study> PE_CGS = Arrays.asList(LMS, OSTEO2);
     private static final String CMI_PREFIX = "cmi-";
+    private String value;
+
+    Study(String value) {
+        this.value = value;
+    }
 
     public static boolean isPECGS(String instanceName) {
         instanceName = instanceName
@@ -28,4 +35,14 @@ public enum Study {
         }
 
     }
+
+    public static Study of(String studyGuid) throws Exception {
+        for (Study study : Study.values()) {
+            if (study.value.equals(studyGuid)) {
+                return study;
+            }
+        }
+        throw new NoSuchElementException("Study: ".concat(studyGuid).concat(" does not exist"));
+    }
+
 }
