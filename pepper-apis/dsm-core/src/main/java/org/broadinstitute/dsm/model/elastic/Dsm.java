@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Dsm {
 
     @SerializedName(ESObjectConstants.DATE_OF_MAJORITY)

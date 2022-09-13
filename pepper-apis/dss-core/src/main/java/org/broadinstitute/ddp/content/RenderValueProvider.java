@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -28,7 +29,7 @@ import org.broadinstitute.ddp.model.dsm.TestResult;
  * Provides methods that can be called within templates to get certain values from the system.
  */
 @Slf4j
-public class RenderValueProvider {
+public class RenderValueProvider implements Cloneable {
     /**
      * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
      * return pre-defined values:
@@ -44,6 +45,7 @@ public class RenderValueProvider {
     private String participantLastName;
     private LocalDate participantBirthDate;
     private ZoneId participantTimeZone;
+    private LocalDate firstCompletedDate;
     private LocalDate date;
     private String kitRequestId;
     private KitReasonType kitReasonType;
@@ -62,6 +64,32 @@ public class RenderValueProvider {
 
     private RenderValueProvider() {
         // Use builder.
+    }
+
+    @Override
+    public RenderValueProvider clone() throws CloneNotSupportedException {
+        var newProvider = (RenderValueProvider)super.clone();
+
+        newProvider.participantGuid = participantGuid;
+        newProvider.participantFirstName = participantFirstName;
+        newProvider.participantLastName = participantLastName;
+        newProvider.participantBirthDate = participantBirthDate;
+        newProvider.participantTimeZone = participantTimeZone;
+        newProvider.firstCompletedDate = firstCompletedDate;
+        newProvider.date = date;
+        newProvider.kitRequestId = kitRequestId;
+        newProvider.kitReasonType = kitReasonType;
+        newProvider.testResultCode = testResultCode;
+        newProvider.testResultTimeCompleted = testResultTimeCompleted;
+        newProvider.activityInstanceNumber = activityInstanceNumber;
+        newProvider.formResponse = formResponse;
+        newProvider.formActivity = formActivity;
+        newProvider.isoLangCode = isoLangCode;
+        newProvider.formInstance = formInstance;
+        newProvider.governedParticipant = governedParticipant;
+        newProvider.addressGuid = addressGuid;
+        newProvider.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
+        return newProvider;
     }
 
     /**
@@ -101,6 +129,28 @@ public class RenderValueProvider {
     }
 
     /**
+     * If the current activity has been previously completed, returns the date of completion.
+     * 
+     * <p>See {@link java.time.format.DateTimeFormatter#ofPattern(String)} for more information
+     * about supported format strings.
+     * @param format The date format string to use. 
+     * @param defaultValue The string to return if there is no valid date
+     * @return the formatted date of first completion, or `defaultValue` if one does not exist
+     */
+    public String firstCompletedDate(String format, String defaultValue) {
+        if (firstCompletedDate == null) {
+            return defaultValue;
+        }
+
+        try {
+            return DateTimeFormatter.ofPattern(format).format(firstCompletedDate);
+        } catch (Exception e) {
+            log.warn("Error formatting submission date value '{}' using format '{}'", firstCompletedDate, format, e);
+            return firstCompletedDate.toString();
+        }
+    }
+
+    /**
      * Returns today's date in given format. Might return a snapshot-ed date.
      */
     public String date(String format) {
@@ -114,6 +164,10 @@ public class RenderValueProvider {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public void setFirstCompletedDate(LocalDate date) {
+        this.firstCompletedDate = date;
     }
 
     public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
@@ -380,6 +434,9 @@ public class RenderValueProvider {
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
         }
+        if (firstCompletedDate != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.DDP_FIRST_COMPLETED_DATE, firstCompletedDate.toString());
+        }
         if (kitRequestId != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
         }
@@ -401,12 +458,9 @@ public class RenderValueProvider {
         return snapshot;
     }
 
+    @AllArgsConstructor
     public static final class Builder {
         private RenderValueProvider provider;
-
-        public Builder(RenderValueProvider provider) {
-            this.provider = cloneProvider(provider);
-        }
 
         public Builder() {
             provider = new RenderValueProvider();
@@ -439,6 +493,11 @@ public class RenderValueProvider {
 
         public Builder setDate(LocalDate date) {
             provider.date = date;
+            return this;
+        }
+
+        public Builder setFirstCompletedDate(LocalDate date) {
+            provider.firstCompletedDate = date;
             return this;
         }
 
@@ -531,6 +590,11 @@ public class RenderValueProvider {
                 provider.date = LocalDate.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.DDP_FIRST_COMPLETED_DATE);
+            if (value != null) {
+                provider.firstCompletedDate = LocalDate.parse(value);
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID);
             if (value != null) {
                 provider.kitRequestId = value;
@@ -565,30 +629,20 @@ public class RenderValueProvider {
         }
 
         public RenderValueProvider build() {
-            return cloneProvider(provider);
-        }
+            RenderValueProvider newProvider = null;
 
-        private RenderValueProvider cloneProvider(RenderValueProvider provider) {
-            RenderValueProvider copy = new RenderValueProvider();
-            copy.participantGuid = provider.participantGuid;
-            copy.participantFirstName = provider.participantFirstName;
-            copy.participantLastName = provider.participantLastName;
-            copy.participantBirthDate = provider.participantBirthDate;
-            copy.participantTimeZone = provider.participantTimeZone;
-            copy.date = provider.date;
-            copy.kitRequestId = provider.kitRequestId;
-            copy.kitReasonType = provider.kitReasonType;
-            copy.testResultCode = provider.testResultCode;
-            copy.testResultTimeCompleted = provider.testResultTimeCompleted;
-            copy.activityInstanceNumber = provider.activityInstanceNumber;
-            copy.formResponse = provider.formResponse;
-            copy.formActivity = provider.formActivity;
-            copy.isoLangCode = provider.isoLangCode;
-            copy.formInstance = provider.formInstance;
-            copy.governedParticipant = provider.governedParticipant;
-            copy.addressGuid = provider.addressGuid;
-            copy.useDefaultsForDdpMethods = provider.useDefaultsForDdpMethods;
-            return copy;
+            try {
+                newProvider = (RenderValueProvider)provider.clone();
+            } catch (CloneNotSupportedException cloneException) {
+                // As of writing this comment, RenderValueProvider completely implements
+                // clone() and there shouldn't be any cases where a CloneNotSupportedException
+                // is thrown. That said, handle it just in case something changes.
+                // (bskinner - 2022.09.12)
+                var message = String.format("Failed to clone instance of %s", this.getClass().getName());
+                throw new DDPException(message, cloneException);
+            }
+
+            return newProvider;
         }
     }
 }

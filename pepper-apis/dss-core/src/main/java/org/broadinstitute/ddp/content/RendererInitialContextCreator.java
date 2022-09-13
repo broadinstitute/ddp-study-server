@@ -41,6 +41,7 @@ public class RendererInitialContextCreator {
      */
     public static Map<String, Object> createRendererInitialContext(
             Handle handle,
+            String instanceGuid,
             long participantId,
             String operatorGuid,
             String studyGuid,
@@ -51,7 +52,9 @@ public class RendererInitialContextCreator {
             Map<String, String> activitySnapshots,
             RenderContextSource renderContextSource) {
 
-        Map<String, String> commonSnapshot = I18nContentRenderer.newValueProviderBuilder(handle, participantId, operatorGuid, studyGuid)
+        final var instance = handle.attach(ActivityInstanceDao.class).findByActivityInstanceGuid(instanceGuid);
+        Map<String, String> commonSnapshot = I18nContentRenderer
+                .newValueProviderBuilder(handle, instance.get().getId(), participantId, operatorGuid, studyGuid)
                 .build().getSnapshot();
 
         Map<String, String> snapshot = handle.attach(ActivityInstanceDao.class).findSubstitutions(formResponse.getId());
