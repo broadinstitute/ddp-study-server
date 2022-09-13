@@ -43,7 +43,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
 
     private static final Logger logger = LoggerFactory.getLogger(OsteoWorkflowStatusUpdate.class);
     private static final Gson GSON = new Gson();
-    private static final String NEW_OSTEO_COHORT_TAG_NAME = "OS PE-CGS";
+    public static final String NEW_OSTEO_COHORT_TAG_NAME = "OS PE-CGS";
 
     private final DDPInstanceDto instance;
     private final String ddpParticipantId;
