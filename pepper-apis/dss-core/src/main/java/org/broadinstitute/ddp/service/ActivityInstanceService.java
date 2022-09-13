@@ -588,8 +588,8 @@ public class ActivityInstanceService {
                     .buildFormChildren()
                     .renderFormTitles()
                     .renderContent()
-                    .setDisplayNumbers()
                     .updateBlockStatuses()
+                    .setDisplayNumbers()
                     .populateSnapshottedAddress()
                 .endBuild()
                     .getContext();
