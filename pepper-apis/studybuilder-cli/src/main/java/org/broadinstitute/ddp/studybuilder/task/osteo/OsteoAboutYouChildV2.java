@@ -70,6 +70,10 @@ public class OsteoAboutYouChildV2 implements CustomTask {
         }
         long revisionId = activeVersion.get().getRevId();
         long stableId = helper.getQuestionStableIdByCode(dataCfg.getString("searchSectionByQuestionCode"), studyDto.getId());
+        int updated = helper.hideQuestionNumber(stableId);
+        if (updated != 1) {
+            throw new DDPException("Ambiguous update to questions. only 1 question must be updated");
+        }
         long blockId = helper.getBlockIdByStableId(stableId);
         long sectionId = helper.getSectionIdByBlockId(blockId);
         String guid = handle.attach(JdbiExpression.class).generateUniqueGuid();
@@ -98,5 +102,8 @@ public class OsteoAboutYouChildV2 implements CustomTask {
 
         @SqlUpdate("insert into block__expression (block_id, expression_id, revision_id) VALUES (:blockId, :exprId, :revId)")
         void insertBlockExpression(@Bind("blockId") long blockId, @Bind("exprId") long exprId, @Bind("revId") long revisionId);
+
+        @SqlUpdate("update question set hide_number=true where question_stable_code_id = :stableId")
+        int hideQuestionNumber(long stableId);
     }
 }
