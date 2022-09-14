@@ -29,6 +29,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
     private static final String SQL_GET_TAGS_BY_INSTANCE_NAME = "SELECT * FROM cohort_tag WHERE ddp_instance_id = "
             + "(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
 
+    public static final String SQL_DELETE_BY_NAME_AND_GUID = "DELETE FROM cohort_tag WHERE cohort_tag_name = ? AND ddp_participant_id = ?";
+
     public static final String COHORT_TAG_ID = "cohort_tag_id";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
     public static final String COHORT_DDP_PARTICIPANT_ID = DBConstants.DDP_PARTICIPANT_ID;
@@ -157,6 +159,28 @@ public class CohortTagDaoImpl implements CohortTagDao {
                         cohortTags.size()
                 ));
         return ids;
+    }
+
+    @Override
+    public int removeCohortByCohortTagNameAndGuid(String cohortTagName, String ddpParticipantId) {
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_BY_NAME_AND_GUID)) {
+                stmt.setString(1, cohortTagName);
+                stmt.setString(2, ddpParticipantId);
+                execResult.resultValue = stmt.executeUpdate();
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException(String.format(
+                    "Error deleting cohort tag with cohortTagName: %s and ddpParticipantId: %s", cohortTagName, ddpParticipantId
+            ), simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     private CohortTag buildCohortTagFrom(ResultSet resultSet) throws SQLException {
