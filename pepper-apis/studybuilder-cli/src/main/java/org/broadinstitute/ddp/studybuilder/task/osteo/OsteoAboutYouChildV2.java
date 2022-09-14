@@ -72,7 +72,12 @@ public class OsteoAboutYouChildV2 implements CustomTask {
         long stableId = helper.getQuestionStableIdByCode(dataCfg.getString("searchSectionByQuestionCode"), studyDto.getId());
         int updated = helper.hideQuestionNumber(stableId);
         if (updated != 1) {
-            throw new DDPException("Ambiguous update to questions. only 1 question must be updated");
+            throw new DDPException("Ambiguous hideNumber update to questions. only 1 question must be updated");
+        }
+        long renderModeId = helper.getRenderModeId(dataCfg.getString("renderMode"));
+        updated = helper.updateRenderModeForQuestion(renderModeId, stableId);
+        if (updated != 1) {
+            throw new DDPException("Ambiguous renderMode update to questions. only 1 question must be updated");
         }
         long blockId = helper.getBlockIdByStableId(stableId);
         long sectionId = helper.getSectionIdByBlockId(blockId);
@@ -105,5 +110,12 @@ public class OsteoAboutYouChildV2 implements CustomTask {
 
         @SqlUpdate("update question set hide_number=true where question_stable_code_id = :stableId")
         int hideQuestionNumber(long stableId);
+
+        @SqlQuery("select picklist_render_mode_id from picklist_render_mode where picklist_render_mode_code=:renderMode")
+        long getRenderModeId(@Bind("renderMode") String renderMode);
+
+        @SqlUpdate("update picklist_question pq join question q on pq.question_id = q.question_id "
+                + "set picklist_render_mode_id=:renderMode WHERE q.question_stable_code_id=:stableId")
+        int updateRenderModeForQuestion(@Bind("renderMode") long renderModeId, @Bind("stableId") long stableId);
     }
 }
