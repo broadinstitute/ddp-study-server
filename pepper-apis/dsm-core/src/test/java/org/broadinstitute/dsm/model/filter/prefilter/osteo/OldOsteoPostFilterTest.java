@@ -36,8 +36,8 @@ public class OldOsteoPostFilterTest {
                 .build();
         Optional<StudyPostFilter> postFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
         postFilter.ifPresent(StudyPostFilter::filter);
-        assertEquals(2, esDto.getActivities().size());
-        assertEquals(List.of("FAMILY_HISTORY", "ABOUT_YOU"), esDto.getActivities().stream()
+        assertEquals(1, esDto.getActivities().size());
+        assertEquals(List.of("ABOUT_YOU"), esDto.getActivities().stream()
                 .map(Activities::getActivityCode)
                 .collect(Collectors.toList()));
     }
