@@ -84,8 +84,10 @@ public class FileUploadService {
         long removalExpireTime = cfg.getLong(ConfigFile.FileUploads.REMOVAL_EXPIRE_TIME);
         TimeUnit removalExpireUnit = TimeUnit.valueOf(cfg.getString(ConfigFile.FileUploads.REMOVAL_EXPIRE_UNIT));
 
+        var apiKey = cfg.getString(ConfigFile.SENDGRID_API_KEY);
+        var connectProxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY);
         return new FileUploadService(
-                new SendGridClient(cfg.getString(ConfigFile.SENDGRID_API_KEY)),
+                new SendGridClient(apiKey, connectProxy),
                 signerCredentials,
                 new GoogleBucketClient(projectId, bucketCredentials),
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
@@ -333,7 +335,14 @@ public class FileUploadService {
                 FileUploadNotificationEmailFactory.create(study, user.map(User::getHruid).orElse(""), fileUploads));
 
         if (result.hasFailure()) {
-            log.error("Can't send an e-mail", result.getThrown());
+            String message;
+            if (result.hasError()) {
+                message = String.format("Failed to send file upload notification email: %s.", result.getError());
+            } else {
+                message = String.format("Failed to send file upload notification email due to an unknown error.");
+            }
+
+            log.error("{}", message, result.getThrown());
             return;
         }
 

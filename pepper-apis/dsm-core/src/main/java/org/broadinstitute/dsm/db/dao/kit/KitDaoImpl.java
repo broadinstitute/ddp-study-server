@@ -172,8 +172,10 @@ public class KitDaoImpl implements KitDao {
                             + kitRequestShipping.getDdpLabel() + " does not exist or already has a Kit Label");
                 } else {
                     logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getBspCollaboratorParticipantId(),
-                            kitRequestShipping.getBspCollaboratorParticipantId());
+                    if (StringUtils.isNotBlank(kitRequestShipping.getBspCollaboratorParticipantId())) {
+                        dbVals.resultValue = new ScanError(kitRequestShipping.getBspCollaboratorParticipantId(),
+                                kitRequestShipping.getBspCollaboratorParticipantId());
+                    }
                 }
             } catch (Exception ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
@@ -449,7 +451,7 @@ public class KitDaoImpl implements KitDao {
                         rs.getString(DBConstants.UPS_RETURN_STATUS),
                         (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null, null, null,
-                        null);
+                        null, null);
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);

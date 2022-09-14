@@ -43,7 +43,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
 
     private static final Logger logger = LoggerFactory.getLogger(OsteoWorkflowStatusUpdate.class);
     private static final Gson GSON = new Gson();
-    private static final String NEW_OSTEO_COHORT_TAG_NAME = "OS PE-CGS";
+    public static final String NEW_OSTEO_COHORT_TAG_NAME = "OS PE-CGS";
 
     private final DDPInstanceDto instance;
     private final String ddpParticipantId;
@@ -86,7 +86,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         int ddpInstanceId = instance.getDdpInstanceId();
         boolean isParticipantInDb = MedicalRecordUtil.isParticipantInDB(ddpParticipantId, String.valueOf(ddpInstanceId));
         if (isParticipantInDb) {
-            logger.info(String.format("Updating values in db for %s", NEW_OSTEO_INSTANCE_NAME));
+            logger.info(String.format("Updating values for existing participant in db for %s", NEW_OSTEO_INSTANCE_NAME));
             Optional<ParticipantDto> maybeOldOsteoParticipant = participantDao
                     .getParticipantByDdpParticipantIdAndDdpInstanceId(ddpParticipantId, ddpInstanceId);
             Optional<Integer> maybeOldOsteoParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getParticipantId);
@@ -109,8 +109,6 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
                     esDsm -> updateDsmAndWriteToES(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
                     ()    -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
             );
-        } else {
-            logger.warn(String.format("Participant with id %s does not exist", ddpParticipantId));
         }
     }
 
