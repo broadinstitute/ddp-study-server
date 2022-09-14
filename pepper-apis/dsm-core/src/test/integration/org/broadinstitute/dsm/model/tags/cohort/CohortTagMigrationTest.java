@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.Util;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
@@ -80,7 +81,7 @@ public class CohortTagMigrationTest {
         );
         cohortTagMigrator.export();
         try {
-            CohortTagUseCaseTest.waitForCreationInElasticSearch();
+            Util.waitForCreationInElasticSearch();
             ElasticSearchParticipantDto participantById =
                     elasticSearchable.getParticipantById(ddpInstanceDto.getEsParticipantIndex(), CohortTagUseCaseTest.GUID);
             List<CohortTag> cohortTags = participantById.getDsm().get().getCohortTag();
