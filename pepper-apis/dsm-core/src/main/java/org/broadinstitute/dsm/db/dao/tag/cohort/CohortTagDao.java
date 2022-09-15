@@ -10,4 +10,7 @@ public interface CohortTagDao extends Dao<CohortTag> {
     Map<String, List<CohortTag>> getCohortTagsByInstanceName(String instanceName);
 
     List<Integer> bulkCohortCreate(List<CohortTag> cohortTags);
+
+    int removeCohortByCohortTagNameAndGuid(String cohortTagName, String ddpParticipantId);
+
 }

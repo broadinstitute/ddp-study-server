@@ -99,13 +99,22 @@ public class SingularDeleteEmailEvents implements CustomTask {
         if (concreteEvents.size() > 1) {
             throw new DDPException("Found more than 1 event configuration with specified filters: " + concreteEvents);
         }
+
+        log.info("Deleting config events: " + concreteEvents);
+
+        concreteEvents.stream().map(EventConfiguration::getEventConfigurationId)
+                .forEach(helper::deleteEventConfOccurenceById);
+
         concreteEvents.stream().map(EventConfiguration::getEventConfigurationId)
                 .forEach(helper::deleteEventById);
     }
 
     private interface SqlHelper extends SqlObject {
         @SqlUpdate("delete from event_configuration where event_configuration_id = :id")
-        void deleteEventById(@Bind("id") long eventId);
+        int deleteEventById(@Bind("id") long eventId);
+
+        @SqlUpdate("delete from event_configuration_occurrence_counter where event_configuration_id = :id")
+        int deleteEventConfOccurenceById(@Bind("id") long eventId);
 
         default long findActivityIdByStudyIdAndCode(long studyId, String activityCode) {
             return getHandle().attach(JdbiActivity.class)

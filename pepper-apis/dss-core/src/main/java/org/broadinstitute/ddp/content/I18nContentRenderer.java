@@ -4,9 +4,11 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
 
 import java.io.StringWriter;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.LocalDate;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,11 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -49,14 +53,19 @@ public class I18nContentRenderer {
         }
     }
 
-    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, String operatorGuid, String studyGuid) {
-        return newValueProvider(handle, participantUserId, operatorGuid, studyGuid, new HashMap<>());
+    public static RenderValueProvider newValueProvider(Handle handle,
+                                                       long activityInstanceId,
+                                                       long participantUserId,
+                                                       String operatorGuid,
+                                                       String studyGuid) {
+        return newValueProvider(handle, activityInstanceId, participantUserId, operatorGuid, studyGuid, new HashMap<>());
     }
 
     public static RenderValueProvider newValueProvider(Handle handle,
+                                       long activityInstanceId,
                                        long participantUserId, String operatorGuid, String studyGuid,
                                        Map<String, String> snapshot) {
-        var builder = newValueProviderBuilder(handle, participantUserId, operatorGuid, studyGuid);
+        var builder = newValueProviderBuilder(handle, activityInstanceId, participantUserId, operatorGuid, studyGuid);
 
         // If there are saved snapshot substitution values, override with those so final rendered
         // content will be consistent with what user last saw when snapshot was taken.
@@ -66,7 +75,8 @@ public class I18nContentRenderer {
     }
 
     public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle,
-                      long participantUserId, String operatorGuid, String studyGuid) {
+                                                                      long activityInstanceId,
+                                                                      long participantUserId, String operatorGuid, String studyGuid) {
 
         var builder = new RenderValueProvider.Builder();
 
@@ -99,6 +109,15 @@ public class I18nContentRenderer {
 
         builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
+
+        final var userZone = zone;
+        builder.setFirstCompletedDate(handle.attach(ActivityInstanceDao.class)
+                .findBaseResponseByInstanceId(activityInstanceId)
+                .map(ActivityResponse::getFirstCompletedAt)
+                .map(Instant::ofEpochMilli)
+                .map(x -> x.atZone(userZone))
+                .map(ZonedDateTime::toLocalDate)
+                .orElse(null));
 
         return builder;
     }

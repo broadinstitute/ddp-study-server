@@ -111,6 +111,8 @@ public class RoutePath {
     public static final String MERCURY_SAMPLES_ROUTE = "mercurySamples";
     public static final String GET_MERCURY_ORDERS_ROUTE = "getMercuryOrders";
 
+    public static final String DASHBOARD = "dashboard";
+
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
         String realm = "";
