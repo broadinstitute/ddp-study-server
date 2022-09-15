@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.export.parse.DashboardValueParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
@@ -18,9 +20,11 @@ abstract class BaseQueryBuilderStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseQueryBuilderStrategy.class);
     protected QueryBuildPayload queryBuildPayload;
+    private ValueParser valueParser;
 
     public BaseQueryBuilderStrategy(QueryBuildPayload queryBuildPayload) {
         this.queryBuildPayload = queryBuildPayload;
+        this.valueParser = new DashboardValueParser();
     }
 
     public QueryBuilder build() {
@@ -51,7 +55,7 @@ abstract class BaseQueryBuilderStrategy {
                 String[] values = splitterStrategy.getValue();
                 QueryPayload queryPayload = new QueryPayload(queryBuildPayload.getLabel().getDashboardFilterDto().getEsNestedPath(),
                         queryBuildPayload.getLabel().getDashboardFilterDto().getEsFilterPath(),
-                        values, queryBuildPayload.getEsParticipantsIndex());
+                        valueParser.parse(values), queryBuildPayload.getEsParticipantsIndex());
                 queryBuildPayload.getBaseQueryBuilder().setPayload(queryPayload);
                 BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
                 queryStrategy.setBaseQueryBuilder(queryBuildPayload.getBaseQueryBuilder());
