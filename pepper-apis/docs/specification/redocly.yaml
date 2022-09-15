@@ -1,0 +1,8 @@
+extends:
+  - recommended
+apis:
+  dss:
+    root: src/pepper.yml
+    rules:
+      security-defined: off
+      operation-4xx-response: off
