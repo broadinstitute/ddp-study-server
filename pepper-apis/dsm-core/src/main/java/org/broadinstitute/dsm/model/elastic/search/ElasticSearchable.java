@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 public interface ElasticSearchable {
 
@@ -45,6 +47,10 @@ public interface ElasticSearchable {
 
     default ReplicationResponse.ShardInfo deleteDocumentById(String index, String docId) {
         return new ReplicationResponse.ShardInfo();
+    }
+
+    default MultiSearchResponse executeMultiSearch(String esIndex, List<QueryBuilder> queryBuilders) {
+        throw new UnsupportedOperationException();
     }
 
 }

@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class OsteoMRDeleteIncomplete implements CustomTask {
-    private static final List<String> ACTIVITY_CODES = List.of("RELEASE_SELF", "RELEASE_MINOR");
+    private static final List<String> ACTIVITY_CODES = List.of("RELEASE_SELF", "RELEASE_MINOR", "ABOUTYOU", "ABOUTCHILD");
 
     private Config studyCfg;
     private StudyDto studyDto;
