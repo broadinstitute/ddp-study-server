@@ -186,5 +186,15 @@ public class TryTest {
         Assert.assertEquals(count.get(), 100);
     }
 
+    @Test
+    public void uncaughtException() {
+        try {
+            Try.evaluate(() -> 42 / 0)
+                    .ifThrowsCatchAndThenGet(NullPointerException.class, err -> 5);
+        } catch (Try.UncaughtException tue) {
+            System.out.println("caught");
+            Assert.assertTrue(true);
+        }
+    }
 
 }

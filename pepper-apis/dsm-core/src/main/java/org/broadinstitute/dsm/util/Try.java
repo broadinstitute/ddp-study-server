@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -84,7 +82,7 @@ public abstract class Try<T> {
             if (failure.getValue().getClass().equals(exception)) {
                 return defaultMapper.apply(failure.getValue());
             } else {
-                throw new UncaughtException(failure.getValue());
+                throw new UncaughtException();
             }
         } else {
             return (V) getValue();
@@ -104,7 +102,7 @@ public abstract class Try<T> {
             if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
                 return defaultMapper.apply(failure.getValue());
             } else {
-                throw new UncaughtException(failure.getValue());
+                throw new UncaughtException();
             }
         } else {
             return (V) getValue();
@@ -184,68 +182,14 @@ public abstract class Try<T> {
     /**
      * A special exception for indicating that user could not catch it
      */
-    private static final class UncaughtException extends RuntimeException {
-
-        private final Exception exception;
-
-        public UncaughtException(Exception exception) {
-            this.exception = exception;
-        }
+    public static final class UncaughtException extends RuntimeException {
 
         @Override
         public String getMessage() {
-            return exception.getMessage();
-        }
-
-        @Override
-        public String getLocalizedMessage() {
-            return exception.getLocalizedMessage();
-        }
-
-        @Override
-        public synchronized Throwable getCause() {
-            return exception.getCause();
-        }
-
-        @Override
-        public synchronized Throwable initCause(Throwable cause) {
-            return exception.initCause(cause);
-        }
-
-        @Override
-        public String toString() {
-            return exception.toString();
-        }
-
-        @Override
-        public void printStackTrace() {
-            exception.printStackTrace();
-        }
-
-        @Override
-        public void printStackTrace(PrintStream s) {
-            exception.printStackTrace(s);
-        }
-
-        @Override
-        public void printStackTrace(PrintWriter s) {
-            exception.printStackTrace(s);
-        }
-
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return exception.fillInStackTrace();
-        }
-
-        @Override
-        public StackTraceElement[] getStackTrace() {
-            return exception.getStackTrace();
-        }
-
-        @Override
-        public void setStackTrace(StackTraceElement[] stackTrace) {
-            exception.setStackTrace(stackTrace);
+            return "UncaughtException";
         }
     }
+
+
 
 }
