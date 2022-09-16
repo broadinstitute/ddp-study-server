@@ -7,6 +7,7 @@ import org.broadinstitute.dsm.util.DDPMedicalRecordDataRequest;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PDFAudit;
+import org.broadinstitute.dsm.util.Try;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -28,29 +29,27 @@ public class DDPRequestJob implements Job {
         //fetch parameters from JobDataMap
         NotificationUtil notificationUtil = (NotificationUtil) dataMap.get(DSMServer.NOTIFICATION_UTIL);
         //get kit requests from ddps
-        try {
+
+        Try.evaluate(() -> {
             DDPKitRequest kitRequest = new DDPKitRequest();
             kitRequest.requestAndWriteKitRequests(LatestKitRequest.getLatestKitRequests());
-        } catch (Exception e) {
-            logger.error("Some error occurred while doing kit request stuff ", e);
-        }
+        }).ifThrowsCatchAndThenRun(Exception.class, err -> logger.error("Some error occurred while doing kit request stuff ", err));
+
         //get new/changed participants from ddps
-        try {
+        Try.evaluate(() -> {
             DDPMedicalRecordDataRequest medicalRecordDataRequest = new DDPMedicalRecordDataRequest();
             medicalRecordDataRequest.requestAndWriteParticipantInstitutions();
-        } catch (Exception e) {
-            logger.error("Some error occurred while doing medical record stuff ", e);
-        }
+        }).ifThrowsCatchAndThenRun(Exception.class, err -> logger.error("Some error occurred while doing medical record stuff ", err));
+
         //deactivate kit requests which meet special behavior
         if (notificationUtil != null) {
             KitUtil.findSpecialBehaviorKits(notificationUtil);
         }
         //upload pdfs into buckets for audit
-        try {
+        Try.evaluate(() -> {
             PDFAudit pdfAudit = new PDFAudit();
             pdfAudit.checkAndSavePDF();
-        } catch (Exception e) {
-            logger.error("Some error occurred while doing pdf audit trail ", e);
-        }
+        }).ifThrowsCatchAndThenRun(Exception.class, err -> logger.error("Some error occurred while doing pdf audit trail ", err));
+
     }
 }

@@ -21,6 +21,7 @@ import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 import org.broadinstitute.dsm.model.mercury.MercuryStatusMessage;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -214,12 +215,10 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     public void insertMercuryOrders(List<MercuryOrderDto> newOrders) {
         for (MercuryOrderDto order : newOrders) {
-            try {
-                create(order);
-            } catch (Exception e) {
-                log.error("Unable to insert mercury order for participant " + order.getDdpParticipantId() + " with barcode "
-                        + order.getBarcode(), e);
-            }
+            Try.evaluate(() -> create(order))
+                    .ifThrowsCatchAndThenRun(Exception.class, err ->
+                        log.error("Unable to insert mercury order for participant " + order.getDdpParticipantId() + " with barcode "
+                                + order.getBarcode(), err));
         }
     }
 

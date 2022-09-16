@@ -32,6 +32,7 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.MedicalInfo;
@@ -311,13 +312,11 @@ public class MedicalRecord implements HasDdpInstanceId {
     public static MedicalInfo getDDPInstitutionInfo(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId) {
         String dsmRequest =
                 ddpInstance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID, ddpParticipantId);
-        try {
-            MedicalInfo medicalInfo =
-                    DDPRequestUtil.getResponseObject(MedicalInfo.class, dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
-            return medicalInfo;
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), e);
-        }
+        return Try.evaluate(() -> DDPRequestUtil.getResponseObject(
+                MedicalInfo.class, dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token()))
+                .ifThrowsCatchAndThenGet(IOException.class, err -> {
+                    throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), err);
+                });
     }
 
     @JsonProperty("followupRequired")

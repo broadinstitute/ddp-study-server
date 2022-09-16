@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 @TableName(
@@ -87,12 +88,8 @@ public class ParticipantData {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return Try.evaluate(() -> ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {}))
+                .ifThrowsAnyCatchAndThenGet(err -> Map.of(), IOException.class, NullPointerException.class);
     }
 
     public int getParticipantDataId() {

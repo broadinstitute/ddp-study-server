@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.db.dto.ddp.participant;
 import java.util.Optional;
 
 import lombok.Getter;
+import org.broadinstitute.dsm.util.Try;
 
 @Getter
 public class ParticipantDto implements Cloneable {
@@ -45,11 +46,10 @@ public class ParticipantDto implements Cloneable {
 
     @Override
     public ParticipantDto clone() {
-        try {
-            return (ParticipantDto) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        return Try.evaluate(() -> (ParticipantDto) super.clone())
+                .ifThrowsCatchAndThenGet(CloneNotSupportedException.class, err -> {
+                    throw new AssertionError();
+                });
     }
 
     public static class Builder {

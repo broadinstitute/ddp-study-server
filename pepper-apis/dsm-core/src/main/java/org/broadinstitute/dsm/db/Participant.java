@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
+import com.mchange.util.AssertException;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBUtil;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -240,10 +242,8 @@ public class Participant implements Cloneable {
 
     @Override
     public Participant clone() {
-        try {
-            return (Participant) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        return Try.evaluate(() -> (Participant) super.clone())
+                .ifThrowsCatchAndThenGet(CloneNotSupportedException.class, err -> {
+                    throw new AssertionError(); });
     }
 }
