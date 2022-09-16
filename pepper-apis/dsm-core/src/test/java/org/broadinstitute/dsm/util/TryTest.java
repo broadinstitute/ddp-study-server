@@ -14,7 +14,7 @@ import org.junit.Test;
 public class TryTest {
 
     @Test
-    public void ifThrowsSingleCatchAndThenRun() {
+    public void catchSingleExceptionAndThenRunTask() {
 
         // will catch ArithmeticException and run the Consumer<ArithmeticException> afterwards
         AtomicBoolean caught = new AtomicBoolean(false);
@@ -51,7 +51,7 @@ public class TryTest {
     }
 
     @Test
-    public void ifThrowsSingleCatchAndThenGet() {
+    public void catchSingleExceptionAndThenGetAlternativeValue() {
 
         // will catch ArithmeticException and run the Function<ArithmeticException, Integer> afterwards
         Integer res1 = Try.evaluate(() -> 50 / 0)
@@ -149,7 +149,7 @@ public class TryTest {
 
     // If it throws either ClassCastException or NullPointerException we will return 100
     @Test
-    public void ifThrowsAnyCatchAndThenGet() {
+    public void catchMultipleExceptionsAndThenGetAlternativeValue() {
         Random rand = new Random();
         for (int i = 0; i < 100; i++) {
             int res = Try.evaluate(() -> {
@@ -167,7 +167,7 @@ public class TryTest {
     // Sometime we have no idea how to handle situation, so we throw exception!
     // The below is the one
     @Test
-    public void ifThrowsAnyCatchAndThenRun() {
+    public void catchMultipleExceptionsAndThenRunTask() {
         AtomicInteger count = new AtomicInteger(0);
         for (int i = 0; i < 100; i++) {
             Try.evaluate(() -> {
