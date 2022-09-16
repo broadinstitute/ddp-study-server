@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-8806_PATIENT_ENROLLMENT" author="pegah">
+        <sql>
+            Select @fid:=field_settings_id from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Patient Enrollment Status";
+
+            update field_settings set column_display = "Participant Enrollment Status"
+            where field_settings_id = @fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_PATIENT_NOTES" author="pegah">
+        <sql>
+            Select @fid:=field_settings_id from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Patient Notes";
+
+            update field_settings set column_display = "Participant Notes"
+            where field_settings_id = @fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_NA_Secondary_Results_Status" author="pegah">
+        <sql>
+
+            select @newPossibleValues := '[{"name": "Wants Results", "value": "WANTS"},{"name": "Declines Results", "value": "DECLINED"},{"name": "Results Found", "value": "FOUND"}, {"name": "Referred to Genome Medical", "value": "REFERRED"}, {"name": "N/A", "value": "NA"}]';
+            Select  @fid:=field_settings_id  from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Secondary Results Status";
+
+
+            UPDATE field_settings
+            SET possible_values =  @newPossibleValues
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_NA_Medical_Record_Uploaded" author="pegah">
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            Select @pv := possible_values, @fid:=field_settings_id  from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Medical Record Uploaded";
+
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_NA_Medical_Record_Status" author="pegah">
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            Select @pv := possible_values, @fid:=field_settings_id  from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Medical Record Status";
+
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_NA_Participant_Enrollment_Status" author="pegah">
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            Select @pv := possible_values, @fid:=field_settings_id  from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Participant Enrollment Status";
+
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_NA_Medical_Release_Audit" author="pegah">
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            Select @pv := possible_values, @fid:=field_settings_id  from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Medical Release Audit";
+
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_NA_Consent_Audit" author="pegah">
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            Select @pv := possible_values, @fid:=field_settings_id  from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Consent Audit";
+
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8806_hide_Date_Record_Uploaded" author="pegah">
+        <sql>
+            select @fid:=field_settings_id from field_settings where ddp_instance_id in
+            (select ddp_instance_id from ddp_instance where instance_name = "singular")
+            and column_display = "Date Record Uploaded";
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
