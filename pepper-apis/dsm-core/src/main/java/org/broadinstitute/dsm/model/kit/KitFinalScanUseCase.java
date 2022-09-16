@@ -19,7 +19,6 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
 
     public KitFinalScanUseCase(KitPayload kitPayload, KitDao kitDao) {
         super(kitPayload, kitDao);
-        setDecoratedScanUseCase(new PecgsDecorator(kitPayload, kitDao));
     }
 
     @Override
@@ -27,41 +26,40 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         Optional<ScanError> result;
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
-        if (isSalivaKit(ddpLabel) && kitLabel.length() < 14) {
-            return Optional.of(
-                    new ScanError(ddpLabel, "Barcode contains less than 14 digits, " + "You can manually enter any missing digits above."));
-        }
-        Optional<ScanError> decoratedProcess = getDecoratedScanUseCase().process(scanPayload);
-        if (decoratedProcess.isPresent()) {
-            return decoratedProcess;
-        }
+
         Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel, kitLabel);
         if (kitByDdpLabel.isPresent()) {
             KitRequestShipping kitRequestShipping = kitByDdpLabel.get();
-            if (kitRequestShipping.isBloodKit()) {
-                if (kitRequestShipping.hasTrackingScan()) {
-                    if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
-                            || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
-                        result = updateKitRequest(kitLabel, ddpLabel, getBspCollaboratorParticipantId(kitRequestShipping));
-                        trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
-                        this.writeSampleSentToES(kitRequestShipping);
-                    } else {
-                        result = Optional.of(
-                                new ScanError(ddpLabel, "Kit Label was scanned on Initial Scan page with another ShortID " + kitLabel));
-                    }
-                } else {
-                    result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
-                }
-            } else {
+            if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix()) && !kitLabel.startsWith(
+                    kitRequestShipping.getKitLabelPrefix())) {
+                //prefix is configured and doesn't match kit label
+                result = Optional.of((new ScanError(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
+                        + "Please check to see if this is the correct kit for this project before proceeding.")));
+            } else if ((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan()) || (
+                    !kitRequestShipping.isKitRequiringTrackingScan() && kitLabel.length() == 14)) {
+                //tracking scan needed and done OR no tracking scan needed and label is length 14 digits
                 if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
                         || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
                     result = updateKitRequest(kitLabel, ddpLabel, getBspCollaboratorParticipantId(kitRequestShipping));
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
+                    this.writeSampleSentToES(kitRequestShipping);
                 } else {
                     result = Optional.of(
-                            new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
+                            new ScanError(ddpLabel, "Kit Label was scanned on Initial Scan page with another ShortID " + kitLabel));
                 }
+            } else if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
+                //tracking scan required and missing
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+            } else if (kitLabel.length() < 14) {
+                //barcode less than 14 digits
+                result = Optional.of(
+                        new ScanError(ddpLabel, "Barcode contains less than 14 digits. You can manually enter any missing digits above."));
+            } else {
+                //wasn't saved
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
             }
         } else {
+            //DSM label doesn't exist
             result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
         }
         return result;
@@ -89,10 +87,6 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             ElasticSearchUtil.writeSample(ddpInstance, kitRequest.getDdpKitRequestId(), kitRequest.getDdpParticipantId(),
                     ESObjectConstants.SAMPLES, ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
         }
-    }
-
-    private boolean isSalivaKit(String ddpLabel) {
-        return !kitDao.isBloodKit(ddpLabel);
     }
 
     private String getBspCollaboratorParticipantId(KitRequestShipping kitRequestShipping) {

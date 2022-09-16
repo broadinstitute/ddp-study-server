@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.kit;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -24,12 +25,23 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
     }
 
     private Optional<ScanError> updateKitRequest(String hruid, String kit) {
-        Optional<KitRequestShipping> maybeKitRequestShipping = kitDao.getKitByHruid(hruid);
-        if (maybeKitRequestShipping.isPresent()) {
-            KitRequestShipping kitRequestShipping = maybeKitRequestShipping.get();
-            kitRequestShipping.setKitLabel(kit);
-            kitRequestShipping.setHruid(hruid);
-            return kitDao.updateKitLabel(kitRequestShipping);
+        if (kit.startsWith("PECGS")) {
+            //BLOOD
+        }  else {
+            //saliva
+        }
+        List<KitRequestShipping> kitList = kitDao.getKitsByHruid(hruid);
+        if (kitList != null && !kitList.isEmpty()) {
+            for (KitRequestShipping kitRequest : kitList) {
+                kitRequest.isKitRequiringTrackingScan();
+                kitRequest.getKitTypeName();
+                kitRequest.getKitLabel();
+            }
+//            kitList.stream().filter()
+//            KitRequestShipping kitRequestShipping = maybeKitRequestShipping.get();
+//            kitRequestShipping.setKitLabel(kit);
+//            kitRequestShipping.setHruid(hruid);
+//            return kitDao.updateKitLabel(kitRequestShipping);
         }
         return Optional.ofNullable(new ScanError(kit, "No kit for participant with ShortId \"" + hruid + "\" was not found.\n"
                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));

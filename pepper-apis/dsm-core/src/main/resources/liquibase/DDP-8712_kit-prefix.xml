@@ -4,10 +4,10 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-
-    <changeSet id="DDP-7641_bookmark_for_osteo2" author="nghurtch">
-        <insert tableName="bookmark">
-            <column name="instance" valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"/>
-        </insert>
+    <changeSet author="simone" id="kit_label_prefix">
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="kit_label_prefix" type="VARCHAR(10)">
+            </column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

@@ -143,6 +143,7 @@ public class DBConstants {
     public static final String COLLECTION_DATE = "collection_date";
     public static final String SEQUENCING_RESTRICTION = "sequencing_restriction";
     public static final String SAMPLE_NOTES = "sample_notes";
+    public static final String KIT_LABEL_PREFIX = "kit_label_prefix";
 
     public static final String ONC_HISTORY_ID = "onc_history_id";
 
