@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.elastic.search;
 import java.util.List;
 import java.util.Map;
 
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
@@ -46,5 +47,7 @@ public interface ElasticSearchable {
     default ReplicationResponse.ShardInfo deleteDocumentById(String index, String docId) {
         return new ReplicationResponse.ShardInfo();
     }
+
+    Map<String, Map<String, Object>> getActivityDefinitions(DDPInstance ddpInstance);
 
 }

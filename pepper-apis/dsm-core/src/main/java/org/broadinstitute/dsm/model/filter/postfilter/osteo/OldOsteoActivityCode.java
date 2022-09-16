@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.model.filter.postfilter.osteo;
 
-import java.util.Arrays;
-
 public enum OldOsteoActivityCode {
 
     ABOUTCHILD,
@@ -14,10 +12,13 @@ public enum OldOsteoActivityCode {
     LOVEDONE,
     CONSENT_ASSENT;
 
-    public static String[] asStrings() {
-        return Arrays.stream(OldOsteoActivityCode.values())
-                .map(OldOsteoActivityCode::toString)
-                .toArray(String[]::new);
+    public static boolean isOldOsteoActivityCode(String activityCode) {
+        try {
+            OldOsteoActivityCode.valueOf(activityCode);
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
 }
