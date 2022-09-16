@@ -284,7 +284,7 @@ public class ViewFilter {
                 stmt.setString(3, ddpGroupId);
                 stmt.setString(4, ddpGroupId);
                 stmt.setString(5, "%," + realm + ",%");
-                stmt.setString(6, "%[" + realm + ",%");
+                stmt.setString(6, "[" + realm + ",%");
                 if (StringUtils.isNotBlank(parent)) {
                     stmt.setString(7, parent);
                 }
