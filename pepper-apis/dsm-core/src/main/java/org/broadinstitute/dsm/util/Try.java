@@ -33,6 +33,8 @@ public abstract class Try<T> {
     /**
      * Some Try computations may start with calling Try.evaluate([some Runnable here]).
      * Returns either Success or Failure instance based on computation
+     * @param runnable a lazy task which is not evaluated on the call site, instead it's evaluated here.
+     *
      */
     public static <T> Try<T> evaluate(Runnable runnable) {
         try {
@@ -45,7 +47,7 @@ public abstract class Try<T> {
 
     /**
      * Returns the value based on if the main computation succeeded or failed
-     * @param successMapper a function which can transform the successful value, or leave it as it is
+     * @param successMapper a function which can transform the successful value, or leave it as it is (Function.identity())
      * @param defaultValue  a default value which will be returned if the computation fails
      */
     public <V> V fold(Function<? super T, ? extends V> successMapper, V defaultValue) {
@@ -80,7 +82,7 @@ public abstract class Try<T> {
     public final <V> V catchAndThenGet(Function<? super Exception, V> defaultMapper, Class<? extends Exception>... exceptions) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
-            if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
+            if (Arrays.stream(exceptions).anyMatch(exception -> failure.getValue().getClass().equals(exception))) {
                 return defaultMapper.apply(failure.getValue());
             } else {
                 throw new UncaughtException();
@@ -100,7 +102,7 @@ public abstract class Try<T> {
     public final void catchAndThenRun(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
-            if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
+            if (Arrays.stream(exceptions).anyMatch(exception -> failure.getValue().getClass().equals(exception))) {
                 consumer.accept(failure.getValue());
             }
         }
