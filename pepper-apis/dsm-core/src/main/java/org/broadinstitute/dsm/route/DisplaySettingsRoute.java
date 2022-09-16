@@ -21,13 +21,13 @@ import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
+import org.broadinstitute.dsm.model.elastic.retrieve.activities.ActivityDefinitionsRetrieverFactory;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.AbstractionUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
@@ -83,7 +83,8 @@ public class DisplaySettingsRoute extends RequestHandler {
                 displaySettings.put("fieldSettings", FieldSettings.getFieldSettings(realm));
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());
-                displaySettings.put("activityDefinitions", ElasticSearchUtil.getActivityDefinitions(instance));
+                Map<String, Map<String, Object>> activityDefinitions = new ActivityDefinitionsRetrieverFactory(instance).spawn().retrieve();
+                displaySettings.put("activityDefinitions", activityDefinitions);
                 displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId,
                         instance.getDdpInstanceId()));
                 displaySettings.put("abstractionFields", AbstractionUtil.getFormControls(realm));
