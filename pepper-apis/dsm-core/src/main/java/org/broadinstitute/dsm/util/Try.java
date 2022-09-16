@@ -73,25 +73,6 @@ public abstract class Try<T> {
     /**
      * Returns the default value if the evaluation procedure will catch the user-specified exception
      * otherwise returns the successive value
-     * @param exception     a user specified exception which can be caught
-     * @param defaultMapper a function for transforming error into default value
-     */
-    public <V> V ifThrowsCatchAndThenGet(Class<? extends Exception> exception, Function<? super Exception, V> defaultMapper) {
-        if (this instanceof Failure) {
-            Failure failure = (Failure) this;
-            if (failure.getValue().getClass().equals(exception)) {
-                return defaultMapper.apply(failure.getValue());
-            } else {
-                throw new UncaughtException();
-            }
-        } else {
-            return (V) getValue();
-        }
-    }
-
-    /**
-     * Returns the default value if the evaluation procedure will catch the user-specified exception
-     * otherwise returns the successive value
      * @param defaultMapper a function for transforming error into default value
      * @param exceptions    a user specified exception array some of which can be caught
      */
@@ -106,21 +87,6 @@ public abstract class Try<T> {
             }
         } else {
             return (V) getValue();
-        }
-    }
-
-    /**
-     * Runs the user specified task if the evaluation procedure will catch the user-specified exception
-     * otherwise it won't run any tasks
-     * @param exception a user specified exception which can be caught
-     * @param consumer  an exception consumer for running the task
-     */
-    public void ifThrowsCatchAndThenRun(Class<? extends Exception> exception, Consumer<? super Exception> consumer) {
-        if (this instanceof Failure) {
-            Failure failure = (Failure) this;
-            if (failure.getValue().getClass().equals(exception)) {
-                consumer.accept(failure.getValue());
-            }
         }
     }
 

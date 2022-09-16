@@ -33,13 +33,13 @@ public class DDPRequestJob implements Job {
         Try.evaluate(() -> {
             DDPKitRequest kitRequest = new DDPKitRequest();
             kitRequest.requestAndWriteKitRequests(LatestKitRequest.getLatestKitRequests());
-        }).ifThrowsCatchAndThenRun(Exception.class, err -> logger.error("Some error occurred while doing kit request stuff ", err));
+        }).ifThrowsAnyCatchAndThenRun(err -> logger.error("Some error occurred while doing kit request stuff ", err), Exception.class);
 
         //get new/changed participants from ddps
         Try.evaluate(() -> {
             DDPMedicalRecordDataRequest medicalRecordDataRequest = new DDPMedicalRecordDataRequest();
             medicalRecordDataRequest.requestAndWriteParticipantInstitutions();
-        }).ifThrowsCatchAndThenRun(Exception.class, err -> logger.error("Some error occurred while doing medical record stuff ", err));
+        }).ifThrowsAnyCatchAndThenRun(err -> logger.error("Some error occurred while doing medical record stuff ", err), Exception.class);
 
         //deactivate kit requests which meet special behavior
         if (notificationUtil != null) {
@@ -49,7 +49,7 @@ public class DDPRequestJob implements Job {
         Try.evaluate(() -> {
             PDFAudit pdfAudit = new PDFAudit();
             pdfAudit.checkAndSavePDF();
-        }).ifThrowsCatchAndThenRun(Exception.class, err -> logger.error("Some error occurred while doing pdf audit trail ", err));
+        }).ifThrowsAnyCatchAndThenRun(err -> logger.error("Some error occurred while doing pdf audit trail ", err), Exception.class);
 
     }
 }

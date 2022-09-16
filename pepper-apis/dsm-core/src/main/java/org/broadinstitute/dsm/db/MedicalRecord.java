@@ -314,9 +314,9 @@ public class MedicalRecord implements HasDdpInstanceId {
                 ddpInstance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID, ddpParticipantId);
         return Try.evaluate(() -> DDPRequestUtil.getResponseObject(
                 MedicalInfo.class, dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token()))
-                .ifThrowsCatchAndThenGet(IOException.class, err -> {
+                .ifThrowsAnyCatchAndThenGet(err -> {
                     throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), err);
-                });
+                }, IOException.class);
     }
 
     @JsonProperty("followupRequired")

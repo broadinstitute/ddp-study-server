@@ -23,9 +23,8 @@ public class DDPInstitutionDto implements Cloneable {
     @Override
     public DDPInstitutionDto clone() {
         return Try.evaluate(() -> (DDPInstitutionDto) super.clone())
-                .ifThrowsCatchAndThenGet(CloneNotSupportedException.class, err -> {
-                    throw new AssertionError();
-                });
+                .ifThrowsAnyCatchAndThenGet(err -> {
+                    throw new AssertionError(); }, CloneNotSupportedException.class);
     }
 
     public static class Builder {

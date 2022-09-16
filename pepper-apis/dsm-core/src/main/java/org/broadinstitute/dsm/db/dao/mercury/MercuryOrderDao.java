@@ -216,9 +216,9 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public void insertMercuryOrders(List<MercuryOrderDto> newOrders) {
         for (MercuryOrderDto order : newOrders) {
             Try.evaluate(() -> create(order))
-                    .ifThrowsCatchAndThenRun(Exception.class, err ->
+                    .ifThrowsAnyCatchAndThenRun(err ->
                         log.error("Unable to insert mercury order for participant " + order.getDdpParticipantId() + " with barcode "
-                                + order.getBarcode(), err));
+                                + order.getBarcode(), err), Exception.class);
         }
     }
 

@@ -47,9 +47,9 @@ public class ParticipantDto implements Cloneable {
     @Override
     public ParticipantDto clone() {
         return Try.evaluate(() -> (ParticipantDto) super.clone())
-                .ifThrowsCatchAndThenGet(CloneNotSupportedException.class, err -> {
+                .ifThrowsAnyCatchAndThenGet(err -> {
                     throw new AssertionError();
-                });
+                }, CloneNotSupportedException.class);
     }
 
     public static class Builder {

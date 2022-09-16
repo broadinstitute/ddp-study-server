@@ -14,61 +14,61 @@ import org.junit.Test;
 public class TryTest {
 
     @Test
-    public void ifThrowsCatchAndThenRun() {
+    public void ifThrowsSingleCatchAndThenRun() {
 
         // will catch ArithmeticException and run the Consumer<ArithmeticException> afterwards
         AtomicBoolean caught = new AtomicBoolean(false);
         Try.evaluate(() -> 42 / 0)
-                .ifThrowsCatchAndThenRun(ArithmeticException.class, error -> {
+                .ifThrowsAnyCatchAndThenRun(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
-                });
+                }, ArithmeticException.class);
         Assert.assertTrue(caught.get());
 
         caught.set(false);
 
         // will catch StringIndexOutOfBoundsException and run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 10000))
-                .ifThrowsCatchAndThenRun(StringIndexOutOfBoundsException.class, error -> {
+                .ifThrowsAnyCatchAndThenRun(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
-                });
+                }, StringIndexOutOfBoundsException.class);
         Assert.assertTrue(caught.get());
 
         caught.set(false);
 
         // will not catch StringIndexOutOfBoundsException and thereby won't run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 3))
-                .ifThrowsCatchAndThenRun(StringIndexOutOfBoundsException.class, error -> {
+                .ifThrowsAnyCatchAndThenRun(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
-                });
+                }, StringIndexOutOfBoundsException.class);
 
         Assert.assertFalse(caught.get());
     }
 
     @Test
-    public void ifThrowsThenGet() {
+    public void ifThrowsSingleCatchAndThenGet() {
 
         // will catch ArithmeticException and run the Function<ArithmeticException, Integer> afterwards
         Integer res1 = Try.evaluate(() -> 50 / 0)
-                .ifThrowsCatchAndThenGet(ArithmeticException.class, error -> {
+                .ifThrowsAnyCatchAndThenGet(error -> {
                     System.out.println("Could not divide 50 by 5 so returning just 1");
                     return 1;
-                });
+                }, ArithmeticException.class);
 
         Assert.assertEquals(res1, Integer.valueOf(1));
 
         // will not catch ArithmeticException and thereby won't run the Function<ArithmeticException, Integer> afterwards
         // will only return the successful division value, which is 20
         Integer res2 = Try.evaluate(() -> 100 / 5)
-                .ifThrowsCatchAndThenGet(ArithmeticException.class, error -> {
+                .ifThrowsAnyCatchAndThenGet(error -> {
                     System.out.println("this won't run here");
                     return 100;
-                });
+                }, ArithmeticException.class);
 
         Assert.assertEquals(res2, Integer.valueOf(20));
 
@@ -77,9 +77,9 @@ public class TryTest {
         try {
             Try.evaluate(() -> {
                 throw new RuntimeException();
-            }).ifThrowsCatchAndThenGet(RuntimeException.class, err -> {
+            }).ifThrowsAnyCatchAndThenGet(err -> {
                 throw new NoSuchElementException();
-            });
+            }, RuntimeException.class);
         } catch (NoSuchElementException nse) {
             System.out.println("caught NoSuchElementException");
             Assert.assertTrue(true);
@@ -190,7 +190,7 @@ public class TryTest {
     public void uncaughtException() {
         try {
             Try.evaluate(() -> 42 / 0)
-                    .ifThrowsCatchAndThenGet(NullPointerException.class, err -> 5);
+                    .ifThrowsAnyCatchAndThenGet(err -> 5, NullPointerException.class);
         } catch (Try.UncaughtException tue) {
             System.out.println("caught");
             Assert.assertTrue(true);

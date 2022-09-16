@@ -515,10 +515,10 @@ public class KitUtil {
                         kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                         ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder())
                         .export()
-                ).ifThrowsCatchAndThenRun(Exception.class, err -> {
+                ).ifThrowsAnyCatchAndThenRun(err -> {
                     logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
                     err.printStackTrace();
-                });
+                }, Exception.class);
 
         return dbVals;
     }

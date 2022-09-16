@@ -68,8 +68,8 @@ public class CohortTag implements Cloneable {
     @Override
     public CohortTag clone() {
         return Try.evaluate(() -> (CohortTag) super.clone())
-                .ifThrowsCatchAndThenGet(CloneNotSupportedException.class, err -> {
+                .ifThrowsAnyCatchAndThenGet(err -> {
                     throw new AssertException();
-                });
+                }, CloneNotSupportedException.class);
     }
 }
