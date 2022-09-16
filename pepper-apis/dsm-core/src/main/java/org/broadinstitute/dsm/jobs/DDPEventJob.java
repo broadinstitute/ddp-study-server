@@ -24,6 +24,6 @@ public class DDPEventJob implements Job {
 
             NotificationUtil notificationUtil = (NotificationUtil) dataMap.get(DSMServer.NOTIFICATION_UTIL);
             notificationUtil.removeObsoleteReminders();
-        }).ifThrowsAnyCatchAndThenRun(err -> logger.error("Failed to execute properly ", err), Exception.class);
+        }).catchAndThenRun(err -> logger.error("Failed to execute properly ", err), Exception.class);
     }
 }

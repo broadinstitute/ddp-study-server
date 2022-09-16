@@ -839,7 +839,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             Try.evaluate(() -> UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                         new PutToNestedScriptBuilder()).export()
-            ).ifThrowsAnyCatchAndThenRun(err -> {
+            ).catchAndThenRun(err -> {
                 logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
                         + "ElasticSearch", dsmKitRequestId));
                 err.printStackTrace();
@@ -1708,7 +1708,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
             return ObjectMapperSingleton.instance().readValue(testResult, new TypeReference<List<Map<String, Object>>>() {
             });
-        }).ifThrowsAnyCatchAndThenGet(err -> Collections.emptyList(), IOException.class, NullPointerException.class);
+        }).catchAndThenGet(err -> Collections.emptyList(), IOException.class, NullPointerException.class);
     }
 
     public String getShortId(String collaboratorParticipantId) {

@@ -515,7 +515,7 @@ public class KitUtil {
                         kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                         ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder())
                         .export()
-                ).ifThrowsAnyCatchAndThenRun(err -> {
+                ).catchAndThenRun(err -> {
                     logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
                     err.printStackTrace();
                 }, Exception.class);

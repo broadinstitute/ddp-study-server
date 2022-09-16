@@ -89,7 +89,7 @@ public class ParticipantData {
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         return Try.evaluate(() -> ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {}))
-                .ifThrowsAnyCatchAndThenGet(err -> Map.of(), IOException.class, NullPointerException.class);
+                .catchAndThenGet(err -> Map.of(), IOException.class, NullPointerException.class);
     }
 
     public int getParticipantDataId() {

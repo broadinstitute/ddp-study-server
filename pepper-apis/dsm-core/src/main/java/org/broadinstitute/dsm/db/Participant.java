@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
-import com.mchange.util.AssertException;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -243,7 +242,7 @@ public class Participant implements Cloneable {
     @Override
     public Participant clone() {
         return Try.evaluate(() -> (Participant) super.clone())
-                .ifThrowsAnyCatchAndThenGet(err -> {
+                .catchAndThenGet(err -> {
                     throw new AssertionError(); }, CloneNotSupportedException.class);
     }
 }

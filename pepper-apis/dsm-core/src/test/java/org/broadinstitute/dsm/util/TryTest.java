@@ -19,7 +19,7 @@ public class TryTest {
         // will catch ArithmeticException and run the Consumer<ArithmeticException> afterwards
         AtomicBoolean caught = new AtomicBoolean(false);
         Try.evaluate(() -> 42 / 0)
-                .ifThrowsAnyCatchAndThenRun(error -> {
+                .catchAndThenRun(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
@@ -30,7 +30,7 @@ public class TryTest {
 
         // will catch StringIndexOutOfBoundsException and run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 10000))
-                .ifThrowsAnyCatchAndThenRun(error -> {
+                .catchAndThenRun(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
@@ -41,7 +41,7 @@ public class TryTest {
 
         // will not catch StringIndexOutOfBoundsException and thereby won't run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 3))
-                .ifThrowsAnyCatchAndThenRun(error -> {
+                .catchAndThenRun(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
@@ -55,7 +55,7 @@ public class TryTest {
 
         // will catch ArithmeticException and run the Function<ArithmeticException, Integer> afterwards
         Integer res1 = Try.evaluate(() -> 50 / 0)
-                .ifThrowsAnyCatchAndThenGet(error -> {
+                .catchAndThenGet(error -> {
                     System.out.println("Could not divide 50 by 5 so returning just 1");
                     return 1;
                 }, ArithmeticException.class);
@@ -65,7 +65,7 @@ public class TryTest {
         // will not catch ArithmeticException and thereby won't run the Function<ArithmeticException, Integer> afterwards
         // will only return the successful division value, which is 20
         Integer res2 = Try.evaluate(() -> 100 / 5)
-                .ifThrowsAnyCatchAndThenGet(error -> {
+                .catchAndThenGet(error -> {
                     System.out.println("this won't run here");
                     return 100;
                 }, ArithmeticException.class);
@@ -77,7 +77,7 @@ public class TryTest {
         try {
             Try.evaluate(() -> {
                 throw new RuntimeException();
-            }).ifThrowsAnyCatchAndThenGet(err -> {
+            }).catchAndThenGet(err -> {
                 throw new NoSuchElementException();
             }, RuntimeException.class);
         } catch (NoSuchElementException nse) {
@@ -159,7 +159,7 @@ public class TryTest {
                 } else {
                     throw new NullPointerException();
                 }
-            }).ifThrowsAnyCatchAndThenGet(err -> 100, ClassCastException.class, NullPointerException.class);
+            }).catchAndThenGet(err -> 100, ClassCastException.class, NullPointerException.class);
             Assert.assertEquals(res, 100);
         }
     }
@@ -178,7 +178,7 @@ public class TryTest {
                 } else {
                     throw new NullPointerException();
                 }
-            }).ifThrowsAnyCatchAndThenRun(err -> {
+            }).catchAndThenRun(err -> {
                 System.out.println("Caught the error");
                 count.incrementAndGet();
             }, ClassCastException.class, NullPointerException.class);
@@ -190,7 +190,7 @@ public class TryTest {
     public void uncaughtException() {
         try {
             Try.evaluate(() -> 42 / 0)
-                    .ifThrowsAnyCatchAndThenGet(err -> 5, NullPointerException.class);
+                    .catchAndThenGet(err -> 5, NullPointerException.class);
         } catch (Try.UncaughtException tue) {
             System.out.println("caught");
             Assert.assertTrue(true);

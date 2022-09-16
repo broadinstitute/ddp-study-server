@@ -736,13 +736,13 @@ public class DSMServer {
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         Try.evaluate(() -> PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId))
-                .ifThrowsAnyCatchAndThenRun(Exception::printStackTrace, Exception.class);
+                .catchAndThenRun(Exception::printStackTrace, Exception.class);
 
         Try.evaluate(() -> DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId))
-                .ifThrowsAnyCatchAndThenRun(Exception::printStackTrace, Exception.class);
+                .catchAndThenRun(Exception::printStackTrace, Exception.class);
 
         Try.evaluate(() -> MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId))
-                .ifThrowsAnyCatchAndThenRun(Exception::printStackTrace, Exception.class);
+                .catchAndThenRun(Exception::printStackTrace, Exception.class);
 
         logger.info("Pubsub setup complete");
     }
@@ -1004,7 +1004,7 @@ public class DSMServer {
                 String rootPackage = DSMServer.class.getPackageName();
                 String slackChannel = config.getString("slack.channel");
                 URI slackHookUrl = Try.evaluate(() -> new URI(slackHookUrlString))
-                        .ifThrowsAnyCatchAndThenGet(err -> {
+                        .catchAndThenGet(err -> {
                             throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + err); },
                                 URISyntaxException.class);
                 SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);

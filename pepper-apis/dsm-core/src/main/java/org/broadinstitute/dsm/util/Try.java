@@ -77,7 +77,7 @@ public abstract class Try<T> {
      * @param exceptions    a user specified exception array some of which can be caught
      */
     @SafeVarargs
-    public final <V> V ifThrowsAnyCatchAndThenGet(Function<? super Exception, V> defaultMapper, Class<? extends Exception>... exceptions) {
+    public final <V> V catchAndThenGet(Function<? super Exception, V> defaultMapper, Class<? extends Exception>... exceptions) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
             if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
@@ -97,7 +97,7 @@ public abstract class Try<T> {
      * @param exceptions a user specified exceptions which can be caught
      */
     @SafeVarargs
-    public final void ifThrowsAnyCatchAndThenRun(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
+    public final void catchAndThenRun(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
             if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
