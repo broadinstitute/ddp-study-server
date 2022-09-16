@@ -83,8 +83,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                 displaySettings.put("fieldSettings", FieldSettings.getFieldSettings(realm));
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());
-                Map<String, Map<String, Object>> activityDefinitions = new ActivityDefinitionsRetrieverFactory(instance).spawn().retrieve();
-                displaySettings.put("activityDefinitions", activityDefinitions);
+                displaySettings.put("activityDefinitions", new ActivityDefinitionsRetrieverFactory(instance).spawn().retrieve());
                 displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId,
                         instance.getDdpInstanceId()));
                 displaySettings.put("abstractionFields", AbstractionUtil.getFormControls(realm));
