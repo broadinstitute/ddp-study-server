@@ -1,6 +1,10 @@
 
 package org.broadinstitute.dsm.util;
 
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.junit.Assert;
@@ -13,26 +17,37 @@ public class TryTest {
     public void ifThrowsCatchAndThenRun() {
 
         // will catch ArithmeticException and run the Consumer<ArithmeticException> afterwards
+        AtomicBoolean caught = new AtomicBoolean(false);
         Try.evaluate(() -> 42 / 0)
                 .ifThrowsCatchAndThenRun(ArithmeticException.class, error -> {
+                    caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
                 });
+        Assert.assertTrue(caught.get());
 
+        caught.set(false);
 
         // will catch StringIndexOutOfBoundsException and run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 10000))
                 .ifThrowsCatchAndThenRun(StringIndexOutOfBoundsException.class, error -> {
+                    caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
                 });
+        Assert.assertTrue(caught.get());
+
+        caught.set(false);
 
         // will not catch StringIndexOutOfBoundsException and thereby won't run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 3))
                 .ifThrowsCatchAndThenRun(StringIndexOutOfBoundsException.class, error -> {
+                    caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
                 });
+
+        Assert.assertFalse(caught.get());
     }
 
     @Test
@@ -40,7 +55,7 @@ public class TryTest {
 
         // will catch ArithmeticException and run the Function<ArithmeticException, Integer> afterwards
         Integer res1 = Try.evaluate(() -> 50 / 0)
-                .ifThrowsThenGet(ArithmeticException.class, error -> {
+                .ifThrowsCatchAndThenGet(ArithmeticException.class, error -> {
                     System.out.println("Could not divide 50 by 5 so returning just 1");
                     return 1;
                 });
@@ -50,12 +65,25 @@ public class TryTest {
         // will not catch ArithmeticException and thereby won't run the Function<ArithmeticException, Integer> afterwards
         // will only return the successful division value, which is 20
         Integer res2 = Try.evaluate(() -> 100 / 5)
-                .ifThrowsThenGet(ArithmeticException.class, error -> {
+                .ifThrowsCatchAndThenGet(ArithmeticException.class, error -> {
                     System.out.println("this won't run here");
                     return 100;
                 });
 
         Assert.assertEquals(res2, Integer.valueOf(20));
+
+        // will catch RuntimeException but does not know how to handle it
+        // so it throws NoSuchElementException
+        try {
+            Try.evaluate(() -> {
+                throw new RuntimeException();
+            }).ifThrowsCatchAndThenGet(RuntimeException.class, err -> {
+                throw new NoSuchElementException();
+            });
+        } catch (NoSuchElementException nse) {
+            System.out.println("caught NoSuchElementException");
+            Assert.assertTrue(true);
+        }
 
     }
 
@@ -95,13 +123,68 @@ public class TryTest {
     @Test
     public void finalizeWith() {
 
+        AtomicBoolean finalizerRan = new AtomicBoolean(false);
+
         // 42 / 1 will be successful so it will print Division was successful
         Try.evaluate(() -> 42 / 1)
-                .finalizeWith(() -> System.out.println("Division was successful"), () -> System.out.println("Division was unsuccessful"));
+                .finalizeWith(() -> {
+                    System.out.println("Division was successful");
+                    finalizerRan.set(true);
+                }, () -> System.out.println("Division was unsuccessful"));
+
+        Assert.assertTrue(finalizerRan.get());
+
+        finalizerRan.set(false);
 
         // 42 / 0 will fail so it will print "Division was unsuccessful"
         Try.evaluate(() -> 42 / 0)
-                .finalizeWith(() -> System.out.println("Division was successful"), () -> System.out.println("Division was unsuccessful"));
+                .finalizeWith(() -> System.out.println("Division was successful"), () -> {
+                    System.out.println("Division was unsuccessful");
+                    finalizerRan.set(true);
+                });
+
+        Assert.assertTrue(finalizerRan.get());
 
     }
+
+    // If it throws either ClassCastException or NullPointerException we will return 100
+    @Test
+    public void ifThrowsAnyCatchAndThenGet() {
+        Random rand = new Random();
+        for (int i = 0; i < 100; i++) {
+            int res = Try.evaluate(() -> {
+                int number = rand.nextInt(10);
+                if (number > 5) {
+                    throw new ClassCastException();
+                } else {
+                    throw new NullPointerException();
+                }
+            }).ifThrowsAnyCatchAndThenGet(err -> 100, ClassCastException.class, NullPointerException.class);
+            Assert.assertEquals(res, 100);
+        }
+    }
+
+    // Sometime we have no idea how to handle situation, so we throw exception!
+    // The below is the one
+    @Test
+    public void ifThrowsAnyCatchAndThenRun() {
+        AtomicInteger count = new AtomicInteger(0);
+        for (int i = 0; i < 100; i++) {
+            Try.evaluate(() -> {
+                Random rand = new Random();
+                int value = rand.nextInt(10);
+                if (value > 5) {
+                    throw new ClassCastException();
+                } else {
+                    throw new NullPointerException();
+                }
+            }).ifThrowsAnyCatchAndThenRun(err -> {
+                System.out.println("Caught the error");
+                count.incrementAndGet();
+            }, ClassCastException.class, NullPointerException.class);
+        }
+        Assert.assertEquals(count.get(), 100);
+    }
+
+
 }

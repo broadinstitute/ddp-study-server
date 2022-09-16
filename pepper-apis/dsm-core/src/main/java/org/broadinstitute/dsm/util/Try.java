@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.util;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -19,7 +20,7 @@ import java.util.function.Function;
 public abstract class Try<T> {
 
     /**
-    * Every Try computation starts with calling Try.evaluate(() -> [some Callable here]).
+    * Some Try computations may start with calling Try.evaluate([some Callable here]).
     * Returns either Success or Failure instance based on computation
     * @param callable a lazy computation which is not evaluated on the call site, instead it's evaluated here.
     */
@@ -31,6 +32,10 @@ public abstract class Try<T> {
         }
     }
 
+    /**
+     * Some Try computations may start with calling Try.evaluate([some Runnable here]).
+     * Returns either Success or Failure instance based on computation
+     */
     public static <T> Try<T> evaluate(Runnable runnable) {
         try {
             runnable.run();
@@ -73,10 +78,30 @@ public abstract class Try<T> {
      * @param exception     a user specified exception which can be caught
      * @param defaultMapper a function for transforming error into default value
      */
-    public <V> V ifThrowsThenGet(Class<? extends Exception> exception, Function<? super Exception, V> defaultMapper) {
+    public <V> V ifThrowsCatchAndThenGet(Class<? extends Exception> exception, Function<? super Exception, V> defaultMapper) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
             if (failure.getValue().getClass().equals(exception)) {
+                return defaultMapper.apply(failure.getValue());
+            } else {
+                throw new UncaughtException(failure.getValue());
+            }
+        } else {
+            return (V) getValue();
+        }
+    }
+
+    /**
+     * Returns the default value if the evaluation procedure will catch the user-specified exception
+     * otherwise returns the successive value
+     * @param defaultMapper a function for transforming error into default value
+     * @param exceptions    a user specified exception array some of which can be caught
+     */
+    @SafeVarargs
+    public final <V> V ifThrowsAnyCatchAndThenGet(Function<? super Exception, V> defaultMapper, Class<? extends Exception>... exceptions) {
+        if (this instanceof Failure) {
+            Failure failure = (Failure) this;
+            if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
                 return defaultMapper.apply(failure.getValue());
             } else {
                 throw new UncaughtException(failure.getValue());
@@ -96,6 +121,22 @@ public abstract class Try<T> {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
             if (failure.getValue().getClass().equals(exception)) {
+                consumer.accept(failure.getValue());
+            }
+        }
+    }
+
+    /**
+     * Runs the user specified task if the evaluation procedure will catch
+     * at least one of the user-specified exceptions otherwise it won't run any tasks
+     * @param consumer  an exception consumer for running the task
+     * @param exceptions a user specified exceptions which can be caught
+     */
+    @SafeVarargs
+    public final void ifThrowsAnyCatchAndThenRun(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
+        if (this instanceof Failure) {
+            Failure failure = (Failure) this;
+            if (Arrays.stream(exceptions).anyMatch(exc -> failure.getValue().getClass().equals(exc))) {
                 consumer.accept(failure.getValue());
             }
         }

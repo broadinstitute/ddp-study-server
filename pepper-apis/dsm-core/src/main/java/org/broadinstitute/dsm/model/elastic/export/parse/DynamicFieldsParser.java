@@ -131,17 +131,16 @@ public class DynamicFieldsParser extends BaseParser {
     }
 
     private Optional<String> getTypeFromPossibleValuesJson() {
-        return Try.evaluate(this::extractTypeFromPossibleValues)
-                .ifThrowsThenGet(Exception.class, error -> Optional.empty());
-    }
-
-    private Optional<String> extractTypeFromPossibleValues() throws JsonProcessingException {
-        List<Map<String, String>> possibleValues =
-                ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {
-                });
-        Optional<String> maybeType = possibleValues.stream().filter(possibleValue -> possibleValue.containsKey(TYPE))
-                .map(possibleValue -> possibleValue.get(TYPE)).findFirst();
-        return maybeType;
+        try {
+            List<Map<String, String>> possibleValues =
+                    ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {
+                    });
+            Optional<String> maybeType = possibleValues.stream().filter(possibleValue -> possibleValue.containsKey(TYPE))
+                    .map(possibleValue -> possibleValue.get(TYPE)).findFirst();
+            return maybeType;
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private boolean isActivityRelatedType() {

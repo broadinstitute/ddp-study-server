@@ -978,6 +978,7 @@ public class DSMServer {
 
 
                 logger.info("Setup Job Scheduler...");
+
                 try {
                     scheduler.start();
                     logger.info("Job Scheduler setup complete.");
@@ -1001,13 +1002,10 @@ public class DSMServer {
                 String slackHookUrlString = config.getString("slack.hook");
                 String gcpServiceName = config.getString("slack.gcpServiceName");
                 String rootPackage = DSMServer.class.getPackageName();
-                URI slackHookUrl;
                 String slackChannel = config.getString("slack.channel");
-                try {
-                    slackHookUrl = new URI(slackHookUrlString);
-                } catch (URISyntaxException e) {
-                    throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + e);
-                }
+                URI slackHookUrl = Try.evaluate(() -> new URI(slackHookUrlString))
+                        .ifThrowsCatchAndThenGet(URISyntaxException.class, err -> {
+                            throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + err); });
                 SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);
                 logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel
                         + ".");

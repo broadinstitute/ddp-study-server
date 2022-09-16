@@ -2,11 +2,13 @@ package org.broadinstitute.dsm.db.dto.tag.cohort;
 
 import java.util.Objects;
 
+import com.mchange.util.AssertException;
 import lombok.Data;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
+import org.broadinstitute.dsm.util.Try;
 
 @Data
 @TableName(
@@ -65,11 +67,9 @@ public class CohortTag implements Cloneable {
 
     @Override
     public CohortTag clone() {
-        try {
-            CohortTag clone = (CohortTag) super.clone();
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        return Try.evaluate(() -> (CohortTag) super.clone())
+                .ifThrowsCatchAndThenGet(CloneNotSupportedException.class, err -> {
+                    throw new AssertException();
+                });
     }
 }

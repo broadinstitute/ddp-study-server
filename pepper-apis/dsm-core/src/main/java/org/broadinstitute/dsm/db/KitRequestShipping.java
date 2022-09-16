@@ -1701,16 +1701,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public List<Map<String, Object>> getTestResult() {
-        try {
+        return Try.evaluate(() -> {
             if (StringUtils.isBlank(testResult)) {
                 return ObjectMapperSingleton.instance().readValue("", new TypeReference<List<Map<String, Object>>>() {
                 });
             }
             return ObjectMapperSingleton.instance().readValue(testResult, new TypeReference<List<Map<String, Object>>>() {
             });
-        } catch (IOException | NullPointerException e) {
-            return Collections.emptyList();
-        }
+        }).ifThrowsAnyCatchAndThenGet(err -> Collections.emptyList(), IOException.class, NullPointerException.class);
     }
 
     public String getShortId(String collaboratorParticipantId) {
