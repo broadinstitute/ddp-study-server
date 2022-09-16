@@ -142,6 +142,7 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
@@ -734,23 +735,14 @@ public class DSMServer {
 
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
-        try {
-            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Try.evaluate(() -> PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId))
+                .ifThrowsCatchAndThenRun(Exception.class, Exception::printStackTrace);
 
-        try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Try.evaluate(() -> DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId))
+                .ifThrowsCatchAndThenRun(Exception.class, Exception::printStackTrace);
 
-        try {
-            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Try.evaluate(() -> MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId))
+                .ifThrowsCatchAndThenRun(Exception.class, Exception::printStackTrace);
 
         logger.info("Pubsub setup complete");
     }

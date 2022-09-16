@@ -23,7 +23,7 @@ public class PubSubResultMessageSubscription {
 
     private static final Logger logger = LoggerFactory.getLogger(PubSubResultMessageSubscription.class);
 
-    public static void dssToDsmSubscriber(String projectId, String subscriptionId) throws Exception {
+    public static void dssToDsmSubscriber(String projectId, String subscriptionId) {
         subscribeWithFlowControlSettings(projectId, subscriptionId);
     }
 

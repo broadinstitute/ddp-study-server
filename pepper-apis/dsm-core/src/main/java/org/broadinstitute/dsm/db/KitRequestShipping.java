@@ -67,6 +67,7 @@ import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.eclipse.jetty.util.StringUtil;
@@ -835,15 +836,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestShipping.setDeactivationReason(deactivationReason);
             kitRequestShipping.setDeactivatedDate(deactivatedDate);
 
-            try {
-                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+            Try.evaluate(() -> UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
-                        new PutToNestedScriptBuilder()).export();
-            } catch (Exception e) {
+                        new PutToNestedScriptBuilder()).export()
+            ).ifThrowsCatchAndThenRun(Exception.class, err -> {
                 logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
                         + "ElasticSearch", dsmKitRequestId));
-                e.printStackTrace();
-            }
+                err.printStackTrace();
+            });
 
         } else {
             if (easypostApiKey != null) {

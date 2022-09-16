@@ -511,13 +511,14 @@ public class KitUtil {
         kitRequestShipping.setMessage(message);
         kitRequestShipping.setDsmKitId(dsmKitId);
 
-        try {
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
-        } catch (Exception e) {
-            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
-            e.printStackTrace();
-        }
+        Try.evaluate(() -> UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS,
+                        kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                        ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder())
+                        .export()
+                ).ifThrowsCatchAndThenRun(Exception.class, err -> {
+                    logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
+                    err.printStackTrace();
+                });
 
         return dbVals;
     }

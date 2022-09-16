@@ -31,6 +31,15 @@ public abstract class Try<T> {
         }
     }
 
+    public static <T> Try<T> evaluate(Runnable runnable) {
+        try {
+            runnable.run();
+            return new Success<>(null);
+        } catch (Exception e) {
+            return (Try<T>) new Failure(e);
+        }
+    }
+
     /**
      * Returns the value based on if the main computation succeeded or failed
      * @param successMapper a function which can transform the successful value, or leave it as it is

@@ -7,10 +7,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.util.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class DynamicFieldsParser extends BaseParser {
@@ -129,16 +131,17 @@ public class DynamicFieldsParser extends BaseParser {
     }
 
     private Optional<String> getTypeFromPossibleValuesJson() {
-        try {
-            List<Map<String, String>> possibleValues =
-                    ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {
-                    });
-            Optional<String> maybeType = possibleValues.stream().filter(possibleValue -> possibleValue.containsKey(TYPE))
-                    .map(possibleValue -> possibleValue.get(TYPE)).findFirst();
-            return maybeType;
-        } catch (Exception e) {
-            return Optional.empty();
-        }
+        return Try.evaluate(this::extractTypeFromPossibleValues)
+                .ifThrowsThenGet(Exception.class, error -> Optional.empty());
+    }
+
+    private Optional<String> extractTypeFromPossibleValues() throws JsonProcessingException {
+        List<Map<String, String>> possibleValues =
+                ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {
+                });
+        Optional<String> maybeType = possibleValues.stream().filter(possibleValue -> possibleValue.containsKey(TYPE))
+                .map(possibleValue -> possibleValue.get(TYPE)).findFirst();
+        return maybeType;
     }
 
     private boolean isActivityRelatedType() {
