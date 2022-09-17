@@ -58,7 +58,7 @@ public class TryTest {
         Integer res1 = Try.evaluate(() -> 50 / 0)
                 .ifThrowsThenGetDefaultOrElseMap(succ -> succ + 1, 1, ArithmeticException.class);
 
-        Assert.assertEquals(res1, Integer.valueOf(1));
+        Assert.assertEquals(Integer.valueOf(1), res1);
 
         // will not catch ArithmeticException and thereby won't run the Function<ArithmeticException, Integer> afterwards
         // will only return the successful division value, which is 20
@@ -67,7 +67,7 @@ public class TryTest {
                     System.out.println("this won't run here");
                 }, ArithmeticException.class);
 
-        Assert.assertEquals(res2, Integer.valueOf(20));
+        Assert.assertEquals(Integer.valueOf(20), res2);
 
         // will catch RuntimeException but does not know how to handle it
         // so it throws NoSuchElementException
@@ -99,21 +99,21 @@ public class TryTest {
         Integer r2 = Try.evaluate(() -> 42 / 0)
                 .fold(i -> i + 1, 0);
 
-        Assert.assertEquals(r2, Integer.valueOf(0));
+        Assert.assertEquals(Integer.valueOf(0), r2);
 
         // "String".substring(0, 10000) will fail so it will return default value,
         // default value will be "String"
         String r3 = Try.evaluate(() -> "String".substring(0, 10000))
                 .fold(str -> str, "String");
 
-        Assert.assertEquals(r3, "String");
+        Assert.assertEquals("String", r3);
 
         // "String".substring(0, 3) will be successful so it will run the onSuccess function,
         // onSuccess function will return the concatenated value which will be "StrStr"
         String r4 = Try.evaluate(() -> "String".substring(0, 3))
                 .fold(str -> str.concat(str), "String");
 
-        Assert.assertEquals(r4, "StrStr");
+        Assert.assertEquals("StrStr", r4);
 
     }
 
@@ -157,7 +157,7 @@ public class TryTest {
                     throw new NullPointerException();
                 }
             }).ifThrowsThenGetDefaultOrElseMap(v -> 100, 100, ClassCastException.class, NullPointerException.class);
-            Assert.assertEquals(res, 100);
+            Assert.assertEquals(100, res);
         }
     }
 
