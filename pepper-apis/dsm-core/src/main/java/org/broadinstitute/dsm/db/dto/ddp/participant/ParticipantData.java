@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -19,7 +20,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 @TableName(
@@ -89,7 +90,7 @@ public class ParticipantData {
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         return Try.evaluate(() -> ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {}))
-                .catchAndThenGet(err -> Map.of(), IOException.class, NullPointerException.class);
+                .ifThrowsThenGetDefaultOrElseMap(Function.identity(), Map.of(), IOException.class, NullPointerException.class);
     }
 
     public int getParticipantDataId() {

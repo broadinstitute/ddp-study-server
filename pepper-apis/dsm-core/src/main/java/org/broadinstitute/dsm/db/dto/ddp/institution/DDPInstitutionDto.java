@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db.dto.ddp.institution;
 
 import lombok.Data;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 
 @Data
 public class DDPInstitutionDto implements Cloneable {
@@ -23,7 +23,7 @@ public class DDPInstitutionDto implements Cloneable {
     @Override
     public DDPInstitutionDto clone() {
         return Try.evaluate(() -> (DDPInstitutionDto) super.clone())
-                .catchAndThenGet(err -> {
+                .ifThrowsThenRunTaskElseGet(error -> {
                     throw new AssertionError(); }, CloneNotSupportedException.class);
     }
 

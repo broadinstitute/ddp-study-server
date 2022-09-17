@@ -142,7 +142,7 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
@@ -736,13 +736,13 @@ public class DSMServer {
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         Try.evaluate(() -> PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId))
-                .catchAndThenRun(Exception::printStackTrace, Exception.class);
+                .ifThrowsCatchAndThenRun(Exception::printStackTrace, Exception.class);
 
         Try.evaluate(() -> DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId))
-                .catchAndThenRun(Exception::printStackTrace, Exception.class);
+                .ifThrowsCatchAndThenRun(Exception::printStackTrace, Exception.class);
 
         Try.evaluate(() -> MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId))
-                .catchAndThenRun(Exception::printStackTrace, Exception.class);
+                .ifThrowsCatchAndThenRun(Exception::printStackTrace, Exception.class);
 
         logger.info("Pubsub setup complete");
     }
@@ -1004,8 +1004,9 @@ public class DSMServer {
                 String rootPackage = DSMServer.class.getPackageName();
                 String slackChannel = config.getString("slack.channel");
                 URI slackHookUrl = Try.evaluate(() -> new URI(slackHookUrlString))
-                        .catchAndThenGet(err -> {
-                            throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + err); },
+                        .ifThrowsThenRunTaskElseGet(err -> {
+                            logger.error(err.getMessage());
+                            throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + err);  },
                                 URISyntaxException.class);
                 SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);
                 logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel

@@ -32,7 +32,7 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.MedicalInfo;
@@ -314,8 +314,9 @@ public class MedicalRecord implements HasDdpInstanceId {
                 ddpInstance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID, ddpParticipantId);
         return Try.evaluate(() -> DDPRequestUtil.getResponseObject(
                 MedicalInfo.class, dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token()))
-                .catchAndThenGet(err -> {
-                    throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), err);
+                .ifThrowsThenRunTaskElseGet(error -> {
+                    logger.error(error.getMessage());
+                    throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName());
                 }, IOException.class);
     }
 

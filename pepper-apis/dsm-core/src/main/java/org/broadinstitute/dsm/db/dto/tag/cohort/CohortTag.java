@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 
 @Data
 @TableName(
@@ -68,7 +68,7 @@ public class CohortTag implements Cloneable {
     @Override
     public CohortTag clone() {
         return Try.evaluate(() -> (CohortTag) super.clone())
-                .catchAndThenGet(err -> {
+                .ifThrowsThenRunTaskElseGet(error -> {
                     throw new AssertException();
                 }, CloneNotSupportedException.class);
     }

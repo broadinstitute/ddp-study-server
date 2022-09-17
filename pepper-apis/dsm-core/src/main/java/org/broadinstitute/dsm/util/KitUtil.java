@@ -36,6 +36,7 @@ import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -515,7 +516,7 @@ public class KitUtil {
                         kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                         ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder())
                         .export()
-                ).catchAndThenRun(err -> {
+                ).ifThrowsCatchAndThenRun(err -> {
                     logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
                     err.printStackTrace();
                 }, Exception.class);

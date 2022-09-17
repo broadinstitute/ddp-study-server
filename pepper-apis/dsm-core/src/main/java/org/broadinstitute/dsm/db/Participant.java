@@ -22,7 +22,7 @@ import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBUtil;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -242,7 +242,8 @@ public class Participant implements Cloneable {
     @Override
     public Participant clone() {
         return Try.evaluate(() -> (Participant) super.clone())
-                .catchAndThenGet(err -> {
+                .ifThrowsThenRunTaskElseGet(error -> {
+                    logger.warn(error.getMessage());
                     throw new AssertionError(); }, CloneNotSupportedException.class);
     }
 }

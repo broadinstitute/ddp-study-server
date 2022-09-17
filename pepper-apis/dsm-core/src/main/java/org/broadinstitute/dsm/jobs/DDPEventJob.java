@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.jobs;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -24,6 +24,6 @@ public class DDPEventJob implements Job {
 
             NotificationUtil notificationUtil = (NotificationUtil) dataMap.get(DSMServer.NOTIFICATION_UTIL);
             notificationUtil.removeObsoleteReminders();
-        }).catchAndThenRun(err -> logger.error("Failed to execute properly ", err), Exception.class);
+        }).ifThrowsCatchAndThenRun(err -> logger.error("Failed to execute properly ", err), Exception.class);
     }
 }

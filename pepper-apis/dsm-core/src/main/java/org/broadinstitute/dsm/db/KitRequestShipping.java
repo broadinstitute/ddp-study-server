@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.easypost.exception.EasyPostException;
@@ -67,7 +68,7 @@ import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
-import org.broadinstitute.dsm.util.Try;
+import org.broadinstitute.dsm.util.tryimpl.Try;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.eclipse.jetty.util.StringUtil;
@@ -839,7 +840,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             Try.evaluate(() -> UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                         new PutToNestedScriptBuilder()).export()
-            ).catchAndThenRun(err -> {
+            ).ifThrowsCatchAndThenRun(err -> {
                 logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
                         + "ElasticSearch", dsmKitRequestId));
                 err.printStackTrace();
@@ -1708,7 +1709,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
             return ObjectMapperSingleton.instance().readValue(testResult, new TypeReference<List<Map<String, Object>>>() {
             });
-        }).catchAndThenGet(err -> Collections.emptyList(), IOException.class, NullPointerException.class);
+        }).ifThrowsThenGetDefaultOrElseMap(Function.identity(), Collections.emptyList(), IOException.class, NullPointerException.class);
     }
 
     public String getShortId(String collaboratorParticipantId) {
