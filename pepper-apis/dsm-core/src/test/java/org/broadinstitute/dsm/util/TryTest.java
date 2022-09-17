@@ -20,7 +20,7 @@ public class TryTest {
         // will catch ArithmeticException and run the Consumer<ArithmeticException> afterwards
         AtomicBoolean caught = new AtomicBoolean(false);
         Try.evaluate(() -> 42 / 0)
-                .ifThrowsCatchAndThenRun(error -> {
+                .ifThrowsThenRunTask(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
@@ -31,7 +31,7 @@ public class TryTest {
 
         // will catch StringIndexOutOfBoundsException and run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 10000))
-                .ifThrowsCatchAndThenRun(error -> {
+                .ifThrowsThenRunTask(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
@@ -42,7 +42,7 @@ public class TryTest {
 
         // will not catch StringIndexOutOfBoundsException and thereby won't run the Consumer<StringIndexOutOfBoundsException> afterwards
         Try.evaluate(() -> "String".substring(0, 3))
-                .ifThrowsCatchAndThenRun(error -> {
+                .ifThrowsThenRunTask(error -> {
                     caught.set(true);
                     System.out.println("error");
                     System.out.println(error.getMessage());
@@ -63,7 +63,7 @@ public class TryTest {
         // will not catch ArithmeticException and thereby won't run the Function<ArithmeticException, Integer> afterwards
         // will only return the successful division value, which is 20
         Integer res2 = Try.evaluate(() -> 100 / 5)
-                .ifThrowsThenRunTaskElseGet(error -> {
+                .ifThrowsThenRunTaskOrElseGet(error -> {
                     System.out.println("this won't run here");
                 }, ArithmeticException.class);
 
@@ -74,7 +74,7 @@ public class TryTest {
         try {
             Try.evaluate(() -> {
                 throw new RuntimeException();
-            }).ifThrowsCatchAndThenRun(err -> {
+            }).ifThrowsThenRunTask(err -> {
                 throw new NoSuchElementException();
             }, RuntimeException.class);
         } catch (NoSuchElementException nse) {
@@ -175,7 +175,7 @@ public class TryTest {
                 } else {
                     throw new NullPointerException();
                 }
-            }).ifThrowsCatchAndThenRun(err -> {
+            }).ifThrowsThenRunTask(err -> {
                 System.out.println("Caught the error");
                 count.incrementAndGet();
             }, ClassCastException.class, NullPointerException.class);

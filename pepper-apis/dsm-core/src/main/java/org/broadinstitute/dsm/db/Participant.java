@@ -242,7 +242,7 @@ public class Participant implements Cloneable {
     @Override
     public Participant clone() {
         return Try.evaluate(() -> (Participant) super.clone())
-                .ifThrowsThenRunTaskElseGet(error -> {
+                .ifThrowsThenRunTaskOrElseGet(error -> {
                     logger.warn(error.getMessage());
                     throw new AssertionError(); }, CloneNotSupportedException.class);
     }

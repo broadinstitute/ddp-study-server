@@ -736,13 +736,13 @@ public class DSMServer {
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         Try.evaluate(() -> PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId))
-                .ifThrowsCatchAndThenRun(Exception::printStackTrace, Exception.class);
+                .ifThrowsThenRunTask(Exception::printStackTrace, Exception.class);
 
         Try.evaluate(() -> DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId))
-                .ifThrowsCatchAndThenRun(Exception::printStackTrace, Exception.class);
+                .ifThrowsThenRunTask(Exception::printStackTrace, Exception.class);
 
         Try.evaluate(() -> MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId))
-                .ifThrowsCatchAndThenRun(Exception::printStackTrace, Exception.class);
+                .ifThrowsThenRunTask(Exception::printStackTrace, Exception.class);
 
         logger.info("Pubsub setup complete");
     }
@@ -1004,7 +1004,7 @@ public class DSMServer {
                 String rootPackage = DSMServer.class.getPackageName();
                 String slackChannel = config.getString("slack.channel");
                 URI slackHookUrl = Try.evaluate(() -> new URI(slackHookUrlString))
-                        .ifThrowsThenRunTaskElseGet(err -> {
+                        .ifThrowsThenRunTaskOrElseGet(err -> {
                             logger.error(err.getMessage());
                             throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + err);  },
                                 URISyntaxException.class);

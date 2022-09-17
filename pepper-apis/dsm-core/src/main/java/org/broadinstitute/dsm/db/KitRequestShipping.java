@@ -840,7 +840,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             Try.evaluate(() -> UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                         new PutToNestedScriptBuilder()).export()
-            ).ifThrowsCatchAndThenRun(err -> {
+            ).ifThrowsThenRunTask(err -> {
                 logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
                         + "ElasticSearch", dsmKitRequestId));
                 err.printStackTrace();

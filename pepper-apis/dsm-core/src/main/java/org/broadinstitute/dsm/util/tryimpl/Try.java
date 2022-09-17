@@ -141,7 +141,7 @@ public abstract class Try<T> {
      */
 
     @SafeVarargs
-    public final T ifThrowsThenRunTaskElseGet(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
+    public final T ifThrowsThenRunTaskOrElseGet(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
             Class<? extends Exception> currentException       = failure.getValue().getClass();
@@ -166,7 +166,7 @@ public abstract class Try<T> {
      * @param exceptions a user specified exceptions which can be caught
      */
     @SafeVarargs
-    public final void ifThrowsCatchAndThenRun(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
+    public final void ifThrowsThenRunTask(Consumer<? super Exception> consumer, Class<? extends Exception>... exceptions) {
         if (this instanceof Failure) {
             Failure failure = (Failure) this;
             Class<? extends Exception> currentException       = failure.getValue().getClass();
