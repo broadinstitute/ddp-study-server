@@ -409,6 +409,7 @@ public class ElasticSearch implements ElasticSearchable {
                 esData.put(hit.getId(), sourceMap);
             }
         }
+    }
 
     public MultiSearchResponse executeMultiSearch(String esIndex, List<QueryBuilder> queryBuilders) {
         MultiSearchRequest request = new MultiSearchRequest();
