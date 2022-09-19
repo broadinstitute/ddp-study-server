@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.lucene.search.join.ScoreMode;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -216,6 +217,11 @@ public class ParticipantWrapperTest {
         @Override
         public ElasticSearch getAllParticipantsDataByInstanceIndex(String esParticipantsIndex) {
             return null;
+        }
+
+        @Override
+        public Map<String, Map<String, Object>> getActivityDefinitions(DDPInstance ddpInstance) {
+            return Map.of();
         }
     }
 }
