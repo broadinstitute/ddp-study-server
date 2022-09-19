@@ -75,12 +75,12 @@ public class MercuryOrderUseCase {
         }
     }
 
-    public static void exportStatusToES(BaseMercuryStatusMessage baseMercuryStatusMessage, ClinicalOrder clinicalOrder, long orderDate) {
+    public static void exportStatusToES(BaseMercuryStatusMessage baseMercuryStatusMessage, ClinicalOrder clinicalOrder, long statusDate) {
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId((int) clinicalOrder.getDdpInstanceId()).orElseThrow();
         MercuryStatusMessage mercuryStatusMessage = baseMercuryStatusMessage.getStatus();
         clinicalOrder.setOrderStatus(mercuryStatusMessage.getOrderStatus());
-        clinicalOrder.setOrderDate(orderDate);
+        clinicalOrder.setStatusDate(statusDate);
         clinicalOrder.setMercuryPdoId(mercuryStatusMessage.getPdoKey());
         clinicalOrder.setStatusDetail(mercuryStatusMessage.getDetails());
 
