@@ -19,7 +19,7 @@ import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.junit.Test;
 
 
-public class NewOsteoStudyPostFilterTest {
+public class NewOsteoPostFilterTest {
 
     @Test
     public void filterWithExistingInstanceId() {
