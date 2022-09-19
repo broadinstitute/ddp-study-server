@@ -94,6 +94,7 @@
     <include file="liquibase/CMI/DDP-7556_mercury_sequencing.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7556_mercury_sequencing_roles.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8239_created_created_by_cohort_tags.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-8112_dashboard.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-8249_singularParticipantFields.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8388_drug-list-update.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8388_drug-list-update-missing.xml" relativeToChangelogFile="true"/>
