@@ -14,4 +14,5 @@ public class MercurySampleDto {
     String sequencingRestriction;
     String lastStatus;
     String lastOrderNumber;
+    String pdoOrderId;
 }

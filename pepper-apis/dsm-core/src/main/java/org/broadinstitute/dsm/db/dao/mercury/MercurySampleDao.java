@@ -39,7 +39,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "left join (select max(mercury_sequencing_id) AS ms_id, tissue_id as seqt "
                     + "From ddp_mercury_sequencing where ddp_participant_id = ? group by (tissue_id)   ) as table2 "
                     + "on table2.seqt = table1.tissue_id "
-                    + "LEFT JOIN (select order_id, mercury_sequencing_id, order_status, order_date "
+                    + "LEFT JOIN (select order_id, mercury_sequencing_id, order_status, order_date, mercury_pdo_id "
                     + "FROM ddp_mercury_sequencing WHERE ddp_participant_id = ?) as table3 ON(table3.mercury_sequencing_id = table2.ms_id)";
 
 
@@ -53,7 +53,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "    LEFT JOIN (select max(mercury_sequencing_id) AS ms_id, dsm_kit_request_id "
                     + "    FROM ddp_mercury_sequencing WHERE ddp_participant_id = ? GROUP BY (dsm_kit_request_id)  ) AS table2 "
                     + "    ON table2.dsm_kit_request_id = table1.dsm_kit_request_id "
-                    + "    LEFT JOIN (select order_id, mercury_sequencing_id, order_date, order_status "
+                    + "    LEFT JOIN (select order_id, mercury_sequencing_id, order_date, order_status, mercury_pdo_id "
                     + "    FROM ddp_mercury_sequencing WHERE ddp_participant_id = ?) as table3 "
                     + "    ON(table3.mercury_sequencing_id = table2.ms_id) ";
 
@@ -111,7 +111,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                             rs.getString(DBConstants.COLLECTION_DATE), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
                             null, rs.getLong(DBConstants.DSM_KIT_REQUEST_ID),
                             rs.getString(DBConstants.SEQUENCING_RESTRICTION), rs.getString(DBConstants.MERCURY_ORDER_STATUS),
-                            rs.getString(DBConstants.MERCURY_ORDER_ID)
+                            rs.getString(DBConstants.MERCURY_ORDER_ID), rs.getString(DBConstants.MERCURY_PDO_ID)
                     );
                     samples.add(mercurySampleDto);
                 }
@@ -142,7 +142,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                             rs.getString(DBConstants.DATE_PX), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
                             rs.getLong(DBConstants.TISSUE_ID), null,
                             null, rs.getString(DBConstants.MERCURY_ORDER_STATUS),
-                            rs.getString(DBConstants.MERCURY_ORDER_ID)
+                            rs.getString(DBConstants.MERCURY_ORDER_ID), rs.getString(DBConstants.MERCURY_PDO_ID)
                     );
                     samples.add(mercurySampleDto);
                 }
