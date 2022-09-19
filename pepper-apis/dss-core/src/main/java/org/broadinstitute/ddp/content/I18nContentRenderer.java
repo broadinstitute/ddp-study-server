@@ -91,7 +91,7 @@ public class I18nContentRenderer {
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
 
-        ZoneId zone = ZoneOffset.UTC;
+        ZoneId zone = ZoneOffset.of("US/Central");
         if (profile != null) {
             if (profile.getFirstName() != null) {
                 builder.setParticipantFirstName(profile.getFirstName());
