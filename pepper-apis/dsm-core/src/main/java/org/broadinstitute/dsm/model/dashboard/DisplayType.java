@@ -5,6 +5,7 @@ public enum DisplayType {
     VERTICAL_BAR_CHART,
     VERTICAL_HIGHLIGHTED_BAR_CHART,
     DONUT_CHART,
-    PIE_CHART
+    PIE_CHART,
+    COUNT
 
 }
