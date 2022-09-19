@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.kit;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.kit.KitPayload;
@@ -27,23 +28,31 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
     private Optional<ScanError> updateKitRequest(String hruid, String kit) {
         if (kit.startsWith("PECGS")) {
             //BLOOD
-        }  else {
+        } else {
             //saliva
         }
         List<KitRequestShipping> kitList = kitDao.getKitsByHruid(hruid);
         if (kitList != null && !kitList.isEmpty()) {
-            for (KitRequestShipping kitRequest : kitList) {
-                kitRequest.isKitRequiringTrackingScan();
-                kitRequest.getKitTypeName();
-                kitRequest.getKitLabel();
+            if (kitList.size() > 2) {
+                return Optional.ofNullable(new ScanError(kit,
+                        "Too many active kits found for \"" + hruid + "\".\n" + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
-//            kitList.stream().filter()
-//            KitRequestShipping kitRequestShipping = maybeKitRequestShipping.get();
-//            kitRequestShipping.setKitLabel(kit);
-//            kitRequestShipping.setHruid(hruid);
-//            return kitDao.updateKitLabel(kitRequestShipping);
+            for (KitRequestShipping kitRequest : kitList) {
+                if (StringUtils.isNotBlank(kitRequest.getKitLabelPrefix()) && kit.startsWith(kitRequest.getKitLabelPrefix())) {
+                    // blood kit
+                    setKitInformation(kitRequest, kit, hruid);
+                } else if (StringUtils.isBlank(kitRequest.getKitLabelPrefix()) && !kit.startsWith(kitRequest.getKitLabelPrefix())) {
+                    // saliva kit
+                    setKitInformation(kitRequest, kit, hruid);
+                }
+            }
         }
         return Optional.ofNullable(new ScanError(kit, "No kit for participant with ShortId \"" + hruid + "\" was not found.\n"
                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+    }
+
+    private void setKitInformation(KitRequestShipping kitRequestShipping, String kit, String hruid) {
+        kitRequestShipping.setKitLabel(kit);
+        kitRequestShipping.setHruid(hruid);
     }
 }
