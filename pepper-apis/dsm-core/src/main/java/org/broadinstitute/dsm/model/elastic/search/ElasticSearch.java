@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.ACTIVITY_CODE;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.ACTIVITY_VERSION;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,8 +15,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.NonNull;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
@@ -24,6 +29,8 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.MultiSearchRequest;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
@@ -32,6 +39,7 @@ import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
@@ -357,6 +365,69 @@ public class ElasticSearch implements ElasticSearchable {
         } catch (Exception e) {
             throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
         }
+    }
+
+    @Override
+    public Map<String, Map<String, Object>> getActivityDefinitions(DDPInstance ddpInstance) {
+        Map<String, Map<String, Object>> esData = new HashMap<>();
+        String index = ddpInstance.getActivityDefinitionIndexES();
+        if (StringUtils.isNotBlank(index)) {
+            logger.info("Collecting activity definitions from ES");
+            try {
+                int scrollSize = 1000;
+
+                SearchRequest searchRequest = new SearchRequest(index);
+                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+                SearchResponse response = null;
+                int i = 0;
+                while (response == null || response.getHits().getHits().length != 0) {
+                    searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+                    searchSourceBuilder.size(scrollSize);
+                    searchSourceBuilder.from(i * scrollSize);
+                    searchRequest.source(searchSourceBuilder);
+
+                    response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+                    addingActivityDefinitionHits(response, esData);
+                    i++;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Couldn't get activity definition from ES for instance " + ddpInstance.getName(), e);
+            }
+            logger.info("Got " + esData.size() + " activity definitions from ES for instance " + ddpInstance.getName());
+        }
+        return esData;
+    }
+
+    public static void addingActivityDefinitionHits(@NonNull SearchResponse response, Map<String, Map<String, Object>> esData) {
+        for (SearchHit hit : response.getHits()) {
+            Map<String, Object> sourceMap = hit.getSourceAsMap();
+            String activityCode = (String) sourceMap.get(ACTIVITY_CODE);
+            String activityVersion = (String) sourceMap.get(ACTIVITY_VERSION);
+            if (StringUtils.isNotBlank(activityCode)) {
+                esData.put(activityCode + "_" + activityVersion, sourceMap);
+            } else {
+                esData.put(hit.getId(), sourceMap);
+            }
+        }
+    }
+
+    public MultiSearchResponse executeMultiSearch(String esIndex, List<QueryBuilder> queryBuilders) {
+        MultiSearchRequest request = new MultiSearchRequest();
+        queryBuilders.forEach(queryBuilder -> {
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(queryBuilder);
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.source(searchSourceBuilder);
+            searchRequest.indices(esIndex);
+            request.add(searchRequest);
+        });
+        MultiSearchResponse result;
+        try {
+            result = ElasticSearchUtil.getClientInstance().msearch(request, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not perform multi search request for index: " + esIndex, e);
+        }
+        return result;
     }
 
     private boolean isSuccessfull(ReplicationResponse.ShardInfo shardInfo) {
