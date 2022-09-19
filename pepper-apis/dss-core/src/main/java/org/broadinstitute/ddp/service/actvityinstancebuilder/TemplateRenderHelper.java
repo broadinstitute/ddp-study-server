@@ -31,6 +31,7 @@ public class TemplateRenderHelper {
     public void createRendererInitialContext(AIBuilderContext ctx, RendererInitialContextCreator.RenderContextSource renderContextSource) {
         Map<String, Object> context = RendererInitialContextCreator.createRendererInitialContext(
                 ctx.getHandle(),
+                ctx.getInstanceGuid(),
                 ctx.getFormResponse() != null ? ctx.getFormResponse().getParticipantId() : ctx.getFormInstance().getParticipantUserId(),
                 ctx.getOperatorGuid(),
                 ctx.getStudyGuid(),
