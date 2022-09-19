@@ -33,6 +33,11 @@ public class QueryPayload {
         this.esIndex = esIndex;
     }
 
+    public QueryPayload(String path, String property, Object[] values, String esIndex) {
+        this(path, property, values);
+        this.esIndex = esIndex;
+    }
+
     public String getFieldName() {
         if (StringUtils.isNotBlank(path)) {
             return path + DBConstants.ALIAS_DELIMITER + property;

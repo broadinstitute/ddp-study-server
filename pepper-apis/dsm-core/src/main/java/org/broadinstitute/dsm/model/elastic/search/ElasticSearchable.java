@@ -5,8 +5,10 @@ import java.util.Map;
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 public interface ElasticSearchable {
 
@@ -48,6 +50,11 @@ public interface ElasticSearchable {
         return new ReplicationResponse.ShardInfo();
     }
 
+
     Map<String, Map<String, Object>> getActivityDefinitions(DDPInstance ddpInstance);
+
+    default MultiSearchResponse executeMultiSearch(String esIndex, List<QueryBuilder> queryBuilders) {
+        throw new UnsupportedOperationException();
+    }
 
 }

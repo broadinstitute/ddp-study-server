@@ -14,6 +14,9 @@ public final class DateQuestionRecord extends QuestionRecord {
     @SerializedName("dateFields")
     private DateValue dateFields;
 
+    @SerializedName("answer")
+    private String answer;
+
     public DateQuestionRecord(String stableId, DateValue answer) {
         super(QuestionType.DATE, stableId);
         this.dateFields = answer;
@@ -22,10 +25,15 @@ public final class DateQuestionRecord extends QuestionRecord {
             str = (str != null ? str : answer.asYearMonth().map(YearMonth::toString).orElse(null));
             str = (str != null ? str : answer.getYear() == null ? null : String.format("%04d", answer.getYear()));
             this.date = str;
+            this.answer = str;
         }
     }
 
     public String getDate() {
         return date;
+    }
+
+    public String getAnswer() {
+        return answer;
     }
 }
