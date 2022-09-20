@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.filter;
 
-import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,9 +32,9 @@ public class FilterFactory {
             case RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE:
                 switch (parent) {
                     case BaseFilter.PARENT_PARTICIPANT_LIST:
-                        if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value())) {
+                        if (isQuickFilter(queryParams)) {
                             filterable = new QuickFilterParticipantList();
-                        } else if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value())) {
+                        } else if (isSavedFilter(queryParams)) {
                             filterable = new SavedFilterParticipantList();
                         } else {
                             filterable = new ManualFilterParticipantList(jsonBody); //no empty filter because of pre-filter
@@ -69,6 +68,14 @@ public class FilterFactory {
                 break;
         }
         return filterable;
+    }
+
+    private static boolean isSavedFilter(QueryParamsMap queryParams) {
+        return StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value());
+    }
+
+    private static boolean isQuickFilter(QueryParamsMap queryParams) {
+        return StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value());
     }
 
 }

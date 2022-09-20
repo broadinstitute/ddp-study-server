@@ -3,25 +3,66 @@ group JdbiPicklistOption;
 insertOption() ::= <<
 insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, is_default,
-       display_order, revision_id, nested_options_template_id)
+       display_order, revision_id, nested_options_template_id, value)
 values (:picklistQuestionId, :stableId, :tooltipTemplateId,
        :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :isDefault,
-       :displayOrder, :revisionId, :nestedOptionsTemplateId)
+       :displayOrder, :revisionId, :nestedOptionsTemplateId, :value)
 >>
 
 insertOptionByDto() ::= <<
 insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, is_default,
-       display_order, revision_id)
+       display_order, revision_id, value)
 values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
        :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
-       :dto.isAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
+       :dto.isAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId, :dto.getValue)
+>>
+
+fetchOptionById() ::= <<
+SELECT  picklist_option_id,
+        picklist_option_stable_id,
+        value,
+        option_label_template_id,
+        tooltip_template_id,
+        detail_label_template_id,
+        allow_details,
+        is_exclusive,
+        is_default,
+        display_order,
+        revision.revision_id AS revision_id,
+        revision.start_date AS revision_start_timestamp,
+        revision.end_date AS revision_end_timestamp,
+        nested_options_template_id
+FROM picklist_option
+    JOIN revision ON revision.revision_id = picklist_option.revision_id
+WHERE picklist_option.picklist_option_id = :id
+>>
+
+// The lombok-generated method names used here are due to
+// the PicklistOptionDto not being Java Bean compatible.
+// (bskinner - 2022.08.29)
+updateOptionByDto() ::= <<
+UPDATE `picklist_option`
+SET picklist_option_stable_id = :dto.getStableId,
+    value = :dto.getValue,
+    option_label_template_id = :dto.getOptionLabelTemplateId,
+    tooltip_template_id = :dto.getTooltipTemplateId,
+    detail_label_template_id = :dto.getDetailLabelTemplateId,
+    allow_details = :dto.isAllowDetails,
+    is_exclusive = :dto.isExclusive,
+    is_default = :dto.isDefault,
+    display_order = :dto.getDisplayOrder,
+    revision_id = :dto.getRevisionId,
+    nested_options_template_id = :dto.getNestedOptionsTemplateId
+WHERE
+    picklist_option_id = :dto.getId
 >>
 
 queryInfoByOptionStableIdAndRevision() ::= <<
 select
     po.picklist_option_id,
     po.picklist_option_stable_id,
+    po.value,
     po.option_label_template_id,
     po.tooltip_template_id,
     po.detail_label_template_id,
@@ -50,6 +91,7 @@ queryAllOrderedOptionsByQuestionIdAndRevision() ::= <<
 select
     po.picklist_option_id,
     po.picklist_option_stable_id,
+    po.value,
     po.option_label_template_id,
     po.tooltip_template_id,
     po.detail_label_template_id,
@@ -78,6 +120,7 @@ order by po.display_order asc, po.picklist_option_id asc
 queryOptionsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
 select po.picklist_option_id,
        po.picklist_option_stable_id,
+       po.value,
        po.option_label_template_id,
        po.tooltip_template_id,
        po.detail_label_template_id,
@@ -102,6 +145,7 @@ queryActiveInfoByOptionStableId() ::= <<
 select
     po.picklist_option_id,
     po.picklist_option_stable_id,
+    po.value,
     po.option_label_template_id,
     po.tooltip_template_id,
     po.detail_label_template_id,
@@ -125,6 +169,7 @@ and rev.end_date is null
 queryAllActiveOrderedOptionsByQuestionId() ::= <<
 select po.picklist_option_id,
        po.picklist_option_stable_id,
+       po.value,
        po.option_label_template_id,
        po.tooltip_template_id,
        po.detail_label_template_id,
@@ -158,6 +203,7 @@ selectAllPicklistSuboptions() ::= <<
 select pno.parent_option_id        as parent_option_id,
 	   po.picklist_option_id        as picklist_option_id,
        po.picklist_option_stable_id as picklist_option_stable_id,
+       po.value,
        po.option_label_template_id  as option_label_template_id,
        po.tooltip_template_id       as tooltip_template_id,
        po.detail_label_template_id  as detail_label_template_id,

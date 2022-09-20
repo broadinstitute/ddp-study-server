@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -62,8 +63,22 @@ public class AndOrFilterSeparatorTest {
 
     @Test
     public void handleSpecialCaseEndingWithOROperator() {
-        String filter = "AND m.additional_values_json IS NOT NULL AND JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' )  = 'TRY_AGAIN_MEDICAL_RECORD'";
+        String filter =
+                "AND m.additional_values_json IS NOT NULL "
+                        + "AND JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' )  = "
+                        + "'TRY_AGAIN_MEDICAL_RECORD'";
         Map<String, List<String>> stringListMap = new AndOrFilterSeparator(filter).parseFiltersByLogicalOperators();
-        Assert.assertEquals("JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' )  = 'TRY_AGAIN_MEDICAL_RECORD'", stringListMap.get("AND").get(0));
+        Assert.assertEquals("JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' )  = 'TRY_AGAIN_MEDICAL_RECORD'",
+                stringListMap.get("AND").get(0));
+    }
+
+    @Test
+    public void handleAge() {
+        String filter = "AND m.randValue <= 4";
+        Map<String, List<String>> stringListMap = new AndOrFilterSeparator(filter).parseFiltersByLogicalOperators();
+        Assert.assertEquals("m.randValue <= 4", stringListMap.get("AND").get(0));
+        String filter2 = "AND m.age >= 5 AND m.age <= 10";
+        stringListMap = new AndOrFilterSeparator(filter2).parseFiltersByLogicalOperators();
+        Assert.assertEquals(Arrays.asList("m.age >= 5", "m.age <= 10"), stringListMap.get("AND"));
     }
 }

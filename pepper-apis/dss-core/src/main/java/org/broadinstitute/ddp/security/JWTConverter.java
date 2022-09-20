@@ -144,16 +144,18 @@ public class JWTConverter {
         return handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
     }
 
-    private DDPAuth convertJWT(String jwt) {
-        DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
-        if (cachedAuth != null) {
-            log.info("Auth found in cache");
-            TransactionWrapper.useTxn(handle -> {
-                String preferrededLanguage = getPreferredLanguageCodeForUser(handle, cachedAuth.getOperator());
-                cachedAuth.setPreferredLanguage(preferrededLanguage);
+    private DDPAuth convertJWT(String jwt, boolean useCachedIfAvailable) {
+        if (useCachedIfAvailable) {
+            DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
+            if (cachedAuth != null) {
+                log.info("Auth found in cache");
+                TransactionWrapper.useTxn(handle -> {
+                    String preferrededLanguage = getPreferredLanguageCodeForUser(handle, cachedAuth.getOperator());
+                    cachedAuth.setPreferredLanguage(preferrededLanguage);
 
-            });
-            return cachedAuth;
+                });
+                return cachedAuth;
+            }
         }
         DDPAuth ddpAuth =
                 TransactionWrapper.withTxn(handle -> {
@@ -186,17 +188,16 @@ public class JWTConverter {
 
                         if (userProfile == null) {
                             Optional<User> user = handle.attach(UserDao.class).findUserByGuid(ddpUserGuid);
-                            userId = user.isPresent() ? user.get().getId() : null;
+                            userId = user.map(User::getId).orElse(null);
                         } else {
                             userId = userProfile.getUserId();
                         }
                         String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
-                        txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
+                        txnDdpAuth = new DDPAuth(auth0Domain, auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
-                        log.warn("Could not verify token. User "
-                                + decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString()
-                                + " tried to authenticate against client auth0clientId "
-                                + auth0ClientId);
+                        log.warn("Could not verify token. User {} tried to authenticate against client {}",
+                                decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString(),
+                                auth0ClientId);
                         throw e;
                     }
                     if (userId != null) {
@@ -221,11 +222,11 @@ public class JWTConverter {
      * header, validates the JWT, and converts it into
      * {@link DDPAuth a ddp auth object}.
      */
-    public DDPAuth convertJWTFromHeader(String authHeader) {
+    public DDPAuth convertJWTFromHeader(String authHeader, boolean useCachedIfAvailable) {
         DDPAuth ddpAuth;
         String jwt = extractEncodedJwtFromHeader(authHeader);
         if (jwt != null) {
-            ddpAuth = convertJWT(jwt);
+            ddpAuth = convertJWT(jwt, useCachedIfAvailable);
         } else {
             ddpAuth = new DDPAuth();
             ddpAuth.setPreferredLanguage(DEFAULT_ISO_LANGUAGE_CODE);

@@ -1,11 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -20,18 +14,23 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.PdfSql;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.PhysicianComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfTemplate;
@@ -48,6 +47,12 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Task to make additional edits as part of the "Brain Tumor Project" rename.
@@ -205,6 +210,26 @@ public class OsteoMRFv2 implements CustomTask {
             sectionBlockDao.insertBlockForSection(activityId, closeSectionId, order, blockDef, v2Dto.getRevId());
         }
 
+        // disable all component blocks
+        for (var section : activity.getSections()) {
+            for (var block : section.getBlocks()) {
+                if (block.getBlockType() == BlockType.COMPONENT) {
+                    if (((ComponentBlockDef) block).getComponentType() != ComponentType.PHYSICIAN) {
+                        sectionBlockDao.disableBlock(block.getBlockId(), meta);
+                        log.info("Disabled component blockId {}", block.getBlockId());
+                    } else {
+                        var templateDao = handle.attach(TemplateDao.class);
+                        var physComponentRevId = ((PhysicianComponentDef) block).getComponentRevisionId();
+                        var titleTemplateId = templateDao.insertTemplate(Template.text(""), physComponentRevId);
+                        var subTitleTemplateId = templateDao.insertTemplate(Template.text(""), physComponentRevId);
+                        var physComponentId = helper.findComponentIdByBlockId(block.getBlockId());
+                        DBUtils.checkUpdate(1, helper.updatePhysicianTemplates(titleTemplateId, subTitleTemplateId, physComponentId));
+                        log.info("Successfully updated title and subtitle templates for Physician Component id {}", physComponentId);
+                    }
+                }
+            }
+        }
+
         // update study-pdfs.conf
         for (var pdfConfigName : activityCfg.getStringList("pdfs")) {
             PdfConfigInfo info = pdfDao.findConfigInfoByStudyIdAndName(studyDto.getId(), pdfConfigName)
@@ -268,5 +293,35 @@ public class OsteoMRFv2 implements CustomTask {
 
         @SqlUpdate("update study_activity set is_write_once = :writeOnce where study_activity_id = :activityId")
         int updateActivityWriteOnce(@Bind("activityId") long activityId, @Bind("writeOnce") boolean writeOnce);
+
+        @SqlUpdate("update user_announcement_event_action set message_template_id = :msgTemplateId where event_action_id ="
+                + "(select event_action_id from event_configuration where event_configuration_id = :eventConfigurationId)")
+        int updateAnnouncementTemplateId(@Bind("msgTemplateId") long msgTemplateId,
+                                         @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlQuery("select ec.event_configuration_id from event_configuration ec "
+                + "join activity_instance_creation_action aica on aica.activity_instance_creation_action_id = ec.event_action_id "
+                + "where aica.study_activity_id = :activityId")
+        List<Long> findEventConfigurationIdByActivityId(@Bind("activityId") long activityId);
+
+        @SqlUpdate("update event_configuration set precondition_expression_id = :exprId, execution_order = :order "
+                + "where event_configuration_id = :eventConfigurationId")
+        int updateEventExpressionAndOrder(@Bind("exprId") long exprId,
+                                          @Bind("order") int order,
+                                          @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlUpdate("update institution_physician_component set title_template_id = :titleTemplateId, "
+                + "        subtitle_template_id = :subtitleTemplateId where institution_physician_component_id = :componentId")
+        int updatePhysicianTemplates(
+                @Bind("titleTemplateId") Long titleTemplateId,
+                @Bind("subtitleTemplateId") Long subtitleTemplateId,
+                @Bind("componentId") long componentId);
+
+        @SqlQuery("select ipc.institution_physician_component_id from institution_physician_component ipc "
+                + "join component c on ipc.institution_physician_component_id = c.component_id "
+                + "join block_component bc on c.component_id = bc.component_id "
+                + "join block b on bc.block_id = b.block_id "
+                + "where b.block_id = :blockId; ")
+        int findComponentIdByBlockId(@Bind("blockId") long blockId);
     }
 }

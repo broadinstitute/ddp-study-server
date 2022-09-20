@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -28,7 +29,7 @@ import org.broadinstitute.ddp.model.dsm.TestResult;
  * Provides methods that can be called within templates to get certain values from the system.
  */
 @Slf4j
-public class RenderValueProvider {
+public class RenderValueProvider implements Cloneable {
     /**
      * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
      * return pre-defined values:
@@ -44,6 +45,7 @@ public class RenderValueProvider {
     private String participantLastName;
     private LocalDate participantBirthDate;
     private ZoneId participantTimeZone;
+    private LocalDate firstCompletedDate;
     private LocalDate date;
     private String kitRequestId;
     private KitReasonType kitReasonType;
@@ -62,6 +64,32 @@ public class RenderValueProvider {
 
     private RenderValueProvider() {
         // Use builder.
+    }
+
+    @Override
+    public RenderValueProvider clone() throws CloneNotSupportedException {
+        var newProvider = (RenderValueProvider)super.clone();
+
+        newProvider.participantGuid = participantGuid;
+        newProvider.participantFirstName = participantFirstName;
+        newProvider.participantLastName = participantLastName;
+        newProvider.participantBirthDate = participantBirthDate;
+        newProvider.participantTimeZone = participantTimeZone;
+        newProvider.firstCompletedDate = firstCompletedDate;
+        newProvider.date = date;
+        newProvider.kitRequestId = kitRequestId;
+        newProvider.kitReasonType = kitReasonType;
+        newProvider.testResultCode = testResultCode;
+        newProvider.testResultTimeCompleted = testResultTimeCompleted;
+        newProvider.activityInstanceNumber = activityInstanceNumber;
+        newProvider.formResponse = formResponse;
+        newProvider.formActivity = formActivity;
+        newProvider.isoLangCode = isoLangCode;
+        newProvider.formInstance = formInstance;
+        newProvider.governedParticipant = governedParticipant;
+        newProvider.addressGuid = addressGuid;
+        newProvider.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
+        return newProvider;
     }
 
     /**
@@ -101,6 +129,28 @@ public class RenderValueProvider {
     }
 
     /**
+     * If the current activity has been previously completed, returns the date of completion.
+     * 
+     * <p>See {@link java.time.format.DateTimeFormatter#ofPattern(String)} for more information
+     * about supported format strings.
+     * @param format The date format string to use. 
+     * @param defaultValue The string to return if there is no valid date
+     * @return the formatted date of first completion, or `defaultValue` if one does not exist
+     */
+    public String firstCompletedDate(String format, String defaultValue) {
+        if (firstCompletedDate == null) {
+            return defaultValue;
+        }
+
+        try {
+            return DateTimeFormatter.ofPattern(format).format(firstCompletedDate);
+        } catch (Exception e) {
+            log.warn("Error formatting submission date value '{}' using format '{}'", firstCompletedDate, format, e);
+            return firstCompletedDate.toString();
+        }
+    }
+
+    /**
      * Returns today's date in given format. Might return a snapshot-ed date.
      */
     public String date(String format) {
@@ -114,6 +164,10 @@ public class RenderValueProvider {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public void setFirstCompletedDate(LocalDate date) {
+        this.firstCompletedDate = date;
     }
 
     public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
@@ -215,27 +269,56 @@ public class RenderValueProvider {
     }
 
     /**
-     * checkAnswer
-     *
-     * @param questionStableId the question stable id
-     * @param optionStableId    the option stable Id
-     * @param stringIfMatches    string if question is answered with option stable Id
-     * @param stringOtherwise    string if question is not answered with option stable Id
-     * @return string stringIfMatches or stringOtherwise
+     * Returns a string value depending on whether a specified PICKLIST question's option
+     * is selected or not.
+     * 
+     * <p>If {@link useDefaultsForDdpMethods} is true, this method will always return
+     * a value of the form "stringIfMatches/stringOtherwise".
+     * 
+     * <p>If an activity does not have a response,
+     * or the question does not have an associated answer, a match will be assumed,
+     * and the `stringIfMatches` value will be returned.
+     * @param questionStableId  the stable id of the PICKLIST question
+     * @param optionStableId    the stable id of the option to check
+     * @param stringIfMatches    string to return if the option is selected, or there is no answer
+     * @param stringOtherwise    string to return if the option is not selected
+     * @return the string value based on the option's selected state
      */
     public String checkAnswer(String questionStableId, String optionStableId,
                               String stringIfMatches, String stringOtherwise) {
-        Answer answer = null;
+        //only used during elastic export
+        if (useDefaultsForDdpMethods) {
+            return String.format("%s/%s", stringIfMatches, stringOtherwise);
+        }
+
+        // Defaulting to `true` is intentional- a null response or answer
+        // is assumed to be "selected"
+        // (bskinner 2022.08.25)
+        var optionIsSelected = true;
+
         if (formResponse != null) {
-            answer = formResponse.getAnswer(questionStableId);
-            if (answer.getQuestionType() != QuestionType.PICKLIST) {
-                throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
-                        formResponse.getActivityCode(), questionStableId));
+            var answer = formResponse.getAnswer(questionStableId);
+
+            if (answer != null) {
+                if (answer.getQuestionType() != QuestionType.PICKLIST) {
+                    var message = String.format("Only %s answers are supported by the `checkAnswer` macro [activity:%s,question:%s]",
+                            QuestionType.PICKLIST,
+                            formResponse.getActivityCode(),
+                            questionStableId);
+                    throw new DDPException(message);
+                }
+
+                optionIsSelected = ((PicklistAnswer) answer).getValue()
+                        .stream()
+                        .anyMatch((selected) -> selected.getStableId().equals(optionStableId));
             }
         }
-        return answer == null || ((PicklistAnswer) answer).getValue().stream()
-                .anyMatch(selected -> selected.getStableId().equals(optionStableId))
-                ? stringIfMatches : stringOtherwise;
+
+        if (optionIsSelected) {
+            return stringIfMatches;
+        } else {
+            return stringOtherwise;
+        }
     }
 
     /**
@@ -351,6 +434,9 @@ public class RenderValueProvider {
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
         }
+        if (firstCompletedDate != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.DDP_FIRST_COMPLETED_DATE, firstCompletedDate.toString());
+        }
         if (kitRequestId != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
         }
@@ -372,12 +458,9 @@ public class RenderValueProvider {
         return snapshot;
     }
 
+    @AllArgsConstructor
     public static final class Builder {
         private RenderValueProvider provider;
-
-        public Builder(RenderValueProvider provider) {
-            this.provider = cloneProvider(provider);
-        }
 
         public Builder() {
             provider = new RenderValueProvider();
@@ -410,6 +493,11 @@ public class RenderValueProvider {
 
         public Builder setDate(LocalDate date) {
             provider.date = date;
+            return this;
+        }
+
+        public Builder setFirstCompletedDate(LocalDate date) {
+            provider.firstCompletedDate = date;
             return this;
         }
 
@@ -502,6 +590,11 @@ public class RenderValueProvider {
                 provider.date = LocalDate.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.DDP_FIRST_COMPLETED_DATE);
+            if (value != null) {
+                provider.firstCompletedDate = LocalDate.parse(value);
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID);
             if (value != null) {
                 provider.kitRequestId = value;
@@ -536,30 +629,20 @@ public class RenderValueProvider {
         }
 
         public RenderValueProvider build() {
-            return cloneProvider(provider);
-        }
+            RenderValueProvider newProvider = null;
 
-        private RenderValueProvider cloneProvider(RenderValueProvider provider) {
-            RenderValueProvider copy = new RenderValueProvider();
-            copy.participantGuid = provider.participantGuid;
-            copy.participantFirstName = provider.participantFirstName;
-            copy.participantLastName = provider.participantLastName;
-            copy.participantBirthDate = provider.participantBirthDate;
-            copy.participantTimeZone = provider.participantTimeZone;
-            copy.date = provider.date;
-            copy.kitRequestId = provider.kitRequestId;
-            copy.kitReasonType = provider.kitReasonType;
-            copy.testResultCode = provider.testResultCode;
-            copy.testResultTimeCompleted = provider.testResultTimeCompleted;
-            copy.activityInstanceNumber = provider.activityInstanceNumber;
-            copy.formResponse = provider.formResponse;
-            copy.formActivity = provider.formActivity;
-            copy.isoLangCode = provider.isoLangCode;
-            copy.formInstance = provider.formInstance;
-            copy.governedParticipant = provider.governedParticipant;
-            copy.addressGuid = provider.addressGuid;
-            copy.useDefaultsForDdpMethods = provider.useDefaultsForDdpMethods;
-            return copy;
+            try {
+                newProvider = (RenderValueProvider)provider.clone();
+            } catch (CloneNotSupportedException cloneException) {
+                // As of writing this comment, RenderValueProvider completely implements
+                // clone() and there shouldn't be any cases where a CloneNotSupportedException
+                // is thrown. That said, handle it just in case something changes.
+                // (bskinner - 2022.09.12)
+                var message = String.format("Failed to clone instance of %s", this.getClass().getName());
+                throw new DDPException(message, cloneException);
+            }
+
+            return newProvider;
         }
     }
 }

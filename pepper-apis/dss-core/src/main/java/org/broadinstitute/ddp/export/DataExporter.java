@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.StudyDataAliasDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
@@ -57,8 +58,11 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.EquationQuestionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
+import org.broadinstitute.ddp.equation.QuestionEvaluator;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityMetadataCollector;
@@ -71,6 +75,7 @@ import org.broadinstitute.ddp.export.json.structured.ComponentQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.CompositeQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.DateQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.DsmComputedRecord;
+import org.broadinstitute.ddp.export.json.structured.EquationQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.export.json.structured.ParticipantProfile;
 import org.broadinstitute.ddp.export.json.structured.ParticipantRecord;
@@ -80,6 +85,7 @@ import org.broadinstitute.ddp.export.json.structured.MatrixQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.QuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.SimpleQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.UserRecord;
+import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -89,6 +95,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -519,10 +526,10 @@ public class DataExporter {
                                         Map<String, Set<String>> governedUsersMap) {
         UserProfile userProfile = user.getProfile();
         if (userProfile == null) {
-            userProfile = new UserProfile.Builder(user.getId()).build();
+            userProfile = UserProfile.builder().userId(user.getId()).build();
         }
         ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
-                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
+                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail().orElse(null),
                 userProfile.getPreferredLangCode(), userProfile.getDoNotContact(), user.getCreatedAt());
 
         Set<String> proxies = new HashSet<>();
@@ -542,10 +549,12 @@ public class DataExporter {
 
         Map<String, User> users = resultset
                 .peek(user -> {
-                    String auth0UserId = user.getAuth0UserId();
-                    if (StringUtils.isBlank(auth0UserId)) {
+                    if (user.hasAuth0Account() == false) {
                         return;
                     }
+                    
+                    var auth0UserId = user.getAuth0UserId().get();
+
                     String email = emailStore.get(auth0UserId);
                     if (email == null) {
                         usersMissingEmails.put(auth0UserId, user.getGuid());
@@ -666,11 +675,17 @@ public class DataExporter {
                     ? participantProxyGuids.get(participantGuid).stream().findFirst().get()
                     : participantGuid;
             if (governancePolicy != null) {
-                AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
-                        pexInterpreter,
-                        participantGuid,
-                        operatorGuid)
-                        .orElse(null);
+                AgeOfMajorityRule aomRule = null;
+                try {
+                    aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
+                            pexInterpreter,
+                            participantGuid,
+                            operatorGuid)
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.error("Error while evaluating age-of-majority rules for participant {} operator {} and studyId {}, ignoring.",
+                            participantGuid, operatorGuid, studyId, e); //log & skip AOM content for the ptp.
+                }
 
                 if (birthDate != null && aomRule != null) {
                     dateOfMajority = aomRule.getDateOfMajority(birthDate);
@@ -743,7 +758,7 @@ public class DataExporter {
      *
      * @param activities the list of activity data for a study
      * @param extract    the participant data for the study
-     * @return
+     * @return a json streen representing the participant's data
      */
     private String formatParticipantToFlatJSON(Handle handle, List<ActivityExtract> activities,
                                                Participant extract) {
@@ -810,7 +825,7 @@ public class DataExporter {
                 .setHruid(participantUser.getHruid())
                 .setLegacyAltPid(participantUser.getLegacyAltPid())
                 .setLegacyShortId(participantUser.getLegacyShortId())
-                .setEmail(participantUser.getEmail())
+                .setEmail(participantUser.getEmail().orElse(null))
                 .setCreatedAt(participantUser.getCreatedAt());
         ParticipantProfile participantProfile = builder.build();
 
@@ -824,7 +839,7 @@ public class DataExporter {
             for (ActivityResponse instance : instances) {
                 ActivityInstanceStatusDto lastStatus = instance.getLatestStatus();
                 List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(activityExtract.getDefinition(),
-                        instance, participant);
+                        instance, participant, handle);
                 ActivityInstanceRecord activityInstanceRecord = new ActivityInstanceRecord(
                         instance.getActivityVersionTag(),
                         instance.getActivityCode(),
@@ -921,7 +936,7 @@ public class DataExporter {
      * @return A flat list of question records
      */
     private List<QuestionRecord> createQuestionRecordsForActivity(ActivityDef definition, ActivityResponse response,
-                                                                  Participant participant) {
+                                                                  Participant participant, Handle handle) {
         List<QuestionRecord> questionRecords = new ArrayList<>();
 
         if (definition.getActivityType() != ActivityType.FORMS) {
@@ -959,6 +974,9 @@ public class DataExporter {
                             allQuestions.add(questionBlock.getQuestion());
                         }
                     }
+                } else if (formBlock.getBlockType() == BlockType.TABULAR) {
+                    TabularBlockDef tabularBlock = (TabularBlockDef) formBlock;
+                    allQuestions.addAll(tabularBlock.getQuestions().collect(Collectors.toList()));
                 } else if (formBlock.getBlockType() == BlockType.QUESTION) {
                     QuestionBlockDef questionBlock = (QuestionBlockDef) formBlock;
                     allQuestions.add(questionBlock.getQuestion());
@@ -968,11 +986,11 @@ public class DataExporter {
                     if (componentBlockDef.getComponentType() == MAILING_ADDRESS) {
                         componentDef = new CompositeQuestionDef(componentBlockDef.getComponentType().name(), false,
                                 dummyTemplate, null, null, dummyValidations, null,
-                                null, false, true, null, null, false, false);
+                                null, false, true, null, null, false, false, null);
                     } else {
                         componentDef = new CompositeQuestionDef(((PhysicianInstitutionComponentDef) componentBlockDef).getInstitutionType()
                                 .name(), false, dummyTemplate, null, null, dummyValidations, null,
-                                null, false, true, null, null, false, false);
+                                null, false, true, null, null, false, false, null);
                     }
 
                     allQuestions.add(componentDef);
@@ -993,11 +1011,11 @@ public class DataExporter {
                     ((CompositeAnswer) instance.getAnswer(composite.getStableId())).getValue().stream()
                             .flatMap(row -> row.getValues().stream())
                             .forEach(instance::putAnswer);
-                    composite.getChildren().forEach(child -> questionRecords.add(createRecordForQuestion(child, instance)));
+                    composite.getChildren().forEach(child -> questionRecords.add(createRecordForQuestion(child, instance, handle)));
                     continue;
                 }
             }
-            questionRecords.add(createRecordForQuestion(question, instance));
+            questionRecords.add(createRecordForQuestion(question, instance, handle));
         }
 
         return questionRecords.stream().filter(Objects::nonNull).collect(Collectors.toList());
@@ -1036,35 +1054,41 @@ public class DataExporter {
      * @param instance The activity instance that has answers
      * @return A question record, or null if it's an unanswered deprecated question that should be skipped for export
      */
-    private QuestionRecord createRecordForQuestion(QuestionDef question, FormResponse instance) {
+    private QuestionRecord createRecordForQuestion(QuestionDef question, FormResponse instance, Handle handle) {
         if (question.isDeprecated() && !instance.hasAnswer(question.getStableId())) {
             return null;
         }
         Answer answer = instance.getAnswer(question.getStableId());
-        if (answer == null) {
+        if (answer == null && question.getQuestionType() != QuestionType.EQUATION) {
             return null;
         }
-        QuestionType type = answer.getQuestionType();
+        QuestionType type = question.getQuestionType();
         if (type == QuestionType.DATE) {
             DateValue value = (DateValue) answer.getValue();
             return new DateQuestionRecord(question.getStableId(), value);
-        } else if (answer.getQuestionType() == QuestionType.FILE) {
+        } else if (type == QuestionType.FILE) {
             List<FileInfo> fileInfos = ((FileAnswer) answer).getValue();
             List<Long> uploadIds = fileInfos == null
                     ? Collections.emptyList() :
                     fileInfos.stream().map(FileInfo::getUploadId).collect(Collectors.toList());
             return new SimpleQuestionRecord(type, question.getStableId(), uploadIds);
-        } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
+        } else if (type == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> selected = ((PicklistAnswer) answer).getValue();
             return new PicklistQuestionRecord(question.getStableId(), selected);
-        } else if (answer.getQuestionType() == QuestionType.MATRIX) {
+        } else if (type == QuestionType.MATRIX) {
             List<SelectedMatrixCell> selected = ((MatrixAnswer) answer).getValue();
             return new MatrixQuestionRecord(question.getStableId(), selected);
-        } else if (answer.getQuestionType() == QuestionType.COMPOSITE) {
+        } else if (type == QuestionType.COMPOSITE) {
             List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
             return new CompositeQuestionRecord(question.getStableId(), rows);
-        } else if (answer.getQuestionType() == QuestionType.DECIMAL) {
+        } else if (type == QuestionType.DECIMAL) {
             return new SimpleQuestionRecord(type, question.getStableId(), ((DecimalAnswer) answer).getValueAsBigDecimal());
+        } else if (type == QuestionType.EQUATION) {
+            final Optional<QuestionDto> equationDto = handle.attach(QuestionDao.class).getJdbiQuestion()
+                    .findDtoByStableIdAndInstanceGuid(question.getStableId(), instance.getGuid());
+            final var questionEvaluator = new QuestionEvaluator(handle, instance.getGuid());
+            final EquationResponse response = questionEvaluator.evaluate((EquationQuestionDto) equationDto.get());
+            return new EquationQuestionRecord(question.getStableId(), response);
         } else {
             return new SimpleQuestionRecord(type, question.getStableId(), answer.getValue());
         }

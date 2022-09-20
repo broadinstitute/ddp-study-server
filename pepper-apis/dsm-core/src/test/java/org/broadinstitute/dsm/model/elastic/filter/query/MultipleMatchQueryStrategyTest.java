@@ -2,13 +2,10 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class MultipleMatchQueryStrategyTest {
 
@@ -16,10 +13,20 @@ public class MultipleMatchQueryStrategyTest {
     public void build() {
         Operator multipleOptions = Operator.MULTIPLE_OPTIONS;
         String[] values = {"Full", "Partial"};
-        QueryPayload mrDocument = new QueryPayload("dsm.medicalRecord", "mrDocument", values);
+        QueryPayload mrDocument =
+                new QueryPayload.Builder()
+                        .withPath("dsm.medicalRecord")
+                        .withProperty("mrDocument")
+                        .withValues(values)
+                        .withAlias("m")
+                        .build();
 
-        BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "mrDocument");
-        NestedQueryBuilder nestedQueryBuilder = (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(multipleOptions, mrDocument);
+        BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of(mrDocument);
+        BuildQueryStrategy queryStrategy = multipleOptions.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
+        NestedQueryBuilder nestedQueryBuilder =
+                (NestedQueryBuilder) baseQueryBuilder.build(queryStrategy.build()
+                );
 
         BoolQueryBuilder expectedBoolQuery = new BoolQueryBuilder();
 

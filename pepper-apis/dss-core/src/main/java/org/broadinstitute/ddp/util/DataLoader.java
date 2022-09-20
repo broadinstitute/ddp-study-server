@@ -651,6 +651,7 @@ public class DataLoader {
                         physician.getName(),
                         physician.getCity(),
                         physician.getState(),
+                        physician.getCountry(),
                         physician.getZipcode(),
                         physician.getPhonenumber(),
                         physician.getPhysicianid(),
@@ -676,6 +677,7 @@ public class DataLoader {
                         null, //name
                         institution.getCity(),
                         institution.getState(),
+                        institution.getCountry(),
                         null,
                         null,
                         institution.getInstitutionId(),
@@ -698,6 +700,7 @@ public class DataLoader {
                     null, //name
                     releaseSurvey.getInitialBiopsyCity(),
                     releaseSurvey.getInitialBiopsyState(),
+                    releaseSurvey.getCountry(),
                     null,
                     null,
                     DEFAULT_DSM_BIOPSY_GUID, null
@@ -1300,7 +1303,7 @@ public class DataLoader {
 
         long userId = userDao.insertMigrationUser(auth0UserId, newUserGuid, pepperClientId.get(), newUserHruid,
                 data.getDatstatAltpid(), data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis);
-        UserDto newUser = new UserDto(userId, auth0UserId, newUserGuid, newUserHruid, data.getDatstatAltpid(),
+        UserDto newUser = new UserDto(userId, auth0UserId, null, newUserGuid, newUserHruid, data.getDatstatAltpid(),
                 data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, newUser.getUserGuid());
 
@@ -1329,11 +1332,13 @@ public class DataLoader {
         Boolean isDoNotContact = getBooleanValue(data.getDdpDoNotContact());
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfile profile = new UserProfile.Builder(user.getUserId())
-                .setFirstName(StringUtils.trim(data.getDatstatFirstname()))
-                .setLastName(StringUtils.trim(data.getDatstatLastname()))
-                .setPreferredLangId(languageCodeId)
-                .setDoNotContact(isDoNotContact)
+        UserProfile profile = UserProfile.builder()
+                .userId(user.getUserId())
+                .firstName(StringUtils.trim(data.getDatstatFirstname()))
+                .lastName(StringUtils.trim(data.getDatstatLastname()))
+                .preferredLangId(languageCodeId)
+                .preferredLangCode(null)
+                .doNotContact(isDoNotContact)
                 .build();
         profileDao.createProfile(profile);
 

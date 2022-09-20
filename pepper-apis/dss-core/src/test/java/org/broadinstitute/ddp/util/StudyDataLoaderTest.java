@@ -12,7 +12,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -368,10 +368,16 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(JdbiUserStudyLegacyData.class)).thenReturn(mockJdbiUserStudyLegacyData);
         when(mockHandle.attach(JdbiUserStudyEnrollment.class)).thenReturn(mockJdbiUserStudyEnrollment);
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
-        StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+
+        StudyDto studyDto = StudyDto.builder()
+                .id(pretendStudyId)
+                .guid(pretendStudyGuid)
+                .name("MBC")
+                .umbrellaId(1)
+                .auth0TenantId(2)
+                .build();
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -459,10 +465,17 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(JdbiMedicalProvider.class)).thenReturn(mockJdbiMedicalProvider);
         when(mockHandle.attach(JdbiInstitutionType.class)).thenReturn(mockInstitutionType);
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
-        StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+
+        StudyDto studyDto = StudyDto.builder()
+                .id(pretendStudyId)
+                .guid(pretendStudyGuid)
+                .name("MBC")
+                .umbrellaId(1)
+                .auth0TenantId(2)
+                .build();
+
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
         mockDataLoader.loadBloodReleaseSurveyData(
@@ -517,10 +530,16 @@ public class StudyDataLoaderTest {
         AnswerDao mockAnswerDao = mock(AnswerDao.class);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
-        StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+
+        StudyDto studyDto = StudyDto.builder()
+                .id(pretendStudyId)
+                .guid(pretendStudyGuid)
+                .name("MBC")
+                .umbrellaId(1)
+                .auth0TenantId(2)
+                .build();
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -704,7 +723,7 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(any())).thenReturn(mockDao);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         mailAddress = mockDataLoader.getUserAddress(mockHandle,
                 participantData,
@@ -751,10 +770,13 @@ public class StudyDataLoaderTest {
         when(mockJdbiLanguageCode.getLanguageCodeId(anyString())).thenReturn(pretendLanguageCodeId);
 
         UserProfileDao mockProfileDao = mock(UserProfileDao.class);
-        doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
+
+        // The value returned by `doReturn` is not used in `addUserProfile` below, so
+        // returning `null` here will work.
+        doReturn(null).when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
 
         mockDataLoader.addUserProfile(
@@ -768,7 +790,7 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<UserProfile> userProfileCaptor = ArgumentCaptor.forClass(UserProfile.class);
         verify(mockProfileDao, times(1)).createProfile(userProfileCaptor.capture());
 
-        assertEquals(pretendUserId, userProfileCaptor.getValue().getUserId());
+        assertEquals(Long.valueOf(pretendUserId), userProfileCaptor.getValue().getUserId());
 
         assertEquals("First1539381231204", userProfileCaptor.getValue().getFirstName());
         assertEquals("Last1539381231204", userProfileCaptor.getValue().getLastName());
@@ -852,10 +874,16 @@ public class StudyDataLoaderTest {
     public void testLoadFollowUpConsent() throws Exception {
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
-        StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+
+        StudyDto studyDto = StudyDto.builder()
+                .id(pretendStudyId)
+                .guid(pretendStudyGuid)
+                .name("MBC")
+                .umbrellaId(1)
+                .auth0TenantId(2)
+                .build();
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -978,10 +1006,16 @@ public class StudyDataLoaderTest {
     public void testLoadTissueConsent() throws Exception {
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
-        StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+
+        StudyDto studyDto = StudyDto.builder()
+                .id(pretendStudyId)
+                .guid(pretendStudyGuid)
+                .name("MBC")
+                .umbrellaId(1)
+                .auth0TenantId(2)
+                .build();
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -1040,10 +1074,16 @@ public class StudyDataLoaderTest {
     public void testLoadBloodConsent() throws Exception {
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
-        StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+
+        StudyDto studyDto = StudyDto.builder()
+                .id(pretendStudyId)
+                .guid(pretendStudyGuid)
+                .name("MBC")
+                .umbrellaId(1)
+                .auth0TenantId(2)
+                .build();
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);

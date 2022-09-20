@@ -8,13 +8,20 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.Filter;
 
+//class to separate 'AND' or 'OR' conditions into type of Map<String, List<String>>
 public class AndOrFilterSeparator {
 
-    public static final String DSM_ALIAS_REGEX = "(NO|m|p|r|t|d|o|k|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";
-    public static final String OR_DSM_ALIAS_REGEX = "(OR) " + DSM_ALIAS_REGEX;
-    public static final String AND_DSM_ALIAS_REGEX = "(AND) " + DSM_ALIAS_REGEX;
-    public static final int AND_PATTERN_MATCHER_NUMBER = 7;
-    public static final int OR_PATTERN_MATCHER_NUMBER = 6;
+    private static final String DSM_ALIAS_REGEX = "(NO|c|m|p|r|t|d|o|k|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";
+    protected String orDsmAliasRegex = "(OR) " + getRegex();
+
+    protected String andDsmAliasRegex = "(AND) " + getRegex();
+
+    protected String getRegex() {
+        return DSM_ALIAS_REGEX;
+    }
+
+    protected static final int AND_PATTERN_MATCHER_NUMBER = 7;
+    protected static final int OR_PATTERN_MATCHER_NUMBER = 6;
     public static final int MINIMUM_STEP_FROM_OPERATOR = 3;
 
     private String filter;
@@ -105,7 +112,7 @@ public class AndOrFilterSeparator {
     }
 
     private String getAliasRegexByOperator(String operator) {
-        return Filter.AND_TRIMMED.equals(operator) ? AND_DSM_ALIAS_REGEX : OR_DSM_ALIAS_REGEX;
+        return Filter.AND_TRIMMED.equals(operator) ? andDsmAliasRegex : orDsmAliasRegex;
     }
 
     private boolean isOperatorWrappedInParenthesis(int startIndex) {

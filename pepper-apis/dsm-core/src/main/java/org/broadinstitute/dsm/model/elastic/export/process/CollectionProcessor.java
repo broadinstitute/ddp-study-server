@@ -1,18 +1,25 @@
 package org.broadinstitute.dsm.model.elastic.export.process;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.Util;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+
+import java.lang.reflect.ParameterizedType;
 
 public class CollectionProcessor extends BaseProcessor {
 
-    public CollectionProcessor(ESDsm esDsm, String propertyName, int recordId, Collector collector) {
+    public CollectionProcessor(Dsm esDsm, String propertyName, int recordId, Collector collector) {
         super(esDsm, propertyName, recordId, collector);
     }
 
@@ -29,19 +36,18 @@ public class CollectionProcessor extends BaseProcessor {
 
     @Override
     protected Object convertObjectToCollection(Object object) {
-        return Util.convertObjectListToMapList(object);
+        return Objects.isNull(object)
+                ? new ArrayList<>()
+                : ObjectMapperSingleton.instance().convertValue(object, new TypeReference<List<Map<String, Object>>>() {});
     }
 
     @Override
-    protected String findPrimaryKeyOfObject(Object object) {
-        List<Object> objectCollection = (List<Object>) object;
-        if (Objects.isNull(objectCollection)) {
-            return StringUtils.EMPTY;
-        }
-        Optional<Object> maybeObject = objectCollection.stream().findFirst();
-        return maybeObject
-                .map(this::getPrimaryKey)
-                .orElse(StringUtils.EMPTY);
+    protected TableName getTableNameByField(Field field) {
+        return Arrays.stream(((ParameterizedType) field.getGenericType())
+                .getActualTypeArguments())
+                .findFirst()
+                .map(obj -> ((Class<?>) obj).getAnnotation(TableName.class))
+                .orElse(null);
     }
 
     @Override
@@ -55,10 +61,10 @@ public class CollectionProcessor extends BaseProcessor {
     }
 
     private boolean isExistingRecord(Map<String, Object> eachRecord) {
-        if (!eachRecord.containsKey(Util.underscoresToCamelCase(primaryKey))) {
+        if (!eachRecord.containsKey(CamelCaseConverter.of(primaryKey).convert())) {
             return false;
         }
-        double id = Double.parseDouble(String.valueOf(eachRecord.get(Util.underscoresToCamelCase(primaryKey))));
+        double id = Double.parseDouble(String.valueOf(eachRecord.get(CamelCaseConverter.of(primaryKey).convert())));
         return id == (double) recordId;
     }
 

@@ -25,11 +25,13 @@ import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -463,7 +465,7 @@ public class KitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    KitRequestShipping.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID)) {
+                    KitDaoImpl.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -511,7 +513,7 @@ public class KitUtil {
 
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+                    ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
             logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
             e.printStackTrace();

@@ -8,7 +8,6 @@ import java.util.Map;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.UploadLineException;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -22,10 +21,6 @@ public class ParticipantSurveyStatusResponse {
     private static final Logger logger = LoggerFactory.getLogger(ParticipantSurveyStatusResponse.class);
 
     private static final String DDP_PARTICIPANT_ID = "participantId";
-    private static final String SHORT_ID = "shortId";
-    private static final String FIRST_NAME = "firstName";
-    private static final String LAST_NAME = "lastName";
-    private static final String EMAIL = "email";
 
     private final ParticipantSurveyInfo surveyInfo;
     private String reason;
@@ -36,31 +31,25 @@ public class ParticipantSurveyStatusResponse {
         this.surveyInfo = surveyInfo;
     }
 
-    public static List<ParticipantSurveyUploadObject> isFileValid(@NonNull DDPInstance instance, @NonNull String fileContent) {
+    public static List<ParticipantSurveyUploadObject> isFileValid(@NonNull String fileContent) {
         if (fileContent != null) {
             String linebreak = SystemUtil.lineBreak(fileContent);
             String[] rows = fileContent.split(linebreak);
             if (rows.length > 1) {
                 String firstRow = rows[0];
-                List<String> fieldNames = new ArrayList<>(Arrays.asList(firstRow.trim().split(SystemUtil.SEPARATOR)));
-                String missingFieldName = fieldNameMissing(instance, fieldNames);
+                List<String> fieldNames = new ArrayList<>(Arrays.asList(firstRow.trim().split(SystemUtil.TAB_SEPARATOR)));
+                String missingFieldName = fieldNameMissing(fieldNames);
                 if (missingFieldName == null) {
                     List<ParticipantSurveyUploadObject> uploadObjects = new ArrayList<>();
                     for (int rowIndex = 1; rowIndex < rows.length; rowIndex++) {
                         Map<String, String> obj = new LinkedHashMap<>();
-                        String[] row = rows[rowIndex].trim().split(SystemUtil.SEPARATOR);
+                        String[] row = rows[rowIndex].trim().split(SystemUtil.TAB_SEPARATOR);
                         if (row.length == fieldNames.size()) {
                             for (int columnIndex = 0; columnIndex < fieldNames.size(); columnIndex++) {
                                 obj.put(fieldNames.get(columnIndex), row[columnIndex]);
                             }
                             try {
-                                ParticipantSurveyUploadObject object;
-                                if (instance.isHasRole()) {
-                                    object = new ParticipantSurveyUploadObject(obj.get(SHORT_ID),
-                                            obj.get(FIRST_NAME), obj.get(LAST_NAME), obj.get(EMAIL));
-                                } else {
-                                    object = new ParticipantSurveyUploadObject(obj.get(DDP_PARTICIPANT_ID));
-                                }
+                                ParticipantSurveyUploadObject object = new ParticipantSurveyUploadObject(obj.get(DDP_PARTICIPANT_ID));
                                 if (object != null) {
                                     uploadObjects.add(object);
                                 }
@@ -81,24 +70,9 @@ public class ParticipantSurveyStatusResponse {
         return null;
     }
 
-    private static String fieldNameMissing(@NonNull DDPInstance instance, @NonNull List<String> fieldName) {
-        if (instance.isHasRole()) {
-            if (!fieldName.contains(SHORT_ID)) {
-                return SHORT_ID;
-            }
-            if (!fieldName.contains(FIRST_NAME)) {
-                return FIRST_NAME;
-            }
-            if (!fieldName.contains(LAST_NAME)) {
-                return LAST_NAME;
-            }
-            if (!fieldName.contains(EMAIL)) {
-                return EMAIL;
-            }
-        } else {
-            if (!fieldName.contains(DDP_PARTICIPANT_ID)) {
-                return DDP_PARTICIPANT_ID;
-            }
+    private static String fieldNameMissing(@NonNull List<String> fieldName) {
+        if (!fieldName.contains(DDP_PARTICIPANT_ID)) {
+            return DDP_PARTICIPANT_ID;
         }
         return null;
     }

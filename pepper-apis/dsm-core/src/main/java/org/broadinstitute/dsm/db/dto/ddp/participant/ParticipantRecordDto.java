@@ -9,12 +9,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
+@TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+        primaryKey = DBConstants.PARTICIPANT_RECORD_ID, columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ParticipantRecordDto {
+public class ParticipantRecordDto implements Cloneable {
 
     @ColumnName(DBConstants.PARTICIPANT_RECORD_ID)
     private Integer participantRecordId;
@@ -58,6 +61,10 @@ public class ParticipantRecordDto {
         this.additionalValuesJson = builder.additionalValuesJson;
         this.lastChanged = builder.lastChanged;
         this.changedBy = builder.changedBy;
+    }
+
+    public void setParticipantId(int participantId) {
+        this.participantId = participantId;
     }
 
     @JsonProperty("dynamicFields")
@@ -110,6 +117,15 @@ public class ParticipantRecordDto {
         return Optional.ofNullable(changedBy);
     }
 
+    @Override
+    public ParticipantRecordDto clone() {
+        try {
+            return (ParticipantRecordDto) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
     public static class Builder {
         public Integer participantRecordId;
         public int participantId;
@@ -122,9 +138,23 @@ public class ParticipantRecordDto {
         public long lastChanged;
         public String changedBy;
 
+        public Builder() {
+
+        }
+
         public Builder(int participantId, long lastChanged) {
             this.participantId = participantId;
             this.lastChanged = lastChanged;
+        }
+
+        public Builder withParticipantId(int participantId) {
+            this.participantId = participantId;
+            return this;
+        }
+
+        public Builder withLastChanged(long lastChanged) {
+            this.lastChanged = lastChanged;
+            return this;
         }
 
         public Builder withParticipantRecordId(int participantRecordId) {
@@ -167,7 +197,7 @@ public class ParticipantRecordDto {
             return this;
         }
 
-        public ParticipantRecordDto builder() {
+        public ParticipantRecordDto build() {
             return new ParticipantRecordDto(this);
         }
 

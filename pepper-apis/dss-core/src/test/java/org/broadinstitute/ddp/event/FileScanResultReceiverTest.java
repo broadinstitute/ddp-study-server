@@ -42,18 +42,29 @@ public class FileScanResultReceiverTest {
         var mockExportDao = mock(DataExportDao.class);
         var mockBlob = mock(Blob.class);
         var now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-        var upload = new FileUpload(1L, "guid", 1L, 1L, 1L, "blob", "mime", "name",
-                123L, true, now, null, null, null);
+        var upload = FileUpload.builder()
+                .id(1L)
+                .guid("guid")
+                .studyId(1L)
+                .operatorUserId(1L)
+                .participantUserId(1L)
+                .blobName("guid_filename")
+                .mimeType("mime")
+                .fileName("name")
+                .fileSize(123L)
+                .isVerified(true)
+                .createdAt(now)
+                .build();
         var msg = PubsubMessage.newBuilder()
                 .setMessageId("foo")
                 .putAttributes(ATTR_BUCKET_ID, "uploads")
-                .putAttributes(ATTR_OBJECT_ID, "foo/bar/guid")
+                .putAttributes(ATTR_OBJECT_ID, "foo/bar/guid_filename")
                 .putAttributes(ATTR_SCAN_RESULT, FileScanResult.CLEAN.name())
                 .build();
 
         // Setup behavior.
         doReturn(true).when(mockBlob).exists();
-        doReturn("foo/bar/guid").when(mockBlob).getName();
+        doReturn("foo/bar/guid_filename").when(mockBlob).getName();
         doReturn(now.toEpochMilli()).when(mockBlob).getCreateTime();
         doReturn(mockBlob).when(mockStorage).getBlob(any(), any());
         doReturn(mockFileDao).when(mockHandle).attach(FileUploadDao.class);
@@ -68,8 +79,8 @@ public class FileScanResultReceiverTest {
         receiverSpy.receiveMessage(msg, mockReply);
 
         // Do asserts.
-        verify(mockStorage).getBlob("uploads", "foo/bar/guid");
-        verify(mockStorage).moveBlob(any(), eq("scanned"), eq("foo/bar/guid"));
+        verify(mockStorage).getBlob("uploads", "foo/bar/guid_filename");
+        verify(mockStorage).moveBlob(any(), eq("scanned"), eq("foo/bar/guid_filename"));
         verify(mockFileDao).findAndLockByGuid("guid");
         verify(mockExportDao, times(1)).queueDataSync(1L, 1L);
         verify(mockReply, times(1)).ack();

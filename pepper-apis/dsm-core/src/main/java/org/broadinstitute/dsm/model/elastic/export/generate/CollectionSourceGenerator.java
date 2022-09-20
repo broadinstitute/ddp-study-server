@@ -3,10 +3,8 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
@@ -16,8 +14,7 @@ public class CollectionSourceGenerator extends SourceGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(CollectionSourceGenerator.class);
 
-    public CollectionSourceGenerator(Parser parser,
-                                     GeneratorPayload generatorPayload) {
+    public CollectionSourceGenerator(Parser parser, GeneratorPayload generatorPayload) {
         super(parser, generatorPayload);
     }
 
@@ -34,11 +31,7 @@ public class CollectionSourceGenerator extends SourceGenerator {
 
     @Override
     protected Object getElement(Object element) {
-        Map<String, Object> fieldNameElement = new HashMap<>();
-        if (Objects.nonNull(element)) {
-            fieldNameElement.put(getFieldName(), element);
-        }
-        return getCollectionElementMap(fieldNameElement);
+        return getCollectionElementMap((Map<String, Object>)super.getElement(element));
     }
 
     protected List<Map<String, Object>> getCollectionElementMap(Map<String, Object> element) {

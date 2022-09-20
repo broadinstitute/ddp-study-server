@@ -1,36 +1,60 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.patch.Patch;
 
 public class GeneratorPayload {
 
     private Patch patch;
-    NameValue nameValue;
+    List<NameValue> nameValues;
 
     public GeneratorPayload() {
+        nameValues = new ArrayList<>();
+    }
+
+    public GeneratorPayload(List<NameValue> nameValue, Patch patch) {
+        this(patch);
+        this.nameValues = nameValue;
     }
 
     public GeneratorPayload(NameValue nameValue, Patch patch) {
-        this.nameValue = nameValue;
+        this(patch);
+        nameValues.add(0, nameValue);
+    }
+
+    private GeneratorPayload(Patch patch) {
+        this();
         this.patch = patch;
     }
 
+    public GeneratorPayload(List<NameValue> nameValue) {
+        this.nameValues = nameValue;
+    }
+
     public GeneratorPayload(NameValue nameValue) {
-        this.nameValue = nameValue;
+        this(nameValue, null);
+    }
+
+
+    public List<NameValue> getNameValues() {
+        return nameValues;
     }
 
     public NameValue getNameValue() {
-        return nameValue;
+        return nameValues.get(0);
     }
 
     public String getName() {
-        return nameValue.getName();
+        return nameValues.get(0).getName();
     }
 
     public Object getValue() {
-        return nameValue.getValue();
+        return nameValues.get(0).getValue();
     }
 
     public Integer getRecordId() {
@@ -46,7 +70,7 @@ public class GeneratorPayload {
     }
 
     public String getCamelCaseFieldName() {
-        return Util.underscoresToCamelCase(Util.getDBElement(getName()).getColumnName());
+        return CamelCaseConverter.of(Util.getDBElement(getName()).getColumnName()).convert();
     }
 
     public String getRawFieldName() {

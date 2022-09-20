@@ -46,6 +46,36 @@ public interface UserDao extends SqlObject {
     @CreateSqlObject
     UserSql getUserSql();
 
+    /**
+     * Creates a new user given the OAuth Client ID of the requestor,
+     * and the desired email for the new user.
+     *
+     * @param createdByClientId the OAuth Client ID creating the user
+     * @param email the desired email for the new user
+     * @return The new user, or null if a user with the specified email already exists
+     */
+    default User createUserByEmail(String email) {
+        final var handle = getHandle();
+        
+        var existingUserId = getJdbiUser().getUserIdByEmail(email);
+        if (existingUserId != null) {
+            // User already exists, return early.
+            // Consider using a more targeted exception here (something like
+            // a UserExistsException)- the null doesn't relay much information about
+            // what happened.
+            return null;
+        }
+
+        final var guid = DBUtils.uniqueUserGuid(handle);
+        final var hruid = DBUtils.uniqueUserHruid(handle);
+
+        final var userSql = getUserSql();
+        long now = Instant.now().toEpochMilli();
+
+        long userId = userSql.insertByEmail(guid, email, hruid, false, now, now);
+        return findUserById(userId).orElseThrow(() -> new DaoException("Internal inconsistency: user with id "
+            + userId + " was created, but can not be found."));
+    }
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
         return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false);
@@ -88,6 +118,11 @@ public interface UserDao extends SqlObject {
     @SqlQuery("queryUserByGuid")
     @RegisterConstructorMapper(User.class)
     Optional<User> findUserByGuid(@Bind("guid") String userGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryUserByEmail")
+    @RegisterConstructorMapper(User.class)
+    Optional<User> findUserByEmail(@Bind("email") String email);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryUserByHruid")

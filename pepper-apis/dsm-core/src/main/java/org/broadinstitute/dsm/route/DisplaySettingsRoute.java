@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -20,13 +21,13 @@ import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
+import org.broadinstitute.dsm.model.elastic.retrieve.activities.ActivityDefinitionsRetrieverFactory;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.AbstractionUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
@@ -82,7 +83,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                 displaySettings.put("fieldSettings", FieldSettings.getFieldSettings(realm));
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());
-                displaySettings.put("activityDefinitions", ElasticSearchUtil.getActivityDefinitions(instance));
+                displaySettings.put("activityDefinitions", new ActivityDefinitionsRetrieverFactory(instance).spawn().retrieve());
                 displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId,
                         instance.getDdpInstanceId()));
                 displaySettings.put("abstractionFields", AbstractionUtil.getFormControls(realm));
@@ -100,8 +101,8 @@ public class DisplaySettingsRoute extends RequestHandler {
                         displaySettings.put("preferredLanguages", preferredLanguages);
                     }
                 }
-                if (DDPInstanceDao.getRole(instance.getName(),
-                        DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
+                HashSet<String> roles = new DDPInstanceDao().getInstanceRoles(instance.getName());
+                if (roles.contains(DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
                     Map<Integer, KitRequestSettings> kitRequestSettingsMap =
                             KitRequestSettings.getKitRequestSettings(instance.getDdpInstanceId());
                     if (kitRequestSettingsMap != null) {
@@ -130,12 +131,16 @@ public class DisplaySettingsRoute extends RequestHandler {
                         }
                     }
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.ADD_FAMILY_MEMBER)) {
+                if (roles.contains(DBConstants.ADD_FAMILY_MEMBER)) {
                     displaySettings.put("addFamilyMember", true);
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.SHOW_GROUP_FIELDS)) {
+                if (roles.contains(DBConstants.SHOW_GROUP_FIELDS)) {
                     displaySettings.put("showGroupFields", true);
                 }
+                if (roles.contains(DBConstants.HAS_CLINICAL_KIT)) {
+                    displaySettings.put("hasSequencingOrders", true);
+                }
+
                 return displaySettings;
             }
         } else {

@@ -75,6 +75,9 @@ public class OperatorTest {
         String filter = "m.mr_received <= 15";
         Operator operator = Operator.extract(filter);
         assertEquals(Operator.LESS_THAN_EQUALS, operator);
+        String filter2 = "m.age <= 4";
+        operator = Operator.extract(filter2);
+        assertEquals(Operator.LESS_THAN_EQUALS, operator);
     }
 
     @Test
@@ -134,5 +137,11 @@ public class OperatorTest {
         String filter = "DATE(FROM_UNIXTIME(k.scan_date/1000))  = DATE(FROM_UNIXTIME(1640563200))";
         Operator operator = Operator.extract(filter);
         assertEquals(Operator.DATE, operator);
+    }
+
+    @Test
+    public void extractIsNull() {
+        String filter = "o.created IS NULL";
+        assertEquals(Operator.IS_NULL, Operator.extract(filter));
     }
 }

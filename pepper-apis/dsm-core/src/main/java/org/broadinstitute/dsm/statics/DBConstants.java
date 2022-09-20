@@ -16,6 +16,9 @@ public class DBConstants {
 
     public static final String DDP_PARTICIPANT_ID = "ddp_participant_id";
     public static final String DDP_KIT_REQUEST = "ddp_kit_request";
+    public static final String DDP_KIT = "ddp_kit";
+
+    public static final String REQUIRES_INSERT_KIT_TRACKING = "requires_insert_in_kit_tracking";
 
     //table alias
     public static final String DDP_PARTICIPANT_ALIAS = "p";
@@ -49,6 +52,8 @@ public class DBConstants {
     public static final String CARRIER_ACCESSKEY = "carrier_accesskey";
     public static final String BSP_COLLECTION = "bsp_collection";
     public static final String BSP_ORGANISM = "bsp_organism";
+    public static final String RESEARCH_PROJECT = "research_project";
+    public static final String MERCURY_ORDER_CREATOR = "mercury_order_creator";
 
     //kit request
     public static final String DSM_KIT_ID = "dsm_kit_id";
@@ -101,6 +106,7 @@ public class DBConstants {
     public static final String EASYPOST_RETURN_ID = "easypost_return_id";
     public static final String DSM_SCAN_DATE = "scan_date";
     public static final String DSM_RECEIVE_DATE = "receive_date";
+    public static final String DSM_RECEIVE_BY = "receive_by";
     public static final String DSM_DEACTIVATED_DATE = "deactivated_date";
     public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
     public static final String COLLABORATOR_PARTICIPANT_ID = "bsp_collaborator_participant_id";
@@ -134,6 +140,9 @@ public class DBConstants {
     public static final String EASYPOST_SHIPMENT_DATE = "easypost_shipment_date";
     public static final String CARE_EVOLVE = "CE_order";
     public static final String DDP_KIT_TABLE_ABBR = "kit.";
+    public static final String COLLECTION_DATE = "collection_date";
+    public static final String SEQUENCING_RESTRICTION = "sequencing_restriction";
+    public static final String SAMPLE_NOTES = "sample_notes";
 
     public static final String ONC_HISTORY_ID = "onc_history_id";
 
@@ -298,6 +307,7 @@ public class DBConstants {
     public static final String PARTICIPANT_STATUS_ENDPOINT = "participant_status_endpoint";
     public static final String UPS_TRACKING_ROLE = "ups_tracking";
     public static final String ADD_FAMILY_MEMBER = "add_family_member";
+    public static final String HAS_CLINICAL_KIT = "has_clinical_kit";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
 
@@ -315,7 +325,7 @@ public class DBConstants {
     public static final String MR_ABSTRACTER = "mr_abstracter";
     public static final String MR_QC = "mr_qc";
     public static final String PT_LIST_VIEW = "pt_list_view";
-
+    public static final String FILE_DOWNLOAD_ROLE = "file_download";
     //miscellaneous
     public static final String EXIT_DATE = "exit_date";
     public static final String EXIT_BY = "exit_by";
@@ -505,8 +515,33 @@ public class DBConstants {
 
     public static final String LABEL_URL_RETURN = "label_url_return";
 
+    public static final String LAST_VERSION_DATE = LAST_VERSION + "_date";
+
+    // ddp_participant
     public static final String PARTICIPANT_RECORD_ID = "participant_record_id";
     public static final String MEDICAL_RECORD_ABSTRACTION_FIELD = "medical_record_abstraction_field";
     public static final String MEDICAL_RECORD_ABSTRACTION_FIELD_ALIAS = "mra";
     public static final String FILE_INFO = "file_info";
+    public static final String RELEASE_COMPLETED = "release_completed";
+
+    // cohort
+    public static final String COHORT_ALIAS = "c";
+    public static final String COHORT_TAG_PK = "cohort_tag_id";
+    public static final String COHORT_TAG = "cohort_tag";
+    public static final String COHORT_TAG_NAME = "cohort_tag_name";
+
+    public static final String MERCURY_ORDER_DATE = "order_date";
+    public static final String MERCURY_STATUS_DATE = "status_date";
+    public static final String MERCURY_BARCODE = "barcode";
+    public static final String MERCURY_ORDER_ID = "order_id";
+    public static final String MERCURY_ORDER_STATUS = "order_status";
+    public static final String MERCURY_STATUS_DETAIL = "status_detail";
+    public static final String MERCURY_SAMPLE_TYPE = "sample_type";
+    public static final String DDP_MERCURY_SEQUENCING = "ddp_mercury_sequencing";
+    public static final String MERCURY_SEQUENCING_ID = "mercury_sequencing_id";
+    public static final String MERCURY_PDO_ID = "mercury_pdo_id";
+    public static final String DDP_MERCURY_SEQUENCING_ALIAS = "cl";
+    public static final String DDP_KIT_ALIAS = "kit";
+    public static final String TRACKING = "tracking";
+
 }

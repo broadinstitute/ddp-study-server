@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
+import org.broadinstitute.ddp.db.dto.BlockTabularQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
@@ -45,6 +46,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.equation.QuestionEvaluator;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -477,7 +479,7 @@ public interface QuestionDao extends SqlObject {
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 boolAnswers, rules, dto.getTrueTemplateId(),
-                dto.getFalseTemplateId());
+                dto.getFalseTemplateId(), dto.getRenderMode());
     }
 
     /**
@@ -1006,7 +1008,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 rules, dto.isAllowMultiple(), dto.isUnwrapOnExport(),
                 dto.getAddButtonTemplateId(), dto.getAdditionalItemTemplateId(),
-                childQuestions, dto.getChildOrientation(), compositeAnswers);
+                childQuestions, dto.getChildOrientation(), dto.getTabularSeparator(), compositeAnswers);
     }
 
 
@@ -1020,6 +1022,55 @@ public interface QuestionDao extends SqlObject {
     default void insertQuestionBlock(long activityId, QuestionBlockDef questionBlock, long revisionId) {
         insertQuestionByType(activityId, questionBlock.getQuestion(), revisionId);
         getJdbiBlockQuestion().insert(questionBlock.getBlockId(), questionBlock.getQuestion().getQuestionId());
+    }
+
+    /**
+     * Delete an "orphan" question that has no answers and is not reference by a block
+     * Added for purpose of supporting tests and studybuilder patch operations.
+     * Note: Implementation is incomplete at this time (August 27 2022) and only supports deletion of question types
+     * that were needed at time.
+     * @param questionDef question to delete
+     *
+     * @throws org.broadinstitute.ddp.exception.DDPException if deletion failed for some reason
+     */
+    default void deleteQuestion(QuestionDef questionDef) {
+        Long questionId = questionDef.getQuestionId();
+        switch (questionDef.getQuestionType()) {
+            case TEXT:
+                deleteTextQuestion(questionId);
+                break;
+            case PICKLIST:
+                getPicklistQuestionDao().delete(questionId);
+                break;
+            case COMPOSITE:
+                deleteCompositeQuestion((CompositeQuestionDef) questionDef, questionId);
+                break;
+            case DATE:
+                deleteDateQuestion(questionId);
+                break;
+            default:
+                throw new DDPException("Deletion of questions of type: " + questionDef.getQuestionType()
+                        + " is not supported. Consider implementing it");
+        }
+        deleteBaseQuestion(questionId);
+    }
+
+    private void deleteTextQuestion(Long questionId) {
+        var wasDeleted = getJdbiTextQuestion().delete(questionId);
+        LOG.info("Deleted text question with id {}?: {}", questionId, wasDeleted);
+    }
+
+    private void deleteCompositeQuestion(CompositeQuestionDef questionDef, Long questionId) {
+        getJdbiCompositeQuestion().deleteChildQuestionMembership(questionId);
+        var wasDeleted =  getJdbiCompositeQuestion().deleteCompositeQuestionParentRecord(questionId);
+        LOG.info("Deleted parent composite question with id {}?: {}", questionId, wasDeleted);
+        questionDef.getChildren().forEach(child -> deleteQuestion(child));
+    }
+
+    default boolean deleteBaseQuestion(long questionId) {
+        getJdbiQuestionValidation().deleteForQuestion(questionId);
+
+        return getJdbiQuestion().deleteBaseQuestion(questionId);
     }
 
     /**
@@ -1232,7 +1283,8 @@ public interface QuestionDao extends SqlObject {
         templateDao.insertTemplate(boolQuestion.getFalseTemplate(), revisionId);
 
         int numInserted = getJdbiBooleanQuestion().insert(boolQuestion.getQuestionId(),
-                boolQuestion.getTrueTemplate().getTemplateId(), boolQuestion.getFalseTemplate().getTemplateId());
+                boolQuestion.getTrueTemplate().getTemplateId(), boolQuestion.getFalseTemplate().getTemplateId(),
+                boolQuestion.getRenderMode());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for bool question " + boolQuestion.getStableId());
         }
@@ -1558,7 +1610,8 @@ public interface QuestionDao extends SqlObject {
             addItemTemplateId = templateDao.insertTemplate(compositeQuestion.getAdditionalItemTemplate(), revisionId);
         }
         getJdbiCompositeQuestion().insertParent(compositeQuestion.getQuestionId(), compositeQuestion.isAllowMultiple(),
-                buttonTemplateId, addItemTemplateId, compositeQuestion.getChildOrientation(), compositeQuestion.isUnwrapOnExport());
+                buttonTemplateId, addItemTemplateId, compositeQuestion.getChildOrientation(), compositeQuestion.isUnwrapOnExport(),
+                compositeQuestion.getTabularSeparator());
         compositeQuestion.getChildren().forEach(childQuestion -> this.insertQuestionByType(activityId, childQuestion, revisionId));
         getJdbiCompositeQuestion().insertChildren(compositeQuestion.getQuestionId(), compositeQuestion.getChildren()
                 .stream()
@@ -1588,6 +1641,13 @@ public interface QuestionDao extends SqlObject {
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for agreement question " + agreementQuestion.getStableId());
         }
+    }
+
+    default boolean deleteDateQuestion(long questionId) {
+        getJdbiDateQuestionFieldOrder().deleteForQuestionId(questionId);
+        var val = getJdbiDateQuestion().delete(questionId);
+        LOG.info("Deleted date question id {}? {}", questionId, val);
+        return val;
     }
 
     /**
@@ -1840,10 +1900,48 @@ public interface QuestionDao extends SqlObject {
             var blockDef = new QuestionBlockDef(questionDef);
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
-            blockDef.setShownExpr(blockDto.getShownExpr());
-            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            
+            var shownExpression = blockDto.getShownExpression();
+            if (shownExpression != null) {
+                blockDef.setShownExprId(shownExpression.getId());
+                blockDef.setShownExpr(shownExpression.getText());
+            }
+
+            var enabledExpression = blockDto.getEnabledExpression();
+            if (enabledExpression != null) {
+                blockDef.setEnabledExprId(enabledExpression.getId());
+                blockDef.setEnabledExpr(enabledExpression.getText());
+            }
 
             blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
+    }
+
+    default Map<Long, QuestionBlockDef> collectTabularBlockDefs(Collection<BlockTabularQuestionDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        final var blockIds = StreamEx.of(blockDtos).map(BlockTabularQuestionDto::getQuestionBlockId).toSet();
+
+        Map<Long, Long> blockIdToQuestionId = getJdbiBlockQuestion()
+                .findQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, QuestionDef> questionDefs = collectQuestionDefs(blockIdToQuestionId.values(), timestamp);
+
+        Map<Long, QuestionBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long questionId = blockIdToQuestionId.get(blockDto.getQuestionBlockId());
+            QuestionDef questionDef = questionDefs.get(questionId);
+
+            var blockDef = new QuestionBlockDef(questionDef);
+            blockDef.setBlockId(blockDto.getQuestionBlockId());
+            blockDef.setBlockGuid(blockDto.getBlockGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            blockDef.setColumnSpan(blockDto.getColumnSpan());
+            blockDefs.put(blockDto.getQuestionBlockId(), blockDef);
         }
 
         return blockDefs;
@@ -2089,7 +2187,10 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template trueTemplate = templates.get(dto.getTrueTemplateId());
         Template falseTemplate = templates.get(dto.getFalseTemplateId());
+
         var builder = BoolQuestionDef.builder(dto.getStableId(), prompt, trueTemplate, falseTemplate);
+        builder.setRenderMode(dto.getRenderMode());
+        
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
@@ -2349,6 +2450,7 @@ public interface QuestionDao extends SqlObject {
                 .setAddButtonTemplate(buttonTmpl)
                 .setAdditionalItemTemplate(addItemTmpl)
                 .setChildOrientation(dto.getChildOrientation())
+                .setTabularSeparator(dto.getTabularSeparator())
                 .addChildrenQuestions(childQuestionDefs);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 

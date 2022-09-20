@@ -1023,7 +1023,7 @@ public class StudyDataLoader {
 
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
-        UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
+        UserDto newUser = new UserDto(userId, auth0UserId, null, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 
@@ -1052,11 +1052,13 @@ public class StudyDataLoader {
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfile profile = new UserProfile.Builder(user.getUserId())
-                .setFirstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
-                .setLastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
-                .setPreferredLangId(languageCodeId)
-                .setDoNotContact(isDoNotContact)
+        UserProfile profile = UserProfile.builder()
+                .userId(user.getUserId())
+                .firstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
+                .lastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
+                .preferredLangId(languageCodeId)
+                .preferredLangCode(null)
+                .doNotContact(isDoNotContact)
                 .build();
         profileDao.createProfile(profile);
 
@@ -1964,6 +1966,7 @@ public class StudyDataLoader {
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
+            String country = getStringValueFromElement(physicianEl, "country");
 
             //check if this physician already exists in DB.. probably populated by release survey for same ptp
             List<MedicalProviderDto> matchedPhysicianList = dbPhysicianList.stream().filter(physician ->
@@ -1987,6 +1990,7 @@ public class StudyDataLoader {
                         name,
                         city,
                         state,
+                        country,
                         postalCode,
                         phoneNumber,
                         physicianId,
@@ -2007,6 +2011,7 @@ public class StudyDataLoader {
         String instName = getStringValueFromElement(sourceDataElement, "initial_biopsy_institution");
         String instCity = getStringValueFromElement(sourceDataElement, "initial_biopsy_city");
         String instState = getStringValueFromElement(sourceDataElement, "initial_biopsy_state");
+        String country = getStringValueFromElement(sourceDataElement, "country");
 
         if (StringUtils.isNotBlank(instName)) {
             String guid = getMedicalProviderGuid(handle);
@@ -2014,7 +2019,7 @@ public class StudyDataLoader {
                     null,
                     guid, userDto.getUserId(), studyDto.getId(),
                     InstitutionType.INITIAL_BIOPSY, instName, null, instCity, instState,
-                    null, null, null, null));
+                    country, null, null, null, null));
         }
     }
 
@@ -2039,6 +2044,7 @@ public class StudyDataLoader {
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
+            String country = getStringValueFromElement(physicianEl, "country");
 
             String guid = getMedicalProviderGuid(handle);
             String legacyGuid;
@@ -2058,6 +2064,7 @@ public class StudyDataLoader {
                     name,
                     city,
                     state,
+                    country,
                     postalCode,
                     phoneNumber,
                     legacyGuid,

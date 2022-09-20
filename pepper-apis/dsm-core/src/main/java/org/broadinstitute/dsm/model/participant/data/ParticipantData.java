@@ -17,8 +17,9 @@ import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -135,21 +136,20 @@ public class ParticipantData {
             throw new RuntimeException("Could not insert participant data for : " + this.ddpParticipantId);
         }
         participantData.setParticipantDataId(createdDataKey);
-        logger.info("Successfully inserted data for participant: " + this.ddpParticipantId);
+        logger.info(String.format("Successfully inserted data for participant: %s in db", this.ddpParticipantId));
 
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
-        String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(this.ddpInstanceId).orElseThrow();
+        String participantGuid = Exportable.getParticipantGuid(this.ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
 
         try {
-            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto, ESObjectConstants.PARTICIPANT_DATA_ID,
-                            ESObjectConstants.DOC_ID,
-                            participantGuid)
+            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
+                            ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.DOC_ID,
+                            participantGuid, new PutToNestedScriptBuilder())
                     .export();
         } catch (Exception e) {
             logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));
             e.printStackTrace();
         }
-
         return createdDataKey;
     }
 
@@ -196,7 +196,7 @@ public class ParticipantData {
         return applicantEmail.equalsIgnoreCase(familyMemberEmail);
     }
 
-    public boolean hasFamilyMemberApplicantEmail(ESProfile applicantProfile) {
+    public boolean hasFamilyMemberApplicantEmail(Profile applicantProfile) {
         if (Objects.isNull(this.data) || StringUtils.isBlank(this.ddpParticipantId)) {
             return false;
         }

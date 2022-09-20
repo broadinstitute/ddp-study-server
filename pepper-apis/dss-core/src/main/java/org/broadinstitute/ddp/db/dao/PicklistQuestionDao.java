@@ -38,6 +38,9 @@ public interface PicklistQuestionDao extends SqlObject {
     int DISPLAY_ORDER_GAP = 10;
 
     @CreateSqlObject
+    JdbiPicklistQuestion getJdbiPicklistQuestion();
+
+    @CreateSqlObject
     JdbiPicklistGroup getJdbiPicklistGroup();
 
     @CreateSqlObject
@@ -139,7 +142,8 @@ public interface PicklistQuestionDao extends SqlObject {
                 options.stream().map(PicklistOptionDef::isDefault).iterator(),
                 Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator(),
                 revisionId,
-                templateIdList.listIterator(3 * options.size()));
+                templateIdList.listIterator(3 * options.size()),
+                options.stream().map(PicklistOptionDef::getValue).iterator());
 
         int displayOrder = 0;
         int j = 0;
@@ -210,7 +214,7 @@ public interface PicklistQuestionDao extends SqlObject {
 
         long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
                 detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(),
-                option.isDefault(), displayOrder, revisionId, nestedOptionsTmplId);
+                option.isDefault(), displayOrder, revisionId, nestedOptionsTmplId, option.getValue());
         option.setOptionId(optionId);
 
         if (CollectionUtils.isNotEmpty(option.getNestedOptions())) {
@@ -508,6 +512,12 @@ public interface PicklistQuestionDao extends SqlObject {
         );
 
         return dtosMap;
+    }
+
+    default void delete(Long questionId) {
+        getJdbiPicklistOption().deleteForQuestionId(questionId);
+        var wasDeleted = getJdbiPicklistQuestion().delete(questionId);
+        LOG.info("Delete date question with id {}? : {}", questionId, wasDeleted);
     }
 
     class GroupAndOptionDtos implements Serializable {

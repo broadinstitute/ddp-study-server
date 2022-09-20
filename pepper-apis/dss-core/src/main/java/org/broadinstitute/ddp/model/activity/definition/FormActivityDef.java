@@ -188,6 +188,13 @@ public class FormActivityDef extends ActivityDef {
         return stableIdToQuestion.get(stableId);
     }
 
+    public Set<QuestionDef> getAllQuestions() {
+        if (stableIdToQuestion == null) {
+            stableIdToQuestion = buildStableIdToQuestionMap();
+        }
+        return new HashSet<>(stableIdToQuestion.values());
+    }
+
     private Map<String, QuestionDef> buildStableIdToQuestionMap() {
         return getAllSections().stream()
                 .flatMap(section -> section.getBlocks().stream())
@@ -216,6 +223,8 @@ public class FormActivityDef extends ActivityDef {
                     nested = ((ConditionalBlockDef) block).getNested();
                 } else if (block.getBlockType() == BlockType.GROUP) {
                     nested = ((GroupBlockDef) block).getNested();
+                } else if (block.getBlockType() == BlockType.TABULAR) {
+                    nested = ((TabularBlockDef) block).getBlocks();
                 }
                 if (nested != null) {
                     nested.stream().filter(check::apply).forEach(blocks::add);

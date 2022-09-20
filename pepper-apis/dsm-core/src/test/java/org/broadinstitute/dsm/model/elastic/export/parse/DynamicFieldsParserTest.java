@@ -1,10 +1,10 @@
+
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
@@ -23,7 +23,7 @@ public class DynamicFieldsParserTest {
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
         dynamicFieldsParser.setDisplayType(displayType);
         dynamicFieldsParser.setPossibleValuesJson(possibleValuesJson);
-        dynamicFieldsParser.setParser(new TypeParser());
+        dynamicFieldsParser.setHelperParser(new TypeParser());
         Map<String, Object> mapping = (Map<String, Object>) dynamicFieldsParser.parse(displayType);
         Object date = mapping.get(MappingGenerator.TYPE);
         assertEquals(TypeParser.DATE, date);
@@ -33,7 +33,7 @@ public class DynamicFieldsParserTest {
     public void checkFieldSettingsDtoByColumnName() {
 
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
-        dynamicFieldsParser.setParser(new ValueParser());
+        dynamicFieldsParser.setHelperParser(new ValueParser());
         dynamicFieldsParser.setFieldSettingsDao(new FieldSettingsDaoMock());
 
         int quantity = 1_000_000;

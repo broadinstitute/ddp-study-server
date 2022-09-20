@@ -105,6 +105,11 @@ public class Patch {
         this.ddpParticipantId = ddpParticipantId;
     }
 
+    // for testing purposes
+    public static Patch fromNameValue(NameValue nameValue) {
+        return new Patch(null, null, null, null, null, null, nameValue, null, null);
+    }
+
     /**
      * Change value of given table
      * for the given id

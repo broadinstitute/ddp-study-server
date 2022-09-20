@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.dao.kit.BSPKitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -67,6 +68,7 @@ public class GPReceivedKit {
         String bspSampleId = bspKitQueryResult.getBspSampleId();
         String bspMaterialType = bspKitQueryResult.getBspMaterialType();
         String bspReceptacleType = bspKitQueryResult.getBspReceptacleType();
+        String collectionDate = bspKitQueryResult.getCollectionDate();
         int bspOrganism;
         try {
             bspOrganism = Integer.parseInt(bspKitQueryResult.getBspOrganism());
@@ -78,7 +80,7 @@ public class GPReceivedKit {
         logger.info("Kit returned has sample id " + bspSampleId);
         return Optional.of(
                 new KitInfo(bspKitQueryResult.getBspCollection(), bspOrganism, "U", bspParticipantId, bspSampleId, bspMaterialType,
-                        bspReceptacleType, ddpInstance.getName(), bspKitQueryResult.getKitTypeName()));
+                        bspReceptacleType, ddpInstance.getName(), bspKitQueryResult.getKitTypeName(), collectionDate));
 
     }
 
@@ -96,7 +98,7 @@ public class GPReceivedKit {
 
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                    ESObjectConstants.KIT_LABEL, kitLabel).export();
+                    ESObjectConstants.KIT_LABEL, kitLabel, new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
             logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
             e.printStackTrace();

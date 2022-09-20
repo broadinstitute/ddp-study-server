@@ -9,22 +9,23 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//class to process either collection(nested type ES objects) or single type data
 public abstract class BaseProcessor implements Processor {
 
 
     protected static final Logger logger = LoggerFactory.getLogger(CollectionProcessor.class);
-    protected ESDsm esDsm;
+    protected Dsm esDsm;
     protected String propertyName;
     protected int recordId;
     protected Collector collector;
     protected String primaryKey;
 
-    public BaseProcessor(ESDsm esDsm, String propertyName, int recordId, Collector collector) {
+    public BaseProcessor(Dsm esDsm, String propertyName, int recordId, Collector collector) {
         this.esDsm = Objects.requireNonNull(esDsm);
         this.propertyName = Objects.requireNonNull(propertyName);
         this.recordId = recordId;
@@ -35,7 +36,7 @@ public abstract class BaseProcessor implements Processor {
 
     }
 
-    public void setEsDsm(ESDsm esDsm) {
+    public void setEsDsm(Dsm esDsm) {
         this.esDsm = esDsm;
     }
 
@@ -49,14 +50,6 @@ public abstract class BaseProcessor implements Processor {
 
     public void setCollector(Collector collector) {
         this.collector = collector;
-    }
-
-    protected String getPrimaryKey(Object obj) {
-        if (Objects.isNull(obj)) {
-            return StringUtils.EMPTY;
-        }
-        TableName tableName = obj.getClass().getAnnotation(TableName.class);
-        return tableName != null ? tableName.primaryKey() : StringUtils.EMPTY;
     }
 
     protected void updateExistingRecord(Map<String, Object> eachRecord) {
@@ -97,7 +90,7 @@ public abstract class BaseProcessor implements Processor {
     protected Object getValueByField(Field field) {
         try {
             Object value = field.get(esDsm);
-            primaryKey = findPrimaryKeyOfObject(value);
+            primaryKey = findPrimaryKeyOfObject(field);
             return convertObjectToCollection(value);
         } catch (IllegalAccessException iae) {
             throw new RuntimeException("error occurred while attempting to get data from ESDsm", iae);
@@ -106,7 +99,15 @@ public abstract class BaseProcessor implements Processor {
 
     protected abstract Object convertObjectToCollection(Object object);
 
-    protected abstract String findPrimaryKeyOfObject(Object object);
+    protected String findPrimaryKeyOfObject(Field field) {
+        if (Objects.isNull(field)) {
+            return StringUtils.EMPTY;
+        }
+        TableName tableName = getTableNameByField(field);
+        return tableName != null ? tableName.primaryKey() : StringUtils.EMPTY;
+    }
+
+    protected abstract TableName getTableNameByField(Field field);
 
     protected abstract Object updateIfExistsOrPut(Object value);
 

@@ -4,7 +4,9 @@ import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultTy
 import static org.broadinstitute.ddp.service.FileUploadServiceTest.FileUploadSettingsForTest.createFileUploadSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,12 +27,14 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
@@ -39,14 +43,12 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class FileUploadServiceTest extends TxnAwareBaseTest {
-
-    private static TestDataSetupUtil.GeneratedTestData testData;
     private static long studyId;
     private static long userId;
 
     @BeforeClass
     public static void setup() {
-        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+        final var testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         studyId = testData.getStudyId();
         userId = testData.getUserId();
     }
@@ -57,8 +59,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         long fileSize = 50000;
         var service = FileUploadService.fromConfig(ConfigManager.getInstance().getConfig());
         var result = TransactionWrapper.withTxn(handle -> service
-                .authorizeUpload(handle, studyId, userId, userId, createFileUploadSettings(fileSize),
-                        "prefix", "application/pdf", "filename.pdf", 50000, false));
+                .authorizeUpload(handle, studyId, userId, userId, createFileUploadSettings(fileSize), GuidUtils.randomFileUploadGuid(),
+                        "prefix/filename.pdf", "application/pdf", "filename.pdf", 50000, false));
 
         var guid = result.getFileUpload().getGuid();
         System.out.println("File upload guid: " + guid);
@@ -70,7 +72,19 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testAuthorizeUpload() throws MalformedURLException {
         var now = Instant.now();
-        var dummyUpload = new FileUpload(1L, "guid", 1L, 1L, 1L, "blob", "mime", "file", 123, false, now, null, null, null);
+        var dummyUpload = FileUpload.builder()
+                .id(1L)
+                .guid("guid")
+                .studyId(1L)
+                .operatorUserId(1L)
+                .participantUserId(1L)
+                .blobName("blob")
+                .mimeType("mime")
+                .fileName("file")
+                .fileSize(123L)
+                .isVerified(false)
+                .createdAt(now)
+                .build();
         var dummyUrl = new URL("https://datadonationplatform.org");
         var expectedMime = FileUploadService.DEFAULT_MIME_TYPE;
         var expectedMethod = HttpMethod.POST;
@@ -78,7 +92,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var mockHandle = mock(Handle.class);
         var mockDao = mock(FileUploadDao.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         doReturn(mockDao).when(mockHandle).attach(FileUploadDao.class);
         doReturn(dummyUpload).when(mockDao)
@@ -86,10 +101,11 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         doReturn(dummyUrl).when(mockClient).generateSignedUrl(any(), eq("uploads"), startsWith("prefix/"),
                 anyLong(), any(), eq(expectedMethod), argThat(map -> expectedMime.equals(map.get("Content-Type"))));
 
-        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", null, "file", 123, true);
+        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, createFileUploadSettings(123),
+                GuidUtils.randomFileUploadGuid(), "prefix/file", null, "file", 123, true);
 
         assertNotNull(result);
-        assertFalse(result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM);
+        assertNotSame(result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNotNull(result.getFileUpload());
         assertNotNull(result.getSignedUrl());
 
@@ -102,10 +118,12 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testAuthorizeUpload_exceededSize() {
-        var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
-        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", "mime", "file", 1024, false);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123),
+                GuidUtils.randomFileUploadGuid(), "prefix/file", "mime", "file", 1024, false);
         assertNotNull(result);
-        assertTrue("should hit size limit", result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM);
+        assertSame("should hit size limit", result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNull(result.getFileUpload());
         assertNull(result.getSignedUrl());
     }
@@ -115,7 +133,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var now = Instant.now();
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         long size = 100;
         doReturn(true).when(mockBlob).exists();
@@ -133,6 +152,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
             var actual = fileDao.findById(upload.getId()).orElse(null);
+            assertNotNull(actual);
             assertTrue(actual.isVerified());
 
             handle.rollback();
@@ -146,9 +166,10 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             var upload = fileDao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 100);
 
             fileDao.markVerified(upload.getId());
-            upload = fileDao.findById(upload.getId()).get();
+            upload = fileDao.findById(upload.getId()).orElseThrow();
 
-            var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+            var mockSendGrid = mock(SendGridClient.class);
+            var service = new FileUploadService(mockSendGrid, null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
             var result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
@@ -161,7 +182,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var now = Instant.now();
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
 
         TransactionWrapper.useTxn(handle -> {
@@ -192,13 +214,12 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.SIZE_MISMATCH, result);
 
-            var quarantinedUpload = new FileUpload(
-                    upload.getId(), upload.getGuid(),
-                    upload.getStudyId(), upload.getOperatorUserId(), upload.getParticipantUserId(),
-                    upload.getBlobName(), upload.getMimeType(),
-                    upload.getFileName(), upload.getFileSize(),
-                    false, upload.getCreatedAt(), null,
-                    Instant.now(), FileScanResult.INFECTED);
+            var quarantinedUpload = upload.toBuilder()
+                    .isVerified(false)
+                    .uploadedAt(null)
+                    .scanResult(FileScanResult.INFECTED)
+                    .scannedAt(Instant.now())
+                    .build();
             result = service.verifyUpload(handle, studyId, userId, quarantinedUpload);
             assertEquals(FileUploadService.VerifyResult.QUARANTINED, result);
 
@@ -210,7 +231,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     public void testRemoveUnusedUploads() {
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         doReturn(true).when(mockBlob).exists();
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");

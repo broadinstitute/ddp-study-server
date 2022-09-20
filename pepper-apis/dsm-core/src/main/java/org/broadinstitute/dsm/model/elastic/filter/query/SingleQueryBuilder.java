@@ -4,8 +4,16 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class SingleQueryBuilder extends BaseQueryBuilder {
 
+    public SingleQueryBuilder(QueryPayload queryPayload) {
+        super(queryPayload);
+    }
+
+    public SingleQueryBuilder() {
+        super(null);
+    }
+
     @Override
-    protected QueryBuilder build(QueryBuilder queryBuilder) {
-        return queryBuilder;
+    protected QueryBuilder getFinalQuery(QueryBuilder query) {
+        return query;
     }
 }

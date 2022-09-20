@@ -15,6 +15,7 @@ public class ParticipantRecordPatch extends BasePatch {
 
     public ParticipantRecordPatch(Patch patch) {
         super(patch);
+        this.dbElementBuilder = new ParticipantRecordDBElementBuilder();
     }
 
     @Override
@@ -57,7 +58,7 @@ public class ParticipantRecordPatch extends BasePatch {
         ParticipantRecordDto participantRecordDto =
                 new ParticipantRecordDto.Builder(participantId, System.currentTimeMillis())
                         .withChangedBy("SYSTEM")
-                        .builder();
+                        .build();
         new ParticipantRecordDao().create(participantRecordDto);
     }
 
@@ -73,4 +74,5 @@ public class ParticipantRecordPatch extends BasePatch {
     Optional<Object> processEachNameValue(NameValue nameValue) {
         return Optional.empty();
     }
+
 }

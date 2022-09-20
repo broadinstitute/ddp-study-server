@@ -15,7 +15,6 @@ import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
@@ -25,7 +24,7 @@ import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
@@ -35,7 +34,6 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
-import org.broadinstitute.dsm.util.PatchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +48,10 @@ public abstract class BasePatch {
     static final Logger logger = LoggerFactory.getLogger(BasePatch.class);
     protected static Map<String, Object> NULL_KEY;
     protected Patch patch;
-    protected ESProfile profile;
+    protected Profile profile;
     protected DDPInstance ddpInstance;
     protected DBElement dbElement;
+    protected DBElementBuilder dbElementBuilder;
     Map<String, Object> resultMap;
     List<NameValue> nameValues;
     private boolean isElasticSearchExportable;
@@ -60,6 +59,7 @@ public abstract class BasePatch {
     {
         resultMap = new HashMap<>();
         nameValues = new ArrayList<>();
+        dbElementBuilder = new DefaultDBElementBuilder();
     }
 
     protected BasePatch() {
@@ -78,8 +78,19 @@ public abstract class BasePatch {
         if (!isElasticSearchExportable) {
             return;
         }
-        GeneratorPayload generatorPayload =
-                new GeneratorPayload(nameValue, patch);
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
+        ExportFacadePayload exportFacadePayload =
+                new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
+                        patch.getRealm());
+        ExportFacade exportFacade = new ExportFacade(exportFacadePayload);
+        exportFacade.export();
+    }
+
+    private void exportToES(List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValues, patch);
         ExportFacadePayload exportFacadePayload =
                 new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
                         patch.getRealm());
@@ -106,7 +117,7 @@ public abstract class BasePatch {
 
     Optional<Object> processSingleNameValue() {
         Optional<Object> result;
-        dbElement = PatchUtil.getColumnNameMap().get(patch.getNameValue().getName());
+        dbElement = dbElementBuilder.fromName(patch.getNameValue().getName());
         if (dbElement != null) {
             result = Optional.of(handleSingleNameValue());
         } else {
@@ -118,14 +129,23 @@ public abstract class BasePatch {
     List<Object> processMultipleNameValues() {
         List<Object> updatedNameValues = new ArrayList<>();
         for (NameValue nameValue : patch.getNameValues()) {
-            dbElement = PatchUtil.getColumnNameMap().get(nameValue.getName());
+            dbElement = dbElementBuilder.fromName(nameValue.getName());
             if (dbElement != null) {
                 processEachNameValue(nameValue).ifPresent(updatedNameValues::add);
             } else {
                 throw new RuntimeException("DBElement not found in ColumnNameMap: " + nameValue.getName());
             }
         }
+        exportToESWithId(getIdForES(), getNameValuesForES());
         return updatedNameValues;
+    }
+
+    protected String getIdForES() {
+        return patch.getId();
+    }
+
+    protected List<NameValue> getNameValuesForES() {
+        return patch.getNameValues();
     }
 
     protected void exportToESWithId(String id, NameValue nameValue) {
@@ -136,13 +156,21 @@ public abstract class BasePatch {
         exportToES(Objects.requireNonNull(nameValue));
     }
 
+    protected void exportToESWithId(String id, List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        patch.setId(Objects.requireNonNull(id));
+        exportToES(Objects.requireNonNull(nameValues));
+    }
+
     abstract Optional<Object> processEachNameValue(NameValue nameValue);
 
     protected boolean hasQuestion(NameValue nameValue) {
         return nameValue.getName().contains("question");
     }
 
-    protected boolean hasProfileAndESWorkflowType(ESProfile profile, Value action) {
+    protected boolean hasProfileAndESWorkflowType(Profile profile, Value action) {
         return ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(action.getType()) && profile != null;
     }
 
@@ -251,7 +279,7 @@ public abstract class BasePatch {
                                     patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
                 }
             }
-        // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
+            // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
         } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue") && !(boolean) patch.getNameValue().getValue()) {
             boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
 
@@ -272,15 +300,14 @@ public abstract class BasePatch {
         int oncHistoryDetailId = -1;
         if (patch.getNameValue().getName().contains(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER)) {
             oncHistoryDetailId = Integer.parseInt(patch.getParentId());
-        } else if (patch.getNameValue().getName()
-                .contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
+        } else if (patch.getNameValue().getName().contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
             oncHistoryDetailId = Integer.parseInt(patch.getId());
         }
         return oncHistoryDetailId;
     }
 
     private NameValue setAdditionalValue(String additionalValue, @NonNull Patch patch, @NonNull Object value) {
-        DBElement dbElement = PatchUtil.getColumnNameMap().get(additionalValue);
+        DBElement dbElement = dbElementBuilder.fromName(additionalValue);
         if (dbElement != null) {
             NameValue nameValue = new NameValue(additionalValue, value);
             Patch.patch(patch.getId(), patch.getUser(), nameValue, dbElement);

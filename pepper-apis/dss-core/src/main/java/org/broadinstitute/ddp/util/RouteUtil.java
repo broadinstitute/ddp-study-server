@@ -3,14 +3,16 @@ package org.broadinstitute.ddp.util;
 import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.broadinstitute.ddp.constants.ErrorCodes.STUDY_NOT_FOUND;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
+import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -30,8 +33,10 @@ import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
 import spark.HaltException;
 import spark.Request;
@@ -56,6 +61,10 @@ public class RouteUtil {
             ddpAuth = new DDPAuth();
         }
         return ddpAuth;
+    }
+
+    public static DDPAuth computeDDPAuth(Request req) {
+        return new JWTConverter().convertJWTFromHeader(req.headers(AUTHORIZATION), false);
     }
 
     public static LanguageDto getUserLanguage(Request req) {
@@ -282,7 +291,17 @@ public class RouteUtil {
             log.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
-        return new UserAndStudy(user, studyDto);
+        List<Governance> governances;
+        try (Stream<Governance> governanceStream = handle.attach(UserGovernanceDao.class)
+                .findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)) {
+            governances = governanceStream.collect(Collectors.toList());
+        }
+        User proxy = null;
+        if (!governances.isEmpty()) {
+            String proxyGuid = governances.get(0).getProxyUserGuid();
+            proxy = handle.attach(UserDao.class).findUserByGuid(proxyGuid).orElse(null);
+        }
+        return new UserAndStudy(user, studyDto, proxy);
     }
 
     /**
@@ -306,16 +325,28 @@ public class RouteUtil {
             log.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
-        return new UserAndStudy(user, studyDto);
+        List<Governance> governances;
+        try (Stream<Governance> governanceStream = handle.attach(UserGovernanceDao.class)
+                .findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)) {
+            governances = governanceStream.collect(Collectors.toList());
+        }
+        User proxy = null;
+        if (!governances.isEmpty()) {
+            String proxyGuid = governances.get(0).getProxyUserGuid();
+            proxy = handle.attach(UserDao.class).findUserByGuid(proxyGuid).orElse(null);
+        }
+        return new UserAndStudy(user, studyDto, proxy);
     }
 
     public static final class UserAndStudy {
         private final User user;
         private final StudyDto studyDto;
+        private final User proxy;
 
-        public UserAndStudy(User user, StudyDto studyDto) {
+        public UserAndStudy(User user, StudyDto studyDto, User proxy) {
             this.user = user;
             this.studyDto = studyDto;
+            this.proxy = proxy;
         }
 
         public User getUser() {
@@ -324,6 +355,10 @@ public class RouteUtil {
 
         public StudyDto getStudyDto() {
             return studyDto;
+        }
+
+        public User getProxy() {
+            return proxy;
         }
     }
 }

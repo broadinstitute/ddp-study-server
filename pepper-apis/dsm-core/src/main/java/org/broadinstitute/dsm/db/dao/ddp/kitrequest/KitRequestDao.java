@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
@@ -16,6 +17,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
+@Slf4j
 public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String SQL_SELECT_ES_SAMPLE =
@@ -27,6 +29,9 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                     + "ddp_kit_request_settings krs ON (kr.ddp_instance_id = krs.ddp_instance_id "
                     + "AND kr.kit_type_id = krs.kit_type_id)  LEFT JOIN "
                     + "carrier_service cs ON (krs.carrier_service_to_id = cs.carrier_service_id)";
+
+    public static final String SQL_GET_KIT_LABEL =
+            "select kit_label from ddp_kit where dsm_kit_request_id = ?";
 
     public static final String BY_INSTANCE_ID = " WHERE kr.ddp_instance_id = ?";
 
@@ -60,24 +65,23 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return Optional.empty();
     }
 
-    public KitRequestDto getKitRequestByLabel(String kitLabel) {
-        List<KitRequestDto> kitRequestDtoList = new ArrayList<>();
+    public Optional<KitRequestDto> getKitRequestByLabel(String kitLabel) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST + BY_DDP_LABEL)) {
                 stmt.setString(1, kitLabel);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        kitRequestDtoList.add(
-                                new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                        rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
-                                        rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
-                                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
-                                        rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
-                                        rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
-                                        rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),
-                                        rs.getString(DBConstants.UPLOAD_REASON), rs.getTimestamp(DBConstants.ORDER_TRANSMITTED_AT)));
+                        dbVals.resultValue =
+                            new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                                    rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
+                                    rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
+                                    rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
+                                    rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
+                                    rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
+                                    rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
+                                    rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),
+                                    rs.getString(DBConstants.UPLOAD_REASON), rs.getTimestamp(DBConstants.ORDER_TRANSMITTED_AT));
                     }
                 }
             } catch (SQLException ex) {
@@ -88,7 +92,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             }
             return dbVals;
         });
-        return kitRequestDtoList.get(0);
+        return Optional.ofNullable((KitRequestDto) results.resultValue);
     }
 
     public List<ESSamplesDto> getESSamplesByInstanceId(int instanceId) {
@@ -144,5 +148,29 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             throw new RuntimeException("Couldn't get kit request id for " + bspSampleId, results.resultException);
         }
         return (String) results.resultValue;
+    }
+
+    public String getKitLabelFromDsmKitRequestId(long dsmKitRequestId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_LABEL)) {
+                stmt.setLong(1, dsmKitRequestId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        dbVals.resultValue = rs.getString(DBConstants.KIT_LABEL);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get kit label for kit " + dsmKitRequestId, results.resultException);
+        }
+        String kitLabel = String.valueOf(results.resultValue);
+        log.info("Got " + kitLabel + " sequencing kit label in DSM DB for " + dsmKitRequestId);
+        return kitLabel;
     }
 }

@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.jdbi.v3.core.Handle;
@@ -98,17 +99,25 @@ public class FileScanResultReceiver implements MessageReceiver {
         }
     }
 
-    private String parseFileUploadGuid(String fileName) {
-        // For authorized uploads, the base file name should be the upload guid.
-        return Path.of(fileName).getFileName().toString();
+    private String parseFileUploadGuid(String blobName) {
+        // For authorized uploads, the base file name should start with the upload guid.
+        final var fileName = Path.of(blobName).getFileName().toString();
+        if (!fileName.contains("_")) {
+            log.error("The blob name {} doesn't have any underscores in it. It must have at least one", blobName);
+            throw new DDPException(String.format("The blob name %s doesn't have any underscores in it. It must have at least one",
+                    blobName));
+        }
+
+        return fileName.substring(0, fileName.indexOf("_"));
     }
 
     private boolean handleFileScanResult(Handle handle, Blob blob, FileScanResult scanResult, Instant scannedAt) {
         // Find and lock file upload so we can safely update and move file.
         var uploadDao = handle.attach(FileUploadDao.class);
         String uploadGuid = parseFileUploadGuid(blob.getName());
-        FileUpload upload = uploadDao.findAndLockByGuid(uploadGuid).orElse(null);
+        log.info("Guid extracted from the file name: {}", uploadGuid);
 
+        FileUpload upload = uploadDao.findAndLockByGuid(uploadGuid).orElse(null);
         if (upload == null) {
             // If we didn't find it, then likely not a file we authorized. Let's report it.
             log.error("Could not find file upload with guid '{}', ack-ing", uploadGuid);

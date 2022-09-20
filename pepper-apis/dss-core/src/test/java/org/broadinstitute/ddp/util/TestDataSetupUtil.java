@@ -540,9 +540,17 @@ public class TestDataSetupUtil {
 
         long studyId = handle.attach(JdbiUmbrellaStudy.class).insert(studyName, studyGuid, umbrellaId, webBaseUrl,
                 auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null, null, false);
-        return new StudyDto(studyId, studyGuid, studyName, null, webBaseUrl, umbrellaId, auth0TenantDto.getId(),
-                studyPrecision,
-                shareParticipantLocation, null, null, false, null, false);
+
+        return StudyDto.builder()
+                .id(studyId)
+                .guid(studyGuid)
+                .name(studyName)
+                .webBaseUrl(webBaseUrl)
+                .umbrellaId(umbrellaId)
+                .auth0TenantId(auth0TenantDto.getId())
+                .olcPrecision(studyPrecision)
+                .publicDataSharingEnabled(shareParticipantLocation)
+                .build();
     }
 
     public static FormActivityDef generateTestFormActivityForUser(Handle handle, String userGuid, String studyGuid) {
@@ -593,27 +601,29 @@ public class TestDataSetupUtil {
      */
     public static UserProfile createTestingProfile(Handle handle, long userId, boolean random) {
         Random rand = new Random();
-        UserProfile profile = new UserProfile.Builder(userId)
-                .setFirstName(random
+        UserProfile profile = UserProfile.builder()
+                .userId(userId)
+                .firstName(random
                         ? "John" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
                         : TestConstants.TEST_USER_PROFILE_FIRST_NAME)
-                .setLastName(random
+                .lastName(random
                         ? "Doe" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
                         : TestConstants.TEST_USER_PROFILE_LAST_NAME)
-                .setSexType(random
+                .sexType(random
                         ? UserProfile.SexType.values()[rand.nextInt(UserProfile.SexType.values().length)]
                         : TestConstants.TEST_USER_PROFILE_SEX)
-                .setBirthDate(LocalDate.of(
+                .birthDate(LocalDate.of(
                         random ? rand.ints(1800, 2017).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_YEAR,
                         random ? rand.ints(1, 12).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_MONTH,
                         random ? rand.ints(1, 28).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_DAY))
-                .setPreferredLangId(LanguageStore
+                .preferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
-                .setSkipLanguagePopup(random
+                .preferredLangCode(null)
+                .skipLanguagePopup(random
                         ? rand.nextBoolean()
                         : TestConstants.TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP)
                 .build();
@@ -964,6 +974,8 @@ public class TestDataSetupUtil {
                                 TestConstants.TEST_INSTITUTION_CITY,
                         random ? "State" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
                                 TestConstants.TEST_INSTITUTION_STATE,
+                        random ? "Country " + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
+                                TestConstants.TEST_INSTITUTION_COUNTRY,
                         random ? GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 5) :
                                 TestConstants.TEST_INSTITUTION_ZIP,
                         random ? GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 12) :

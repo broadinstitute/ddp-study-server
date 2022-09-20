@@ -12,9 +12,9 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
@@ -46,7 +46,7 @@ public class ClinicalKitDto {
     String gender;
     @SerializedName("accession_number")
     String accessionNumber;
-    @SerializedName("collection_date")
+    @SerializedName ("sample_collection_date")
     String collectionDate;
     @SerializedName("kit_label")
     String mfBarcode;
@@ -108,11 +108,11 @@ public class ClinicalKitDto {
         }
 
         try {
-            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(ESDsm::getDateOfBirth).orElse(""));
-            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getFirstName).orElse(""));
-            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getLastName).orElse(""));
+            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(Dsm::getDateOfBirth).orElse(""));
+            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getFirstName).orElse(""));
+            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getLastName).orElse(""));
             this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
-            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getHruid).orElse("");
+            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getHruid).orElse("");
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                             ddpInstance.isMigratedDDP(),
@@ -139,8 +139,8 @@ public class ClinicalKitDto {
         return getGenderFromActivities(participantByShortId.getActivities());
     }
 
-    private String getGenderFromActivities(List<ESActivities> activities) {
-        Optional<ESActivities> maybeAboutYouActivity = activities.stream()
+    private String getGenderFromActivities(List<Activities> activities) {
+        Optional<Activities> maybeAboutYouActivity = activities.stream()
                 .filter(activity -> DDPActivityConstants.ACTIVITY_ABOUT_YOU.equals(activity.getActivityCode()))
                 .findFirst();
         return (String) maybeAboutYouActivity.map(aboutYou -> {
@@ -151,6 +151,6 @@ public class ClinicalKitDto {
             return maybeGenderQuestionAnswer
                     .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
                     .orElse("U");
-        }).orElse("U");
+        }).orElse("U"); //todo we have to decide what will happen in this case?
     }
 }

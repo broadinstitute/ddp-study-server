@@ -24,7 +24,7 @@ public class ClinicalKitsRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
 
-    private final String mercury = "MERCURY";
+    public static final String MERCURY = "MERCURY";
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
@@ -57,8 +57,8 @@ public class ClinicalKitsRoute implements Route {
             //kit not found in ddp_kit table -> check tissue smi-ids
             return new ClinicalKitDao().getClinicalKitBasedOnSmId(kitLabel);
         } else {
-            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, mercury);
-            KitInfo kitInfo = maybeKitInfo.get();
+            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.orElseThrow(), notificationUtil, MERCURY);
+            KitInfo kitInfo = maybeKitInfo.orElseThrow();
             ClinicalKitDto clinicalKit = new ClinicalKitDto();
             logger.info("Creating clinical kit to return to GP " + kitLabel);
             clinicalKit.setCollaboratorParticipantId(kitInfo.getCollaboratorParticipantId());
@@ -67,8 +67,8 @@ public class ClinicalKitsRoute implements Route {
             clinicalKit.setVesselType(kitInfo.getReceptacleName());
             clinicalKit.setSampleType(kitInfo.getKitType());
             clinicalKit.setMfBarcode(kitLabel);
-            clinicalKit.setCollectionDate("01/31/2021"); //TODO needs to get replaced to real values after we add these values to DSM
-            clinicalKit.setSampleCollection(kitInfo.getSampleCollectionBarcode());
+            clinicalKit.setCollectionDate(kitInfo.getCollectionDate());
+            clinicalKit.setSampleCollection(ClinicalKitDao.PECGS);
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitInfo.getRealm());
             clinicalKit.setNecessaryParticipantDataToClinicalKit(optionalBSPKitDto.get().getDdpParticipantId(), ddpInstance);
             return clinicalKit;

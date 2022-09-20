@@ -38,7 +38,6 @@ public class PatchRoute extends RequestHandler {
         String userIdRequest = UserUtil.getUserId(request);
         if (UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest)
                 || UserUtil.checkUserAccess(null, userId, DBConstants.MR_ABSTRACTER, userIdRequest)
-                || UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest)
                 || UserUtil.checkUserAccess(null, userId, DBConstants.PT_LIST_VIEW, userIdRequest)) {
             try {
                 String requestBody = request.body();

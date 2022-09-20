@@ -14,10 +14,14 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecordLog;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
+import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
 import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 import org.slf4j.Logger;
@@ -72,7 +76,8 @@ public class DDPMedicalRecordDataRequest {
                                             DDPRequestUtil.getResponseObject(InstitutionRequest[].class, dsmRequest, ddpInstance.getName(),
                                                     ddpInstance.isHasAuth0Token());
                                     if (institutionRequests != null && institutionRequests.length > 0) {
-                                        logger.info("Got " + institutionRequests.length + " InstitutionRequests for " + ddpInstance.getName());
+                                        logger.info(
+                                                "Got " + institutionRequests.length + " InstitutionRequests for " + ddpInstance.getName());
                                         for (InstitutionRequest institutionRequest : institutionRequests) {
                                             try {
                                                 writeParticipantIntoDb(conn, ddpInstance.getDdpInstanceId(), institutionRequest,
@@ -116,12 +121,21 @@ public class DDPMedicalRecordDataRequest {
                 }
             }
         } else {
-            //new participant
             ParticipantDto participantDto =
                     new ParticipantDto.Builder(Integer.parseInt(instanceId), System.currentTimeMillis()).withDdpParticipantId(
                                     institutionRequest.getParticipantId()).withLastVersion(institutionRequest.getId())
                             .withLastVersionDate(institutionRequest.getLastUpdated()).withChangedBy(SystemUtil.SYSTEM).build();
-            new ParticipantDao().create(participantDto);
+            int participantId             = new ParticipantDao().create(participantDto);
+            DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
+            ElasticSearchParticipantExporterFactory.fromPayload(
+                    new ParticipantExportPayload(
+                            participantId,
+                            institutionRequest.getParticipantId(),
+                            instanceId,
+                            instanceName,
+                            ddpInstanceDto
+                    )
+            ).export();
             writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
         }
     }

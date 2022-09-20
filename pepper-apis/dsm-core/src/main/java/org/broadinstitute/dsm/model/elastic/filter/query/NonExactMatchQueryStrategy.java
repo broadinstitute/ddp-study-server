@@ -1,24 +1,59 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.broadinstitute.dsm.model.Filter;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.WildcardQueryBuilder;
 
 public class NonExactMatchQueryStrategy extends MatchQueryStrategy {
 
     public static final String WILDCARD_ASTERISK = "*";
 
     @Override
-    public QueryBuilder build(BaseQueryBuilder baseQueryBuilder) {
-        QueryBuilder queryBuilder;
+    public List<QueryBuilder> build(BaseQueryBuilder baseQueryBuilder) {
+        List<QueryBuilder> queryBuilders = new ArrayList<>();
         if (isTextType(baseQueryBuilder)) {
-            queryBuilder = baseQueryBuilder.build(QueryBuilders.wildcardQuery(
-                    baseQueryBuilder.payload.getFieldName(),
-                    String.format("%s%s%s",
-                            WILDCARD_ASTERISK, String.valueOf(baseQueryBuilder.payload.getValues()[0]).toLowerCase(), WILDCARD_ASTERISK)));
-
+            queryBuilders.addAll(buildWildCardQueries(baseQueryBuilder));
         } else {
-            queryBuilder = super.build(baseQueryBuilder);
+            queryBuilders.add(super.getMainQueryBuilder(baseQueryBuilder));
         }
-        return queryBuilder;
+        return queryBuilders;
+    }
+
+    private List<WildcardQueryBuilder> buildWildCardQueries(BaseQueryBuilder baseQueryBuilder) {
+        List<WildcardQueryBuilder> result = new ArrayList<>();
+        String lowerCaseValue = String.valueOf(baseQueryBuilder.payload.getValues()[0]).toLowerCase();
+        String[] wordsSplittedBySpace = lowerCaseValue.split(Filter.SPACE);
+        if (isValueSpaceSeparated(wordsSplittedBySpace)) {
+            for (String word: wordsSplittedBySpace) {
+                result.add(buildWildCardQuery(baseQueryBuilder, word));
+            }
+        } else {
+            result.add(buildWildCardQuery(baseQueryBuilder, lowerCaseValue));
+        }
+        return result;
+    }
+
+    private boolean isValueSpaceSeparated(String[] wordsSplittedBySpace) {
+        return wordsSplittedBySpace.length > 1;
+    }
+
+    private WildcardQueryBuilder buildWildCardQuery(BaseQueryBuilder baseQueryBuilder, String lowerCaseValue) {
+        return QueryBuilders.wildcardQuery(
+                baseQueryBuilder.payload.getFieldName(),
+                String.format("%s%s%s",
+                        WILDCARD_ASTERISK, lowerCaseValue, WILDCARD_ASTERISK));
+    }
+
+    @Override
+    protected MatchQueryBuilder addOperator(MatchQueryBuilder baseQuery) {
+        return baseQuery.operator(Operator.OR);
     }
 }

@@ -6,7 +6,7 @@ servers:
     description: Production server (uses real data)
 info:
   description: 'Pepper API specification'
-  version: 'v1.27-370-ge7f3453f7'
+  version: 'v1.27-709-g45148cd87'
   title: Pepper
   contact:
     email: info@datadonationplatform.org
@@ -79,6 +79,8 @@ paths:
     $ref: 'endpoints/admin.studies.user.login-account.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
+  /studies/{study}/audit:
+    $ref: 'endpoints/studies.audit.yml'
   /studies/{study}/invitation-check:
     $ref: 'endpoints/studies.invitation-check.yml'
   /studies/{study}/invitation-verify:
@@ -95,6 +97,8 @@ paths:
      $ref: 'endpoints/user.studies.activity.instance.question-options.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
+  /user:
+    $ref: 'endpoints/users.yml'
   /user/{user}:
     $ref: 'endpoints/user.yml'
   /user/{user}/profile:

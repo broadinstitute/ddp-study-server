@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,17 +24,25 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import com.typesafe.config.Config;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -41,6 +50,7 @@ public class FileUploadService {
     public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
     public static final int DEFAULT_BATCH_SIZE = 100;
 
+    private final SendGridClient sendGridClient;
     private final ServiceAccountSigner signer;
     private final GoogleBucketClient storageClient;
     private final String uploadsBucket;
@@ -74,7 +84,10 @@ public class FileUploadService {
         long removalExpireTime = cfg.getLong(ConfigFile.FileUploads.REMOVAL_EXPIRE_TIME);
         TimeUnit removalExpireUnit = TimeUnit.valueOf(cfg.getString(ConfigFile.FileUploads.REMOVAL_EXPIRE_UNIT));
 
+        var apiKey = cfg.getString(ConfigFile.SENDGRID_API_KEY);
+        var connectProxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY);
         return new FileUploadService(
+                new SendGridClient(apiKey, connectProxy),
                 signerCredentials,
                 new GoogleBucketClient(projectId, bucketCredentials),
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
@@ -84,10 +97,11 @@ public class FileUploadService {
                 removalExpireTime, removalExpireUnit, removalBatchSize);
     }
 
-    public FileUploadService(ServiceAccountSigner signer, GoogleBucketClient storageClient,
+    public FileUploadService(SendGridClient sendGridClient, ServiceAccountSigner signer, GoogleBucketClient storageClient,
                              String uploadsBucket, String scannedBucket, String quarantineBucket,
                              int maxSignedUrlMins, long removalExpireTime, TimeUnit removalExpireUnit, int removalBatchSize) {
         this.signer = signer;
+        this.sendGridClient = sendGridClient;
         this.storageClient = storageClient;
         this.uploadsBucket = uploadsBucket;
         this.scannedBucket = scannedBucket;
@@ -129,7 +143,7 @@ public class FileUploadService {
      * @param operatorUserId    the operator who instantiated this request
      * @param participantUserId the participant who will own the file
      * @param fileUploadSettings file upload parameters
-     * @param blobPrefix        a prefix to prepend to blob name, e.g. for organizational purposes
+     * @param blobPath          a cloud path of the blob
      * @param mimeType          the user-reported mime type
      * @param fileName          the user-reported name for the file
      * @param fileSize          the user-reported file size
@@ -137,8 +151,8 @@ public class FileUploadService {
      * @return authorization result
      */
     public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
-                                           FileUploadSettings fileUploadSettings,
-                                           String blobPrefix, String mimeType,
+                                           FileUploadSettings fileUploadSettings, String fileGuid,
+                                           String blobPath, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
         if (fileSize > fileUploadSettings.getMaxFileSize()) {
             return new AuthorizeResult(FILE_SIZE_EXCEEDS_MAXIMUM, null, null, fileUploadSettings);
@@ -148,19 +162,16 @@ public class FileUploadService {
             return new AuthorizeResult(MIME_TYPE_NOT_ALLOWED, null, null, fileUploadSettings);
         }
 
-        blobPrefix = blobPrefix != null ? blobPrefix + "/" : "";
         mimeType = mimeType != null ? mimeType : DEFAULT_MIME_TYPE;
 
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
-        String uploadGuid = GuidUtils.randomFileUploadGuid();
-        String blobName = blobPrefix + uploadGuid;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
-                uploadGuid, studyId, operatorUserId, participantUserId,
-                blobName, mimeType, fileName, fileSize);
+                fileGuid, studyId, operatorUserId, participantUserId,
+                blobPath, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
-                signer, uploadsBucket, blobName,
+                signer, uploadsBucket, blobPath,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, headers);
 
@@ -287,6 +298,58 @@ public class FileUploadService {
         return uploadIdsToDelete.size();
     }
 
+    public void sendNotifications(final Handle handle) {
+        StreamEx.of(handle.attach(FileUploadDao.class).findWithoutSentNotification())
+                .groupingBy(FileUpload::getStudyId)
+                .forEach((studyId, fileUploads) -> sendNotifications(handle, studyId, fileUploads));
+    }
+
+    private void sendNotifications(final Handle handle, final Long studyId, final List<FileUpload> fileUploads) {
+        final var study = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
+        if (StringUtils.isBlank(study.getNotificationEmail())) {
+            handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
+            log.warn("Study {} doesn't have an e-mail for notifications", study.getGuid());
+            return;
+        }
+
+        if (study.getNotificationMailTemplateId() == null) {
+            handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
+            log.warn("Study {} doesn't have an e-mail template for notifications", study.getGuid());
+            return;
+        }
+
+        StreamEx.of(fileUploads)
+                .groupingBy(FileUpload::getParticipantUserId)
+                .forEach((participantId, uploads) -> sendNotification(handle, study, participantId, uploads));
+
+        log.info("Notifications sent for {} study", study.getGuid());
+    }
+
+    private void sendNotification(final Handle handle,
+                                  final StudyDto study,
+                                  final Long participantId,
+                                  final List<FileUpload> fileUploads) {
+        final var user = handle.attach(UserDao.class).findUserById(participantId);
+
+        final var result = sendGridClient.sendMail(
+                FileUploadNotificationEmailFactory.create(study, user.map(User::getHruid).orElse(""), fileUploads));
+
+        if (result.hasFailure()) {
+            String message;
+            if (result.hasError()) {
+                message = String.format("Failed to send file upload notification email: %s.", result.getError());
+            } else {
+                message = String.format("Failed to send file upload notification email due to an unknown error.");
+            }
+
+            log.error("{}", message, result.getThrown());
+            return;
+        }
+
+        handle.attach(FileUploadDao.class).setNotificationSentByFileUploadIds(StreamEx.of(fileUploads).map(FileUpload::getId).toList());
+        log.info("A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
+    }
+
     public enum VerifyResult {
         /**
          * File hasn't been uploaded yet.
@@ -316,37 +379,12 @@ public class FileUploadService {
         OK
     }
 
+    @Value
+    @AllArgsConstructor
     public static class AuthorizeResult {
-        private final AuthorizeResultType authorizeResultType;
-        private final FileUpload fileUpload;
-        private final URL signedUrl;
-        private final FileUploadSettings fileUploadSettings;
-
-        public AuthorizeResult(
-                AuthorizeResultType authorizeResultType,
-                FileUpload fileUpload,
-                URL signedUrl,
-                FileUploadSettings fileUploadSettings) {
-            this.authorizeResultType = authorizeResultType;
-            this.fileUpload = fileUpload;
-            this.signedUrl = signedUrl;
-            this.fileUploadSettings = fileUploadSettings;
-        }
-
-        public AuthorizeResultType getAuthorizeResultType() {
-            return authorizeResultType;
-        }
-
-        public FileUpload getFileUpload() {
-            return fileUpload;
-        }
-
-        public URL getSignedUrl() {
-            return signedUrl;
-        }
-
-        public FileUploadSettings getFileUploadSettings() {
-            return fileUploadSettings;
-        }
+        AuthorizeResultType authorizeResultType;
+        FileUpload fileUpload;
+        URL signedUrl;
+        FileUploadSettings fileUploadSettings;
     }
 }

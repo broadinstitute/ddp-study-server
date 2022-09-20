@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
@@ -23,16 +23,16 @@ public class SourceGeneratorTest {
     @Test
     public void generateCollection() {
         BaseParser parser = new ValueParser();
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
+        parser.setPropertyInfo(new PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
         Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value", 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
         List<Map<String, Object>> medicalRecords = (List) ((Map) objectMap.get(SourceGenerator.DSM_OBJECT)).get("medicalRecord");
         Optional<Map<String, Object>> first =
-                medicalRecords.stream().filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN)) != null)
+                medicalRecords.stream().filter(i -> i.get(CamelCaseConverter.of(TestPatchUtil.MEDICAL_RECORD_COLUMN).convert()) != null)
                         .findFirst();
         first.ifPresentOrElse(
-                val -> Assert.assertEquals("value", val.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN))),
+                val -> Assert.assertEquals("value", val.get(CamelCaseConverter.of(TestPatchUtil.MEDICAL_RECORD_COLUMN).convert())),
                 Assert::fail);
     }
 
@@ -42,7 +42,7 @@ public class SourceGeneratorTest {
         return new GeneratorPayload(new NameValue(columnName, value), patch) {
             @Override
             public String getCamelCaseFieldName() {
-                return Util.underscoresToCamelCase(columnName);
+                return CamelCaseConverter.of(columnName).convert();
             }
         };
     }
@@ -50,14 +50,15 @@ public class SourceGeneratorTest {
     @Test
     public void generateNumeric() {
         BaseParser parser = new ValueParser();
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
+        parser.setPropertyInfo(new PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
         Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.NUMERIC_FIELD, 1, 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
         List<Map<String, Object>> medicalRecords = (List) ((Map) objectMap.get(SourceGenerator.DSM_OBJECT)).get("medicalRecord");
         Optional<Map<String, Object>> first =
-                medicalRecords.stream().filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD)) != null).findFirst();
-        first.ifPresentOrElse(val -> Assert.assertEquals(1L, val.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD))),
+                medicalRecords.stream()
+                        .filter(i -> i.get(CamelCaseConverter.of(TestPatchUtil.NUMERIC_FIELD).convert()) != null).findFirst();
+        first.ifPresentOrElse(val -> Assert.assertEquals(1L, val.get(CamelCaseConverter.of(TestPatchUtil.NUMERIC_FIELD).convert())),
                 Assert::fail);
     }
 
@@ -68,8 +69,8 @@ public class SourceGeneratorTest {
         patch.setId("0");
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         DynamicFieldsParser dynamicFieldsParser = new TestDynamicFieldsParser();
-        dynamicFieldsParser.setParser(new ValueParser());
-        dynamicFieldsParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        dynamicFieldsParser.setHelperParser(new ValueParser());
+        dynamicFieldsParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
         Generator generator = new TestSourceGenerator(dynamicFieldsParser, generatorPayload);
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);

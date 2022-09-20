@@ -34,13 +34,15 @@ public abstract class QuestionRecord {
             if (record instanceof SimpleQuestionRecord) {
                 questionAnswer = ((SimpleQuestionRecord) record).getAnswer();
             } else if (record instanceof DateQuestionRecord) {
-                questionAnswer = ((DateQuestionRecord) record).getDate();
+                questionAnswer = ((DateQuestionRecord) record).getAnswer();
             } else if (record instanceof PicklistQuestionRecord) {
                 questionAnswer = ((PicklistQuestionRecord) record).getSelected();
             } else if (record instanceof CompositeQuestionRecord) {
                 questionAnswer = ((CompositeQuestionRecord) record).getAnswer();
             } else if (record instanceof MatrixQuestionRecord) {
-                questionAnswer = ((MatrixQuestionRecord) record).getSelected();
+                questionAnswer = ((MatrixQuestionRecord) record).getAnswer();
+            } else if (record instanceof EquationQuestionRecord) {
+                questionAnswer = ((EquationQuestionRecord) record).getAnswer();
             }
 
             if (questionAnswer != null) {

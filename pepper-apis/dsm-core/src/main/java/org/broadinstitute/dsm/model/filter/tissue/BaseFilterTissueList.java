@@ -6,10 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.NonNull;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.structure.DBElement;
+import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.TissueList;
 import org.broadinstitute.dsm.model.TissueListWrapper;
@@ -19,6 +21,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.QueryParamsMap;
 
 public abstract class BaseFilterTissueList extends BaseFilter implements Filterable<List<TissueListWrapper>> {
 
@@ -28,6 +31,11 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
         super(jsonBody);
     }
 
+    @Override
+    /** Custom tissue deserializers are not yet needed/implemented */
+    public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap, Deserializer deserializer) {
+        throw new NotImplementedException();
+    }
 
     protected List<TissueListWrapper> filterTissueList(Filter[] filters, Map<String, DBElement> columnNameMap, String filterName,
                                                        @NonNull DDPInstance instance, String filterQuery) {
@@ -36,7 +44,8 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
         if (filters != null && !columnNameMap.isEmpty()) {
             for (Filter filter : filters) {
                 if (filter != null) {
-                    DBElement dbElement = columnNameMap.get(filter.getParticipantColumn().getTableAlias() + "." + filter.getFilter1().getName());
+                    DBElement dbElement =
+                            columnNameMap.get(filter.getParticipantColumn().getTableAlias() + "." + filter.getFilter1().getName());
                     ViewFilter.addQueryCondition(queryConditions, dbElement, filter);
                 }
             }

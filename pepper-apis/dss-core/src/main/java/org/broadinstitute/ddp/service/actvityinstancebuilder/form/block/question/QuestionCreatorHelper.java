@@ -93,7 +93,8 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getTrueTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
-                        ctx, questionDef.getFalseTemplate())
+                        ctx, questionDef.getFalseTemplate()),
+                questionDef.getRenderMode()
         );
     }
 
@@ -121,7 +122,7 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalItemTemplate()),
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getChildren(),
                         (childQuestionDef) -> questionCreator.createQuestion(ctx, childQuestionDef)),
-                questionDef.getChildOrientation(),
+                questionDef.getChildOrientation(), questionDef.getTabularSeparator(),
                 questionCreator.getAnswers(ctx, questionDef.getStableId())
         );
     }

@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,8 +30,6 @@ public class JWTRouteFilter {
     public static final String DDP_ROLES_CLAIM = "org.broadinstitute.ddp.roles";
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
     private final String auth0Domain;
-    private final String bspSecret;
-    private final Collection<String> expectedRoles = new HashSet<>();
 
     /**
      * Create a filter that will only allow access if a
@@ -41,9 +37,8 @@ public class JWTRouteFilter {
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
      */
-    public JWTRouteFilter(String auth0Domain, String bspSecret) {
+    public JWTRouteFilter(String auth0Domain) {
         this.auth0Domain = auth0Domain;
-        this.bspSecret = bspSecret;
     }
 
     /**
@@ -59,6 +54,9 @@ public class JWTRouteFilter {
                 if (parsedAuthHeader != null) {
                     if (parsedAuthHeader.length == 2) {
                         String jwtToken = parsedAuthHeader[1].trim();
+                        if (!isRSA) {
+                            logger.info(jwtToken);
+                        }
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
                                 Map<String, Claim> verifiedClaims;
@@ -76,13 +74,21 @@ public class JWTRouteFilter {
                                 if (verifiedClaims != null) {
                                     // no role restriction required, just a valid signature
                                     isAccessAllowed = true;
+                                } else {
+                                    logger.error("Claims were null, token deosn't have valid signature and access is not allowed");
                                 }
                             } catch (Exception e) {
                                 logger.error("Invalid token: " + jwtToken, e);
                             }
                         }
+                    } else {
+                        logger.warn("Header was missing Bearer information (not length 2)");
                     }
+                } else {
+                    logger.warn("Header was missing Bearer information");
                 }
+            } else {
+                logger.warn("Header was missing Authorization information");
             }
         }
         return isAccessAllowed;

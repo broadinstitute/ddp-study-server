@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -445,7 +445,7 @@ public class ElasticSearchTest extends TestHelper {
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             Optional<ElasticSearchParticipantDto> esObject =
                     ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter, client);
-            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(ESProfile::getLegacyAltPid)
+            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(Profile::getLegacyAltPid)
                     .orElse("");
         } catch (IOException e) {
             Assert.fail();
@@ -462,7 +462,7 @@ public class ElasticSearchTest extends TestHelper {
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             ElasticSearchParticipantDto esObject =
                     ElasticSearchUtil.fetchESDataByAltpid("participants_structured.atcp.atcp", altpid, client);
-            fetchedPid = esObject.getProfile().map(ESProfile::getLegacyAltPid).orElse("");
+            fetchedPid = esObject.getProfile().map(Profile::getLegacyAltPid).orElse("");
         } catch (IOException e) {
             Assert.fail();
             e.printStackTrace();
@@ -847,7 +847,7 @@ public class ElasticSearchTest extends TestHelper {
             String collaboratorParticipantId = "RGP_2046_3";
             DDPInstance ddpInstance =
                     new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
-                            null);
+                            null, "", "", "");
             Map<String, Object> workflowsBefore =
                     ElasticSearchUtil.getObjectsMap(client, ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
             ElasticSearchUtil.removeWorkflowIfNoDataOrWrongSubject(client, ddpParticipantId, ddpInstance, collaboratorParticipantId);
@@ -876,7 +876,7 @@ public class ElasticSearchTest extends TestHelper {
         String status = "TEST";
         DDPInstance ddpInstance =
                 new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.atcp.atcp", null,
-                        null);
+                        null, "", "", "");
 
         Map<String, Object> workflowsBefore =
                 ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
@@ -925,7 +925,7 @@ public class ElasticSearchTest extends TestHelper {
         String lastname = "testlastname";
         DDPInstance ddpInstance =
                 new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
-                        null);
+                        null, "", "", "");
         Map<String, Object> workflowsBefore =
                 ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
 
@@ -981,7 +981,7 @@ public class ElasticSearchTest extends TestHelper {
         String idName = ESObjectConstants.MEDICAL_RECORDS_ID;
         DDPInstance ddpInstance =
                 new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
-                        null);
+                        null, "", "", "");
         String familyId = "1234";
 
         Map<String, Object> objectsMapESBefore =
@@ -1030,7 +1030,7 @@ public class ElasticSearchTest extends TestHelper {
         String idName = ESObjectConstants.TISSUE_RECORDS_ID;
         DDPInstance ddpInstance =
                 new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
-                        null);
+                        null, "", "", "");
 
         Map<String, Object> objectsMapESBefore =
                 ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "dsm");
@@ -1082,7 +1082,7 @@ public class ElasticSearchTest extends TestHelper {
         String idName = ESObjectConstants.KIT_REQUEST_ID;
         DDPInstance ddpInstance =
                 new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
-                        null);
+                        null, "", "", "");
 
         Map<String, Object> objectsMapESBefore =
                 ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, objectType);

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.google.gson.Gson;
@@ -29,6 +30,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.TissueList;
+import org.broadinstitute.dsm.model.participant.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -47,7 +49,7 @@ public class ViewFilter {
                     + "ddp_group_id, changed_by, last_changed, deleted) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     public static final String SQL_CHECK_VIEW_NAME = "SELECT * FROM view_filters WHERE (display_name = ? ) and deleted <=> 0 ";
     public static final String SQL_SELECT_USER_FILTERS =
-            "SELECT * FROM view_filters WHERE (created_by = ? OR (created_by = 'System' AND ddp_group_id = ? )"
+            "SELECT * FROM view_filters WHERE ( (created_by = ? AND ddp_group_id = ?) OR (created_by = 'System' AND ddp_group_id = ? )"
                     + "OR (shared = 1 AND ddp_group_id = ? ) OR (ddp_group_id is NULL AND ddp_realm_id LIKE '%#%') ) AND deleted <> 1 ";
     public static final String SQL_SELECT_QUERY_ITEMS =
             "SELECT query_items, quick_filter_name FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
@@ -77,7 +79,7 @@ public class ViewFilter {
     public String filterQuery;
     @ColumnName(DBConstants.DISPLAY_NAME_FILTER)
     private String filterName;
-    private Map<String, List<String>> columns;
+    private Map<String, List<Object>> columns;
     private String[] columnsToSave;
     @ColumnName(DBConstants.FILTER_ID)
     private String id;
@@ -99,7 +101,7 @@ public class ViewFilter {
         this(filterName, null, null, null, null, null, null, parent, null, null, null, null, null);
     }
 
-    public ViewFilter(String filterName, Map<String, List<String>> columns, String id, String fDeleted, Boolean shared, String userId,
+    public ViewFilter(String filterName, Map<String, List<Object>> columns, String id, String fDeleted, Boolean shared, String userId,
                       Filter[] filters, String parent, String icon, String quickFilterName, String queryItems, String filterQuery,
                       Integer[] realmId) {
         this.userId = userId;
@@ -281,8 +283,9 @@ public class ViewFilter {
                 stmt.setString(1, userId);
                 stmt.setString(2, ddpGroupId);
                 stmt.setString(3, ddpGroupId);
+                stmt.setString(4, ddpGroupId);
                 if (StringUtils.isNotBlank(parent)) {
-                    stmt.setString(4, parent);
+                    stmt.setString(5, parent);
                 }
                 try {
                     ResultSet rs = stmt.executeQuery();
@@ -306,19 +309,21 @@ public class ViewFilter {
 
     private static ViewFilter getFilterView(@NonNull ResultSet rs, @NonNull Map<String, DBElement> columnNameMap) throws SQLException {
         String[] viewColumns = rs.getString(DBConstants.VIEW_COLUMNS).split(",");
-        Map<String, List<String>> columnMap = new HashMap<>();
+        Map<String, List<Object>> columnMap = new HashMap<>();
         for (String column : viewColumns) {
             if (StringUtils.isNotBlank(column)) {
                 DBElement dbElement = columnNameMap.get(column);
                 if (dbElement != null) {
-                    List<String> columnList = new ArrayList<>();
+                    List<Object> columnList = new ArrayList<>();
                     if (columnMap.containsKey(dbElement.getTableAlias())) {
                         columnList = columnMap.get(dbElement.getTableAlias());
                     }
-                    columnList.add(column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1));
+                    columnList.add(getFieldName(column));
                     columnMap.put(dbElement.getTableAlias(), columnList);
+                } else if (Util.isUnderDsmKey(extractAliasFrom(column))) {
+                    fillColumnMapByCustomFields(columnMap, column);
                 } else {
-                    List<String> columnList = new ArrayList<>();
+                    List<Object> columnList = new ArrayList<>();
                     if (columnMap.containsKey("ES")) {
                         columnList = columnMap.get("ES");
                     }
@@ -342,6 +347,31 @@ public class ViewFilter {
             }
         }
         return filter;
+    }
+
+    private static void fillColumnMapByCustomFields(Map<String, List<Object>> columnMap, String column) {
+        List<Object> columnList = new ArrayList<>();
+        if (columnMap.containsKey(extractAliasFrom(column))) {
+            columnList = columnMap.get(extractAliasFrom(column));
+        }
+        columnList.add(getFieldName(column));
+        columnMap.put(getAlias(column), columnList);
+    }
+
+    private static String getAlias(String column) {
+        return column.substring(0, column.indexOf(DBConstants.ALIAS_DELIMITER));
+    }
+
+    private static String getFieldName(String column) {
+        return column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1);
+    }
+
+    private static String extractAliasFrom(String column) {
+        String[] splittedColumn = Objects.requireNonNull(column).split("\\.");
+        if (splittedColumn.length < 2) {
+            return StringUtils.EMPTY;
+        }
+        return splittedColumn[0];
     }
 
     public static List<TissueList> getDestroyingSamples(String realm) {
@@ -582,6 +612,11 @@ public class ViewFilter {
                                             longWord = true;
                                             value += trimValue(tempValue) + " ";
                                         }
+                                    } else {
+                                        value = word;
+                                        state = 11;
+                                        exact = true;
+                                        break;
                                     }
                                 } else if (longWord && tempValue.contains(Filter.SINGLE_QUOTE)) {
                                     value += trimValue(tempValue) + Filter.SPACE;
@@ -685,7 +720,7 @@ public class ViewFilter {
                         case 14:// finding the next selected option
                             int first = word.indexOf(Filter.SINGLE_QUOTE);
                             int last = word.lastIndexOf(Filter.SINGLE_QUOTE);
-                            if (first != -1) {
+                            if (first != -1 && last > 0) {
                                 word = word.substring(first + 1, last);
                             }
                             selectedOptions.add(word);
@@ -739,6 +774,11 @@ public class ViewFilter {
                                 break;
                             } else if (word.equals(Filter.LIKE)) {
                                 state = 8;
+                                break;
+                            } else if (word.equals(Filter.IS)) {
+                                exact = false;
+                                range = false;
+                                state = 5;
                                 break;
                             }
                             break;
@@ -863,7 +903,7 @@ public class ViewFilter {
                         case 40:
                             break;
                         default:
-                            logger.error("Unknown state " +  state);
+                            logger.error("Unknown state " + state);
                     }
                 }
             }
@@ -925,6 +965,8 @@ public class ViewFilter {
                     filter.setFilter2(new NameValue(path, null));
                 }
                 if (Filter.ADDITIONAL_VALUES.equals(filter.type)) {
+                    filter.setFilter1(new NameValue(columnName, value));
+                    filter.setFilter2(new NameValue(path, null));
                     filter.setParticipantColumn(new ParticipantColumn(path, tableName));
                 } else if (Filter.TEXT.equals(filter.type) || Filter.BOOLEAN.equals(filter.type) || Filter.NUMBER.equals(filter.type)) {
                     if (Filter.NUMBER.equals(filter.type) && condition.contains(Filter.SMALLER_EQUALS_TRIMMED) && !arrayContains(conditions,

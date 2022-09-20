@@ -73,8 +73,19 @@ public class OLCServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy() {
-        var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, true, "email", null, true, null, false);
+        var enabledStudy = StudyDto.builder()
+                .id(1)
+                .guid("study")
+                .name("name")
+                .irbPassword("irb")
+                .webBaseUrl("url")
+                .umbrellaId(1)
+                .auth0TenantId(1)
+                .olcPrecision(OLCPrecision.MEDIUM)
+                .publicDataSharingEnabled(true)
+                .dataExportEnabled(true)
+                .studyEmail("email")
+                .build();
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
         when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(List.of(PLUSCODE_FULL));
@@ -88,8 +99,19 @@ public class OLCServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_noParticipantsWithDefaultAddress() {
-        var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, true, "email", null, true, null, false);
+        var enabledStudy = StudyDto.builder()
+                .id(1)
+                .guid("study")
+                .name("name")
+                .irbPassword("irb")
+                .webBaseUrl("url")
+                .umbrellaId(1)
+                .auth0TenantId(1)
+                .olcPrecision(OLCPrecision.MEDIUM)
+                .publicDataSharingEnabled(true)
+                .dataExportEnabled(true)
+                .studyEmail("email")
+                .build();
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
         when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(Collections.emptyList());
@@ -100,8 +122,19 @@ public class OLCServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_publicDataSharingDisabled() {
-        var disabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, false, "email", null, true, null, false);
+        var disabledStudy = StudyDto.builder()
+                .id(1)
+                .guid("study")
+                .name("name")
+                .irbPassword("irb")
+                .webBaseUrl("url")
+                .umbrellaId(1)
+                .auth0TenantId(1)
+                .olcPrecision(OLCPrecision.MEDIUM)
+                .publicDataSharingEnabled(false)
+                .dataExportEnabled(true)
+                .studyEmail("email")
+                .build();
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(disabledStudy);
 
@@ -111,7 +144,17 @@ public class OLCServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_noOlcPrecisionSet() {
-        var noPrecisionStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L, null, false, "email", null, true, null, false);
+        var noPrecisionStudy = StudyDto.builder()
+                .id(1)
+                .guid("study")
+                .name("name")
+                .irbPassword("irb")
+                .webBaseUrl("url")
+                .umbrellaId(1)
+                .auth0TenantId(1)
+                .dataExportEnabled(true)
+                .studyEmail("email")
+                .build();
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(noPrecisionStudy);
 

@@ -31,14 +31,19 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
 import spark.Response;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Slf4j
 @AllArgsConstructor
 public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<CreateUserActivityUploadPayload> {
     private final FileUploadService service;
+    private static final int MB_IN_BYTES = 1048576;
 
     @Override
     protected int getValidationErrorStatus() {
@@ -107,14 +112,16 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
 
-            String prefix = String.format("%s/%s/%s", studyGuid, userGuid, instanceDto.getActivityCode());
+            final var fileGuid = GuidUtils.randomFileUploadGuid();
+
             return service.authorizeUpload(
                     handle,
                     instanceDto.getStudyId(),
                     operatorUser.getId(),
                     instanceDto.getParticipantId(),
                     fileQuestionDef,
-                    prefix,
+                    fileGuid,
+                    getBlobPath(payload, userGuid, studyGuid, fileGuid, instanceDto.getActivityCode()),
                     payload.getMimeType(),
                     payload.getFileName(),
                     payload.getFileSize(),
@@ -124,7 +131,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         if (result.getAuthorizeResultType() != FileUploadService.AuthorizeResultType.OK) {
             String msg = null;
             if (result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM) {
-                msg = "File size exceeded maximum of " + result.getFileUploadSettings().getMaxFileSize() + " bytes";
+                msg = "File size exceeded maximum of " + bytesToMbs(result.getFileUploadSettings().getMaxFileSize()) + " MB-s";
             } else if (result.getAuthorizeResultType() == MIME_TYPE_NOT_ALLOWED) {
                 msg = "Mime type not belongs to allowed list: " + result.getFileUploadSettings().getMimeTypes();
             }
@@ -138,5 +145,19 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
+    }
+
+    private String getBlobPath(CreateUserActivityUploadPayload payload, String userGuid, String studyGuid,
+                               String fileGuid, String activityCode) {
+        return String.format("%s/%s_%s_%s_%s_%s",
+                studyGuid, fileGuid, activityCode, userGuid, getCurrentTimestamp(), payload.getFileName());
+    }
+
+    private long bytesToMbs(long maxFileSize) {
+        return maxFileSize / MB_IN_BYTES;
+    }
+
+    private static String getCurrentTimestamp() {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date());
     }
 }

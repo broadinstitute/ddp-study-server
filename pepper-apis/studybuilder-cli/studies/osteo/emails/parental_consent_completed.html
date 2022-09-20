@@ -83,7 +83,7 @@
 
   <tr style="width: 540px;">
     <td style="padding: 50px 0 0 0;">
-      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Dear Parent,</p>
+      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Dear -ddp.proxy.firstName-,</p>
 
       <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Thank you for joining The Osteosarcoma Project and for giving us your consent for research. Your participation isn't just important to our work - it drives everything that we do.</p>
 
@@ -94,7 +94,7 @@
   </tr>
   <tr style="height:0px">
     <td style="border-left:solid #ffffff 1px;border-right:solid #ffffff 1px;border-bottom:solid #ffffff 1px;border-top:solid #ffffff 1px;vertical-align:top;background-color:#ffffff;padding:20px 0px 0px 0px">
-      <div>&nbsp; <a href="-ddp.baseWebUrl-/activity-link/-ddp.activityInstanceGuid-" style="font-size:16px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#7154ff;border-top:15px solid #7154ff;border-bottom:15px solid #7154ff;border-left:25px solid #7154ff;border-right:25px solid #7154ff;border-radius:3px;display:inline-block"
+      <div>&nbsp; <a href="-ddp.baseWebUrl-/activity-link/-ddp.activityInstanceGuid-?participantGuid=-ddp.participant.guid-" style="font-size:16px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#7154ff;border-top:15px solid #7154ff;border-bottom:15px solid #7154ff;border-left:25px solid #7154ff;border-right:25px solid #7154ff;border-radius:3px;display:inline-block"
                      target="_blank">Contact Info Form</a>&nbsp;&nbsp;</div>
     </td>
   </tr>
@@ -104,7 +104,12 @@
         or call <a href="tel:${contact.phone}" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.phone}</a>.</p>
       <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Sincerely,</p>
       <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">The OSproject team</p>
-      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">For additional updates, follow us on <a href="${social.twitter}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Twitter</a>, <a href="${social.facebook}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Facebook</a> or <a href="${social.instagram}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Instagram</a>.</p>
+      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">
+        For additional updates, follow us on
+        <a href='${social.facebook}'    target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>,
+        <a href='${social.instagram}'   target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Instagram</a> or
+        <a href='${social.twitter}'     target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Twitter</a>.
+      </p>
     </td>
   </tr>
 </table>

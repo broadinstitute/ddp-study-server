@@ -58,8 +58,7 @@
         },
         "statusTimestamp": {
           "type": "date",
-          "ignore_malformed": false,
-          "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+          "ignore_malformed": false
         },
         "profile": {
           "properties": {
@@ -125,8 +124,7 @@
             },
             "createdAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             }
           }
         },
@@ -298,18 +296,15 @@
             },
             "createdAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "completedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "lastUpdatedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "attributes": {
               "type": "object"
@@ -328,8 +323,7 @@
                 },
                 "date": {
                   "type": "date",
-                  "ignore_malformed": false,
-                  "format": "strict_year_month_day||strict_year_month||strict_year"
+                  "ignore_malformed": false
                 },
                 "dateFields": {
                   "properties": {
@@ -398,23 +392,19 @@
             },
             "createdAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "voidedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "verifiedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "acceptedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "contactEmail": {
               "type": "keyword",
@@ -456,18 +446,15 @@
             },
             "authorizedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "uploadedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "scannedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "scanResult": {
               "type": "keyword"
@@ -524,8 +511,7 @@
             },
             "date": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             }
           }
         },
@@ -567,271 +553,271 @@
               }
             },
             "medicalRecord": {
-            "type": "nested",
-            "properties": {
-              "id": {
-                "type": "keyword"
-              },
-              "medicalRecordId": {
-                "type": "keyword"
-              },
-              "mrReceived": {
-                "type": "date"
-              },
-              "unableObtain": {
-                "type": "boolean"
-              },
-              "notes": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+              "type": "nested",
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "medicalRecordId": {
+                  "type": "keyword"
+                },
+                "mrReceived": {
+                  "type": "date"
+                },
+                "unableObtain": {
+                  "type": "boolean"
+                },
+                "notes": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "followUpRequiredText": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "followUpRequiredText": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "faxSent3": {
-                "type": "date"
-              },
-              "faxSent2": {
-                "type": "date"
-              },
-              "followUpRequired": {
-                "type": "boolean"
-              },
-              "ddpParticipantId": {
-                "type": "keyword"
-              },
-              "reviewMedicalRecord": {
-                "type": "boolean"
-              },
-              "type": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "faxSent3": {
+                  "type": "date"
+                },
+                "faxSent2": {
+                  "type": "date"
+                },
+                "followUpRequired": {
+                  "type": "boolean"
+                },
+                "ddpParticipantId": {
+                  "type": "keyword"
+                },
+                "reviewMedicalRecord": {
+                  "type": "boolean"
+                },
+                "type": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "ddpInstitutionId": {
-                "type": "keyword"
-              },
-              "participantId": {
-                "type": "keyword"
-              },
-              "unableObtainText": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "ddpInstitutionId": {
+                  "type": "keyword"
+                },
+                "participantId": {
+                  "type": "keyword"
+                },
+                "unableObtainText": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "mrProblem": {
-                "type": "boolean"
-              },
-              "mrProblemText": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "mrProblem": {
+                  "type": "boolean"
+                },
+                "mrProblemText": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "mrDocument": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "mrDocument": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "faxSent": {
-                "type": "date"
-              },
-              "ddpInstanceId": {
-                "type": "keyword"
-              },
-              "contact": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "faxSent": {
+                  "type": "date"
+                },
+                "ddpInstanceId": {
+                  "type": "keyword"
+                },
+                "contact": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "fax": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "fax": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "international": {
-                "type": "boolean"
-              },
-              "mrDocumentFileName": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "international": {
+                  "type": "boolean"
+                },
+                "mrDocumentFileName": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "followUps": {
-                "type": "text"
-              },
-              "faxConfirmed": {
-                "type": "date"
-              },
-              "pathologyPresent": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "followUps": {
+                  "type": "text"
+                },
+                "faxConfirmed": {
+                  "type": "date"
+                },
+                "pathologyPresent": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "institutionId": {
-                "type": "keyword"
-              },
-              "crRequired": {
-                "type": "boolean"
-              },
-              "faxSentBy": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "institutionId": {
+                  "type": "keyword"
+                },
+                "crRequired": {
+                  "type": "boolean"
+                },
+                "faxSentBy": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "duplicate": {
-                "type": "boolean"
-              },
-              "faxConfirmed2": {
-                "type": "date"
-              },
-              "faxConfirmed3": {
-                "type": "date"
-              },
-              "faxSent2By": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "duplicate": {
+                  "type": "boolean"
+                },
+                "faxConfirmed2": {
+                  "type": "date"
+                },
+                "faxConfirmed3": {
+                  "type": "date"
+                },
+                "faxSent2By": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "phone": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "phone": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "faxSent3By": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "faxSent3By": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
-                }
-              },
-              "name": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  },
-                  "lower_case_sort": {
-                    "type": "text",
-                    "analyzer": "case_insensitive_sort",
-                    "fielddata": true
+                },
+                "name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
                   }
                 }
               }
-            }
-          },
+            },
             "oncHistoryDetail": {
               "type": "nested",
               "properties": {
@@ -1305,43 +1291,43 @@
             },
             "smId": {
               "type": "nested",
-                "properties": {
-                  "smIdPk": {
-                    "type": "keyword"
-                  },
-                  "smIdValue": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
-                      },
-                      "lower_case_sort": {
-                        "type": "text",
-                        "analyzer": "case_insensitive_sort",
-                        "fielddata": true
-                      }
+              "properties": {
+                "smIdPk": {
+                  "type": "keyword"
+                },
+                "smIdValue": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
                     }
-                  },
-                  "smIdType": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
-                      },
-                      "lower_case_sort": {
-                        "type": "text",
-                        "analyzer": "case_insensitive_sort",
-                        "fielddata": true
-                      }
-                    }
-                  },
-                  "tissueId": {
-                    "type": "keyword"
-                  },
-                  "deleted": {
-                    "type": "boolean"
                   }
+                },
+                "smIdType": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "tissueId": {
+                  "type": "keyword"
+                },
+                "deleted": {
+                  "type": "boolean"
                 }
+              }
             },
             "kitRequestShipping": {
               "type": "nested",
@@ -1774,6 +1760,22 @@
                       "type": "date"
                     }
                   }
+                },
+                "sequencingRestriction": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "collectionDate": {
+                  "type": "date"
                 }
               }
             },
@@ -1946,6 +1948,234 @@
                 },
                 "dataReleaseId": {
                   "type": "long"
+                }
+              }
+            },
+            "cohortTag": {
+              "type": "nested",
+              "properties": {
+                "cohortTagId": {
+                  "type": "keyword"
+                },
+                "cohortTagName": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ddpParticipantId": {
+                  "type": "keyword"
+                },
+                "ddpInstanceId": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "newOsteoParticipant": {
+              "properties": {
+                "minimalMr": {
+                  "type": "boolean"
+                },
+                "assigneeIdMr": {
+                  "type": "text"
+                },
+                "notes": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "mrAttentionFlagD": {
+                  "type": "long"
+                },
+                "instanceName": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ddpParticipantId": {
+                  "type": "keyword"
+                },
+                "assigneeIdTissue": {
+                  "type": "text"
+                },
+                "tissueAttentionFlagD": {
+                  "type": "long"
+                },
+                "migratedDdp": {
+                  "type": "boolean"
+                },
+                "participantId": {
+                  "type": "keyword"
+                },
+                "exitBy": {
+                  "type": "long"
+                },
+                "baseUrl": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "auth0Token": {
+                  "type": "boolean"
+                },
+                "crReceived": {
+                  "type": "date"
+                },
+                "oncHistoryId": {
+                  "type": "keyword"
+                },
+                "ddpInstanceId": {
+                  "type": "keyword"
+                },
+                "notificationRecipients": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "abstractionReady": {
+                  "type": "boolean"
+                },
+                "crSent": {
+                  "type": "date"
+                },
+                "exitDate": {
+                  "type": "date"
+                }
+              }
+            },
+            "clinicalOrder": {
+              "type": "nested",
+              "properties": {
+                "mercurySequencingId": {
+                  "type": "keyword"
+                },
+                "orderId": {
+                  "type": "keyword",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ddpParticipantId": {
+                  "type": "keyword"
+                },
+                "orderDate": {
+                  "type": "date"
+                },
+                "barcode": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ddpInstanceId": {
+                  "type": "keyword"
+                },
+                "kitTypeId": {
+                  "type": "keyword"
+                },
+                "orderStatus": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "statusDate": {
+                  "type": "date"
+                },
+                "mercuryPdoId": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "createdBy": {
+                  "type": "text"
+                },
+                "tissueId": {
+                  "type": "keyword"
+                },
+                "dsmKitRequestId": {
+                  "type": "keyword"
+                },
+                "statusDetail": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
                 }
               }
             }

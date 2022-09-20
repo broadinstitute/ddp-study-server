@@ -173,6 +173,9 @@ public interface JdbiQuestion extends SqlObject {
         return parentIdToChildIds;
     }
 
+    @SqlUpdate("DELETE FROM question WHERE question_id = :questionId")
+    boolean deleteBaseQuestion(@Bind("questionId") long questionId);
+
     @SqlQuery("select cqq.parent_question_id, cqq.child_question_id"
             + "  from composite_question__question as cqq"
             + "  join question as q on q.question_id = cqq.child_question_id"
@@ -232,6 +235,11 @@ public interface JdbiQuestion extends SqlObject {
             return stream.findFirst();
         }
     }
+
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(QuestionDto.class)
+    @SqlQuery("select_basic_question_dtos_by_id")
+    Optional<QuestionDto> findBasicQuestionDtoById(long questionId);
 
     @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
     int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);

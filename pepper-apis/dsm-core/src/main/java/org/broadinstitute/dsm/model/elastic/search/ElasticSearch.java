@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.ACTIVITY_CODE;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.ACTIVITY_VERSION;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,21 +15,31 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.NonNull;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.MultiSearchRequest;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
@@ -50,7 +63,8 @@ public class ElasticSearch implements ElasticSearchable {
 
 
     public ElasticSearch() {
-        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.ASC);
+        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.DESC)
+                .unmappedType(CustomSortBuilder.UNMAPPED_TYPE_LONG).missing(CustomSortBuilder.IF_MISSING_LAST);
         this.deserializer = new SourceMapDeserializer();
     }
 
@@ -63,6 +77,11 @@ public class ElasticSearch implements ElasticSearchable {
     @Override
     public void setDeserializer(Deserializer deserializer) {
         this.deserializer = deserializer;
+    }
+
+    @Override
+    public Deserializer getDeserializer() {
+        return this.deserializer;
     }
 
     @Override
@@ -98,7 +117,10 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> result = new ArrayList<>();
         String ddp = getDdpFromSearchHit(Arrays.stream(searchHits).findFirst().orElse(null));
         for (SearchHit searchHit : searchHits) {
-            Optional<ElasticSearchParticipantDto> maybeElasticSearchResult = parseSourceMap(searchHit.getSourceAsMap());
+            Optional<ElasticSearchParticipantDto> maybeElasticSearchResult = null;
+
+            maybeElasticSearchResult = parseSourceMap(searchHit.getSourceAsMap());
+
             maybeElasticSearchResult.ifPresent(elasticSearchParticipantDto -> {
                 elasticSearchParticipantDto.setDdp(ddp);
                 result.add(elasticSearchParticipantDto);
@@ -136,7 +158,8 @@ public class ElasticSearch implements ElasticSearchable {
             int scrollSize = to - from;
             SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(sortBy);
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+            searchSourceBuilder.sort(sortBy);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
             searchRequest.source(searchSourceBuilder);
@@ -168,6 +191,7 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esIndex, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
+
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
     }
@@ -309,6 +333,107 @@ public class ElasticSearch implements ElasticSearchable {
                 .toArray(new SearchHitProxy[] {});
         return extractLegacyAltPidGuidPair(searchHitProxies);
     }
+
+    @Override
+    public ReplicationResponse.ShardInfo createDocumentById(String index, String docId, Map<String, Object> data) {
+
+        try {
+            IndexRequest indexRequest = new IndexRequest(index, "_doc", docId).source(data);
+            IndexResponse response = ElasticSearchUtil.getClientInstance().index(indexRequest, RequestOptions.DEFAULT);
+            if (isSuccessfull(response.getShardInfo())) {
+                logger.info("Document with id: " + docId + " created successfully in index: " + index);
+            } else {
+                logger.error("Document with id: " + docId + " could not be created in index" + index);
+            }
+            return response.getShardInfo();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
+        }
+    }
+
+    @Override
+    public ReplicationResponse.ShardInfo deleteDocumentById(String index, String docId) {
+        try {
+            DeleteRequest deleteRequest = new DeleteRequest(index, "_doc", docId);
+            DeleteResponse deleteResponse = ElasticSearchUtil.getClientInstance().delete(deleteRequest, RequestOptions.DEFAULT);
+            if (isSuccessfull(deleteResponse.getShardInfo())) {
+                logger.info("Document with id: " + docId + " created successfully in index: " + index);
+            } else {
+                logger.error("Document with id: " + docId + " could not be created in index" + index);
+            }
+            return deleteResponse.getShardInfo();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
+        }
+    }
+
+    @Override
+    public Map<String, Map<String, Object>> getActivityDefinitions(DDPInstance ddpInstance) {
+        Map<String, Map<String, Object>> esData = new HashMap<>();
+        String index = ddpInstance.getActivityDefinitionIndexES();
+        if (StringUtils.isNotBlank(index)) {
+            logger.info("Collecting activity definitions from ES");
+            try {
+                int scrollSize = 1000;
+
+                SearchRequest searchRequest = new SearchRequest(index);
+                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+                SearchResponse response = null;
+                int i = 0;
+                while (response == null || response.getHits().getHits().length != 0) {
+                    searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+                    searchSourceBuilder.size(scrollSize);
+                    searchSourceBuilder.from(i * scrollSize);
+                    searchRequest.source(searchSourceBuilder);
+
+                    response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+                    addingActivityDefinitionHits(response, esData);
+                    i++;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Couldn't get activity definition from ES for instance " + ddpInstance.getName(), e);
+            }
+            logger.info("Got " + esData.size() + " activity definitions from ES for instance " + ddpInstance.getName());
+        }
+        return esData;
+    }
+
+    public static void addingActivityDefinitionHits(@NonNull SearchResponse response, Map<String, Map<String, Object>> esData) {
+        for (SearchHit hit : response.getHits()) {
+            Map<String, Object> sourceMap = hit.getSourceAsMap();
+            String activityCode = (String) sourceMap.get(ACTIVITY_CODE);
+            String activityVersion = (String) sourceMap.get(ACTIVITY_VERSION);
+            if (StringUtils.isNotBlank(activityCode)) {
+                esData.put(activityCode + "_" + activityVersion, sourceMap);
+            } else {
+                esData.put(hit.getId(), sourceMap);
+            }
+        }
+    }
+
+    public MultiSearchResponse executeMultiSearch(String esIndex, List<QueryBuilder> queryBuilders) {
+        MultiSearchRequest request = new MultiSearchRequest();
+        queryBuilders.forEach(queryBuilder -> {
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(queryBuilder);
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.source(searchSourceBuilder);
+            searchRequest.indices(esIndex);
+            request.add(searchRequest);
+        });
+        MultiSearchResponse result;
+        try {
+            result = ElasticSearchUtil.getClientInstance().msearch(request, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not perform multi search request for index: " + esIndex, e);
+        }
+        return result;
+    }
+
+    private boolean isSuccessfull(ReplicationResponse.ShardInfo shardInfo) {
+        return shardInfo.getSuccessful() > 0;
+    }
+
 
     Map<String, String> extractLegacyAltPidGuidPair(SearchHitProxy[] records) {
         Set<String> parentsGuids = getParents(records);

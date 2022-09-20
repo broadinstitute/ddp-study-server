@@ -8,8 +8,24 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.AbstractionActivity;
+import org.broadinstitute.dsm.db.AbstractionFieldValue;
+import org.broadinstitute.dsm.db.AbstractionQCValue;
+import org.broadinstitute.dsm.db.AbstractionReviewValue;
+import org.broadinstitute.dsm.db.ClinicalOrder;
+import org.broadinstitute.dsm.db.DDPKitDto;
+import org.broadinstitute.dsm.db.Drug;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.ParticipantData;
+import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -33,6 +49,7 @@ public class PatchUtil {
         getColumnNames(Participant.class);
         getColumnNames(MedicalRecord.class);
         getColumnNames(OncHistoryDetail.class);
+        getColumnNames(OncHistoryDto.class);
         getColumnNames(Tissue.class);
         getColumnNames(AbstractionFieldValue.class);
         getColumnNames(AbstractionReviewValue.class);
@@ -40,11 +57,14 @@ public class PatchUtil {
         getColumnNames(AbstractionActivity.class);
         getColumnNames(ViewFilter.class);
         getColumnNames(KitRequestShipping.class);
+        getColumnNames(DDPKitDto.class);
         getColumnNames(KitRequest.class);
         getColumnNames(Drug.class);
         getColumnNames(ParticipantData.class);
         getColumnNames(ParticipantRecordDto.class);
         getColumnNames(SmId.class);
+        getColumnNames(CohortTag.class);
+        getColumnNames(ClinicalOrder.class);
         logger.info("Loaded patch utils");
     }
 

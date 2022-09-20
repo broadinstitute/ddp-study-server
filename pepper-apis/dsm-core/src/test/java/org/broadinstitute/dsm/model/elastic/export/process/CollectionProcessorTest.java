@@ -7,11 +7,11 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.CollectionSourceGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.model.patch.Patch;
@@ -29,7 +29,7 @@ public class CollectionProcessorTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        ESDsm esDsm = objectMapper.readValue(json, ESDsm.class);
+        Dsm esDsm = objectMapper.readValue(json, Dsm.class);
 
         NameValue nameValue = new NameValue("m.mrProblemText", "mr_updated");
 
@@ -38,7 +38,7 @@ public class CollectionProcessorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
-        valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        valueParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
 
         Processor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload,
                 new CollectionSourceGenerator(valueParser, generatorPayload));
@@ -61,7 +61,7 @@ public class CollectionProcessorTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        ESDsm esDsm = objectMapper.readValue(json, ESDsm.class);
+        Dsm esDsm = objectMapper.readValue(json, Dsm.class);
 
         NameValue nameValue = new NameValue("m.mrProblemText", "val");
 
@@ -70,7 +70,7 @@ public class CollectionProcessorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
-        valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        valueParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
 
         CollectionProcessor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload,
                 new CollectionSourceGenerator(valueParser, generatorPayload));
@@ -87,11 +87,11 @@ public class CollectionProcessorTest {
         double recordId = 5;
         String json = String.format("{\"%s\":[{\"medicalRecordId\":%s,\"type\":\"%s\", \"mrProblemText\":\"TEST_VAL2\"}]}", propertyName,
                 recordId, "value");
-        ;
+
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        ESDsm esDsm = objectMapper.readValue(json, ESDsm.class);
+        Dsm esDsm = objectMapper.readValue(json, Dsm.class);
 
         NameValue nameValue = new NameValue("m.type", "TEST_VAL");
         Patch patch = new Patch();
@@ -99,7 +99,7 @@ public class CollectionProcessorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
-        valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        valueParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
 
         CollectionProcessor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload,
                 new CollectionSourceGenerator(valueParser, generatorPayload));
@@ -121,8 +121,8 @@ public class CollectionProcessorTest {
     private static class TestCollectionProcessor extends CollectionProcessor {
 
 
-        public TestCollectionProcessor(ESDsm esDsm, String propertyName, GeneratorPayload generatorPayload, Collector collector) {
-            super(esDsm, propertyName, generatorPayload.getRecordId(), collector);
+        public TestCollectionProcessor(Dsm dsm, String propertyName, GeneratorPayload generatorPayload, Collector collector) {
+            super(dsm, propertyName, generatorPayload.getRecordId(), collector);
         }
 
     }

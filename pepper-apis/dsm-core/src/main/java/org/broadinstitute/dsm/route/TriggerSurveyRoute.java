@@ -105,7 +105,7 @@ public class TriggerSurveyRoute extends RequestHandler {
             DDPInstance instance;
             if (queryParams.value(RoutePath.REALM) != null) {
                 realm = queryParams.get(RoutePath.REALM).value();
-                instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.SURVEY_STATUS_ENDPOINTS);
+                instance = DDPInstance.getDDPInstance(realm);
             } else {
                 throw new RuntimeException("No realm query param was sent");
             }
@@ -140,15 +140,13 @@ public class TriggerSurveyRoute extends RequestHandler {
                     List<ParticipantSurveyInfo> surveyInfos = null;
                     String comment = null;
                     Long surveyTriggerId = null;
-                    if (instance.isHasRole()) {
-                        if (queryParams.value("comment") != null) {
-                            comment = queryParams.get("comment").value();
-                        } else {
-                            throw new RuntimeException("No comment query param was sent");
-                        }
-                        surveyInfos = DDPRequestUtil.getFollowupSurveysStatus(instance, surveyName);
-                        surveyTriggerId = addTriggerCommentIntoDB(userIdRequest, comment, currentTime);
+                    if (queryParams.value("comment") != null) {
+                        comment = queryParams.get("comment").value();
+                    } else {
+                        throw new RuntimeException("No comment query param was sent");
                     }
+                    surveyInfos = DDPRequestUtil.getFollowupSurveysStatus(instance, surveyName);
+                    surveyTriggerId = addTriggerCommentIntoDB(userIdRequest, comment, currentTime);
                     if (isFileUpload || triggerAgain) {
                         List<ParticipantSurveyUploadObject> participantList = null;
                         if (triggerAgain) { //already participants and no file
@@ -158,7 +156,7 @@ public class TriggerSurveyRoute extends RequestHandler {
                             if (isFileUpload) {
                                 HttpServletRequest rawRequest = request.raw();
                                 String content = SystemUtil.getBody(rawRequest);
-                                participantList = ParticipantSurveyStatusResponse.isFileValid(instance, content);
+                                participantList = ParticipantSurveyStatusResponse.isFileValid(content);
                             }
                         }
                         logger.info(participantList.size() + " Participants were uploaded to trigger surveys");
@@ -166,7 +164,7 @@ public class TriggerSurveyRoute extends RequestHandler {
                         List<ParticipantSurveyUploadObject> alreadyUploaded = new ArrayList<>();
                         for (ParticipantSurveyUploadObject participant : participantList) {
                             if (triggerAgain) {
-                                if (!triggerSurvey(instance, participant, surveyTriggerId, surveyName, instance.isHasRole())) {
+                                if (!triggerSurvey(instance, participant, surveyTriggerId, surveyName)) {
                                     failed.add(participant);
                                 }
                             } else {
@@ -180,7 +178,7 @@ public class TriggerSurveyRoute extends RequestHandler {
                                     }
                                 }
                                 if (!alreadyTriggered) {
-                                    if (!triggerSurvey(instance, participant, surveyTriggerId, surveyName, instance.isHasRole())) {
+                                    if (!triggerSurvey(instance, participant, surveyTriggerId, surveyName)) {
                                         failed.add(participant);
                                     }
                                 } else {
@@ -259,13 +257,8 @@ public class TriggerSurveyRoute extends RequestHandler {
     }
 
     private boolean triggerSurvey(@NonNull DDPInstance instance, @NonNull ParticipantSurveyUploadObject participant, Long surveyTriggerId,
-                                  @NonNull String surveyName, boolean hasSurveyStatusEndpoint) {
-        SimpleFollowUpSurvey survey = null;
-        if (hasSurveyStatusEndpoint) {
-            survey = new SimpleFollowUpSurvey(participant.getDDPParticipantID(), surveyTriggerId);
-        } else {
-            survey = new SimpleFollowUpSurvey(participant.getDDPParticipantID());
-        }
+                                  @NonNull String surveyName) {
+        SimpleFollowUpSurvey survey = new SimpleFollowUpSurvey(participant.getDDPParticipantID(), surveyTriggerId);
         try {
             if (DDPRequestUtil.triggerFollowupSurvey(instance, survey, surveyName).getCode() != 200) {
                 return false;

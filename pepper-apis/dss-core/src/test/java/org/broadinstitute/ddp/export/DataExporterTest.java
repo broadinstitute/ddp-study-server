@@ -219,7 +219,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             // Create a medical provider for them
             MedicalProviderDto provider = new MedicalProviderDto(null, UUID.randomUUID().toString(),
                     testData.getUserId(), testData.getStudyId(),
-                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, "street1");
+                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null, "street1");
             handle.attach(JdbiMedicalProvider.class).insert(provider);
 
             // Create an instance for them
@@ -267,7 +267,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             MailAddress nonDefaultAddress = actual.getNonDefaultMailAddresses().values().iterator().next();
             assertEquals(snapshottedAdress.getGuid(), nonDefaultAddress.getGuid());
 
-            assertEquals(testData.getTestingUser().getEmail(), actual.getUser().getEmail());
+            assertEquals(Optional.of(testData.getTestingUser().getEmail()), actual.getUser().getEmail());
 
             assertTrue(actual.getUser().hasProfile());
             assertEquals(testData.getProfile().getFirstName(), actual.getUser().getProfile().getFirstName());
@@ -328,7 +328,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         null,
                         0,
                         0,
-                        0L));
+                        0L,
+                        null));
 
         assertNull(participant.getBirthDate());
         assertNull(participant.getDateOfMajority());
@@ -786,8 +787,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     EnrollmentStatusType.ENROLLED, timestamp, null);
 
             User user = new User(1L, TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
-                    false, 1L, 1L, "auth", timestamp, timestamp, null);
-            user.setEmail("test@datadonationplatform.org");
+                    false, 1L, 1L, "auth", timestamp, timestamp, null, "test@datadonationplatform.org");
             user.setProfile(new UserProfile(1L, "first-foo", "last-bar", null, null, 1L, "en", null, true, null, null));
             if (!emptyAddress) {
                 MailAddress address = new MailAddress("foo bar", "85 Main St", "Apt 2", "Boston", "MA", "US", "02115", "6171112233", null,
@@ -799,7 +799,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             Participant participant = new Participant(status, user);
             participant.addProvider(new MedicalProviderDto(null, UUID.randomUUID().toString(),
                     testData.getUserId(), testData.getStudyId(),
-                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
+                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null,  null, null, null));
             if (!emptyActivity) {
                 FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt,
                         null, null, 1L, "ACT", "v1", false, 0,
@@ -812,12 +812,22 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         Collections.singletonList(new FileInfo(1L, "file1", "file.pdf", 123L))));
                 participant.addResponse(instance);
 
-                participant.addAllFiles(List.of(new FileRecord("uploads", new FileUpload(
-                        1L, "file1", 1L, 1L, 1L, "blob1", "application/pdf", "file.pdf", 123L, true,
-                        Instant.ofEpochMilli(timestamp + 1),
-                        Instant.ofEpochMilli(timestamp + 2),
-                        Instant.ofEpochMilli(timestamp + 3),
-                        FileScanResult.INFECTED))));
+                participant.addAllFiles(List.of(new FileRecord("uploads", FileUpload.builder()
+                        .id(1L)
+                        .guid("file1")
+                        .studyId(1L)
+                        .operatorUserId(1L)
+                        .participantUserId(1L)
+                        .blobName("blob1")
+                        .mimeType("application/pdf")
+                        .fileName("file.pdf")
+                        .fileSize(123L)
+                        .isVerified(true)
+                        .createdAt(Instant.ofEpochMilli(timestamp + 1))
+                        .uploadedAt(Instant.ofEpochMilli(timestamp + 2))
+                        .scannedAt(Instant.ofEpochMilli(timestamp + 3))
+                        .scanResult(FileScanResult.INFECTED)
+                        .build())));
 
                 Map<String, String> substitutions = Map.of(
                         I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, "kit-1",

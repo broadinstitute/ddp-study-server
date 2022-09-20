@@ -22,6 +22,10 @@
       body {
         padding: 0;
         margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
       html {
         height: 100%;
@@ -35,10 +39,27 @@
       .header {
         font-family: Spartan-Bold,sans-serif;
         color: #521b93;
-        padding-top: 30px;
-        padding-bottom: 20px!important;
         background: #fff;
+        padding-top: 20px;
+        height: 133px;
+        box-sizing: border-box;
       }
+      @media (max-width: 1200px) {
+        .header {
+          height: 113px;
+        }
+      }
+      @media (max-width: 680px) {
+        .header {
+          height: 89px;
+        }
+      }
+      @media (max-width: 450px) {
+        .header {
+          height: 72px;
+        }
+      }
+
       .container {
         width: auto!important;
         max-width: 1300px;
@@ -65,10 +86,12 @@
         align-items: center;
         justify-content: space-between;
         max-width: 1400px;
+        box-sizing: border-box;
         height: 100%;
       }
       .header__logo {
         height: 100px;
+        align-self: flex-start;
       }
       a {
         font-weight: bold;
@@ -78,8 +101,6 @@
       }
       .header__logo-img {
         height: 100%;
-        position: relative;
-        top: -4px;
       }
       img {
         vertical-align: middle;
@@ -138,7 +159,7 @@
         align-items: center;
         list-style: none;
       }
-      .link-list__item + .link-list__item {
+      .header .link-list__item + .link-list__item {
         margin-left: 25px;
       }
       .link-list__item .link {
@@ -173,6 +194,10 @@
       .header, .header button {
         font-family: Spartan,sans-serif;
         color: #521b93;
+      }
+      .header .button--wide {
+        width: 160px;
+        box-sizing: border-box;
       }
       .button--wide {
         width: 120px;
@@ -259,16 +284,13 @@
         }
       }
       @media (max-width: 64em) {
-        .header {
-          margin-bottom: 20px;
-        }
         .header__logo {
           margin-right: auto;
         }
         .toggle {
           display: block;
         }
-        .link-list__item + .link-list__item {
+        .header .link-list__item + .link-list__item {
           margin-top: 1.6rem;
           margin-left: 0;
         }
@@ -314,10 +336,23 @@
         padding: 48px 0 60px;
         background: #521b93;
         color: #fff;
+        line-height: 1.5rem;
+      }
+      @media (max-width: 450px) {
+        .footer {
+          padding-bottom: 12px !important;
+        }
       }
       .footer .container {
         display: flex;
         justify-content: space-between;
+        box-sizing: border-box;
+      }
+      @media (max-width: 450px) {
+        .footer .container {
+          flex-direction: column-reverse;
+          gap: 24px;
+        }
       }
       .footer-logo img {
         width: 215px;
@@ -332,6 +367,11 @@
       .footer-social {
         margin: 40px 0;
         display: flex;
+      }
+      @media (max-width: 450px) {
+        .footer-social {
+          justify-content: center;
+        }
       }
       .footer-social-item {
         width: 50px;
@@ -370,14 +410,58 @@
         list-style: none;
         padding: 0;
       }
+      .footer-meta {
+        max-width: 30%;
+      }
+      @media (max-width: 1024px) {
+        .footer-meta {
+          max-width: unset;
+        }
+      }
+      @media (max-width: 700px) {
+        .footer-meta {
+          max-width: 80%;
+        }
+      }
+      @media (max-width: 450px) {
+        .footer-meta {
+          max-width: 100%;
+          text-align: center;
+        }
+      }
+      .footer-menu {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+      }
       .footer-menu .link-list {
         margin-top: 0;
+      }
+      @media (max-width: 450px) {
+        .footer-menu .link-list {
+          width: 100%;
+          flex-direction: row !important;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 5px;
+        }
       }
       .footer a {
         color: #fff!important;
       }
       .footer .link-list__item:not(:last-of-type) {
         margin-right: 20px;
+      }
+      .footer .SimpleButton, .footer .button {
+        width: 112px;
+        box-sizing: border-box;
+      }
+      @media (max-width: 1200px) {
+        .footer .SimpleButton, .footer .button {
+          padding: 7px 12px 4px;
+          font-size: 16px;
+          line-height: 21px;
+        }
       }
       .footer .SimpleButton {
         color: #fff;
@@ -389,22 +473,14 @@
         border-color: #fff!important;
         color: #521b93!important;
       }
-      @media (max-width: 1024px) {
-        .footer .container {
-          display: block!important;
-          width: auto!important;
-          padding-left: 20px!important;
-          padding-right: 20px!important;
-        }
-      }
       @media (max-width: 64em) {
         .footer-copyright {
           margin-bottom: 30px;
         }
         .footer .link-list {
-          flex-direction: column!important;
-          align-items: unset!important;
-          padding-left: 0!important;
+          flex-direction: column;
+          align-items: unset;
+          padding-left: 0;
         }
         .footer .link-list__item:not(:last-of-type) {
           margin-bottom: 14px;
@@ -419,9 +495,6 @@
       /* Auth0 */
       .auth0-lock.auth0-lock {
         position: unset;
-      }
-      #ddp-header {
-        display: none!important;
       }
       .auth0-lock.auth0-lock .auth0-lock-submit {
         background-color: #521b93!important;
@@ -467,7 +540,7 @@
     <header class="header">
       <div class="container">
         <a class="header__logo" href="##BASE_URL##">
-          <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="Header.LogoAlt">
+          <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="logo">
         </a>
     
         <button class="toggle" id="header-toggle">
@@ -527,7 +600,7 @@
       <div class="container">
         <div class="footer-meta">
           <div class="footer-logo">
-            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png"" alt="Header.LogoAlt">
+            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png" alt="logo">
           </div>
           <div class="footer-contacts">
             Contact Us: (650) 561-6750<br>
@@ -551,7 +624,7 @@
               </a>
             </div>
           </div>
-          <div class="footer-copyright">Copyright 2021 Additional Ventures</div>
+          <div class="footer-copyright">Copyright © <span id="current-year"></span> Additional<br>Ventures. All rights reserved.</div>
         </div>
         <div class="footer-menu">
           <nav>
@@ -663,7 +736,7 @@
 
       #ddp-header .auth0-lock-header-logo {
         max-width: 100%;
-        height: 60px;
+        height: 48px;
         margin-bottom: 10px;
       }
 
@@ -704,10 +777,13 @@
         }
       }
 
+      // set current year
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
       var headerLogo =
-        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME_NAME##/images/logo-black.png';
+        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/images/logo-black.png';
       var headerText = '';
       var studyColor = '#458484';
       var studyHelpEmail = '##STUDY_EMAIL##';
@@ -875,7 +951,7 @@
             // tweak the header
             var header = document.createElement('div');
             header.innerHTML =
-              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" src="' +
+              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" alt="logo" src="' +
               headerLogo +
               '"></div>';
             var auth0LockHeader = document.getElementsByClassName(
@@ -991,7 +1067,7 @@
       }
 
       function addSignUpInstruction() {
-        if (mode == 'signup' && languageDictionary.additionalDescription) {
+        if (mode === 'signup' && languageDictionary.additionalDescription) {
           const interval = setInterval(function () {
             const lockFormEl = document.querySelector('.auth0-lock-form');
             if (lockFormEl) {
@@ -1001,7 +1077,7 @@
               lockFormEl.prepend(div);
               clearInterval(interval);
             }
-          }, 700);
+          }, 2100);
         }
       }
 

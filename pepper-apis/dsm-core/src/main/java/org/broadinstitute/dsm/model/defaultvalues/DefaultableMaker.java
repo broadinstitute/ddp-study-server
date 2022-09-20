@@ -13,8 +13,8 @@ public class DefaultableMaker {
             case RGP:
                 defaultable = new RgpAutomaticProbandDataCreator();
                 break;
-            case SINGULAR:
-                defaultable = new SingularDefaultValues();
+            case CMI_OSTEO:
+                defaultable = new NewOsteoDefaultValues();
                 break;
             default:
                 break;

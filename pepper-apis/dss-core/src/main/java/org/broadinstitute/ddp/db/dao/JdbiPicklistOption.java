@@ -18,21 +18,6 @@ import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface JdbiPicklistOption extends SqlObject {
-
-    @UseStringTemplateSqlLocator
-    @SqlUpdate("insertOption")
-    @GetGeneratedKeys
-    long insert(@Bind("picklistQuestionId") long picklistQuestionId,
-                @Bind("stableId") String stableId,
-                @Bind("optionLabelTemplateId") long optionLabelTemplateId,
-                @Bind("tooltipTemplateId") Long tooltipTemplateId,
-                @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
-                @Bind("allowDetails") boolean allowDetails,
-                @Bind("isExclusive") boolean isExclusive,
-                @Bind("isDefault") boolean isDefault,
-                @Bind("displayOrder") int displayOrder,
-                @Bind("revisionId") long revisionId);
-
     @UseStringTemplateSqlLocator
     @SqlUpdate("insertOption")
     @GetGeneratedKeys
@@ -46,7 +31,8 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("isDefault") boolean isDefault,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId,
-                @Bind("nestedOptionsTemplateId") Long nestedOptionsTemplateId);
+                @Bind("nestedOptionsTemplateId") Long nestedOptionsTemplateId,
+                @Bind("value") String value);
 
     @UseStringTemplateSqlLocator
     @SqlBatch("insertOption")
@@ -61,7 +47,8 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("isDefault") Iterator<Boolean> isDefault,
                 @Bind("displayOrder") Iterator<Integer> displayOrder,
                 @Bind("revisionId") long revisionId,
-                @Bind("nestedOptionsTemplateId") Iterator<Long> nestedOptionsTemplateId);
+                @Bind("nestedOptionsTemplateId") Iterator<Long> nestedOptionsTemplateId,
+                @Bind("value") Iterator<String> value);
 
     @UseStringTemplateSqlLocator
     @SqlBatch("insertOptionByDto")
@@ -70,6 +57,14 @@ public interface JdbiPicklistOption extends SqlObject {
                             @Bind("picklistQuestionId") long picklistQuestionId,
                             @Bind("revisionId") long revisionId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("fetchOptionById")
+    @RegisterConstructorMapper(PicklistOptionDto.class)
+    Optional<PicklistOptionDto> findById(@Bind("id") long id);
+    
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("updateOptionByDto")
+    int update(@BindMethods("dto") PicklistOptionDto optionDto);
 
     /**
      * Get all picklist options for given picklist question that are/were active at creation time of given
@@ -154,5 +149,6 @@ public interface JdbiPicklistOption extends SqlObject {
                 .isPresent();
     }
 
-
+    @SqlUpdate("DELETE FROM picklist_option WHERE picklist_question_id = :questionId")
+    boolean deleteForQuestionId(@Bind("questionId") Long questionId);
 }

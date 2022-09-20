@@ -215,7 +215,7 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
 
         TransactionWrapper.useTxn(handle -> {
             assertEquals("fake-auth0-id", handle.attach(UserDao.class)
-                    .findUserByGuid(user.getGuid()).get().getAuth0UserId());
+                    .findUserByGuid(user.getGuid()).get().getAuth0UserId().get());
         });
     }
 
