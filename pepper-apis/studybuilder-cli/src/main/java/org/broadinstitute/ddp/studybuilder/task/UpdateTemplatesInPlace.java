@@ -246,7 +246,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
     void traverseActivity(Handle handle, String activityCode, Config definition, FormActivityDef activity, long timestamp) {
         log.info("Comparing templates in activity {}...", activityCode);
-
+        definition = definition.resolveWith(varsCfg);
         extractAndCompare(handle, "", activity.getLastUpdatedTextTemplate(), definition, "lastUpdatedTextTemplate");
         extractAndCompare(handle, "", activity.getReadonlyHintTemplate(), definition, "readonlyHintTemplate");
 
