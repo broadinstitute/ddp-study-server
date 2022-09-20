@@ -1,13 +1,25 @@
+
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import org.broadinstitute.dsm.util.TestUtil;
-import org.junit.Test;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.CANCERS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.CHECKBOX;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.DATE;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.DRUGS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.MULTI_OPTIONS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.MULTI_TYPE;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.MULTI_TYPE_ARRAY;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.NUMBER;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.OPTIONS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.TABLE;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.TEXT;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.TEXT_AREA;
+import static org.junit.Assert.assertEquals;
 
 import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.*;
-import static org.junit.Assert.assertEquals;
+import org.broadinstitute.dsm.util.TestUtil;
+import org.junit.Test;
 
 public class MedicalRecordAbstractionFieldTypeTest {
 

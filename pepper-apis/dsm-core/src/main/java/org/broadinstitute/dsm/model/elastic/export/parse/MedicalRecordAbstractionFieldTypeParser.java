@@ -1,16 +1,18 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import static org.broadinstitute.dsm.statics.DBConstants.*;
-import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.*;
-import static org.broadinstitute.dsm.util.AbstractionUtil.*;
+import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;
+import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.PROPERTIES;
+import static org.broadinstitute.dsm.statics.DBConstants.VALUE;
+import static org.broadinstitute.dsm.util.AbstractionUtil.DATE_STRING;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser {
 
@@ -37,11 +39,6 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
         switch (fieldType) {
             case DATE:
                 parsedType = forDate(columnName);
-                break;
-            case TEXT:
-            case TEXT_AREA:
-            case BUTTON_SELECT:
-                parsedType = forString(columnName);
                 break;
             case NUMBER:
                 parsedType = forNumeric(columnName);
@@ -114,8 +111,7 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
 
 
     public void setPossibleValues(String possibleValues) {
-        this.possibleValues = ObjectMapperSingleton.readValue(possibleValues, new TypeReference<List>() {
-        });
+        this.possibleValues = ObjectMapperSingleton.readValue(possibleValues, new TypeReference<List>() {});
     }
 
     public List<Map<String, String>> getPossibleValues() {

@@ -22,11 +22,19 @@ enum MedicalRecordAbstractionFieldType {
     CHECKBOX("checkbox"),
     CANCERS("cancers");
 
-
     private final String innerValue;
 
     MedicalRecordAbstractionFieldType(String innerValue) {
         this.innerValue = innerValue;
+    }
+
+    public static boolean isMedicalRecordAbstractionFieldType(String fieldType) {
+        try {
+            MedicalRecordAbstractionFieldType.valueOf(fieldType);
+            return true;
+        } catch (IllegalArgumentException iae) {
+            return false;
+        }
     }
 
     public static MedicalRecordAbstractionFieldType of(String value) {
