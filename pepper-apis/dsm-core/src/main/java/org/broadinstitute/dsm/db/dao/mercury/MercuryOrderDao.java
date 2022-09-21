@@ -66,14 +66,14 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
 
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage) throws Exception {
-        long orderDate = System.currentTimeMillis();
+        long statusDate = System.currentTimeMillis();
         AtomicReference<ClinicalOrder> clinicalOrderAtomicReference = new AtomicReference<>();
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             MercuryStatusMessage mercuryStatusMessage = baseMercuryStatusMessage.getStatus();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_ORDER_STATUS)) {
                 stmt.setString(1, mercuryStatusMessage.getOrderStatus());
-                stmt.setLong(2, orderDate);
+                stmt.setLong(2, statusDate);
                 stmt.setString(3, mercuryStatusMessage.getPdoKey());
                 stmt.setString(4, mercuryStatusMessage.getDetails());
                 stmt.setString(5, mercuryStatusMessage.getOrderID());
@@ -101,7 +101,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                             rs.getString(DBConstants.MERCURY_ORDER_ID),
                             rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
                             rs.getLong(DBConstants.DDP_INSTANCE_ID),
-                            null, 0L, null,
+                            null, statusDate, null,
                             rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), null));
                 } else {
                     dbVals.resultException = new RuntimeException(
@@ -116,7 +116,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         if (results.resultException != null) {
             throw new DSMPubSubException("Unable to process the status of the order " + baseMercuryStatusMessage, results.resultException);
         }
-        MercuryOrderUseCase.exportStatusToES(baseMercuryStatusMessage, clinicalOrderAtomicReference.get(), orderDate);
+        MercuryOrderUseCase.exportStatusToES(baseMercuryStatusMessage, clinicalOrderAtomicReference.get(), statusDate);
     }
 
     public HashMap<String, MercuryOrderDto> getPossibleBarcodesForParticipant(String ddpParticipantId) {

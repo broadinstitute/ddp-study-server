@@ -24,6 +24,9 @@ class ChartStrategyFactory {
             case DONUT_CHART:
                 basicChartStrategy = new DonutChartStrategy(payload);
                 break;
+            case COUNT:
+                basicChartStrategy = new CountStrategy(payload);
+                break;
             default:
                 basicChartStrategy = new NullChartStrategy();
                 break;
