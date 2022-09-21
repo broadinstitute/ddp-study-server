@@ -268,6 +268,7 @@ public class DBConstants {
     public static final String ACTIONS = "actions";
     public static final String READONLY = "readonly";
     public static final String MAX_LENGTH = "max_length";
+    public static final String DETAILS = "details";
 
     //dashboards
     public static final String PARTICIPANT_COUNT = "participantCount";
