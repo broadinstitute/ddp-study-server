@@ -322,6 +322,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     private Boolean requiresInsertInKitTracking;
     private String kitLabelPrefix;
+    private Long kitLabelLength;
 
     public KitRequestShipping() {
     }
@@ -337,21 +338,21 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this(null, collaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
                 scanDate, error, null, receiveDate, null, deactivatedDate, null, null, null, null, null, null, externalOrderNumber, null,
                 externalOrderStatus, null, testResult, upsTrackingStatus, upsReturnStatus, externalOrderDate, careEvolve, uploadReason,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
     }
 
     public KitRequestShipping(String participantId, String collaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
                               String receiveDateString, String hruid, String gender) {
         this(participantId, collaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
                 null, null, null, null, null, null, null, dsmKitId, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, receiveDateString, hruid, gender, null, null, null, null, null);
+                null, null, receiveDateString, hruid, gender, null, null, null, null, null, null);
     }
 
     public KitRequestShipping(Long dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
                               String message) {
         this(null, null, null, null, null, null, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
                 easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
     }
 
     // shippingId = ddp_label !!!
@@ -364,7 +365,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
                               String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction,
-                              String receivedBy, String sampleNotes, String kitLabelPrefix) {
+                              String receivedBy, String sampleNotes, String kitLabelPrefix, Long kitLabelLength) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -404,6 +405,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.receivedBy = receivedBy;
         this.sampleNotes = sampleNotes;
         this.kitLabelPrefix = kitLabelPrefix;
+        this.kitLabelLength = kitLabelLength;
     }
 
     public Boolean getError() {
@@ -439,7 +441,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
                         rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION),
                         rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES),
-                        rs.getString(DBConstants.KIT_LABEL_PREFIX));
+                        rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {

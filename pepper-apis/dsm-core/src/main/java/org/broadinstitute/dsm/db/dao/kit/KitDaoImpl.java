@@ -53,7 +53,7 @@ public class KitDaoImpl implements KitDao {
                     + "AND request.kit_type_id = dkc.kit_type_id) WHERE ex.ddp_participant_exit_id is null";
     public static final String KIT_BY_KIT_REQUEST_ID = " and kit.dsm_kit_request_id = ?";
     public static final String KIT_BY_KIT_ID = " and kit.dsm_kit_id = ?";
-    public static final String KIT_BY_HRUID = " and bsp_collaborator_participant_id like '%#%' AND not kit_complete <=> 1 "
+    public static final String KIT_BY_HRUID = " and bsp_collaborator_participant_id like ? AND not kit_complete <=> 1 "
             + "AND deactivated_date is null";
 
     private static final String SQL_IS_BLOOD_KIT_QUERY = "SELECT kt.requires_insert_in_kit_tracking AS found "
@@ -87,7 +87,7 @@ public class KitDaoImpl implements KitDao {
             + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
             + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
             + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, "
-            + "kt.requires_insert_in_kit_tracking, track.tracking_id, ks.kit_label_prefix "
+            + "kt.requires_insert_in_kit_tracking, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
             + "FROM ddp_kit as kit "
             + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
             + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
@@ -416,6 +416,7 @@ public class KitDaoImpl implements KitDao {
                         kitRequestShipping.setTrackingId(rs.getString(DBConstants.TRACKING_ID));
                         kitRequestShipping.setKitLabel(rs.getString(DBConstants.KIT_LABEL));
                         kitRequestShipping.setKitLabelPrefix(rs.getString(DBConstants.KIT_LABEL_PREFIX));
+                        kitRequestShipping.setKitLabelLength(rs.getLong(DBConstants.KIT_LABEL_LENGTH));
                         dbVals.resultValue = kitRequestShipping;
                     }
                 }
@@ -455,7 +456,7 @@ public class KitDaoImpl implements KitDao {
                         rs.getString(DBConstants.UPS_RETURN_STATUS),
                         (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null, null, null,
-                        null, null, null);
+                        null, null, rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);
@@ -536,7 +537,8 @@ public class KitDaoImpl implements KitDao {
         List<KitRequestShipping> kitRequestList = new ArrayList<>();
         inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_HRUID.replace("#", hruid))) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_HRUID)) {
+                stmt.setString(1, "%" + hruid + "%");
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         kitRequestList.add(getKitRequestShipping(rs));

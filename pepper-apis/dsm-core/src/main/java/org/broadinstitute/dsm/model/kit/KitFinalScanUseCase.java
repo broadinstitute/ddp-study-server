@@ -35,9 +35,15 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 //prefix is configured and doesn't match kit label
                 result = Optional.of((new ScanError(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
                         + "Please check to see if this is the correct kit for this project before proceeding.")));
+            } else if (kitRequestShipping.getKitLabelLength() != null && kitRequestShipping.getKitLabelLength() != 0
+                    && kitLabel.length() != kitRequestShipping.getKitLabelLength()) {
+                //barcode length doesn't fit configured length
+                result = Optional.of(new ScanError(ddpLabel,
+                        "Barcode doesn't contain " + kitRequestShipping.getKitLabelLength() + " digits. You can manually enter any"
+                                + " missing digits above."));
             } else if ((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan()) || (
-                    !kitRequestShipping.isKitRequiringTrackingScan() && kitLabel.length() == 14)) {
-                //tracking scan needed and done OR no tracking scan needed and label is length 14 digits
+                    !kitRequestShipping.isKitRequiringTrackingScan())) {
+                //tracking scan needed and done OR no tracking scan needed
                 if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
                         || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
                     result = updateKitRequest(kitLabel, ddpLabel, getBspCollaboratorParticipantId(kitRequestShipping));
@@ -45,15 +51,11 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     this.writeSampleSentToES(kitRequestShipping);
                 } else {
                     result = Optional.of(
-                            new ScanError(ddpLabel, "Kit Label was scanned on Initial Scan page with another ShortID " + kitLabel));
+                            new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
                 }
             } else if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
                 //tracking scan required and missing
                 result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
-            } else if (kitLabel.length() < 14) {
-                //barcode less than 14 digits
-                result = Optional.of(
-                        new ScanError(ddpLabel, "Barcode contains less than 14 digits. You can manually enter any missing digits above."));
             } else {
                 //wasn't saved
                 result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));

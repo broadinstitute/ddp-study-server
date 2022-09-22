@@ -26,24 +26,33 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
     }
 
     private Optional<ScanError> updateKitRequest(String hruid, String kit) {
-        if (kit.startsWith("PECGS")) {
-            //BLOOD
-        } else {
-            //saliva
-        }
         List<KitRequestShipping> kitList = kitDao.getKitsByHruid(hruid);
         if (kitList != null && !kitList.isEmpty()) {
             if (kitList.size() > 2) {
-                return Optional.ofNullable(new ScanError(kit,
+                Optional.ofNullable(new ScanError(kit,
                         "Too many active kits found for \"" + hruid + "\".\n" + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
+
+            if (kitList.size() == 0) {
+                return Optional.ofNullable(new ScanError(kit, "No kit for participant with ShortId \"" + hruid + "\" was not found.\n"
+                        + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+            }
+            Optional<KitRequestShipping> kitRequestWithPrefix =
+                    kitList.stream().filter(k -> StringUtils.isNotBlank(k.getKitLabelPrefix())).findFirst();
             for (KitRequestShipping kitRequest : kitList) {
                 if (StringUtils.isNotBlank(kitRequest.getKitLabelPrefix()) && kit.startsWith(kitRequest.getKitLabelPrefix())) {
                     // blood kit
                     setKitInformation(kitRequest, kit, hruid);
-                } else if (StringUtils.isBlank(kitRequest.getKitLabelPrefix()) && !kit.startsWith(kitRequest.getKitLabelPrefix())) {
-                    // saliva kit
+                    return kitDao.updateKitLabel(kitRequest);
+                } else if (StringUtils.isBlank(kitRequest.getKitLabelPrefix())
+                        && kitRequestWithPrefix.isPresent() && !kit.startsWith(kitRequestWithPrefix.get().getKitLabelPrefix())) {
+                    // saliva kit and blood kit in the queue -> so check that kit does not start with prefix
                     setKitInformation(kitRequest, kit, hruid);
+                    return kitDao.updateKitLabel(kitRequest);
+                } else if (StringUtils.isBlank(kitRequest.getKitLabelPrefix()) && !kitRequestWithPrefix.isPresent()) {
+                    // saliva kit and no blood kit in the queue -> DSM doesn't know prefix then
+                    setKitInformation(kitRequest, kit, hruid);
+                    return kitDao.updateKitLabel(kitRequest);
                 }
             }
         }
