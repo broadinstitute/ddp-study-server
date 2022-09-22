@@ -4,7 +4,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
 
 import java.io.StringWriter;
-import java.time.ZoneOffset;
+import java.util.TimeZone;
 import java.time.ZoneId;
 import java.time.LocalDate;
 import java.time.Instant;
@@ -91,7 +91,7 @@ public class I18nContentRenderer {
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
 
-        ZoneId zone = ZoneOffset.UTC;
+        ZoneId zone = TimeZone.getTimeZone("US/Central").toZoneId();
         if (profile != null) {
             if (profile.getFirstName() != null) {
                 builder.setParticipantFirstName(profile.getFirstName());
