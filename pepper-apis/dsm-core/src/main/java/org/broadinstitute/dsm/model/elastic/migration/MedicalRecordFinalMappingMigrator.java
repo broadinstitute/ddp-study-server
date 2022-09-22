@@ -11,7 +11,8 @@ import java.util.Map;
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDao;
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDto;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
 import org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 
@@ -20,12 +21,15 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
     public static final String MEDICAL_RECORD_FINAL = "medicalRecordFinal";
 
     protected MedicalRecordAbstractionFieldTypeParser parser;
-    protected MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao =
-            new MedicalRecordAbstractionFieldDaoImpl();
+    protected MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao;
+    protected CamelCaseConverter camelCaseConverter;
 
     public MedicalRecordFinalMappingMigrator(String index, String study) {
         super(index, study);
         this.parser = new MedicalRecordAbstractionFieldTypeParser(new TypeParser());
+        this.medicalRecordAbstractionFieldDao = new MedicalRecordAbstractionFieldDaoImpl();
+        this.camelCaseConverter = CamelCaseConverter.of();
+        camelCaseConverter.setSplittingStrategy(new SpaceSplittingStrategy());
     }
 
     public void setMedicalRecordAbstractionFieldDao(
@@ -42,13 +46,13 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
                 new HashMap<>(Map.of(PROPERTIES, fieldTypeMappings))));
         for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName    = field.getDisplayName();
-            Integer orderNumber   = field.getOrderNumber();
-            String columnName     = Util.underscoresToCamelCase(createColumnNameByDisplayNameAndOrderNumber(displayName, orderNumber));
+            int orderNumber       = field.getOrderNumber();
+            String columnName     = createColumnNameByDisplayNameAndOrderNumber(displayName, orderNumber);
             String fieldType      = field.getType();
             String possibleValues = field.getPossibleValues();
             parser.setType(fieldType);
             parser.setPossibleValues(possibleValues);
-            Object fieldTypeMapping = parser.parse(columnName); // date1 is mapping
+            Object fieldTypeMapping = parser.parse(columnName);
             if (!fieldTypeMappings.containsKey(columnName)) {
                 fieldTypeMappings.put(columnName, fieldTypeMapping);
             }
@@ -69,7 +73,8 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         if (displayName != null && orderNumber != null) {
             columnName = displayName + orderNumber;
         }
-        return columnName;
+        camelCaseConverter.setStringToConvert(columnName);
+        return camelCaseConverter.convert();
     }
 }
 

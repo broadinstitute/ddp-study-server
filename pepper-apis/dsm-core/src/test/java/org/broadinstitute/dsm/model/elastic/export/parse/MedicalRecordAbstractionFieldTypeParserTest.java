@@ -1,17 +1,21 @@
+
 package org.broadinstitute.dsm.model.elastic.export.parse;
-
-import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.*;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;
 import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.PROPERTIES;
 import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.OTHER;
 import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.VALUES;
-import static org.broadinstitute.dsm.statics.DBConstants.VALUE;
 import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
+import org.junit.Before;
+import org.junit.Test;
 
 public class MedicalRecordAbstractionFieldTypeParserTest {
 
@@ -61,7 +65,8 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
     @Test
     public void buildMultiTypeArrayMapping() {
 
-        var possibleValues = "[{\"value\":\"Other Cancer\",\"type\":\"text\"},{\"value\":\"Site Other Cancer\",\"type\":\"text\"},{\"value\":\"Date Other Cancer\",\"type\":\"date\"}]";
+        var possibleValues = "[{\"value\":\"Other Cancer\",\"type\":\"text\"},{\"value\":\"Site Other Cancer\",\"type\":\"text\"},"
+                + "{\"value\":\"Date Other Cancer\",\"type\":\"date\"}]";
 
         parser.setType("multi_type_array");
         parser.setPossibleValues(possibleValues);
@@ -70,9 +75,11 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
 
         expectedInnerMapping.put("otherCancer", TypeParser.TEXT_KEYWORD_MAPPING);
         expectedInnerMapping.put("siteOtherCancer", TypeParser.TEXT_KEYWORD_MAPPING);
-        expectedInnerMapping.put("dateOtherCancer", new HashMap<>(Map.of("properties", Map.of("dateString", TypeParser.DATE_MAPPING,"est", TypeParser.BOOLEAN_MAPPING))));
+        expectedInnerMapping.put("dateOtherCancer", new HashMap<>(Map.of("properties", Map.of("dateString", TypeParser.DATE_MAPPING,
+                "est", TypeParser.BOOLEAN_MAPPING))));
 
-        var expected = new HashMap<String, Object>(Map.of("type", "nested","properties", expectedInnerMapping));
+        var expected = new HashMap<String, Object>(Map.of("type", "nested",
+                "properties", expectedInnerMapping));
 
         var actual = parser.parse("Other Cancers");
 
@@ -84,7 +91,9 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
     @Test
     public void buildComplexMultiTypeArrayMapping() {
 
-        var possibleValues = "[{\"value\":\"Type of Procedure\",\"type\":\"button_select\",\"values\":[{\"value\":\"Biopsy\"},{\"value\":\"Prostatectomy\"},{\"value\":\"Other\"}]},{\"value\":\"TNM Classification\",\"type\":\"button_select\",\"values\":[{\"value\":\"c\"},{\"value\":\"p\"},{\"value\":\"yp\"},{\"value\":\"Other\"}]}]";
+        var possibleValues = "[{\"value\":\"Type of Procedure\",\"type\":\"button_select\",\"values\":[{\"value\":\"Biopsy\"},"
+                + "{\"value\":\"Prostatectomy\"},{\"value\":\"Other\"}]},{\"value\":\"TNM Classification\",\"type\":\"button_select\","
+                + "\"values\":[{\"value\":\"c\"},{\"value\":\"p\"},{\"value\":\"yp\"},{\"value\":\"Other\"}]}]";
 
         parser.setType("multi_type_array");
         parser.setPossibleValues(possibleValues);
@@ -94,7 +103,8 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
         expectedInnerMapping.put("typeOfProcedure", TypeParser.TEXT_KEYWORD_MAPPING);
         expectedInnerMapping.put("tnmClassification", TypeParser.TEXT_KEYWORD_MAPPING);
 
-        var expected = new HashMap<String, Object>(Map.of("type", "nested","properties", expectedInnerMapping));
+        var expected = new HashMap<String, Object>(Map.of("type", "nested",
+                "properties", expectedInnerMapping));
 
         var actual = parser.parse("TNM");
 

@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.converters.Converter;
+import org.broadinstitute.dsm.model.elastic.converters.split.FieldNameSplittingStrategy;
+import org.broadinstitute.dsm.model.elastic.converters.split.UnderscoreSplittingStrategy;
 
 public class CamelCaseConverter implements Converter<String> {
 
@@ -16,11 +18,16 @@ public class CamelCaseConverter implements Converter<String> {
     public static final String UNDERSCORE_SEPARATOR = "_";
     private final Pattern camelCaseRegex = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
     protected String stringToConvert;
+    protected FieldNameSplittingStrategy splittingStrategy;
 
     protected CamelCaseConverter() {}
 
     public void setStringToConvert(String stringToConvert) {
         this.stringToConvert = stringToConvert;
+    }
+
+    public void setSplittingStrategy(FieldNameSplittingStrategy splittingStrategy) {
+        this.splittingStrategy = splittingStrategy;
     }
 
     private boolean hasNoUnderscores(String[] splittedWords) {
@@ -55,7 +62,7 @@ public class CamelCaseConverter implements Converter<String> {
 
     @Override
     public String convert() {
-        String[] splittedWords = stringToConvert.split(UNDERSCORE_SEPARATOR);
+        String[] splittedWords = splittingStrategy.split(stringToConvert);
         if (hasNoUnderscores(splittedWords)) {
             return handleAllUppercase(stringToConvert);
         }
@@ -64,6 +71,7 @@ public class CamelCaseConverter implements Converter<String> {
 
     public static CamelCaseConverter of(String stringToConvert) {
         instance.stringToConvert = stringToConvert;
+        instance.splittingStrategy = new UnderscoreSplittingStrategy();
         return instance;
     }
 

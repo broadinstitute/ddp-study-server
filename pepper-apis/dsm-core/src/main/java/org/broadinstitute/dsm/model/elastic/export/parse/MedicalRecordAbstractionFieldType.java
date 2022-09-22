@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import lombok.Getter;
