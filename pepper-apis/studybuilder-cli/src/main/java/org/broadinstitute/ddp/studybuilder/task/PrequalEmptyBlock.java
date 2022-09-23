@@ -22,10 +22,16 @@ import java.util.List;
 public abstract class PrequalEmptyBlock implements CustomTask {
     private final String studyGuid;
     private final String activityCode;
+    private final String precondition;
 
-    public PrequalEmptyBlock(String activityCode, String studyGuid) {
+    public PrequalEmptyBlock(String activityCode, String studyGuid, String precondition) {
         this.activityCode = activityCode;
         this.studyGuid = studyGuid;
+        this.precondition = precondition;
+    }
+
+    public PrequalEmptyBlock(String activityCode, String studyGuid) {
+        this(activityCode, studyGuid, "true");
     }
 
     @Override
@@ -42,6 +48,7 @@ public abstract class PrequalEmptyBlock implements CustomTask {
 
     private void addBlockToActivity(Handle handle) {
         ContentBlockDef contentBlockDef = new ContentBlockDef(Template.html(""));
+        contentBlockDef.setShownExpr(precondition);
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(studyGuid, activityCode).orElseThrow();
         ActivityVersionDto ver = handle.attach(JdbiActivityVersion.class).getActiveVersion(activityDto.getActivityId()).orElseThrow();
