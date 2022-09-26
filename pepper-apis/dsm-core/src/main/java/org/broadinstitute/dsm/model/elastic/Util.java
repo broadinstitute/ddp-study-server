@@ -1,16 +1,10 @@
 package org.broadinstitute.dsm.model.elastic;
 
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 
@@ -52,23 +46,6 @@ public class Util {
         StringBuilder camelCaseClassName = className.replace(0, 1, String.valueOf(className.charAt(0)).toLowerCase());
         return camelCaseClassName.toString();
     }
-
-    public static String spacedLowerCaseToCamelCase(String fieldName) {
-        String[] separatedBySpace = fieldName.split(Filter.SPACE);
-        Stream<String> mappedToUppercase = Arrays.stream(separatedBySpace).skip(1).map(Util::capitalize);
-        String firstWordToLowerCase = separatedBySpace[0].toLowerCase();
-        LinkedList<String> mappedWords = new LinkedList<>();
-        mappedWords.addFirst(firstWordToLowerCase);
-        mappedWords.addAll(mappedToUppercase.collect(Collectors.toList()));
-        return String.join(StringUtils.EMPTY, mappedWords);
-    }
-
-    private static String capitalize(String word) {
-        return word.substring(0, 1)
-                .toUpperCase()
-                .concat(word.substring(1));
-    }
-
 
     public static class Constants {
         public static final String PROFILE = "profile";

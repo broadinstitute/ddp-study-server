@@ -71,13 +71,5 @@ public class UtilTest {
         assertNotNull(shouldBeNonNull);
     }
 
-    @Test
-    public void spacedLowerCaseToCamelCase() {
-        String spaced1 = "Spaced field name";
-        String spaced2 = "Another Spaced field name";
-
-        assertEquals("spacedFieldName", Util.spacedLowerCaseToCamelCase(spaced1));
-        assertEquals("anotherSpacedFieldName", Util.spacedLowerCaseToCamelCase(spaced2));
-    }
 
 }
