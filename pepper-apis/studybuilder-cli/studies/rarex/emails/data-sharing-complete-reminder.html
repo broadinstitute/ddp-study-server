@@ -73,7 +73,7 @@
 
             <tr style="width: 540px;">
                 <td align="left" style="margin: 0; padding: 50px 0 0 0; font-family: 'Roboto', sans-serif;">
-                    <a href="-ddp.baseWebUrl-" target="_blank" style="cursor: pointer; text-decoration: none;">
+                    <a href="{{baseWebUrl}}" target="_blank" style="cursor: pointer; text-decoration: none;">
                         <img src="https://storage.googleapis.com/${assetsBucketName}/assets/rarex-email-logo.jpg"
                              alt="RARE-X Project logo" style="-ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none;"
                              width="181px" height="65px" border="0">
@@ -85,7 +85,7 @@
                 <td style="padding: 50px 0 0 0;">
 
                     <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">
-                        -ddp.salutation-
+                        {{salutation}}
                     </p>
 
                     <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">
@@ -102,7 +102,7 @@
                     </p>
 
                     <div>
-                        <a href="-ddp.baseWebUrl-/activity/-ddp.activityInstanceGuid-"
+                        <a href="{{baseWebUrl}}/activity/{{activityInstanceGuid}}"
                                                         style="font-size:14px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#26355c;
                                    border-top:15px solid #26355c;border-bottom:15px solid #26355c;border-left:25px solid #26355c;
                                    border-right:25px solid #26355c;display:inline-block; text-transform: uppercase;"
