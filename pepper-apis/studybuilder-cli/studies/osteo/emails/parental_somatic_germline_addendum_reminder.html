@@ -73,7 +73,7 @@
        border="0" cellpadding="0" cellspacing="0" width="100%">
     <tr style="width: 540px;">
         <td align="left" style="margin: 0; padding: 50px 0 0 0; font-family: 'Source Sans Pro', sans-serif;">
-            <a href="-ddp.baseWebUrl-" target="_blank" style="cursor: pointer; text-decoration: none;">
+            <a href="{{baseWebUrl}}" target="_blank" style="cursor: pointer; text-decoration: none;">
                 <img src="https://storage.googleapis.com/${assetsBucketName}/osteo/project-logo.png"
                      alt="Osteosarcoma Project logo" style="-ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none;"
                      width="230px" height="63px" border="0">
@@ -83,7 +83,7 @@
 
     <tr style="width: 540px;">
         <td style="padding: 50px 0 0 0;">
-            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Dear -ddp.proxy.firstName-,</p>
+            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Dear {{proxy_firstName}},</p>
 
             <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Thank you for joining the Osteosarcoma Project and telling us about your child’s experience with cancer.</p>
             <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">As a part of the project, we are partnering with Invitae in order to share information with participants about their germline DNA (or “normal” DNA). We are now asking you to opt in if you would like to take part in this additional aspect of the study. Taking part in this is completely optional and will not have any impact on your child's overall participation in the OSproject.</p>
@@ -92,7 +92,7 @@
     </tr>
     <tr style="height:0px">
         <td style="border-left:solid #ffffff 1px;border-right:solid #ffffff 1px;border-bottom:solid #ffffff 1px;border-top:solid #ffffff 1px;vertical-align:top;background-color:#ffffff;padding:20px 0px 0px 0px">
-            <div>&nbsp; <a href="-ddp.baseWebUrl-/activity-link/-ddp.activityInstanceGuid-?participantGuid=-ddp.participant.guid-" style="font-size:16px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#7154ff;border-top:15px solid #7154ff;border-bottom:15px solid #7154ff;border-left:25px solid #7154ff;border-right:25px solid #7154ff;border-radius:3px;display:inline-block"
+            <div>&nbsp; <a href="{{baseWebUrl}}/activity-link/{{activityInstanceGuid}}?participantGuid={{participant_guid}}" style="font-size:16px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#7154ff;border-top:15px solid #7154ff;border-bottom:15px solid #7154ff;border-left:25px solid #7154ff;border-right:25px solid #7154ff;border-radius:3px;display:inline-block"
                            target="_blank">Please Sign Rider Consent Form</a>&nbsp;&nbsp;</div>
         </td>
     </tr>
