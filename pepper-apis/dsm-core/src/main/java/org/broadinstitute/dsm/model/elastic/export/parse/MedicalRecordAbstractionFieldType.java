@@ -30,15 +30,6 @@ enum MedicalRecordAbstractionFieldType {
         return this.innerValue;
     }
 
-    public static boolean isMedicalRecordAbstractionFieldType(String fieldType) {
-        try {
-            MedicalRecordAbstractionFieldType.valueOf(fieldType);
-            return true;
-        } catch (IllegalArgumentException iae) {
-            return false;
-        }
-    }
-
     public static MedicalRecordAbstractionFieldType of(String value) {
         return Arrays.stream(MedicalRecordAbstractionFieldType.values())
                 .filter(fieldType -> fieldType.asString().equals(value))

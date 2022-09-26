@@ -70,12 +70,14 @@ public class CamelCaseConverter implements Converter<String> {
     }
 
     public static CamelCaseConverter of(String stringToConvert) {
-        instance.stringToConvert = stringToConvert;
+        instance.stringToConvert   = stringToConvert;
         instance.splittingStrategy = new UnderscoreSplittingStrategy();
         return instance;
     }
 
     public static CamelCaseConverter of() {
+        instance.splittingStrategy = new UnderscoreSplittingStrategy();
         return instance;
     }
+
 }
