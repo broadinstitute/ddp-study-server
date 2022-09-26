@@ -1,12 +1,9 @@
 
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import lombok.Getter;
-
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-@Getter
 enum MedicalRecordAbstractionFieldType {
 
     DATE("date"),
@@ -29,6 +26,10 @@ enum MedicalRecordAbstractionFieldType {
         this.innerValue = innerValue;
     }
 
+    public String asString() {
+        return this.innerValue;
+    }
+
     public static boolean isMedicalRecordAbstractionFieldType(String fieldType) {
         try {
             MedicalRecordAbstractionFieldType.valueOf(fieldType);
@@ -40,7 +41,7 @@ enum MedicalRecordAbstractionFieldType {
 
     public static MedicalRecordAbstractionFieldType of(String value) {
         return Arrays.stream(MedicalRecordAbstractionFieldType.values())
-                .filter(fieldType -> fieldType.getInnerValue().equals(value))
+                .filter(fieldType -> fieldType.asString().equals(value))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException(String.format("requested type %s does not exist", value)));
     }
