@@ -544,4 +544,10 @@ public class DBConstants {
     public static final String DDP_KIT_ALIAS = "kit";
     public static final String TRACKING = "tracking";
 
+    // abstraction
+    public static final String DDP_MEDICAL_RECORD_FINAL       = "ddp_medical_record_final";
+    public static final String DDP_MEDICAL_RECORD_FINAL_ALIAS = "ab"; // `ab`straction
+    public static final String DDP_MEDICAL_RECORD_FINAL_ID    = "medical_record_final_id";
+    public static final String DATA_RELEASE_ID                = "data_release_id";
+
 }

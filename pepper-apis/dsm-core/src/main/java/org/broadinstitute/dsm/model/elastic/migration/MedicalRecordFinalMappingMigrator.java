@@ -32,18 +32,21 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         camelCaseConverter.setSplittingStrategy(new SpaceSplittingStrategy());
     }
 
-    public void setMedicalRecordAbstractionFieldDao(
+    // for testing purposes
+    void setMedicalRecordAbstractionFieldDao(
             MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao) {
         this.medicalRecordAbstractionFieldDao = medicalRecordAbstractionFieldDao;
     }
 
     @Override
     protected void processAndBuildMapping() {
+        // read abstraction fields by study
         List<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFields =
                 medicalRecordAbstractionFieldDao.getMedicalRecordAbstractionFieldsByInstanceName(study);
         Map<String, Object> fieldTypeMappings = new HashMap<>();
         Map<String, Object> dynamicFields     = new HashMap<>(Map.of(DYNAMIC_FIELDS_WRAPPER_NAME,
                 new HashMap<>(Map.of(PROPERTIES, fieldTypeMappings))));
+        // loop for each, build mapping based on type and field name (ds name + ord_number)
         for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName    = field.getDisplayName();
             int orderNumber       = field.getOrderNumber();
