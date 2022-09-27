@@ -930,7 +930,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
         String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
         SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
+            SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement insertKitRequest = conn.prepareStatement(
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_REQUEST), Statement.RETURN_GENERATED_KEYS)) {
                 insertKitRequest.setString(1, instanceId);
@@ -948,7 +948,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 insertKitRequest.executeUpdate();
                 try (ResultSet rs = insertKitRequest.getGeneratedKeys()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getString(1);
+                        KitRequestShipping kitRequestShipping = new KitRequestShipping();
+                        kitRequestShipping.setDsmKitRequestId(rs.getLong(1));
+                        dbVals.resultValue = kitRequestShipping;
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Error getting id of new kit request ", e);
@@ -957,7 +959,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException == null && dbVals.resultValue != null) {
-                writeNewKit(conn, (String) dbVals.resultValue, addressIdTo, errorMessage, needsApproval);
+                KitRequestShipping kitRequestShipping = (KitRequestShipping) dbVals.resultValue;
+                SimpleResult simpleResultKitWriting = writeNewKit(conn, String.valueOf(kitRequestShipping.getDsmKitRequestId()),
+                        addressIdTo, errorMessage, needsApproval);
+                kitRequestShipping.setDsmKitId((Long) simpleResultKitWriting.resultValue);
+                dbVals.resultValue = kitRequestShipping;
             }
             return dbVals;
         });
@@ -968,11 +974,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
 
         if (Objects.nonNull(ddpInstance)) {
-            KitRequestShipping kitRequestShipping = new KitRequestShipping();
+            KitRequestShipping kitRequestShipping = (KitRequestShipping) results.resultValue;
             kitRequestShipping.setParticipantId(ddpParticipantId);
             kitRequestShipping.setCollaboratorParticipantId(collaboratorPatientId);
             kitRequestShipping.setBspCollaboratorSampleId(collaboratorSampleId);
-            kitRequestShipping.setDsmKitRequestId(Long.parseLong(String.valueOf(results.resultValue)));
             kitRequestShipping.setMessage(errorMessage);
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
@@ -994,15 +999,15 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 e.printStackTrace();
             }
 
+            logger.info("Added kitRequest w/ ddpKitRequestId " + ddpKitRequestId);
+            return String.valueOf(kitRequestShipping.getDsmKitRequestId());
         }
-
-        logger.info("Added kitRequest w/ ddpKitRequestId " + ddpKitRequestId);
-        return (String) results.resultValue;
+        throw new RuntimeException("Error returning kit request information for ddpKitRequestId " + ddpKitRequestId);
     }
 
     private static SimpleResult writeNewKit(Connection conn, String kitRequestId, String addressIdTo, String errorMessage,
                                             boolean needsApproval) {
-        SimpleResult dbVals = new SimpleResult();
+        SimpleResult dbVals = new SimpleResult(0);
         try (PreparedStatement insertKit = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
             insertKit.setString(1, kitRequestId);
             if (StringUtils.isNotBlank(addressIdTo)) {
@@ -1020,7 +1025,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             insertKit.executeUpdate();
             try (ResultSet rs = insertKit.getGeneratedKeys()) {
                 if (rs.next()) {
-                    dbVals.resultValue = rs.getString(1);
+                    dbVals.resultValue = rs.getLong(1);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error getting id of new kit request ", e);

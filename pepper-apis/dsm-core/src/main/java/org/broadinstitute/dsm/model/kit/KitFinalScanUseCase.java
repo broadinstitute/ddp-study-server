@@ -1,18 +1,19 @@
 package org.broadinstitute.dsm.model.kit;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.model.elastic.export.Exportable;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
+import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 //connects kit request with an actual mf barcode on the tub
 public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
@@ -41,13 +42,16 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 result = Optional.of(new ScanError(ddpLabel,
                         "Barcode doesn't contain " + kitRequestShipping.getKitLabelLength() + " digits. You can manually enter any"
                                 + " missing digits above."));
-            } else if ((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan()) || (
-                    !kitRequestShipping.isKitRequiringTrackingScan())) {
+            } else if ((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan())
+                    || (!kitRequestShipping.isKitRequiringTrackingScan())) {
                 //tracking scan needed and done OR no tracking scan needed
                 if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
                         || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
-                    result = updateKitRequest(kitLabel, ddpLabel, getBspCollaboratorParticipantId(kitRequestShipping));
-                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
+                    kitRequestShipping.setKitLabel(kitLabel);
+                    kitRequestShipping.setDdpLabel(ddpLabel);
+                    kitRequestShipping.setScanDate(System.currentTimeMillis());
+                    result = updateKitRequest(kitRequestShipping);
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, kitRequestShipping);
                     this.writeSampleSentToES(kitRequestShipping);
                 } else {
                     result = Optional.of(
@@ -67,32 +71,20 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         return result;
     }
 
-    private Optional<ScanError> updateKitRequest(String addValue, String kit, String bspCollaboratorParticipantId) {
-        KitRequestShipping kitRequestShipping = getKitRequestShipping(addValue, kit);
-        kitRequestShipping.setBspCollaboratorParticipantId(bspCollaboratorParticipantId);
+    private Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping) {
         return kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
     }
 
-    protected KitRequestShipping getKitRequestShipping(String addValue, String kit) {
-        KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setKitLabel(addValue);
-        kitRequestShipping.setDdpLabel(kit);
-        return kitRequestShipping;
-    }
-
     private void writeSampleSentToES(KitRequestShipping kitRequest) {
-        int ddpInstanceId = Long.valueOf(kitRequest.getDdpInstanceId()).intValue();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceId);
-        Map<String, Object> nameValuesMap = new HashMap<>();
-        ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.SENT);
-        if (ddpInstance != null && kitRequest.getDdpKitRequestId() != null && kitRequest.getDdpParticipantId() != null) {
-            ElasticSearchUtil.writeSample(ddpInstance, kitRequest.getDdpKitRequestId(), kitRequest.getDdpParticipantId(),
-                    ESObjectConstants.SAMPLES, ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
+        //need to add sent date to it TODO
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId((int) kitRequest.getDdpInstanceId()).orElseThrow();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequest, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                    ESObjectConstants.DOC_ID,
+                    Exportable.getParticipantGuid(kitRequest.getDdpParticipantId(), ddpInstanceDto.getEsParticipantIndex()),
+                    new PutToNestedScriptBuilder()).export();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
-
-    private String getBspCollaboratorParticipantId(KitRequestShipping kitRequestShipping) {
-        return StringUtils.isEmpty(kitRequestShipping.getKitLabel()) ? null : kitRequestShipping.getBspCollaboratorParticipantId();
-    }
-
 }
