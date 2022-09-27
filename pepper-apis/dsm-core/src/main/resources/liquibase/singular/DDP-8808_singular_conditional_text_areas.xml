@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-8808_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_1" author="pegah">
+        <sql>
+            UPDATE field_settings SET actions = ? WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id WHERE column_name = ? AND field_type = ?
+            AND ddp_instance_id in (SELECT ddp_instance_id WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_1" author="pegah">
+        <sql>
+            UPDATE field_settings SET actions = ? WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id WHERE column_name = ? AND field_type = ?
+            AND ddp_instance_id in (SELECT ddp_instance_id WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+</databaseChangeLog>
