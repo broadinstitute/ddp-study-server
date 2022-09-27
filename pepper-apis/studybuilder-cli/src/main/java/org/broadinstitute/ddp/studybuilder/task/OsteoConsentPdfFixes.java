@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
+import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.studybuilder.PdfBuilder;
 import org.jdbi.v3.core.Handle;
@@ -65,7 +66,8 @@ public class OsteoConsentPdfFixes implements CustomTask {
                 .filter(v -> v.getVersionTag().equals(V2_VERSION_TAG))
                 .findFirst()
                 .orElseThrow(() -> new DDPException("Expected release pdf version 2 but not found"));
-        pdfDao.deleteConfigVersionAndDataSources(pdfVersion);
+        PdfConfiguration fullConfig = pdfDao.findFullConfig(pdfVersion);
+        pdfDao.deleteSpecificConfigVersion(fullConfig);
 
         UserDto adminUser = handle.attach(JdbiUser.class).findByUserGuid(studyCfg.getString("adminUser.guid"));
 
