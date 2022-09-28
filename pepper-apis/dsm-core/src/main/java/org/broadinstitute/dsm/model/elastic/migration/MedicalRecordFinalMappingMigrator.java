@@ -13,7 +13,6 @@ import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFie
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDaoLive;
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDto;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
@@ -24,14 +23,13 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
 
     protected MedicalRecordAbstractionFieldTypeParser parser;
     protected MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao;
-    protected CamelCaseConverter camelCaseConverter;
+    protected MedicalRecordFinalColumnBuilder medicalRecordFinalColumnBuilder;
 
     public MedicalRecordFinalMappingMigrator(String index, String study) {
         super(index, study);
         this.parser = new MedicalRecordAbstractionFieldTypeParser(new TypeParser());
         this.medicalRecordAbstractionFieldDao = new MedicalRecordAbstractionFieldDaoLive();
-        this.camelCaseConverter = CamelCaseConverter.of();
-        camelCaseConverter.setSplittingStrategy(new SpaceSplittingStrategy());
+        this.medicalRecordFinalColumnBuilder = new MedicalRecordFinalColumnBuilderLive(CamelCaseConverter.of());
     }
 
     // for testing purposes
@@ -54,7 +52,7 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName    = field.getDisplayName();
             int orderNumber       = field.getOrderNumber();
-            String columnName     = createColumnNameByDisplayNameAndOrderNumber(displayName, orderNumber);
+            String columnName     = medicalRecordFinalColumnBuilder.joinAndThenMapToCamelCase(displayName, orderNumber);
             String fieldType      = field.getType();
             String possibleValues = field.getPossibleValues();
             parser.setType(fieldType);
@@ -73,15 +71,6 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         Map<String, Object> dsmLevel = new HashMap<>(Map.of(DSM_OBJECT, dsmLevelProperties));
         return new HashMap<>(Map.of(PROPERTIES, dsmLevel));
 
-    }
-
-    private String createColumnNameByDisplayNameAndOrderNumber(String displayName, Integer orderNumber) {
-        String columnName = displayName;
-        if (displayName != null && orderNumber != null) {
-            columnName = displayName + orderNumber;
-        }
-        camelCaseConverter.setStringToConvert(columnName);
-        return camelCaseConverter.convert();
     }
 }
 

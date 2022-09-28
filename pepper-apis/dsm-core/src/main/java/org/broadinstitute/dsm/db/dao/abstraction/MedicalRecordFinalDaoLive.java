@@ -24,7 +24,7 @@ public class MedicalRecordFinalDaoLive implements MedicalRecordFinalDao {
 
     private static final String SQL_GET_ALL_BY_INSTANCE_NAME = "SELECT "
             + "p.ddp_participant_id, m.medical_record_final_id, m.participant_id, "
-            + "m.medical_record_abstraction_field_id, mf.type, m.value, m.no_data, m.data_release_id "
+            + "m.medical_record_abstraction_field_id, mf.type, mf.display_name, mf.order_number, m.value, m.no_data, m.data_release_id "
             + "FROM ddp_medical_record_final m "
             + "LEFT JOIN ddp_participant p on m.participant_id = p.participant_id "
             + "LEFT JOIN medical_record_abstraction_field mf ON "
@@ -85,6 +85,8 @@ public class MedicalRecordFinalDaoLive implements MedicalRecordFinalDao {
                 rs.getString(DBConstants.TYPE),
                 rs.getString(DBConstants.VALUE),
                 rs.getLong(DBConstants.NO_DATA),
-                rs.getLong(DBConstants.DATA_RELEASE_ID));
+                rs.getLong(DBConstants.DATA_RELEASE_ID),
+                rs.getString(DBConstants.DISPLAY_NAME),
+                rs.getInt(DBConstants.ORDER_NUMBER));
     }
 }

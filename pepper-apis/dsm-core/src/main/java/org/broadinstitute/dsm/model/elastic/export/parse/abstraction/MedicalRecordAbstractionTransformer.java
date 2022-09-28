@@ -4,6 +4,6 @@ import java.util.Map;
 
 public abstract class MedicalRecordAbstractionTransformer {
 
-    public abstract Map<String, Object> toMap(String value);
+    public abstract Map<String, Object> toMap(String fieldName, String value);
 
 }

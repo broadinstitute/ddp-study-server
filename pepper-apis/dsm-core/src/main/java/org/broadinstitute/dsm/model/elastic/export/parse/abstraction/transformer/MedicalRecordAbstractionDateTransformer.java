@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer;
 
 import java.util.HashMap;
@@ -12,14 +13,14 @@ public class MedicalRecordAbstractionDateTransformer extends MedicalRecordAbstra
 
 
     @Override
-    public Map<String, Object> toMap(String value) {
+    public Map<String, Object> toMap(String fieldName, String value) {
         Map<String, Object> result = new HashMap<>();
         try {
-            return (Map) ObjectMapperSingleton.readValue(value, new TypeReference<Map<String, String>>() {});
-        } catch(JsonParseException jpe) {
-            return value;
+            Map<String, Object> innerValues = ObjectMapperSingleton.readValue(value, new TypeReference<Map<String, Object>>() {});
+            result.put(fieldName, Map.of("dynamicFields", innerValues));
+        } catch (JsonParseException jpe) {
+            result.put(fieldName, value);
         }
-
+        return result;
     }
-
 }

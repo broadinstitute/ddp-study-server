@@ -3,6 +3,8 @@ package org.broadinstitute.dsm.db;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -27,6 +29,8 @@ public class MedicalRecordFinalDto {
     @ColumnName(DBConstants.TYPE)
     private final String type;
 
+    @JsonProperty("dynamicFields")
+    @SerializedName("dynamicFields")
     @ColumnName(DBConstants.VALUE)
     private final String value;
 
@@ -35,6 +39,12 @@ public class MedicalRecordFinalDto {
 
     @ColumnName(DBConstants.DATA_RELEASE_ID)
     private final Long dataReleaseId;
+
+    @ColumnName(DBConstants.DISPLAY_NAME)
+    private final String displayName;
+
+    @ColumnName(DBConstants.ORDER_NUMBER)
+    private final Integer orderNumber;
 
 }
 
