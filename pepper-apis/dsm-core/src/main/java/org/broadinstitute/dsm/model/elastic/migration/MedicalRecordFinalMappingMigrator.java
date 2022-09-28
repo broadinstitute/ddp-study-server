@@ -23,7 +23,7 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
 
     protected MedicalRecordAbstractionFieldTypeParser parser;
     protected MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao;
-    protected MedicalRecordFinalColumnBuilder medicalRecordFinalColumnBuilder;
+    protected MedicalRecordFinalColumnNameBuilder medicalRecordFinalColumnBuilder;
 
     public MedicalRecordFinalMappingMigrator(String index, String study) {
         super(index, study);

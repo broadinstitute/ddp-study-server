@@ -10,7 +10,7 @@ public enum MedicalRecordAbstractionFieldType {
     BUTTON_SELECT("button_select"),
     NUMBER("number"),
     MULTI_OPTIONS("multi_options"),
-    TEXT_AREA("text_area"),
+    TEXT_AREA("textarea"),
     MULTI_TYPE_ARRAY("multi_type_array"),
     TEXT("text"),
     TABLE("table"),

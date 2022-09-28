@@ -16,7 +16,7 @@ public class MedicalRecordAbstractionValueTransformerFactory {
                 transformer = new MedicalRecordAbstractionTextTransformer();
                 break;
             default:
-                transformer = null;
+                transformer = new MedicalRecordAbstractionTextTransformer();
         }
         return transformer;
     }

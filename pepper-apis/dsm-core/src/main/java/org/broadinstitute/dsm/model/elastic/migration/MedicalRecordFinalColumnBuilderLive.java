@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.migration;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
 
-public class MedicalRecordFinalColumnBuilderLive implements MedicalRecordFinalColumnBuilder {
+public class MedicalRecordFinalColumnBuilderLive implements MedicalRecordFinalColumnNameBuilder {
 
     CamelCaseConverter camelCaseConverter;
 

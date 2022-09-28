@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.MedicalRecordFinalDto;
@@ -8,18 +9,18 @@ import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConver
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionTransformer;
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionValueTransformerFactory;
-import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnBuilder;
+import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNameBuilder;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnBuilderLive;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
 
-    MedicalRecordFinalColumnBuilder medicalRecordFinalColumnBuilder;
+    MedicalRecordFinalColumnNameBuilder columnBuilder;
 
     public MedicalRecordFinalObjectTransformer(String realm) {
         super(realm, null);
-        this.medicalRecordFinalColumnBuilder = new MedicalRecordFinalColumnBuilderLive(CamelCaseConverter.of());
+        this.columnBuilder = new MedicalRecordFinalColumnBuilderLive(CamelCaseConverter.of());
     }
 
     @Override
@@ -30,9 +31,12 @@ public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
         Map<String, Object> result = ObjectMapperSingleton.readValue(
                 ObjectMapperSingleton.writeValueAsString(mrFinal),
                 new TypeReference<Map<String, Object>>() {});
-        String fieldName = medicalRecordFinalColumnBuilder.joinAndThenMapToCamelCase(mrFinal.getDisplayName(), mrFinal.getOrderNumber());
-        Map<String, Object> dynamicFields = transformer.toMap(fieldName, mrFinal.getValue());
-        result.put(ESObjectConstants.DYNAMIC_FIELDS, dynamicFields);
+        String fieldName = columnBuilder.joinAndThenMapToCamelCase(mrFinal.getDisplayName(), mrFinal.getOrderNumber());
+        String value = mrFinal.getValue();
+        if (Objects.nonNull(value)) {
+            Map<String, Object> dynamicFields = transformer.toMap(fieldName, value);
+            result.put(ESObjectConstants.DYNAMIC_FIELDS, dynamicFields);
+        }
         return result;
     }
 
