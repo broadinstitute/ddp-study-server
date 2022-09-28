@@ -11,16 +11,16 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class MedicalRecordAbstractionDateTransformer extends MedicalRecordAbstractionTransformer {
 
-
     @Override
     public Map<String, Object> toMap(String fieldName, String value) {
         Map<String, Object> result = new HashMap<>();
         try {
             Map<String, Object> innerValues = ObjectMapperSingleton.readValue(value, new TypeReference<Map<String, Object>>() {});
-            result.put(fieldName, Map.of("dynamicFields", innerValues));
+            result.put(fieldName, innerValues);
         } catch (JsonParseException jpe) {
             result.put(fieldName, value);
         }
         return result;
     }
+
 }

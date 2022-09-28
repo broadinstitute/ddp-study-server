@@ -26,7 +26,27 @@ public class MedicalRecordFinalObjectTransformerTest {
                 3L, "date", "{\"dateString\": \"2020-01-01\", \"est\": \"true\"}", 5L,
                 6L, "Date PX", 2));
         var expectedDynamicFields =
-                Map.of("datePx2", Map.of("dynamicFields", Map.of("dateString", "2020-01-01", "est", "true")));
+                Map.of("datePx2", Map.of("dateString", "2020-01-01", "est", "true"));
+        Assert.assertEquals(expectedDynamicFields, actual.get("dynamicFields"));
+    }
+
+    @Test
+    public void transformTextToMap() {
+        var transformer = new MedicalRecordFinalObjectTransformer("Prostate");
+        var actual = transformer.transformObjectToMap(new MedicalRecordFinalDto(1L, 2L,
+                3L, "text", "I love DSM", 5L,
+                6L, "Text Field", 10));
+        var expectedDynamicFields = Map.of("textField10", "I love DSM");
+        Assert.assertEquals(expectedDynamicFields, actual.get("dynamicFields"));
+    }
+
+    @Test
+    public void transformTextAreaToMap() {
+        var transformer = new MedicalRecordFinalObjectTransformer("Prostate");
+        var actual = transformer.transformObjectToMap(new MedicalRecordFinalDto(1L, 2L,
+                3L, "text_area", "I love DSS", 5L,
+                6L, "Text Field", 1));
+        var expectedDynamicFields = Map.of("textField1", "I love DSS");
         Assert.assertEquals(expectedDynamicFields, actual.get("dynamicFields"));
     }
 

@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalReco
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionValueTransformerFactory;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnBuilder;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnBuilderLive;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
@@ -26,11 +27,12 @@ public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
         MedicalRecordFinalDto mrFinal = (MedicalRecordFinalDto) obj;
         MedicalRecordAbstractionFieldType fieldType = MedicalRecordAbstractionFieldType.of(mrFinal.getType());
         MedicalRecordAbstractionTransformer transformer = MedicalRecordAbstractionValueTransformerFactory.getInstance(fieldType);
-        String stringifiedDto = ObjectMapperSingleton.writeValueAsString(mrFinal);
-        Map<String, Object> result = ObjectMapperSingleton.readValue(stringifiedDto, new TypeReference<Map<String, Object>>() {});
+        Map<String, Object> result = ObjectMapperSingleton.readValue(
+                ObjectMapperSingleton.writeValueAsString(mrFinal),
+                new TypeReference<Map<String, Object>>() {});
         String fieldName = medicalRecordFinalColumnBuilder.joinAndThenMapToCamelCase(mrFinal.getDisplayName(), mrFinal.getOrderNumber());
         Map<String, Object> dynamicFields = transformer.toMap(fieldName, mrFinal.getValue());
-        result.put("dynamicFields", dynamicFields);
+        result.put(ESObjectConstants.DYNAMIC_FIELDS, dynamicFields);
         return result;
     }
 

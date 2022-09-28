@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
 
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.MedicalRecordAbstractionDateTransformer;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.MedicalRecordAbstractionTextTransformer;
 
 public class MedicalRecordAbstractionValueTransformerFactory {
 
@@ -10,8 +11,12 @@ public class MedicalRecordAbstractionValueTransformerFactory {
             case DATE:
                 transformer = new MedicalRecordAbstractionDateTransformer();
                 break;
+            case TEXT:
+            case TEXT_AREA:
+                transformer = new MedicalRecordAbstractionTextTransformer();
+                break;
             default:
-                transformer = new MedicalRecordAbstractionDateTransformer();
+                transformer = null;
         }
         return transformer;
     }
