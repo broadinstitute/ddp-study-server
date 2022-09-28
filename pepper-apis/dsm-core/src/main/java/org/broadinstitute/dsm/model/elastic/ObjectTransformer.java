@@ -14,8 +14,9 @@ import org.broadinstitute.dsm.model.elastic.converters.ConverterFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 
 public class ObjectTransformer {
-    private BaseParser parser;
-    private String realm;
+
+    protected BaseParser parser;
+    protected String realm;
 
     public ObjectTransformer(String realm, BaseParser parser) {
         this(realm);
@@ -43,7 +44,7 @@ public class ObjectTransformer {
         return result;
     }
 
-    private Map<String, Object> extractAndConvertObjectToMap(Object obj, Field declaredField) {
+    protected Map<String, Object> extractAndConvertObjectToMap(Object obj, Field declaredField) {
         try {
             ColumnName annotation = declaredField.getAnnotation(ColumnName.class);
             declaredField.setAccessible(true);
@@ -69,7 +70,7 @@ public class ObjectTransformer {
         return result;
     }
 
-    private Map<String, Object> convertToMap(String fieldName, Object fieldValue) {
+    protected Map<String, Object> convertToMap(String fieldName, Object fieldValue) {
         ConverterFactory converterFactory = new ConverterFactory(fieldName, fieldValue, realm);
         Converter<Map<String, Object>> converter = converterFactory.of();
         if (Objects.nonNull(parser)) {

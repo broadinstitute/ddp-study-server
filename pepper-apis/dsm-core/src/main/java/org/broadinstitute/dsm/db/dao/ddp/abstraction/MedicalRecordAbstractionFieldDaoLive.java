@@ -15,9 +15,9 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MedicalRecordAbstractionFieldDaoImpl implements MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> {
+public class MedicalRecordAbstractionFieldDaoLive implements MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> {
 
-    private static final Logger logger = LoggerFactory.getLogger(MedicalRecordAbstractionFieldDaoImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(MedicalRecordAbstractionFieldDaoLive.class);
 
     private static final String SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_FIELDS = "SELECT * FROM medical_record_abstraction_field ";
 

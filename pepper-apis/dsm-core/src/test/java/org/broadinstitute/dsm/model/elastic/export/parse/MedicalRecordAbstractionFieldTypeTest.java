@@ -1,23 +1,24 @@
 
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.CANCERS;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.CHECKBOX;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.DATE;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.DRUGS;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.MULTI_OPTIONS;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.MULTI_TYPE;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.MULTI_TYPE_ARRAY;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.NUMBER;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.OPTIONS;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.TABLE;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.TEXT;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldType.TEXT_AREA;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.CANCERS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.CHECKBOX;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.DATE;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.DRUGS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.MULTI_OPTIONS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.MULTI_TYPE;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.MULTI_TYPE_ARRAY;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.NUMBER;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.OPTIONS;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.TABLE;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.TEXT;
+import static org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType.TEXT_AREA;
 import static org.junit.Assert.assertEquals;
 
 import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.Test;
 

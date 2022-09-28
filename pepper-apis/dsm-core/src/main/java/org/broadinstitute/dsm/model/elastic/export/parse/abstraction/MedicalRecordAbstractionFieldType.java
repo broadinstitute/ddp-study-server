@@ -1,10 +1,10 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-enum MedicalRecordAbstractionFieldType {
+public enum MedicalRecordAbstractionFieldType {
 
     DATE("date"),
     BUTTON_SELECT("button_select"),
@@ -36,4 +36,5 @@ enum MedicalRecordAbstractionFieldType {
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException(String.format("requested type %s does not exist", value)));
     }
+
 }

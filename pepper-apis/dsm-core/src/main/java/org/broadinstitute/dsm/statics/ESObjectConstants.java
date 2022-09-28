@@ -118,8 +118,6 @@ public class ESObjectConstants {
     public static final String ACTIVITY_CODE = "activityCode";
     public static final String QUESTIONS_ANSWERS = "questionsAnswers";
 
-
-
     //cohort tags
     public static final String DSM_COHORT_TAG_ID = "cohortTagId";
     public static final String COHORT_TAG = "cohortTag";
@@ -158,4 +156,7 @@ public class ESObjectConstants {
 
     // participant
     public static final String PARTICIPANT_ID = "participantId";
+
+    // abstraction final
+    public static final String MEDICAL_RECORD_FINAL = "medicalRecordFinal";
 }

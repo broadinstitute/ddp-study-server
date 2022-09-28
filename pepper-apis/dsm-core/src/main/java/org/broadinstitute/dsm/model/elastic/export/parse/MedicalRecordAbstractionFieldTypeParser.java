@@ -14,19 +14,22 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
+import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser {
 
     public static final String SINGLE_ANSWER = "singleAnswer";
+    public static final String OTHER         = "other";
+    public static final String VALUES        = "values";
+    public static final String EST           = "est";
+
     private String type;
     private final BaseParser baseParser;
     private List<Map<String, String>> possibleValues;
     protected CamelCaseConverter camelCaseConverter;
-
-    public static final String OTHER = "other";
-    public static final String VALUES = "values";
-    public static final String EST = "est";
 
     public MedicalRecordAbstractionFieldTypeParser(BaseParser baseParser) {
         this.baseParser = baseParser;
@@ -57,6 +60,7 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
                 parsedType = forMultiTypeArray(columnName);
                 break;
             default:
+                // text, textarea, button_select
                 parsedType = forString(columnName);
         }
         return parsedType;

@@ -24,6 +24,9 @@ public class MedicalRecordFinalDto {
     @ColumnName(DBConstants.MEDICAL_RECORD_ABSTRACTION_FIELD_ID)
     private final Long medicalRecordAbstractionFieldId;
 
+    @ColumnName(DBConstants.TYPE)
+    private final String type;
+
     @ColumnName(DBConstants.VALUE)
     private final String value;
 

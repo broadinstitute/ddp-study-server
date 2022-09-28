@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

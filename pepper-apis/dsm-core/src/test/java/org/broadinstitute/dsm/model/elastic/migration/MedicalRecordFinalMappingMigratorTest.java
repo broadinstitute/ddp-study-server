@@ -12,14 +12,13 @@ import org.junit.Test;
 public class MedicalRecordFinalMappingMigratorTest {
 
     @Test
-    public void buildMapping() {
+    public void buildFullMapping() {
         var index    = "participants_structured.cmi.cmi-brain";
         var study    = "brain";
         var migrator = new MedicalRecordFinalMappingMigrator(index, study);
         migrator.setMedicalRecordAbstractionFieldDao(new MedicalRecordAbstractionFieldDaoMock());
         migrator.processAndBuildMapping();
         System.out.println(migrator.propertyMap);
-
         Assert.assertTrue(true);
     }
 
