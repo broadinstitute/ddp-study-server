@@ -1,11 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
@@ -30,8 +31,9 @@ public class MedicalRecordAbstractionMultiOptionsTransformer extends MedicalReco
             Object other  = innerValues.get(OTHER);
             Object values = innerValues.get(fieldName);
             result.put(upperCaseFieldName, Map.of(OTHER, other, VALUES, values));
-        } catch (JsonParseException jpe) {
-            List<String> values = ObjectMapperSingleton.readValue(value, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            String innerValues  = value.substring(1, value.length() - 1);
+            List<String> values = Arrays.stream(innerValues.split(",")).map(String::trim).collect(Collectors.toList());
             result.put(upperCaseFieldName, Map.of(VALUES, values));
         }
         return result;

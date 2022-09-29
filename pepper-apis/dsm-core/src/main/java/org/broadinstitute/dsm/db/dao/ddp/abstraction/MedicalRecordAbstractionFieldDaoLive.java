@@ -24,6 +24,9 @@ public class MedicalRecordAbstractionFieldDaoLive implements MedicalRecordAbstra
     private static final String FILTER_BY_INSTANCE_ID =
             "WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) ";
 
+    private static final String SELECT_POSSIBLE_VALUES_BY_DISPLAY_NAME_AND_TYPE = "SELECT possible_values "
+            + "FROM medical_record_abstraction_field WHERE display_name = ? AND type = ?";
+
     private static final String SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_FIELDS_FILTERED_BY_INSTANCE_ID =
             SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_FIELDS + FILTER_BY_INSTANCE_ID;
 
@@ -64,6 +67,32 @@ public class MedicalRecordAbstractionFieldDaoLive implements MedicalRecordAbstra
         }
         logger.info("Got " + records.size() + " medicalRecordAbstractionFields in DSM DB");
         return records;
+    }
+
+    @Override
+    public String getPossibleValuesByDisplayNameAndType(String displayName, String type) {
+        String possibleValues;
+        SimpleResult result = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_POSSIBLE_VALUES_BY_DISPLAY_NAME_AND_TYPE)) {
+                stmt.setString(1, displayName);
+                stmt.setString(2, type);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        dbVals.resultValue = rs.getString(DBConstants.POSSIBLE_VALUE);
+                    }
+                }
+            } catch (SQLException se) {
+                dbVals.resultException = se;
+            }
+            return dbVals;
+        });
+        if (result.resultException != null) {
+            throw new RuntimeException("Couldn't get possible values of medicalRecordAbstractionFields ", result.resultException);
+        }
+        possibleValues = (String) result.resultValue;
+        logger.info("Got " + possibleValues);
+        return possibleValues;
     }
 
     private MedicalRecordAbstractionFieldDto getMedicalRecordAbstractionFieldDtoFromResultSet(ResultSet rs) throws SQLException {

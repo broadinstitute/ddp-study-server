@@ -79,5 +79,10 @@ public class MedicalRecordFinalMappingMigratorTest {
                             null, false, 1L, "18", 1, 0));
 
         }
+
+        @Override
+        public String getPossibleValuesByDisplayNameAndType(String displayName, String type) {
+            return null;
+        }
     }
 }
