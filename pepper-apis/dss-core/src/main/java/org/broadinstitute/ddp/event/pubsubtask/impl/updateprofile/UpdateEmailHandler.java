@@ -52,9 +52,9 @@ public class UpdateEmailHandler {
             UserGovernanceDao governanceDao = handle.attach(UserGovernanceDao.class);
             List<Governance> governances = governanceDao.findGovernancesByParticipantGuid(userDto.getUserGuid())
                     .collect(Collectors.toList());
-            if (governances.isEmpty()){
+            if (governances.isEmpty()) {
                 errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user";
-            } else if (governances.size() > 1){
+            } else if (governances.size() > 1) {
                 errMsg = "User " + userDto.getUserGuid() + " has more than one proxy";
             } else {
                 String proxyUserGuid = governances.get(0).getProxyUserGuid();
