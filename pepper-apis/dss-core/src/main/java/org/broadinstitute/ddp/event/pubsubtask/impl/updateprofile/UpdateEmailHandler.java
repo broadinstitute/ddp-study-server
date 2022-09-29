@@ -5,15 +5,19 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Se
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__EMAIL;
 
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 
@@ -30,25 +34,41 @@ public class UpdateEmailHandler {
             if (userDto == null) {
                 throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
             }
-            validateUserForLoginDataUpdateEligibility(userDto);
+            userDto = validateUserForLoginDataUpdateEligibility(handle, userDto);
 
-            log.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
+            log.info(infoMsg("Attempting to change the email of the user {}"), userDto.getUserGuid());
 
-            updateEmailInAuth0(handle, userDto, email, userGuid);
+            updateEmailInAuth0(handle, userDto, email, userDto.getUserGuid());
         }
     }
 
-    private void validateUserForLoginDataUpdateEligibility(UserDto userDto) {
+    private UserDto validateUserForLoginDataUpdateEligibility(Handle handle, UserDto userDto) {
         String errMsg = null;
         if (userDto == null) {
-            errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
+            errMsg = "User does not exist in Pepper";
+            throw new PubSubTaskException(errMsg, WARN);
         }
         if (userDto.getAuth0UserId().isEmpty()) {
-            errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
+            UserGovernanceDao governanceDao = handle.attach(UserGovernanceDao.class);
+            List<Governance> governances = governanceDao.findGovernancesByParticipantGuid(userDto.getUserGuid())
+                    .collect(Collectors.toList());
+            if (governances.isEmpty()){
+                errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user";
+            } else if (governances.size() > 1){
+                errMsg = "User " + userDto.getUserGuid() + " has more than one proxy";
+            } else {
+                String proxyUserGuid = governances.get(0).getProxyUserGuid();
+                log.info("{} is governed user of {}, attempting to update email for proxy", userDto.getUserGuid(), proxyUserGuid);
+                userDto = handle.attach(JdbiUser.class).findByUserGuid(proxyUserGuid);
+                if (userDto.getAuth0UserId().isEmpty()) {
+                    errMsg = "Proxy User " + userDto.getUserGuid() + " is not associated with the Auth0 user";
+                }
+            }
         }
         if (errMsg != null) {
             throw new PubSubTaskException(errMsg, WARN);
         }
+        return userDto;
     }
 
     /**
