@@ -9,7 +9,7 @@ public class MedicalRecordAbstractionTextTransformer extends MedicalRecordAbstra
 
     @Override
     public Map<String, Object> toMap(String fieldName, String value) {
-        return new HashMap<>(Map.of(fieldName, value));
+        return new HashMap<>(Map.of(columnNameBuilder.apply(fieldName), value));
     }
 
 }

@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalReco
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionTransformer;
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionValueTransformerFactory;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNameBuilder;
-import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnBuilderLive;
+import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNameBuilderLive;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -20,7 +20,7 @@ public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
 
     public MedicalRecordFinalObjectTransformer(String realm) {
         super(realm, null);
-        this.columnBuilder = new MedicalRecordFinalColumnBuilderLive(CamelCaseConverter.of());
+        this.columnBuilder = new MedicalRecordFinalColumnNameBuilderLive(CamelCaseConverter.of());
     }
 
     @Override
@@ -31,10 +31,9 @@ public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
         Map<String, Object> result = ObjectMapperSingleton.readValue(
                 ObjectMapperSingleton.writeValueAsString(mrFinal),
                 new TypeReference<Map<String, Object>>() {});
-        String fieldName = columnBuilder.joinAndThenMapToCamelCase(mrFinal.getDisplayName(), mrFinal.getOrderNumber());
         String value = mrFinal.getValue();
         if (Objects.nonNull(value)) {
-            Map<String, Object> dynamicFields = transformer.toMap(fieldName, value);
+            Map<String, Object> dynamicFields = transformer.toMap(mrFinal.getDisplayName(), value);
             result.put(ESObjectConstants.DYNAMIC_FIELDS, dynamicFields);
         }
         return result;

@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-public interface MedicalRecordFinalColumnNameBuilder {
+import java.util.function.UnaryOperator;
 
-    String joinAndThenMapToCamelCase(String displayName, Integer orderNumber);
-}
+public interface MedicalRecordFinalColumnNameBuilder extends UnaryOperator<String> {}

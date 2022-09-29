@@ -23,13 +23,13 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
 
     protected MedicalRecordAbstractionFieldTypeParser parser;
     protected MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao;
-    protected MedicalRecordFinalColumnNameBuilder medicalRecordFinalColumnBuilder;
+    protected MedicalRecordFinalColumnNameBuilder columnNameBuilder;
 
     public MedicalRecordFinalMappingMigrator(String index, String study) {
         super(index, study);
         this.parser = new MedicalRecordAbstractionFieldTypeParser(new TypeParser());
         this.medicalRecordAbstractionFieldDao = new MedicalRecordAbstractionFieldDaoLive();
-        this.medicalRecordFinalColumnBuilder = new MedicalRecordFinalColumnBuilderLive(CamelCaseConverter.of());
+        this.columnNameBuilder = new MedicalRecordFinalColumnNameBuilderLive(CamelCaseConverter.of());
     }
 
     // for testing purposes
@@ -51,8 +51,7 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         // iterate for each and build mapping based on field type and field name (ds name + ord_number)
         for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName    = field.getDisplayName();
-            int orderNumber       = field.getOrderNumber();
-            String columnName     = medicalRecordFinalColumnBuilder.joinAndThenMapToCamelCase(displayName, orderNumber);
+            String columnName     = columnNameBuilder.apply(displayName);
             String fieldType      = field.getType();
             String possibleValues = field.getPossibleValues();
             parser.setType(fieldType);
@@ -70,7 +69,6 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         Map<String, Object> dsmLevelProperties = new HashMap<>(Map.of(PROPERTIES, propertyMap));
         Map<String, Object> dsmLevel = new HashMap<>(Map.of(DSM_OBJECT, dsmLevelProperties));
         return new HashMap<>(Map.of(PROPERTIES, dsmLevel));
-
     }
 }
 
