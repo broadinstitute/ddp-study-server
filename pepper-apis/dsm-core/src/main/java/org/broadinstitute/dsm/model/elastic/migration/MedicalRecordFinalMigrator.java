@@ -7,6 +7,9 @@ import org.broadinstitute.dsm.db.dao.abstraction.MedicalRecordFinalDao;
 import org.broadinstitute.dsm.model.elastic.MedicalRecordFinalObjectTransformer;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
+/**
+ * A class which is responsible for migrating the source of `ddp_medical_record_final` objects into ElasticSearch.
+ */
 public class MedicalRecordFinalMigrator extends BaseCollectionMigrator {
 
     private final MedicalRecordFinalDao medicalRecordFinalDao;    

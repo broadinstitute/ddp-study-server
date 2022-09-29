@@ -17,6 +17,9 @@ import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 
+/**
+ * A class which is responsible for migrating the mapping of `ddp_medical_record_final` objects into ElasticSearch.
+ */
 public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigrator {
 
     public static final String MEDICAL_RECORD_FINAL = "medicalRecordFinal";
@@ -40,15 +43,12 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
 
     @Override
     protected void processAndBuildMapping() {
-        // read abstraction fields by study
         List<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFields =
                 medicalRecordAbstractionFieldDao.getMedicalRecordAbstractionFieldsByInstanceName(study);
-        // inner mappings
         Map<String, Object> fieldTypeMappings = new HashMap<>();
         Map<String, Object> dynamicFields     = new HashMap<>(
                 Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(
                         Map.of(PROPERTIES, fieldTypeMappings))));
-        // iterate for each and build mapping based on field type and field name (ds name + ord_number)
         for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName    = field.getDisplayName();
             String columnName     = columnNameBuilder.apply(displayName);

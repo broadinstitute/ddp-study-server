@@ -14,6 +14,10 @@ import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNa
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
+
+/**
+ * The class which is responsible for transforming `medical_record_final` objects into the map instances suited for ElasticSearch.
+ */
 public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
 
     MedicalRecordFinalColumnNameBuilder columnBuilder;
@@ -23,17 +27,21 @@ public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
         this.columnBuilder = new MedicalRecordFinalColumnNameBuilderLive(CamelCaseConverter.of());
     }
 
+    /**
+     * Transforms each object to the map representation
+     * @param obj a concrete object of `ddp_medical_record_final`
+     */
     @Override
     public Map<String, Object> transformObjectToMap(Object obj) {
-        MedicalRecordFinalDto mrFinal = (MedicalRecordFinalDto) obj;
-        MedicalRecordAbstractionFieldType fieldType = MedicalRecordAbstractionFieldType.of(mrFinal.getType());
+        MedicalRecordFinalDto medicalRecordFinalDto = (MedicalRecordFinalDto) obj;
+        MedicalRecordAbstractionFieldType fieldType = MedicalRecordAbstractionFieldType.of(medicalRecordFinalDto.getType());
         MedicalRecordAbstractionTransformer transformer = MedicalRecordAbstractionValueTransformerFactory.getInstance(fieldType);
         Map<String, Object> result = ObjectMapperSingleton.readValue(
-                ObjectMapperSingleton.writeValueAsString(mrFinal),
+                ObjectMapperSingleton.writeValueAsString(medicalRecordFinalDto),
                 new TypeReference<Map<String, Object>>() {});
-        String value = mrFinal.getValue();
+        String value = medicalRecordFinalDto.getValue();
         if (Objects.nonNull(value)) {
-            Map<String, Object> dynamicFields = transformer.toMap(mrFinal.getDisplayName(), value);
+            Map<String, Object> dynamicFields = transformer.toMap(medicalRecordFinalDto.getDisplayName(), value);
             result.put(ESObjectConstants.DYNAMIC_FIELDS, dynamicFields);
         }
         return result;

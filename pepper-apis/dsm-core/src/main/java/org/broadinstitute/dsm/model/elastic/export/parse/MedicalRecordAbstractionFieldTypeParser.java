@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;
@@ -14,11 +15,13 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
-import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
+/**
+ * A class which is responsible for building the mapping of each concrete data type of `medical_record_abstraction_field`
+ * suited for the ElasticSearch.
+ */
 public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser {
 
     public static final String SINGLE_ANSWER = "singleAnswer";
@@ -41,6 +44,10 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
         this.type = type;
     }
 
+    /**
+     * Returns the map representation of mapping suited for ElasticSearch.
+     * @param columnName a display name for the concrete data of `medical_record_abstraction_field'
+     */
     @Override
     public Object parse(String columnName) {
         Object parsedType;

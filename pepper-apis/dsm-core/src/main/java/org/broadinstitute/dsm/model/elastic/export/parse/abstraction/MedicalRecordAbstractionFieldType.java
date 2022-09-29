@@ -4,6 +4,9 @@ package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
+/**
+ * An enumerated representation of `medical_record_abstraction_field` types in DB.
+ */
 public enum MedicalRecordAbstractionFieldType {
 
     DATE("date"),
@@ -30,6 +33,10 @@ public enum MedicalRecordAbstractionFieldType {
         return this.innerValue;
     }
 
+    /**
+     * returns the Enum value based on if it the argument matches the innerValue
+     * @value a value to match against an innerValue field
+     */
     public static MedicalRecordAbstractionFieldType of(String value) {
         return Arrays.stream(MedicalRecordAbstractionFieldType.values())
                 .filter(fieldType -> fieldType.asString().equals(value))

@@ -15,6 +15,10 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * A production implementation of MedicalRecordAbstractionFieldDao
+ */
 public class MedicalRecordAbstractionFieldDaoLive implements MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordAbstractionFieldDaoLive.class);
@@ -115,4 +119,5 @@ public class MedicalRecordAbstractionFieldDaoLive implements MedicalRecordAbstra
                 abstractionGroupId, ddpInstanceId,
                 orderNumber, deleted);
     }
+
 }

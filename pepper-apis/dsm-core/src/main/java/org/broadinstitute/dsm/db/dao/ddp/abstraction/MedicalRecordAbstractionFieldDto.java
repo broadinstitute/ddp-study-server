@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.db.dao.ddp.abstraction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -8,6 +9,9 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 
+/**
+ * A data class which represents the the `medical_record_abstraction_field` table in DB.
+ */
 @TableName(
         name = DBConstants.MEDICAL_RECORD_ABSTRACTION_FIELD,
         alias = DBConstants.MEDICAL_RECORD_ABSTRACTION_FIELD_ALIAS,

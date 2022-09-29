@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.db.dao.abstraction;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
@@ -17,10 +18,12 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A Production implementation of MedicalRecordFinalDao
+ */
 public class MedicalRecordFinalDaoLive implements MedicalRecordFinalDao {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordFinalDaoLive.class);
-
 
     private static final String SQL_GET_ALL_BY_INSTANCE_NAME = "SELECT "
             + "p.ddp_participant_id, m.medical_record_final_id, m.participant_id, "
@@ -30,7 +33,6 @@ public class MedicalRecordFinalDaoLive implements MedicalRecordFinalDao {
             + "LEFT JOIN medical_record_abstraction_field mf ON "
             + "mf.medical_record_abstraction_field_id = m.medical_record_abstraction_field_id "
             + "WHERE p.ddp_instance_id = ((SELECT ddp_instance_id FROM ddp_instance where instance_name = ?));";
-
 
 
     @Override
@@ -89,4 +91,5 @@ public class MedicalRecordFinalDaoLive implements MedicalRecordFinalDao {
                 rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getInt(DBConstants.ORDER_NUMBER));
     }
+
 }

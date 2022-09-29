@@ -10,6 +10,9 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 
+/**
+ * A data class which represents the the `ddp_medical_record_final` table in DB.
+ */
 @Data
 @TableName(name = DBConstants.DDP_MEDICAL_RECORD_FINAL, alias = DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS,
         primaryKey = DBConstants.DDP_MEDICAL_RECORD_FINAL_ID, columnPrefix = "")
@@ -47,4 +50,3 @@ public class MedicalRecordFinalDto {
     private final Integer orderNumber;
 
 }
-
