@@ -34,7 +34,7 @@ public enum MedicalRecordAbstractionFieldType {
     }
 
     /**
-     * returns the Enum value based on if it the argument matches the innerValue
+     * returns the Enum value based on if the argument matches the innerValue
      * @value a value to match against an innerValue field
      */
     public static MedicalRecordAbstractionFieldType of(String value) {
