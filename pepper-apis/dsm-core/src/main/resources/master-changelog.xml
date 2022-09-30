@@ -104,4 +104,5 @@
     <include file="liquibase/CMI/DDP-8113_invitaeTab.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8569_sampleNotes.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-8806_singular_field_changes.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-8712_kit-prefix.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

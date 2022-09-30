@@ -20,7 +20,6 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
 
     @Test
     public void processIsNotBloodKit() {
-
         KitRequestShipping kitRequestShipping = getKitRequestShipping("ddpLabel", "TEST");
         KitRequestShipping kitRequestShipping2 = getKitRequestShipping("ddpLabel2", "TEST2");
 
