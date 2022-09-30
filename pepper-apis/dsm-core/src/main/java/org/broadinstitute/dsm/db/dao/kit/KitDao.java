@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -32,7 +33,7 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel);
 
-    Optional<KitRequestShipping> getKitByHruid(String hruid);
+    List<KitRequestShipping> getKitsByHruid(String hruid);
 
     Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping);
 

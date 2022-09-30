@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.gp;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -8,7 +7,6 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPKitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
@@ -17,7 +15,6 @@ import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBui
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
@@ -35,11 +32,10 @@ public class GPReceivedKit {
         BSPKitDao bspKitDao = new BSPKitDao();
         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(bspKitQueryResult.getInstanceName());
         instanceSettingsDto.getKitBehaviorChange().flatMap(
-                kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
+                        kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
                 .ifPresentOrElse(received -> {
                     Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + bspKitQueryResult.getDdpParticipantId());
-                    writeSampleReceivedToES(ddpInstance, bspKitQueryResult);
                     Map<String, Object> participant = participants.get(bspKitQueryResult.getDdpParticipantId());
                     if (participant != null) {
                         boolean triggerDDP = true;
@@ -61,8 +57,8 @@ public class GPReceivedKit {
                         updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, triggerDDP, receiver);
                     }
                 }, () -> {
-                        updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true, receiver);
-                    });
+                    updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true, receiver);
+                });
 
         String bspParticipantId = bspKitQueryResult.getBspParticipantId();
         String bspSampleId = bspKitQueryResult.getBspSampleId();
@@ -103,13 +99,5 @@ public class GPReceivedKit {
             logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
             e.printStackTrace();
         }
-    }
-
-    private static void writeSampleReceivedToES(DDPInstance ddpInstance, BSPKitDto bspKitInfo) {
-        String kitRequestId = new KitRequestDao().getKitRequestIdByBSPSampleId(bspKitInfo.getBspSampleId());
-        Map<String, Object> nameValuesMap = new HashMap<>();
-        ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.RECEIVED);
-        ElasticSearchUtil.writeSample(ddpInstance, kitRequestId, bspKitInfo.getDdpParticipantId(), ESObjectConstants.SAMPLES,
-                ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
     }
 }
