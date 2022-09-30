@@ -48,9 +48,10 @@ public class ViewFilter {
             "INSERT INTO view_filters (view_columns, display_name, created_by, shared, query_items, parent,  quick_filter_name, "
                     + "ddp_group_id, changed_by, last_changed, deleted) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     public static final String SQL_CHECK_VIEW_NAME = "SELECT * FROM view_filters WHERE (display_name = ? ) and deleted <=> 0 ";
-    public static final String SQL_SELECT_USER_FILTERS =
-            "SELECT * FROM view_filters WHERE ( (created_by = ? AND ddp_group_id = ?) OR (created_by = 'System' AND ddp_group_id = ? )"
-                    + "OR (shared = 1 AND ddp_group_id = ? ) OR (ddp_group_id is NULL AND (ddp_realm_id LIKE ? OR ddp_realm_id LIKE ?)) ) AND deleted <> 1 ";
+    public static final String SQL_SELECT_USER_FILTERS = "SELECT * FROM view_filters "
+            + "WHERE created_by = ? "
+            + "OR ((created_by = 'System' OR shared = 1) AND (ddp_group_id = ? OR (ddp_realm_id LIKE ? OR ddp_realm_id LIKE ?))) "
+            + "AND deleted <> 1 ";
     public static final String SQL_SELECT_QUERY_ITEMS =
             "SELECT query_items, quick_filter_name FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
     public static final String SQL_GET_DEFAULT_FILTER =
@@ -281,10 +282,8 @@ public class ViewFilter {
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, userId);
                 stmt.setString(2, ddpGroupId);
-                stmt.setString(3, ddpGroupId);
-                stmt.setString(4, ddpGroupId);
-                stmt.setString(5, "%," + realm + ",%");
-                stmt.setString(6, "[" + realm + ",%");
+                stmt.setString(3, "%," + realm + ",%");
+                stmt.setString(4, "[" + realm + ",%");
                 if (StringUtils.isNotBlank(parent)) {
                     stmt.setString(7, parent);
                 }
