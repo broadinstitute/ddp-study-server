@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
-public class MedicalRecordAbstractionOptionsTransformer extends MedicalRecordAbstractionTransformer {
+public class OptionsSourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
     private static final String OTHER = "other";
 

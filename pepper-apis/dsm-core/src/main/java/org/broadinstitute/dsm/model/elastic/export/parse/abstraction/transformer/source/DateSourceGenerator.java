@@ -1,18 +1,17 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionTransformer;
 import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
  * A class which is responsible for building a map for `date` data type
  */
-public class MedicalRecordAbstractionDateTransformer extends MedicalRecordAbstractionTransformer {
+public class DateSourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
     /**
      * Transforms field-value pair into map representation

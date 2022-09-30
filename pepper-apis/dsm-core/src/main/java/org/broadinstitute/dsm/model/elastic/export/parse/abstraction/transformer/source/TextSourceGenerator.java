@@ -1,14 +1,12 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionTransformer;
-
 /**
  * A class which is responsible for building a map for `text` and `textarea` data types
  */
-public class MedicalRecordAbstractionTextTransformer extends MedicalRecordAbstractionTransformer {
+public class TextSourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
     /**
      * Transforms field-value pair into map representation

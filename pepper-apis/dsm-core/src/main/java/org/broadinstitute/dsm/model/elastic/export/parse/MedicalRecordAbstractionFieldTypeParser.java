@@ -15,8 +15,14 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.DateMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.MultiOptionsMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.NumericMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.OptionsMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.TextMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+
 
 /**
  * A class which is responsible for building the mapping of each concrete data type of `medical_record_abstraction_field`
@@ -54,32 +60,26 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
         MedicalRecordAbstractionFieldType fieldType = MedicalRecordAbstractionFieldType.of(type);
         switch (fieldType) {
             case DATE:
-                parsedType = forDate(columnName);
+                parsedType = new DateMappingGenerator().toMap(columnName);
                 break;
             case NUMBER:
-                parsedType = forNumeric(columnName);
+                parsedType = new NumericMappingGenerator().toMap(columnName);
                 break;
             case MULTI_OPTIONS:
-                parsedType = forMultiOptions(columnName);
+                parsedType = new MultiOptionsMappingGenerator().toMap(columnName);
                 break;
             case TABLE:
             case MULTI_TYPE_ARRAY:
                 parsedType = forMultiTypeArray(columnName);
                 break;
             case OPTIONS:
-                parsedType = forOptions(columnName);
+                parsedType = new OptionsMappingGenerator().toMap(columnName);
                 break;
             default:
                 // handles all other cases such as: text, textarea, button_select etc...
-                parsedType = forString(columnName);
+                parsedType = new TextMappingGenerator().toMap(columnName);
         }
         return parsedType;
-    }
-
-    private Object forOptions(String columnName) {
-        camelCaseConverter.setStringToConvert(columnName);
-        String camelCaseColumnName = camelCaseConverter.convert();
-        return new HashMap<>(Map.of(PROPERTIES, Map.of(OTHER, TEXT_KEYWORD_MAPPING, camelCaseColumnName, TEXT_KEYWORD_MAPPING)));
     }
 
     private Object forMultiTypeArray(String columnName) {
@@ -102,41 +102,6 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
 
         return finalMapping;
     }
-
-    protected Object forMultiOptions(String columnName) {
-        return new HashMap<>(Map.of(
-                TYPE, NESTED,
-                PROPERTIES, new HashMap<>(Map.of(
-                        OTHER, baseParser.forString(columnName),
-                        VALUES, new HashMap<>(Map.of(
-                                TYPE, NESTED,
-                                PROPERTIES, new HashMap<>(Map.of(
-                                        VALUES, baseParser.forString(columnName)))))))));
-    }
-
-    @Override
-    protected Object forNumeric(String value) {
-        return baseParser.forNumeric(value);
-    }
-
-    @Override
-    protected Object forBoolean(String value) {
-        return baseParser.forBoolean(value);
-    }
-
-    @Override
-    protected Object forDate(String value) {
-        return new HashMap<>(Map.of(
-                PROPERTIES, new HashMap<>(Map.of(
-                        DATE_STRING, baseParser.forDate(value),
-                        EST, baseParser.forBoolean(value)))));
-    }
-
-    @Override
-    protected Object forString(String value) {
-        return baseParser.forString(value);
-    }
-
 
     public void setPossibleValues(String possibleValues) {
         this.possibleValues = ObjectMapperSingleton.readValue(possibleValues, new TypeReference<List>() {});

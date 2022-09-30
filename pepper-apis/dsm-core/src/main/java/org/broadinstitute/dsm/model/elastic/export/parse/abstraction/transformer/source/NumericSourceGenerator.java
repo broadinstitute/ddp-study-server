@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * A class which is responsible for building a map for `number` data type
  */
-public class MedicalRecordAbstractionNumberTransformer extends MedicalRecordAbstractionTransformer {
+public class NumericSourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
     /**
      * Transforms field-value pair into map representation

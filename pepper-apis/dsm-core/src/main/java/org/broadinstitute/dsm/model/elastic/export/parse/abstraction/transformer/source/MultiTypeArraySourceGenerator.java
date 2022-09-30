@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,13 +15,13 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 /**
  * A class which is responsible for building a map for `multi_type_array` and `table` data types
  */
-public class MedicalRecordAbstractionMultiTypeArrayTransformer extends MedicalRecordAbstractionTransformer {
+public class MultiTypeArraySourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
     private static final String MULTI_TYPE_ARRAY = MedicalRecordAbstractionFieldType.MULTI_TYPE_ARRAY.asString();
 
     private final MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> dao;
 
-    public MedicalRecordAbstractionMultiTypeArrayTransformer(MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> dao) {
+    public MultiTypeArraySourceGenerator(MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> dao) {
         this.dao = dao;
     }
 
@@ -42,7 +42,7 @@ public class MedicalRecordAbstractionMultiTypeArrayTransformer extends MedicalRe
         for (Map<String, Object> possibleValue : possibleValues) {
             MedicalRecordAbstractionFieldType fieldType =
                     MedicalRecordAbstractionFieldType.of(String.valueOf(possibleValue.get(DBConstants.TYPE)));
-            MedicalRecordAbstractionTransformer transformer = MedicalRecordAbstractionValueTransformerFactory.getInstance(fieldType);
+            MedicalRecordAbstractionSourceGenerator transformer = MedicalRecordAbstractionSourceGeneratorFactory.getInstance(fieldType);
             String currentField = String.valueOf(possibleValue.get(DBConstants.VALUE));
             Optional<Object> currentValue = values.stream()
                     .filter(map -> map.containsKey(currentField) && Objects.nonNull(map.get(currentField)))

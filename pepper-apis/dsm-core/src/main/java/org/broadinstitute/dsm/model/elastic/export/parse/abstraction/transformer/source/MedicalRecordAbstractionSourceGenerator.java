@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.Map;
 
@@ -10,11 +10,11 @@ import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNa
  * An abstract class for creating the top-level definition of the concrete implementations
  * for MedicalRecordAbstractionTransformer which transform each type to the source mapping
  */
-public abstract class MedicalRecordAbstractionTransformer {
+public abstract class MedicalRecordAbstractionSourceGenerator {
 
     protected final MedicalRecordFinalColumnNameBuilder columnNameBuilder;
 
-    protected MedicalRecordAbstractionTransformer() {
+    protected MedicalRecordAbstractionSourceGenerator() {
         this.columnNameBuilder = new MedicalRecordFinalColumnNameBuilderLive(CamelCaseConverter.of());
     }
 

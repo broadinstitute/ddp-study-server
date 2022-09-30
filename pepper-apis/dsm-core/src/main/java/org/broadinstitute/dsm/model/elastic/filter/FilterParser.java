@@ -36,7 +36,7 @@ public class FilterParser extends ValueParser {
     }
 
     @Override
-    protected Object forNumeric(String value) {
+    public Object forNumeric(String value) {
         return value;
     }
 

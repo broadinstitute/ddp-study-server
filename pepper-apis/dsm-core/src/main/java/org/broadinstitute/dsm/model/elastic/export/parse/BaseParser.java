@@ -62,13 +62,13 @@ public abstract class BaseParser implements Parser {
                 || Integer.class.isAssignableFrom(fieldType);
     }
 
-    protected abstract Object forNumeric(String value);
+    public abstract Object forNumeric(String value);
 
-    protected abstract Object forBoolean(String value);
+    public abstract Object forBoolean(String value);
 
-    protected abstract Object forDate(String value);
+    public abstract Object forDate(String value);
 
-    protected abstract Object forString(String value);
+    public abstract Object forString(String value);
 
     protected boolean isBoolean(String value) {
         return convertBoolean(value).equalsIgnoreCase(Boolean.TRUE.toString()) || convertBoolean(value).equalsIgnoreCase(

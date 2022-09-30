@@ -6,9 +6,9 @@ import java.util.Objects;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.MedicalRecordFinalDto;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionTransformer;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionValueTransformerFactory;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source.MedicalRecordAbstractionFieldType;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source.MedicalRecordAbstractionSourceGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source.MedicalRecordAbstractionSourceGeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNameBuilder;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalColumnNameBuilderLive;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -35,7 +35,7 @@ public class MedicalRecordFinalObjectTransformer extends ObjectTransformer {
     public Map<String, Object> transformObjectToMap(Object obj) {
         MedicalRecordFinalDto medicalRecordFinalDto = (MedicalRecordFinalDto) obj;
         MedicalRecordAbstractionFieldType fieldType = MedicalRecordAbstractionFieldType.of(medicalRecordFinalDto.getType());
-        MedicalRecordAbstractionTransformer transformer = MedicalRecordAbstractionValueTransformerFactory.getInstance(fieldType);
+        MedicalRecordAbstractionSourceGenerator transformer = MedicalRecordAbstractionSourceGeneratorFactory.getInstance(fieldType);
         Map<String, Object> result = ObjectMapperSingleton.readValue(
                 ObjectMapperSingleton.writeValueAsString(medicalRecordFinalDto),
                 new TypeReference<Map<String, Object>>() {});

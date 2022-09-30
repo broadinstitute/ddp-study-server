@@ -109,22 +109,22 @@ public class DynamicFieldsParser extends BaseParser {
     }
 
     @Override
-    protected Object forNumeric(String value) {
+    public Object forNumeric(String value) {
         return parser.forNumeric(value);
     }
 
     @Override
-    protected Object forBoolean(String value) {
+    public Object forBoolean(String value) {
         return parser.forBoolean(value);
     }
 
     @Override
-    protected Object forDate(String value) {
+    public Object forDate(String value) {
         return parser.forDate(value);
     }
 
     @Override
-    protected Object forString(String value) {
+    public Object forString(String value) {
         return parser.forString(value);
     }
 

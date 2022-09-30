@@ -9,7 +9,7 @@ public class ValueParser extends BaseParser {
     public static final String N_A_SYMBOLIC_DATE = "1000-01-01";
 
     @Override
-    protected Object forNumeric(String value) {
+    public Object forNumeric(String value) {
         if (isEmptyOrNullString(value)) {
             //returning null if numeric value is deleted
             return null;
@@ -18,7 +18,7 @@ public class ValueParser extends BaseParser {
     }
 
     @Override
-    protected Object forBoolean(String value) {
+    public Object forBoolean(String value) {
         if (isTrue(value)) {
             return true;
         }
@@ -30,7 +30,7 @@ public class ValueParser extends BaseParser {
     }
 
     @Override
-    protected Object forDate(String value) {
+    public Object forDate(String value) {
         if (isEmptyOrNullString(value)) {
             //returning null for ES, because ES throws exception if we pass empty string to ES for date fields
             value = null;
@@ -49,7 +49,7 @@ public class ValueParser extends BaseParser {
     }
 
     @Override
-    protected Object forString(String value) {
+    public Object forString(String value) {
         return value;
     }
 }

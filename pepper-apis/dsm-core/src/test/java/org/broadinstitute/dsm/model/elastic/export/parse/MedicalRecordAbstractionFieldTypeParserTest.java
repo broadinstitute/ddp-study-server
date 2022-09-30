@@ -1,10 +1,6 @@
 
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;
-import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.PROPERTIES;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.OTHER;
-import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.VALUES;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -13,8 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source.MedicalRecordAbstractionFieldType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,51 +21,6 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
     @Before
     public void setUp() {
         parser = new MedicalRecordAbstractionFieldTypeParser(new TypeParser());
-    }
-
-    @Test
-    public void parseDate() {
-        parser.setType("date");
-        var expected = new HashMap<String, Object>(Map.of(
-                "properties", new HashMap<>(Map.of(
-                        "dateString", TypeParser.DATE_MAPPING,
-                        "est", TypeParser.BOOLEAN_MAPPING))));
-        var actual = parser.parse("DX Date");
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void parseButtonSelect() {
-        var fieldName = "Prostatic Adenocarcinoma";
-        parser.setType(MedicalRecordAbstractionFieldType.BUTTON_SELECT.asString());
-        var actual = parser.parse(fieldName);
-        var expected = TypeParser.TEXT_KEYWORD_MAPPING;
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void parseNumber() {
-        var fieldName = "DX percent ER";
-        parser.setType(MedicalRecordAbstractionFieldType.NUMBER.asString());
-        var expectedInnerMapping = TypeParser.LONG_MAPPING;
-        var actual = parser.parse(fieldName);
-        Assert.assertEquals(expectedInnerMapping, actual);
-    }
-
-    @Test
-    public void parseMultiOptions() {
-        parser.setType(MedicalRecordAbstractionFieldType.MULTI_OPTIONS.asString());
-        Map<String, Object> expected = new HashMap<>(Map.of(
-                MappingGenerator.TYPE, NESTED,
-                PROPERTIES, new HashMap<>(Map.of(
-                        OTHER, TypeParser.TEXT_KEYWORD_MAPPING,
-                        VALUES, new HashMap<>(Map.of(
-                                MappingGenerator.TYPE, NESTED,
-                                PROPERTIES, new HashMap<>(Map.of(
-                                        VALUES, TypeParser.TEXT_KEYWORD_MAPPING))))))));
-
-        var actual = parser.parse("MET_SITES_EVERY");
-        assertEquals(expected, actual);
     }
 
     // Will also pass for `table` data type as well
@@ -146,37 +96,6 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
         assertEquals(expected, actual);
 
     }
-
-    @Test
-    public void parseText() {
-        var fieldName = "Number Positive LN";
-        parser.setType(MedicalRecordAbstractionFieldType.TEXT.asString());
-        var actual = parser.parse(fieldName);
-        var expected = TypeParser.TEXT_KEYWORD_MAPPING;
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void parseTextArea() {
-        var fieldName = "Patient notes";
-        parser.setType(MedicalRecordAbstractionFieldType.TEXT_AREA.asString());
-        var actual = parser.parse(fieldName);
-        var expected = TypeParser.TEXT_KEYWORD_MAPPING;
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void parseOptions() {
-        var fieldName = "DX Stage";
-        parser.setType(MedicalRecordAbstractionFieldType.OPTIONS.asString());
-        var actual = parser.parse(fieldName);
-        var expected = new HashMap<>(Map.of(
-                PROPERTIES, Map.of(
-                        OTHER, TypeParser.TEXT_KEYWORD_MAPPING,
-                        "dxStage", TypeParser.TEXT_KEYWORD_MAPPING)));
-        Assert.assertEquals(expected, actual);
-    }
-
 
     @Test
     public void setPossibleValues() {

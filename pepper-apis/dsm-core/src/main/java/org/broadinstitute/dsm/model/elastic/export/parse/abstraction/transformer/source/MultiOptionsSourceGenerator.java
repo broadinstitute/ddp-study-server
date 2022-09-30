@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 /**
  * A class which is responsible for building a map for `multi_options` data type
  */
-public class MedicalRecordAbstractionMultiOptionsTransformer extends MedicalRecordAbstractionTransformer {
+public class MultiOptionsSourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
     public static final String OTHER  = "other";
     public static final String VALUES = "values";

@@ -26,22 +26,22 @@ public class TypeParser extends BaseParser {
     public static final Map<String, String> LONG_MAPPING = new HashMap<>(Map.of(MappingGenerator.TYPE, LONG));
 
     @Override
-    protected Object forNumeric(String value) {
+    public Object forNumeric(String value) {
         return LONG_MAPPING;
     }
 
     @Override
-    protected Object forBoolean(String value) {
+    public Object forBoolean(String value) {
         return BOOLEAN_MAPPING;
     }
 
     @Override
-    protected Object forDate(String value) {
+    public Object forDate(String value) {
         return DATE_MAPPING;
     }
 
     @Override
-    protected Object forString(String value) {
+    public Object forString(String value) {
         return TEXT_KEYWORD_MAPPING;
     }
 
