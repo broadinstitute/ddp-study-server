@@ -144,6 +144,26 @@ public class MedicalRecordFinalObjectTransformerTest {
         Assert.assertEquals(expectedDynamicFields, actual.get("dynamicFields"));
     }
 
+    @Test
+    public void transformComplexOptionsToMap() {
+        var transformer = new MedicalRecordFinalObjectTransformer("Prostate");
+        var actual = transformer.transformObjectToMap(new MedicalRecordFinalDto(19L, 32L,
+                333L, "options", "{\"other\":\"Unknown type\",\"DX Type\":\"other\"}", 5L,
+                6L, "DX Type", 1));
+        var expectedDynamicFields = Map.of("dxType", Map.of("other", "Unknown type", "dxType", "other"));
+        Assert.assertEquals(expectedDynamicFields, actual.get("dynamicFields"));
+    }
+
+    @Test
+    public void transformSimpleOptionsToMap() {
+        var transformer = new MedicalRecordFinalObjectTransformer("Prostate");
+        var actual = transformer.transformObjectToMap(new MedicalRecordFinalDto(19L, 32L,
+                333L, "options", "Equivocal", 5L,
+                6L, "DX Type", 1));
+        var expectedDynamicFields = Map.of("dxType", "Equivocal");
+        Assert.assertEquals(expectedDynamicFields, actual.get("dynamicFields"));
+    }
+
 
 
 }

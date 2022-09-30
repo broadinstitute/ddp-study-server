@@ -46,9 +46,8 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
         List<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFields =
                 medicalRecordAbstractionFieldDao.getMedicalRecordAbstractionFieldsByInstanceName(study);
         Map<String, Object> fieldTypeMappings = new HashMap<>();
-        Map<String, Object> dynamicFields     = new HashMap<>(
-                Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(
-                        Map.of(PROPERTIES, fieldTypeMappings))));
+        Map<String, Object> dynamicFields =
+                new HashMap<>(Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(Map.of(PROPERTIES, fieldTypeMappings))));
         for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName    = field.getDisplayName();
             String columnName     = columnNameBuilder.apply(displayName);

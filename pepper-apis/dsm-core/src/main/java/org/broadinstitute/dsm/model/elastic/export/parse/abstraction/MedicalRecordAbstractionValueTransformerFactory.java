@@ -32,6 +32,9 @@ public class MedicalRecordAbstractionValueTransformerFactory {
             case MULTI_TYPE_ARRAY:
                 transformer = new MedicalRecordAbstractionMultiTypeArrayTransformer(new MedicalRecordAbstractionFieldDaoLive());
                 break;
+            case OPTIONS:
+                transformer = new MedicalRecordAbstractionOptionsTransformer();
+                break;
             default:
                 transformer = new MedicalRecordAbstractionTextTransformer();
         }

@@ -66,11 +66,20 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
             case MULTI_TYPE_ARRAY:
                 parsedType = forMultiTypeArray(columnName);
                 break;
+            case OPTIONS:
+                parsedType = forOptions(columnName);
+                break;
             default:
-                // text, textarea, button_select
+                // handles all other cases such as: text, textarea, button_select etc...
                 parsedType = forString(columnName);
         }
         return parsedType;
+    }
+
+    private Object forOptions(String columnName) {
+        camelCaseConverter.setStringToConvert(columnName);
+        String camelCaseColumnName = camelCaseConverter.convert();
+        return new HashMap<>(Map.of(PROPERTIES, Map.of(OTHER, TEXT_KEYWORD_MAPPING, camelCaseColumnName, TEXT_KEYWORD_MAPPING)));
     }
 
     private Object forMultiTypeArray(String columnName) {

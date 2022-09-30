@@ -165,6 +165,18 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void parseOptions() {
+        var fieldName = "DX Stage";
+        parser.setType(MedicalRecordAbstractionFieldType.OPTIONS.asString());
+        var actual = parser.parse(fieldName);
+        var expected = new HashMap<>(Map.of(
+                PROPERTIES, Map.of(
+                        OTHER, TypeParser.TEXT_KEYWORD_MAPPING,
+                        "dxStage", TypeParser.TEXT_KEYWORD_MAPPING)));
+        Assert.assertEquals(expected, actual);
+    }
+
 
     @Test
     public void setPossibleValues() {
