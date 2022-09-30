@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.kit;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -82,8 +83,8 @@ public class KitDaoMock implements KitDao {
     }
 
     @Override
-    public Optional<KitRequestShipping> getKitByHruid(String hruid) {
-        return Optional.empty();
+    public List<KitRequestShipping> getKitsByHruid(String hruid) {
+        return null;
     }
 
     @Override
