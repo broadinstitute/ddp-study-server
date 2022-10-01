@@ -285,7 +285,7 @@ public class ViewFilter {
                 stmt.setString(3, "%," + realm + ",%");
                 stmt.setString(4, "[" + realm + ",%");
                 if (StringUtils.isNotBlank(parent)) {
-                    stmt.setString(7, parent);
+                    stmt.setString(5, parent);
                 }
                 try {
                     ResultSet rs = stmt.executeQuery();
