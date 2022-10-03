@@ -198,5 +198,14 @@
             AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
         </sql>
     </changeSet>
+    <changeSet id="8808_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_1_OTHER_HYPOPLASTIC_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER_HYPOPLASTIC","conditionalFieldSetting":{"columnName":"OTHER_HYPOPLASTIC_SPECIFY","fieldType":"DIAGNOSIS_GROUP","columnDisplay":"Specify (Other hypoplastic right ventricle or small right-sided structures)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt;     0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'DIAGNOSIS' AND field_type = 'DIAGNOSIS_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
     
 </databaseChangeLog>
