@@ -119,14 +119,9 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             }
         }
 
-        if (message.isDynamicTemplate()) {
-            //add dynamic data
-            Map<String, Object> dynamicData = getDynamicData(message);
-            dynamicData.forEach(personalization::addDynamicTemplateData);
-        } else {
-            //legacy template
-            buildSubstitutions(message).forEach(personalization::addSubstitution);
-        }
+        var dynamicData = getDynamicData(message);
+        dynamicData.forEach(personalization::addDynamicTemplateData);
+
         mail.addPersonalization(personalization);
 
         var versionResult = sendGrid.getTemplateActiveVersionId(templateId);

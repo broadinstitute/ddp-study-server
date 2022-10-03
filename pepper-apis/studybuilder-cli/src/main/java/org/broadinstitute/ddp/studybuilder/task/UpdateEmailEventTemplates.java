@@ -110,7 +110,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
             Map<String, Object> object = new HashMap<>();
             object.put("emailTemplate", actionCfg.getString("emailTemplate"));
             object.put("language", language);
-            object.put("isDynamic", false);
+            object.put("isDynamic", true);
             ConfigObject configObject = ConfigValueFactory.fromMap(object);
             latestTemplates.put(language, configObject.toConfig());
         } else {
@@ -124,16 +124,15 @@ public class UpdateEmailEventTemplates implements CustomTask {
         for (var language : latestTemplates.keySet()) {
             Config tmplCfg = latestTemplates.get(language);
             String latestTemplateKey = tmplCfg.getString("emailTemplate");
-            boolean isDynamic = tmplCfg.hasPath("isDynamic") && tmplCfg.getBoolean("isDynamic");
             NotificationTemplate current = currentTemplates.remove(language);
 
             if (current == null) {
-                addEmailTemplate(handle, actionId, language, latestTemplateKey, isDynamic);
+                addEmailTemplate(handle, actionId, language, latestTemplateKey);
                 log.info("[{}] language {}: added template {}", eventKey, language, latestTemplateKey);
             } else {
                 if (!current.getTemplateKey().equals(latestTemplateKey)) {
                     String currentTemplateKey = current.getTemplateKey();
-                    updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
+                    updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey);
                     log.info("[{}] language {}: un-assigned template {} and added template {}",
                             eventKey, language, currentTemplateKey, latestTemplateKey);
                 }
@@ -155,7 +154,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
 
     private void addEmailTemplate(Handle handle, long actionId, String language, String templateKey, boolean isDynamic) {
         var eventActionSql = handle.attach(EventActionSql.class);
-        long templateId = eventActionSql.findOrInsertNotificationTemplateId(templateKey, language, isDynamic);
+        long templateId = eventActionSql.findOrInsertNotificationTemplateId(templateKey, language);
         eventActionSql.bulkAddNotificationTemplatesToAction(actionId, Set.of(templateId));
     }
 
@@ -168,13 +167,13 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 .orElseThrow(() -> new DDPException("Could not find email template with key " + currentTemplateKey));
         unassignTemplateFromEmailAction(handle, actionId, currentTemplateId);
 
-        long latestTemplateId = eventActionSql.findOrInsertNotificationTemplateId(latestTemplateKey, language, isDynamic);
+        long latestTemplateId = eventActionSql.findOrInsertNotificationTemplateId(latestTemplateKey, language);
         eventActionSql.bulkAddNotificationTemplatesToAction(actionId, Set.of(latestTemplateId));
     }
 
     private long findEventActionId(Handle handle, long eventId) {
         String sql = "select event_action_id from event_configuration where event_configuration_id = :id";
-        return handle.createQuery(sql).bind("id", eventId).mapTo(Long.class).findOnly();
+        return handle.createQuery(sql).bind("id", eventId).mapTo(Long.class).one();
     }
 
     private void unassignTemplateFromEmailAction(Handle handle, long actionId, long templateId) {

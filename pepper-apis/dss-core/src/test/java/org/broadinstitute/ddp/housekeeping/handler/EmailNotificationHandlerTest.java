@@ -1,11 +1,6 @@
 package org.broadinstitute.ddp.housekeeping.handler;
 
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.BASE_WEB_URL;
-import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_BASE_WEB_URL;
-import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
-import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_LAST_NAME;
-import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_SALUTATION;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_FIRST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_LAST_NAME;
@@ -154,29 +149,10 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testBuildSubstitutions() {
-        var msg = new NotificationMessage(
-                NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "template", false, List.of("to@ddp.org"), "first", "last", "guid",
-                "study", "pepper", "from@ddp.org", "key", "salutation",
-                List.of(new NotificationTemplateSubstitutionDto("-ddp.foo-", "bar"),
-                        new NotificationTemplateSubstitutionDto("-ddp.alice-", "bob")),
-                "url", 1L);
-        var subs = handler.buildSubstitutions(msg);
-        assertEquals("Dear first last,", subs.get(DDP_SALUTATION));
-        assertEquals("url", subs.get(DDP_BASE_WEB_URL));
-        assertEquals("guid", subs.get(DDP_PARTICIPANT_GUID));
-        assertEquals("first", subs.get(DDP_PARTICIPANT_FIRST_NAME));
-        assertEquals("last", subs.get(DDP_PARTICIPANT_LAST_NAME));
-        assertEquals("bar", subs.get("-ddp.foo-"));
-        assertEquals("bob", subs.get("-ddp.alice-"));
-    }
-
-    @Test
     public void testBuildDynamicTemplateSubstitutions() {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "template", false, List.of("to@ddp.org"), "first", "last", "guid",
+                "template", List.of("to@ddp.org"), "first", "last", "guid",
                 "study", "pepper", "from@ddp.org", "key", "salutation",
                 List.of(new NotificationTemplateSubstitutionDto("-ddp.foo-", "bar"),
                         new NotificationTemplateSubstitutionDto("-ddp.activityInstanceGuid-", "AIXX8967"),

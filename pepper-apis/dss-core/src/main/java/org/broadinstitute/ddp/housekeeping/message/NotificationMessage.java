@@ -56,12 +56,11 @@ public class NotificationMessage implements HousekeepingMessage {
     @SerializedName("eventConfigId")
     private long eventConfigurationId;
 
-    private boolean isDynamicTemplate;
+    private boolean isDynamicTemplate = true;
 
     public NotificationMessage(NotificationType notificationType,
                                NotificationServiceType service,
                                String templateKey,
-                               boolean isDynamicTemplate,
                                Collection<String> sendToList,
                                String participantFirstName,
                                String participantLastName,
@@ -76,7 +75,6 @@ public class NotificationMessage implements HousekeepingMessage {
         this.notificationType = notificationType;
         this.notificationService = service;
         this.templateKey = templateKey;
-        this.isDynamicTemplate = isDynamicTemplate;
         this.distributionList = sendToList;
         this.participantFirstName = participantFirstName;
         this.participantLastName = participantLastName;

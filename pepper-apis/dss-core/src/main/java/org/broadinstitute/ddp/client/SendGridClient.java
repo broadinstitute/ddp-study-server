@@ -97,14 +97,10 @@ public class SendGridClient {
      * @param name the name for the template
      * @return result with created template, or error details
      */
-    public ApiResult<Template, String> createTemplate(String name, boolean isDynamic) {
+    public ApiResult<Template, String> createTemplate(String name) {
         Map<String, String> payload = new HashMap<>();
         payload.put(KEY_NAME, name);
-        if (isDynamic) {
-            payload.put(KEY_GENERATION, GEN_DYNAMIC);
-        } else {
-            payload.put(KEY_GENERATION, GEN_LEGACY);
-        }
+        payload.put(KEY_GENERATION, GEN_DYNAMIC);
 
         Request request = new Request();
         request.setMethod(Method.POST);
