@@ -5,7 +5,6 @@ import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenera
 import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.PROPERTIES;
 import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.TEXT_KEYWORD_MAPPING;
 import static org.broadinstitute.dsm.statics.DBConstants.VALUE;
-import static org.broadinstitute.dsm.util.AbstractionUtil.DATE_STRING;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,12 +14,12 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.converters.split.SpaceSplittingStrategy;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.DateMappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.MultiOptionsMappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.NumericMappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.OptionsMappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping.TextMappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source.MedicalRecordAbstractionFieldType;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.DateMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.MultiOptionsMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.NumericMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.OptionsMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.TextMappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 

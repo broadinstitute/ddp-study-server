@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping;
 
 import java.util.Map;
 

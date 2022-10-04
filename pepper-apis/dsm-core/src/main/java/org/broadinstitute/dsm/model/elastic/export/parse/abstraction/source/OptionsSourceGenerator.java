@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.source;
 
 import java.util.HashMap;
 import java.util.Map;

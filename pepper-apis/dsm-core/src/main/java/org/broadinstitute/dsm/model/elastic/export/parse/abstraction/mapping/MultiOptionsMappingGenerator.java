@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.PROPERTIES;
 import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;

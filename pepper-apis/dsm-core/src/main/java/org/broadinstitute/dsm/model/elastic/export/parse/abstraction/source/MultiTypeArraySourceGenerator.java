@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.source;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +9,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDao;
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDto;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 

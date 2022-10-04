@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.PROPERTIES;
 import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;
@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.MultiOptionsMappingGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 

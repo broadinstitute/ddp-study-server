@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.PROPERTIES;
 import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.OTHER;
@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.OptionsMappingGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 

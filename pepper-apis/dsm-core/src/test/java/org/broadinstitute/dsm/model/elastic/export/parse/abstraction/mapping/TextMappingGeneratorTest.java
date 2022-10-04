@@ -1,7 +1,8 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.mapping;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping;
 
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.mapping.TextMappingGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 

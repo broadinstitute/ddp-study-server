@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.transformer.source;
+package org.broadinstitute.dsm.model.elastic.export.parse.abstraction;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
