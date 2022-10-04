@@ -309,7 +309,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
-    private long ddpInstanceId;
+    private Long ddpInstanceId;
     @ColumnName(DBConstants.COLLECTION_DATE)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String collectionDate;
