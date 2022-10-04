@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 @Getter
@@ -102,6 +103,13 @@ public enum Alias {
 
     private static Alias of(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
+    }
+
+    public static Alias aliasByValue(String value) {
+        return Arrays.stream(Alias.values())
+                .filter(alias -> alias.value.equals(value))
+                .findFirst()
+                .orElse(ACTIVITIES);
     }
 
     private static Alias ofOrNull(String alias) {

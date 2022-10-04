@@ -18,4 +18,8 @@ public class Util {
             return false;
         }
     }
+
+    public static boolean isUnderDsmKey(Alias alias) {
+        return aliases.contains(alias);
+    }
 }
