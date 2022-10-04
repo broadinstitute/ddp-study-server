@@ -983,7 +983,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
-            kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
+            kitRequestShipping.setDdpInstanceId((long)ddpInstance.getDdpInstanceIdAsInt());
             kitRequestShipping.setDdpLabel(ddpLabel);
 
             DDPInstanceDto ddpInstanceDto =
