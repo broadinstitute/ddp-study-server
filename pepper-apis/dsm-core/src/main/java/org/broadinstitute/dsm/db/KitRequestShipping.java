@@ -1738,7 +1738,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     @Override
     public Optional<Long> extractDdpInstanceId() {
-        return Optional.of(ddpInstanceId);
+        return Optional.of(ddpInstanceId != null ? ddpInstanceId : 0);
     }
 
     public boolean isKitRequiringTrackingScan() {
