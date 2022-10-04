@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.parse.abstraction.source;
 
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.SINGLE_ANSWER;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,7 @@ import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFie
 import org.broadinstitute.dsm.db.dao.ddp.abstraction.MedicalRecordAbstractionFieldDto;
 import org.broadinstitute.dsm.model.elastic.export.parse.abstraction.MedicalRecordAbstractionFieldType;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
@@ -36,23 +39,29 @@ public class MultiTypeArraySourceGenerator extends MedicalRecordAbstractionSourc
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> dynamicFields = new HashMap<>();
         String camelCaseFieldName = columnNameBuilder.apply(fieldName);
-        String possibleValuesAsString = dao.getPossibleValuesByDisplayNameAndType(fieldName, MULTI_TYPE_ARRAY);
-        List<Map<String, Object>> possibleValues =
-                ObjectMapperSingleton.readValue(possibleValuesAsString, new TypeReference<List<Map<String, Object>>>() {});
-        List<Map<String, Object>> values = ObjectMapperSingleton.readValue(value, new TypeReference<List<Map<String, Object>>>() {});
-        for (Map<String, Object> possibleValue : possibleValues) {
-            MedicalRecordAbstractionFieldType fieldType =
-                    MedicalRecordAbstractionFieldType.of(String.valueOf(possibleValue.get(DBConstants.TYPE)));
-            MedicalRecordAbstractionSourceGenerator transformer = MedicalRecordAbstractionSourceGeneratorFactory.getInstance(fieldType);
-            String currentField = String.valueOf(possibleValue.get(DBConstants.VALUE));
-            Optional<Object> currentValue = values.stream()
-                    .filter(map -> map.containsKey(currentField) && Objects.nonNull(map.get(currentField)))
-                    .map(map -> map.get(currentField))
-                    .findFirst();
-            currentValue.ifPresent(val -> {
-                Map<String, Object> sourceMap = transformer.toMap(columnNameBuilder.apply(currentField), String.valueOf(val));
-                dynamicFields.putAll(sourceMap);
-            });
+        try {
+            List<Map<String, Object>> values = ObjectMapperSingleton.readValue(value, new TypeReference<List<Map<String, Object>>>() {});
+            String possibleValuesAsString = dao.getPossibleValuesByDisplayNameAndType(fieldName, MULTI_TYPE_ARRAY);
+            List<Map<String, Object>> possibleValues =
+                    ObjectMapperSingleton.readValue(possibleValuesAsString, new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> possibleValue : possibleValues) {
+                MedicalRecordAbstractionFieldType fieldType =
+                        MedicalRecordAbstractionFieldType.of(String.valueOf(possibleValue.get(DBConstants.TYPE)));
+                MedicalRecordAbstractionSourceGenerator sourceGenerator = MedicalRecordAbstractionSourceGeneratorFactory.spawn(fieldType);
+                String currentField = String.valueOf(possibleValue.get(DBConstants.VALUE));
+                Optional<Object> currentValue = values.stream()
+                        .filter(map -> map.containsKey(currentField) && Objects.nonNull(map.get(currentField)))
+                        .map(map -> map.get(currentField))
+                        .findFirst();
+                currentValue.ifPresent(val -> {
+                    Map<String, Object> sourceMap = sourceGenerator.toMap(columnNameBuilder.apply(currentField), String.valueOf(val));
+                    dynamicFields.putAll(sourceMap);
+                });
+            }
+        } catch (JsonParseException jpe) {
+            TextSourceGenerator sourceGenerator = new TextSourceGenerator();
+            Map<String, Object> sourceMap = sourceGenerator.toMap(SINGLE_ANSWER, value);
+            dynamicFields.putAll(sourceMap);
         }
         result.put(camelCaseFieldName, dynamicFields);
         return result;

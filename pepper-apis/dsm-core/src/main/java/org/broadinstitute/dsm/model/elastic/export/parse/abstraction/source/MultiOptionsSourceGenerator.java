@@ -14,8 +14,10 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  */
 public class MultiOptionsSourceGenerator extends MedicalRecordAbstractionSourceGenerator {
 
-    public static final String OTHER  = "other";
-    public static final String VALUES = "values";
+    public static final int FIRST_VALUE_START_INDEX = 1;
+    public static final String VALUES               = "values";
+    public static final String OTHER                = "other";
+    public static final String COMMA                = ",";
 
     /**
      * Transforms field-value pair into map representation
@@ -32,10 +34,16 @@ public class MultiOptionsSourceGenerator extends MedicalRecordAbstractionSourceG
             Object values = innerValues.get(fieldName);
             result.put(upperCaseFieldName, Map.of(OTHER, other, VALUES, values));
         } catch (Exception e) {
-            String innerValues  = value.substring(1, value.length() - 1);
-            List<String> values = Arrays.stream(innerValues.split(",")).map(String::trim).collect(Collectors.toList());
+            String innerValues  = value.substring(FIRST_VALUE_START_INDEX, getLastValueEndIndex(value));
+            List<String> values = Arrays.stream(innerValues.split(COMMA)).map(String::trim).collect(Collectors.toList());
             result.put(upperCaseFieldName, Map.of(VALUES, values));
         }
         return result;
     }
+
+    private static int getLastValueEndIndex(String value) {
+        return value.length() - 1;
+    }
+
+
 }

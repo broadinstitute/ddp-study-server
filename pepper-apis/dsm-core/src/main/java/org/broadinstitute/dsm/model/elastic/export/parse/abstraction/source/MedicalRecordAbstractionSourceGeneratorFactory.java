@@ -12,7 +12,7 @@ public class MedicalRecordAbstractionSourceGeneratorFactory {
      * Static factory method for creating a concrete instance of MedicalRecordAbstractionSourceGenerator
      * @param fieldType a concrete field type of medical record final data
      */
-    public static MedicalRecordAbstractionSourceGenerator getInstance(MedicalRecordAbstractionFieldType fieldType) {
+    public static MedicalRecordAbstractionSourceGenerator spawn(MedicalRecordAbstractionFieldType fieldType) {
         MedicalRecordAbstractionSourceGenerator generator;
         switch (fieldType) {
             case DATE:
