@@ -1,0 +1,150 @@
+package org.broadinstitute.ddp.studybuilder.task;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.io.File;
+import java.nio.file.Path;
+
+@Slf4j
+public class SingularAOMSupport implements CustomTask {
+    private static final String DATA_FILE  = "patches/singular-aom-new-events.conf";
+    private static final String STUDY_GUID  = "singular";
+
+    protected Config dataCfg;
+    protected Path cfgPath;
+    protected Config cfg;
+    protected Config varsCfg;
+
+    public SingularAOMSupport() {
+        super();
+    }
+
+    @Override
+    public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
+        if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
+            throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
+        }
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
+        this.cfgPath = cfgPath;
+        this.cfg = studyCfg;
+        this.varsCfg = varsCfg;
+    }
+
+    @Override
+    public void run(Handle handle) {
+        log.info("TASK:: SingularEvent Updates for AOM  ");
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
+        //updateSignatureQuestionDef(handle, studyDto);
+        deleteEvents(handle, studyDto);
+    }
+
+    private void updateSignatureQuestionDef(Handle handle, StudyDto studyDto) {
+        var helper = handle.attach(SingularAOMSupport.SqlHelper.class);
+        long questionId = helper.findQuestionId(studyDto.getId(), "MEDICAL_RECORD_RELEASE", "MRR_SIGNATURE");
+        helper.updateQuestionDef(questionId);
+        log.info("Update QuestionDef with id: {} ", questionId);
+
+    }
+
+    private void deleteEvents(Handle handle, StudyDto studyDto) {
+        var helper = handle.attach(SingularAOMSupport.SqlHelper.class);
+        log.info("Deleting events configuration for AOM support...");
+        //events will be re-generated from SingularInsertAOMEvents wth updated precondition pex
+
+        Long eventConfigId = helper.findEventConfigId(studyDto.getId(), "ABOUT_PATIENT", "ACTIVITY_INSTANCE_CREATION");
+        helper.deleteEventConfOccurenceById(eventConfigId);
+        helper.deleteEventById(eventConfigId);
+        log.info("Deleted event configuration with id: {} ", eventConfigId);
+
+        eventConfigId = helper.findEventConfigId(studyDto.getId(), "MEDICAL_RECORD_FILE_UPLOAD", "ACTIVITY_INSTANCE_CREATION");
+        helper.deleteEventConfOccurenceById(eventConfigId);
+        helper.deleteEventById(eventConfigId);
+        log.info("Deleted event configuration with id: {} ", eventConfigId);
+
+        //copy events
+        eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "ABOUT_PATIENT");
+        helper.deleteEventConfOccurenceById(eventConfigId);
+        helper.deleteEventById(eventConfigId);
+        log.info("Deleted event configuration with id: {} ", eventConfigId);
+
+        eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "MEDICAL_RECORD_RELEASE");
+        helper.deleteEventConfOccurenceById(eventConfigId);
+        helper.deleteEventById(eventConfigId);
+        log.info("Deleted event configuration with id: {} ", eventConfigId);
+
+        eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "MEDICAL_RECORD_FILE_UPLOAD");
+        helper.deleteEventConfOccurenceById(eventConfigId);
+        helper.deleteEventById(eventConfigId);
+        log.info("Deleted event configuration with id: {} ", eventConfigId);
+
+        eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "PATIENT_SURVEY");
+        helper.deleteEventConfOccurenceById(eventConfigId);
+        helper.deleteEventById(eventConfigId);
+        log.info("Deleted event configuration with id: {} ", eventConfigId);
+    }
+
+    private interface SqlHelper extends SqlObject {
+        @SqlUpdate("delete from event_configuration where event_configuration_id = :id")
+        int deleteEventById(@Bind("id") long eventId);
+
+        @SqlUpdate("delete from event_configuration_occurrence_counter where event_configuration_id = :id")
+        int deleteEventConfOccurenceById(@Bind("id") long eventId);
+
+        @SqlQuery("select e.event_configuration_id\n"
+                + "from  event_configuration as e\n"
+                + "join event_action ea on e.event_action_id = ea.event_action_id\n"
+                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
+                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
+                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
+                + " join expression as ex on ex.expression_id = e.precondition_expression_id\n"
+                + "where e.umbrella_study_id = :studyId \n"
+                + "and e.is_active = true\n"
+                + "and sa.study_activity_code = :activityCode \n"
+                + "and ex.expression_text = 'true'\n"
+                + "and eat.event_action_type_code = :actionType ")
+        Long findEventConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode,
+                               @Bind("actionType") String actionType);
+
+        @SqlQuery("select e.event_configuration_id\n"
+                + " from  event_configuration as e\n"
+                + " join event_action ea on e.event_action_id = ea.event_action_id\n"
+                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
+                + " join copy_answer_event_action caea on caea.event_action_id = ea.event_action_id\n"
+                + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id\n"
+                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
+                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
+                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order = 1\n"
+                + "and sa.study_activity_code = :activityCode \n"
+                + "and eat.event_action_type_code = 'COPY_ANSWER'\n"
+                + "and cc.copy_from_previous_instance = true;\n ")
+        Long findEventCopyConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode);
+
+        @SqlQuery("select q.question_id\n"
+                + "from question q, study_activity sa, question_stable_code qsc\n"
+                + "where q.study_activity_id = sa.study_activity_id\n"
+                + "and qsc.question_stable_code_id = q.question_stable_code_id\n"
+                + "and sa.study_activity_code = :activityCode \n"
+                + "and qsc.stable_id = :stableId \n"
+                + "and q.is_write_once = true"
+                + " and sa.study_id = :studyId")
+        Long findQuestionId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode, @Bind("stableId") String stableId);
+
+        @SqlUpdate("update question set is_write_once = false where question_id = :questionId  \n")
+        int updateQuestionDef(@Bind("questionId") long questionId);
+    }
+
+}
