@@ -3,12 +3,14 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -19,6 +21,7 @@ import java.nio.file.Path;
 public class SingularAOMSupport implements CustomTask {
     private static final String DATA_FILE  = "patches/singular-aom-new-events.conf";
     private static final String STUDY_GUID  = "singular";
+    private static final String PRECOND_EXPR = "user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
 
     protected Config dataCfg;
     protected Path cfgPath;
@@ -48,8 +51,8 @@ public class SingularAOMSupport implements CustomTask {
     public void run(Handle handle) {
         log.info("TASK:: SingularEvent Updates for AOM  ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
-        //updateSignatureQuestionDef(handle, studyDto);
-        deleteEvents(handle, studyDto);
+        updateSignatureQuestionDef(handle, studyDto);
+        updateEvents(handle, studyDto);
     }
 
     private void updateSignatureQuestionDef(Handle handle, StudyDto studyDto) {
@@ -60,61 +63,74 @@ public class SingularAOMSupport implements CustomTask {
 
     }
 
-    private void deleteEvents(Handle handle, StudyDto studyDto) {
+    private void updateEvents(Handle handle, StudyDto studyDto) {
+        //update events preCondition Expression for AOM support
         var helper = handle.attach(SingularAOMSupport.SqlHelper.class);
-        log.info("Deleting events configuration for AOM support...");
-        //events will be re-generated from SingularInsertAOMEvents wth updated precondition pex
+        log.info("Update events preCondition Expression for AOM support...");
 
+        //ABOUT_PATIENT : COMPLETE
         Long eventConfigId = helper.findEventConfigId(studyDto.getId(), "ABOUT_PATIENT", "ACTIVITY_INSTANCE_CREATION");
-        helper.deleteEventConfOccurenceById(eventConfigId);
-        helper.deleteEventById(eventConfigId);
-        log.info("Deleted event configuration with id: {} ", eventConfigId);
+        Long expressionId = helper.getPreCondExpressionIdByEventConfigId(eventConfigId);
+        JdbiExpression jdbiExpr = handle.attach(JdbiExpression.class);
+        jdbiExpr.updateById(expressionId, PRECOND_EXPR);
+        log.info("Updated event configuration with id: {} ", eventConfigId);
 
+        //MEDICAL_RECORD_FILE_UPLOAD : COMPLETE
         eventConfigId = helper.findEventConfigId(studyDto.getId(), "MEDICAL_RECORD_FILE_UPLOAD", "ACTIVITY_INSTANCE_CREATION");
-        helper.deleteEventConfOccurenceById(eventConfigId);
-        helper.deleteEventById(eventConfigId);
-        log.info("Deleted event configuration with id: {} ", eventConfigId);
+        expressionId = helper.getPreCondExpressionIdByEventConfigId(eventConfigId);
+        jdbiExpr.updateById(expressionId, PRECOND_EXPR);
+        log.info("Updated event configuration with id: {} ", eventConfigId);
 
-        //copy events
+        //copy events updates
+        //insert new precondition Expr
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "ABOUT_PATIENT");
-        helper.deleteEventConfOccurenceById(eventConfigId);
-        helper.deleteEventById(eventConfigId);
-        log.info("Deleted event configuration with id: {} ", eventConfigId);
+        String guidExpr = jdbiExpr.generateUniqueGuid();
+        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
+        log.info("Updated event configuration  {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "MEDICAL_RECORD_RELEASE");
-        helper.deleteEventConfOccurenceById(eventConfigId);
-        helper.deleteEventById(eventConfigId);
-        log.info("Deleted event configuration with id: {} ", eventConfigId);
+        guidExpr = jdbiExpr.generateUniqueGuid();
+        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
+        log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "MEDICAL_RECORD_FILE_UPLOAD");
-        helper.deleteEventConfOccurenceById(eventConfigId);
-        helper.deleteEventById(eventConfigId);
-        log.info("Deleted event configuration with id: {} ", eventConfigId);
+        guidExpr = jdbiExpr.generateUniqueGuid();
+        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
+        log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "PATIENT_SURVEY");
-        helper.deleteEventConfOccurenceById(eventConfigId);
-        helper.deleteEventById(eventConfigId);
-        log.info("Deleted event configuration with id: {} ", eventConfigId);
+        guidExpr = jdbiExpr.generateUniqueGuid();
+        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
+        log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("delete from event_configuration where event_configuration_id = :id")
-        int deleteEventById(@Bind("id") long eventId);
+        @SqlUpdate("update question set is_write_once = false where question_id = :questionId  \n")
+        int updateQuestionDef(@Bind("questionId") long questionId);
 
-        @SqlUpdate("delete from event_configuration_occurrence_counter where event_configuration_id = :id")
-        int deleteEventConfOccurenceById(@Bind("id") long eventId);
+        @SqlUpdate("insert into expression (expression_guid, expression_text) values (:guid, :text)")
+        @GetGeneratedKeys
+        long insertExpression(@Bind("guid") String guid, @Bind("text") String text);
+
+        @SqlUpdate("update event_configuration set precondition_expression_id = :exprId where event_configuration_id = :eventConfigId")
+        int updateEventConfigPrecondExpr(@Bind("eventConfigId") long eventConfigId, @Bind("exprId") long exprId);
 
         @SqlQuery("select e.event_configuration_id\n"
                 + "from  event_configuration as e\n"
                 + "join event_action ea on e.event_action_id = ea.event_action_id\n"
                 + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
                 + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
+                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id\n"
                 + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
                 + " join expression as ex on ex.expression_id = e.precondition_expression_id\n"
                 + "where e.umbrella_study_id = :studyId \n"
                 + "and e.is_active = true\n"
                 + "and sa.study_activity_code = :activityCode \n"
-                + "and ex.expression_text = 'true'\n"
+                + "and ex.expression_text = 'true' and st.study_activity_code = 'COMPLETE' \n"
                 + "and eat.event_action_type_code = :actionType ")
         Long findEventConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode,
                                @Bind("actionType") String actionType);
@@ -143,8 +159,9 @@ public class SingularAOMSupport implements CustomTask {
                 + " and sa.study_id = :studyId")
         Long findQuestionId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode, @Bind("stableId") String stableId);
 
-        @SqlUpdate("update question set is_write_once = false where question_id = :questionId  \n")
-        int updateQuestionDef(@Bind("questionId") long questionId);
+        @SqlQuery("SELECT precondition_expression_id FROM event_configuration WHERE event_configuration_id = :eventConfigId")
+        Long getPreCondExpressionIdByEventConfigId(@Bind("eventConfigId") long eventConfigId);
+
     }
 
 }
