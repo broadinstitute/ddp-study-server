@@ -21,7 +21,7 @@ import java.nio.file.Path;
 public class SingularAOMSupport implements CustomTask {
     private static final String DATA_FILE  = "patches/singular-aom-new-events.conf";
     private static final String STUDY_GUID  = "singular";
-    private static final String PRECOND_EXPR = "user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
+    private static final String PRECOND_EXPR = "!user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
 
     protected Config dataCfg;
     protected Path cfgPath;
@@ -85,25 +85,25 @@ public class SingularAOMSupport implements CustomTask {
         //insert new precondition Expr
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "ABOUT_PATIENT");
         String guidExpr = jdbiExpr.generateUniqueGuid();
-        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        expressionId = helper.insertExpression(guidExpr, PRECOND_EXPR);
         helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
         log.info("Updated event configuration  {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "MEDICAL_RECORD_RELEASE");
         guidExpr = jdbiExpr.generateUniqueGuid();
-        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        expressionId = helper.insertExpression(guidExpr, PRECOND_EXPR);
         helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
         log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "MEDICAL_RECORD_FILE_UPLOAD");
         guidExpr = jdbiExpr.generateUniqueGuid();
-        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        expressionId = helper.insertExpression(guidExpr, PRECOND_EXPR);
         helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
         log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "PATIENT_SURVEY");
         guidExpr = jdbiExpr.generateUniqueGuid();
-        expressionId = helper.insertExpression(guidExpr, dataCfg.getString(PRECOND_EXPR));
+        expressionId = helper.insertExpression(guidExpr, PRECOND_EXPR);
         helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
         log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
     }
@@ -130,7 +130,7 @@ public class SingularAOMSupport implements CustomTask {
                 + "where e.umbrella_study_id = :studyId \n"
                 + "and e.is_active = true\n"
                 + "and sa.study_activity_code = :activityCode \n"
-                + "and ex.expression_text = 'true' and st.study_activity_code = 'COMPLETE' \n"
+                + "and ex.expression_text = 'true' and st.activity_instance_status_type_code = 'COMPLETE' \n"
                 + "and eat.event_action_type_code = :actionType ")
         Long findEventConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode,
                                @Bind("actionType") String actionType);
