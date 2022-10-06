@@ -19,6 +19,7 @@
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
         <liquibase.version>3.6.3</liquibase.version>
         <elasticsearch.version>6.8.2</elasticsearch.version>
+        <google-cloud-storage.version>2.11.3</google-cloud-storage.version>
     </properties>
 
     <modules>
@@ -368,7 +369,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>google-cloud-storage</artifactId>
-                <version>1.69.0</version>
+                <version>${google-cloud-storage.version}</version>
             </dependency>
 
             <dependency>
