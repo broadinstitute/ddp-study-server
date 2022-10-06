@@ -41,10 +41,13 @@ public class UpdateEmailHandler {
     private void validateUserForLoginDataUpdateEligibility(UserDto userDto) {
         String errMsg = null;
         if (userDto == null) {
-            errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
+            errMsg = "User does not exist in Pepper";
+            throw new PubSubTaskException(errMsg, WARN);
         }
         if (userDto.getAuth0UserId().isEmpty()) {
-            errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
+            errMsg = "It appears that " + userDto.getUserGuid() + " is a pediatric participant, "
+                    + "and this email address is associated with their parent or guardian.  "
+                    + "Please update the parent/guardian email address if you would like to update this pediatric participant’s address.";
         }
         if (errMsg != null) {
             throw new PubSubTaskException(errMsg, WARN);

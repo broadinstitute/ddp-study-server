@@ -39,16 +39,13 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;
         }
-        if (request.url().contains(RoutePath.MERCURY_SAMPLES_ROUTE)) {
-            if (queryParams.value(RoutePath.DDP_PARTICIPANT_ID) == null) {
-                throw new RuntimeException("No ddpParticipantId query param was sent");
-            }
-            String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-            List<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm);
-            log.info(String.format("Returning a list of %d samples", eligibleSamples.size()));
-            return eligibleSamples;
+        if (queryParams.value(RoutePath.DDP_PARTICIPANT_ID) == null) {
+            throw new RuntimeException("No ddpParticipantId query param was sent");
         }
-        return null;
+        String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
+        List<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm);
+        log.info(String.format("Returning a list of %d samples", eligibleSamples.size()));
+        return eligibleSamples;
     }
 
 }
