@@ -102,8 +102,7 @@ public class ConfigUtil {
      * Get sql from config file
      * @param queryName name of query
      * @return the SQL for query
-     * @deprecated
-     * please use JDBI and daos instead of looking up
+     * @deprecated please use JDBI and daos instead of looking up
      */
     @Deprecated
     public static String getSqlFromConfig(@NonNull String queryName) {
@@ -112,8 +111,7 @@ public class ConfigUtil {
 
     /**
      * Get sql from config file
-     * @deprecated
-     * please use JDBI and daos instead of looking up SQL snippets from config files
+     * @deprecated please use JDBI and daos instead of looking up SQL snippets from config files
      */
     @Deprecated
     public static String getSqlFromConfig(String sourceName, @NonNull String queryName) {
