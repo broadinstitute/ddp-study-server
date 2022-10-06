@@ -198,14 +198,68 @@
             AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
         </sql>
     </changeSet>
-    <changeSet id="8808_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_1_OTHER_HYPOPLASTIC_SPECIFY" author="pegah">
+    <changeSet id="8808_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_1_OTHER_AND_OTHER_HYPOPLASTIC_SPECIFY" author="pegah">
         <sql>
             UPDATE field_settings
-            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER_HYPOPLASTIC","conditionalFieldSetting":{"columnName":"OTHER_HYPOPLASTIC_SPECIFY","fieldType":"DIAGNOSIS_GROUP","columnDisplay":"Specify (Other hypoplastic right ventricle or small right-sided structures)","displayType":"TEXTAREA"}}]'
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER_HYPOPLASTIC","conditionalFieldSetting":{"columnName":"DIAGNOSIS_OTHER_HYPOPLASTIC_SPECIFY","fieldType":"DIAGNOSIS_GROUP","columnDisplay":"Specify (Other hypoplastic right ventricle or small right-sided structures)","displayType":"TEXTAREA"}},{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"DIAGNOSIS_OTHER_SPECIFY","fieldType":"DIAGNOSIS_GROUP","columnDisplay":"Specify (Other)","displayType":"TEXTAREA"}}]'
             WHERE field_settings_id &lt;&gt;     0 AND field_settings_id IN
             ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'DIAGNOSIS' AND field_type = 'DIAGNOSIS_GROUP'
             AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
         </sql>
     </changeSet>
-    
+    <changeSet id="8808_CONDITIONAL_TEXT_CLINICAL_NOTES_14_SURGICAL_HISTORY_OTHER_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"SURGICAL_HISTORY_OTHER_SPECIFY","fieldType":"GROUP_CLINICAL_NOTES","columnDisplay":"Specify (Other)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'SURGICAL_HISTORY' AND field_type = 'GROUP_CLINICAL_NOTES'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="8808_CONDITIONAL_TEXT_CLINICAL_NOTES_16_FONTAN_TYPE_OTHER_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"FONTAN_TYPE_OTHER_SPECIFY","fieldType":"GROUP_CLINICAL_NOTES","columnDisplay":"Specify (Other Fontan Type)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'FONTAN_TYPE' AND field_type = 'GROUP_CLINICAL_NOTES'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="8808_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_2_KARYOTYPE_ABNORMAL" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"KARYOTYPE_ABNORMAL_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Karyotype Abnormal)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'KARYOTYPE_ABNORMAL' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="8808_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_4_MICROARRAY_ABNORMAL" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"MICROARRAY_ABNORMAL_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Microarray Abnormal)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'MICROARRAY_ABNORMAL' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="8808_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_5_GENE_SYNDROMES" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"GENE_SYNDROMES_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Single Gene Syndromes)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'GENE_SYNDROMES' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="8808_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_7_CLINICAL_SYNDROMES" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"CLINICAL_SYNDROMES_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Clinical Syndromes)","displayType":"TEXTAREA"}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'CLINICAL_SYNDROMES' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
