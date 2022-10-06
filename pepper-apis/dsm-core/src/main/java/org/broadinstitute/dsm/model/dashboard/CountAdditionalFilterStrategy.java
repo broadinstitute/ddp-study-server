@@ -11,16 +11,20 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.filter.query.BaseActivitiesStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseQueryBuilder;
+import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.CollectionQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
+import org.elasticsearch.index.query.QueryBuilder;
 
 public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
 
-    public static final String FILTER_AND_OR_DELIMITER = "((?<=AND)|(?=AND])|(?<=OR)|(?=OR)|(?<=OR)|(?=AND))";
+    public static final String FILTER_AND_OR_DELIMITER = "((?<=AND)|(?<=\\sAND)|(?=AND\\s])|(?<=\\sOR)|(?=OR\\s)|(?<=\\sOR)|(?=AND\\s))";
 
     public CountAdditionalFilterStrategy(QueryBuildPayload queryBuildPayload) {
         super(queryBuildPayload);
@@ -94,6 +98,21 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
         BaseQueryBuilder result = super.getBaseQueryBuilder(queryPayload);
         if (Alias.of(queryPayload.getAlias()).isCollection()) {
             result = new CollectionQueryBuilder(queryPayload);
+        }
+        return result;
+    }
+
+    @Override
+    protected List<QueryBuilder> buildQueries(BuildQueryStrategy queryStrategy) {
+        List<QueryBuilder> result = super.buildQueries(queryStrategy);
+        if (Alias.of(queryStrategy.getBaseQueryBuilder().getPayload().getAlias()) == Alias.ACTIVITIES) {
+            queryStrategy.getBaseQueryBuilder().getPayload().setPath(Alias.ACTIVITIES.getValue());
+            BaseActivitiesStrategy baseActivitiesStrategy = BaseActivitiesStrategy.of(
+                    new FilterParser(),
+                    queryStrategy.getBaseQueryBuilder().getOperator(),
+                    queryStrategy.getBaseQueryBuilder()
+            );
+            result = baseActivitiesStrategy.build();
         }
         return result;
     }

@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 //class to handle domain logic of additional filtering of dashboard
 public class AdditionalFilterStrategy {
@@ -34,10 +35,14 @@ public class AdditionalFilterStrategy {
                 QueryPayload queryPayload = buildQueryPayload(splitterStrategy);
                 BuildQueryStrategy queryStrategy = getQueryStrategy(operator, queryPayload);
                 filterStrategy.build(boolQueryBuilder,
-                        getBaseQueryBuilder(queryPayload).build(queryStrategy.build()));
+                        getBaseQueryBuilder(queryPayload).build(buildQueries(queryStrategy)));
             }
         }
         return boolQueryBuilder;
+    }
+
+    protected List<QueryBuilder> buildQueries(BuildQueryStrategy queryStrategy) {
+        return queryStrategy.build();
     }
 
     protected BuildQueryStrategy getQueryStrategy(Operator operator, QueryPayload queryPayload) {
@@ -45,6 +50,7 @@ public class AdditionalFilterStrategy {
         BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(getBaseQueryBuilder(queryPayload));
         getBaseQueryBuilder(queryPayload).setOperator(operator);
+        queryStrategy.getBaseQueryBuilder().setOperator(operator);
         return queryStrategy;
     }
 

@@ -54,7 +54,7 @@ public class CountAdditionalFilterStrategyTest {
     }
 
     @Test
-    public void processNonNestedMultipleDifferentAdditionalFilter() {
+    public void processMultipleDifferentAdditionalFilter() {
         DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
                 .withEsFilterPath("profile.createdAt")
                 .withAdditionalFilter("AND profile.createdAt IS NOT NULL OR address.country = US "
@@ -75,6 +75,84 @@ public class CountAdditionalFilterStrategyTest {
         expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
         expectedQuery.should(QueryBuilders.matchQuery("address.country", "US").operator(Operator.AND));
         expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
+        expectedQuery.should(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfMajority")));
+
+        assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void processMultipleDifferentAdditionalFilterWithActivityQuestionsAnswers() {
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
+                .withEsFilterPath("profile.createdAt")
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL OR address.country = US "
+                        + "AND dsm.dateOfBirth IS NOT NULL OR dsm.dateOfMajority IS NOT NULL AND m.faxSent IS NULL "
+                        + "AND MEDICAL_HISTORY.TELANGIECTASIA IS NOT NULL ")
+                .build();
+        DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
+                .withDashboardLabelFilter(labelFilterDto)
+                .build();
+        QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
+        CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
+        BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("dsm.medicalRecord",
+                        QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")), ScoreMode.Avg)
+        );
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("activities",
+                        QueryBuilders.boolQuery()
+                                .must(QueryBuilders.matchQuery("activities.activityCode", "MEDICAL_HISTORY").operator(Operator.AND))
+                                .must(QueryBuilders.nestedQuery(
+                                        "activities.questionsAnswers",
+                                        QueryBuilders.boolQuery()
+                                                .must(QueryBuilders.matchQuery("activities.questionsAnswers.stableId", "TELANGIECTASIA")
+                                                        .operator(Operator.AND))
+                                                .must(QueryBuilders.boolQuery()
+                                                        .must(QueryBuilders.existsQuery("activities.questionsAnswers.answer"))),
+                                        ScoreMode.Avg
+                                )), ScoreMode.Avg)
+        );
+        expectedQuery.should(QueryBuilders.matchQuery("address.country", "US").operator(Operator.AND));
+        expectedQuery.should(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfMajority")));
+
+        assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void processMultipleDifferentAdditionalFilterWithNonActivityQuestionsAnswers() {
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
+                .withEsFilterPath("profile.createdAt")
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL OR address.country = US "
+                        + "AND dsm.dateOfBirth IS NOT NULL OR dsm.dateOfMajority IS NOT NULL AND m.faxSent IS NULL "
+                        + "AND PREQUAL.createdAt IS NOT NULL  ")
+                .build();
+        DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
+                .withDashboardLabelFilter(labelFilterDto)
+                .build();
+        QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
+        CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
+        BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("dsm.medicalRecord",
+                        QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")), ScoreMode.Avg)
+        );
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("activities",
+                        QueryBuilders.boolQuery()
+                                .must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                                .must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("activities.createdAt"))),
+                        ScoreMode.Avg
+                )
+        );
+        expectedQuery.should(QueryBuilders.matchQuery("address.country", "US").operator(Operator.AND));
         expectedQuery.should(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfMajority")));
 
         assertEquals(expectedQuery, actualQuery);
