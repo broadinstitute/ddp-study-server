@@ -226,6 +226,7 @@ public class EasyPostUtil {
         return Address.create(fromAddressMap);
     }
 
+    //inches and oz
     public Parcel createParcel(@NonNull String weight, @NonNull String height, @NonNull String width,
                                @NonNull String length) throws EasyPostException {
         Map<String, Object> parcelMap = new HashMap<>();
