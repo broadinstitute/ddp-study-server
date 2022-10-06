@@ -9,10 +9,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.filter.query.BaseQueryBuilder;
+import org.broadinstitute.dsm.model.elastic.filter.query.CollectionQueryBuilder;
+import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
+
+    public static final String FILTER_AND_OR_DELIMITER = "((?<=AND)|(?=AND])|(?<=OR)|(?=OR)|(?<=OR)|(?=AND))";
+
     public CountAdditionalFilterStrategy(QueryBuildPayload queryBuildPayload) {
         super(queryBuildPayload);
     }
@@ -20,11 +29,17 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     private List<String> splitConcreteFiltersFromAdditionalFilter() {
         String[] separatedFiltersWithDelimiters =
                 queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter()
-                        .split("((?<=AND)|(?=AND])|(?<=OR)|(?=OR)|(?<=OR)|(?=AND))");
+                        .split(FILTER_AND_OR_DELIMITER);
 
+        return buildFiltersWithOperators(separatedFiltersWithDelimiters);
+    }
+
+    private List<String> buildFiltersWithOperators(String[] separatedFiltersWithDelimiters) {
         List<String> fullFilters = new ArrayList<>();
         for (int i = 0; i < separatedFiltersWithDelimiters.length - 1; i += 2) {
-            fullFilters.add(separatedFiltersWithDelimiters[i] + separatedFiltersWithDelimiters[i + 1]);
+            int operatorIndex = i;
+            int filterIndex = i + 1;
+            fullFilters.add(separatedFiltersWithDelimiters[operatorIndex] + separatedFiltersWithDelimiters[filterIndex]);
         }
         return fullFilters;
     }
@@ -47,9 +62,9 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
 
     private Map<String, List<String>> mergeFilters(Map<String, List<String>> nonDsmFilters, Map<String, List<String>> dsmFilters) {
         Map<String, List<String>> result = new HashMap<>(nonDsmFilters);
-        result.merge("AND", dsmFilters.get("AND"),
+        result.merge(Filter.AND_TRIMMED, dsmFilters.get(Filter.AND_TRIMMED),
                 (prev, curr) -> Stream.concat(prev.stream(), curr.stream()).collect(Collectors.toList()));
-        result.merge("OR", dsmFilters.get("OR"),
+        result.merge(Filter.OR_TRIMMED, dsmFilters.get(Filter.OR_TRIMMED),
                 (prev, curr) -> Stream.concat(prev.stream(), curr.stream()).collect(Collectors.toList()));
         return result;
     }
@@ -61,5 +76,25 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
                 extractFilters(separatedFilters, AndOrFilterSeparator.class),
                 extractFilters(separatedFilters, NonDsmAndOrFilterSeparator.class)
         );
+    }
+
+    @Override
+    protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy) {
+        return new QueryPayload(
+                splitterStrategy.getAlias(),
+                splitterStrategy.getInnerProperty(),
+                splitterStrategy.getAlias(),
+                valueParser.parse(splitterStrategy.getValue()),
+                queryBuildPayload.getEsParticipantsIndex()
+                );
+    }
+
+    @Override
+    protected BaseQueryBuilder getBaseQueryBuilder(QueryPayload queryPayload) {
+        BaseQueryBuilder result = super.getBaseQueryBuilder(queryPayload);
+        if (Alias.of(queryPayload.getAlias()).isCollection()) {
+            result = new CollectionQueryBuilder(queryPayload);
+        }
+        return result;
     }
 }

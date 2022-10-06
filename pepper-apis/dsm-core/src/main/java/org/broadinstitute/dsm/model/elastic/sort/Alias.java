@@ -101,7 +101,7 @@ public enum Alias {
         return esAlias;
     }
 
-    private static Alias of(String alias) {
+    public static Alias of(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
     }
 

@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.dashboard;
 
 import static org.junit.Assert.assertEquals;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -56,7 +57,7 @@ public class CountAdditionalFilterStrategyTest {
     public void processNonNestedMultipleDifferentAdditionalFilter() {
         DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
                 .withEsFilterPath("profile.createdAt")
-                .withAdditionalFilter("AND profile.createdAt IS NOT NULL OR address.country = 'US' "
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL OR address.country = US "
                         + "AND dsm.dateOfBirth IS NOT NULL OR dsm.dateOfMajority IS NOT NULL AND m.faxSent IS NULL")
                 .build();
         DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
@@ -67,11 +68,14 @@ public class CountAdditionalFilterStrategyTest {
         BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("dsm.medicalRecord",
+                        QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")), ScoreMode.Avg)
+        );
         expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
         expectedQuery.should(QueryBuilders.matchQuery("address.country", "US").operator(Operator.AND));
         expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.should(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfMajority")));
-        expectedQuery.must(QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")));
 
         assertEquals(expectedQuery, actualQuery);
     }
