@@ -22,7 +22,7 @@ public class SingularAOMSupport implements CustomTask {
     private static final String DATA_FILE  = "patches/singular-aom-new-events.conf";
     private static final String STUDY_GUID  = "singular";
     private static final String PRECOND_EXPR = "!user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
-    private static final String COPY_PRECOND_EXPR = "'user.studies[\"singular\"].forms[\"CONSENT_SELF\"].isStatus(\"COMPLETE\")'";
+    private static final String COPY_PRECOND_EXPR = "user.studies[\"singular\"].forms[\"CONSENT_SELF\"].isStatus(\"COMPLETE\")";
 
     protected Config dataCfg;
     protected Path cfgPath;
@@ -173,8 +173,8 @@ public class SingularAOMSupport implements CustomTask {
                 + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id\n"
                 + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
                 + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
-                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id"
-                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order := execOrder\n"
+                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id\n"
+                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order = :execOrder\n"
                 + "and sa.study_activity_code = :activityCode \n"
                 + "and st.activity_instance_status_type_code = 'CREATED'\n"
                 + "and eat.event_action_type_code = 'COPY_ANSWER'\n"
