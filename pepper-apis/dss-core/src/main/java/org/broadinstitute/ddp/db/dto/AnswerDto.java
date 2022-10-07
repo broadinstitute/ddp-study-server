@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.time.Instant;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -14,6 +16,9 @@ public class AnswerDto {
     
     @ColumnName("answer_guid")
     String guid;
+
+    @ColumnName("last_updated_at")
+    Instant lastUpdatedAt;
 
     @ColumnName("question_id")
     long questionId;
