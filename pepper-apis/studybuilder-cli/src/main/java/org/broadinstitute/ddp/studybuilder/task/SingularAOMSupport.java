@@ -22,6 +22,7 @@ public class SingularAOMSupport implements CustomTask {
     private static final String DATA_FILE  = "patches/singular-aom-new-events.conf";
     private static final String STUDY_GUID  = "singular";
     private static final String PRECOND_EXPR = "!user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
+    private static final String COPY_PRECOND_EXPR = "'user.studies[\"singular\"].forms[\"CONSENT_SELF\"].isStatus(\"COMPLETE\")'";
 
     protected Config dataCfg;
     protected Path cfgPath;
@@ -82,7 +83,21 @@ public class SingularAOMSupport implements CustomTask {
         log.info("Updated event configuration with id: {} ", eventConfigId);
 
         //copy events updates
-        //insert new precondition Expr
+        //ABOUT_PATIENT : CREATE copy firstname and lastname
+        eventConfigId = helper.findEventCopyConfigByStatus(studyDto.getId(), "ABOUT_PATIENT", 1);
+        expressionId = helper.getPreCondExpressionIdByEventConfigId(eventConfigId);
+        jdbiExpr = handle.attach(JdbiExpression.class);
+        jdbiExpr.updateById(expressionId, COPY_PRECOND_EXPR);
+        log.info("Updated event configuration with id: {} ", eventConfigId);
+
+        //ABOUT_PATIENT : CREATE copy firstname and lastname
+        eventConfigId = helper.findEventCopyConfigByStatus(studyDto.getId(), "MEDICAL_RECORD_RELEASE", 2);
+        expressionId = helper.getPreCondExpressionIdByEventConfigId(eventConfigId);
+        jdbiExpr = handle.attach(JdbiExpression.class);
+        jdbiExpr.updateById(expressionId, COPY_PRECOND_EXPR);
+        log.info("Updated event configuration with id: {} ", eventConfigId);
+
+        //insert new precondition Expr for copy events
         eventConfigId = helper.findEventCopyConfigId(studyDto.getId(), "ABOUT_PATIENT");
         String guidExpr = jdbiExpr.generateUniqueGuid();
         expressionId = helper.insertExpression(guidExpr, PRECOND_EXPR);
@@ -106,6 +121,7 @@ public class SingularAOMSupport implements CustomTask {
         expressionId = helper.insertExpression(guidExpr, PRECOND_EXPR);
         helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
         log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
+
     }
 
     private interface SqlHelper extends SqlObject {
@@ -148,6 +164,23 @@ public class SingularAOMSupport implements CustomTask {
                 + "and eat.event_action_type_code = 'COPY_ANSWER'\n"
                 + "and cc.copy_from_previous_instance = true;\n ")
         Long findEventCopyConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode);
+
+        @SqlQuery("select e.event_configuration_id\n"
+                + " from  event_configuration as e\n"
+                + " join event_action ea on e.event_action_id = ea.event_action_id\n"
+                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
+                + " join copy_answer_event_action caea on caea.event_action_id = ea.event_action_id\n"
+                + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id\n"
+                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
+                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
+                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id"
+                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order := execOrder\n"
+                + "and sa.study_activity_code = :activityCode \n"
+                + "and st.activity_instance_status_type_code = 'CREATED'\n"
+                + "and eat.event_action_type_code = 'COPY_ANSWER'\n"
+                + "and cc.copy_from_previous_instance = false;\n ")
+        Long findEventCopyConfigByStatus(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode,
+                                         @Bind("execOrder") int execOrder);
 
         @SqlQuery("select q.question_id\n"
                 + "from question q, study_activity sa, question_stable_code qsc\n"
