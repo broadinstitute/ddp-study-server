@@ -116,9 +116,9 @@ public class FieldSettings {
                         }
                     }
                 } catch (JsonMappingException e) {
-                    e.printStackTrace();
+                    logger.error("Unable to get the FieldSetting ", e);
                 } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    logger.error("Unable to parse the FieldSetting json ", e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
