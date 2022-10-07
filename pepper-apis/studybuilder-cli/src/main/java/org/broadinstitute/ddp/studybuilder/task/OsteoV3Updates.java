@@ -1,12 +1,14 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
-import com.typesafe.config.Config;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2NumerationUpdate;
-import org.jdbi.v3.core.Handle;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.typesafe.config.Config;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2NumerationUpdate;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPdfFixes;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoReleaseV2PdfUpdates;
+import org.jdbi.v3.core.Handle;
 
 public class OsteoV3Updates implements CustomTask {
 
@@ -17,6 +19,7 @@ public class OsteoV3Updates implements CustomTask {
         tasks.add(new OsteoPrequalEmptyBlock());
         tasks.add(new OsteoAboutYouV2NumerationUpdate());
         tasks.add(new OsteoPdfFixes());
+        tasks.add(new OsteoReleaseV2PdfUpdates());
         tasks.add(new OsteoConsentPdfFixes());
 
         tasks.add(new UpdateStudyNonSyncEvents());
