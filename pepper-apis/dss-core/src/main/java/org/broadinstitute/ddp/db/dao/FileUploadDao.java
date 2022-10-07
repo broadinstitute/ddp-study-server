@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -67,12 +68,30 @@ public interface FileUploadDao extends SqlObject {
     @SqlUpdate("delete from file_upload where participant_user_id = :userId or operator_user_id = :userId")
     void deleteByParticipantOrOperatorId(@Bind("userId") long userId);
 
-    @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result"
-            + "       where file_scan_result_id = f.scan_result_id) as scan_result"
-            + "  from file_upload as f"
-            + " where f.file_upload_id = :id")
+    @SqlQuery("SELECT f.file_upload_id AS file_upload_id, "
+            + "     f.file_upload_guid AS file_upload_guid, "
+            + "     f.study_id AS study_id, "
+            + "     f.operator_user_id AS operator_user_id, "
+            + "     f.participant_user_id AS participant_user_id, "
+            + "     f.blob_name AS blob_name, "
+            + "     f.mime_type AS mime_type, "
+            + "     f.file_name AS file_name, "
+            + "     f.file_size AS file_size, "
+            + "     f.is_verified AS is_verified, "
+            + "     f.created_at AS created_at, "
+            + "     f.uploaded_at AS uploaded_at, "
+            + "     f.scanned_at AS scanned_at, "
+            + "     fsr.file_scan_result_code AS scan_result, "
+            + "     f.notification_sent_at AS notification_sent_at "
+            + "FROM file_upload AS f "
+            + " JOIN file_scan_result AS fsr ON fsr.file_scan_result_id = f.scan_result_id "
+            + "WHERE f.file_upload_id IN (<uploadIds>)")
     @RegisterConstructorMapper(FileUpload.class)
-    Optional<FileUpload> findById(@Bind("id") long fileUploadId);
+    List<FileUpload> findByIds(@BindList("uploadIds") long... uploadIds);
+
+    default Optional<FileUpload> findById(long fileUploadId) {
+        return findByIds(fileUploadId).stream().findFirst();
+    }
 
     @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result"
             + "       where file_scan_result_id = f.scan_result_id) as scan_result"
