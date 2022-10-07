@@ -29,10 +29,6 @@ public class SingularAOMSupport implements CustomTask {
     protected Config cfg;
     protected Config varsCfg;
 
-    public SingularAOMSupport() {
-        super();
-    }
-
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
@@ -125,7 +121,7 @@ public class SingularAOMSupport implements CustomTask {
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("update question set is_write_once = false where question_id = :questionId  \n")
+        @SqlUpdate("update question set is_write_once = false where question_id = :questionId    ")
         int updateQuestionDef(@Bind("questionId") long questionId);
 
         @SqlUpdate("insert into expression (expression_guid, expression_text) values (:guid, :text)")
@@ -135,59 +131,59 @@ public class SingularAOMSupport implements CustomTask {
         @SqlUpdate("update event_configuration set precondition_expression_id = :exprId where event_configuration_id = :eventConfigId")
         int updateEventConfigPrecondExpr(@Bind("eventConfigId") long eventConfigId, @Bind("exprId") long exprId);
 
-        @SqlQuery("select e.event_configuration_id\n"
-                + "from  event_configuration as e\n"
-                + "join event_action ea on e.event_action_id = ea.event_action_id\n"
-                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
-                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
-                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id\n"
-                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
-                + " join expression as ex on ex.expression_id = e.precondition_expression_id\n"
-                + "where e.umbrella_study_id = :studyId \n"
-                + "and e.is_active = true\n"
-                + "and sa.study_activity_code = :activityCode \n"
-                + "and ex.expression_text = 'true' and st.activity_instance_status_type_code = 'COMPLETE' \n"
+        @SqlQuery("select e.event_configuration_id  "
+                + "from  event_configuration as e  "
+                + "join event_action ea on e.event_action_id = ea.event_action_id  "
+                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id  "
+                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id  "
+                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id  "
+                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id  "
+                + " join expression as ex on ex.expression_id = e.precondition_expression_id  "
+                + "where e.umbrella_study_id = :studyId   "
+                + "and e.is_active = true  "
+                + "and sa.study_activity_code = :activityCode   "
+                + "and ex.expression_text = 'true' and st.activity_instance_status_type_code = 'COMPLETE'   "
                 + "and eat.event_action_type_code = :actionType ")
         Long findEventConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode,
                                @Bind("actionType") String actionType);
 
-        @SqlQuery("select e.event_configuration_id\n"
-                + " from  event_configuration as e\n"
-                + " join event_action ea on e.event_action_id = ea.event_action_id\n"
-                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
-                + " join copy_answer_event_action caea on caea.event_action_id = ea.event_action_id\n"
-                + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id\n"
-                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
-                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
-                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order = 1\n"
-                + "and sa.study_activity_code = :activityCode \n"
-                + "and eat.event_action_type_code = 'COPY_ANSWER'\n"
-                + "and cc.copy_from_previous_instance = true;\n ")
+        @SqlQuery("select e.event_configuration_id  "
+                + " from  event_configuration as e  "
+                + " join event_action ea on e.event_action_id = ea.event_action_id  "
+                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id  "
+                + " join copy_answer_event_action caea on caea.event_action_id = ea.event_action_id  "
+                + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id  "
+                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id  "
+                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id  "
+                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order = 1  "
+                + "and sa.study_activity_code = :activityCode   "
+                + "and eat.event_action_type_code = 'COPY_ANSWER'  "
+                + "and cc.copy_from_previous_instance = true;")
         Long findEventCopyConfigId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode);
 
-        @SqlQuery("select e.event_configuration_id\n"
-                + " from  event_configuration as e\n"
-                + " join event_action ea on e.event_action_id = ea.event_action_id\n"
-                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id\n"
-                + " join copy_answer_event_action caea on caea.event_action_id = ea.event_action_id\n"
-                + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id\n"
-                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id\n"
-                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id\n"
-                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id\n"
-                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order = :execOrder\n"
-                + "and sa.study_activity_code = :activityCode \n"
-                + "and st.activity_instance_status_type_code = 'CREATED'\n"
-                + "and eat.event_action_type_code = 'COPY_ANSWER'\n"
-                + "and cc.copy_from_previous_instance = false;\n ")
+        @SqlQuery("select e.event_configuration_id  "
+                + " from  event_configuration as e  "
+                + " join event_action ea on e.event_action_id = ea.event_action_id  "
+                + " join event_action_type as eat on eat.event_action_type_id = ea.event_action_type_id  "
+                + " join copy_answer_event_action caea on caea.event_action_id = ea.event_action_id  "
+                + " join copy_configuration cc on cc.copy_configuration_id = caea.copy_configuration_id  "
+                + " join activity_status_trigger ast on e.event_trigger_id = ast.activity_status_trigger_id  "
+                + " join study_activity sa on sa.study_activity_id = ast.study_activity_id  "
+                + " join activity_instance_status_type st on st.activity_instance_status_type_id = ast.activity_instance_status_type_id  "
+                + "where e.umbrella_study_id = :studyId  and e.is_active = true and e.execution_order = :execOrder  "
+                + "and sa.study_activity_code = :activityCode   "
+                + "and st.activity_instance_status_type_code = 'CREATED'  "
+                + "and eat.event_action_type_code = 'COPY_ANSWER'  "
+                + "and cc.copy_from_previous_instance = false;")
         Long findEventCopyConfigByStatus(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode,
                                          @Bind("execOrder") int execOrder);
 
-        @SqlQuery("select q.question_id\n"
-                + "from question q, study_activity sa, question_stable_code qsc\n"
-                + "where q.study_activity_id = sa.study_activity_id\n"
-                + "and qsc.question_stable_code_id = q.question_stable_code_id\n"
-                + "and sa.study_activity_code = :activityCode \n"
-                + "and qsc.stable_id = :stableId \n"
+        @SqlQuery("select q.question_id  "
+                + "from question q, study_activity sa, question_stable_code qsc  "
+                + "where q.study_activity_id = sa.study_activity_id  "
+                + "and qsc.question_stable_code_id = q.question_stable_code_id  "
+                + "and sa.study_activity_code = :activityCode   "
+                + "and qsc.stable_id = :stableId   "
                 + "and q.is_write_once = true"
                 + " and sa.study_id = :studyId")
         Long findQuestionId(@Bind("studyId") long studyId, @Bind("activityCode") String activityCode, @Bind("stableId") String stableId);
