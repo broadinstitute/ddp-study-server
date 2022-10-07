@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.abstraction.MedicalRecordFinalDaoLive;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
@@ -31,6 +32,8 @@ import org.broadinstitute.dsm.model.elastic.migration.ClinicalOrderMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.CohortTagMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.DynamicFieldsMappingMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.KitRequestShippingMigrator;
+import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalMappingMigrator;
+import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordFinalMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.OncHistoryDetailsMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.OncHistoryMigrator;
@@ -115,11 +118,12 @@ public class DSMtasksSubscription {
             logger.info("Starting migrating DSM data to ES for study: " + study + " with index: " + index);
             List<? extends Exportable> exportables = Arrays.asList(
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
-                    new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
-                    new OncHistoryDetailsMigrator(index, study), new OncHistoryMigrator(index, study),
-                    new ParticipantDataMigrator(index, study), AdditionalParticipantMigratorFactory.of(index, study),
-                    new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
-                    new TissueMigrator(index, study), new SMIDMigrator(index, study),
+                    new DynamicFieldsMappingMigrator(index, study), new MedicalRecordFinalMappingMigrator(index, study),
+                    new MedicalRecordFinalMigrator(index, study, new MedicalRecordFinalDaoLive()),
+                    new MedicalRecordMigrator(index, study), new OncHistoryDetailsMigrator(index, study),
+                    new OncHistoryMigrator(index, study), new ParticipantDataMigrator(index, study),
+                    AdditionalParticipantMigratorFactory.of(index, study), new ParticipantMigrator(index, study),
+                    new KitRequestShippingMigrator(index, study), new TissueMigrator(index, study), new SMIDMigrator(index, study),
                     new CohortTagMigrator(index, study, new CohortTagDaoImpl()),
                     new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()));
             exportables.forEach(Exportable::export);

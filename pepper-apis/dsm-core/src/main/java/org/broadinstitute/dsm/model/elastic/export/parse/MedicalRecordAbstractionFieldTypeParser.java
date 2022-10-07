@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
@@ -91,13 +92,18 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
 
         for (Map<String, String> possibleValue : possibleValues) {
             String fieldName = possibleValue.get(VALUE);
-            camelCaseConverter.setStringToConvert(fieldName);
-            String camelCaseFieldName = camelCaseConverter.convert();
-            String fieldType = possibleValue.get(TYPE);
-            this.setType(fieldType);
-            Object fieldMapping = this.parse(columnName);
-            innerMapping.put(camelCaseFieldName, fieldMapping);
+            if (Objects.isNull(fieldName)) {
+                innerMapping.put(columnName, TEXT_KEYWORD_MAPPING);
+            } else {
+                camelCaseConverter.setStringToConvert(fieldName);
+                String camelCaseFieldName = camelCaseConverter.convert();
+                String fieldType = possibleValue.get(TYPE);
+                this.setType(fieldType);
+                Object fieldMapping = this.parse(columnName);
+                innerMapping.put(camelCaseFieldName, fieldMapping);
+            }
         }
+
 
         return finalMapping;
     }

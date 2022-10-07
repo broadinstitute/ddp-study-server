@@ -45,18 +45,22 @@ public class MultiTypeArraySourceGenerator extends MedicalRecordAbstractionSourc
             List<Map<String, Object>> possibleValues =
                     ObjectMapperSingleton.readValue(possibleValuesAsString, new TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> possibleValue : possibleValues) {
-                MedicalRecordAbstractionFieldType fieldType =
-                        MedicalRecordAbstractionFieldType.of(String.valueOf(possibleValue.get(DBConstants.TYPE)));
-                MedicalRecordAbstractionSourceGenerator sourceGenerator = MedicalRecordAbstractionSourceGeneratorFactory.spawn(fieldType);
-                String currentField = String.valueOf(possibleValue.get(DBConstants.VALUE));
-                Optional<Object> currentValue = values.stream()
-                        .filter(map -> map.containsKey(currentField) && Objects.nonNull(map.get(currentField)))
-                        .map(map -> map.get(currentField))
-                        .findFirst();
-                currentValue.ifPresent(val -> {
-                    Map<String, Object> sourceMap = sourceGenerator.toMap(columnNameBuilder.apply(currentField), String.valueOf(val));
-                    dynamicFields.putAll(sourceMap);
-                });
+                if (possibleValue.isEmpty()) {
+                    dynamicFields.putAll(new TextSourceGenerator().toMap(camelCaseFieldName, value));
+                } else {
+                    MedicalRecordAbstractionFieldType fieldType =
+                            MedicalRecordAbstractionFieldType.of(String.valueOf(possibleValue.get(DBConstants.TYPE)));
+                    MedicalRecordAbstractionSourceGenerator sourceGenerator = MedicalRecordAbstractionSourceGeneratorFactory.spawn(fieldType);
+                    String currentField = String.valueOf(possibleValue.get(DBConstants.VALUE));
+                    Optional<Object> currentValue = values.stream()
+                            .filter(map -> map.containsKey(currentField) && Objects.nonNull(map.get(currentField)))
+                            .map(map -> map.get(currentField))
+                            .findFirst();
+                    currentValue.ifPresent(val -> {
+                        Map<String, Object> sourceMap = sourceGenerator.toMap(columnNameBuilder.apply(currentField), String.valueOf(val));
+                        dynamicFields.putAll(sourceMap);
+                    });
+                }
             }
         } catch (JsonParseException jpe) {
             TextSourceGenerator sourceGenerator = new TextSourceGenerator();
