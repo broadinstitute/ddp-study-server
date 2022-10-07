@@ -321,6 +321,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String sampleNotes;
 
     private Boolean requiresInsertInKitTracking;
+    private String kitLabelPrefix;
+    private Long kitLabelLength;
 
     public KitRequestShipping() {
     }
@@ -336,21 +338,21 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this(null, collaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
                 scanDate, error, null, receiveDate, null, deactivatedDate, null, null, null, null, null, null, externalOrderNumber, null,
                 externalOrderStatus, null, testResult, upsTrackingStatus, upsReturnStatus, externalOrderDate, careEvolve, uploadReason,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
     }
 
     public KitRequestShipping(String participantId, String collaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
                               String receiveDateString, String hruid, String gender) {
         this(participantId, collaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
                 null, null, null, null, null, null, null, dsmKitId, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, receiveDateString, hruid, gender, null, null, null, null);
+                null, null, receiveDateString, hruid, gender, null, null, null, null, null, null);
     }
 
     public KitRequestShipping(Long dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
                               String message) {
         this(null, null, null, null, null, null, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
                 easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
     }
 
     // shippingId = ddp_label !!!
@@ -363,7 +365,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
                               String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction,
-                              String receivedBy, String sampleNotes) {
+                              String receivedBy, String sampleNotes, String kitLabelPrefix, Long kitLabelLength) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -402,6 +404,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.sequencingRestriction = sequencingRestriction;
         this.receivedBy = receivedBy;
         this.sampleNotes = sampleNotes;
+        this.kitLabelPrefix = kitLabelPrefix;
+        this.kitLabelLength = kitLabelLength;
     }
 
     public Boolean getError() {
@@ -436,7 +440,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
                         rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION),
-                        rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES));
+                        rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES),
+                        rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
@@ -925,7 +930,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
         String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
         SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
+            SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement insertKitRequest = conn.prepareStatement(
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_REQUEST), Statement.RETURN_GENERATED_KEYS)) {
                 insertKitRequest.setString(1, instanceId);
@@ -943,7 +948,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 insertKitRequest.executeUpdate();
                 try (ResultSet rs = insertKitRequest.getGeneratedKeys()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getString(1);
+                        KitRequestShipping kitRequestShipping = new KitRequestShipping();
+                        kitRequestShipping.setDsmKitRequestId(rs.getLong(1));
+                        dbVals.resultValue = kitRequestShipping;
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Error getting id of new kit request ", e);
@@ -952,7 +959,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException == null && dbVals.resultValue != null) {
-                writeNewKit(conn, (String) dbVals.resultValue, addressIdTo, errorMessage, needsApproval);
+                KitRequestShipping kitRequestShipping = (KitRequestShipping) dbVals.resultValue;
+                SimpleResult simpleResultKitWriting = writeNewKit(conn, String.valueOf(kitRequestShipping.getDsmKitRequestId()),
+                        addressIdTo, errorMessage, needsApproval);
+                kitRequestShipping.setDsmKitId((Long) simpleResultKitWriting.resultValue);
+                dbVals.resultValue = kitRequestShipping;
             }
             return dbVals;
         });
@@ -963,11 +974,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
 
         if (Objects.nonNull(ddpInstance)) {
-            KitRequestShipping kitRequestShipping = new KitRequestShipping();
+            KitRequestShipping kitRequestShipping = (KitRequestShipping) results.resultValue;
             kitRequestShipping.setParticipantId(ddpParticipantId);
             kitRequestShipping.setCollaboratorParticipantId(collaboratorPatientId);
             kitRequestShipping.setBspCollaboratorSampleId(collaboratorSampleId);
-            kitRequestShipping.setDsmKitRequestId(Long.parseLong(String.valueOf(results.resultValue)));
             kitRequestShipping.setMessage(errorMessage);
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
@@ -989,15 +999,15 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 e.printStackTrace();
             }
 
+            logger.info("Added kitRequest w/ ddpKitRequestId " + ddpKitRequestId);
+            return String.valueOf(kitRequestShipping.getDsmKitRequestId());
         }
-
-        logger.info("Added kitRequest w/ ddpKitRequestId " + ddpKitRequestId);
-        return (String) results.resultValue;
+        throw new RuntimeException("Error returning kit request information for ddpKitRequestId " + ddpKitRequestId);
     }
 
     private static SimpleResult writeNewKit(Connection conn, String kitRequestId, String addressIdTo, String errorMessage,
                                             boolean needsApproval) {
-        SimpleResult dbVals = new SimpleResult();
+        SimpleResult dbVals = new SimpleResult(0);
         try (PreparedStatement insertKit = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
             insertKit.setString(1, kitRequestId);
             if (StringUtils.isNotBlank(addressIdTo)) {
@@ -1015,7 +1025,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             insertKit.executeUpdate();
             try (ResultSet rs = insertKit.getGeneratedKeys()) {
                 if (rs.next()) {
-                    dbVals.resultValue = rs.getString(1);
+                    dbVals.resultValue = rs.getLong(1);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error getting id of new kit request ", e);
@@ -1730,7 +1740,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return Optional.of(ddpInstanceId);
     }
 
-    public boolean isBloodKit() {
+    public boolean isKitRequiringTrackingScan() {
         if (Objects.isNull(requiresInsertInKitTracking)) {
             return false;
         }
