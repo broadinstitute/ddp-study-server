@@ -154,11 +154,36 @@ public interface AnswerDao extends SqlObject {
         if (answer.getValue() == null) {
             return;
         }
-        List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
-        int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
+
+        final List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
+        final int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
         if (inserted.length != uploadIds.size()) {
-            throw new DaoException("Not all file uploads were assigned to answer " + answerId);
+            final var message = String.format("Failed to insert uploads ids for [answer:%s] (%s inserted, %s expected)",
+                    answerId,
+                    inserted.length,
+                    uploadIds.size());
+            throw new DaoException(message);
         }
+
+        /*
+         * The answer dto needs to be pulled directly here as the `Answer` class does not
+         *  include the lastUpdatedAt time. It could be added- the ideal spot would likely be
+         *  in {@link AnswerWithValueReducer}- but that would involve altering the ctors for a
+         *  very widely used base class. This should work for the time being.
+         *  (bskinner - 20221007)
+         */
+        final var uploadedAt = getAnswerSql()
+                .findDtoById(answerId)
+                .map(AnswerDto::getLastUpdatedAt)
+                .orElse(Instant.now());
+        final var fileUploadDao = getHandle().attach(FileUploadDao.class);
+        fileUploadDao.findByIds(uploadIds.stream().mapToLong(id -> id).toArray())
+                .forEach(record -> {
+                    fileUploadDao.updateStatus(record.getId(),
+                            uploadedAt,
+                            record.getScannedAt(),
+                            record.getScanResult());
+                });
     }
 
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
