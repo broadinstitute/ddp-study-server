@@ -481,7 +481,7 @@ public interface AnswerDao extends SqlObject {
             boolean isChildAnswer = view.getColumn("is_child_answer", Boolean.class);
             String actInstanceGuid = view.getColumn("activity_instance_guid", String.class);
 
-            Answer answer;
+            final Answer answer;
             switch (type) {
                 case AGREEMENT:
                     answer = new AgreementAnswer(answerId, questionStableId, answerGuid, view.getColumn("aa_value", Boolean.class),
