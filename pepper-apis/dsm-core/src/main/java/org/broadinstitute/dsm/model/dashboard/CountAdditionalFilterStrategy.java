@@ -24,7 +24,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
 
-    public static final String FILTER_AND_OR_DELIMITER = "((?<=AND)|(?<=\\sAND)|(?=AND\\s])|(?<=\\sOR)|(?=OR\\s)|(?<=\\sOR)|(?=AND\\s))";
+    public static final String FILTER_AND_OR_DELIMITER = "(?<!\\()((?=\\bOR\\b)|(?<=\\bOR\\b))(?![\\w\\s.='\"]*[)])|"
+            + "(?<!\\()((?=\\bAND\\b)|(?<=\\bAND\\b))(?![\\w\\s.='\"]*[)])";
 
     public CountAdditionalFilterStrategy(QueryBuildPayload queryBuildPayload) {
         super(queryBuildPayload);
@@ -70,6 +71,8 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
                 (prev, curr) -> Stream.concat(prev.stream(), curr.stream()).collect(Collectors.toList()));
         result.merge(Filter.OR_TRIMMED, dsmFilters.get(Filter.OR_TRIMMED),
                 (prev, curr) -> Stream.concat(prev.stream(), curr.stream()).collect(Collectors.toList()));
+        result.put(Filter.AND_TRIMMED, result.get(Filter.AND_TRIMMED).stream().distinct().collect(Collectors.toList()));
+        result.put(Filter.OR_TRIMMED, result.get(Filter.OR_TRIMMED).stream().distinct().collect(Collectors.toList()));
         return result;
     }
 

@@ -158,5 +158,32 @@ public class CountAdditionalFilterStrategyTest {
         assertEquals(expectedQuery, actualQuery);
     }
 
+    @Test
+    public void processMultipleAdditionalFilterWithParenthesis() {
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
+                .withEsFilterPath("profile.createdAt")
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL "
+                        + "AND ( t.tissueType = 'review' OR t.tissueType = 'no' OR t.tissueType = 'bla' ) ")
+                .build();
+        DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
+                .withDashboardLabelFilter(labelFilterDto)
+                .build();
+        QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
+        CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
+        BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("dsm.tissue",
+                QueryBuilders.boolQuery()
+                .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "review"))
+                .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "no"))
+                .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "bla")),
+                ScoreMode.Avg)
+        );
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+
+        assertEquals(expectedQuery, actualQuery);
+    }
 
 }
