@@ -186,4 +186,44 @@ public class CountAdditionalFilterStrategyTest {
         assertEquals(expectedQuery, actualQuery);
     }
 
+    @Test
+    public void processMultipleAdditionalFilterWithParenthesisAndEdgeCases() {
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
+                .withEsFilterPath("profile.createdAt")
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL "
+                        + "AND ( t.tissueType = 'review' OR t.tissueType = 'no' OR t.tissueType = 'bla' ) "
+                        + "OR JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = true"
+                        + "OR STR_TO_DATE(m.fax_sent,'%Y-%m-%d') = STR_TO_DATE('2021-12-17','%Y-%m-%d') "
+                        + "AND JSON_CONTAINS ( k.test_result , JSON_OBJECT ( 'result' , 'result' ) ) ")
+                .build();
+        DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
+                .withDashboardLabelFilter(labelFilterDto)
+                .build();
+        QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
+        CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
+        BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("dsm.tissue",
+                QueryBuilders.boolQuery()
+                .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "review"))
+                .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "no"))
+                .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "bla")),
+                ScoreMode.Avg)
+        );
+        expectedQuery.must(QueryBuilders.nestedQuery("dsm.kitRequestShipping",
+                QueryBuilders.matchQuery("dsm.kitRequestShipping.testResult.result", "result").operator(Operator.AND),
+                ScoreMode.Avg));
+        expectedQuery.should(QueryBuilders.nestedQuery("dsm.medicalRecord",
+                QueryBuilders.matchQuery("dsm.medicalRecord.dynamicFields.seeingIfBugExists", true).operator(Operator.AND),
+                ScoreMode.Avg));
+        expectedQuery.should(QueryBuilders.nestedQuery("dsm.medicalRecord",
+                QueryBuilders.matchQuery("dsm.medicalRecord.faxSent", "2021-12-17").operator(Operator.AND),
+                ScoreMode.Avg));
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+
+        assertEquals(expectedQuery, actualQuery);
+    }
+
 }
