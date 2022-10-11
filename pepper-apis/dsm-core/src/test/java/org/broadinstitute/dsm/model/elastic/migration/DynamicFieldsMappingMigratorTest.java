@@ -24,8 +24,8 @@ public class DynamicFieldsMappingMigratorTest {
     @Ignore
     public void testExport() {
 
-        final String index = "participants_structured.cmi.cmi-mpc";
-        final String study = "Prostate";
+        final String index = "participants_structured.cmi.cmi-mbc";
+        final String study = "Pepper-MBC";
 
         List<? extends Exportable> exportables = Arrays.asList(
                 // DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first

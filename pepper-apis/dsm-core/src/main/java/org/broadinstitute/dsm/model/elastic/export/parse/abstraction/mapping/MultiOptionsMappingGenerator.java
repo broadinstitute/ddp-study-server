@@ -11,7 +11,6 @@ public class MultiOptionsMappingGenerator extends MedicalRecordAbstractionMappin
     @Override
     public Map<String, Object> toMap(String fieldName) {
         return new HashMap<>(Map.of(
-                TYPE, NESTED,
                 PROPERTIES, new HashMap<>(Map.of(
                         OTHER, baseParser.forString(fieldName),
                         VALUES, new HashMap<>(Map.of(
