@@ -43,7 +43,7 @@ SELECT
     -- and expected row position
     LEFT JOIN
     (SELECT
-        i.parent_answer_id,ca.question_id,ca.answer_guid,ca.answer_id,i.response_order
+        i.parent_answer_id, ca.question_id, ca.answer_guid, ca.last_updated_at, ca.answer_id, i.response_order
     FROM
         composite_answer_item i
     LEFT JOIN
