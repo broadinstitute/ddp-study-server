@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.db.dao;
 
 import static java.util.stream.Collectors.toList;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -89,7 +88,7 @@ public interface JdbiCompositeAnswer extends SqlObject {
                                 lastChildRowAnswerDtos
                                         .add(new AnswerDto(childAnswerId,
                                                 rs.getString("child_answer_guid"),
-                                                rs.getObject("child_last_updated_at", Instant.class),
+                                                rs.getLong("child_last_updated_at"),
                                                 rs.getLong("child_question_id"),
                                                 rs.getString("child_question_stable_id"),
                                                 QuestionType.valueOf(rs.getString("child_question_type_code")),
@@ -99,6 +98,4 @@ public interface JdbiCompositeAnswer extends SqlObject {
                         });
         return Optional.ofNullable(answerSummary.getGuid() == null ? null : answerSummary);
     }
-
-
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -175,6 +176,7 @@ public interface AnswerDao extends SqlObject {
         final var uploadedAt = getAnswerSql()
                 .findDtoById(answerId)
                 .map(AnswerDto::getLastUpdatedAt)
+                .map(timestamp -> Instant.ofEpochMilli((long)timestamp))
                 .orElse(Instant.now());
         final var fileUploadDao = getHandle().attach(FileUploadDao.class);
         fileUploadDao.findByIds(uploadIds.stream().mapToLong(id -> id).toArray())
