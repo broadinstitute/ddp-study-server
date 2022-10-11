@@ -24,6 +24,10 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
 
+    /*
+        regex to separate complex filters full of with AND, OR operators, also covers edge case not to separate by AND or OR
+        operator, if those operators are used between parenthesis (such case is filter by multiple options question)
+     */
     public static final String FILTER_AND_OR_DELIMITER = "(?<!\\()((?=\\bOR\\b)|(?<=\\bOR\\b))(?![\\w\\s.='\"]*[)])|"
             + "(?<!\\()((?=\\bAND\\b)|(?<=\\bAND\\b))(?![\\w\\s.='\"]*[)])";
 
