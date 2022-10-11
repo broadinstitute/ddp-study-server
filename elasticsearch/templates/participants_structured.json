@@ -1944,11 +1944,40 @@
                 "medicalRecordAbstractionFieldId": {
                   "type": "keyword"
                 },
+                "type": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
                 "noData": {
                   "type": "long"
                 },
                 "dataReleaseId": {
                   "type": "long"
+                },
+                "displayName": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "orderNumber": {
+                  "type": "integer"
                 }
               }
             },
