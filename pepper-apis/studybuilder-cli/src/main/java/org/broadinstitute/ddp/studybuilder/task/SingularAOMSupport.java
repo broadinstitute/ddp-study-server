@@ -23,8 +23,10 @@ public class SingularAOMSupport implements CustomTask {
     private static final String STUDY_GUID  = "singular";
     private static final String PRECOND_EXPR = "!user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
     private static final String COPY_PRECOND_EXPR = "user.studies[\"singular\"].forms[\"CONSENT_SELF\"].isStatus(\"COMPLETE\")";
-    private static final String RELEASE_EXPR  = "!(user.studies[\"singular\"].forms[\"MEDICAL_RECORD_RELEASE\"].questions[\"MRR_STAFF_GETS_RECORDS_DIRECTLY\"].isAnswered() &&\n" +
-            "user.studies[\"singular\"].forms[\"MEDICAL_RECORD_RELEASE\"].questions[\"MRR_STAFF_GETS_RECORDS_DIRECTLY\"].answers.hasOption(\"TRUE\"))";
+    private static final String RELEASE_EXPR  = "!(user.studies[\"singular\"].forms[\"MEDICAL_RECORD_RELEASE\"]"
+            + ".questions[\"MRR_STAFF_GETS_RECORDS_DIRECTLY\"]"
+            + ".isAnswered() && user.studies[\"singular\"].forms[\"MEDICAL_RECORD_RELEASE\"]"
+            + ".questions[\"MRR_STAFF_GETS_RECORDS_DIRECTLY\"].answers.hasOption(\"TRUE\"))";
 
     protected Config dataCfg;
     protected Path cfgPath;
@@ -59,7 +61,6 @@ public class SingularAOMSupport implements CustomTask {
         long questionId = helper.findQuestionId(studyDto.getId(), "MEDICAL_RECORD_RELEASE", "MRR_SIGNATURE");
         helper.updateQuestionDef(questionId);
         log.info("Update QuestionDef with id: {} ", questionId);
-
     }
 
     private void updateEvents(Handle handle, StudyDto studyDto) {
