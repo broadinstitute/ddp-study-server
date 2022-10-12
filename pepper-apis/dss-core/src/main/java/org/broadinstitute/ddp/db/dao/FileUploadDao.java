@@ -81,10 +81,11 @@ public interface FileUploadDao extends SqlObject {
             + "     f.created_at AS created_at, "
             + "     f.uploaded_at AS uploaded_at, "
             + "     f.scanned_at AS scanned_at, "
-            + "     fsr.file_scan_result_code AS scan_result, "
-            + "     f.notification_sent_at AS notification_sent_at "
+            + "     f.notification_sent_at AS notification_sent_at, "
+            + "     (SELECT file_scan_result_code "
+            + "         FROM file_scan_result "
+            + "         WHERE file_scan_result_id = f.scan_result_id) AS scan_result "
             + "FROM file_upload AS f "
-            + " JOIN file_scan_result AS fsr ON fsr.file_scan_result_id = f.scan_result_id "
             + "WHERE f.file_upload_id IN (<uploadIds>)")
     @RegisterConstructorMapper(FileUpload.class)
     List<FileUpload> findByIds(@BindList("uploadIds") long... uploadIds);
