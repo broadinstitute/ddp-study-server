@@ -165,6 +165,11 @@ public interface AnswerDao extends SqlObject {
             throw new DaoException(message);
         }
 
+        if (uploadIds.isEmpty()) {
+            // No file uploads specified- nothing more to do here.
+            return;
+        }
+
         /*
          * The answer dto needs to be pulled directly here as the `Answer` class does not
          *  include the lastUpdatedAt time. It could be added- the ideal spot would likely be
@@ -178,6 +183,7 @@ public interface AnswerDao extends SqlObject {
                 .map(timestamp -> Instant.ofEpochMilli((long)timestamp))
                 .orElse(Instant.now());
         final var fileUploadDao = getHandle().attach(FileUploadDao.class);
+
         fileUploadDao.findByIds(uploadIds.stream().mapToLong(id -> id).toArray())
                 .forEach(record -> {
                     fileUploadDao.updateStatus(record.getId(),
