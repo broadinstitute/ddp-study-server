@@ -23,6 +23,8 @@ public class SingularAOMSupport implements CustomTask {
     private static final String STUDY_GUID  = "singular";
     private static final String PRECOND_EXPR = "!user.studies[\"singular\"].forms[\"CHILD_CONTACT\"].isStatus(\"COMPLETE\")";
     private static final String COPY_PRECOND_EXPR = "user.studies[\"singular\"].forms[\"CONSENT_SELF\"].isStatus(\"COMPLETE\")";
+    private static final String RELEASE_EXPR  = "!(user.studies[\"singular\"].forms[\"MEDICAL_RECORD_RELEASE\"].questions[\"MRR_STAFF_GETS_RECORDS_DIRECTLY\"].isAnswered() &&\n" +
+            "user.studies[\"singular\"].forms[\"MEDICAL_RECORD_RELEASE\"].questions[\"MRR_STAFF_GETS_RECORDS_DIRECTLY\"].answers.hasOption(\"TRUE\"))";
 
     protected Config dataCfg;
     protected Path cfgPath;
@@ -118,6 +120,10 @@ public class SingularAOMSupport implements CustomTask {
         helper.updateEventConfigPrecondExpr(eventConfigId, expressionId);
         log.info("Updated event configuration {} with pre-cond exprId: {} ", eventConfigId, expressionId);
 
+        Long blockExprId = helper.getBlockExpressionId("MRR_RECORD_SEND_OPTIONS", studyDto.getId());
+        helper.updateExpression(blockExprId, RELEASE_EXPR);
+        log.info("Updated blockExprId  {} with Expr: {} ", blockExprId, RELEASE_EXPR);
+
     }
 
     private interface SqlHelper extends SqlObject {
@@ -191,6 +197,18 @@ public class SingularAOMSupport implements CustomTask {
         @SqlQuery("SELECT precondition_expression_id FROM event_configuration WHERE event_configuration_id = :eventConfigId")
         Long getPreCondExpressionIdByEventConfigId(@Bind("eventConfigId") long eventConfigId);
 
+        @SqlQuery("select e.expression_id from block_enabled_expression be, expression e, block__question bq, "
+                + " question q, question_stable_code qsc \n"
+                + "                where be.expression_id = e.expression_id \n"
+                + "                and bq.block_id = be.block_id \n"
+                + "                and q.question_id = bq.question_id \n"
+                + "                and qsc.question_stable_code_id = q.question_stable_code_id \n"
+                + "                and qsc.stable_id = :stableId \n"
+                + "                and qsc.umbrella_study_id = :studyId")
+        long getBlockExpressionId(@Bind("stableId") String stableId, @Bind("studyId") long studyId);
+
+        @SqlUpdate("update expression set expression_text = :expressionText where expression_id = :expressionId")
+        int updateExpression(@Bind("expressionId") long expressionId, @Bind("expressionText") String expressionText);
     }
 
 }
