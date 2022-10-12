@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Study Configurations" pattern="file[studybuilder-cli]:studies//*" />
+</component>
