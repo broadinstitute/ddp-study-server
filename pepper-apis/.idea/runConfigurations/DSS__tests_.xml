@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="DSS (tests)" type="JUnit" factoryName="JUnit">
+    <module name="dss-core" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="ALTERNATIVE_JRE_PATH" value="11" />
+    <option name="PACKAGE_NAME" value="org.broadinstitute.ddp.route" />
+    <option name="MAIN_CLASS_NAME" value="org.broadinstitute.ddp.route.ServerInSameProcessIntegrationTestSuite" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="VM_PARAMETERS" value="-Dconfig.file=&quot;$USER_HOME$/.ddp/application.dss.test.conf&quot; -Ditext.license=&quot;$ProjectFileDir$/output-config/itextkey.xml&quot; -DfailIfNoTests=false -ea" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

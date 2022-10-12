@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PEX REPL" type="Application" factoryName="Application" activateToolWindowBeforeRun="false">
+    <option name="ALTERNATIVE_JRE_PATH" value="11" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="org.broadinstitute.ddp.PexREPL" />
+    <module name="dss-core" />
+    <option name="VM_PARAMETERS" value="-Dconfig.file=&quot;$USER_HOME$/.ddp/application.dss.conf&quot; -ea" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
