@@ -320,4 +320,5 @@
     <include file="db-changes/schema/DDP-8631-add-country-field-to-medical-provider.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8606.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8554.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/PEPPER-37-add-auth0-log-event-code.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
