@@ -100,7 +100,13 @@ public class FieldSettings {
                                         possibleValues, rs.getInt(DBConstants.ORDER_NUMBER), actionValues,
                                         rs.getBoolean(DBConstants.READONLY), maxLength, null);
                         if (rs.getString(DBConstants.DETAILS) != null) {
-                            setting.setDetails(new ObjectMapper().readValue(rs.getString(DBConstants.DETAILS), HashMap.class));
+                            try {
+                                setting.setDetails(new ObjectMapper().readValue(rs.getString(DBConstants.DETAILS), HashMap.class));
+                            } catch (JsonMappingException e) {
+                                logger.error("Unable to get the FieldSetting for " + rs.getString(DBConstants.COLUMN_NAME), e);
+                            } catch (JsonProcessingException e) {
+                                logger.error("Unable to parse the FieldSetting json for " + rs.getString(DBConstants.COLUMN_NAME), e);
+                            }
                         }
                         if (fieldSettingsList.containsKey(type)) {
                             // If we have already found settings with this field_type, add this
@@ -115,10 +121,6 @@ public class FieldSettings {
                             fieldSettingsList.put(type, subList);
                         }
                     }
-                } catch (JsonMappingException e) {
-                    logger.error("Unable to get the FieldSetting ", e);
-                } catch (JsonProcessingException e) {
-                    logger.error("Unable to parse the FieldSetting json ", e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
