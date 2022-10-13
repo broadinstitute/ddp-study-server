@@ -8,7 +8,7 @@
     <changeSet author="sampath" id="20221013-add-auth0-log-event-code-table">
         <sql>
         insert into auth0_log_event_code (code, title, description)
-        values ('signup_pwd_leak', 'Breached password', 'Someone behind the IP address: ip attempted to login with a leaked password.');
+        values ('signup_pwd_leak', 'Breached password', 'A login was attempted with a leaked password.');
         </sql>
     </changeSet>
 
