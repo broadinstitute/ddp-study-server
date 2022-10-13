@@ -94,8 +94,9 @@ public class FieldSettings {
                         List<Value> actionValues = getValueListFromJsonString(rs, DBConstants.ACTIONS);
                         String type = rs.getString(DBConstants.FIELD_TYPE);
                         Integer maxLength = (Integer) rs.getObject(DBConstants.MAX_LENGTH);
+                        String columnName = rs.getString(DBConstants.COLUMN_NAME);
                         FieldSettings setting =
-                                new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID), rs.getString(DBConstants.COLUMN_NAME),
+                                new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID), columnName,
                                         rs.getString(DBConstants.COLUMN_DISPLAY), type, rs.getString(DBConstants.DISPLAY_TYPE),
                                         possibleValues, rs.getInt(DBConstants.ORDER_NUMBER), actionValues,
                                         rs.getBoolean(DBConstants.READONLY), maxLength, null);
@@ -103,9 +104,9 @@ public class FieldSettings {
                             try {
                                 setting.setDetails(new ObjectMapper().readValue(rs.getString(DBConstants.DETAILS), HashMap.class));
                             } catch (JsonMappingException e) {
-                                logger.error("Unable to get the FieldSetting for " + rs.getString(DBConstants.COLUMN_NAME), e);
+                                logger.error("Unable to get the FieldSetting for " + columnName, e);
                             } catch (JsonProcessingException e) {
-                                logger.error("Unable to parse the FieldSetting json for " + rs.getString(DBConstants.COLUMN_NAME), e);
+                                logger.error("Unable to parse the FieldSetting json for " + columnName, e);
                             }
                         }
                         if (fieldSettingsList.containsKey(type)) {
