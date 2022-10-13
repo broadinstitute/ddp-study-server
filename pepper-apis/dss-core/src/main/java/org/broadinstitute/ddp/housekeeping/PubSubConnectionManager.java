@@ -196,7 +196,7 @@ public class PubSubConnectionManager {
 
     /**
      * Creates the creds provider needed for the emulator.
-     * @return
+     * @return an environment-correct credentials provider
      */
     private CredentialsProvider emulatedPubSubCredentialsProvider() {
         if (!useEmulator) {
@@ -208,7 +208,7 @@ public class PubSubConnectionManager {
 
     /**
      * Creates the channel need for the emulator
-     * @return
+     * @return an environment-correct managed channel instance
      */
     private ManagedChannel emulatedPubSubChannel() {
         if (!useEmulator) {

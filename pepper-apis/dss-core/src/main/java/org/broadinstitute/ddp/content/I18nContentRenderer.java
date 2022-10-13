@@ -42,15 +42,14 @@ public class I18nContentRenderer {
 
     private static Long defaultLangId = null;
 
-    private VelocityEngine engine;
+    private final VelocityEngine engine;
 
     private static Long getDefaultLanguageId() {
-        if (defaultLangId != null) {
-            return defaultLangId;
-        } else {
+        if (defaultLangId == null) {
             defaultLangId = LanguageStore.getDefault().getId();
-            return defaultLangId;
         }
+
+        return defaultLangId;
     }
 
     public static RenderValueProvider newValueProvider(Handle handle,
@@ -110,12 +109,11 @@ public class I18nContentRenderer {
         builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
 
-        final var userZone = zone;
         builder.setFirstCompletedDate(handle.attach(ActivityInstanceDao.class)
                 .findBaseResponseByInstanceId(activityInstanceId)
                 .map(ActivityResponse::getFirstCompletedAt)
                 .map(Instant::ofEpochMilli)
-                .map(x -> x.atZone(userZone))
+                .map(x -> x.atZone(TimeZone.getTimeZone("US/Central").toZoneId()))
                 .map(ZonedDateTime::toLocalDate)
                 .orElse(null));
 
