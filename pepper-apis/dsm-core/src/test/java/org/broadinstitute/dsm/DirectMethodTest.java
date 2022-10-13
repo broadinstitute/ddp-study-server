@@ -127,7 +127,7 @@ public class DirectMethodTest extends TestHelper {
                                                                              int orderNumber, boolean deleted) {
         FieldSettings setting =
                 new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType, possibleValues, orderNumber, null, false,
-                        null);
+                        null, null);
         if (settingId != null && deleted) {
             setting.setDeleted(true);
         }
