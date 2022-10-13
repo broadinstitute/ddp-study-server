@@ -158,11 +158,10 @@ public interface AnswerDao extends SqlObject {
         final List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
         final int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
         if (inserted.length != uploadIds.size()) {
-            final var message = String.format("Failed to insert uploads ids for [answer:%s] (%s inserted, %s expected)",
+            throw new DaoException(String.format("Failed to insert uploads ids for [answer:%s] (%s inserted, %s expected)",
                     answerId,
                     inserted.length,
-                    uploadIds.size());
-            throw new DaoException(message);
+                    uploadIds.size()));
         }
 
         if (uploadIds.isEmpty()) {

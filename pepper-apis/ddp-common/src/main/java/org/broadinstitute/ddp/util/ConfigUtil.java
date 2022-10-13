@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.util;
 
 import java.time.Instant;
-import java.util.Optional;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigRenderOptions;
@@ -52,18 +51,6 @@ public class ConfigUtil {
      */
     public static String getStringOrElse(Config cfg, String key, String defaultValue) {
         return cfg.hasPath(key) ? cfg.getString(key) : defaultValue;
-    }
-
-    public static Optional<String> getString(Config cfg, String key) {
-        if (cfg.hasPathOrNull(key)) {
-            if (cfg.getIsNull(key)) {
-                return Optional.empty();
-            } else {
-                return Optional.of(cfg.getString(key));
-            }
-        } else {
-            return Optional.empty();
-        }
     }
 
     /**
