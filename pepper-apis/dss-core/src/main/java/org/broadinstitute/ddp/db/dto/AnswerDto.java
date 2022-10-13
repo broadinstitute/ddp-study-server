@@ -15,6 +15,9 @@ public class AnswerDto {
     @ColumnName("answer_guid")
     String guid;
 
+    @ColumnName("last_updated_at")
+    long lastUpdatedAt;
+
     @ColumnName("question_id")
     long questionId;
 

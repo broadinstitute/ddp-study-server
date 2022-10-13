@@ -154,11 +154,42 @@ public interface AnswerDao extends SqlObject {
         if (answer.getValue() == null) {
             return;
         }
-        List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
-        int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
+
+        final List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
+        final int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
         if (inserted.length != uploadIds.size()) {
-            throw new DaoException("Not all file uploads were assigned to answer " + answerId);
+            throw new DaoException(String.format("Failed to insert uploads ids for [answer:%s] (%s inserted, %s expected)",
+                    answerId,
+                    inserted.length,
+                    uploadIds.size()));
         }
+
+        if (uploadIds.isEmpty()) {
+            // No file uploads specified- nothing more to do here.
+            return;
+        }
+
+        /*
+         * The answer dto needs to be pulled directly here as the `Answer` class does not
+         *  include the lastUpdatedAt time. It could be added- the ideal spot would likely be
+         *  in {@link AnswerWithValueReducer}- but that would involve altering the ctors for a
+         *  very widely used base class. This should work for the time being.
+         *  (bskinner - 20221007)
+         */
+        final var uploadedAt = getAnswerSql()
+                .findDtoById(answerId)
+                .map(AnswerDto::getLastUpdatedAt)
+                .map(timestamp -> Instant.ofEpochMilli((long)timestamp))
+                .orElse(Instant.now());
+        final var fileUploadDao = getHandle().attach(FileUploadDao.class);
+
+        fileUploadDao.findByIds(uploadIds.stream().mapToLong(id -> id).toArray())
+                .forEach(record -> {
+                    fileUploadDao.updateStatus(record.getId(),
+                            uploadedAt,
+                            record.getScannedAt(),
+                            record.getScanResult());
+                });
     }
 
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
@@ -481,7 +512,7 @@ public interface AnswerDao extends SqlObject {
             boolean isChildAnswer = view.getColumn("is_child_answer", Boolean.class);
             String actInstanceGuid = view.getColumn("activity_instance_guid", String.class);
 
-            Answer answer;
+            final Answer answer;
             switch (type) {
                 case AGREEMENT:
                     answer = new AgreementAnswer(answerId, questionStableId, answerGuid, view.getColumn("aa_value", Boolean.class),

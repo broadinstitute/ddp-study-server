@@ -425,6 +425,7 @@
           }
         },
         "files": {
+          "type": "nested",
           "properties": {
             "guid": {
               "type": "keyword"
@@ -436,7 +437,17 @@
               "type": "text"
             },
             "fileName": {
-              "type": "text"
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
             },
             "fileSize": {
               "type": "long"
