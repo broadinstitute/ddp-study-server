@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.Data;
@@ -31,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public class FieldSettings {
     public static final String GET_FIELD_SETTINGS = "SELECT setting.field_settings_id, setting.column_name, setting.max_length, "
             + "setting.column_display, setting.field_type, setting.display_type, setting.possible_values, setting.order_number, actions, "
-            + "readonly "
+            + "readonly, setting.details "
             + "FROM field_settings setting, ddp_instance realm WHERE "
             + "realm.ddp_instance_id = setting.ddp_instance_id AND NOT (setting.deleted <=>1) AND realm.instance_name=? "
             + "ORDER BY order_number asc";
@@ -55,9 +58,11 @@ public class FieldSettings {
     private final boolean readonly; //Value of readonly for the setting
     private final Integer maxLength; //Value of max_length for string-like field settings
     private boolean deleted; //Value of deleted for the setting
+    private HashMap<String, Object> details; //Value of details for this field
 
     public FieldSettings(String fieldSettingId, String columnName, String columnDisplay, String fieldType, String displayType,
-                         List<Value> possibleValues, int orderNumber, List<Value> actions, boolean readonly, Integer maxLength) {
+                         List<Value> possibleValues, int orderNumber, List<Value> actions, boolean readonly, Integer maxLength,
+                         HashMap details) {
         this.fieldSettingId = fieldSettingId;
         this.columnName = columnName;
         this.columnDisplay = columnDisplay;
@@ -68,6 +73,7 @@ public class FieldSettings {
         this.actions = actions;
         this.readonly = readonly;
         this.maxLength = maxLength;
+        this.details = details;
     }
 
     /**
@@ -88,11 +94,21 @@ public class FieldSettings {
                         List<Value> actionValues = getValueListFromJsonString(rs, DBConstants.ACTIONS);
                         String type = rs.getString(DBConstants.FIELD_TYPE);
                         Integer maxLength = (Integer) rs.getObject(DBConstants.MAX_LENGTH);
+                        String columnName = rs.getString(DBConstants.COLUMN_NAME);
                         FieldSettings setting =
-                                new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID), rs.getString(DBConstants.COLUMN_NAME),
+                                new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID), columnName,
                                         rs.getString(DBConstants.COLUMN_DISPLAY), type, rs.getString(DBConstants.DISPLAY_TYPE),
                                         possibleValues, rs.getInt(DBConstants.ORDER_NUMBER), actionValues,
-                                        rs.getBoolean(DBConstants.READONLY), maxLength);
+                                        rs.getBoolean(DBConstants.READONLY), maxLength, null);
+                        if (rs.getString(DBConstants.DETAILS) != null) {
+                            try {
+                                setting.setDetails(new ObjectMapper().readValue(rs.getString(DBConstants.DETAILS), HashMap.class));
+                            } catch (JsonMappingException e) {
+                                logger.error("Unable to get the FieldSetting for " + columnName, e);
+                            } catch (JsonProcessingException e) {
+                                logger.error("Unable to parse the FieldSetting json for " + columnName, e);
+                            }
+                        }
                         if (fieldSettingsList.containsKey(type)) {
                             // If we have already found settings with this field_type, add this
                             // setting to the list of settings with this field_type
