@@ -88,6 +88,7 @@ public interface JdbiCompositeAnswer extends SqlObject {
                                 lastChildRowAnswerDtos
                                         .add(new AnswerDto(childAnswerId,
                                                 rs.getString("child_answer_guid"),
+                                                rs.getLong("child_last_updated_at"),
                                                 rs.getLong("child_question_id"),
                                                 rs.getString("child_question_stable_id"),
                                                 QuestionType.valueOf(rs.getString("child_question_type_code")),
@@ -97,6 +98,4 @@ public interface JdbiCompositeAnswer extends SqlObject {
                         });
         return Optional.ofNullable(answerSummary.getGuid() == null ? null : answerSummary);
     }
-
-
 }
