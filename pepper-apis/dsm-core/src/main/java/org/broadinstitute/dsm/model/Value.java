@@ -4,6 +4,7 @@ import java.util.List;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.broadinstitute.dsm.db.FieldSettings;
 
 //EqualsAndHashCode ensures Collection.contains can be used to check for a Value object with a particular value property
 @Getter
@@ -15,6 +16,8 @@ public class Value {
     private String type;
     private String type2;
     private List<Value> values;
+    private FieldSettings conditionalFieldSetting;
+    private String condition;
 
     public Value(String value) {
         this.value = value;
