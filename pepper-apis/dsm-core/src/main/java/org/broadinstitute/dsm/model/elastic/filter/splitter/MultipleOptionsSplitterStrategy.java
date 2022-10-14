@@ -37,6 +37,7 @@ public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
 
     @Override
     public String getFieldName() {
-        return super.getFieldName().split(Filter.EQUALS)[0];
+        return super.getFieldWithAlias()[1].split(Filter.EQUALS)[0];
     }
+
 }

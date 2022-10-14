@@ -58,4 +58,9 @@ public class DashboardValueParser extends ValueParser {
         }
         return result;
     }
+
+    @Override
+    protected Object forString(String value) {
+        return convertString(value);
+    }
 }
