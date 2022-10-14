@@ -51,7 +51,7 @@ public class ViewFilter {
     public static final String SQL_SELECT_USER_FILTERS = "SELECT * FROM view_filters "
             + "WHERE created_by = ? "
             + "OR ((created_by = 'System' OR shared = 1) AND (ddp_group_id = ? OR (ddp_realm_id LIKE ? OR ddp_realm_id LIKE ?))) "
-            + "AND deleted <> 1 ";
+            + "AND deleted <=> 1 ";
     public static final String SQL_SELECT_QUERY_ITEMS =
             "SELECT query_items, quick_filter_name FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
     public static final String SQL_GET_DEFAULT_FILTER =
