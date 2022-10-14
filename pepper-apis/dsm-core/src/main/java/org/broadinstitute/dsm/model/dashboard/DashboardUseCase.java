@@ -45,7 +45,7 @@ public class DashboardUseCase {
 
     private List<QueryBuilder> getQueryBuildersFromDashboardDto(DDPInstanceDto ddpInstanceDto, DashboardDto dashboardDto) {
         return dashboardDto.getLabels().stream()
-                .map(labelDto -> new QueryBuildPayload(ddpInstanceDto, labelDto))
+                .map(labelDto -> new QueryBuildPayload(ddpInstanceDto, dashboardDto.getDisplayType(), labelDto))
                 .map(QueryBuilderStrategyFactory::new)
                 .map(factory -> factory.of().build())
                 .collect(Collectors.toList());

@@ -14,8 +14,12 @@ public class Util {
     public static boolean isUnderDsmKey(String alias) {
         try {
             return aliases.contains(Alias.valueOf(alias.toUpperCase()));
-        } catch (IllegalArgumentException iae) {
+        } catch (Exception e) {
             return false;
         }
+    }
+
+    public static boolean isUnderDsmKey(Alias alias) {
+        return aliases.contains(alias);
     }
 }

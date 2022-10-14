@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.model.Filter;
 public class AndOrFilterSeparator {
 
     private static final String DSM_ALIAS_REGEX = "(NO|c|m|p|r|t|d|o|k|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";
+
     protected String orDsmAliasRegex = "(OR) " + getRegex();
 
     protected String andDsmAliasRegex = "(AND) " + getRegex();

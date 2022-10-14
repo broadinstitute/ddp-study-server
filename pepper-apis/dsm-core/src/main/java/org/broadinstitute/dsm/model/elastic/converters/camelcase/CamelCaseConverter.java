@@ -28,7 +28,11 @@ public class CamelCaseConverter implements Converter<String> {
     }
 
     private String handleAllUppercase(String word) {
-        return camelCaseRegex.matcher(word).matches() ? word : word.toLowerCase();
+        return isCamelCase(word) ? word : word.toLowerCase();
+    }
+
+    boolean isCamelCase(String word) {
+        return camelCaseRegex.matcher(word).matches();
     }
 
     private String makeCamelCaseFrom(List<StringBuilder> words) {

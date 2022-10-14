@@ -2,6 +2,8 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
+import org.broadinstitute.dsm.model.participant.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 @Getter
@@ -39,10 +41,15 @@ public class QueryPayload {
     }
 
     public String getFieldName() {
+        String result = property;
         if (StringUtils.isNotBlank(path)) {
-            return path + DBConstants.ALIAS_DELIMITER + property;
+            if (Util.isUnderDsmKey(alias)) {
+                result = String.join(DBConstants.ALIAS_DELIMITER, Alias.of(alias).getValue(), property);
+            } else {
+                result = String.join(DBConstants.ALIAS_DELIMITER, path, property);
+            }
         }
-        return property;
+        return result;
     }
 
     public void setPath(String path) {
@@ -50,6 +57,10 @@ public class QueryPayload {
     }
 
     public String getPath() {
+        String path = this.path;
+        if (Util.isUnderDsmKey(alias)) {
+            path = Alias.of(alias).getValue();
+        }
         return StringUtils.isBlank(path)
                 ? property
                 : path;
