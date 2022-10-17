@@ -1,0 +1,13 @@
+<changeSet id="DDP-8806_NA_FONTAN_TYPE" author="pegah">
+    <sql>
+        select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+        Select @pv := possible_values, @fid:=field_settings_id  from field_settings where ddp_instance_id in
+        (select ddp_instance_id from ddp_instance where instance_name = "singular")
+        and column_name = "FONTAN_TYPE";
+
+        select JSON_MERGE_PRESERVE(@pv, @newChange);
+        UPDATE field_settings
+        SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+        WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
+    </sql>
+</changeSet>
