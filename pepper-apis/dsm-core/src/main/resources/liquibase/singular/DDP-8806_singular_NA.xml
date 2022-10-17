@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 <changeSet id="DDP-8806_NA_FONTAN_TYPE" author="pegah">
     <sql>
         select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
@@ -11,3 +17,4 @@
         WHERE field_settings_id &lt;&gt; 0 and field_settings_id =@fid;
     </sql>
 </changeSet>
+</databaseChangeLog>
