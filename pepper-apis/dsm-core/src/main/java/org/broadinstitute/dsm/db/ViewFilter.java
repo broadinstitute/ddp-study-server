@@ -55,7 +55,7 @@ public class ViewFilter {
     public static final String SQL_SELECT_QUERY_ITEMS =
             "SELECT query_items, quick_filter_name FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
     public static final String SQL_GET_DEFAULT_FILTER =
-            "SELECT display_name from view_filters WHERE default_users LIKE '%#%' AND parent = ? AND deleted <> 1";
+            "SELECT display_name from view_filters WHERE default_users LIKE ? AND parent = ? AND deleted <> 1";
     public static final String SQL_SELECT_DEFAULT_FILTER_USERS =
             "SELECT default_users FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
     public static final String SQL_UPDATE_DEFAULT_FILTER =
@@ -1149,10 +1149,9 @@ public class ViewFilter {
     public static String getDefaultFilterForUser(@NonNull String userId, @NonNull String parent) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            String query = SQL_GET_DEFAULT_FILTER.replace("#", userId);
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, parent);
-                //                stmt.setString(2, parent);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_DEFAULT_FILTER)) {
+                stmt.setString(1, "%" + userId + "%");
+                stmt.setString(2, parent);
                 try {
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
