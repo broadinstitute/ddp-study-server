@@ -41,10 +41,11 @@ class QueryBuildPayload {
     }
 
     AndOrFilterSeparator getFilterSeparator(DashboardLabelFilterDto dashboardLabelFilterDto) {
-        if (Objects.isNull(dashboardLabelFilterDto) || Util.isUnderDsmKey(Alias.aliasByValue(extractAliasFrom(dashboardLabelFilterDto)))) {
-            return new AndOrFilterSeparator(StringUtils.EMPTY);
-        }
-        return new NonDsmAndOrFilterSeparator(StringUtils.EMPTY);
+        return new AndOrFilterSeparator(StringUtils.EMPTY);
+//        if (Objects.isNull(dashboardLabelFilterDto) || Util.isUnderDsmKey(Alias.aliasByValue(extractAliasFrom(dashboardLabelFilterDto)))) {
+//            return new AndOrFilterSeparator(StringUtils.EMPTY);
+//        }
+//        return new NonDsmAndOrFilterSeparator(StringUtils.EMPTY);
     }
 
     private String extractAliasFrom(DashboardLabelFilterDto dashboardLabelFilterDto) {

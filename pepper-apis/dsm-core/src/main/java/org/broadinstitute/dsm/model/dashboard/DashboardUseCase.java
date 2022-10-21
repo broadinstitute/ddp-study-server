@@ -37,7 +37,10 @@ public class DashboardUseCase {
             ChartStrategyPayload chartStrategyPayload = new ChartStrategyPayload(dashboardDto, msearch);
             ChartStrategyFactory chartStrategyFactory = new ChartStrategyFactory(chartStrategyPayload);
             Supplier<DashboardData> chartStrategy = chartStrategyFactory.of();
-            result.add(chartStrategy.get());
+            DashboardData dashboardData = chartStrategy.get();
+            if (dashboardData != null) {
+                result.add(dashboardData);
+            }
         }
         Collections.sort(result);
         return result;
