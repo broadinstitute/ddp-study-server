@@ -140,5 +140,9 @@ public class CohortTagUseCase {
     private String getCohortTagName() {
         return cohortTagPayload.getCohortTagName();
     }
+
+    public boolean participantHasTag() {
+        return cohortTagDao.participantHasTag(this.getDdpParticipantId(), this.getCohortTagName());
+    }
 }
 

@@ -31,6 +31,9 @@ public class CohortTagDaoImpl implements CohortTagDao {
 
     public static final String SQL_DELETE_BY_NAME_AND_GUID = "DELETE FROM cohort_tag WHERE cohort_tag_name = ? AND ddp_participant_id = ?";
 
+    public static final String SQL_SELECT_BY_NAME_AND_GUID = "SELECT * FROM cohort_tag WHERE cohort_tag_name = ? "
+            + "  AND ddp_participant_id = ? ";
+
     public static final String COHORT_TAG_ID = "cohort_tag_id";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
     public static final String COHORT_DDP_PARTICIPANT_ID = DBConstants.DDP_PARTICIPANT_ID;
@@ -129,7 +132,7 @@ public class CohortTagDaoImpl implements CohortTagDao {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_COHORT_TAG, Statement.RETURN_GENERATED_KEYS)) {
-                for (CohortTag tag: cohortTags) {
+                for (CohortTag tag : cohortTags) {
                     stmt.setString(1, tag.getCohortTagName());
                     stmt.setString(2, tag.getDdpParticipantId());
                     stmt.setInt(3, tag.getDdpInstanceId());
@@ -181,6 +184,31 @@ public class CohortTagDaoImpl implements CohortTagDao {
             ), simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
+    }
+
+    @Override
+    public boolean participantHasTag(String ddpParticipantId, String tagName) {
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BY_NAME_AND_GUID)) {
+                stmt.setString(1, tagName);
+                stmt.setString(2, ddpParticipantId);
+                ResultSet resultSet = stmt.executeQuery();
+                if (resultSet.next()) {
+                    execResult.resultValue = true;
+                } else {
+                    execResult.resultValue = false;
+                }
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Could not fetch cohort tags for participant: " + ddpParticipantId, simpleResult.resultException);
+        }
+        return (boolean) simpleResult.resultValue;
     }
 
     private CohortTag buildCohortTagFrom(ResultSet resultSet) throws SQLException {

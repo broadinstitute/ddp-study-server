@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.elastic.export.painless.NestedUpsertPainlessFacade;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
@@ -30,6 +31,11 @@ public class CreateCohortTagRoute extends RequestHandler  {
         cohortTagPayload.setCreatedBy(new UserDao().get(Integer.parseInt(userId)).flatMap(UserDto::getEmail).orElse(StringUtils.EMPTY));
         CohortTagUseCase cohortTagUseCase = new CohortTagUseCase(cohortTagPayload, ddpInstanceDto, new CohortTagDaoImpl(),
                 new ElasticSearch(), new NestedUpsertPainlessFacade(), new PutToNestedScriptBuilder());
+        if (cohortTagUseCase.participantHasTag()) {
+            response.status(500);
+            throw new DuplicateException(String.format("Participant %s Already has tag %s", cohortTagPayload.getDdpParticipantId(),
+                    cohortTagPayload.getCohortTagName()));
+        }
         int justCreatedCohortTagId = cohortTagUseCase.insert();
         return ObjectMapperSingleton.writeValueAsString(justCreatedCohortTagId);
     }
