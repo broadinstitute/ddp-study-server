@@ -133,12 +133,14 @@ public class CohortTagDaoImpl implements CohortTagDao {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_COHORT_TAG, Statement.RETURN_GENERATED_KEYS)) {
                 for (CohortTag tag : cohortTags) {
-                    stmt.setString(1, tag.getCohortTagName());
-                    stmt.setString(2, tag.getDdpParticipantId());
-                    stmt.setInt(3, tag.getDdpInstanceId());
-                    stmt.setLong(4, System.currentTimeMillis());
-                    stmt.setString(5, tag.getCreatedBy());
-                    stmt.addBatch();
+                    if (!participantHasTag(tag.getDdpParticipantId(), tag.getCohortTagName())) {
+                        stmt.setString(1, tag.getCohortTagName());
+                        stmt.setString(2, tag.getDdpParticipantId());
+                        stmt.setInt(3, tag.getDdpInstanceId());
+                        stmt.setLong(4, System.currentTimeMillis());
+                        stmt.setString(5, tag.getCreatedBy());
+                        stmt.addBatch();
+                    }
                 }
                 stmt.executeBatch();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
