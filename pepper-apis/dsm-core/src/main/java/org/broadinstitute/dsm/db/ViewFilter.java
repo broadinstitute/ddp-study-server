@@ -1006,11 +1006,6 @@ public class ViewFilter {
                     if (path != null && !f2) { //additional field
                         filter.setFilter2(new NameValue(path, ""));
                     }
-                    if (f1 && !f2 && Filter.DATE.equals(filter.type) && filter.isRange()) {
-                        // set max date to very far in the future
-                        filter.setFilter2(new NameValue(filter.getFilter1().getName(),
-                                LocalDateTime.now().plusYears(10).format(DateTimeFormatter.ISO_LOCAL_DATE)));
-                    }
                     if (f2) { // maximum set in a range filter
                         if (filter.getFilter1() == null) {
                             filter.setFilter1(new NameValue(columnName, null));
