@@ -83,6 +83,24 @@ public class ParticipantWrapper {
         });
     }
 
+    public ParticipantWrapperResult getFilteredList(AbstractQueryBuilder<?> mainQuery) {
+        logger.info("Getting list of participant information");
+
+        DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
+
+        if (StringUtils.isBlank(ddpInstanceDto.getEsParticipantIndex())) {
+            throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstanceDto.getInstanceName());
+        }
+
+        fetchAndPrepareDataByAbstractQuery(mainQuery);
+        return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+    }
+
+    private void fetchAndPrepareDataByAbstractQuery(AbstractQueryBuilder<?> mainQuery) {
+        esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
+                participantWrapperPayload.getTo(), mainQuery);
+    }
+
     private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
         AbstractQueryBuilder<?> mainQuery = prepareQuery(filters);
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),

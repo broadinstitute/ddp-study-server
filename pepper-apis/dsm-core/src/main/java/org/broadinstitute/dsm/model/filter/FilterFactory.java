@@ -32,12 +32,10 @@ public class FilterFactory {
             case RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE:
                 switch (parent) {
                     case BaseFilter.PARENT_PARTICIPANT_LIST:
-                        if (isQuickFilter(queryParams)) {
+                        if (isSavedFilter(queryParams)) {
                             filterable = new QuickFilterParticipantList();
-                        } else if (isSavedFilter(queryParams)) {
-                            filterable = new SavedFilterParticipantList();
                         } else {
-                            filterable = new ManualFilterParticipantList(jsonBody); //no empty filter because of pre-filter
+                            filterable = new ManualFilterParticipantList(jsonBody);
                         }
                         break;
                     case BaseFilter.TISSUE_LIST_PARENT:
@@ -71,10 +69,6 @@ public class FilterFactory {
     }
 
     private static boolean isSavedFilter(QueryParamsMap queryParams) {
-        return StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value());
-    }
-
-    private static boolean isQuickFilter(QueryParamsMap queryParams) {
         return StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value());
     }
 

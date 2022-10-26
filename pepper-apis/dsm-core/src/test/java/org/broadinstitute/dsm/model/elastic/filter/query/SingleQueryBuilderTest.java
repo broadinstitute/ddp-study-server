@@ -7,6 +7,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,6 +63,16 @@ public class SingleQueryBuilderTest {
     }
 
     @Test
+    public void dateWithRange() {
+        String andFilter = " AND dsm.dateOfBirth  >= '1990-11-25'";
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(new RangeQueryBuilder("dsm.dateOfBirth").gte("1990-11-25"));
+
+        Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(andFilter));
+    }
+
+    @Test
     public void twoValueNotEmpty() {
         String filter = " AND profile.firstName IS NOT NULL  AND profile.lastName IS NOT NULL ";
 
@@ -105,7 +116,7 @@ public class SingleQueryBuilderTest {
     private AbstractQueryBuilder<?> getNonActivityQueryBuilder(String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = new BaseAbstractQueryBuilder();
         abstractQueryBuilder.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(new NonDsmAndOrFilterSeparator(filter));
+//        abstractQueryBuilder.setFilterSeparator(new NonDsmAndOrFilterSeparator(filter));
         AbstractQueryBuilder<?> actualQuery = abstractQueryBuilder.build();
         return actualQuery;
     }
