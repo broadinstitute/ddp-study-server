@@ -1,5 +1,5 @@
 ## Background
-_Read [this great article on the art of making a great PR](https://mtlynch.io/code-review-love) before you make a PR.  Keep your PR focused on a single logical unit of work that is easy for a reviewer to understand.  If that means splitting up larger work into multiple PRs that branch off one another, do it.  We optimize for reviewability.  Creating a nice, easy, clean PR takes time and effort.  Take the time and do it right up front.  If your PR is half-baked, or just ingredients on the counter or raw dough, mark it as draft and write down what kind of feedback you are looking for.  You can make a great PR even with incomplete code.  While we strive for perfection in the final stages of a PR, if you are not making a PR until you think the code is perfect, you are probably sharing your work far later than you should be and will likely incur more extensive rework and waste as the collective swarm brings its expertise to the code.
+_Read [this great article on the art of making a great PR](https://mtlynch.io/code-review-love) before you make a PR.  Keep your PR focused on a single logical unit of work that is easy for a reviewer to understand.  If that means splitting up larger work into multiple PRs that branch off one another, do it.  We optimize for reviewability.  Creating a nice, easy, clean PR takes time and effort.  Take the time and do it right up front.  If your PR is half-baked, or just ingredients on the counter or raw dough, mark it as draft and write down what kind of feedback you are looking for.  You can make a great PR even with incomplete code.  While we strive for perfection in the final stages of a PR, if you are not making a PR until you think the code is perfect, you are probably sharing your work far later than you should be and will likely incur more extensive rework and waste as the collective swarm brings its expertise to the code._
 
 ## Summary (PEPPER-XYZ)
 
@@ -11,7 +11,7 @@ _Reviews do not just focus on code.  They also focus on the user-observable surf
 
 ## FUD Score
 
-_Overall, how are you feeling about these changes?_
+Overall, how are you feeling about these changes?
 
 - [ ] :relaxed: All good, business as usual!
 - [ ] :sweat_smile: There might be some issues here
