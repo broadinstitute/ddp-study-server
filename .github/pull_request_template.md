@@ -5,7 +5,7 @@ _Sharing half-baked PRs early and often is encouraged.  While we strive for perf
 
 ## Summary (PEPPER-XYZ)
 
-_Fill in the summary title above and the jira ticket (just PEPPER-123, no need for the URL, which will be automatically created. Give the reviewer a roadmap of the changes by creating an order list of bulleted links to lines in your changes and an explanation of why they should go in the order you give them.  If there are things that were nonintuitive for you as a developer, give your reviewer that additional context so they don't have to waste time rediscovering what you've already learned._
+_Fill in the summary title above and the jira ticket (just PEPPER-123, no need for the URL, which will be automatically created. Give the reviewer a roadmap of the changes by creating an order list of bulleted [links to lines in your changes](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-a-permanent-link-to-a-code-snippet) and an explanation of why they should go in the order you give them.  If there are things that were nonintuitive for you as a developer, give your reviewer that additional context so they don't have to waste time rediscovering what you've already learned._
 
 _Don't just copy paste things from your ticket into the summary.  The ticket should cover the "what" and the "why".  The code and PR should cover the "how".  Write down any alternative implementation plans that were considered and why they were not pursued.  Write down surprises you encountered._
 
