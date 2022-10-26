@@ -1,18 +1,17 @@
-## Context
+## Table Stakes 
+_Read [this great article on the art of making a great PR](https://mtlynch.io/code-review-love) before you make a PR.  Keep your PR focused on a single logical unit of work that is easy for a reviewer to grok.  If that means splitting up larger work into multiple PRs that branch off one another, do it.  We optimize for reviewability.  Creating a nice, easy, clean PR takes time and effort.  Take the time and do it right up front--otherwise you'll be wasting everyone's time._
 
-_Say a few words about the bigger picture beyond this PR. How do your changes improve life for our users? Link directly to the jira ticket (just type "DDP-..." and it'll automatically link) to help your teammates quickly get up to speed on the motivation for these changes._
+_Sharing half-baked PRs early and often is encouraged.  While we strive for perfection in the final stages of a PR, if you are not making a PR until you think it's perfect, you are probably sharing your work far later than you should be and will likely incur more extensive rework and waste as the collective swarm brings its expertise to the code.  PRs are a way for the team to collectively gain mastery and deliver the highest value possible to customers given the constraints of time and risk._
 
-## Checklist
+## Summary (PEPPER-XYZ)
 
-- [ ] I have labeled the type of changes involved using the `C-*` labels.
-- [ ] I have assessed potential risks and labeled using the `R-*` labels.
-- [ ] I have considered error handling and alerts, and added `L-*` labels as needed.
-- [ ] I have considered security and privacy, and added `I-*` labels as needed
-- [ ] I have analyzed my changes for stability, fault tolerance, graceful degradation, performance bottlenecks and written a brief summary in this PR.
-- [ ] If applicable, I have discussed the analytics needs at both a platform and study level with Product and instrumented code accordingly.
-- [ ] If applicable, my UI/UX changes have passed muster with Product/Design via an over-the-shoulder review, screenshots, etc.
+_Fill in the summary title above and the jira ticket (just PEPPER-123, no need for the URL, which will be automatically created. Give the reviewer a roadmap of the changes by creating an order list of bulleted links to lines in your changes and an explanation of why they should go in the order you give them.  If there are things that were nonintuitive for you as a developer, give your reviewer that additional context so they don't have to waste time rediscovering what you've already learned._
 
-_If unsure or need help with any of the above items, add the `help wanted` label. For items that starts with `If applicable`, if it is not applicable, check it off and add `n/a` in front._
+_Don't just copy paste things from your ticket into the summary.  The ticket should cover the "what" and the "why".  The code and PR should cover the "how".  Write down any alternative implementation plans that were considered and why they were not pursued.  Write down surprises you encountered._
+
+_Reviews do not just focus on code.  They also focus on the user-observable surface area, which can be UI, APIs, data, etc.  Help your reviewer come up to speed on exactly how these changes manifest for users of various stripes by showing before and after with pictures, videos, nicely formatted API input/output etc._
+
+_If your PR is half-baked, or just ingredients on the counter or raw dough, mark it as draft and write down what kind of feedback you are looking for._
 
 ## FUD Score
 
@@ -22,24 +21,14 @@ _Overall, how are you feeling about these changes?_
 - [ ] :sweat_smile: There might be some issues here
 - [ ] :scream: I'm sweaty and nervous
 
-## How do we demo these changes?
-
-_How does one observe these changes in a deployed system? Note that **user visible** encompasses many personas--not just patients and study staff, but also ops duty, your fellow devs, compliance, etc._
-
-- [ ] They are user-visible in dev as a regular user journey and require no additional instructions.
-- [ ] Getting dev into a state where this is user-visible requires some tech fiddling. I have documented these steps in the related ticket.
-- [ ] Requires other features before it's human visible. I have documented the blocking issues in jira.
-- [ ] I have no idea how to demo this. Please help me!
-
 ## Testing
+Pick one:
+- [ ] Acceptance criteria and/or steps of reproduction are sufficiently clear in the ticket that anyone can validate these changes by just following the steps.  No subtle tribal knowledge required. (good)
+- [ ] There are automated tests that cover backend, frontend, and fully deployed targetted UI or end-to-end UI.  No need to follow manual acceptance criteria or steps of reproduction because they are all captured in tests. (better)
 
-- [ ] I have written automated positive tests
-- [ ] I have written automated negative tests
-- [ ] I have written zero automated tests but have poked around locally to verify proper functionality
-- [ ] The jira ticket has acceptance criteria and QA has the needed information to test changes
 
-## Release
-
-- [ ] These changes require no special release procedures--just code!
-- [ ] Releasing these changes requires special handling and I have documented the special procedures in the release plan document
+## Checklist
+- [ ] "downtime" and "deployment notes" fields in the ticket have sufficient detail that anyone can deploy these changes.
+- [ ] Key stakeholders or stakeholder proxies have interacted with these changes as a real user would and have blessed the user-facing behavior.  This can happen via over-the-shoulder local deployment, or on dev.  It doesn't have to wait for test or staging.
+- [ ] Appsec and compliance fields have been set in the ticket, and appsec and compliance have given the ticket and the code changes their blessing as appropriate.
 
