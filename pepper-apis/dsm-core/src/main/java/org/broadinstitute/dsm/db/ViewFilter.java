@@ -309,6 +309,25 @@ public class ViewFilter {
 
     private static ViewFilter getFilterView(@NonNull ResultSet rs, @NonNull Map<String, DBElement> columnNameMap) throws SQLException {
         String[] viewColumns = rs.getString(DBConstants.VIEW_COLUMNS).split(",");
+        Map<String, List<Object>> columnMap = getColumnMap(columnNameMap, viewColumns);
+        ViewFilter filter = new ViewFilter(rs.getString(DBConstants.DISPLAY_NAME_FILTER), columnMap, rs.getString(DBConstants.FILTER_ID),
+                rs.getString(DBConstants.DELETED), rs.getBoolean(DBConstants.SHARED_FILTER), rs.getString(DBConstants.CREATED_BY), null,
+                rs.getString(DBConstants.FILTER_PARENT), rs.getString(DBConstants.FILTER_ICON), rs.getString(DBConstants.QUICK_FILTER_NAME),
+                parseToFrontEndQuery(rs.getString(DBConstants.QUERY_ITEMS)), null,
+                new Gson().fromJson(rs.getString(DBConstants.FILTER_REALM_ID), Integer[].class));
+        if (!rs.getString(DBConstants.CREATED_BY).contains("System")) {
+            String queryToParse = rs.getString(DBConstants.QUERY_ITEMS);
+            try {
+                filter = parseQueryToViewFilterObject(queryToParse, filter);
+            } catch (Exception e) {
+                return filter;
+
+            }
+        }
+        return filter;
+    }
+
+    private static Map<String, List<Object>> getColumnMap(Map<String, DBElement> columnNameMap, String[] viewColumns) {
         Map<String, List<Object>> columnMap = new HashMap<>();
         for (String column : viewColumns) {
             if (StringUtils.isNotBlank(column)) {
@@ -332,21 +351,7 @@ public class ViewFilter {
                 }
             }
         }
-        ViewFilter filter = new ViewFilter(rs.getString(DBConstants.DISPLAY_NAME_FILTER), columnMap, rs.getString(DBConstants.FILTER_ID),
-                rs.getString(DBConstants.DELETED), rs.getBoolean(DBConstants.SHARED_FILTER), rs.getString(DBConstants.CREATED_BY), null,
-                rs.getString(DBConstants.FILTER_PARENT), rs.getString(DBConstants.FILTER_ICON), rs.getString(DBConstants.QUICK_FILTER_NAME),
-                parseToFrontEndQuery(rs.getString(DBConstants.QUERY_ITEMS)), null,
-                new Gson().fromJson(rs.getString(DBConstants.FILTER_REALM_ID), Integer[].class));
-        if (!rs.getString(DBConstants.CREATED_BY).contains("System")) {
-            String queryToParse = rs.getString(DBConstants.QUERY_ITEMS);
-            try {
-                filter = parseFilteringQuery(queryToParse, filter);
-            } catch (Exception e) {
-                return filter;
-
-            }
-        }
-        return filter;
+        return columnMap;
     }
 
     private static void fillColumnMapByCustomFields(Map<String, List<Object>> columnMap, String column) {
@@ -482,7 +487,7 @@ public class ViewFilter {
      * @param viewFilter: ViewFilter to return with Filter[] of query String in it
      * @return ViewFilter which the input string is parsed and is in as a Filter[]
      */
-    public static ViewFilter parseFilteringQuery(String str, ViewFilter viewFilter) {
+    public static ViewFilter parseQueryToViewFilterObject(String str, ViewFilter viewFilter) {
         String[] conditions = str.split("(and\\s)|(AND\\s)");
         Map<String, Filter> filters = new HashMap<>(conditions.length);
         for (String condition : conditions) {
@@ -507,6 +512,7 @@ public class ViewFilter {
             NameValue filter2 = null;
             NameValue filter1 = null;
             String[] words = condition.trim().split("(\\s+)");
+
             for (String word : words) {
                 if (StringUtils.isNotBlank(word)) {
                     switch (state) {
