@@ -144,7 +144,8 @@ public class KitUtil {
                                 ElasticSearchUtil.BY_LEGACY_ALTPID + kitLabelTriggered.getDdpParticipantId());
                     }
                     DDPParticipant ddpParticipant =
-                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, kitLabelTriggered.getDdpParticipantId());
+                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, kitLabelTriggered.getDdpParticipantId(),
+                                    ddpInstance);
                     if (ddpParticipant != null) {
                         toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(), null,
                                 ddpParticipant);
@@ -169,7 +170,7 @@ public class KitUtil {
                                         ElasticSearchUtil.getDDPParticipantsFromES(kitLabelTriggered.getInstanceName(),
                                                 kitLabelTriggered.getParticipantIndexES());
                                 ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                                        kitLabelTriggered.getDdpParticipantId());
+                                        kitLabelTriggered.getDdpParticipantId(), ddpInstance);
                             } else {
                                 //DDP requested pt
                                 ddpParticipant = DDPParticipant.getDDPParticipant(kitLabelTriggered.getBaseURL(),
@@ -246,7 +247,7 @@ public class KitUtil {
                                         rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
                                         rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
                                         rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME), 0, null,
-                                        rs.getInt(DBConstants.DDP_INSTANCE_ID)), //label creation doesn't care if kit was part of sub kit...
+                                        rs.getInt(DBConstants.DDP_INSTANCE_ID), rs.getInt(DBConstants.HAS_CARE_OF)), //label creation doesn't care if kit was part of sub kit...
                                 new KitType(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                         rs.getString(DBConstants.KIT_TYPE_NAME), rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME),
                                         rs.getString(DBConstants.EXTERNAL_SHIPPER), rs.getString(DBConstants.CUSTOMS_JSON)),

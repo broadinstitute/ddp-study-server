@@ -4,6 +4,7 @@ import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Parcel;
 import com.easypost.model.Shipment;
+import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.slf4j.Logger;
@@ -39,11 +40,12 @@ public class CreateLabelTool {
 
         try {
             EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
-            Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952");
+            KitRequestSettings kitRequestSettings = new KitRequestSettings();
+            Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952", kitRequestSettings);
             Address returnAddress =
                     easyPostUtil.createBroadAddress("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge",
                             "02141", "MA", "US", "617-714-8952");
-//            inches and oz
+            //            inches and oz
             Parcel parcel = easyPostUtil.createParcel("8", "2", "7.3", "9.5"); //stool kit sizes
             logger.info("Going to buy label");
             Shipment shipment2Participant =
@@ -80,7 +82,8 @@ public class CreateLabelTool {
         participant.setCountry("USA");
         try {
             EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
-            Address address = easyPostUtil.createAddress(participant, "617-714-8952");
+            KitRequestSettings kitRequestSettings = new KitRequestSettings();
+            Address address = easyPostUtil.createAddress(participant, "617-714-8952", kitRequestSettings);
             Address veri = address.verify(apiKey);
             logger.info(veri.getName());
         } catch (EasyPostException e) {

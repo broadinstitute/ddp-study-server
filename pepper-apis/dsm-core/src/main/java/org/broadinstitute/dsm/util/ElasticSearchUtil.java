@@ -776,12 +776,23 @@ public class ElasticSearchUtil {
     }
 
     public static DDPParticipant getParticipantAsDDPParticipant(@NonNull Map<String, Map<String, Object>> participantsESData,
-                                                                @NonNull String ddpParticipantId) {
+                                                                @NonNull String ddpParticipantId, DDPInstance ddpInstance) {
         if (participantsESData != null && !participantsESData.isEmpty()) {
             Map<String, Object> participantESData = participantsESData.get(ddpParticipantId);
             if (participantESData != null && !participantESData.isEmpty()) {
                 Map<String, Object> address = (Map<String, Object>) participantESData.get(ADDRESS);
                 Map<String, Object> profile = (Map<String, Object>) participantESData.get(PROFILE);
+                ArrayList<String> proxies = (ArrayList<String> ) participantESData.get(PROXIES);
+                String proxyFirstName = null;
+                String proxyLastName = null;
+                if (proxies != null && proxies.size() > 0) {
+                    String proxyParticipantId = proxies.get(0);
+                    Map<String, Map<String, Object>> proxyESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
+                            BY_GUID + proxyParticipantId);
+                    Map<String, Object> proxyProfile = (Map<String, Object>) proxyESData.get(proxyParticipantId).get(PROFILE);
+                    proxyFirstName = (String) proxyProfile.get("firstName");
+                    proxyLastName = (String) proxyProfile.get("lastName");
+                }
                 if (address != null && !address.isEmpty() && profile != null && !profile.isEmpty()) {
                     String firstName = "";
                     String lastName = "";
@@ -795,10 +806,10 @@ public class ElasticSearchUtil {
                     return new DDPParticipant(ddpParticipantId, firstName, lastName, (String) address.get("country"),
                             (String) address.get("city"), (String) address.get("zip"), (String) address.get("street1"),
                             (String) address.get("street2"), (String) address.get("state"), (String) profile.get(ESObjectConstants.HRUID),
-                            null);
+                            null, proxyFirstName, proxyLastName);
                 } else if (profile != null && !profile.isEmpty()) {
                     return new DDPParticipant((String) profile.get(ESObjectConstants.HRUID), "", (String) profile.get("firstName"),
-                            (String) profile.get("lastName"));
+                            (String) profile.get("lastName"),  proxyFirstName, proxyLastName);
                 }
             }
         }

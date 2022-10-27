@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.exception.CarrierRejectionException;
 import org.broadinstitute.dsm.exception.RateNotAvailableException;
 import org.broadinstitute.dsm.model.EasypostLabelRate;
+import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ public class EasyPostUtil {
     private final String country = "country";
     private final String phone = "phone";
     private final String residential = "residential";
+    private final String company = "company";
 
     private final String weight = "weight";
     private final String height = "height";
@@ -184,7 +186,8 @@ public class EasyPostUtil {
         }
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone) throws EasyPostException {
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, KitRequestSettings kitRequestSettings)
+            throws EasyPostException {
         if (StringUtils.isEmpty(this.phone)) {
             throw new RuntimeException("Contact phone number is needed");
         }
@@ -207,6 +210,14 @@ public class EasyPostUtil {
         toAddressMap.put(this.phone, phone); //Needed for FedEx!
         toAddressMap.put(this.residential, true);
 
+        String careOf = null;
+        if (kitRequestSettings.getHasCareOF() == 1) {
+            if (ddpParticipant.getProxyFirstName() != null || ddpParticipant.getProxyLastName() != null) {
+                careOf = String.format("C/O %s %s", ddpParticipant.getProxyFirstName(), ddpParticipant.getProxyLastName());
+                toAddressMap.put(this.company, careOf);
+            }
+        }
+
         return Address.create(toAddressMap);
     }
 
@@ -222,7 +233,6 @@ public class EasyPostUtil {
         fromAddressMap.put(this.zip, zip);
         fromAddressMap.put(this.country, country);
         fromAddressMap.put(this.phone, phone);
-
         return Address.create(fromAddressMap);
     }
 

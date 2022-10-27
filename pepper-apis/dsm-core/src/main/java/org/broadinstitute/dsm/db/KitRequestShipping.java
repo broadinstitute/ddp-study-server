@@ -722,7 +722,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                     getAddressPerEasypost(ddpInstance, kit, apiKey);
                                 } else {
                                     if (participantsESData != null && !participantsESData.isEmpty()) {
-                                        ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, key);
+                                        ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, key,
+                                                ddpInstance);
                                         if (ddpParticipant != null) {
                                             kit.setParticipant(ddpParticipant);
                                         } else {
@@ -794,7 +795,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     new DDPParticipant(kitRequest.getParticipantId(), null, participantAddress.getName(), participantAddress.getCountry(),
                             participantAddress.getCity(), participantAddress.getZip(), participantAddress.getStreet1(),
                             participantAddress.getStreet2(), participantAddress.getState(),
-                            kitRequest.getShortId(kitRequest.getCollaboratorParticipantId()), null);
+                            kitRequest.getShortId(kitRequest.getCollaboratorParticipantId()), null, null, null);
             kitRequest.setParticipant(participant);
             if (ddpInstance.isHasRole()) { //if instance hasRole NEEDS_NAME_LABELS
                 kitRequest.setNameLabel(participantAddress.getName());
@@ -1356,7 +1357,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             if (StringUtils.isNotBlank(addressId)) {
                 toAddress = easyPostUtil.getAddress(addressId);
             } else if (participant != null) {
-                toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
+                toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone(), kitRequestSettings);
             }
         }
         return toAddress;

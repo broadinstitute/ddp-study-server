@@ -250,7 +250,8 @@ public class ParticipantMedicalRecordTool {
                 String zip = datStatZipField != -1 ? datStatLineData[datStatZipField] : "";
                 String country = datStatCountryField != -1 ? datStatLineData[datStatCountryField] : "";
                 DDPParticipant participant =
-                        new DDPParticipant(participantId, firstName, lastName, country, city, zip, street1, street2, state, shortId, null);
+                        new DDPParticipant(participantId, firstName, lastName, country, city, zip, street1, street2, state, shortId, null,
+                                null, null);
 
                 String biopsyInst = "";
                 if (datStatLineData.length > datStatBiopsyInstitute) {
