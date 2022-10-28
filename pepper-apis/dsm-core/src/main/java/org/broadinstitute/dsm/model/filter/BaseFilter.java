@@ -66,9 +66,11 @@ public class BaseFilter {
                 filters = requestForFiltering.getFilters();
             }
             quickFilterName = requestForFiltering == null ? null : requestForFiltering.getQuickFilterName();
-        } else if (savedFilters != null) {
+        }
+        if (filters != null && filters.length < 1 && savedFilters != null) {
             filters = savedFilters;
-        } else if (queryParamsMap.hasKey(RequestParameter.FILTER_NAME)) {
+        }
+        if (queryParamsMap.hasKey(RequestParameter.FILTER_NAME)) {
             quickFilterName = queryParamsMap.get(RequestParameter.FILTER_NAME).value();
             if (StringUtils.isNotBlank(quickFilterName)) {
                 filterQuery = ViewFilter.getFilterQuery(quickFilterName, parent);
