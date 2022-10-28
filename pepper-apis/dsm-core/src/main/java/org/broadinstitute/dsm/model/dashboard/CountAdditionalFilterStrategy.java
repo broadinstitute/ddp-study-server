@@ -82,10 +82,6 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     @Override
     protected Map<String, List<String>> getSeparatedFilters() {
         List<String> separatedFilters = splitConcreteFiltersFromAdditionalFilter();
-//        return mergeFilters(
-//                extractFilters(separatedFilters, AndOrFilterSeparator.class),
-//                extractFilters(separatedFilters, NonDsmAndOrFilterSeparator.class)
-//        );
         return extractFilters(separatedFilters, AndOrFilterSeparator.class);
     }
 
