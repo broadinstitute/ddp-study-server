@@ -21,7 +21,7 @@ public class OperatorTest {
             assertEquals(Operator.EQUALS, equals);
             assertEquals(Operator.GREATER_THAN_EQUALS, larger);
             assertEquals(Operator.LESS_THAN_EQUALS, smaller);
-            assertEquals(Operator.IS_NOT_NULL_LIST, isNotNull);
+            assertEquals(Operator.IS_NOT_NULL_LIST, isNotNull); //TODO Unit test failing
         } catch (IllegalArgumentException iae) {
             Assert.assertTrue(true);
         }

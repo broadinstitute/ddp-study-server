@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
+import org.broadinstitute.dsm.model.filter.participant.BaseFilterParticipantList;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
@@ -97,17 +98,61 @@ public class CollectionQueryBuilderTest {
 
         String filter = " AND c.cohort_tag_name = '7' AND dsm.dateOfMajority  >= '2022-10-26'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("dsm", filter).build();
+//        AbstractQueryBuilder<?> esAliasQuery = BaseFilterParticipantList.createMixedSourceBaseAbstractQueryBuilder(filter);
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
-                .must(new RangeQueryBuilder("dsm.dateOfMajority").gte("2022-10-26"))
-                .must(new NestedQueryBuilder("dsm.cohortTag", new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "7"), ScoreMode.Avg));
+                .must(new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "7").operator(Operator.AND), ScoreMode.Avg))
+                .must(new RangeQueryBuilder("dsm.dateOfMajority").gte("2022-10-26"));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void cohortNameValue() {
+
+        String filter = " AND c.cohort_tag_name = '7'";
+
+        AbstractQueryBuilder<?> actual = BaseFilterParticipantList.createMixedSourceBaseAbstractQueryBuilder(filter);
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "7").operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void scanDateRangeValue() {
+        String filter = " AND k.scan_date  >= 1664928000000 AND k.scan_date  <= 1665014399999";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").gte(1664928000000L), ScoreMode.Avg))
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").lte(1665014399999L), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void receivedDateValue() {
+        String filter = " AND DATE(FROM_UNIXTIME(k.receive_date/1000)) = DATE(FROM_UNIXTIME(1664928000))";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new MatchQueryBuilder("dsm.kitRequestShipping.receiveDate", "2022-10-05").operator(Operator.AND), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
 
     private BaseAbstractQueryBuilder getAbstractQueryBuilder(String alias, String filter) {
-        BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(alias, filter);
+        BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         return abstractQueryBuilder;
     }

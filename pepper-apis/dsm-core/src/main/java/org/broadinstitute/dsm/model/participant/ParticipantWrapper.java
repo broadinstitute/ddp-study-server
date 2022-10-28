@@ -112,7 +112,7 @@ public class ParticipantWrapper {
         boolean hasSeveralFilters = filters.size() > 1;
         for (String alias : filters.keySet()) {
             if (StringUtils.isNotBlank(filters.get(alias))) {
-                BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(alias, filters.get(alias));
+                BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(filters.get(alias));
                 queryBuilder.setEsIndex(getEsParticipantIndex());
                 if (hasSeveralFilters) {
                     ((BoolQueryBuilder) mainQuery).must(queryBuilder.build());
