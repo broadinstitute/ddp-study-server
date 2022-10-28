@@ -116,7 +116,7 @@ public class SingleQueryBuilderTest {
     private AbstractQueryBuilder<?> getNonActivityQueryBuilder(String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = new BaseAbstractQueryBuilder();
         abstractQueryBuilder.setFilter(filter);
-//        abstractQueryBuilder.setFilterSeparator(new NonDsmAndOrFilterSeparator(filter));
+        abstractQueryBuilder.setFilterSeparator(new NonDsmAndOrFilterSeparator(filter));
         AbstractQueryBuilder<?> actualQuery = abstractQueryBuilder.build();
         return actualQuery;
     }

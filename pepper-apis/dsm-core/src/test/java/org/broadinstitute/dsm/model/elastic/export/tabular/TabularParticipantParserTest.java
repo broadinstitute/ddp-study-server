@@ -97,12 +97,12 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(TELANGIECTASIA_FILTER), null, false, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("Mutliselect value not rendered", "1", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES"));
-        assertEquals("Mutliselect value not rendered", "0", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("Mutliselect value not rendered", "1", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES"));
+        assertEquals("Mutliselect value not rendered", "0", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN"));
 
-        assertEquals("option details not rendered", "71", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL"));
-        assertEquals("option details not rendered", "", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
+        assertEquals("option details not rendered", "71", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL"));
+        assertEquals("option details not rendered", "", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
     }
 
     @Test

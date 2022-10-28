@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.QuickFilterParticipantList;
-import org.broadinstitute.dsm.model.filter.participant.SavedFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.tissue.ManualFilterTissueList;
 import org.broadinstitute.dsm.model.filter.tissue.SavedFiltersTissueList;
 import org.broadinstitute.dsm.model.filter.tissue.SearchBarFilterTissueList;

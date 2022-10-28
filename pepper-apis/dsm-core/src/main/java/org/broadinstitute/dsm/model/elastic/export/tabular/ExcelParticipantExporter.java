@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 /** generates an excel file with a single sheet containing the participant data */
 public class ExcelParticipantExporter extends TabularParticipantExporter {
-    private final static int ROW_ACCESS_WINDOW_SIZE = 200;
+    private static final int ROW_ACCESS_WINDOW_SIZE = 200;
     protected final SXSSFWorkbook workbook;
 
     protected final SXSSFSheet sheet;

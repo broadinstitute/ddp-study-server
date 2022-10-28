@@ -483,7 +483,7 @@ public class ViewFilter {
 
     /***
      *
-     * @param str: MySQL query String to be parsed
+     * @param str: String of MySQL query to be parsed
      * @param viewFilter: ViewFilter to return with Filter[] of query String in it
      * @return ViewFilter which the input string is parsed and is in as a Filter[]
      */

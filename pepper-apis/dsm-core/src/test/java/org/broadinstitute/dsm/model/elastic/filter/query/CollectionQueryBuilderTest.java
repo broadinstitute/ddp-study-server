@@ -97,7 +97,7 @@ public class CollectionQueryBuilderTest {
 
         String filter = " AND c.cohort_tag_name = '7' AND dsm.dateOfMajority  >= '2022-10-26'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder( "dsm", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("dsm", filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
                 .must(new RangeQueryBuilder("dsm.dateOfMajority").gte("2022-10-26"))
