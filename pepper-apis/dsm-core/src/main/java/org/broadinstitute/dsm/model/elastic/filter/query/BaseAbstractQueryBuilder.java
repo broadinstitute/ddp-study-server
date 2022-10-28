@@ -63,6 +63,9 @@ public class BaseAbstractQueryBuilder {
     protected void buildUpQuery(List<String> filterValues, FilterStrategy filterStrategy) {
         for (String filterValue : filterValues) {
             Operator operator = Operator.extract(filterValue);
+            if (operator == null) {
+                continue;
+            }
             splitter = operator.getSplitterStrategy();
             splitter.setFilterSeparator(filterSeparator);
             splitter.setFilter(filterValue);
