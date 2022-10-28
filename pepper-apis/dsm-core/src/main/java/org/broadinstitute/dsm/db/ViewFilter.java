@@ -318,7 +318,7 @@ public class ViewFilter {
         if (!rs.getString(DBConstants.CREATED_BY).contains("System")) {
             String queryToParse = rs.getString(DBConstants.QUERY_ITEMS);
             try {
-                filter = parseQueryToViewFilterObject(queryToParse, filter);
+                filter = parseFilteringQuery(queryToParse, filter);
             } catch (Exception e) {
                 return filter;
 
@@ -487,7 +487,7 @@ public class ViewFilter {
      * @param viewFilter: ViewFilter to return with Filter[] of query String in it
      * @return ViewFilter which the input string is parsed and is in as a Filter[]
      */
-    public static ViewFilter parseQueryToViewFilterObject(String str, ViewFilter viewFilter) {
+    public static ViewFilter parseFilteringQuery(String str, ViewFilter viewFilter) {
         String[] conditions = str.split("(and\\s)|(AND\\s)");
         Map<String, Filter> filters = new HashMap<>(conditions.length);
         for (String condition : conditions) {
