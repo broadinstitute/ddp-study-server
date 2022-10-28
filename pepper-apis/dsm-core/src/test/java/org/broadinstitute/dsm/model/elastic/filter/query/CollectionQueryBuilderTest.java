@@ -79,6 +79,34 @@ public class CollectionQueryBuilderTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void scanDateRangeValue() {
+        String filter = " AND k.scan_date  >= 1664928000000 AND k.scan_date  <= 1665014399999";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").gte(1664928000000L), ScoreMode.Avg))
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").lte(1665014399999L), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void receivedDateValue() {
+        String filter = " AND DATE(FROM_UNIXTIME(k.receive_date/1000)) = DATE(FROM_UNIXTIME(1664928000))";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new MatchQueryBuilder("dsm.kitRequestShipping.receiveDate", "2022-10-05").operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
     private BaseAbstractQueryBuilder getAbstractQueryBuilder(String alias, String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(alias, filter);
         abstractQueryBuilder.setParser(new FilterParser());
