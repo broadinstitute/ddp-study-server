@@ -24,7 +24,7 @@ public class PdfBucketService {
     private final boolean useCloudStorage;
 
     public static String getBlobName(String umbrellaGuid, String studyGuid, String userGuid, String pdfConfigName, String pdfVersionTag) {
-        return String.format("%s/%s/%s_%s_%s.pdf", umbrellaGuid, studyGuid, userGuid, pdfConfigName, pdfVersionTag);
+        return String.format("%s/%s/%s_%s_%s.pdf", umbrellaGuid, studyGuid.toLowerCase(), userGuid, pdfConfigName, pdfVersionTag);
     }
 
     /**
