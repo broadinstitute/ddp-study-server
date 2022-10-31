@@ -27,20 +27,15 @@ public class DDPParticipant {
     private String shortId;
     private String legacyShortId;
     private DeliveryAddress address;
-    private String proxyFirstName;
-    private String proxyLastName;
 
     public DDPParticipant() {
     }
 
-    public DDPParticipant(String shortId, String legacyShortId, String firstName, String lastName, String proxyFirstName,
-                          String proxyLastName) {
+    public DDPParticipant(String shortId, String legacyShortId, String firstName, String lastName) {
         this.shortId = shortId;
         this.legacyShortId = legacyShortId;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.proxyFirstName = proxyFirstName;
-        this.proxyLastName = proxyLastName;
     }
 
     public DDPParticipant(String shortId, String legacyShortId, String firstName, String lastName, DeliveryAddress address) {
@@ -52,9 +47,8 @@ public class DDPParticipant {
     }
 
     public DDPParticipant(String participantId, String firstName, String lastName, String country, String city, String postalCode,
-                          String street1, String street2, String state, String shortId, String legacyShortId, String proxyFirstName,
-                          String proxyLastName) {
-        this(shortId, legacyShortId, firstName, lastName, proxyFirstName, proxyLastName);
+                          String street1, String street2, String state, String shortId, String legacyShortId) {
+        this(shortId, legacyShortId, firstName, lastName);
         this.participantId = participantId;
         this.country = country;
         this.city = city;

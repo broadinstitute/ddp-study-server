@@ -299,7 +299,7 @@ public class GBFTest extends TestHelper {
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             String ddpParticipantId = rs.getString("ddp_participant_id");
-                            DDPParticipant participant = ElasticSearchUtil.getParticipantAsDDPParticipant(elasticMap, ddpParticipantId, instance);
+                            DDPParticipant participant = ElasticSearchUtil.getParticipantAsDDPParticipant(elasticMap, ddpParticipantId);
 
                             kitsToOrder.add(new KitRequest(ddpParticipantId, participant.getShortId(), participant, externalOrderNumber));
 

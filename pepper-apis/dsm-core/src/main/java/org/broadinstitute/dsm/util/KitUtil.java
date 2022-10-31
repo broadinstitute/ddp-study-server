@@ -144,11 +144,10 @@ public class KitUtil {
                                 ElasticSearchUtil.BY_LEGACY_ALTPID + kitLabelTriggered.getDdpParticipantId());
                     }
                     DDPParticipant ddpParticipant =
-                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, kitLabelTriggered.getDdpParticipantId(),
-                                    ddpInstance);
+                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, kitLabelTriggered.getDdpParticipantId());
                     if (ddpParticipant != null) {
                         toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(), null,
-                                ddpParticipant);
+                                ddpParticipant, ddpInstanceDto.getDdpInstanceId());
                         KitRequestShipping.updateRequest(kitLabelTriggered, ddpParticipant, kitLabelTriggered.getKitTyp(),
                                 kitLabelTriggered.getKitRequestSettings());
                     } else {
@@ -159,7 +158,7 @@ public class KitUtil {
                 } else {
                     //uploaded pt
                     toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(),
-                            kitLabelTriggered.getAddressIdTo(), null);
+                            kitLabelTriggered.getAddressIdTo(), null, ddpInstanceDto.getDdpInstanceId());
                     //uploaded pt is missing collaborator ids -> due to migration and upload with wrong shortId
                     if (kitLabelTriggered.getParticipantCollaboratorId() == null) {
                         if (StringUtils.isNotBlank(kitLabelTriggered.getBaseURL())) {
@@ -170,7 +169,7 @@ public class KitUtil {
                                         ElasticSearchUtil.getDDPParticipantsFromES(kitLabelTriggered.getInstanceName(),
                                                 kitLabelTriggered.getParticipantIndexES());
                                 ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                                        kitLabelTriggered.getDdpParticipantId(), ddpInstance);
+                                        kitLabelTriggered.getDdpParticipantId());
                             } else {
                                 //DDP requested pt
                                 ddpParticipant = DDPParticipant.getDDPParticipant(kitLabelTriggered.getBaseURL(),
@@ -247,7 +246,8 @@ public class KitUtil {
                                         rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
                                         rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
                                         rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME), 0, null,
-                                        rs.getInt(DBConstants.DDP_INSTANCE_ID), rs.getInt(DBConstants.HAS_CARE_OF)), //label creation doesn't care if kit was part of sub kit...
+                                        rs.getInt(DBConstants.DDP_INSTANCE_ID), //label creation doesn't care if kit was part of sub kit...
+                                        rs.getInt(DBConstants.HAS_CARE_OF)),
                                 new KitType(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                         rs.getString(DBConstants.KIT_TYPE_NAME), rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME),
                                         rs.getString(DBConstants.EXTERNAL_SHIPPER), rs.getString(DBConstants.CUSTOMS_JSON)),
@@ -276,14 +276,16 @@ public class KitUtil {
         Shipment returnShipment = null;
         Address toAddress = null;
         try {
-            toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressIdTo, null);
+            toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressIdTo, null,
+                    ddpInstanceDto.getDdpInstanceId());
             participantShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, false, toAddress);
         } catch (Exception e) {
             errorMessage = "To: " + e.getMessage();
         }
         try {
-            Address returnAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, null, null);
+            Address returnAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, null, null,
+                    ddpInstanceDto.getDdpInstanceId());
             returnShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, true, returnAddress);
         } catch (Exception e) {

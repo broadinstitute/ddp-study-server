@@ -412,7 +412,7 @@ public class RouteTestSample extends TestHelper {
     public Address easyPost(String instanceId, String instanceName, DDPParticipant participant, boolean notFEDEX2DAY) throws Exception {
         HashMap<Integer, KitRequestSettings> carrierServiceMap = KitRequestSettings.getKitRequestSettings(instanceId);
         EasyPostUtil easyPostUtil = new EasyPostUtil(instanceName);
-        Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952", false);
+        Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952");
         Address returnAddress =
                 easyPostUtil.createBroadAddress("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge", "02141",
                         "MA", "US", "617-714-8952");

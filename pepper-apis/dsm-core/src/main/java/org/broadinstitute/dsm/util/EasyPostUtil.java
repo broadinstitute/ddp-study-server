@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import com.easypost.EasyPost;
 import com.easypost.exception.EasyPostException;
@@ -23,7 +22,6 @@ import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.exception.CarrierRejectionException;
 import org.broadinstitute.dsm.exception.RateNotAvailableException;
 import org.broadinstitute.dsm.model.EasypostLabelRate;
-import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -187,7 +185,7 @@ public class EasyPostUtil {
         }
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, boolean hasCareOf)
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone)
             throws EasyPostException {
         if (StringUtils.isEmpty(this.phone)) {
             throw new RuntimeException("Contact phone number is needed");
@@ -211,15 +209,34 @@ public class EasyPostUtil {
         toAddressMap.put(this.phone, phone); //Needed for FedEx!
         toAddressMap.put(this.residential, true);
 
-        String careOf = null;
-        if (hasCareOf) {
-            if (ddpParticipant.getProxyFirstName() != null || ddpParticipant.getProxyLastName() != null) {
-                careOf = String.format("C/O %s %s", Objects.toString(ddpParticipant.getProxyFirstName(), ""),
-                        Objects.toString(ddpParticipant.getProxyLastName(), ""));
-                toAddressMap.put(this.company, careOf);
-            }
+
+        return Address.create(toAddressMap);
+    }
+
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, @NonNull String company)
+            throws EasyPostException {
+        if (StringUtils.isEmpty(this.phone)) {
+            throw new RuntimeException("Contact phone number is needed");
         }
 
+        String mailToName = ddpParticipant.getMailToName();
+        if (StringUtils.isBlank(mailToName)) {
+            String firstName = ddpParticipant.getFirstName();
+            String lastName = ddpParticipant.getLastName();
+            mailToName = firstName + " " + lastName;
+        }
+
+        Map<String, Object> toAddressMap = new HashMap<>();
+        toAddressMap.put(this.name, mailToName);
+        toAddressMap.put(this.street1, ddpParticipant.getStreet1());
+        toAddressMap.put(this.street2, ddpParticipant.getStreet2());
+        toAddressMap.put(this.city, ddpParticipant.getCity());
+        toAddressMap.put(this.state, ddpParticipant.getState());
+        toAddressMap.put(this.zip, ddpParticipant.getPostalCode());
+        toAddressMap.put(this.country, ddpParticipant.getCountry());
+        toAddressMap.put(this.phone, phone); //Needed for FedEx!
+        toAddressMap.put(this.residential, true);
+        toAddressMap.put(this.company, company); // care of field goes here
         return Address.create(toAddressMap);
     }
 

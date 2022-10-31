@@ -89,8 +89,7 @@ public class ParticipantExit {
                         ElasticSearchUtil.getDDPParticipantsFromES(realm, instance.getParticipantIndexES());
                 for (ParticipantExit exitParticipant : exitedParticipants) {
                     DDPParticipant ddpParticipant =
-                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, exitParticipant.getParticipantId(),
-                                    instance);
+                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, exitParticipant.getParticipantId());
                     if (ddpParticipant != null) {
                         exitParticipant.setShortId(ddpParticipant.getShortId());
                         exitParticipant.setLegacyShortId(ddpParticipant.getLegacyShortId());
