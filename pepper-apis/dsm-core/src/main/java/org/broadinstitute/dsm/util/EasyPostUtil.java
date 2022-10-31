@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.easypost.EasyPost;
 import com.easypost.exception.EasyPostException;
@@ -186,7 +187,7 @@ public class EasyPostUtil {
         }
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, KitRequestSettings kitRequestSettings)
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, boolean hasCareOf)
             throws EasyPostException {
         if (StringUtils.isEmpty(this.phone)) {
             throw new RuntimeException("Contact phone number is needed");
@@ -211,9 +212,10 @@ public class EasyPostUtil {
         toAddressMap.put(this.residential, true);
 
         String careOf = null;
-        if (kitRequestSettings.getHasCareOF() == 1) {
+        if (hasCareOf) {
             if (ddpParticipant.getProxyFirstName() != null || ddpParticipant.getProxyLastName() != null) {
-                careOf = String.format("C/O %s %s", ddpParticipant.getProxyFirstName(), ddpParticipant.getProxyLastName());
+                careOf = String.format("C/O %s %s", Objects.toString(ddpParticipant.getProxyFirstName(), ""),
+                        Objects.toString(ddpParticipant.getProxyLastName(), ""));
                 toAddressMap.put(this.company, careOf);
             }
         }
