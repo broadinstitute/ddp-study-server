@@ -80,6 +80,19 @@ public class CollectionQueryBuilderTest {
     }
 
     @Test
+    public void collectionBuildDateOfMajorityRange() {
+
+        String filter = "  AND dsm.dateOfMajority >= '2022-10-26'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("dsm", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new RangeQueryBuilder("dsm.dateOfMajority").gte("2022-10-26"));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
     public void scanDateRangeValue() {
         String filter = " AND k.scan_date  >= 1664928000000 AND k.scan_date  <= 1665014399999";
 
@@ -123,6 +136,16 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                 new NestedQueryBuilder("dsm.medicalRecord", new MatchQueryBuilder("dsm.medicalRecord.followUp", true), ScoreMode.Avg));
 
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void smIdNotEmpty() {
+        String filter = " AND sm.sm_id_value IS NOT NULL ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("sm", filter).build();
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.smId",
+                            new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.smId.smIdValue")), ScoreMode.Avg));
         Assert.assertEquals(expected, actual);
     }
 

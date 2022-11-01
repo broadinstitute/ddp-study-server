@@ -7,6 +7,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -57,6 +58,16 @@ public class SingleQueryBuilderTest {
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
         expectedQuery.must(new MatchQueryBuilder("dsm.dateOfBirth", "1990-11-25").operator(Operator.AND));
+
+        Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(andFilter));
+    }
+
+    @Test
+    public void dateWithRange() {
+        String andFilter = " AND dsm.dateOfBirth  >= '1990-11-25'";
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(new RangeQueryBuilder("dsm.dateOfBirth").gte("1990-11-25"));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(andFilter));
     }
