@@ -171,6 +171,16 @@ public class CollectionQueryBuilderTest {
     }
 
     @Test
+    public void smIdNotEmpty() {
+        String filter = " AND sm.sm_id_value IS NOT NULL ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("sm", filter).build();
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.smId",
+                            new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.smId.smIdValue")), ScoreMode.Avg));
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
     public void multipleOptionsQueryBuilder() {
 
         String filter =
