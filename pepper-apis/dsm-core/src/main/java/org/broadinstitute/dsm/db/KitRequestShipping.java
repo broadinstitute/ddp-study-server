@@ -1347,7 +1347,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public static Address getToAddressId(@NonNull EasyPostUtil easyPostUtil, KitRequestSettings kitRequestSettings, String addressId,
-                                         DDPParticipant participant, Integer ddpInstanceId) throws Exception {
+                                         DDPParticipant participant, DDPInstanceDto ddpInstance) throws Exception {
         Address toAddress = null;
         if (addressId == null && participant == null) { //if both are set to null then it is return label!
             toAddress = easyPostUtil.createBroadAddress(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
@@ -1359,7 +1359,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             } else if (participant != null) {
                 boolean hasCareOf = kitRequestSettings.getHasCareOF() == 1;
                 if (hasCareOf) {
-                    DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceId);
                     String proxyFirstName = null;
                     String proxyLastName = null;
                     Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,

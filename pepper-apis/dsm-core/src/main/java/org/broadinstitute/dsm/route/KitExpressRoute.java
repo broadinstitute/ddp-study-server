@@ -108,7 +108,7 @@ public class KitExpressRoute extends RequestHandler {
         Address toAddress = null;
         try {
             toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressToId, null,
-                    ddpInstanceDto.getDdpInstanceId());
+                    ddpInstanceDto);
             participantShipment = KitRequestShipping.getShipment(easyPostUtil, ddpInstanceDto.getBillingReference(),
                     kitType, kitRequestSettings, toAddress, "FedEx", kitRequestSettings.getCarrierToId(), "FIRST_OVERNIGHT");
             doNotification(ddpInstanceDto.getInstanceName());

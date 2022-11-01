@@ -147,7 +147,7 @@ public class KitUtil {
                             ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, kitLabelTriggered.getDdpParticipantId());
                     if (ddpParticipant != null) {
                         toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(), null,
-                                ddpParticipant, ddpInstanceDto.getDdpInstanceId());
+                                ddpParticipant, ddpInstanceDto);
                         KitRequestShipping.updateRequest(kitLabelTriggered, ddpParticipant, kitLabelTriggered.getKitTyp(),
                                 kitLabelTriggered.getKitRequestSettings());
                     } else {
@@ -158,7 +158,7 @@ public class KitUtil {
                 } else {
                     //uploaded pt
                     toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(),
-                            kitLabelTriggered.getAddressIdTo(), null, ddpInstanceDto.getDdpInstanceId());
+                            kitLabelTriggered.getAddressIdTo(), null, ddpInstanceDto);
                     //uploaded pt is missing collaborator ids -> due to migration and upload with wrong shortId
                     if (kitLabelTriggered.getParticipantCollaboratorId() == null) {
                         if (StringUtils.isNotBlank(kitLabelTriggered.getBaseURL())) {
@@ -277,7 +277,7 @@ public class KitUtil {
         Address toAddress = null;
         try {
             toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressIdTo, null,
-                    ddpInstanceDto.getDdpInstanceId());
+                    ddpInstanceDto);
             participantShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, false, toAddress);
         } catch (Exception e) {
@@ -285,7 +285,7 @@ public class KitUtil {
         }
         try {
             Address returnAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, null, null,
-                    ddpInstanceDto.getDdpInstanceId());
+                    ddpInstanceDto);
             returnShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, true, returnAddress);
         } catch (Exception e) {
