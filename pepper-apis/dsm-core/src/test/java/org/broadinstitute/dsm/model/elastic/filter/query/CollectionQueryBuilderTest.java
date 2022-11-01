@@ -220,4 +220,32 @@ public class CollectionQueryBuilderTest {
         Assert.assertTrue(dsmAliasRegex.matcher(substringToMatch).matches());
     }
 
+    @Test
+    public void parseQueryWithNumberInString() {
+        String filter = " AND c.cohort_tag_name = 'Oct 7 2022'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                        new NestedQueryBuilder("dsm.cohortTag",
+                                new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseQueryWithNumber() {
+        String filter = " AND c.cohort_tag_name = '7'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                        new NestedQueryBuilder("dsm.cohortTag",
+                                new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "7")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
 }
