@@ -23,6 +23,17 @@ public class PdfBucketService {
     private final String bucketName;
     private final boolean useCloudStorage;
 
+    /**
+     * Generates name from the passed values.
+     * Passed study guid is lower cased to overcome google bucket name being case-sensitive.
+     *
+     * @param umbrellaGuid umbrella guid
+     * @param studyGuid study guid
+     * @param userGuid  user guid
+     * @param pdfConfigName pdf config name
+     * @param pdfVersionTag pdf version
+     * @return generated name
+     */
     public static String getBlobName(String umbrellaGuid, String studyGuid, String userGuid, String pdfConfigName, String pdfVersionTag) {
         return String.format("%s/%s/%s_%s_%s.pdf", umbrellaGuid, studyGuid.toLowerCase(), userGuid, pdfConfigName, pdfVersionTag);
     }
