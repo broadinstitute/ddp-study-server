@@ -58,7 +58,7 @@ public class OsteoV2ReleasePdfUpdates implements CustomTask {
         pdfs.forEach(pdf -> cleanupV2Version(handle, pdf.getString("name"), studyDto.getId(), "v2"));
 
         //re-insert new v2 version
-        var pdfBuilder = new PdfBuilder(cfgPath.getParent(), studyCfg, studyDto, adminUser.getUserId());
+        PdfBuilder pdfBuilder = new PdfBuilder(cfgPath.getParent(), studyCfg, studyDto, adminUser.getUserId());
         pdfs.forEach(pdf -> pdfBuilder.insertPdfConfig(handle, pdf));
 
     }
