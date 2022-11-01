@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.model.filter.postfilter.osteo.OldOsteoPostFilter;
 public interface StudyPostFilter {
 
     String OLD_OSTEO_INSTANCE_NAME = "Osteo";
-    String NEW_OSTEO_INSTANCE_NAME = "osteo2";
+    public static String NEW_OSTEO_INSTANCE_NAME = "osteo2";
 
     static Optional<StudyPostFilter> fromPayload(StudyPostFilterPayload studyPostFilterPayload) {
         Optional<StudyPostFilter> studyPostFilter = Optional.empty();

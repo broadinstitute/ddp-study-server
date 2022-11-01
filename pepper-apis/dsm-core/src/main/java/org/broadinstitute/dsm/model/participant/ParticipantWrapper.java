@@ -75,7 +75,7 @@ public class ParticipantWrapper {
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
-            fetchAndPrepareDataByFilters(filters);
+            fetchAndPrepareDataByFilters(filters, ddpInstanceDto.getInstanceName());
             return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData();
@@ -83,7 +83,7 @@ public class ParticipantWrapper {
         });
     }
 
-    public ParticipantWrapperResult getFilteredList(AbstractQueryBuilder<?> mainQuery) {
+    public ParticipantWrapperResult getFilteredList(AbstractQueryBuilder<?> mainQuery, String instanceName) {
         logger.info("Getting list of participant information");
 
         DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
@@ -92,19 +92,19 @@ public class ParticipantWrapper {
             throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstanceDto.getInstanceName());
         }
 
-        fetchAndPrepareDataByAbstractQuery(mainQuery);
+        fetchAndPrepareDataByAbstractQuery(mainQuery, instanceName);
         return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
     }
 
-    private void fetchAndPrepareDataByAbstractQuery(AbstractQueryBuilder<?> mainQuery) {
+    private void fetchAndPrepareDataByAbstractQuery(AbstractQueryBuilder<?> mainQuery, String instanceName) {
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
                 participantWrapperPayload.getTo(), mainQuery);
     }
 
-    private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
+    private void fetchAndPrepareDataByFilters(Map<String, String> filters, String instanceName) {
         AbstractQueryBuilder<?> mainQuery = prepareQuery(filters);
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), mainQuery);
+                participantWrapperPayload.getTo(), mainQuery, instanceName);
     }
 
     AbstractQueryBuilder<?> prepareQuery(Map<String, String> filters) {
