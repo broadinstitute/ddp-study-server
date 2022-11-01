@@ -254,7 +254,7 @@ public class CollectionQueryBuilderTest {
     public void parseQueryWithNumberInString() {
         String filter = " AND c.cohort_tag_name = 'Oct 7 2022'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                         new NestedQueryBuilder("dsm.cohortTag",
@@ -268,7 +268,7 @@ public class CollectionQueryBuilderTest {
     public void parseQueryWithNumber() {
         String filter = " AND c.cohort_tag_name = '7'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                         new NestedQueryBuilder("dsm.cohortTag",
@@ -282,7 +282,7 @@ public class CollectionQueryBuilderTest {
     public void parseLikeQueryWithNumberInString() {
         String filter = " AND c.cohort_tag_name LIKE '%Oct 7 2022%'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                 new NestedQueryBuilder("dsm.cohortTag",
@@ -296,7 +296,7 @@ public class CollectionQueryBuilderTest {
     public void parseLikeQueryWithDoubleSpacesInString() {
         String filter = " AND c.cohort_tag_name LIKE '%Oct 7  2022%'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                 new NestedQueryBuilder("dsm.cohortTag",
@@ -310,7 +310,7 @@ public class CollectionQueryBuilderTest {
     public void parseLikeQueryWithMultipleSpacesInString() {
         String filter = " AND c.cohort_tag_name LIKE '%Oct 7     2022%'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                 new NestedQueryBuilder("dsm.cohortTag",
@@ -324,7 +324,7 @@ public class CollectionQueryBuilderTest {
     public void parseEqualsQueryWithDoubleSpacesInString() {
         String filter = " AND c.cohort_tag_name = 'Oct 7  2022'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                 new NestedQueryBuilder("dsm.cohortTag",
@@ -338,7 +338,7 @@ public class CollectionQueryBuilderTest {
     public void parseEqualsQueryWithMultipleSpacesInString() {
         String filter = " AND c.cohort_tag_name = 'Oct 7     2022'";
 
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
                 new NestedQueryBuilder("dsm.cohortTag",
