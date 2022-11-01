@@ -248,4 +248,74 @@ public class CollectionQueryBuilderTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void parseLikeQueryWithNumberInString() {
+        String filter = " AND c.cohort_tag_name LIKE '%Oct 7 2022%'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                                .operator(Operator.OR), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseLikeQueryWithDoubleSpacesInString() {
+        String filter = " AND c.cohort_tag_name LIKE '%Oct 7  2022%'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                                .operator(Operator.OR), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseLikeQueryWithMultipleSpacesInString() {
+        String filter = " AND c.cohort_tag_name LIKE '%Oct 7     2022%'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                                .operator(Operator.OR), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseEqualsQueryWithDoubleSpacesInString() {
+        String filter = " AND c.cohort_tag_name = 'Oct 7  2022'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseEqualsQueryWithMultipleSpacesInString() {
+        String filter = " AND c.cohort_tag_name = 'Oct 7     2022'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("m", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
 }

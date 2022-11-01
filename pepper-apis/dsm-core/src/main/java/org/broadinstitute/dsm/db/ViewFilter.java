@@ -606,7 +606,7 @@ public class ViewFilter {
                                 type = Filter.NUMBER;
                                 state = 40;
                             } else {
-                                tempValue = word;
+                                tempValue = word.trim();
                                 if (!longWord) {
                                     if (tempValue.contains(Filter.SINGLE_QUOTE)) {
                                         if (tempValue.indexOf(Filter.SINGLE_QUOTE) != tempValue.lastIndexOf(Filter.SINGLE_QUOTE)) {
@@ -697,7 +697,7 @@ public class ViewFilter {
                                         state = 11;
                                     } else {
                                         // "LIKE %more than 1 word% query
-                                        tempValue = word;
+                                        tempValue = word.trim();
                                         if (!longWord) {
                                             if (tempValue.contains(Filter.SINGLE_QUOTE)) {
                                                 if (tempValue.indexOf(Filter.SINGLE_QUOTE) != tempValue.lastIndexOf(Filter.SINGLE_QUOTE)) {
