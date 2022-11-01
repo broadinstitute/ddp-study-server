@@ -601,12 +601,12 @@ public class ViewFilter {
                                 value = word;
                                 type = Filter.BOOLEAN;
                                 state = 40;
-                            } else if (StringUtils.isNumeric(word)) {
+                            } else if (isNumeric(word) && !longWord) {
                                 value = word;
                                 type = Filter.NUMBER;
                                 state = 40;
                             } else {
-                                tempValue = word;
+                                tempValue = word.trim();
                                 if (!longWord) {
                                     if (tempValue.contains(Filter.SINGLE_QUOTE)) {
                                         if (tempValue.indexOf(Filter.SINGLE_QUOTE) != tempValue.lastIndexOf(Filter.SINGLE_QUOTE)) {
@@ -677,8 +677,8 @@ public class ViewFilter {
 
                         case 8: // query contained word "LIKE", exact match is false then
                             exact = false;
-                            if (word.equals("'1'") || (word.equals("1") && (Filter.CHECKBOX.equals(
-                                    type)))) { // check boxes are either 1 or 0
+                            if (word.equals("'1'") || (word.equals("1")
+                                    && (Filter.CHECKBOX.equals(type)))) { // check boxes are either 1 or 0
                                 if (StringUtils.isNotBlank(type)) {
                                     filter2 = new NameValue(columnName, true);
                                 } else {
@@ -688,17 +688,43 @@ public class ViewFilter {
                                 state = 9;
                                 break;
                             } else { // "LIKE %?% query
-                                value = word;
-                                if (value.contains(Filter.PERCENT_SIGN)) {
+                                if (word.contains(Filter.PERCENT_SIGN) || longWord) {
                                     exact = false;
-                                    int first = value.indexOf(Filter.PERCENT_SIGN);
-                                    int last = value.lastIndexOf(Filter.PERCENT_SIGN);
-                                    if (first != -1) {
-                                        value = value.substring(first + 1, last);
+                                    int first = word.indexOf(Filter.PERCENT_SIGN);
+                                    int last = word.lastIndexOf(Filter.PERCENT_SIGN);
+                                    if (first != -1 && first != last) {
+                                        value = word.substring(first + 1, last);
+                                        state = 11;
+                                    } else {
+                                        // "LIKE %more than 1 word% query
+                                        tempValue = word.trim();
+                                        if (!longWord) {
+                                            if (tempValue.contains(Filter.SINGLE_QUOTE)) {
+                                                if (tempValue.indexOf(Filter.SINGLE_QUOTE) != tempValue.lastIndexOf(Filter.SINGLE_QUOTE)) {
+                                                    value = trimValue(tempValue);
+                                                    state = 11;
+                                                    break;
+                                                } else {
+                                                    longWord = true;
+                                                    value += trimValue(tempValue) + " ";
+                                                }
+                                            } else {
+                                                value = word;
+                                                state = 11;
+                                                exact = true;
+                                                break;
+                                            }
+                                        } else if (longWord && tempValue.contains(Filter.SINGLE_QUOTE)) {
+                                            value += trimValue(tempValue) + Filter.SPACE;
+                                            longWord = false;
+                                            value = value.trim();
+                                            state = 11;
+                                            break;
+                                        } else if (longWord) {
+                                            value += tempValue + Filter.SPACE;
+                                        }
                                     }
                                 }
-
-                                state = 11;
                             }
                             break;
                         case 9:// termination state
@@ -1262,5 +1288,14 @@ public class ViewFilter {
         LocalDateTime today = LocalDateTime.now();     //Today
         LocalDateTime tomorrow = today.plusDays(numberOfDays);
         return getDate(tomorrow);
+    }
+
+    private static boolean isNumeric(String value) {
+        try {
+            Double.parseDouble(value);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
     }
 }
