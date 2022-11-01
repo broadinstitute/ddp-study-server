@@ -20,21 +20,25 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import spark.Request;
 import spark.Response;
 
-public class CreateCohortTagRoute extends RequestHandler  {
+public class CreateCohortTagRoute extends RequestHandler {
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
         String realm = Optional.ofNullable(request.queryMap().get(RoutePath.REALM).value()).orElseThrow().toLowerCase();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        CohortTag cohortTagPayload = ObjectMapperSingleton.readValue(request.body(), new TypeReference<CohortTag>() {});
+        CohortTag cohortTagPayload = ObjectMapperSingleton.readValue(request.body(), new TypeReference<CohortTag>() {
+        });
         cohortTagPayload.setCreatedBy(new UserDao().get(Integer.parseInt(userId)).flatMap(UserDto::getEmail).orElse(StringUtils.EMPTY));
         CohortTagUseCase cohortTagUseCase = new CohortTagUseCase(cohortTagPayload, ddpInstanceDto, new CohortTagDaoImpl(),
                 new ElasticSearch(), new NestedUpsertPainlessFacade(), new PutToNestedScriptBuilder());
-        int justCreatedCohortTagId = cohortTagUseCase.insert();
-        return ObjectMapperSingleton.writeValueAsString(justCreatedCohortTagId);
+        try {
+            int justCreatedCohortTagId = cohortTagUseCase.insert();
+            return ObjectMapperSingleton.writeValueAsString(justCreatedCohortTagId);
+        } catch (Exception e) {
+            response.status(500);
+            throw new RuntimeException("Duplicate tag!", e);
+        }
     }
-
-
 
 
 }
