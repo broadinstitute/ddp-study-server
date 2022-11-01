@@ -309,7 +309,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
-    private long ddpInstanceId;
+    private Long ddpInstanceId;
     @ColumnName(DBConstants.COLLECTION_DATE)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String collectionDate;
@@ -443,6 +443,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES),
                         rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+        kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);
@@ -982,7 +983,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
-            kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
+            kitRequestShipping.setDdpInstanceId((long)ddpInstance.getDdpInstanceIdAsInt());
             kitRequestShipping.setDdpLabel(ddpLabel);
 
             DDPInstanceDto ddpInstanceDto =
@@ -1761,7 +1762,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     @Override
     public Optional<Long> extractDdpInstanceId() {
-        return Optional.of(ddpInstanceId);
+        return Optional.of(ddpInstanceId != null ? ddpInstanceId : 0);
     }
 
     public boolean isKitRequiringTrackingScan() {
