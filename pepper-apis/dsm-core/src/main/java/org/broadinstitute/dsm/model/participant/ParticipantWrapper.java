@@ -75,7 +75,7 @@ public class ParticipantWrapper {
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
-            fetchAndPrepareDataByFilters(filters);
+            fetchAndPrepareDataByFilters(filters, ddpInstanceDto.getInstanceName());
             return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData();
@@ -83,10 +83,10 @@ public class ParticipantWrapper {
         });
     }
 
-    private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
+    private void fetchAndPrepareDataByFilters(Map<String, String> filters, String instanceName) {
         AbstractQueryBuilder<?> mainQuery = prepareQuery(filters);
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), mainQuery);
+                participantWrapperPayload.getTo(), mainQuery, instanceName);
     }
 
     AbstractQueryBuilder<?> prepareQuery(Map<String, String> filters) {
