@@ -199,6 +199,12 @@ public class ParticipantWrapperTest {
         }
 
         @Override
+        public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to,
+                                                             AbstractQueryBuilder queryBuilder, String instanceName) {
+            return null;
+        }
+
+        @Override
         public ElasticSearch getParticipantsByRangeAndIds(String participantIndexES, int from, int to, List<String> participantIds) {
             return null;
         }
