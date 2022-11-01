@@ -318,7 +318,7 @@ public class ViewFilter {
         if (!rs.getString(DBConstants.CREATED_BY).contains("System")) {
             String queryToParse = rs.getString(DBConstants.QUERY_ITEMS);
             try {
-                filter = parseFilteringQuery(queryToParse, filter);
+                filter = parseQueryToViewFilterObject(queryToParse, filter);
             } catch (Exception e) {
                 return filter;
 
@@ -487,7 +487,7 @@ public class ViewFilter {
      * @param viewFilter: ViewFilter to return with Filter[] of query String in it
      * @return ViewFilter which the input string is parsed and is in as a Filter[]
      */
-    public static ViewFilter parseFilteringQuery(String str, ViewFilter viewFilter) {
+    private static ViewFilter parseQueryToViewFilterObject(String str, ViewFilter viewFilter) {
         String[] conditions = str.split("(and\\s)|(AND\\s)");
         Map<String, Filter> filters = new HashMap<>(conditions.length);
         for (String condition : conditions) {
@@ -751,9 +751,7 @@ public class ViewFilter {
                                 tableName = names[0];
                                 columnName = names[1];
                                 state = 18;
-
                             }
-
                             break;
                         case 18:
                             if (word.equals(",")) { // need to look for the path in the query since it is a MySQL json query
@@ -1244,18 +1242,18 @@ public class ViewFilter {
         return value;
     }
 
-    public static String getDate() {
+    private static String getDate() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime now = LocalDateTime.now();
         return (dtf.format(now));
     }
 
-    public static String getDate(LocalDateTime date) {
+    private static String getDate(LocalDateTime date) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return (dtf.format(date));
     }
 
-    public static String getDate(int numberOfDays, char operator) {
+    private static String getDate(int numberOfDays, char operator) {
         if (operator == '-') {
             numberOfDays *= -1;
         }

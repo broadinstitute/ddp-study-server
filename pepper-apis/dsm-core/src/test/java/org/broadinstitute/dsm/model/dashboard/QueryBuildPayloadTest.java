@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
-import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
 import org.junit.Test;
 
 public class QueryBuildPayloadTest {
