@@ -8,6 +8,7 @@ import lombok.Data;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.elastic.export.painless.ScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -52,7 +53,11 @@ public class CohortTagUseCase {
         this.scriptBuilder = scriptBuilder;
     }
 
-    public int insert() {
+    public int insert() throws DuplicateException {
+        if (participantHasTag()) {
+            throw new DuplicateException(String.format("Participant %s Already has tag %s", cohortTagPayload.getDdpParticipantId(),
+                    cohortTagPayload.getCohortTagName()));
+        }
         logger.info("Inserting cohort tag with tag name: " + getCohortTagName()
                 + " for participant with id: " + getDdpParticipantId());
         cohortTagPayload.setDdpParticipantId(getGuidIfLegacyAltPid(ddpInstanceDto, cohortTagPayload));
@@ -85,12 +90,19 @@ public class CohortTagUseCase {
         String createdBy = bulkCohortTag.getCreatedBy();
         for (String participantId: bulkCohortTag.getSelectedPatients()) {
             for (String tag: bulkCohortTag.getCohortTags()) {
-                CohortTag cohortTag = new CohortTag(tag, participantId, ddpInstanceDto.getDdpInstanceId());
-                cohortTag.setCreatedBy(createdBy);
-                cohortTagsToCreate.add(cohortTag);
+                if (!cohortTagDao.participantHasTag(participantId, tag) && !isDuplicateTag(participantId, tag, cohortTagsToCreate)) {
+                    CohortTag cohortTag = new CohortTag(tag, participantId, ddpInstanceDto.getDdpInstanceId());
+                    cohortTag.setCreatedBy(createdBy);
+                    cohortTagsToCreate.add(cohortTag);
+                }
             }
         }
         return cohortTagsToCreate;
+    }
+
+    private boolean isDuplicateTag(String participantId, String tag, List<CohortTag> cohortTagsToCreate) {
+        return cohortTagsToCreate.stream().filter(cohortTag ->
+            cohortTag.getCohortTagName().equals(tag) && cohortTag.getDdpParticipantId().equals(participantId)).findAny().isPresent();
     }
 
     private void setCohortTagIdsToCohortTags(List<CohortTag> cohortTagsToCreate, List<Integer> createdCohortTagsIds) {
