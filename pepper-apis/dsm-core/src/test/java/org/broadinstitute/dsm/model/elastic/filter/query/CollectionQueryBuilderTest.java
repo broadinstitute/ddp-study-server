@@ -79,6 +79,19 @@ public class CollectionQueryBuilderTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void collectionBuildDateOfMajorityRange() {
+
+        String filter = "  AND dsm.dateOfMajority >= '2022-10-26'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder("dsm", filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new RangeQueryBuilder("dsm.dateOfMajority").gte("2022-10-26"));
+
+        Assert.assertEquals(expected, actual);
+    }
+
     private BaseAbstractQueryBuilder getAbstractQueryBuilder(String alias, String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(alias, filter);
         abstractQueryBuilder.setParser(new FilterParser());
