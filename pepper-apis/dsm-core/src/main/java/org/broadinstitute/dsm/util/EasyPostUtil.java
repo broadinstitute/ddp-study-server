@@ -185,7 +185,7 @@ public class EasyPostUtil {
         }
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone)
+    public Map<String, Object> createAddressMap(DDPParticipant ddpParticipant, @NonNull String phone)
             throws EasyPostException {
         if (StringUtils.isEmpty(this.phone)) {
             throw new RuntimeException("Contact phone number is needed");
@@ -208,9 +208,7 @@ public class EasyPostUtil {
         toAddressMap.put(this.country, ddpParticipant.getCountry());
         toAddressMap.put(this.phone, phone); //Needed for FedEx!
         toAddressMap.put(this.residential, true);
-
-
-        return Address.create(toAddressMap);
+        return toAddressMap;
     }
 
     public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, @NonNull String company)
@@ -218,25 +216,17 @@ public class EasyPostUtil {
         if (StringUtils.isEmpty(this.phone)) {
             throw new RuntimeException("Contact phone number is needed");
         }
+        Map<String, Object> toAddressMap = createAddressMap(ddpParticipant, phone);
+        toAddressMap.put(this.company, company); // Care Of field goes here
+        return Address.create(toAddressMap);
+    }
 
-        String mailToName = ddpParticipant.getMailToName();
-        if (StringUtils.isBlank(mailToName)) {
-            String firstName = ddpParticipant.getFirstName();
-            String lastName = ddpParticipant.getLastName();
-            mailToName = firstName + " " + lastName;
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone)
+            throws EasyPostException {
+        if (StringUtils.isEmpty(this.phone)) {
+            throw new RuntimeException("Contact phone number is needed");
         }
-
-        Map<String, Object> toAddressMap = new HashMap<>();
-        toAddressMap.put(this.name, mailToName);
-        toAddressMap.put(this.street1, ddpParticipant.getStreet1());
-        toAddressMap.put(this.street2, ddpParticipant.getStreet2());
-        toAddressMap.put(this.city, ddpParticipant.getCity());
-        toAddressMap.put(this.state, ddpParticipant.getState());
-        toAddressMap.put(this.zip, ddpParticipant.getPostalCode());
-        toAddressMap.put(this.country, ddpParticipant.getCountry());
-        toAddressMap.put(this.phone, phone); //Needed for FedEx!
-        toAddressMap.put(this.residential, true);
-        toAddressMap.put(this.company, company); // care of field goes here
+        Map<String, Object> toAddressMap = createAddressMap(ddpParticipant, phone);
         return Address.create(toAddressMap);
     }
 
