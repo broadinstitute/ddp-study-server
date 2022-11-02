@@ -68,13 +68,13 @@ public class CountAdditionalFilterStrategyTest {
         BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("dsm.medicalRecord",
                         QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")), ScoreMode.Avg)
         );
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
         expectedQuery.should(QueryBuilders.matchQuery("address.country", "US").operator(Operator.AND));
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.should(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfMajority")));
 
         assertEquals(expectedQuery, actualQuery);
@@ -96,12 +96,12 @@ public class CountAdditionalFilterStrategyTest {
         BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("dsm.medicalRecord",
                         QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")), ScoreMode.Avg)
         );
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("activities",
                         QueryBuilders.boolQuery()
@@ -138,12 +138,12 @@ public class CountAdditionalFilterStrategyTest {
         BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("dsm.medicalRecord",
                         QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("dsm.medicalRecord.faxSent")), ScoreMode.Avg)
         );
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("dsm.dateOfBirth")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("activities",
                         QueryBuilders.boolQuery()
@@ -173,6 +173,7 @@ public class CountAdditionalFilterStrategyTest {
         BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("dsm.tissue",
                 QueryBuilders.boolQuery()
@@ -181,7 +182,6 @@ public class CountAdditionalFilterStrategyTest {
                 .should(QueryBuilders.matchQuery("dsm.tissue.tissueType", "bla")),
                 ScoreMode.Avg)
         );
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
 
         assertEquals(expectedQuery, actualQuery);
     }
@@ -204,6 +204,7 @@ public class CountAdditionalFilterStrategyTest {
         BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
         expectedQuery.must(
                 QueryBuilders.nestedQuery("dsm.tissue",
                 QueryBuilders.boolQuery()
@@ -221,7 +222,6 @@ public class CountAdditionalFilterStrategyTest {
         expectedQuery.should(QueryBuilders.nestedQuery("dsm.medicalRecord",
                 QueryBuilders.matchQuery("dsm.medicalRecord.faxSent", "2021-12-17").operator(Operator.AND),
                 ScoreMode.Avg));
-        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
 
         assertEquals(expectedQuery, actualQuery);
     }
