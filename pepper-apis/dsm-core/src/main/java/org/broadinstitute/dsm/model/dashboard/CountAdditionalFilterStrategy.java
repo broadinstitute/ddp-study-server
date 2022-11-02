@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
-import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseActivitiesStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
@@ -83,10 +82,7 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     @Override
     protected Map<String, List<String>> getSeparatedFilters() {
         List<String> separatedFilters = splitConcreteFiltersFromAdditionalFilter();
-        return mergeFilters(
-                extractFilters(separatedFilters, AndOrFilterSeparator.class),
-                extractFilters(separatedFilters, NonDsmAndOrFilterSeparator.class)
-        );
+        return extractFilters(separatedFilters, AndOrFilterSeparator.class);
     }
 
     @Override
