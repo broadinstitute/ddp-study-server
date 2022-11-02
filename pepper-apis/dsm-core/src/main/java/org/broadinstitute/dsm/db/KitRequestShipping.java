@@ -1357,8 +1357,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             if (StringUtils.isNotBlank(addressId)) {
                 toAddress = easyPostUtil.getAddress(addressId);
             } else if (participant != null) {
-                boolean hasCareOf = kitRequestSettings.getHasCareOF() == 1;
-                if (!hasCareOf) { // aside form singular, all other studies should go here and proceed with normal label
+                if (kitRequestSettings.getHasCareOF() != 1) { // aside form singular, all other studies should go here and proceed with normal label
                     toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
                     return toAddress;
                 }
@@ -1394,7 +1393,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
             }
         } else { // participant is not in ES
-            toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
+            throw new RuntimeException(String.format("Participant %s was not found in ES", participant.getParticipantId()));
         }
         return toAddress;
     }

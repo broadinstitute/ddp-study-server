@@ -358,10 +358,10 @@ public class ElasticSearchUtil {
         return getFilteredDDPParticipantsFromES(index, instance.getName(), filter);
     }
 
-    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstanceDto instance,
+    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstanceDto instanceDto,
                                                                                     @NonNull String filter) {
-        String index = instance.getEsParticipantIndex();
-        return getFilteredDDPParticipantsFromES(index, instance.getInstanceName(), filter);
+        String index = instanceDto.getEsParticipantIndex();
+        return getFilteredDDPParticipantsFromES(index, instanceDto.getInstanceName(), filter);
     }
 
     public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull String index, @NonNull String instanceName,

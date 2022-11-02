@@ -4,7 +4,6 @@ import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Parcel;
 import com.easypost.model.Shipment;
-import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.slf4j.Logger;
