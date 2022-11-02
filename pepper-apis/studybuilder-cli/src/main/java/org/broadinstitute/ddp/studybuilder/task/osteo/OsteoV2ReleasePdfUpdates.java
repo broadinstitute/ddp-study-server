@@ -76,10 +76,10 @@ public class OsteoV2ReleasePdfUpdates implements CustomTask {
                 .orElseThrow(() -> new DDPException("Could not find pdf version with data source for versionTag=" + versionTag));
 
         //delete this version to do clean insert
-        int rowCount = sqlHelper.deletePdfActivitySourcesByVersionId(version.getId());
-        rowCount = sqlHelper.deletePdfSourcesByVersionId(version.getId());
-        rowCount = sqlHelper.deletePdfVersionTemplateVersionId(version.getId());
-        rowCount = sqlHelper.deletePdfVersionByVersionId(version.getId());
+        sqlHelper.deletePdfActivitySourcesByVersionId(version.getId());
+        sqlHelper.deletePdfSourcesByVersionId(version.getId());
+        sqlHelper.deletePdfVersionTemplateVersionId(version.getId());
+        sqlHelper.deletePdfVersionByVersionId(version.getId());
 
     }
 
