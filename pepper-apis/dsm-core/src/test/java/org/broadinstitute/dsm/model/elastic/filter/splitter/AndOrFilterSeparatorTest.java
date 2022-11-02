@@ -20,7 +20,7 @@ public class AndOrFilterSeparatorTest {
                         + "AND ( t.tissue = 'review' OR t.tissue = 'no' OR t.tissue = 'bla' ) " + "OR m.medicalRecordName = '213' "
                         + "AND STR_TO_DATE(m.fax_sent,'%Y-%m-%d') = STR_TO_DATE('2021-12-17','%Y-%m-%d') "
                         + "AND JSON_CONTAINS ( k.test_result , JSON_OBJECT ( 'result' , 'result' ) ) "
-                        + "OR m.mrNotes = 'MEDICAL_RECORD_NOTESS' " + "AND m.medicalMedical = 'something AND something' "
+                        + "OR m.mrNotes = 'MEDICAL_RECORD_NOTESS' "
                         + "AND ( oD.request = 'review' OR oD.request = 'no' OR oD.request = 'bla' ) " + "OR t.tissueRecord = '225' "
                         + "OR STR_TO_DATE(m.fax_sent,'%Y-%m-%d') = STR_TO_DATE('2021-12-17','%Y-%m-%d') "
                         + "AND JSON_EXTRACT ( m.additiona`l_values_json , '$.seeingIfBugExists' )";
@@ -33,7 +33,6 @@ public class AndOrFilterSeparatorTest {
                                         "( t.tissue = 'review' OR t.tissue = 'no' OR t.tissue = 'bla' )",
                                         "STR_TO_DATE(m.fax_sent,'%Y-%m-%d') = STR_TO_DATE('2021-12-17','%Y-%m-%d')",
                                         "JSON_CONTAINS ( k.test_result , JSON_OBJECT ( 'result' , 'result' ) )",
-                                        "m.medicalMedical = 'something AND something'",
                                         "( oD.request = 'review' OR oD.request = 'no' OR " + "oD.request = 'bla' )",
                                         "JSON_EXTRACT ( m.additiona`l_values_json , '$.seeingIfBugExists' )")).toArray(),
                         eachFilter.getValue().toArray());
