@@ -1357,7 +1357,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             if (StringUtils.isNotBlank(addressId)) {
                 toAddress = easyPostUtil.getAddress(addressId);
             } else if (participant != null) {
-                if (kitRequestSettings.getHasCareOF() != 1) { // aside form singular, all other studies should go here and proceed with normal label
+                if (kitRequestSettings.getHasCareOF() != 1) {
+                    // aside form singular, all other studies should go here and proceed with normal label
                     toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
                     return toAddress;
                 }
