@@ -253,15 +253,15 @@ public class ElasticSearch implements ElasticSearchable {
     private AbstractQueryBuilder addOsteo2Filter(AbstractQueryBuilder queryBuilder) {
         //just osteo2
         BoolQueryBuilder osteo2QueryBuilder = new BoolQueryBuilder();
-        osteo2QueryBuilder.should(OsteoVersion2Surveys("CONSENT"));
-        osteo2QueryBuilder.should(OsteoVersion2Surveys("CONSENT_ASSENT"));
-        osteo2QueryBuilder.should(OsteoVersion2Surveys("PARENTAL_CONSENT"));
-        osteo2QueryBuilder.should(OsteoVersion2Surveys("LOVEDONE"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("CONSENT"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("CONSENT_ASSENT"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("PARENTAL_CONSENT"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("LOVEDONE"));
         ((BoolQueryBuilder) queryBuilder).must(osteo2QueryBuilder);
         return queryBuilder;
     }
 
-    private NestedQueryBuilder OsteoVersion2Surveys(String stableId) {
+    private NestedQueryBuilder osteoVersion2Surveys(String stableId) {
         BoolQueryBuilder queryBuilderConsentV2 = new BoolQueryBuilder();
         queryBuilderConsentV2.must(new MatchQueryBuilder("activities.activityCode", stableId).operator(Operator.AND));
         queryBuilderConsentV2.must(QueryBuilders.matchQuery("activities.activityVersion", "v2").operator(Operator.AND));

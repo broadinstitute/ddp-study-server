@@ -38,10 +38,11 @@ class QueryBuildPayload {
 
     AndOrFilterSeparator getFilterSeparator(DashboardLabelFilterDto dashboardLabelFilterDto) {
         return new AndOrFilterSeparator(StringUtils.EMPTY);
-//        if (Objects.isNull(dashboardLabelFilterDto) || Util.isUnderDsmKey(Alias.aliasByValue(extractAliasFrom(dashboardLabelFilterDto)))) {
-//            return new AndOrFilterSeparator(StringUtils.EMPTY);
-//        }
-//        return new NonDsmAndOrFilterSeparator(StringUtils.EMPTY);
+        //      if (Objects.isNull(dashboardLabelFilterDto)
+        //      || Util.isUnderDsmKey(Alias.aliasByValue(extractAliasFrom(dashboardLabelFilterDto)))) {
+        //          return new AndOrFilterSeparator(StringUtils.EMPTY);
+        //      }
+        //      return new NonDsmAndOrFilterSeparator(StringUtils.EMPTY);
     }
 
     private String extractAliasFrom(DashboardLabelFilterDto dashboardLabelFilterDto) {
@@ -50,9 +51,7 @@ class QueryBuildPayload {
             return dashboardLabelFilterDto.getEsNestedPath();
         } else {
             String[] paths = dashboardLabelFilterDto.getEsFilterPath().split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR);
-            result = Arrays.stream(paths)
-                    .findFirst()
-                    .orElse(StringUtils.EMPTY);
+            result = Arrays.stream(paths).findFirst().orElse(StringUtils.EMPTY);
         }
         return result;
     }
