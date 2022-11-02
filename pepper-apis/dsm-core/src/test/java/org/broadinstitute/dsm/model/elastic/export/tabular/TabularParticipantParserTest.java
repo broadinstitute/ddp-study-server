@@ -97,12 +97,12 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(TELANGIECTASIA_FILTER), null, false, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("Mutliselect value not rendered", "1", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES"));
-        assertEquals("Mutliselect value not rendered", "0", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("Mutliselect value not rendered", "1", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES"));
+        assertEquals("Mutliselect value not rendered", "0", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN"));
 
-        assertEquals("option details not rendered", "71", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL"));
-        assertEquals("option details not rendered", "", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
+        assertEquals("option details not rendered", "71", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL"));
+        assertEquals("option details not rendered", "", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
     }
 
     @Test
@@ -111,9 +111,9 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(TELANGIECTASIA_FILTER), null, true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("Mutliselect value not rendered", "eye", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA"));
-        assertEquals("option details not rendered", "71", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA_DETAIL"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("Mutliselect value not rendered", "eye", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA"));
+        assertEquals("option details not rendered", "71", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA_DETAIL"));
     }
 
     @Test
@@ -122,9 +122,9 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(TELANGIECTASIA_FILTER), null, true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT_2));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("Mutliselect value not rendered", "eye, skin", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA"));
-        assertEquals("option details not rendered", "71; 47", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA_DETAIL"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("Mutliselect value not rendered", "eye, skin", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA"));
+        assertEquals("option details not rendered", "71; 47", participantMap.get("MEDICAL_HISTORY.TELANGIECTASIA_DETAIL"));
     }
 
 
@@ -134,12 +134,12 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(MEDICATION_CATEGORY_FILTER), null, true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("Composite value not rendered", "med1", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME"));
-        assertEquals("Composite value not rendered", "39", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("Composite value not rendered", "med1", participantMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME"));
+        assertEquals("Composite value not rendered", "39", participantMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE"));
 
-        assertEquals("Composite value not rendered", "med2", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME_2"));
-        assertEquals("Composite value not rendered", "18", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE_2"));
+        assertEquals("Composite value not rendered", "med2", participantMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME_2"));
+        assertEquals("Composite value not rendered", "18", participantMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE_2"));
     }
 
     @Test
@@ -148,9 +148,9 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(PROXY_EMAIL_FILTER, EMAIL_FILTER), null, true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_SINGULAR_PARTICIPANT));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("proxy email not rendered", "iamaproxy@gmail.com", pMap.get("PROFILE.PROXY.EMAIL"));
-        assertEquals("email not rendered", "participantEmail@gmail.com", pMap.get("PROFILE.EMAIL"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("proxy email not rendered", "iamaproxy@gmail.com", participantMap.get("PROFILE.PROXY.EMAIL"));
+        assertEquals("email not rendered", "participantEmail@gmail.com", participantMap.get("PROFILE.EMAIL"));
     }
 
     @Test
@@ -159,8 +159,8 @@ public class TabularParticipantParserTest {
                 new TabularParticipantParser(Arrays.asList(SINGULAR_NOTES_FILTER), null, true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_SINGULAR_PARTICIPANT));
-        Map<String, String> pMap = participantValueMaps.get(0);
-        assertEquals("dynamic field not rendered", "admin entered notes", pMap.get("DSM.PARTICIPANT.RECORD.SINGULARNOTES"));
+        Map<String, String> participantMap = participantValueMaps.get(0);
+        assertEquals("dynamic field not rendered", "admin entered notes", participantMap.get("DSM.PARTICIPANT.RECORD.SINGULARNOTES"));
     }
 
     @Test
