@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="DDP-195_UPDATE_GENETIC_TESTING_ANSWER_FIELD" author="nick">
         <sql>
-            UPDATE `dev_dsm_db`.`field_settings` SET `actions` =
+            UPDATE `field_settings` SET `actions` =
             '[{\"type\":\"conditionalDisplay\",\"condition\":\"OTHER\",\"conditionalFieldSetting\":{\"columnName\":\"KARYOTYPE_ABNORMAL_OTHER_SPECIFY\",\"fieldType\":\"GROUP_GENETIC_TESTING\",\"columnDisplay\":\"Other Chromosomal anomaly (please specify)\",\"displayType\":\"TEXTAREA\",\"details\":{\"size\":100}}}]'
             WHERE column_name='KARYOTYPE_ABNORMAL';
 
