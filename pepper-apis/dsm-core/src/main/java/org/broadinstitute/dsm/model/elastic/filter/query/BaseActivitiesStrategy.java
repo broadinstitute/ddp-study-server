@@ -36,8 +36,12 @@ public abstract class BaseActivitiesStrategy extends BaseQueryStrategy {
         return strategy;
     }
 
-    private static boolean isQuestionsAnswersField(Operator operator) {
+    public static boolean isQuestionsAnswersField(Operator operator) {
         return !BASE_ACTIVITY_PROPERTIES.contains(operator.getSplitterStrategy().getFieldName());
+    }
+
+    public static boolean isQuestionsAnswersField(String property) {
+        return !BASE_ACTIVITY_PROPERTIES.contains(property);
     }
 
     @Override

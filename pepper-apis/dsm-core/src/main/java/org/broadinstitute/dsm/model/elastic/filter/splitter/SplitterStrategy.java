@@ -48,8 +48,7 @@ public abstract class SplitterStrategy {
                     })
                     .collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
         }
-        camelCaseConverter.setStringToConvert(getFieldWithAlias()[1]);
-        return camelCaseConverter.convert();
+        return getFieldName();
     }
 
     public String getFieldName() {

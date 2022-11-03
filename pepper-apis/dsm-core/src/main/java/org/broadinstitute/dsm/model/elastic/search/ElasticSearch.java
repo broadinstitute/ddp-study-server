@@ -18,10 +18,12 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
@@ -39,6 +41,10 @@ import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.ExistsQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -213,6 +219,11 @@ public class ElasticSearch implements ElasticSearchable {
 
     @Override
     public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder) {
+        return getParticipantsByRangeAndFilter(esParticipantsIndex, from, to, queryBuilder, null);
+    }
+
+    public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder,
+                                                         String instanceName) {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
@@ -222,6 +233,10 @@ public class ElasticSearch implements ElasticSearchable {
             int scrollSize = to - from;
             SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esParticipantsIndex));
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            //just osteo2
+            if (StudyPostFilter.NEW_OSTEO_INSTANCE_NAME.equals(instanceName)) {
+                queryBuilder = addOsteo2Filter(queryBuilder);
+            }
             searchSourceBuilder.query(queryBuilder).sort(sortBy);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
@@ -233,6 +248,26 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+    }
+
+    private AbstractQueryBuilder addOsteo2Filter(AbstractQueryBuilder queryBuilder) {
+        //just osteo2
+        BoolQueryBuilder osteo2QueryBuilder = new BoolQueryBuilder();
+        osteo2QueryBuilder.should(osteoVersion2Surveys("CONSENT"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("CONSENT_ASSENT"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("PARENTAL_CONSENT"));
+        osteo2QueryBuilder.should(osteoVersion2Surveys("LOVEDONE"));
+        ((BoolQueryBuilder) queryBuilder).must(osteo2QueryBuilder);
+        return queryBuilder;
+    }
+
+    private NestedQueryBuilder osteoVersion2Surveys(String stableId) {
+        BoolQueryBuilder queryBuilderConsentV2 = new BoolQueryBuilder();
+        queryBuilderConsentV2.must(new MatchQueryBuilder("activities.activityCode", stableId).operator(Operator.AND));
+        queryBuilderConsentV2.must(QueryBuilders.matchQuery("activities.activityVersion", "v2").operator(Operator.AND));
+        queryBuilderConsentV2.must(new BoolQueryBuilder().must(new ExistsQueryBuilder("activities.completedAt")));
+        NestedQueryBuilder expectedNestedQueryConsent = new NestedQueryBuilder("activities", queryBuilderConsentV2, ScoreMode.Avg);
+        return expectedNestedQueryConsent;
     }
 
     @Override

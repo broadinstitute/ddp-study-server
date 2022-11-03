@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 import java.util.List;
 import java.util.Objects;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
@@ -10,6 +11,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 @Setter
+@Getter
 public abstract class BaseQueryBuilder {
 
     protected Operator operator;

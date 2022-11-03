@@ -29,8 +29,10 @@ public class ClinicalKitDao {
                     + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
-                    + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) WHERE sm.sm_id_value = ? ";
-    private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ?";
+                    + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) WHERE sm.sm_id_value = ? "
+                    + "AND NOT sm.deleted <=> 1 ";
+    private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ? "
+                    + "AND NOT deleted <=> 1";
 
     public Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
         SimpleResult results = inTransaction((conn) -> {

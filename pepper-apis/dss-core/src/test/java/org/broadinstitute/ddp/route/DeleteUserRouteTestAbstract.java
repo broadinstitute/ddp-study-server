@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
@@ -33,6 +35,7 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
 
+@Slf4j
 public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
 
     protected static TestDataSetupUtil.GeneratedTestData testData;
@@ -85,21 +88,59 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
 
     protected static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
-            var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
-            var profileDao = handle.attach(UserProfileDao.class);
-            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-            DsmKitRequestDao kitDao = handle.attach(DsmKitRequestDao.class);
-            JdbiMailAddress addressDao = handle.attach(JdbiMailAddress.class);
-            kitsToDelete.forEach(kitDao::deleteKitRequest);
-            addressesToDelete.forEach(addressDao::deleteAddress);
-            governancesToDelete.values().stream().flatMap(Collection::stream).distinct().forEach(userGovernanceDao::unassignProxy);
-            userGovernanceDao.deleteAllGovernancesForProxy(testData.getUserId());
-            for (var user : usersToDelete) {
-                jdbiEnrollment.deleteByUserGuidStudyGuid(user.getGuid(), testData.getStudyGuid());
-                profileDao.getUserProfileSql().deleteByUserGuid(user.getGuid());
-                handle.attach(DataExportDao.class).deleteDataSyncRequestsForUser(user.getId());
+            final var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
+            final var profileDao = handle.attach(UserProfileDao.class);
+            final var userGovernanceDao = handle.attach(UserGovernanceDao.class);
+            final var kitDao = handle.attach(DsmKitRequestDao.class);
+            final var addressDao = handle.attach(JdbiMailAddress.class);
+            
+            try {
+                kitsToDelete.forEach(kitDao::deleteKitRequest);
+            } catch (DaoException daoe) {
+                log.warn("failed to remove test kit data (deleteKitRequest)", daoe);
             }
-            handle.attach(JdbiUser.class).deleteAllByGuids(usersToDelete.stream().map(User::getGuid).collect(Collectors.toSet()));
+
+            try {
+                addressesToDelete.stream()
+                        .mapToLong(Long::longValue)
+                        .forEach(addressDao::deleteAddress);
+            } catch (DaoException daoe) {
+                log.warn("failed to remove test address data (deleteAddress)", daoe);
+            }
+
+            try {
+                governancesToDelete.values()
+                        .stream()
+                        .flatMap(Collection::stream)
+                        .distinct()
+                        .mapToLong(Long::longValue)
+                        .forEach(userGovernanceDao::unassignProxy);
+            } catch (DaoException daoe) {
+                log.warn("failed to remove test governances data (unassignProxy)", daoe);
+            }
+
+            try {
+                userGovernanceDao.deleteAllGovernancesForProxy(testData.getUserId());
+            } catch (DaoException daoe) {
+                log.warn("failed to remove test governances data (deleteAllGovernancesForProxy)", daoe);
+            }
+
+            for (var user : usersToDelete) {
+                try {
+                    jdbiEnrollment.deleteByUserGuidStudyGuid(user.getGuid(), testData.getStudyGuid());
+                    profileDao.getUserProfileSql().deleteByUserGuid(user.getGuid());
+                    handle.attach(DataExportDao.class).deleteDataSyncRequestsForUser(user.getId());
+                } catch (DaoException daoe) {
+                    log.warn("failed to remove test user data [guid:{},study:{}]", user.getGuid(), testData.getStudyGuid(), daoe);
+                }
+            }
+
+            try {
+                handle.attach(JdbiUser.class).deleteAllByGuids(usersToDelete.stream().map(User::getGuid).collect(Collectors.toSet()));
+            } catch (DaoException daoe) {
+                log.warn("failed to remove remaining test users (deleteAllByGuids)", daoe);
+            }
+            
             usersToDelete.clear();
         });
     }

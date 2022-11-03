@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 @Getter
@@ -60,7 +61,8 @@ public enum Alias {
     AT_PARTICIPANT_INFO(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     AT_PARTICIPANT_EXIT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     DATA(StringUtils.EMPTY, false, false),
-    CL(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.CLINICAL_ORDER), true, false);
+    CL(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.CLINICAL_ORDER), true, false),
+    SM(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.SMID), true, false);
 
     Alias(String value, boolean isCollection, boolean isJson) {
         this.value = value;
@@ -100,8 +102,15 @@ public enum Alias {
         return esAlias;
     }
 
-    private static Alias of(String alias) {
+    public static Alias of(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
+    }
+
+    public static Alias aliasByValue(String value) {
+        return Arrays.stream(Alias.values())
+                .filter(alias -> alias.value.equals(value))
+                .findFirst()
+                .orElse(ACTIVITIES);
     }
 
     private static Alias ofOrNull(String alias) {

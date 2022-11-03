@@ -2,7 +2,10 @@ package org.broadinstitute.dsm.model.patch;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
+import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 
@@ -36,15 +39,19 @@ public class SMIDPatch extends BasePatch {
 
     @Override
     protected Object patchNameValuePair() {
-        String smIdPk = new TissueSMIDDao().createNewSMIDForTissue(patch.getParentId(), patch.getUser(), getSMIDType(), getSMIDValue());
-        if (Integer.parseInt(smIdPk) > 0) {
-            resultMap.put(SM_ID_PK, smIdPk);
-            NameValue nameValue =
-                    new SMIDNameValue(String.join(DBConstants.ALIAS_DELIMITER, DBConstants.SM_ID_ALIAS, SM_ID_VALUE), getSMIDValue(),
-                            getSMIDType());
-            exportToESWithId(smIdPk, nameValue);
+        if (StringUtils.isNotBlank(getSMIDValue()) && SmId.isUniqueSmId(getSMIDValue())) {
+            String smIdPk = new TissueSMIDDao().createNewSMIDForTissue(patch.getParentId(), patch.getUser(), getSMIDType(), getSMIDValue());
+            if (Integer.parseInt(smIdPk) > 0) {
+                resultMap.put(SM_ID_PK, smIdPk);
+                NameValue nameValue =
+                        new SMIDNameValue(String.join(DBConstants.ALIAS_DELIMITER, DBConstants.SM_ID_ALIAS, SM_ID_VALUE), getSMIDValue(),
+                                getSMIDType());
+                exportToESWithId(smIdPk, nameValue);
+            }
+            return resultMap;
+        } else {
+            throw new DuplicateException("Duplicate or blank value for sm id value " + getSMIDValue());
         }
-        return resultMap;
     }
 
 

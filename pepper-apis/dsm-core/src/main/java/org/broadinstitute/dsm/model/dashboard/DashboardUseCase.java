@@ -37,7 +37,10 @@ public class DashboardUseCase {
             ChartStrategyPayload chartStrategyPayload = new ChartStrategyPayload(dashboardDto, msearch);
             ChartStrategyFactory chartStrategyFactory = new ChartStrategyFactory(chartStrategyPayload);
             Supplier<DashboardData> chartStrategy = chartStrategyFactory.of();
-            result.add(chartStrategy.get());
+            DashboardData dashboardData = chartStrategy.get();
+            if (dashboardData != null) {
+                result.add(dashboardData);
+            }
         }
         Collections.sort(result);
         return result;
@@ -45,7 +48,7 @@ public class DashboardUseCase {
 
     private List<QueryBuilder> getQueryBuildersFromDashboardDto(DDPInstanceDto ddpInstanceDto, DashboardDto dashboardDto) {
         return dashboardDto.getLabels().stream()
-                .map(labelDto -> new QueryBuildPayload(ddpInstanceDto, labelDto))
+                .map(labelDto -> new QueryBuildPayload(ddpInstanceDto, dashboardDto.getDisplayType(), labelDto))
                 .map(QueryBuilderStrategyFactory::new)
                 .map(factory -> factory.of().build())
                 .collect(Collectors.toList());
