@@ -15,6 +15,9 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
+import org.broadinstitute.dsm.model.elastic.filter.query.AbstractQueryBuilderFactory;
+import org.broadinstitute.dsm.model.elastic.filter.query.BaseAbstractQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.BaseFilter;
@@ -25,6 +28,7 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -164,6 +168,12 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static AbstractQueryBuilder<?> createMixedSourceBaseAbstractQueryBuilder(String filterQuery) {
+        BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filterQuery);
+        abstractQueryBuilder.setParser(new FilterParser());
+        return abstractQueryBuilder.build();
     }
 
 }

@@ -50,6 +50,7 @@ public class EasyPostUtil {
     private final String country = "country";
     private final String phone = "phone";
     private final String residential = "residential";
+    private final String company = "company";
 
     private final String weight = "weight";
     private final String height = "height";
@@ -184,7 +185,8 @@ public class EasyPostUtil {
         }
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone) throws EasyPostException {
+    public Map<String, Object> createAddressMap(DDPParticipant ddpParticipant, @NonNull String phone)
+            throws EasyPostException {
         if (StringUtils.isEmpty(this.phone)) {
             throw new RuntimeException("Contact phone number is needed");
         }
@@ -206,7 +208,25 @@ public class EasyPostUtil {
         toAddressMap.put(this.country, ddpParticipant.getCountry());
         toAddressMap.put(this.phone, phone); //Needed for FedEx!
         toAddressMap.put(this.residential, true);
+        return toAddressMap;
+    }
 
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, @NonNull String company)
+            throws EasyPostException {
+        if (StringUtils.isEmpty(this.phone)) {
+            throw new RuntimeException("Contact phone number is needed");
+        }
+        Map<String, Object> toAddressMap = createAddressMap(ddpParticipant, phone);
+        toAddressMap.put(this.company, company); // Care Of field goes here
+        return Address.create(toAddressMap);
+    }
+
+    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone)
+            throws EasyPostException {
+        if (StringUtils.isEmpty(this.phone)) {
+            throw new RuntimeException("Contact phone number is needed");
+        }
+        Map<String, Object> toAddressMap = createAddressMap(ddpParticipant, phone);
         return Address.create(toAddressMap);
     }
 
@@ -222,7 +242,6 @@ public class EasyPostUtil {
         fromAddressMap.put(this.zip, zip);
         fromAddressMap.put(this.country, country);
         fromAddressMap.put(this.phone, phone);
-
         return Address.create(fromAddressMap);
     }
 
