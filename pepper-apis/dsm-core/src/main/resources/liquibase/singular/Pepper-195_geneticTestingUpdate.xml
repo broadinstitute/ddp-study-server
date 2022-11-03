@@ -9,7 +9,7 @@
             UPDATE `field_settings` SET `actions` =
             '[{\"type\":\"conditionalDisplay\",\"condition\":\"OTHER\",\"conditionalFieldSetting\":{\"columnName\":\"KARYOTYPE_ABNORMAL_OTHER_SPECIFY\",\"fieldType\":\"GROUP_GENETIC_TESTING\",\"columnDisplay\":\"Other Chromosomal anomaly (please specify)\",\"displayType\":\"TEXTAREA\",\"details\":{\"size\":100}}}]'
             WHERE column_name='KARYOTYPE_ABNORMAL';
-
         </sql>
     </changeSet>
+
 </databaseChangeLog>
