@@ -34,7 +34,7 @@ public class OldOsteoActivityDefinitionsRetriever extends ActivityDefinitionsRet
     private static Optional<Activities> parseToActivity(Map<String, Object> activityDef) {
         Optional<Activities> maybeActivity = Optional.empty();
         if (isActivityFieldsDefined(activityDef)) {
-          maybeActivity = Optional.of(new Activities(
+            maybeActivity = Optional.of(new Activities(
                   String.valueOf(activityDef.get(ACTIVITY_CODE)),
                   String.valueOf(activityDef.get(ACTIVITY_VERSION))
           ));

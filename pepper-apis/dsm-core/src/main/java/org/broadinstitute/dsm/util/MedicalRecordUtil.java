@@ -293,7 +293,8 @@ public class MedicalRecordUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting participant id for pt w/ ddpParticipantId " + ddpParticipantId, results.resultException);
+            throw new RuntimeException("Error getting participant id for pt w/ ddpParticipantId " + ddpParticipantId,
+                    results.resultException);
         }
         return (String) results.resultValue;
     }

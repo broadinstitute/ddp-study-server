@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
-import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
@@ -18,7 +18,7 @@ public class SingleQueryBuilderTest {
 
         String filter = "AND p.participantId = '1234'";
 
-        BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create("p", filter);
+        BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder().must(
@@ -97,7 +97,6 @@ public class SingleQueryBuilderTest {
         expectedQuery.must(new MatchQueryBuilder("dsm.diagnosisYear", 2014L).operator(Operator.AND));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(filter));
-
     }
 
     @Test
@@ -110,13 +109,12 @@ public class SingleQueryBuilderTest {
         expectedQuery.should(new MatchQueryBuilder("dsm.diagnosisYear", 2015L).operator(Operator.AND));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(filter));
-
     }
 
     private AbstractQueryBuilder<?> getNonActivityQueryBuilder(String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = new BaseAbstractQueryBuilder();
         abstractQueryBuilder.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(new NonDsmAndOrFilterSeparator(filter));
+        abstractQueryBuilder.setFilterSeparator(new AndOrFilterSeparator(filter));
         AbstractQueryBuilder<?> actualQuery = abstractQueryBuilder.build();
         return actualQuery;
     }
