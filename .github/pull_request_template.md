@@ -21,7 +21,7 @@ Pick one:
 
 
 ## Checklist
-- [ ] "downtime" and "deployment notes" fields in the ticket have sufficient detail that anyone can deploy these changes.
+- [ ] "Deployment Notes", "Downtime" and "Impact on Configuration" fields in the ticket have sufficient detail that anyone can deploy these changes.
 - [ ] Appsec and compliance fields have been set in the ticket, and appsec and compliance have given the ticket and the code changes their blessing as appropriate.
 
 ## References
