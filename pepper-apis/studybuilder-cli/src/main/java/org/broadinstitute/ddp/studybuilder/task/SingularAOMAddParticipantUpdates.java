@@ -390,12 +390,6 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Generates name from the passed values.
-     * Passed study guid is lower cased to overcome google bucket name being case-sensitive.
-     * @param blockConfig asdasfd
-     * @return asfasdf
-     */
     private FormBlockDef createBlockDef(Config blockConfig) {
         final var blockJson = ConfigUtil.toJson(blockConfig);
         final var blockDef = gson.fromJson(blockJson, FormBlockDef.class);
