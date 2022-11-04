@@ -14,14 +14,12 @@ import org.junit.Test;
 
 public class ActivitiesCollectionQueryBuilderTest {
 
-    public static final String ES = "ES";
     private BaseAbstractQueryBuilder abstractQueryBuilder;
-
 
     @Test
     public void activitiesCompletedAtNotEmpty() {
         String filter = " AND ANGIORELEASE.completedAt IS NOT NULL ";
-        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -36,7 +34,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesCreatedAtExactDate() {
         String filter = " AND ANGIORELEASE.completedAt = '2022-07-28'";
-        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -51,7 +49,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesStatusOptions() {
         String filter = "  AND ( ANGIORELEASE.status = 'COMPLETE' OR ANGIORELEASE.status = 'IN_PROGRESS' ) ";
-        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -69,7 +67,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesLastUpdatedAtRange() {
         String filter = " AND ANGIORELEASE.lastUpdatedAt  >= '2022-04-21' AND ANGIORELEASE.lastUpdatedAt  <= '2022-07-28'";
-        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -90,7 +88,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesQuestionsAnswers() {
         String filter = " AND ANGIORELEASE.INSTITUTION = 'bla'";
-        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();

@@ -77,7 +77,8 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
 
     private void writeSampleSentToES(KitRequestShipping kitRequest) {
         //need to add sent date to it TODO
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId((int) kitRequest.getDdpInstanceId()).orElseThrow();
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(kitRequest.getDdpInstanceId().intValue())
+                .orElseThrow();
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequest, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                     ESObjectConstants.DOC_ID,
