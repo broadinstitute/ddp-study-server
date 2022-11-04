@@ -32,7 +32,7 @@ public class KitRequestSettings {
                     + "ret.return_address_street1, ret.return_address_street2, "
                     + "ret.return_address_city, ret.return_address_state, ret.return_address_zip, ret.return_address_country, "
                     + "ret.return_address_phone, dkc.kit_type_display_name, dkc.external_shipper, "
-                    + "dkc.external_name, dkc.external_client_id, subK.kit_type_id, subK.external_name, subK.kit_count, "
+                    + "dkc.external_name, dkc.external_client_id, subK.kit_type_id, subK.external_name, subK.kit_count, dkc.has_care_of,  "
                     + "(SELECT kit.kit_type_name FROM kit_type kit WHERE kit.kit_type_id = subK.kit_type_id) AS subKitName, "
                     + "(SELECT count(dkc2.ddp_kit_request_settings_id) FROM ddp_kit_request_settings dkc2 LEFT JOIN sub_kits_settings subK "
                     + "ON (subK.ddp_kit_request_settings_id = dkc2.ddp_kit_request_settings_id) "
@@ -74,6 +74,11 @@ public class KitRequestSettings {
     private int hasSubKits;
     private List<KitSubKits> subKits;
     private Integer ddpInstanceId;
+    private Integer hasCareOF;
+
+    public KitRequestSettings(){
+
+    }
 
     public KitRequestSettings(String carrierTo, String carrierToId, String serviceTo, String carrierToAccountNumber, String carrierReturn,
                               String carrierReturnId, String serviceReturn, String carrierRetrunAccountNumber, String length, String height,
@@ -81,7 +86,7 @@ public class KitRequestSettings {
                               String collaboratorParticipantLengthOverwrite, String returnName, String returnStreet1, String returnStreet2,
                               String returnCity, String returnZip, String returnState, String returnCountry, String phone,
                               String displayName, String externalShipper, String externalClientId, String externalShipperKitName,
-                              int hasSubKits, List<KitSubKits> subKits, Integer ddpInstanceId) {
+                              int hasSubKits, List<KitSubKits> subKits, Integer ddpInstanceId, Integer hasCareOF) {
         this.carrierTo = carrierTo;
         this.carrierToId = carrierToId;
         this.serviceTo = serviceTo;
@@ -111,6 +116,7 @@ public class KitRequestSettings {
         this.hasSubKits = hasSubKits;
         this.subKits = subKits;
         this.ddpInstanceId = ddpInstanceId;
+        this.hasCareOF = hasCareOF;
     }
 
     // Getting KitRequestSettings
@@ -150,7 +156,8 @@ public class KitRequestSettings {
                                     rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
                                     rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
                                     rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME),
-                                    rs.getInt(DBConstants.HAS_SUB_KITS), subKits, rs.getInt(DBConstants.DDP_INSTANCE_ID)));
+                                    rs.getInt(DBConstants.HAS_SUB_KITS), subKits, rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                                    rs.getInt("dkc." + DBConstants.HAS_CARE_OF)));
                         }
                     }
                 }

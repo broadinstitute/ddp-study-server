@@ -20,6 +20,9 @@ public interface ElasticSearchable {
 
     ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder);
 
+    ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder,
+                                                  String instanceName);
+
     ElasticSearch getParticipantsByRangeAndIds(String participantIndexES, int from, int to, List<String> participantIds);
 
     ElasticSearchParticipantDto getParticipantById(String esParticipantsIndex, String id);
