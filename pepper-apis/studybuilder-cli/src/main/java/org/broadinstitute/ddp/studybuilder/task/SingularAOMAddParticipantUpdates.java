@@ -151,6 +151,7 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
 
         if (shouldRun(handle) == false) {
             log.info("patch will be skipped.");
+            log.info("TASK:: {} completed successfully.", taskName());
             return;
         }
 
