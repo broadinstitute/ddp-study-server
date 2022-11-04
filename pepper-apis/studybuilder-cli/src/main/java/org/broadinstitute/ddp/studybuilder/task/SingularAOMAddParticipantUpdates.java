@@ -506,10 +506,6 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
                 studyGuid));
     }
 
-    private DDPException unknownError(Exception error) {
-        return new DDPException(String.format("an unknown error has occurred"), error);
-    }
-
     /*
      * 
      * Helper functions for getting information about the patch itself
