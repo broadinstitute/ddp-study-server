@@ -21,6 +21,9 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
         }
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
 
+        if (StringUtils.isNotBlank(ddpInstanceDto.getQueryItems())) {
+            filterQuery = filterQuery + ddpInstanceDto.getQueryItems();
+        }
         AbstractQueryBuilder<?> mainQuery = createMixedSourceBaseAbstractQueryBuilder(filterQuery);
 
         ParticipantWrapperPayload.Builder participantWrapperPayload =
