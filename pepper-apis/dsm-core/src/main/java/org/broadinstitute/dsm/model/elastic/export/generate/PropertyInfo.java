@@ -55,6 +55,7 @@ public class PropertyInfo {
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.FILES, new PropertyInfo(Files.class, true));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DSM, new PropertyInfo(Dsm.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DATA, new PropertyInfo(Status.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PARTICIPANT_DATA, new PropertyInfo(ParticipantData.class, true));
     }
 
     private Class<?> propertyClass;
