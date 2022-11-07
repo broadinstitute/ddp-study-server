@@ -12,6 +12,8 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -75,6 +77,7 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
                                 @Bind long offset);
     }
 
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     private static enum Metadata {
         DESCRIPTION("description"),
         STUDY("study"),
@@ -82,12 +85,9 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
         QUESTIONS("questions");
 
         public final String key;
-
-        private Metadata(String key) {
-            this.key = key;
-        }
     }
 
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     private static enum Content {
         ACTIVITY("activity"),
         VERSION_TAG("versionTag"),
@@ -96,10 +96,6 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
         INSERT_AFTER("insert-after-stableid");
 
         public final String key;
-
-        private Content(String key) {
-            this.key = key;
-        }
     }
 
     /*
