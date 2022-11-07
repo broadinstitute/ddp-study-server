@@ -16,7 +16,7 @@
         <sonar.jacoco.reportPaths>target/jacoco.exec</sonar.jacoco.reportPaths>
         <jdbi.version>3.1.1</jdbi.version>
         <itext.version>7.1.4</itext.version>
-        <itext.licensekey.version>3.0.3</itext.licensekey.version>
+        <itext.licensekey.version>4.0.4</itext.licensekey.version>
         <liquibase.version>3.6.3</liquibase.version>
         <elasticsearch.version>6.8.15</elasticsearch.version>
     </properties>
