@@ -100,7 +100,7 @@ public class SingularAOMAddParticipantUpdates implements CustomTask {
 
     /*
      * 
-     * Instance implemenetation
+     * Instance implementation
      * 
      */
 
