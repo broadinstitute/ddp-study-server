@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -130,21 +132,21 @@ public class ConfigManager {
      * Reads the config file to a string
      */
     public static String readConfigFile() throws IOException {
-        return FileUtils.readFileToString(TYPESAFE_CONFIG_FILE);
+        return FileUtils.readFileToString(TYPESAFE_CONFIG_FILE, StandardCharsets.UTF_8);
     }
 
     /**
      * Overwrites the config file.  ONLY USE IN TESTS.
      */
     public static void rewriteConfigFile(String newContents) throws IOException  {
-        FileUtils.writeStringToFile(TYPESAFE_CONFIG_FILE, newContents);
+        FileUtils.writeStringToFile(TYPESAFE_CONFIG_FILE, newContents, StandardCharsets.UTF_8);
     }
 
     /**
      * Overwrites the config file.  ONLY USE IN TESTS.
      */
     public static void rewriteConfigFile(Config newConfig) throws IOException  {
-        FileUtils.writeStringToFile(TYPESAFE_CONFIG_FILE, newConfig.root().render(ConfigRenderOptions.concise()));
+        FileUtils.writeStringToFile(TYPESAFE_CONFIG_FILE, newConfig.root().render(ConfigRenderOptions.concise()), StandardCharsets.UTF_8);
     }
 
     /**
