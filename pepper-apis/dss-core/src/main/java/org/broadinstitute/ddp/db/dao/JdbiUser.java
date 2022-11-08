@@ -22,6 +22,9 @@ public interface JdbiUser extends SqlObject {
     @SqlQuery("select user_id from user where guid = :userGuid")
     long getUserIdByGuid(@Bind("userGuid") String userGuid);
 
+    @SqlQuery("select user_id from user where hruid = :userHruid")
+    long getUserIdByHruid(@Bind("userHruid") String userHruid);
+
     @SqlQuery("select user_id from user where email = :email")
     Long getUserIdByEmail(@Bind("email") String email);
 
@@ -64,6 +67,10 @@ public interface JdbiUser extends SqlObject {
     @SqlQuery("select * from user where guid = :guid")
     @RegisterConstructorMapper(UserDto.class)
     UserDto findByUserGuid(@Bind("guid") String userGuid);
+
+    @SqlQuery("select * from user where hruid = :hruid")
+    @RegisterConstructorMapper(UserDto.class)
+    UserDto findByUserHruid(@Bind("hruid") String userHruid);
 
     @SqlQuery("select * from user where email = :email")
     @RegisterConstructorMapper(UserDto.class)

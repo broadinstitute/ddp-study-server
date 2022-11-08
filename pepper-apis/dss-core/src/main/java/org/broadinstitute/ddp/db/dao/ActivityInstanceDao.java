@@ -214,6 +214,32 @@ public interface ActivityInstanceDao extends SqlObject {
                 legacyVersion);
     }
 
+    default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
+                                               InstanceStatusType initialStatus, Boolean isReadOnly,
+                                               long createdAtMillis, Long submissionId,
+                                               String sessionId, String legacyVersion, boolean isHidden) {
+        var userDao = getHandle().attach(UserDao.class);
+        User participant = userDao.findUserByGuid(participantGuid)
+                .orElseThrow(() -> new DaoException("Could not find participant user with guid: " + participantGuid));
+        User operator = userDao.findUserByGuid(operatorGuid)
+                .orElseThrow(() -> new DaoException("Could not find operator user with guid: " + operatorGuid));
+        ActivityInstanceDto instanceDto = createNewInstance(
+                activityId,
+                operator,
+                participant,
+                initialStatus,
+                isReadOnly,
+                createdAtMillis,
+                null,
+                null,
+                submissionId,
+                sessionId,
+                legacyVersion);
+
+        //set isHidden
+        return instanceDto;
+    }
+
     default ActivityInstanceDto insertInstance(long activityId, User operator, User participant,
                                                Long submissionId, String sessionId, String legacyVersion) {
         long createdAtMillis = Instant.now().toEpochMilli();
@@ -290,6 +316,12 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("participantId") long participantId,
             @Bind("isReadOnly") boolean isReadOnly,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
+
+    @SqlUpdate("update activity_instance set is_hidden = :isHidden"
+            + "  where activity_instance_id = :activityInstanceId")
+    int updateIsHiddenByActivityInstance(
+            @Bind("activityInstanceId") long activityInstanceId,
+            @Bind("isHidden") boolean isHidden);
 
     @SqlUpdate("update activity_instance set is_hidden = :isHidden"
             + "  where participant_id = :participantId and study_activity_id in (<activityIds>) order by activity_instance_id")
