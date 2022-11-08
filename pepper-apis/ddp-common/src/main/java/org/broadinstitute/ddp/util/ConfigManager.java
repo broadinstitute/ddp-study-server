@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,10 +30,6 @@ import org.broadinstitute.ddp.secrets.SecretManager;
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ConfigManager {
-    private static final String GOOGLE_SECRET_PROJECT = "google.secret.project";
-    private static final String GOOGLE_SECRET_VERSION = "google.secret.version";
-    private static final String GOOGLE_SECRET_NAME = "google.secret.name";
-
     private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
     public static final File TYPESAFE_CONFIG_FILE;
 
@@ -93,10 +88,10 @@ public class ConfigManager {
 
         if (configCloud.isEmpty() && configLocal.isEmpty()) {
             log.info("no configuration was specified, an empty configuration will be used. "
-                    + "Use properties '{}' to use a local file or '{}' and '{}' to use a cloud secret",
+                            + "Use properties '{}' to use a local file or '{}' and '{}' to use a cloud secret",
                     TYPESAFE_CONFIG_SYSTEM_VAR,
-                    GOOGLE_SECRET_PROJECT,
-                    GOOGLE_SECRET_NAME);
+                    PropertyManager.Property.GOOGLE_SECRET_PROJECT.getKey(),
+                    PropertyManager.Property.GOOGLE_SECRET_NAME.getKey());
             return null;
         }
 
@@ -108,23 +103,24 @@ public class ConfigManager {
     }
 
     private static boolean isSecretManagerConfigurationSpecified() {
-        return StringUtils.isNotBlank(getProperty(GOOGLE_SECRET_PROJECT)) && StringUtils.isNotBlank(getProperty(GOOGLE_SECRET_NAME));
+        return StringUtils.isNotBlank(PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_PROJECT, null))
+                && StringUtils.isNotBlank(PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_NAME, null));
     }
 
     private static Config loadFromSecretManager() {
-        final var projectName = getProperty(GOOGLE_SECRET_PROJECT);
-        if (projectName == null) {
-            log.error(GOOGLE_SECRET_PROJECT + " property is not set");
+        final var projectName = PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_PROJECT);
+        if (projectName.isEmpty()) {
+            log.error(PropertyManager.Property.GOOGLE_SECRET_PROJECT.getKey() + " property is not set");
             return ConfigFactory.empty();
         }
 
-        final var secretName = getProperty(GOOGLE_SECRET_NAME);
-        if (secretName == null) {
-            log.error(GOOGLE_SECRET_NAME + " property is not set");
+        final var secretName = PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_NAME);
+        if (secretName.isEmpty()) {
+            log.error(PropertyManager.Property.GOOGLE_SECRET_NAME.getKey() + " property is not set");
             return ConfigFactory.empty();
         }
 
-        return ConfigFactory.parseString(SecretManager.get(projectName, secretName, getProperty(GOOGLE_SECRET_VERSION, "latest"))
+        return ConfigFactory.parseString(SecretManager.get(projectName.get(), secretName.get(), PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_VERSION, "latest"))
                 .orElseThrow(() -> new DDPException("The secret " + secretName + " doesn't exist")));
     }
 
@@ -177,13 +173,5 @@ public class ConfigManager {
             log.info("Overriding config value for key {}", override.getKey());
         }
         return cfgWithOverride;
-    }
-
-    private static String getProperty(final String propertyName) {
-        return getProperty(propertyName, null);
-    }
-
-    private static String getProperty(final String propertyName, final String defaultValue) {
-        return Optional.ofNullable(System.getProperty(propertyName)).orElse(defaultValue);
     }
 }
