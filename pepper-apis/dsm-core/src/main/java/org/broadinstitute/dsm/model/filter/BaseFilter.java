@@ -67,13 +67,14 @@ public class BaseFilter {
             }
             quickFilterName = requestForFiltering == null ? null : requestForFiltering.getQuickFilterName();
         }
-        if (filters != null && filters.length < 1 && savedFilters != null) {
+        if ((filters != null && filters.length < 1 && savedFilters != null) || (filters == null && savedFilters != null)) {
             filters = savedFilters;
         }
         if (queryParamsMap.hasKey(RequestParameter.FILTER_NAME)) {
             quickFilterName = queryParamsMap.get(RequestParameter.FILTER_NAME).value();
             if (StringUtils.isNotBlank(quickFilterName)) {
                 filterQuery = ViewFilter.getFilterQuery(quickFilterName, parent);
+                filters = ViewFilter.parseQueryToViewFilterObject(filterQuery, new ViewFilter()).getFilters();
             }
         }
 
