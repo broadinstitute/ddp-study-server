@@ -565,11 +565,11 @@ public class StudyDataLoaderAT {
         //iterate through each question_stable_mapping
         JsonArray questionStableArray = mappingData.getAsJsonObject().getAsJsonArray("question_answer_stables");
         for (JsonElement thisMap : questionStableArray) {
-            String questionName = getStringValueFromElement(thisMap, "name");
+            String questionName = getStringValueFromElement(thisMap, "name").toUpperCase();
             String questionType = getStringValueFromElement(thisMap, "type");
             String stableId = getStringValueFromElement(thisMap, "stable_id");
             if (StringUtils.isEmpty(stableId)) {
-                //non question-answer-stable elements.. continue to next element
+                //non question-answer-stable elements. continue to next element
                 sourceDataSurveyQs.get(surveyName).add(questionName);
                 continue;
             }
@@ -652,7 +652,7 @@ public class StudyDataLoaderAT {
                                            String participantGuid, String instanceGuid, AnswerDao answerDao) {
 
         String answerGuid = null;
-        String questionName = getStringValueFromElement(mapElement, "name");
+        String questionName = getStringValueFromElement(mapElement, "name").toUpperCase();
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
@@ -850,6 +850,7 @@ public class StudyDataLoaderAT {
             } else {
                 key = questionName;
             }
+            key = key.toUpperCase();
             JsonElement sourceDataOptEl = sourceDataElement.getAsJsonObject().get(key);
             if (sourceDataOptEl != null && !sourceDataOptEl.isJsonNull()) {
                 value = sourceDataElement.getAsJsonObject().get(key);
@@ -978,7 +979,7 @@ public class StudyDataLoaderAT {
             stableId = stableIdElement.getAsString();
         }
 
-        if (valueEl != null && !valueEl.isJsonNull()) {
+        if (valueEl != null && !valueEl.isJsonNull() && !valueEl.getAsString().isEmpty()) {
             answerGuid = answerTextQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
         }
         sourceDataSurveyQs.get(surveyName).add(questionName);
@@ -1468,7 +1469,7 @@ public class StudyDataLoaderAT {
         if (stableId == null) {
             return null;
         }
-        String questionName = getStringValueFromElement(mapElement, "name");
+        String questionName = getStringValueFromElement(mapElement, "name").toUpperCase();
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;

@@ -468,10 +468,7 @@ public class StudyDataLoaderMainAT {
         skippedList = new ArrayList<>();
         //disable events before loading data.
         //todo revisit
-        //updateStudyEvents(studyGuid, false);
-
-
-
+        updateStudyEvents(studyGuid, false);
 
         for (Map.Entry<String, List<JsonElement>> entry : userSurveyDataMap.entrySet()) {
             processParticipantAT(studyGuid, entry.getKey(), entry.getValue(), mappingData, dataLoader);
@@ -489,6 +486,9 @@ public class StudyDataLoaderMainAT {
         if (isDeleteAuth0Email) {
             deleteAuth0Emails(cfg, migrationRunReport);
         }
+
+        updateStudyEvents(studyGuid, true);
+
     }
 
     public void processLocalFile(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
@@ -889,24 +889,24 @@ public class StudyDataLoaderMainAT {
                         Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
                         long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
 
-                        ActivityInstanceDto instanceDto = activityInstanceDao.findByActivityInstanceGuid(instanceGuids[counter]).get();
+                        //ActivityInstanceDto instanceDto = activityInstanceDao.findByActivityInstanceGuid(instanceGuids[counter]).get();
                         //ZTR51QCIJB A6IP3SCN7A Q01SODUT1L
-                        /*ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
                                 userGuid, studyId,
                                 activityCode, createdToMillis, lastSubmitedToMillis,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
-                                true);*/
+                                true);
                         LOG.info("---created new activity instance: {} for user: {} ", instanceDto.getGuid(), userGuid);
                         dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                                 mappingData.get("atcp_registry_questionnaire"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
 
-                        //activityInstanceStatusDao
-                        //        .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
-                        //                lastSubmitedToMillis + 1, userGuid);
+                        activityInstanceStatusDao
+                                .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
+                                        lastSubmitedToMillis + 1, userGuid);
                         counter++;
 
                     }
