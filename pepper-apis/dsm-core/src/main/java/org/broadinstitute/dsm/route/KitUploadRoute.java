@@ -230,9 +230,11 @@ public class KitUploadRoute extends RequestHandler {
                 String errorMessage = "";
                 String participantGuid = "";
                 String participantLegacyAltPid = "";
+                int x = 4;
                 String collaboratorParticipantId = "";
-                //if kit has ddpParticipantId use that (RGP!)
-                if (StringUtils.isBlank(kit.getParticipantId())) {
+                //if kit has ddpParticipantId use that (RGP!) and
+                //if ddpInstance is 30 then it is Darwin Vertebrate so we ignore this check
+                if (!ddpInstance.getDdpInstanceId().equals("30") && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
                     participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
@@ -393,10 +395,17 @@ public class KitUploadRoute extends RequestHandler {
                     errorMessage += "collaboratorSampleId was too long ";
                 }
             }
-            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
-                    collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
-                    uploadReason, ddpInstance);
-            kit.setDdpLabel(shippingId);
+            if(ddpInstance.getDdpInstanceId().equals("30")){
+                KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getShortId(),
+                        collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
+                        uploadReason, ddpInstance);
+            }
+            else {
+                KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
+                        collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
+                        uploadReason, ddpInstance);
+                kit.setDdpLabel(shippingId);
+            }
         }
     }
 
