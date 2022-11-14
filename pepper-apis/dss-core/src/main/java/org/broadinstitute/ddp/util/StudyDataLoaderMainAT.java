@@ -371,9 +371,8 @@ public class StudyDataLoaderMainAT {
         //Map<String, JsonElement> surveyDataMap = new HashMap<>();
 
         //load user GENOME_STUDY_CPT_ID, hruid mapping
-        String userCTPdata = new String(Files.readAllBytes(Paths.get("/Users/sampath/Desktop/atcpmigration/atcp-ptp-list.json")));
+        String userCTPdata = new String(Files.readAllBytes(Paths.get("/Users/sampath/IdeaProjects/ddp-study-server/pepper-apis/dss-core/src/test/resources/atcp-ptp-list-test.json")));
 
-        //File file = Paths.get("atc-ptp-list.json").toFile();
         JsonElement userCptEl;
         try {
             userCptEl = new Gson().fromJson(userCTPdata, new TypeToken<JsonObject>() {
@@ -405,7 +404,12 @@ public class StudyDataLoaderMainAT {
         JsonArray surveys = surveyElement.getAsJsonArray();
         for (JsonElement thisElement : surveys) {
             JsonElement cptId = thisElement.getAsJsonObject().get("GENOME_STUDY_CPT_ID");
-            String hruid = cptUserMap.get(cptId);
+            //String genomeCPT = cptId.
+            String hruid = cptUserMap.get(cptId.getAsString());
+            //if (cptId.e)
+            if (hruid == null) {
+                continue;
+            }
             List<JsonElement> surveyList = userMedicalDataMap
                     .computeIfAbsent(hruid, key -> new ArrayList<JsonElement>());
             surveyList.add(thisElement);
@@ -444,6 +448,9 @@ public class StudyDataLoaderMainAT {
     public void processLocalFileAT(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
         StudyDataLoaderAT dataLoader = new StudyDataLoaderAT(cfg);
 
+        LocalDateTime createdDateTime = LocalDateTime.parse("4/4/2016 6:23:00 PM", dataLoader.formatter);
+        LOG.info("created : {} ", createdDateTime);
+
         //load mapping data
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
         //load source survey data
@@ -463,9 +470,11 @@ public class StudyDataLoaderMainAT {
         //todo revisit
         //updateStudyEvents(studyGuid, false);
 
+
+
+
         for (Map.Entry<String, List<JsonElement>> entry : userSurveyDataMap.entrySet()) {
             processParticipantAT(studyGuid, entry.getKey(), entry.getValue(), mappingData, dataLoader);
-
         }
 
 
@@ -848,7 +857,7 @@ public class StudyDataLoaderMainAT {
             try {
                 //verify if participant is already loaded..
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
-                userGuid = jdbiUser.getUserGuidByAltpid(hruid);
+                userGuid = jdbiUser.getUserGuidByHruid(hruid);
                 if (userGuid == null) {
                     throw new Exception(" AT User not found for hruid: " + hruid);
                 } else {
@@ -866,6 +875,8 @@ public class StudyDataLoaderMainAT {
                             .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
                     LOG.info("  --USER : {} has {} instances : {} ", userDto.getUserHruid(), activityInstanceDtoList.size());
 
+                    int counter = 0;
+                    String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
                     for (JsonElement surveyDataEl : surveyData) {
                         String createdAt = surveyDataEl.getAsJsonObject().get("DATSTAT.STARTDATETIME").getAsString();
                         String completedAt = surveyDataEl.getAsJsonObject().get("DATSTAT.ENDDATETIME").getAsString();
@@ -878,21 +889,25 @@ public class StudyDataLoaderMainAT {
                         Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
                         long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
 
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(surveyDataEl,
+                        ActivityInstanceDto instanceDto = activityInstanceDao.findByActivityInstanceGuid(instanceGuids[counter]).get();
+                        //ZTR51QCIJB A6IP3SCN7A Q01SODUT1L
+                        /*ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
                                 userGuid, studyId,
-                                activityCode, createdAt,
+                                activityCode, createdToMillis, lastSubmitedToMillis,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
-                                true);
+                                true);*/
+                        LOG.info("---created new activity instance: {} for user: {} ", instanceDto.getGuid(), userGuid);
                         dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                                 mappingData.get("atcp_registry_questionnaire"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
 
-                        activityInstanceStatusDao
-                                .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
-                                        lastSubmitedToMillis + 1, userGuid);
+                        //activityInstanceStatusDao
+                        //        .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
+                        //                lastSubmitedToMillis + 1, userGuid);
+                        counter++;
 
                     }
                 }

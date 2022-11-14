@@ -87,9 +87,11 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -114,16 +116,19 @@ public class StudyDataLoaderAT {
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderAT.class);
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    private static final String MH_DATE_FORMAT = "M[M]/d[d]/yyyy h[h]:mm:ss a";
     private static final String DATSTAT_DATE_OF_BIRTH_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
     private Long defaultKitCreationEpoch = null;
 
     public DateTimeFormatter formatter = new DateTimeFormatterBuilder()
             .parseCaseInsensitive()
-            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            .optionalStart()
-            .appendPattern(".SSS")
-            .optionalEnd()
+            .appendPattern(MH_DATE_FORMAT)
+            //.append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            //.optionalStart()
+            //.appendPattern(".ss")
+            //.appendFraction(ChronoField.SECOND_OF_MINUTE, 0, 2, false)
+            //.optionalEnd()
             .toFormatter();
 
     Map<String, List<String>> sourceDataSurveyQs;
@@ -288,6 +293,9 @@ public class StudyDataLoaderAT {
         String ddpCreated = baseSurvey.getDdpCreated();
         String ddpCompleted = baseSurvey.getDdpFirstCompleted();
         String ddpLastUpdated = baseSurvey.getDdpLastUpdated();
+        if (ddpLastUpdated == null) {
+            ddpLastUpdated = ddpCompleted;
+        }
         String activityVersion = baseSurvey.getActivityVersion();
         if (StringUtils.isEmpty(activityVersion)) {
             activityVersion = baseSurvey.getSurveyVersion();
@@ -347,6 +355,51 @@ public class StudyDataLoaderAT {
         if (ddpLastUpdatedAt < ddpCreatedAt) {
             throw new Exception("Invalid ddpCreatedAt - ddpLastUpdated dates. created date : " + ddpCreated
                     + " is greater than last updated date: " + ddpLastUpdated + " in activity: " + activityCode
+                    + " userguid: " + participantGuid);
+        }
+
+        String surveyStatus = baseSurvey.getSurveyStatus();
+        InstanceStatusType instanceCurrentStatus = InstanceStatusType.COMPLETE;
+        ActivityInstanceDto dto = activityInstanceDao
+                .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
+                        true,
+                        ddpCreatedAt,
+                        submissionId, sessionId, activityVersion, hideInstance);
+        activityInstanceDao.updateIsHiddenByActivityInstance(dto.getId(), true);
+
+        LOG.info("Created activity instance {} for activity {} and user {}",
+                dto.getGuid(), activityCode, participantGuid);
+
+        long activityInstanceId = dto.getId();
+        activityInstanceStatusDao.insertStatus(activityInstanceId, InstanceStatusType.COMPLETE, ddpCompletedAt, participantGuid);
+
+        return dto;
+    }
+
+    public ActivityInstanceDto createActivityInstanceAT(JsonElement surveyData, String participantGuid,
+                                                      long studyId, String activityCode, long createdAt, long completedAt,
+                                                      JdbiActivity jdbiActivity,
+                                                      ActivityInstanceDao activityInstanceDao,
+                                                      ActivityInstanceStatusDao activityInstanceStatusDao,
+                                                      boolean hideInstance) throws Exception {
+
+        BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
+
+        Long submissionId = baseSurvey.getDatstatSubmissionId();
+        String sessionId = baseSurvey.getDatstatSessionId();
+        String activityVersion = baseSurvey.getActivityVersion();
+        if (StringUtils.isEmpty(activityVersion)) {
+            activityVersion = baseSurvey.getSurveyVersion();
+        }
+        Integer submissionStatus = baseSurvey.getDatstatSubmissionStatus();
+        Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, activityCode).get();
+        Long ddpLastUpdatedAt = completedAt;
+        Long ddpCreatedAt = createdAt;
+        Long ddpCompletedAt = completedAt+1;
+
+        if (ddpLastUpdatedAt < ddpCreatedAt) {
+            throw new Exception("Invalid ddpCreatedAt - ddpLastUpdated dates. created date : " + ddpCreatedAt
+                    + " is greater than last updated date: " + ddpLastUpdatedAt + " in activity: " + activityCode
                     + " userguid: " + participantGuid);
         }
 
@@ -851,7 +904,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid = null;
         JsonElement valueEl;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
         String stableId = null;
         JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
         if (!stableIdElement.isJsonNull()) {
@@ -916,7 +969,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid = null;
         JsonElement valueEl;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         String stableId = null;
@@ -937,7 +990,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid = null;
         JsonElement valueEl;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         String stableId = null;
@@ -963,8 +1016,8 @@ public class StudyDataLoaderAT {
 
         String answerGuid;
         String stableId = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
-        JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
         }
@@ -985,7 +1038,7 @@ public class StudyDataLoaderAT {
                                             String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
         String stableId = null;
@@ -1144,8 +1197,15 @@ public class StudyDataLoaderAT {
         if (CollectionUtils.isNotEmpty(nestedGuids)) {
             for (String childGuid : nestedGuids) {
                 if (childGuid != null) {
-                    childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
+                    Long childAnswerId = answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId();
+                    childrenAnswerIds.add(childAnswerId);
                 }
+            }
+            LOG.info("--------chd answers: {} orderIds : {} ", childrenAnswerIds.size(), compositeAnswerOrders.size());
+            if (childrenAnswerIds.size() != compositeAnswerOrders.size()) {
+                LOG.info("----------Not equal----STBLID: {} ", pepperQuestionStableId);
+            } else {
+                LOG.info("----------EQUAL----");
             }
             jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
         }
@@ -1155,8 +1215,9 @@ public class StudyDataLoaderAT {
     private String processMedicalCompositeQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                                    String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
+        LOG.info("---processMedicalCompositeQuestion------");
         String answerGuid = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
         String stableId = null;
@@ -1225,6 +1286,7 @@ public class StudyDataLoaderAT {
                         break;
                     case "ClinicalTrialPicklist":
                         //todo .. revisit and make it generic
+                        LOG.info("-------ClinicalTrialPicklist------");
                         String childStableId = childEl.getAsJsonObject().get("stable_id").getAsString();
                         JsonElement thisDataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
                         if (thisDataArrayEl != null && !thisDataArrayEl.isJsonNull()) {
@@ -1246,8 +1308,20 @@ public class StudyDataLoaderAT {
                 nestedAnsOrders.add(childOrder);
             }
         }
-        nestedQAGuids.remove(null);
-        nestedAnsOrders.remove(null);
+        //nestedQAGuids.remove(null);
+        //nestedAnsOrders.remove(null);
+        nestedQAGuids.removeAll(Collections.singleton(null));
+        nestedAnsOrders.removeAll(Collections.singleton(null));
+        nestedQAGuids.removeAll(Collections.singleton(""));
+        nestedAnsOrders.removeAll(Collections.singleton(""));
+        List<String> filteredQAGuids = nestedQAGuids.stream().filter(value ->
+                value != null && value.length() > 0
+        ).collect(Collectors.toList());
+
+
+        LOG.info("--------nested GUIDs in processMED sableID: {} .. : {} .. nestedAnswerOrders: {} .. filteredQAGUids: {}",
+                stableId, nestedQAGuids.size(), nestedAnsOrders.size(), filteredQAGuids.size());
+
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
@@ -1258,10 +1332,11 @@ public class StudyDataLoaderAT {
     private String processMedListCompositeQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                                    String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
+        LOG.info("******processMedListCompositeQuestion*****");
         //todo .. with some work processCompositeQuestion can be used to handle this question.
         //this handles composite question with list/array
         String answerGuid = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         String stableId = null;
         JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
@@ -1336,7 +1411,9 @@ public class StudyDataLoaderAT {
                 }
             }
 
+            LOG.info("--------nested GUIDs : {}", nestedQAGuids.size());
             nestedQAGuids.remove(null);
+            LOG.info("--------nested GUIDs in processMED : {} .. nestedAnswerOrders: {}", nestedQAGuids.size(), nestedAnsOrders.size());
             if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
                 answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid, nestedQAGuids,
                         nestedAnsOrders, answerDao);
@@ -1362,8 +1439,8 @@ public class StudyDataLoaderAT {
         if (stableId == null) {
             return null;
         }
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
-        JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
         }
@@ -1392,7 +1469,7 @@ public class StudyDataLoaderAT {
             return null;
         }
         String questionName = getStringValueFromElement(mapElement, "name");
-        JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
+        JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
         }
