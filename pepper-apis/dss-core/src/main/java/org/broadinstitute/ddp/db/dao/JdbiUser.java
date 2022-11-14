@@ -31,6 +31,9 @@ public interface JdbiUser extends SqlObject {
     @SqlQuery("select guid from user where legacy_altpid = :altpid")
     String getUserGuidByAltpid(@Bind("altpid") String altpid);
 
+    @SqlQuery("select guid from user where hruid = :hruid")
+    String getUserGuidByHruid(@Bind("hruid") String hruid);
+
     @SqlQuery("select user_id from user where hruid is NULL")
     List<Long> getUserIdsForUsersWithoutHruids();
 
