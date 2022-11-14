@@ -565,7 +565,7 @@ public class StudyDataLoaderAT {
         //iterate through each question_stable_mapping
         JsonArray questionStableArray = mappingData.getAsJsonObject().getAsJsonArray("question_answer_stables");
         for (JsonElement thisMap : questionStableArray) {
-            String questionName = getStringValueFromElement(thisMap, "name").toUpperCase();
+            String questionName = getStringValueFromElement(thisMap, "name");
             String questionType = getStringValueFromElement(thisMap, "type");
             String stableId = getStringValueFromElement(thisMap, "stable_id");
             if (StringUtils.isEmpty(stableId)) {
@@ -652,7 +652,7 @@ public class StudyDataLoaderAT {
                                            String participantGuid, String instanceGuid, AnswerDao answerDao) {
 
         String answerGuid = null;
-        String questionName = getStringValueFromElement(mapElement, "name").toUpperCase();
+        String questionName = getStringValueFromElement(mapElement, "name");
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
@@ -684,6 +684,7 @@ public class StudyDataLoaderAT {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
+            LOG.info("---PL QStableID: {} .. selected options: {}", stableId, selectedPicklistOptions);
             answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
         }
         return answerGuid;
@@ -728,9 +729,11 @@ public class StudyDataLoaderAT {
                     JsonElement specifyKeyElement = optionObject.get("text");
 
                     if (specifyKeyElement != null && !specifyKeyElement.isJsonNull()
+                            && !specifyKeyElement.getAsString().isEmpty()
                             && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
                         foundSpecify = true;
                         String otherText = specifyKeyElement.getAsString();
+                        LOG.info("-----has specify: {} .. optionName:{}", otherText, optionName);
                         selectedPicklistOptions
                                 .add(new SelectedPicklistOption(val, getStringValueFromElement(sourceDataElement, questionName + "."
                                         + otherText)));
@@ -850,7 +853,6 @@ public class StudyDataLoaderAT {
             } else {
                 key = questionName;
             }
-            key = key.toUpperCase();
             JsonElement sourceDataOptEl = sourceDataElement.getAsJsonObject().get(key);
             if (sourceDataOptEl != null && !sourceDataOptEl.isJsonNull()) {
                 value = sourceDataElement.getAsJsonObject().get(key);
@@ -905,7 +907,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid = null;
         JsonElement valueEl;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         String stableId = null;
         JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
         if (!stableIdElement.isJsonNull()) {
@@ -970,7 +972,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid = null;
         JsonElement valueEl;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         String stableId = null;
@@ -991,7 +993,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid = null;
         JsonElement valueEl;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         String stableId = null;
@@ -1017,7 +1019,7 @@ public class StudyDataLoaderAT {
 
         String answerGuid;
         String stableId = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
@@ -1039,7 +1041,7 @@ public class StudyDataLoaderAT {
                                             String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
         String stableId = null;
@@ -1110,7 +1112,7 @@ public class StudyDataLoaderAT {
                 }
             }
         }
-        nestedQAGuids.remove(null);
+        nestedQAGuids.removeAll(Collections.singleton(null));
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
@@ -1180,6 +1182,7 @@ public class StudyDataLoaderAT {
 
     public String answerPickListQuestion(String questionStableId, String participantGuid, String instanceGuid,
                                          List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
+        LOG.info("---PL QSID: {}", questionStableId);
         Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
         return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
@@ -1218,7 +1221,7 @@ public class StudyDataLoaderAT {
 
         LOG.info("---processMedicalCompositeQuestion------");
         String answerGuid = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
         String stableId = null;
@@ -1309,8 +1312,6 @@ public class StudyDataLoaderAT {
                 nestedAnsOrders.add(childOrder);
             }
         }
-        //nestedQAGuids.remove(null);
-        //nestedAnsOrders.remove(null);
         nestedQAGuids.removeAll(Collections.singleton(null));
         nestedAnsOrders.removeAll(Collections.singleton(null));
         nestedQAGuids.removeAll(Collections.singleton(""));
@@ -1337,7 +1338,7 @@ public class StudyDataLoaderAT {
         //todo .. with some work processCompositeQuestion can be used to handle this question.
         //this handles composite question with list/array
         String answerGuid = null;
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         String stableId = null;
         JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
@@ -1440,7 +1441,7 @@ public class StudyDataLoaderAT {
         if (stableId == null) {
             return null;
         }
-        String questionName = mapElement.getAsJsonObject().get("name").getAsString().toUpperCase();
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
@@ -1469,7 +1470,7 @@ public class StudyDataLoaderAT {
         if (stableId == null) {
             return null;
         }
-        String questionName = getStringValueFromElement(mapElement, "name").toUpperCase();
+        String questionName = getStringValueFromElement(mapElement, "name");
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName.toUpperCase());
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;

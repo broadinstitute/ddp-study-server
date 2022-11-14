@@ -893,7 +893,7 @@ public class StudyDataLoaderMainAT {
                         //ZTR51QCIJB A6IP3SCN7A Q01SODUT1L
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
                                 userGuid, studyId,
-                                activityCode, createdToMillis, lastSubmitedToMillis,
+                                activityCode, createdToMillis++, lastSubmitedToMillis++,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
