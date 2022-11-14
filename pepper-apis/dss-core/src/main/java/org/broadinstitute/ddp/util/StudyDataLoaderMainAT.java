@@ -403,7 +403,7 @@ public class StudyDataLoaderMainAT {
         JsonElement surveyElement = dataElement.getAsJsonObject().get("data");
         JsonArray surveys = surveyElement.getAsJsonArray();
         for (JsonElement thisElement : surveys) {
-            JsonElement cptId = thisElement.getAsJsonObject().get("GENOME_STUDY_CPT_ID");
+            JsonElement cptId = thisElement.getAsJsonObject().get("genome_study_cpt_id");
             //String genomeCPT = cptId.
             String hruid = cptUserMap.get(cptId.getAsString());
             //if (cptId.e)
@@ -878,8 +878,8 @@ public class StudyDataLoaderMainAT {
                     int counter = 0;
                     String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
                     for (JsonElement surveyDataEl : surveyData) {
-                        String createdAt = surveyDataEl.getAsJsonObject().get("DATSTAT.STARTDATETIME").getAsString();
-                        String completedAt = surveyDataEl.getAsJsonObject().get("DATSTAT.ENDDATETIME").getAsString();
+                        String createdAt = surveyDataEl.getAsJsonObject().get("datstat.startdatetime").getAsString();
+                        String completedAt = surveyDataEl.getAsJsonObject().get("datstat.enddatetime").getAsString();
 
                         LocalDateTime createdDateTime = LocalDateTime.parse(createdAt, dataLoader.formatter);
                         Instant createdDateTimeInst = createdDateTime.toInstant(ZoneOffset.UTC);

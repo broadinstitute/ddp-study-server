@@ -86,7 +86,7 @@ public interface PicklistAnswerDao extends SqlObject {
             }
 
             PicklistOptionDto dto = dtoMap.get(option.getStableId());
-            if (!dto.isAllowDetails() && option.getDetailText() != null) {
+            if (!dto.isAllowDetails() && option.getDetailText() != null && !option.getDetailText().isEmpty()) {
                 throw new OperationNotAllowedException("Picklist option " + dto.getStableId() + " does not allow details");
             }
 
