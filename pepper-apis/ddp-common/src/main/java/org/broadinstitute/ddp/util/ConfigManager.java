@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.constants.ApplicationProperty;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.secrets.SecretManager;
 
@@ -30,14 +31,14 @@ import org.broadinstitute.ddp.secrets.SecretManager;
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ConfigManager {
-    private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
     public static final File TYPESAFE_CONFIG_FILE;
 
     static {
         // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
-        final var gaeConfigPropertyName = TYPESAFE_CONFIG_SYSTEM_VAR.replace('.', '_');
+        final var systemPropertyName = ApplicationProperty.APPLICATION_CONFIG.getPropertyName();
+        final var gaeConfigPropertyName = systemPropertyName.replace('.', '_');
         final var configFileName = Optional.ofNullable(System.getenv(gaeConfigPropertyName))
-                .orElse(System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR));
+                .orElse(System.getProperty(systemPropertyName));
 
         TYPESAFE_CONFIG_FILE = Optional.ofNullable(configFileName).map(File::new).orElse(null);
         if (TYPESAFE_CONFIG_FILE != null && !TYPESAFE_CONFIG_FILE.exists()) {
@@ -89,9 +90,9 @@ public class ConfigManager {
         if (configCloud.isEmpty() && configLocal.isEmpty()) {
             log.info("no configuration was specified, an empty configuration will be used. "
                             + "Use properties '{}' to use a local file or '{}' and '{}' to use a cloud secret",
-                    TYPESAFE_CONFIG_SYSTEM_VAR,
-                    PropertyManager.Property.GOOGLE_SECRET_PROJECT.getKey(),
-                    PropertyManager.Property.GOOGLE_SECRET_NAME.getKey());
+                    ApplicationProperty.APPLICATION_CONFIG.getPropertyName(),
+                    ApplicationProperty.GOOGLE_SECRET_PROJECT.getPropertyName(),
+                    ApplicationProperty.GOOGLE_SECRET_NAME.getPropertyName());
             return null;
         }
 
@@ -103,25 +104,31 @@ public class ConfigManager {
     }
 
     private static boolean isSecretManagerConfigurationSpecified() {
-        return StringUtils.isNotBlank(PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_PROJECT, null))
-                && StringUtils.isNotBlank(PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_NAME, null));
+        return StringUtils.isNotBlank(PropertyManager.getProperty(ApplicationProperty.GOOGLE_SECRET_PROJECT, null))
+                && StringUtils.isNotBlank(PropertyManager.getProperty(ApplicationProperty.GOOGLE_SECRET_NAME, null));
     }
 
     private static Config loadFromSecretManager() {
-        final var projectName = PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_PROJECT);
+        final var projectName = PropertyManager.getProperty(ApplicationProperty.GOOGLE_SECRET_PROJECT);
         if (projectName.isEmpty()) {
-            log.error(PropertyManager.Property.GOOGLE_SECRET_PROJECT.getKey() + " property is not set");
+            log.error(ApplicationProperty.GOOGLE_SECRET_PROJECT.getPropertyName() + " property is not set");
             return ConfigFactory.empty();
         }
 
-        final var secretName = PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_NAME);
+        final var secretName = PropertyManager.getProperty(ApplicationProperty.GOOGLE_SECRET_NAME);
         if (secretName.isEmpty()) {
-            log.error(PropertyManager.Property.GOOGLE_SECRET_NAME.getKey() + " property is not set");
+            log.error(ApplicationProperty.GOOGLE_SECRET_NAME.getPropertyName() + " property is not set");
             return ConfigFactory.empty();
         }
 
-        return ConfigFactory.parseString(SecretManager.get(projectName.get(), secretName.get(), PropertyManager.getProperty(PropertyManager.Property.GOOGLE_SECRET_VERSION, "latest"))
-                .orElseThrow(() -> new DDPException("The secret " + secretName + " doesn't exist")));
+        final var configurationContents = SecretManager.get(
+                projectName.get(),
+                secretName.get(),
+                PropertyManager.getProperty(ApplicationProperty.GOOGLE_SECRET_VERSION, SecretManager.LATEST));
+
+        return ConfigFactory.parseString(configurationContents.orElseThrow(() -> {
+            return new DDPException("The secret " + secretName + " doesn't exist");
+        }));
     }
 
     /**
