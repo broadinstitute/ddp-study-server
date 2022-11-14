@@ -1,23 +1,22 @@
 package org.broadinstitute.ddp.secrets;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.core.GoogleCredentialsProvider;
-import com.google.cloud.secretmanager.v1.*;
+import com.google.cloud.secretmanager.v1.AccessSecretVersionResponse;
+import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
+import com.google.cloud.secretmanager.v1.SecretManagerServiceSettings;
+import com.google.cloud.secretmanager.v1.SecretPayload;
+import com.google.cloud.secretmanager.v1.SecretVersionName;
 import com.google.protobuf.ByteString;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 
-import java.io.IOException;
-import java.lang.ref.Cleaner;
-import java.util.Optional;
-
 @Slf4j
 public final class SecretManager {
+    public static final String LATEST = "latest";
 
     private static SecretManagerServiceClient createSecretManagerClient() throws IOException {
         final var credentialsProvider = FixedCredentialsProvider.create(GoogleCredentialUtil.initCredentials(false));
