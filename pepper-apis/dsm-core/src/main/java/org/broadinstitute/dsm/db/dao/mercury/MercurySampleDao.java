@@ -131,7 +131,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
     private List<MercurySampleDto> getEligibleTissues(Connection conn, String ddpParticipantId, String realm,
                                                       KitDaoImpl kitDaoImpl) throws Exception {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
-        if (!participantHasKitReceived(conn, ddpParticipantId, realm, kitDaoImpl)) {
+        if (!participantHasKitReceived(conn, ddpParticipantId, kitDaoImpl)) {
             return samples;
         }
         SimpleResult dbVals = new SimpleResult();
@@ -163,9 +163,8 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         return samples;
     }
 
-    private boolean participantHasKitReceived(Connection conn, String ddpParticipantId, String realm,
-                                              KitDaoImpl kitDaoImpl) {
-        return kitDaoImpl.hasKitReceived(conn, ddpParticipantId, realm);
+    private boolean participantHasKitReceived(Connection conn, String ddpParticipantId, KitDaoImpl kitDaoImpl) {
+        return kitDaoImpl.hasKitReceived(conn, ddpParticipantId);
     }
 
     private String getSampleStatus(ResultSet rs) throws SQLException {

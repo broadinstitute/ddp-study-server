@@ -129,8 +129,7 @@ public class KitDaoImpl implements KitDao {
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
-            + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND ddp_instance_id = ? "
-            + " AND receive_date IS NOT NULL ";
+            + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND receive_date IS NOT NULL ";
 
     private static final String SQL_DELETE_KIT_REQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
 
@@ -589,10 +588,9 @@ public class KitDaoImpl implements KitDao {
         return result;
     }
 
-    public boolean hasKitReceived(Connection connection, String ddpParticipantId, String realm) {
+    public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
         try (PreparedStatement stmt = connection.prepareStatement(SQL_SELECT_RECEIVED_KITS)) {
             stmt.setString(1, ddpParticipantId);
-            stmt.setString(2, realm);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return true;
