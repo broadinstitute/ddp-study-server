@@ -233,7 +233,8 @@ public class KitUploadRoute extends RequestHandler {
                 int x = 4;
                 String collaboratorParticipantId = "";
                 //if kit has ddpParticipantId use that (RGP!) and
-                //if ddpInstance is 30 then it is Darwin Vertebrate so we ignore this check
+                //For any studies that do not have participants the search will fail and error so
+                //we check if ddpInstance.getParticipantIndexES() != null
                 if(ddpInstance.getParticipantIndexES() != null && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());

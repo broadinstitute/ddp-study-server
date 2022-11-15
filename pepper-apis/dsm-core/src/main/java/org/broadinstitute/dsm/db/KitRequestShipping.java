@@ -995,8 +995,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
                         new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
-                //If it is Darwin there is no participant, so the above try will fail. This skips
-                //the error log for the failure if the participant is Darwin
+                //This error will trigger on studies with no participants, this skips
+                //the error log if that is the reason for the upsert failure.
                 if(ddpInstance.getParticipantIndexES() == null){
                     logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
                             + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
