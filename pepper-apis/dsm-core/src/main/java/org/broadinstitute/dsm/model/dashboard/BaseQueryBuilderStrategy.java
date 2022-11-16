@@ -1,9 +1,7 @@
 package org.broadinstitute.dsm.model.dashboard;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
-import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.query.AbstractQueryBuilderFactory;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseAbstractQueryBuilder;
@@ -33,7 +31,6 @@ abstract class BaseQueryBuilderStrategy {
             queryBuilder = buildQueryForNoAdditionalFilter();
         }
         if (queryBuildPayload.getStartDate() != null) {
-            FilterStrategy filterStrategy = FilterStrategy.of(Filter.AND_TRIMMED);
             String filter = String.format("AND profile.createdAt >= '%s' AND profile.createdAt <= '%s'", queryBuildPayload.getStartDate(),
                     queryBuildPayload.getEndDate());
             //add endDate as well
