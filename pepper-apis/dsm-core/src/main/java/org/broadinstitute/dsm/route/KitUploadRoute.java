@@ -235,7 +235,7 @@ public class KitUploadRoute extends RequestHandler {
                 //if kit has ddpParticipantId use that (RGP!) and
                 //For any studies that do not have participants the search will fail and error so
                 //we check if ddpInstance.getParticipantIndexES() != null
-                if(ddpInstance.getParticipantIndexES() != null && StringUtils.isBlank(kit.getParticipantId())) {
+                if(StringUtils.isNotBlank((ddpInstance.getParticipantIndexES())) && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
                     participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
@@ -396,17 +396,20 @@ public class KitUploadRoute extends RequestHandler {
                     errorMessage += "collaboratorSampleId was too long ";
                 }
             }
-            if(ddpInstance.getParticipantIndexES() == null){
-                KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getShortId(),
-                        collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
-                        uploadReason, ddpInstance);
+
+            String participantID = kit.getShortId();
+
+            //If there is a participant change the participantID to the ID of the existing
+            //participant
+            if(StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))){
+                participantID = kit.getParticipantId().trim();
             }
-            else {
-                KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
-                        collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
-                        uploadReason, ddpInstance);
-                kit.setDdpLabel(shippingId);
-            }
+
+            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, participantID,
+                    collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
+                    uploadReason, ddpInstance);
+            kit.setDdpLabel(shippingId);
+
         }
     }
 
