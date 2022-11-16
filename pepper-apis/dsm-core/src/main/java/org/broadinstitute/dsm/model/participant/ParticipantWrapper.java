@@ -250,6 +250,9 @@ public class ParticipantWrapper {
 
     private void addProxyDataToDto(UnparsedESParticipantDto esDto, ElasticSearch proxiesByIds) {
         List<String> participantProxyGuids = (List<String>) esDto.getDataAsMap().get("proxies");
+        if (participantProxyGuids == null) {
+            return;
+        }
         List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
                 .filter(proxyEsDto -> {
                     Map<String, Object> profile = (Map<String, Object>) ((UnparsedESParticipantDto) proxyEsDto).getDataAsMap()
