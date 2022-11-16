@@ -129,7 +129,7 @@ public class DashboardDaoImplTest {
 
     @Test
     public void getByInstanceId() {
-        List<DashboardDto> byInstanceId = dashboardDao.getByInstanceId(DDP_INSTANCE_ID);
+        List<DashboardDto> byInstanceId = dashboardDao.getByInstanceId(DDP_INSTANCE_ID, true);
         try {
             DashboardDto dashboardDto = byInstanceId.get(0);
             testDashboard(dashboardDto);

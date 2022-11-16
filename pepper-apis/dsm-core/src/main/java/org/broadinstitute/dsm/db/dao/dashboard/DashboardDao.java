@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
 
 public interface DashboardDao extends Dao<DashboardDto> {
-    List<DashboardDto> getByInstanceId(int instanceId);
+    List<DashboardDto> getByInstanceId(int instanceId, boolean charts);
 
     int createLabel(DashboardLabelDto dashboardLabelDto);
 
