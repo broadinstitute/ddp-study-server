@@ -16,7 +16,7 @@ import java.util.List;
 
 @Slf4j
 public class LmsEmailReminderUpdate implements CustomTask {
-    private static final String STUDY_GUID  = "cmi-lms";
+    private static final String STUDY_GUID = "cmi-lms";
     private static final String CANCEL_EXPR_FH = "user.studies[\"cmi-lms\"].forms[\"FAMILY_HISTORY_SELF\"].isStatus(\"COMPLETE\")";
     private static final String CANCEL_EXPR_GL = "user.studies[\"cmi-lms\"].forms[\"GERMLINE_CONSENT_ADDENDUM\"].isStatus(\"COMPLETE\")";
     private static final String CANCEL_EXPR_GL_PED = "user.studies[\"cmi-lms\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"]"
