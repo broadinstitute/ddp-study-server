@@ -50,7 +50,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "t.tissue_id, t.notes, count_received, tissue_type, tissue_site, tumor_type, h_e, pathology_report, "
                     + "collaborator_sample_id, block_sent, scrolls_received, sk_id, sm_id, "
                     + "sent_gp, first_sm_id, additional_tissue_value_json, expected_return, return_date, return_fedex_id, "
-                    + "shl_work_number, tumor_percentage, tissue_sequence, "
+                    + "shl_work_number, block_id_shl, tumor_percentage, tissue_sequence, "
                     + "scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, "
                     + "sm.tissue_id, smt.sm_id_type FROM ddp_onc_history_detail oD "
                     + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id "
