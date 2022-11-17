@@ -19,6 +19,8 @@ class QueryBuildPayload {
     private AndOrFilterSeparator separator;
     private BaseQueryBuilder baseQueryBuilder;
     private DashboardLabelDto label;
+    private String startDate;
+    private String endDate;
 
     public QueryBuildPayload(DDPInstanceDto ddpInstanceDto, DisplayType displayType, DashboardLabelDto label) {
         this.esParticipantsIndex = ddpInstanceDto.getEsParticipantIndex();
@@ -26,6 +28,13 @@ class QueryBuildPayload {
         this.baseQueryBuilder = BaseQueryBuilderFactory.of(label.getEsNestedPath());
         this.label = label;
         this.displayType = displayType;
+    }
+
+    public QueryBuildPayload(DDPInstanceDto ddpInstanceDto, DisplayType displayType, DashboardLabelDto label, String startDate,
+                             String endDate) {
+        this(ddpInstanceDto, displayType, label);
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     QueryBuildPayload() {
