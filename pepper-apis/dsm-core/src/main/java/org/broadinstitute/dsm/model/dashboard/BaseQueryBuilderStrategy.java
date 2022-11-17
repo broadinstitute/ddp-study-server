@@ -1,9 +1,14 @@
 package org.broadinstitute.dsm.model.dashboard;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
+import org.broadinstitute.dsm.model.elastic.filter.query.AbstractQueryBuilderFactory;
+import org.broadinstitute.dsm.model.elastic.filter.query.BaseAbstractQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +23,23 @@ abstract class BaseQueryBuilderStrategy {
     }
 
     public QueryBuilder build() {
+        AbstractQueryBuilder finalQuery = new BoolQueryBuilder();
         QueryBuilder queryBuilder;
         if (hasAdditionalFilter()) {
             queryBuilder = buildQueryForAdditionalFilter();
         } else {
             queryBuilder = buildQueryForNoAdditionalFilter();
         }
-        return queryBuilder;
+        if (queryBuildPayload.getStartDate() != null) {
+            String filter = String.format("AND profile.createdAt >= '%s' AND profile.createdAt <= '%s'", queryBuildPayload.getStartDate(),
+                    queryBuildPayload.getEndDate());
+            //add endDate as well
+            BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
+            abstractQueryBuilder.setParser(new FilterParser());
+            ((BoolQueryBuilder) finalQuery).must(abstractQueryBuilder.build());
+        }
+        ((BoolQueryBuilder) finalQuery).must(queryBuilder);
+        return finalQuery;
     }
 
     private boolean hasAdditionalFilter() {
