@@ -109,4 +109,5 @@
     <include file="liquibase/singular/PEPPER-104_care_of.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-8712_kit-prefix.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-4_viewDSSonly.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-211_dashboardDateField.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,15 +1,18 @@
 package org.broadinstitute.dsm.model.dashboard;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.query.AbstractQueryBuilderFactory;
-import org.broadinstitute.dsm.model.elastic.filter.query.BaseAbstractQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +33,30 @@ abstract class BaseQueryBuilderStrategy {
         } else {
             queryBuilder = buildQueryForNoAdditionalFilter();
         }
-        if (queryBuildPayload.getStartDate() != null) {
-            String filter = String.format("AND profile.createdAt >= '%s' AND profile.createdAt <= '%s'", queryBuildPayload.getStartDate(),
-                    queryBuildPayload.getEndDate());
-            //add endDate as well
-            BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
-            abstractQueryBuilder.setParser(new FilterParser());
-            ((BoolQueryBuilder) finalQuery).must(abstractQueryBuilder.build());
+        
+        if (queryBuildPayload.getStartDate() != null
+                && StringUtils.isNotBlank(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())) {
+            String datePeriodField = queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField();
+            int dots = count(datePeriodField, "\\.+");
+            if (dots >= 1) {
+                //1 it is profile
+                BoolQueryBuilder single = new BoolQueryBuilder();
+                single.must(new RangeQueryBuilder(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())
+                        .gte(queryBuildPayload.getStartDate()));
+                single.must(new RangeQueryBuilder(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())
+                        .lte(queryBuildPayload.getEndDate()));
+
+                if (dots > 1 && datePeriodField.lastIndexOf(".") > -1) {
+                    //nested
+                    String nestedPath = datePeriodField.substring(0, datePeriodField.lastIndexOf("."));
+                    BoolQueryBuilder nested = new BoolQueryBuilder();
+                    nested.must(QueryBuilders.nestedQuery(nestedPath, single, ScoreMode.Avg));
+                    ((BoolQueryBuilder) finalQuery).must(nested);
+                } else {
+                    ((BoolQueryBuilder) finalQuery).must(single);
+                }
+            }
+            //empty  = default profile.createdAt????
         }
         ((BoolQueryBuilder) finalQuery).must(queryBuilder);
         return finalQuery;
@@ -61,4 +81,15 @@ abstract class BaseQueryBuilderStrategy {
     }
 
     protected abstract QueryPayload getQueryPayload();
+
+    public static int count(String str, String regex) {
+        int i = 0;
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(str);
+        while (m.find()) {
+            m.group();
+            i++;
+        }
+        return i;
+    }
 }
