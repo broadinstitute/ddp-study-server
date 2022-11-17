@@ -74,6 +74,9 @@ public class CohortTagUseCase {
     public List<CohortTag> bulkInsert() {
         logger.info("Inserting cohort tags: " + bulkCohortTag.getCohortTags());
         List<CohortTag> cohortTagsToCreate = createCohortTagObjectsFromStringTags();
+        if (cohortTagsToCreate.size() == 0) {
+            return new ArrayList<>();
+        }
         List<Integer> createdCohortTagsIds = cohortTagDao.bulkCohortCreate(cohortTagsToCreate);
         setCohortTagIdsToCohortTags(cohortTagsToCreate, createdCohortTagsIds);
 

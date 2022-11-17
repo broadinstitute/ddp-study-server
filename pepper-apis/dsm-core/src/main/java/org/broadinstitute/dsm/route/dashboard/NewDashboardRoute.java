@@ -17,8 +17,14 @@ public class NewDashboardRoute extends RequestHandler {
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
         String realm = Optional.ofNullable(request.queryMap().get(RoutePath.REALM).value()).orElseThrow().toLowerCase();
+        String startDate = null;
+        String endDate = null;
+        if (request.queryMap().hasKey("startDate") && request.queryMap().hasKey("endDate")) {
+            startDate = request.queryMap().get("startDate").value();
+            endDate = request.queryMap().get("endDate").value();
+        }
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         DashboardUseCase dashboardUseCase = new DashboardUseCase(new DashboardDaoImpl(), new ElasticSearch());
-        return dashboardUseCase.getByDdpInstance(ddpInstanceDto);
+        return dashboardUseCase.getByDdpInstance(ddpInstanceDto, startDate, endDate);
     }
 }

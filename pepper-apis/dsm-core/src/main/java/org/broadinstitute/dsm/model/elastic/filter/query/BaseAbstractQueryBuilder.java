@@ -77,10 +77,15 @@ public class BaseAbstractQueryBuilder {
             splitter.setFilterSeparator(filterSeparator);
             splitter.setFilter(filterValue);
             String path = PropertyInfo.of(splitter.getAlias()).getPropertyName();
-            if (Util.isUnderDsmKey(Objects.requireNonNull(splitter.getAlias()))) {
+            String alias = Objects.requireNonNull(splitter.getAlias());
+            if (Util.isUnderDsmKey(alias)) {
                 path = DSM_WITH_DOT + PropertyInfo.of(splitter.getAlias()).getPropertyName();
             }
-            QueryPayload queryPayload = new QueryPayload(path, splitter.getInnerProperty(), splitter.getAlias(),
+            String innerProperty = splitter.getInnerProperty();
+            if (alias.equals(ESObjectConstants.PARTICIPANT_DATA)) {
+                innerProperty = "dynamicFields." + innerProperty;
+            }
+            QueryPayload queryPayload = new QueryPayload(path, innerProperty, splitter.getAlias(),
                             parser.parse(splitter.getValue()), esIndex);
             baseQueryBuilder = BaseQueryBuilder.of(queryPayload);
             List<QueryBuilder> queryBuilders =

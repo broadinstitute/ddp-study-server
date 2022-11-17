@@ -16,11 +16,14 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
         prepareNecessaryData(queryParamsMap);
         ParticipantWrapperResult participantWrapperResult = new ParticipantWrapperResult();
-        if (StringUtils.isBlank(quickFilterName) || StringUtils.isBlank(filterQuery)) {
+        if (StringUtils.isBlank(quickFilterName) && StringUtils.isBlank(filterQuery)) {
             return participantWrapperResult;
         }
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
 
+        if (StringUtils.isNotBlank(ddpInstanceDto.getQueryItems())) {
+            filterQuery = filterQuery + ddpInstanceDto.getQueryItems();
+        }
         AbstractQueryBuilder<?> mainQuery = createMixedSourceBaseAbstractQueryBuilder(filterQuery);
 
         ParticipantWrapperPayload.Builder participantWrapperPayload =
