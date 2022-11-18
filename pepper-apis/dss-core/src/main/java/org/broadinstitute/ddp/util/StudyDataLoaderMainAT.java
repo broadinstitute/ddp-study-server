@@ -46,7 +46,6 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.slf4j.Logger;
@@ -371,7 +370,8 @@ public class StudyDataLoaderMainAT {
         //Map<String, JsonElement> surveyDataMap = new HashMap<>();
 
         //load user GENOME_STUDY_CPT_ID, hruid mapping
-        String userCTPdata = new String(Files.readAllBytes(Paths.get("/Users/sampath/IdeaProjects/ddp-study-server/pepper-apis/dss-core/src/test/resources/atcp-ptp-list-test.json")));
+        String userCTPdata = new String(Files.readAllBytes(Paths.get(
+                "/Users/sampath/IdeaProjects/ddp-study-server/pepper-apis/dss-core/src/test/resources/atcp-ptp-list-test.json")));
 
         JsonElement userCptEl;
         try {
