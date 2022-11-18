@@ -230,7 +230,6 @@ public class KitUploadRoute extends RequestHandler {
                 String errorMessage = "";
                 String participantGuid = "";
                 String participantLegacyAltPid = "";
-                int x = 4;
                 String collaboratorParticipantId = "";
                 //if kit has ddpParticipantId use that (RGP!) and
                 //For any studies that do not have participants the search will fail and error so
