@@ -371,7 +371,7 @@ public class StudyDataLoaderMainAT {
 
         //load user GENOME_STUDY_CPT_ID, hruid mapping
         String userCTPdata = new String(Files.readAllBytes(Paths.get(
-                "/Users/sampath/IdeaProjects/ddp-study-server/pepper-apis/dss-core/src/test/resources/atcp-ptp-list-test.json")));
+                "/Users/sampath/IdeaProjects/ddp-study-server/pepper-apis/dss-core/src/test/resources/atcp-ptp-list-2.json")));
 
         JsonElement userCptEl;
         try {
@@ -387,8 +387,9 @@ public class StudyDataLoaderMainAT {
         JsonArray allUsersCPT = userCPTElement.getAsJsonArray();
         for (JsonElement thisElement : allUsersCPT) {
             JsonObject jsonObj = thisElement.getAsJsonObject();
-            cptUserMap.put(jsonObj.get("GENOME_STUDY_CPT_ID").getAsString(), jsonObj.get("HRUID").getAsString());
+            cptUserMap.put(jsonObj.get("GENOME_STUDY_CPT_ID").getAsString().toLowerCase(), jsonObj.get("HRUID").getAsString());
         }
+        LOG.info("---CPT user count: {}", cptUserMap.size());
 
         JsonElement data;
         try {
@@ -404,12 +405,14 @@ public class StudyDataLoaderMainAT {
         JsonArray surveys = surveyElement.getAsJsonArray();
         for (JsonElement thisElement : surveys) {
             JsonElement cptId = thisElement.getAsJsonObject().get("genome_study_cpt_id");
-            //String genomeCPT = cptId.
+            //LOG.info("*******---------GENOME_CPT_ID : {}", cptId);
             String hruid = cptUserMap.get(cptId.getAsString());
             //if (cptId.e)
             if (hruid == null) {
+                //LOG.info("*******---------NO MATCH in ptp list MAP for GENOME_CPT_ID : {}", cptId);
                 continue;
             }
+            //LOG.info("*******---------GENOME_CPT_ID : {}", cptId);
             List<JsonElement> surveyList = userMedicalDataMap
                     .computeIfAbsent(hruid, key -> new ArrayList<JsonElement>());
             surveyList.add(thisElement);
@@ -448,8 +451,8 @@ public class StudyDataLoaderMainAT {
     public void processLocalFileAT(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
         StudyDataLoaderAT dataLoader = new StudyDataLoaderAT(cfg);
 
-        LocalDateTime createdDateTime = LocalDateTime.parse("4/4/2016 6:23:00 PM", dataLoader.formatter);
-        LOG.info("created : {} ", createdDateTime);
+        //LocalDateTime createdDateTime = LocalDateTime.parse("4/4/2016 6:23:00 PM", dataLoader.formatter);
+        //LOG.info("created : {} ", createdDateTime);
 
         //load mapping data
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
@@ -875,9 +878,10 @@ public class StudyDataLoaderMainAT {
                             .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
                     LOG.info("  --USER : {} has {} instances : {} ", userDto.getUserHruid(), activityInstanceDtoList.size());
 
-                    int counter = 0;
-                    String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
+                    int counter = 1;
+                    //String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
                     for (JsonElement surveyDataEl : surveyData) {
+                        LOG.info("---loading MH for CPTID: {} ", surveyDataEl.getAsJsonObject().get("genome_study_cpt_id").getAsString());
                         String createdAt = surveyDataEl.getAsJsonObject().get("datstat.startdatetime").getAsString();
                         String completedAt = surveyDataEl.getAsJsonObject().get("datstat.enddatetime").getAsString();
 
@@ -898,7 +902,7 @@ public class StudyDataLoaderMainAT {
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
                                 true);
-                        LOG.info("---created new activity instance: {} for user: {} ", instanceDto.getGuid(), userGuid);
+                        LOG.info("---created new activity instance: {} for user: {}.. total count: {} ", instanceDto.getGuid(), userGuid, counter);
                         dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                                 mappingData.get("atcp_registry_questionnaire"),
                                 studyDto, userDto, instanceDto,

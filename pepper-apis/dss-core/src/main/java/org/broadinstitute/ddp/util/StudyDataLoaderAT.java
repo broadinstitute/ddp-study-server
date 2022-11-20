@@ -73,7 +73,8 @@ public class StudyDataLoaderAT {
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderAT.class);
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-    private static final String MH_DATE_FORMAT = "M[M]/d[d]/yyyy h[h]:mm:ss a";
+    private static final String MH_DATE_FORMAT = "M/d/yy H:m[:s][a]";
+    //private static final String MH_DATE_FORMAT = "M[M]/d[d]/yyyy h[h]:mm:ss a";
     private static final String DATSTAT_DATE_OF_BIRTH_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
     private Long defaultKitCreationEpoch = null;
@@ -386,7 +387,7 @@ public class StudyDataLoaderAT {
                                              ActivityInstanceDto instanceDto,
                                              AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating MedicalHistory Survey...");
+        //LOG.info("Populating MedicalHistory Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
             LOG.warn("NO MedicalHistory Survey !");
             return;
@@ -641,7 +642,7 @@ public class StudyDataLoaderAT {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
-            LOG.info("---PL QStableID: {} .. selected options: {}", stableId, selectedPicklistOptions);
+            //LOG.info("---PL QStableID: {} .. selected options: {}", stableId, selectedPicklistOptions);
             answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
         }
         return answerGuid;
@@ -690,7 +691,7 @@ public class StudyDataLoaderAT {
                             && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
                         foundSpecify = true;
                         String otherText = specifyKeyElement.getAsString();
-                        LOG.info("-----has specify: {} .. optionName:{}", otherText, optionName);
+                        LOG.debug("-----has specify: {} .. optionName:{}", otherText, optionName);
                         selectedPicklistOptions
                                 .add(new SelectedPicklistOption(val, getStringValueFromElement(sourceDataElement, questionName + "."
                                         + otherText)));
@@ -815,7 +816,7 @@ public class StudyDataLoaderAT {
                 value = sourceDataElement.getAsJsonObject().get(key);
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
-            if (value != null && (key.contains("medication") || key.contains("sibling"))) {
+            if (value != null && !value.isJsonNull() && !value.getAsString().isEmpty() && (key.contains("medication") || key.contains("sibling"))) {
                 int intValue = value.getAsInt();
                 if (intValue == -1) {
                     intValue = 2;
@@ -823,12 +824,12 @@ public class StudyDataLoaderAT {
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(intValue).getAsJsonObject().get("stable_id").getAsString()));
                 break;
-            } else if (value != null && key.contains("sample_") && key.contains("_type")) {
+            } else if (value != null && !value.getAsString().isEmpty() && key.contains("sample_") && key.contains("_type")) {
                 int intValue = value.getAsInt() - 1;
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(intValue).getAsJsonObject().get("stable_id").getAsString()));
                 break;
-            } else if (value != null && value.getAsInt() == 1) { //option checked
+            } else if (value != null && !value.getAsString().isEmpty() && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
                     String otherText = getTextDetails(sourceDataElement, option, key);
@@ -1139,7 +1140,7 @@ public class StudyDataLoaderAT {
 
     public String answerPickListQuestion(String questionStableId, String participantGuid, String instanceGuid,
                                          List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
-        LOG.info("---PL QSID: {}", questionStableId);
+        //LOG.info("---PL QSID: {}", questionStableId);
         Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
         return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
@@ -1162,11 +1163,11 @@ public class StudyDataLoaderAT {
                     childrenAnswerIds.add(childAnswerId);
                 }
             }
-            LOG.info("--------chd answers: {} orderIds : {} ", childrenAnswerIds.size(), compositeAnswerOrders.size());
+            //LOG.debug("--------chd answers: {} orderIds : {} ", childrenAnswerIds.size(), compositeAnswerOrders.size());
             if (childrenAnswerIds.size() != compositeAnswerOrders.size()) {
-                LOG.info("----------Not equal----STBLID: {} ", pepperQuestionStableId);
+                //LOG.info("----------Not equal----STBLID: {} ", pepperQuestionStableId);
             } else {
-                LOG.info("----------EQUAL----");
+                //LOG.info("----------EQUAL----");
             }
             jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
         }
@@ -1176,7 +1177,7 @@ public class StudyDataLoaderAT {
     private String processMedicalCompositeQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                                    String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
-        LOG.info("---processMedicalCompositeQuestion------");
+        LOG.debug("---processMedicalCompositeQuestion------");
         String answerGuid = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
@@ -1278,7 +1279,7 @@ public class StudyDataLoaderAT {
         ).collect(Collectors.toList());
 
 
-        LOG.info("--------nested GUIDs in processMED sableID: {} .. : {} .. nestedAnswerOrders: {} .. filteredQAGUids: {}",
+        LOG.debug("--------nested GUIDs in processMED sableID: {} .. : {} .. nestedAnswerOrders: {} .. filteredQAGUids: {}",
                 stableId, nestedQAGuids.size(), nestedAnsOrders.size(), filteredQAGuids.size());
 
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
