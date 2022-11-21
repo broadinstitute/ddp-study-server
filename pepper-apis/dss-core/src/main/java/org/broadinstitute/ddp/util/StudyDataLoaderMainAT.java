@@ -48,6 +48,7 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -451,34 +452,38 @@ public class StudyDataLoaderMainAT {
     public void processLocalFileAT(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
         StudyDataLoaderAT dataLoader = new StudyDataLoaderAT(cfg);
 
-        //LocalDateTime createdDateTime = LocalDateTime.parse("4/4/2016 6:23:00 PM", dataLoader.formatter);
-        //LOG.info("created : {} ", createdDateTime);
-
         //load mapping data
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
         //load source survey data
         String data = new String(Files.readAllBytes(Paths.get(fileName)));
-        //multiple files
-
 
         Map<String, List<JsonElement>> userSurveyDataMap = loadAllSourceData(data);
 
-        //JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
-
-        //setRunEmail(dryRun, surveyDataMap.get("datstatparticipantdata"), new HashMap<>());
         migrationRunReport = new ArrayList<>();
         failedList = new ArrayList<>();
         skippedList = new ArrayList<>();
-        //disable events before loading data.
         //todo revisit
-        updateStudyEvents(studyGuid, false);
 
-        for (Map.Entry<String, List<JsonElement>> entry : userSurveyDataMap.entrySet()) {
-            processParticipantAT(studyGuid, entry.getKey(), entry.getValue(), mappingData, dataLoader);
-        }
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
+            try {
+                //disable events before loading data.
+                updateStudyEvents(studyGuid, false);
 
+                for (Map.Entry<String, List<JsonElement>> entry : userSurveyDataMap.entrySet()) {
+                    processParticipantAT(handle, studyGuid, entry.getKey(), entry.getValue(), mappingData, dataLoader);
+                }
 
-        //processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, null, null);
+            } catch (Exception e) {
+                LOG.error("Failed to load Participant: " + e.getMessage());
+                e.printStackTrace();
+                handle.rollback();
+                //isSuccess = false;
+                LOG.error("Rolled back...");
+            }
+            updateStudyEvents(studyGuid, true);
+
+        });
+
 
         try {
             createReport(migrationRunReport);
@@ -492,61 +497,6 @@ public class StudyDataLoaderMainAT {
 
         updateStudyEvents(studyGuid, true);
 
-    }
-
-    public void processLocalFile(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
-        StudyDataLoaderAT dataLoader = new StudyDataLoaderAT(cfg);
-        final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
-        final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
-
-        //load mapping data
-        Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
-        //load source survey data
-        String data = new String(Files.readAllBytes(Paths.get(fileName)));
-        Map<String, JsonElement> surveyDataMap = loadSourceDataFile(data);
-
-        if (pswPath != null && !pswPath.isEmpty()) {
-            String hashedPasswordsData = new String(Files.readAllBytes(Paths.get(pswPath)));
-            JsonElement hashedPasswordsJson;
-            try {
-                hashedPasswordsJson = new Gson().fromJson(hashedPasswordsData, new TypeToken<JsonArray>() {
-                }.getType());
-            } catch (Exception e) {
-                LOG.error("Failed to load file data as JSON ", e);
-                return;
-            }
-            JsonArray hashedPasswordsJsonArray = hashedPasswordsJson.getAsJsonArray();
-            JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
-            String userEmail = datstatData.getAsJsonObject().get("datstat_email").getAsString();
-            for (JsonElement item : hashedPasswordsJsonArray) {
-                if (item.getAsJsonObject().has(userEmail)
-                        && item.getAsJsonObject().get(userEmail) != null
-                        && !item.getAsJsonObject().get(userEmail).isJsonNull()) {
-                    surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
-                            .add("password", item.getAsJsonObject().get(userEmail));
-                }
-            }
-        }
-
-        setRunEmail(dryRun, surveyDataMap.get("datstatparticipantdata"), new HashMap<>());
-        migrationRunReport = new ArrayList<>();
-        failedList = new ArrayList<>();
-        skippedList = new ArrayList<>();
-        //disable events before loading data.
-        updateStudyEvents(studyGuid, false);
-
-        processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, addressService, olcService);
-
-        try {
-            createReport(migrationRunReport);
-        } catch (Exception e) {
-            LOG.error("Failed to create migration run report. ", e);
-        }
-
-        if (isDeleteAuth0Email) {
-            deleteAuth0Emails(cfg, migrationRunReport);
-        }
     }
 
     private void updateStudyEvents(String studyGuid, boolean enableEvents) {
@@ -836,9 +786,76 @@ public class StudyDataLoaderMainAT {
         }
     }
 
-    @SuppressWarnings("checkstyle:WhitespaceAfter")
-    private void processParticipantAT(String studyGuid, String hruid, List<JsonElement> surveyData,
-                                      Map<String, JsonElement> mappingData, StudyDataLoaderAT dataLoader) {
+    private void processParticipantAT(Handle handle, String studyGuid, String hruid, List<JsonElement> surveyData,
+                                      Map<String, JsonElement> mappingData, StudyDataLoaderAT dataLoader) throws Exception {
+
+        //load ptp
+        LOG.info("loading participant: {} ", hruid);
+
+        String userGuid = null;
+        JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+        ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
+        ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
+        JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+        JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
+        StudyDto studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyGuid);
+        long studyId = studyDto.getId();
+
+        JdbiUser jdbiUser = handle.attach(JdbiUser.class);
+        userGuid = jdbiUser.getUserGuidByHruid(hruid);
+        if (userGuid == null) {
+            throw new Exception(" AT User not found for hruid: " + hruid);
+        } else {
+
+            UserDto userDto = jdbiUser.findByUserGuid(userGuid);
+            var answerDao = handle.attach(AnswerDao.class);
+            String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+                    .get("activity_code").getAsString();
+            List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                    .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+            LOG.info("  --USER : {} has {} instances : {} ", userDto.getUserHruid(), activityInstanceDtoList.size());
+
+            int counter = 1;
+            //String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
+            for (JsonElement surveyDataEl : surveyData) {
+                LOG.info("---loading MH for CPTID: {} ", surveyDataEl.getAsJsonObject().get("genome_study_cpt_id").getAsString());
+                String createdAt = surveyDataEl.getAsJsonObject().get("datstat.startdatetime").getAsString();
+                String completedAt = surveyDataEl.getAsJsonObject().get("datstat.enddatetime").getAsString();
+
+                LocalDateTime createdDateTime = LocalDateTime.parse(createdAt, dataLoader.formatter);
+                Instant createdDateTimeInst = createdDateTime.toInstant(ZoneOffset.UTC);
+                long createdToMillis = createdDateTimeInst.toEpochMilli();
+
+                LocalDateTime lastSubmitedDateTime = LocalDateTime.parse(completedAt, dataLoader.formatter);
+                Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
+                long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
+
+                //ActivityInstanceDto instanceDto = activityInstanceDao.findByActivityInstanceGuid(instanceGuids[counter]).get();
+                //ZTR51QCIJB A6IP3SCN7A Q01SODUT1L
+                ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
+                        userGuid, studyId,
+                        activityCode, createdToMillis++, lastSubmitedToMillis++,
+                        jdbiActivity,
+                        activityInstanceDao,
+                        activityInstanceStatusDao,
+                        true);
+                LOG.info("---created new activity instance: {} for user: {}.. total count: {} ", instanceDto.getGuid(), userGuid, counter);
+                dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
+                        mappingData.get("atcp_registry_questionnaire"),
+                        studyDto, userDto, instanceDto,
+                        answerDao);
+
+                activityInstanceStatusDao
+                        .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
+                                lastSubmitedToMillis + 1, userGuid);
+                counter++;
+
+            }
+        }
+    }
+
+    private void processParticipantATOLD(String studyGuid, String hruid, List<JsonElement> surveyData,
+                                         Map<String, JsonElement> mappingData, StudyDataLoaderAT dataLoader) {
 
         //load ptp
         LOG.info("loading participant: {} ", hruid);
