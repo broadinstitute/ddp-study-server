@@ -44,7 +44,7 @@ public class DashboardDaoImpl implements DashboardDao {
             + "WHERE d.ddp_instance_id = ? ";
 
     private static final String SQL_DISPLAY_CHARTS = "AND display_type != 'COUNT'";
-    private static final String SQL_DISPLAY_COUNTS = "AND display_type == 'COUNT'";
+    private static final String SQL_DISPLAY_COUNTS = "AND display_type = 'COUNT'";
 
     private static final String SQL_DELETE_DASHBOARD_BY_ID = "DELETE FROM dashboard WHERE dashboard_id = ?";
     private static final String SQL_DELETE_DASHBOARD_LABEL_BY_ID = "DELETE FROM dashboard_label WHERE label_id = ?";
