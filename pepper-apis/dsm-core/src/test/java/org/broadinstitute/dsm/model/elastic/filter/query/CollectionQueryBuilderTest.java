@@ -150,6 +150,19 @@ public class CollectionQueryBuilderTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void collectionBuildRegistrationRange() {
+        String filter = "AND profile.createdAt >= '01/01/2020' AND profile.createdAt <= '01/01/2022'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"));
+        expected.must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022"));
+
+        Assert.assertEquals(expected, actual);
+    }
+
     private BaseAbstractQueryBuilder getAbstractQueryBuilder(String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
