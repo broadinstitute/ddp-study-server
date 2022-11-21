@@ -26,9 +26,9 @@ public class DashboardUseCase {
         this.elasticSearchable = elasticSearchable;
     }
 
-    public List<DashboardData> getByDdpInstance(DDPInstanceDto ddpInstanceDto, String startDate, String endDate) {
+    public List<DashboardData> getByDdpInstance(DDPInstanceDto ddpInstanceDto, String startDate, String endDate, boolean charts) {
         List<DashboardData> result = new ArrayList<>();
-        List<DashboardDto> dashboardDtos = dashboardDao.getByInstanceId(ddpInstanceDto.getDdpInstanceId());
+        List<DashboardDto> dashboardDtos = dashboardDao.getByInstanceId(ddpInstanceDto.getDdpInstanceId(), charts);
         logger.info("Collecting dashboard graphs for instance: " + ddpInstanceDto.getInstanceName());
         for (DashboardDto dashboardDto: dashboardDtos) {
             List<QueryBuilder> queryBuilders = getQueryBuildersFromDashboardDto(ddpInstanceDto, dashboardDto, startDate, endDate);
