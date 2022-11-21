@@ -48,7 +48,7 @@ public class Tissue {
                     + "pathology_report, collaborator_sample_id, block_sent, expected_return, return_date, return_fedex_id, "
                     + "scrolls_received, sk_id, sm_id, "
                     + "scrolls_count, uss_count, blocks_count, h_e_count, first_sm_id, sent_gp, last_changed, changed_by, "
-                    + "additional_tissue_value_json, shl_work_number, "
+                    + "additional_tissue_value_json, shl_work_number, block_id_shl, "
                     + "tumor_percentage, tissue_sequence, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, sm.tissue_id "
                     + "FROM ddp_tissue t "
                     + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id AND NOT sm.deleted <=> 1 AND NOT t.deleted <=> 1) "
@@ -139,6 +139,10 @@ public class Tissue {
     private Integer blocksCount;
     @ColumnName (DBConstants.H_E_COUNT)
     private Integer hECount;
+
+    @ColumnName (DBConstants.BLOCK_ID_SHL)
+    private String blockIdShl;
+
     private List<SmId> ussSMID;
     private List<SmId> scrollSMID;
     private List<SmId> heSMID;
@@ -150,8 +154,8 @@ public class Tissue {
                   String tumorType, String hE, String pathologyReport, String collaboratorSampleId, String blockSent,
                   String scrollsReceived, String skId, String smId, String sentGp, String firstSmId, String additionalValuesJson,
                   String expectedReturn, String returnDate, String returnFedexId, String shlWorkNumber, String tumorPercentage,
-                  String tissueSequence, Integer scrollsCount, Integer ussCount, Integer blocksCount, Integer hECount, List<SmId> ussSMIDs,
-                  List<SmId> scrollSMIDs, List<SmId> heSMID) {
+                  String tissueSequence, Integer scrollsCount, Integer ussCount, Integer blocksCount, Integer hECount,
+                  String blockIdShl, List<SmId> ussSMIDs, List<SmId> scrollSMIDs, List<SmId> heSMID) {
         this.tissueId = tissueId;
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.notes = notes;
@@ -179,6 +183,7 @@ public class Tissue {
         this.hECount = hECount;
         this.blocksCount = blocksCount;
         this.ussCount = ussCount;
+        this.blockIdShl = blockIdShl;
         this.scrollSMID = scrollSMIDs;
         this.ussSMID = ussSMIDs;
         this.heSMID = heSMID;
@@ -201,7 +206,8 @@ public class Tissue {
                 rs.getString(DBConstants.SHL_WORK_NUMBER), rs.getString(DBConstants.TUMOR_PERCENTAGE),
                 rs.getString(DBConstants.TISSUE_SEQUENCE), (Integer) rs.getObject(DBConstants.SCROLLS_COUNT),
                 (Integer) rs.getObject(DBConstants.USS_COUNT), (Integer) rs.getObject(DBConstants.BLOCKS_COUNT),
-                (Integer) rs.getObject(DBConstants.H_E_COUNT), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                (Integer) rs.getObject(DBConstants.H_E_COUNT), rs.getString(DBConstants.BLOCK_ID_SHL),
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         return tissue;
     }
 
