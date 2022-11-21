@@ -234,7 +234,7 @@ public class KitUploadRoute extends RequestHandler {
                 //if kit has ddpParticipantId use that (RGP!) and
                 //For any studies that do not have participants the search will fail and error so
                 //we check if ddpInstance.getParticipantIndexES() != null
-                if(StringUtils.isNotBlank((ddpInstance.getParticipantIndexES())) && StringUtils.isBlank(kit.getParticipantId())) {
+                if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES())) && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
                     participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
@@ -400,7 +400,7 @@ public class KitUploadRoute extends RequestHandler {
 
             //If there is a participant change the participantID to the ID of the existing
             //participant
-            if(StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))){
+            if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
                 participantID = kit.getParticipantId().trim();
             }
 
