@@ -70,6 +70,8 @@ public class SingularAgeValidationUpdate implements CustomTask {
                         .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), activityCode)
                         .orElseThrow(() -> new DDPException("Activity " + activityCode + " doesn't exist")),
                 ConfigFactory.parseFile(file).resolveWith(varsCfg));
+
+        log.info("Patch {} applied", patchFile);
     }
 
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final ActivityDto activity, final Config config) {
