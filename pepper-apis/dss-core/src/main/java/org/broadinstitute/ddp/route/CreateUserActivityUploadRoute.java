@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultTy
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -43,7 +44,6 @@ import java.util.Date;
 @AllArgsConstructor
 public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<CreateUserActivityUploadPayload> {
     private final FileUploadService service;
-    private static final int MB_IN_BYTES = 1048576;
 
     @Override
     protected int getValidationErrorStatus() {
@@ -131,7 +131,8 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         if (result.getAuthorizeResultType() != FileUploadService.AuthorizeResultType.OK) {
             String msg = null;
             if (result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM) {
-                msg = "File size exceeded maximum of " + bytesToMbs(result.getFileUploadSettings().getMaxFileSize()) + " MB-s";
+
+                msg = "File size exceeded maximum of " + FileUtils.byteCountToDisplaySize(result.getFileUploadSettings().getMaxFileSize());
             } else if (result.getAuthorizeResultType() == MIME_TYPE_NOT_ALLOWED) {
                 msg = "Mime type not belongs to allowed list: " + result.getFileUploadSettings().getMimeTypes();
             }
@@ -151,10 +152,6 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
                                String fileGuid, String activityCode) {
         return String.format("%s/%s_%s_%s_%s_%s",
                 studyGuid, fileGuid, activityCode, userGuid, getCurrentTimestamp(), payload.getFileName());
-    }
-
-    private long bytesToMbs(long maxFileSize) {
-        return maxFileSize / MB_IN_BYTES;
     }
 
     private static String getCurrentTimestamp() {

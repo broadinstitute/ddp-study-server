@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
@@ -11,11 +12,17 @@ import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
+import org.broadinstitute.dsm.model.participant.Util;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 public class BaseAbstractQueryBuilder {
+
+    protected static final String DSM_WITH_DOT = ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER;
+
     protected String filter;
     protected Parser parser;
     protected String esIndex;
@@ -63,11 +70,22 @@ public class BaseAbstractQueryBuilder {
     protected void buildUpQuery(List<String> filterValues, FilterStrategy filterStrategy) {
         for (String filterValue : filterValues) {
             Operator operator = Operator.extract(filterValue);
+            if (operator == null) {
+                continue;
+            }
             splitter = operator.getSplitterStrategy();
             splitter.setFilterSeparator(filterSeparator);
             splitter.setFilter(filterValue);
-            QueryPayload queryPayload =
-                    new QueryPayload(buildPath(), splitter.getInnerProperty(), splitter.getAlias(),
+            String path = PropertyInfo.of(splitter.getAlias()).getPropertyName();
+            String alias = Objects.requireNonNull(splitter.getAlias());
+            if (Util.isUnderDsmKey(alias)) {
+                path = DSM_WITH_DOT + PropertyInfo.of(splitter.getAlias()).getPropertyName();
+            }
+            String innerProperty = splitter.getInnerProperty();
+            if (alias.equals(ESObjectConstants.PARTICIPANT_DATA)) {
+                innerProperty = "dynamicFields." + innerProperty;
+            }
+            QueryPayload queryPayload = new QueryPayload(path, innerProperty, splitter.getAlias(),
                             parser.parse(splitter.getValue()), esIndex);
             baseQueryBuilder = BaseQueryBuilder.of(queryPayload);
             List<QueryBuilder> queryBuilders =
@@ -76,7 +94,4 @@ public class BaseAbstractQueryBuilder {
         }
     }
 
-    protected String buildPath() {
-        return PropertyInfo.of(splitter.getAlias()).getPropertyName();
-    }
 }

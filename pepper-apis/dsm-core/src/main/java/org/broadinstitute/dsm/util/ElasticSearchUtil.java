@@ -30,6 +30,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
@@ -354,6 +355,17 @@ public class ElasticSearchUtil {
 
     public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstance instance, @NonNull String filter) {
         String index = instance.getParticipantIndexES();
+        return getFilteredDDPParticipantsFromES(index, instance.getName(), filter);
+    }
+
+    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstanceDto instanceDto,
+                                                                                    @NonNull String filter) {
+        String index = instanceDto.getEsParticipantIndex();
+        return getFilteredDDPParticipantsFromES(index, instanceDto.getInstanceName(), filter);
+    }
+
+    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull String index, @NonNull String instanceName,
+                                                                                    @NonNull String filter) {
         if (StringUtils.isNotBlank(index)) {
             Map<String, Map<String, Object>> esData = new HashMap<>();
             logger.info("Collecting ES data from index " + index);
@@ -374,13 +386,13 @@ public class ElasticSearchUtil {
                     searchRequest.source(searchSourceBuilder);
 
                     response = client.search(searchRequest, RequestOptions.DEFAULT);
-                    addingParticipantStructuredHits(response, esData, instance.getName(), index);
+                    addingParticipantStructuredHits(response, esData, instanceName, index);
                     i++;
                 }
             } catch (Exception e) {
-                logger.error("Couldn't get participants from ES for instance " + instance.getName(), e);
+                logger.error("Couldn't get participants from ES for instance " + instanceName, e);
             }
-            logger.info("Got " + esData.size() + " participants from ES for instance " + instance.getName());
+            logger.info("Got " + esData.size() + " participants from ES for instance " + instanceName);
             return esData;
         }
         return null;

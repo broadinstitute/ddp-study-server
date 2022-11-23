@@ -43,6 +43,9 @@ public class MedicalRecordUtil {
             "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
     private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM ddp_participant "
             + "WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
+    private static final String SQL_SELECT_PARTICIPANT = "SELECT participant_id FROM ddp_participant p "
+            + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
+            + "WHERE ddp_participant_id = ? AND instance_name = ?";
     private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT =
             "SELECT rec.medical_record_id, inst.type FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec "
                     + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id "
@@ -270,6 +273,30 @@ public class MedicalRecordUtil {
             throw new RuntimeException("Error getting medical record id for pt w/ id " + participantId, results.resultException);
         }
         return (Number) results.resultValue;
+    }
+
+    public static String getParticipantIdByDdpParticipantId(@NonNull String ddpParticipantId, @NonNull String realm) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement checkParticipant = conn.prepareStatement(SQL_SELECT_PARTICIPANT)) {
+                checkParticipant.setString(1, ddpParticipantId);
+                checkParticipant.setString(2, realm);
+                try (ResultSet rs = checkParticipant.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getString(DBConstants.PARTICIPANT_ID);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting participant id for pt w/ ddpParticipantId " + ddpParticipantId,
+                    results.resultException);
+        }
+        return (String) results.resultValue;
     }
 
 

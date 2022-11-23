@@ -36,8 +36,8 @@ abstract class BasicChartStrategy implements Supplier<DashboardData> {
     }
 
     protected void fillLabelsValues() {
-        logger.info("Filling dashboard data with values and labels...");
         DashboardDto dashboardDto = chartStrategyPayload.getDashboardDto();
+        logger.info("Filling dashboard data with values and labels for " + dashboardDto.getDisplayText());
         MultiSearchResponse msearch = chartStrategyPayload.getMultiSearchResponse();
         for (int i = 0; i < dashboardDto.getLabels().size(); i++) {
             MultiSearchResponse.Item response = msearch.getResponses()[i];

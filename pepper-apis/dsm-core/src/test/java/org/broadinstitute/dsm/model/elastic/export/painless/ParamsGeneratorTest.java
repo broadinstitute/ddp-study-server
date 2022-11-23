@@ -47,7 +47,7 @@ public class ParamsGeneratorTest {
         Map<String, Object> innerMap =
                 new LinkedHashMap<>(Map.of("timeCompleted", "2012-05-02", "result", "Negative", "isCorrected", true));
         List<Map<String, Object>> innerMapInList = new ArrayList<>(List.of(innerMap));
-        Map<String, Object> fullInnerMap = new HashMap<>(Map.of(ESObjectConstants.KIT_TEST_RESULT, innerMapInList, "ddpInstanceId", 0L));
+        Map<String, Object> fullInnerMap = new HashMap<>(Map.of(ESObjectConstants.KIT_TEST_RESULT, innerMapInList));
         Map<String, Map<String, Object>> kitRequestShippingMap =
                 new HashMap<>(Map.of(ESObjectConstants.KIT_REQUEST_SHIPPING, fullInnerMap));
         Map<String, Object> expected = new HashMap<>(Map.of(ESObjectConstants.DSM, kitRequestShippingMap));

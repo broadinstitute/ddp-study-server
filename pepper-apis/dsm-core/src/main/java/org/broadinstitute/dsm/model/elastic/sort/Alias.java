@@ -61,7 +61,8 @@ public enum Alias {
     AT_PARTICIPANT_INFO(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     AT_PARTICIPANT_EXIT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     DATA(StringUtils.EMPTY, false, false),
-    CL(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.CLINICAL_ORDER), true, false);
+    CL(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.CLINICAL_ORDER), true, false),
+    SM(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.SMID), true, false);
 
     Alias(String value, boolean isCollection, boolean isJson) {
         this.value = value;

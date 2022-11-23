@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.model.elastic.sort.Alias;
 public class Util {
 
     private static final List<Alias> aliases = Arrays.asList(
-            Alias.P, Alias.M, Alias.OD, Alias.K, Alias.T, Alias.O, Alias.D, Alias.R, Alias.C, Alias.CL
+            Alias.P, Alias.M, Alias.OD, Alias.K, Alias.T, Alias.O, Alias.D, Alias.R, Alias.C, Alias.CL, Alias.SM, Alias.PARTICIPANTDATA
     );
 
     public static boolean isUnderDsmKey(String alias) {

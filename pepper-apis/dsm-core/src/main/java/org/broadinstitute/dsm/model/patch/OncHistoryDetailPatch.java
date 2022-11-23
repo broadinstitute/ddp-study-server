@@ -1,9 +1,12 @@
 package org.broadinstitute.dsm.model.patch;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.NameValue;
@@ -40,11 +43,18 @@ public class OncHistoryDetailPatch extends BasePatch {
     }
 
     private void prepare() {
-        mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
+        if (StringUtils.isNotBlank(patch.getParentId())) {
+            mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
+        }
         if (mrID == null) {
             if (StringUtils.isNotBlank(patch.getDdpParticipantId())) {
                 // mr of that type doesn't exist yet, so create an institution and mr
                 MedicalRecordUtil.writeInstitutionIntoDb(patch.getDdpParticipantId(), MedicalRecordUtil.NOT_SPECIFIED, patch.getRealm());
+                String participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(patch.getDdpParticipantId(), patch.getRealm());
+                if (StringUtils.isBlank(participantId)) {
+                    throw new RuntimeException("Error adding new institution for oncHistory for pt w/ id " + patch.getParentId());
+                }
+                patch.setParentId(participantId);
                 mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
             } else {
                 throw new RuntimeException("Error adding new institution for oncHistory for pt w/ id " + patch.getParentId());
@@ -78,7 +88,11 @@ public class OncHistoryDetailPatch extends BasePatch {
     Object handleSingleNameValue() {
         if (Patch.patch(oncHistoryDetailId, patch.getUser(), patch.getNameValue(), dbElement)) {
             nameValues.addAll(setWorkflowRelatedFields(patch));
-            exportToESWithId(oncHistoryDetailId, patch.getNameValue());
+            DDPInstance instance = DDPInstance.getDDPInstance(patch.getRealm());
+            List<NameValue> nameValuesOd = new ArrayList<>();
+            nameValuesOd.add(patch.getNameValue());
+            nameValuesOd.add(new NameValue("oD.ddpInstanceId", instance.getDdpInstanceId()));
+            exportToESWithId(oncHistoryDetailId, nameValuesOd);
             //set oncHistoryDetails created if it is a oncHistoryDetails value without a ID, otherwise created should already be set
             if (dbElement.getTableName().equals(DBConstants.DDP_ONC_HISTORY_DETAIL)) {
                 NameValue oncHistoryCreated = OncHistory.setOncHistoryCreated(patch.getParentId(), patch.getUser());

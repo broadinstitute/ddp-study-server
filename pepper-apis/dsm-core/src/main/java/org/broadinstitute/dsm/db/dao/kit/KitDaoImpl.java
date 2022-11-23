@@ -86,7 +86,7 @@ public class KitDaoImpl implements KitDao {
             + "req.kit_type_id, req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
             + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
             + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
-            + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, "
+            + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, kit.dsm_kit_id,"
             + "kt.requires_insert_in_kit_tracking, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
             + "FROM ddp_kit as kit "
             + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
@@ -417,6 +417,7 @@ public class KitDaoImpl implements KitDao {
                         kitRequestShipping.setKitLabel(rs.getString(DBConstants.KIT_LABEL));
                         kitRequestShipping.setKitLabelPrefix(rs.getString(DBConstants.KIT_LABEL_PREFIX));
                         kitRequestShipping.setKitLabelLength(rs.getLong(DBConstants.KIT_LABEL_LENGTH));
+                        kitRequestShipping.setDsmKitId(rs.getLong(DBConstants.DSM_KIT_ID));
                         dbVals.resultValue = kitRequestShipping;
                     }
                 }

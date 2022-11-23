@@ -49,7 +49,7 @@ public class BaseFilter {
         filterQuery = "";
         quickFilterName = "";
         Filter[] savedFilters = new Gson().fromJson(queryParamsMap.get(RequestParameter.FILTERS).value(), Filter[].class);
-        if (!Objects.isNull(jsonBody)) {
+        if (!Objects.isNull(jsonBody) && StringUtils.isNotBlank(jsonBody)) {
 
             ViewFilter requestForFiltering;
             try {
@@ -61,14 +61,21 @@ public class BaseFilter {
 
             if (requestForFiltering != null) {
                 if (requestForFiltering.getFilters() == null && StringUtils.isNotBlank(requestForFiltering.getFilterQuery())) {
-                    filterQuery = ViewFilter.changeFieldsInQuery(requestForFiltering.getFilterQuery(), false);
-                    requestForFiltering = ViewFilter.parseFilteringQuery(filterQuery, requestForFiltering);
+                    throw new RuntimeException("Removed too much logic");
                 }
                 filters = requestForFiltering.getFilters();
             }
             quickFilterName = requestForFiltering == null ? null : requestForFiltering.getQuickFilterName();
-        } else if (savedFilters != null) {
+        }
+        if ((filters != null && filters.length < 1 && savedFilters != null) || (filters == null && savedFilters != null)) {
             filters = savedFilters;
+        }
+        if (queryParamsMap.hasKey(RequestParameter.FILTER_NAME)) {
+            quickFilterName = queryParamsMap.get(RequestParameter.FILTER_NAME).value();
+            if (StringUtils.isNotBlank(quickFilterName)) {
+                filterQuery = ViewFilter.getFilterQuery(quickFilterName, parent);
+                filters = ViewFilter.parseQueryToViewFilterObject(filterQuery, new ViewFilter()).getFilters();
+            }
         }
 
         if (queryParamsMap.hasKey(LIST_RANGE_FROM)) {

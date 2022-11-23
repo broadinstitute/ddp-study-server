@@ -1,9 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.Filter;
 import org.elasticsearch.index.query.MatchQueryBuilder;
