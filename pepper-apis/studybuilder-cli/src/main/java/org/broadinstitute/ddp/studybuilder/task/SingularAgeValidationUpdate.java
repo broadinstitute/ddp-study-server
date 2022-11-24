@@ -7,14 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -75,21 +73,22 @@ public class SingularAgeValidationUpdate implements CustomTask {
     }
 
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final ActivityDto activity, final Config config) {
-        final var activityVersion = handle.attach(JdbiActivityVersion.class)
-                .getActiveVersion(activity.getActivityId())
-                .orElseThrow(() -> new DDPException("Can't fetch latest activity version for " + activity.getActivityCode()));
-
-        handle.attach(SqlHelper.class).deleteValidations(activity.getActivityId());
+        final var revisionId = handle.attach(JdbiActivityVersion.class).findAllVersionsInAscendingOrder(activity.getActivityId())
+                .stream()
+                .findFirst()
+                .map(revision -> handle.attach(JdbiRevision.class).copyStart(revision.getRevId()))
+                .orElseThrow(() -> activeRevisionNotFoundError(activity.getActivityCode(), cfg.getString("study.guid")));
 
         builder.insertValidations(handle,
                 activity.getActivityId(),
                 activity.getActivityCode(),
-                activityVersion.getRevId(),
+                revisionId,
                 List.copyOf(config.getConfigList("validations")));
     }
 
-    private interface SqlHelper extends SqlObject {
-        @SqlUpdate("DELETE FROM activity_validation WHERE study_activity_id = :studyActivityId")
-        void deleteValidations(@Bind("studyActivityId") long studyActivityId);
+    private DDPException activeRevisionNotFoundError(final String activityCode, final String studyGuid) {
+        return new DDPException(String.format("failed to find an active revision for [activity:%s] in [study:%s]",
+                activityCode,
+                studyGuid));
     }
 }
