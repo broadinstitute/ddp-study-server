@@ -79,14 +79,6 @@ public class SingularAgeValidationUpdate implements CustomTask {
         log.info("Patch {} applied", patchFile);
     }
 
-    private void removeValidations(final Handle handle, final String activityCode, final Config config) {
-        List.copyOf(config.getConfigList("validations")).forEach(validation -> removeValidation(handle, activityCode, validation));
-    }
-
-    private void removeValidation(final Handle handle, final String activityCode, final Config validation) {
-        handle.attach(SqlHelper.class).removeValidation(activityCode, validation.getString("precondition"), validation.getString("expression"));
-    }
-
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final ActivityDto activity, final Config config) {
         final var revisionId = handle.attach(JdbiActivityVersion.class).findAllVersionsInAscendingOrder(activity.getActivityId())
                 .stream()
@@ -101,6 +93,15 @@ public class SingularAgeValidationUpdate implements CustomTask {
                 List.copyOf(config.getConfigList("validations")));
     }
 
+    private void removeValidations(final Handle handle, final String activityCode, final Config config) {
+        List.copyOf(config.getConfigList("validations")).forEach(validation -> removeValidation(handle, activityCode, validation));
+    }
+
+    private void removeValidation(final Handle handle, final String activityCode, final Config validation) {
+        handle.attach(SqlHelper.class)
+                .removeValidation(activityCode, validation.getString("precondition"), validation.getString("expression"));
+    }
+
     private DDPException activeRevisionNotFoundError(final String activityCode, final String studyGuid) {
         return new DDPException(String.format("failed to find an active revision for [activity:%s] in [study:%s]",
                 activityCode,
@@ -108,13 +109,13 @@ public class SingularAgeValidationUpdate implements CustomTask {
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("DELETE activity_validation "
-                 + "FROM activity_validation "
-                 + "JOIN study_activity ON activity_validation.study_activity_id = study_activity.study_activity_id "
-                 + "WHERE study_activity.study_activity_code = :activityCode "
-                 + "AND REPLACE(REPLACE(REPLACE(REPLACE(activity_validation.expression_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
+        @SqlUpdate("DELETE av "
+                 + "FROM activity_validation av "
+                 + "JOIN study_activity sa ON av.study_activity_id = sa.study_activity_id "
+                 + "WHERE sa.study_activity_code = :activityCode "
+                 + "AND REPLACE(REPLACE(REPLACE(REPLACE(av.expression_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
                  + "    REPLACE(REPLACE(REPLACE(REPLACE(:expression, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') "
-                 + "AND REPLACE(REPLACE(REPLACE(REPLACE(activity_validation.precondition_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
+                 + "AND REPLACE(REPLACE(REPLACE(REPLACE(av.precondition_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
                  + "    REPLACE(REPLACE(REPLACE(REPLACE(:precondition, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') ")
         void removeValidation(@Bind("activityCode") final String activityCode,
                               @Bind("precondition") final String precondition,
