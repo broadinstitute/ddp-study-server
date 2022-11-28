@@ -150,6 +150,19 @@ public class CollectionQueryBuilderTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void collectionBuildRegistrationRange() {
+        String filter = "AND profile.createdAt >= '01/01/2020' AND profile.createdAt <= '01/01/2022'";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"));
+        expected.must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022"));
+
+        Assert.assertEquals(expected, actual);
+    }
+
     private BaseAbstractQueryBuilder getAbstractQueryBuilder(String filter) {
         BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filter);
         abstractQueryBuilder.setParser(new FilterParser());
@@ -348,4 +361,31 @@ public class CollectionQueryBuilderTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void parseEqualsQueryForDynamicFormField() {
+        String filter = " AND participantData.ACCEPTANCE_STATUS = 'MORE_INFO_NEEDED' ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.participantData",
+                        new MatchQueryBuilder("dsm.participantData.dynamicFields.acceptanceStatus", "MORE_INFO_NEEDED")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseEqualsQueryForDynamicFormText() {
+        String filter = "  AND participantData.IMPORTANT_NOTES = 'Test' ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("dsm.participantData",
+                        new MatchQueryBuilder("dsm.participantData.dynamicFields.importantNotes", "Test")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
 }

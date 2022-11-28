@@ -43,6 +43,9 @@ public class DashboardDaoImpl implements DashboardDao {
             + "LEFT JOIN dashboard_label_filter as df ON dl.label_id = df.label_id "
             + "WHERE d.ddp_instance_id = ? ";
 
+    private static final String SQL_DISPLAY_CHARTS = "AND display_type != 'COUNT'";
+    private static final String SQL_DISPLAY_COUNTS = "AND display_type = 'COUNT'";
+
     private static final String SQL_DELETE_DASHBOARD_BY_ID = "DELETE FROM dashboard WHERE dashboard_id = ?";
     private static final String SQL_DELETE_DASHBOARD_LABEL_BY_ID = "DELETE FROM dashboard_label WHERE label_id = ?";
     private static final String SQL_DELETE_DASHBOARD_LABEL_FILTER_BY_ID = "DELETE FROM dashboard_label_filter WHERE label_filter_id = ?";
@@ -178,11 +181,12 @@ public class DashboardDaoImpl implements DashboardDao {
     }
 
     @Override
-    public List<DashboardDto> getByInstanceId(int instanceId) {
+    public List<DashboardDto> getByInstanceId(int instanceId, boolean charts) {
         List<DashboardDto> result = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DASHBOARD_DATAS_BY_INSTANCE_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DASHBOARD_DATAS_BY_INSTANCE_ID
+                    + (charts ? SQL_DISPLAY_CHARTS : SQL_DISPLAY_COUNTS))) {
                 stmt.setLong(1, instanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     Map<Integer, DashboardDto> map = new HashMap<>();
