@@ -685,11 +685,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     target) || OVERVIEW.equals(target) || WAITING.equals(target)) {
 
                 DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.NEEDS_NAME_LABELS);
-                if (StringUtils.isBlank(ddpInstance.getParticipantIndexES())) {
-                    throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstance.getName());
+                Map<String, Map<String, Object>> participantsESData = null;
+                if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
+                    participantsESData =
+                            ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
                 }
-                Map<String, Map<String, Object>> participantsESData =
-                        ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
 
                 for (String key : kitRequests.keySet()) {
                     List<KitRequestShipping> kitRequest = kitRequests.get(key);
