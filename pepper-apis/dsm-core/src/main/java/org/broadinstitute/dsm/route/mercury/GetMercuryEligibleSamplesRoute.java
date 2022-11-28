@@ -23,7 +23,7 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
 
 
     public GetMercuryEligibleSamplesRoute(MercurySampleDao mercurySampleDao, String projectId, String topicId,
-                                         KitDaoImpl kitDao) {
+                                          KitDaoImpl kitDao) {
         this.mercurySampleDao = mercurySampleDao;
         this.projectId = projectId;
         this.topicId = topicId;

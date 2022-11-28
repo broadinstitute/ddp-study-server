@@ -26,12 +26,12 @@ public class DashboardUseCase {
         this.elasticSearchable = elasticSearchable;
     }
 
-    public List<DashboardData> getByDdpInstance(DDPInstanceDto ddpInstanceDto) {
+    public List<DashboardData> getByDdpInstance(DDPInstanceDto ddpInstanceDto, String startDate, String endDate, boolean charts) {
         List<DashboardData> result = new ArrayList<>();
-        List<DashboardDto> dashboardDtos = dashboardDao.getByInstanceId(ddpInstanceDto.getDdpInstanceId());
+        List<DashboardDto> dashboardDtos = dashboardDao.getByInstanceId(ddpInstanceDto.getDdpInstanceId(), charts);
         logger.info("Collecting dashboard graphs for instance: " + ddpInstanceDto.getInstanceName());
         for (DashboardDto dashboardDto: dashboardDtos) {
-            List<QueryBuilder> queryBuilders = getQueryBuildersFromDashboardDto(ddpInstanceDto, dashboardDto);
+            List<QueryBuilder> queryBuilders = getQueryBuildersFromDashboardDto(ddpInstanceDto, dashboardDto, startDate, endDate);
             MultiSearchResponse msearch = elasticSearchable
                     .executeMultiSearch(ddpInstanceDto.getEsParticipantIndex(), queryBuilders);
             ChartStrategyPayload chartStrategyPayload = new ChartStrategyPayload(dashboardDto, msearch);
@@ -46,7 +46,8 @@ public class DashboardUseCase {
         return result;
     }
 
-    private List<QueryBuilder> getQueryBuildersFromDashboardDto(DDPInstanceDto ddpInstanceDto, DashboardDto dashboardDto) {
+    private List<QueryBuilder> getQueryBuildersFromDashboardDto(DDPInstanceDto ddpInstanceDto, DashboardDto dashboardDto,
+                                                                String startDate, String endDate) {
         return dashboardDto.getLabels().stream()
                 .map(labelDto -> new QueryBuildPayload(ddpInstanceDto, dashboardDto.getDisplayType(), labelDto))
                 .map(QueryBuilderStrategyFactory::new)

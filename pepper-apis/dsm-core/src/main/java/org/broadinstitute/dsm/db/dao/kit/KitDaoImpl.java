@@ -508,19 +508,6 @@ public class KitDaoImpl implements KitDao {
         return result;
     }
 
-    public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
-        try (PreparedStatement stmt = connection.prepareStatement(SQL_SELECT_RECEIVED_KITS)) {
-            stmt.setString(1, ddpParticipantId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return true;
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(String.format("Error getting kits for %s", ddpParticipantId));
-        }
-        return false;
-    }
-
     private boolean booleanCheckFoundAsName(String kitLabel, String query) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
@@ -599,5 +586,18 @@ public class KitDaoImpl implements KitDao {
             result = Optional.ofNullable((ScanError) results.resultValue);
         }
         return result;
+    }
+
+    public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
+        try (PreparedStatement stmt = connection.prepareStatement(SQL_SELECT_RECEIVED_KITS)) {
+            stmt.setString(1, ddpParticipantId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(String.format("Error getting kits for %s", ddpParticipantId));
+        }
+        return false;
     }
 }
