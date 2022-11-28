@@ -3,13 +3,10 @@ package org.broadinstitute.dsm.model.dashboard;
 import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseActivitiesStrategy;
@@ -27,8 +24,8 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
         regex to separate complex filters full of with AND, OR operators, also covers edge case not to separate by AND or OR
         operator, if those operators are used between parenthesis (such case is filter by multiple options question)
      */
-    public static final String FILTER_AND_OR_DELIMITER = "(?<!\\()((?=\\bOR\\b)|(?<=\\bOR\\b))(?![\\w\\s.='\"]*[)])|"
-            + "(?<!\\()((?=\\bAND\\b)|(?<=\\bAND\\b))(?![\\w\\s.='\"]*[)])";
+    public static final String FILTER_AND_OR_DELIMITER =
+            "(?<!\\()((?=\\bOR\\b)|(?<=\\bOR\\b))(?![\\w\\s.='\"]*[)])|" + "(?<!\\()((?=\\bAND\\b)|(?<=\\bAND\\b))(?![\\w\\s.='\"]*[)])";
 
     public CountAdditionalFilterStrategy(QueryBuildPayload queryBuildPayload) {
         super(queryBuildPayload);
@@ -36,8 +33,7 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
 
     private List<String> splitConcreteFiltersFromAdditionalFilter() {
         String[] separatedFiltersWithDelimiters =
-                queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter()
-                        .split(FILTER_AND_OR_DELIMITER);
+                queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter().split(FILTER_AND_OR_DELIMITER);
 
         return buildFiltersWithOperators(separatedFiltersWithDelimiters);
     }
@@ -53,30 +49,17 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     }
 
     private Map<String, List<String>> extractFilters(List<String> fullFilters, Class<? extends AndOrFilterSeparator> separatorClass) {
-        return fullFilters.stream()
-                .map(filter -> {
+        return fullFilters.stream().map(filter -> {
                     try {
                         return separatorClass.getConstructor(String.class).newInstance(filter).parseFiltersByLogicalOperators();
                     } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                         throw new RuntimeException(e);
                     }
-                })
-                .flatMap(map -> map.entrySet().stream().map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue())))
+                }).flatMap(map -> map.entrySet().stream().map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (prev, curr) -> {
                     prev.addAll(curr);
                     return prev;
                 }));
-    }
-
-    private Map<String, List<String>> mergeFilters(Map<String, List<String>> nonDsmFilters, Map<String, List<String>> dsmFilters) {
-        Map<String, List<String>> result = new HashMap<>(nonDsmFilters);
-        result.merge(Filter.AND_TRIMMED, dsmFilters.get(Filter.AND_TRIMMED),
-                (prev, curr) -> Stream.concat(prev.stream(), curr.stream()).collect(Collectors.toList()));
-        result.merge(Filter.OR_TRIMMED, dsmFilters.get(Filter.OR_TRIMMED),
-                (prev, curr) -> Stream.concat(prev.stream(), curr.stream()).collect(Collectors.toList()));
-        result.put(Filter.AND_TRIMMED, result.get(Filter.AND_TRIMMED).stream().distinct().collect(Collectors.toList()));
-        result.put(Filter.OR_TRIMMED, result.get(Filter.OR_TRIMMED).stream().distinct().collect(Collectors.toList()));
-        return result;
     }
 
     @Override
@@ -87,13 +70,8 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
 
     @Override
     protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy) {
-        return new QueryPayload(
-                splitterStrategy.getAlias(),
-                splitterStrategy.getInnerProperty(),
-                splitterStrategy.getAlias(),
-                valueParser.parse(splitterStrategy.getValue()),
-                queryBuildPayload.getEsParticipantsIndex()
-                );
+        return new QueryPayload(splitterStrategy.getAlias(), splitterStrategy.getInnerProperty(), splitterStrategy.getAlias(),
+                valueParser.parse(splitterStrategy.getValue()), queryBuildPayload.getEsParticipantsIndex());
     }
 
     @Override
@@ -108,13 +86,13 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     @Override
     protected List<QueryBuilder> buildQueries(BuildQueryStrategy queryStrategy) {
         List<QueryBuilder> result = super.buildQueries(queryStrategy);
-        if (Alias.of(queryStrategy.getBaseQueryBuilder().getPayload().getAlias()) == Alias.ACTIVITIES) {
+        if (queryStrategy != null && queryStrategy.getBaseQueryBuilder() != null && queryStrategy.getBaseQueryBuilder().getPayload() != null
+                && queryStrategy.getBaseQueryBuilder().getPayload().getAlias() != null
+                && Alias.of(queryStrategy.getBaseQueryBuilder().getPayload().getAlias()) == Alias.ACTIVITIES) {
             queryStrategy.getBaseQueryBuilder().getPayload().setPath(Alias.ACTIVITIES.getValue());
-            BaseActivitiesStrategy baseActivitiesStrategy = BaseActivitiesStrategy.of(
-                    new FilterParser(),
-                    queryStrategy.getBaseQueryBuilder().getOperator(),
-                    queryStrategy.getBaseQueryBuilder()
-            );
+            BaseActivitiesStrategy baseActivitiesStrategy =
+                    BaseActivitiesStrategy.of(new FilterParser(), queryStrategy.getBaseQueryBuilder().getOperator(),
+                            queryStrategy.getBaseQueryBuilder());
             result = baseActivitiesStrategy.build();
         }
         return result;

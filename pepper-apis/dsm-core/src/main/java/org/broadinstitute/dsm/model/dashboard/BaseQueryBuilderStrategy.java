@@ -8,6 +8,7 @@ import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -33,33 +34,8 @@ abstract class BaseQueryBuilderStrategy {
         } else {
             queryBuilder = buildQueryForNoAdditionalFilter();
         }
-        
-        if (queryBuildPayload.getStartDate() != null
-                && StringUtils.isNotBlank(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())) {
-            String datePeriodField = queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField();
-            int dots = count(datePeriodField, "\\.+");
-            if (dots >= 1) {
-                //1 it is profile
-                BoolQueryBuilder single = new BoolQueryBuilder();
-                single.must(new RangeQueryBuilder(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())
-                        .gte(queryBuildPayload.getStartDate()));
-                single.must(new RangeQueryBuilder(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())
-                        .lte(queryBuildPayload.getEndDate()));
-
-                if (dots > 1 && datePeriodField.lastIndexOf(".") > -1) {
-                    //nested
-                    String nestedPath = datePeriodField.substring(0, datePeriodField.lastIndexOf("."));
-                    BoolQueryBuilder nested = new BoolQueryBuilder();
-                    nested.must(QueryBuilders.nestedQuery(nestedPath, single, ScoreMode.Avg));
-                    ((BoolQueryBuilder) finalQuery).must(nested);
-                } else {
-                    ((BoolQueryBuilder) finalQuery).must(single);
-                }
-            }
-            //empty  = default profile.createdAt????
-        }
         ((BoolQueryBuilder) finalQuery).must(queryBuilder);
-        return finalQuery;
+        return queryBuilder;
     }
 
     private boolean hasAdditionalFilter() {
@@ -91,5 +67,33 @@ abstract class BaseQueryBuilderStrategy {
             i++;
         }
         return i;
+    }
+
+    private void mightNeedLater(AbstractQueryBuilder finalQuery){
+        // if esNestedPath = activities same as datePeriodField start
+        if (queryBuildPayload.getStartDate() != null
+                && StringUtils.isNotBlank(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())) {
+            String datePeriodField = queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField();
+            int dots = count(datePeriodField, "\\.+");
+            if (dots >= 1) {
+                //1 it is profile
+                BoolQueryBuilder single = new BoolQueryBuilder();
+                single.must(new RangeQueryBuilder(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())
+                        .gte(queryBuildPayload.getStartDate()));
+                single.must(new RangeQueryBuilder(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())
+                        .lte(queryBuildPayload.getEndDate()));
+
+                String nestedPath = datePeriodField.substring(0, datePeriodField.lastIndexOf("."));
+                if (dots > 1 && datePeriodField.lastIndexOf(".") > -1 || !nestedPath.startsWith(ElasticSearchUtil.PROFILE)) {
+                    //nested
+                    BoolQueryBuilder nested = new BoolQueryBuilder();
+                    nested.must(QueryBuilders.nestedQuery(nestedPath, single, ScoreMode.Avg));
+                    ((BoolQueryBuilder) finalQuery).must(nested);
+                } else {
+                    ((BoolQueryBuilder) finalQuery).must(single);
+                }
+            }
+            //empty  = default profile.createdAt????
+        }
     }
 }

@@ -3,6 +3,8 @@ package org.broadinstitute.dsm.model.dashboard;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.parse.DashboardValueParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
@@ -29,16 +31,35 @@ public class AdditionalFilterStrategy {
         for (Map.Entry<String, List<String>> parsedFilter : getSeparatedFilters().entrySet()) {
             FilterStrategy filterStrategy = FilterStrategy.of(parsedFilter.getKey());
             for (String filterValue : parsedFilter.getValue()) {
-                Operator operator = Operator.extract(filterValue);
-                SplitterStrategy splitterStrategy = operator.getSplitterStrategy();
-                splitterStrategy.setFilter(filterValue);
-                QueryPayload queryPayload = buildQueryPayload(splitterStrategy);
-                BuildQueryStrategy queryStrategy = getQueryStrategy(operator, queryPayload);
-                filterStrategy.build(boolQueryBuilder,
-                        getBaseQueryBuilder(queryPayload).build(buildQueries(queryStrategy)));
+                buildQueryBuilderFromQueryString(boolQueryBuilder, filterStrategy, filterValue);
             }
         }
+        addDatePeriod(boolQueryBuilder, queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField(),
+                Filter.LARGER_EQUALS_TRIMMED, queryBuildPayload.getStartDate());
+        addDatePeriod(boolQueryBuilder, queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField(),
+                Filter.SMALLER_EQUALS_TRIMMED, queryBuildPayload.getEndDate());
         return boolQueryBuilder;
+    }
+
+    private void addDatePeriod(BoolQueryBuilder boolQueryBuilder, String field, String queryOperator, String date) {
+        if (queryBuildPayload.getStartDate() != null
+                && StringUtils.isNotBlank(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())) {
+            FilterStrategy filterStrategy = FilterStrategy.of(Filter.AND_TRIMMED);
+            String filter = String.format("%s %s '%s' ", field, queryOperator, date);
+            //TODO test is changing it to right query. here not
+            // still prequal instead of nested!
+            buildQueryBuilderFromQueryString(boolQueryBuilder, filterStrategy, filter);
+        }
+    }
+
+    private void buildQueryBuilderFromQueryString(BoolQueryBuilder boolQueryBuilder, FilterStrategy filterStrategy, String filter) {
+        Operator operator = Operator.extract(filter);
+        SplitterStrategy splitterStrategy = operator.getSplitterStrategy();
+        splitterStrategy.setFilter(filter);
+        QueryPayload queryPayload = buildQueryPayload(splitterStrategy);
+        BuildQueryStrategy queryStrategy = getQueryStrategy(operator, queryPayload);
+        filterStrategy.build(boolQueryBuilder,
+                getBaseQueryBuilder(queryPayload).build(buildQueries(queryStrategy)));
     }
 
     protected List<QueryBuilder> buildQueries(BuildQueryStrategy queryStrategy) {
@@ -59,16 +80,13 @@ public class AdditionalFilterStrategy {
     }
 
     protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy) {
-        return new QueryPayload(
-                queryBuildPayload.getLabel().getDashboardFilterDto().getEsNestedPath(),
-                queryBuildPayload.getLabel().getDashboardFilterDto().getEsFilterPath(),
-                valueParser.parse(splitterStrategy.getValue()),
+        return new QueryPayload(queryBuildPayload.getLabel().getDashboardFilterDto().getEsNestedPath(),
+                queryBuildPayload.getLabel().getDashboardFilterDto().getEsFilterPath(), valueParser.parse(splitterStrategy.getValue()),
                 queryBuildPayload.getEsParticipantsIndex());
     }
 
     protected Map<String, List<String>> getSeparatedFilters() {
-        queryBuildPayload.getSeparator()
-                .setFilter(queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter());
+        queryBuildPayload.getSeparator().setFilter(queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter());
         return queryBuildPayload.getSeparator().parseFiltersByLogicalOperators();
     }
 

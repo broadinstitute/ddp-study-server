@@ -54,6 +54,55 @@ public class CountAdditionalFilterStrategyTest {
     }
 
     @Test
+    public void processNonNestedMultipleAdditionalFilterRange() {
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
+                .withEsFilterPath("profile.createdAt")
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL AND profile.createdAt >= 1658222730748")
+                .build();
+        DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
+                .withDashboardLabelFilter(labelFilterDto)
+                .build();
+        QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
+        CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
+        BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(QueryBuilders.matchQuery("profile.createdAt", 1658222730748L).operator(Operator.AND));
+
+        assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void processMultipleDifferentAdditionalFilterWithNonActivityQuestionsAnswersRange() {
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
+                .withEsFilterPath("profile.createdAt")
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL AND PREQUAL.createdAt IS NOT NULL  "
+                        + "AND PREQUAL.completedAt >=  '01/01/2020'  AND PREQUAL.completedAt <= '01/01/2022'")
+                .build();
+        DashboardLabelDto labelDto = new DashboardLabelDto.Builder()
+                .withDashboardLabelFilter(labelFilterDto)
+                .build();
+        QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
+        CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
+        BoolQueryBuilder actualQuery = countAdditionalFilterStrategy.process();
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
+        expectedQuery.must(
+                QueryBuilders.nestedQuery("activities",
+                        QueryBuilders.boolQuery()
+                                .must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                                .must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("activities.createdAt"))),
+                        ScoreMode.Avg
+                )
+        );
+
+        assertEquals(expectedQuery, actualQuery);
+    }
+
+
+    @Test
     public void processMultipleDifferentAdditionalFilter() {
         DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder()
                 .withEsFilterPath("profile.createdAt")

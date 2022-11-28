@@ -88,6 +88,19 @@ public class SingleQueryBuilderTest {
     }
 
     @Test
+    public void collectionBuildActivityCompletedRange() {
+        String filter = "AND PREQUAL.completedAt >= '01/01/2020' AND PREQUAL.completedAt <= '01/01/2022'";
+
+        AbstractQueryBuilder<?> actual = getNonActivityQueryBuilder(filter);
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(new RangeQueryBuilder("PREQUAL.completedAt").gte("01/01/2020"));
+        expected.must(new RangeQueryBuilder("PREQUAL.completedAt").lte("01/01/2022"));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
     public void twoValueNotEmpty() {
         String filter = " AND profile.firstName IS NOT NULL  AND profile.lastName IS NOT NULL ";
 
