@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -126,6 +127,9 @@ public class KitDaoImpl implements KitDao {
             + "external_order_number, "
             + "upload_reason) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+
+    private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
+            + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND receive_date IS NOT NULL ";
 
     private static final String SQL_DELETE_KIT_REQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
 
@@ -502,6 +506,19 @@ public class KitDaoImpl implements KitDao {
             result = (Optional<ScanError>) results.resultValue;
         }
         return result;
+    }
+
+    public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
+        try (PreparedStatement stmt = connection.prepareStatement(SQL_SELECT_RECEIVED_KITS)) {
+            stmt.setString(1, ddpParticipantId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(String.format("Error getting kits for %s", ddpParticipantId));
+        }
+        return false;
     }
 
     private boolean booleanCheckFoundAsName(String kitLabel, String query) {
