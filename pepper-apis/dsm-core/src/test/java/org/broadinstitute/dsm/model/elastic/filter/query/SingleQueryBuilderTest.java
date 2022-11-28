@@ -1,11 +1,13 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
@@ -70,6 +72,19 @@ public class SingleQueryBuilderTest {
         expectedQuery.must(new RangeQueryBuilder("dsm.dateOfBirth").gte("1990-11-25"));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(andFilter));
+    }
+
+    @Test
+    public void collectionBuildRegistrationRange() {
+        String filter = "AND profile.createdAt >= '01/01/2020' AND profile.createdAt <= '01/01/2022'";
+
+        AbstractQueryBuilder<?> actual = getNonActivityQueryBuilder(filter);
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"));
+        expected.must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022"));
+
+        Assert.assertEquals(expected, actual);
     }
 
     @Test
