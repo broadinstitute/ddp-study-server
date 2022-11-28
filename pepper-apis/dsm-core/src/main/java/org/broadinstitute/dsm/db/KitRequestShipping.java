@@ -685,45 +685,45 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     target) || OVERVIEW.equals(target) || WAITING.equals(target)) {
 
                 DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.NEEDS_NAME_LABELS);
+                Map<String, Map<String, Object>> participantsESData = null;
                 if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
-
-                    Map<String, Map<String, Object>> participantsESData =
+                    participantsESData =
                             ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
+                }
 
-                    for (String key : kitRequests.keySet()) {
-                        List<KitRequestShipping> kitRequest = kitRequests.get(key);
-                        DDPParticipant ddpParticipant = null;
-                        boolean checkedParticipant = false;
+                for (String key : kitRequests.keySet()) {
+                    List<KitRequestShipping> kitRequest = kitRequests.get(key);
+                    DDPParticipant ddpParticipant = null;
+                    boolean checkedParticipant = false;
 
-                        for (KitRequestShipping kit : kitRequest) {
-                            if (StringUtils.isNotBlank(kit.getRealm())) {
-                                if (participantsESData != null && !participantsESData.isEmpty()) {
-                                    kit.setPreferredLanguage(ElasticSearchUtil.getPreferredLanguage(participantsESData, key));
-                                }
-                                // ERROR need address; QUEUE need name label if realm = RGP
-                                // UPLOADED and DEACTIVATED and TRIGGERED and WAITING need shortId if getCollaboratorParticipantId is blank
-                                if ((ERROR.equals(target) || ((QUEUE.equals(target) || UPLOADED.equals(target)) && ddpInstance.isHasRole()))
-                                        || (
-                                        (UPLOADED.equals(target) || DEACTIVATED.equals(target) || TRIGGERED.equals(target) || OVERVIEW.equals(
-                                                target) || WAITING.equals(target))
-                                                && StringUtils.isBlank(kit.getBspCollaboratorParticipantId()))) {
-                                    String apiKey = DSMServer.getDDPEasypostApiKey(ddpInstance.getName());
-                                    if (StringUtils.isNotBlank(apiKey) && kit.getEasypostAddressId() != null && StringUtils.isNotBlank(
-                                            kit.getEasypostAddressId())) {
-                                        getAddressPerEasypost(ddpInstance, kit, apiKey);
-                                    } else {
-                                        if (participantsESData != null && !participantsESData.isEmpty()) {
-                                            ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, key);
-                                            if (ddpParticipant != null) {
-                                                kit.setParticipant(ddpParticipant);
-                                            } else {
-                                                kit.setMessage(PARTICIPANT_NOT_FOUND_MESSAGE + kit.getRealm());
-                                                kit.setError(true);
-                                            }
+                    for (KitRequestShipping kit : kitRequest) {
+                        if (StringUtils.isNotBlank(kit.getRealm())) {
+                            if (participantsESData != null && !participantsESData.isEmpty()) {
+                                kit.setPreferredLanguage(ElasticSearchUtil.getPreferredLanguage(participantsESData, key));
+                            }
+                            // ERROR need address; QUEUE need name label if realm = RGP
+                            // UPLOADED and DEACTIVATED and TRIGGERED and WAITING need shortId if getCollaboratorParticipantId is blank
+                            if ((ERROR.equals(target) || ((QUEUE.equals(target) || UPLOADED.equals(target)) && ddpInstance.isHasRole()))
+                                    || (
+                                    (UPLOADED.equals(target) || DEACTIVATED.equals(target) || TRIGGERED.equals(target) || OVERVIEW.equals(
+                                            target) || WAITING.equals(target))
+                                            && StringUtils.isBlank(kit.getBspCollaboratorParticipantId()))) {
+                                String apiKey = DSMServer.getDDPEasypostApiKey(ddpInstance.getName());
+                                if (StringUtils.isNotBlank(apiKey) && kit.getEasypostAddressId() != null && StringUtils.isNotBlank(
+                                        kit.getEasypostAddressId())) {
+                                    getAddressPerEasypost(ddpInstance, kit, apiKey);
+                                } else {
+                                    if (participantsESData != null && !participantsESData.isEmpty()) {
+                                        ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, key);
+                                        if (ddpParticipant != null) {
+                                            kit.setParticipant(ddpParticipant);
                                         } else {
-                                            kit.setMessage(NO_PARTICIPANT_INFORMATION);
+                                            kit.setMessage(PARTICIPANT_NOT_FOUND_MESSAGE + kit.getRealm());
                                             kit.setError(true);
                                         }
+                                    } else {
+                                        kit.setMessage(NO_PARTICIPANT_INFORMATION);
+                                        kit.setError(true);
                                     }
                                 }
                             }
