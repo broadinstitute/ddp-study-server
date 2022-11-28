@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.route.mercury;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
 import org.broadinstitute.dsm.db.dto.mercury.MercurySampleDto;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -16,14 +17,17 @@ import spark.Response;
 @Slf4j
 public class GetMercuryEligibleSamplesRoute extends RequestHandler {
     private MercurySampleDao mercurySampleDao;
+    private KitDaoImpl kitDaoImpl;
     public static String projectId;
     public static String topicId;
 
 
-    public GetMercuryEligibleSamplesRoute(MercurySampleDao mercurySampleDao, String projectId, String topicId) {
+    public GetMercuryEligibleSamplesRoute(MercurySampleDao mercurySampleDao, String projectId, String topicId,
+                                          KitDaoImpl kitDao) {
         this.mercurySampleDao = mercurySampleDao;
         this.projectId = projectId;
         this.topicId = topicId;
+        this.kitDaoImpl = kitDao;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
             throw new RuntimeException("No ddpParticipantId query param was sent");
         }
         String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        List<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm);
+        List<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm, kitDaoImpl);
         log.info(String.format("Returning a list of %d samples", eligibleSamples.size()));
         return eligibleSamples;
     }
