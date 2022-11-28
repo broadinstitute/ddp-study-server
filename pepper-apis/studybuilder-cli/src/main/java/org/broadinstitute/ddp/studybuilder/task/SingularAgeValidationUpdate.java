@@ -13,7 +13,11 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -62,6 +66,9 @@ public class SingularAgeValidationUpdate implements CustomTask {
             throw new DDPException("Data file is missing: " + patchFile);
         }
 
+        final File validationToRemove = cfgPath.getParent().resolve("patches/pepper-18-validations-to-remove.conf").toFile();
+        removeValidations(handle, activityCode, ConfigFactory.parseFile(validationToRemove).resolveWith(varsCfg));
+
         updateValidations(handle,
                 builder,
                 handle.attach(JdbiActivity.class)
@@ -70,6 +77,14 @@ public class SingularAgeValidationUpdate implements CustomTask {
                 ConfigFactory.parseFile(file).resolveWith(varsCfg));
 
         log.info("Patch {} applied", patchFile);
+    }
+
+    private void removeValidations(final Handle handle, final String activityCode, final Config config) {
+        List.copyOf(config.getConfigList("validations")).forEach(validation -> removeValidation(handle, activityCode, validation));
+    }
+
+    private void removeValidation(final Handle handle, final String activityCode, final Config validation) {
+        handle.attach(SqlHelper.class).removeValidation(activityCode, validation.getString("precondition"), validation.getString("expression"));
     }
 
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final ActivityDto activity, final Config config) {
@@ -90,5 +105,17 @@ public class SingularAgeValidationUpdate implements CustomTask {
         return new DDPException(String.format("failed to find an active revision for [activity:%s] in [study:%s]",
                 activityCode,
                 studyGuid));
+    }
+
+    private interface SqlHelper extends SqlObject {
+        @SqlUpdate("DELETE activity_validation "
+                 + "FROM activity_validation "
+                 + "JOIN study_activity ON activity_validation.study_activity_id = study_activity.study_activity_id "
+                 + "WHERE study_activity.study_activity_code = :activityCode "
+                 + "AND REPLACE(activity_validation.expression_text, ' ', '') = REPLACE(:expression, ' ', '') "
+                 + "AND REPLACE(activity_validation.precondition_text, ' ', '') = REPLACE(:precondition, ' ', '') ")
+        void removeValidation(@Bind("activityCode") final String activityCode,
+                              @Bind("precondition") final String precondition,
+                              @Bind("expression") final String expression);
     }
 }
