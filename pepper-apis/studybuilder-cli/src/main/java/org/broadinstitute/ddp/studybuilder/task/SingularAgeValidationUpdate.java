@@ -112,8 +112,10 @@ public class SingularAgeValidationUpdate implements CustomTask {
                  + "FROM activity_validation "
                  + "JOIN study_activity ON activity_validation.study_activity_id = study_activity.study_activity_id "
                  + "WHERE study_activity.study_activity_code = :activityCode "
-                 + "AND REPLACE(activity_validation.expression_text, ' ', '') = REPLACE(:expression, ' ', '') "
-                 + "AND REPLACE(activity_validation.precondition_text, ' ', '') = REPLACE(:precondition, ' ', '') ")
+                 + "AND REPLACE(REPLACE(REPLACE(REPLACE(activity_validation.expression_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
+                 + "    REPLACE(REPLACE(REPLACE(REPLACE(:expression, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') "
+                 + "AND REPLACE(REPLACE(REPLACE(REPLACE(activity_validation.precondition_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
+                 + "    REPLACE(REPLACE(REPLACE(REPLACE(:precondition, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') ")
         void removeValidation(@Bind("activityCode") final String activityCode,
                               @Bind("precondition") final String precondition,
                               @Bind("expression") final String expression);
