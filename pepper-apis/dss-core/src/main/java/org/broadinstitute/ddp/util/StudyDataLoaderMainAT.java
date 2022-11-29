@@ -119,6 +119,7 @@ public class StudyDataLoaderMainAT {
         options.addOption("gb", true, "google bucket file");
         options.addOption("p", false, "preprocess");
         options.addOption("pf", true, "preprocess file name");
+        options.addOption("pl", true, "participant lookup file name");
         options.addOption("t", true, "Auth0 tenant id");
         options.addOption("psw", true, "User Hashed Passwords File");
 
@@ -316,7 +317,7 @@ public class StudyDataLoaderMainAT {
             }
         } else if (hasFile) {
             try {
-                dataLoaderMain.processLocalFileAT(cfg, "atcp", cmd.getOptionValue('f'), isDryRun, cmd.getOptionValue("psw"));
+                dataLoaderMain.processLocalFileAT(cfg, "atcp", cmd.getOptionValue('f'), isDryRun, cmd.getOptionValue("pl"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -364,16 +365,14 @@ public class StudyDataLoaderMainAT {
         return surveyDataMap;
     }
 
-    public Map<String, List<JsonElement>> loadAllSourceData(String allMedicalHistoryData) throws Exception {
+    public Map<String, List<JsonElement>> loadAllSourceData(String allMedicalHistoryData, String ptpLookupFile) throws Exception {
         Map<String, List<JsonElement>> userMedicalDataMap = new HashMap<>();
         Map<String, String> cptUserMap = new HashMap<>();
 
         //Map<String, JsonElement> surveyDataMap = new HashMap<>();
 
         //load user GENOME_STUDY_CPT_ID, hruid mapping
-        String userCTPdata = new String(Files.readAllBytes(Paths.get(
-                "/Users/sampath/IdeaProjects/ddp-study-server/pepper-apis/dss-core/src/test/resources/atcp-ptp-list-2.json")));
-
+        String userCTPdata = new String(Files.readAllBytes(Paths.get(ptpLookupFile)));
         JsonElement userCptEl;
         try {
             userCptEl = new Gson().fromJson(userCTPdata, new TypeToken<JsonObject>() {
@@ -449,7 +448,7 @@ public class StudyDataLoaderMainAT {
         return mappingData;
     }
 
-    public void processLocalFileAT(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
+    public void processLocalFileAT(Config cfg, String studyGuid, String fileName, boolean dryRun, String ptpLookupFile) throws Exception {
         StudyDataLoaderAT dataLoader = new StudyDataLoaderAT(cfg);
 
         //load mapping data
@@ -457,7 +456,7 @@ public class StudyDataLoaderMainAT {
         //load source survey data
         String data = new String(Files.readAllBytes(Paths.get(fileName)));
 
-        Map<String, List<JsonElement>> userSurveyDataMap = loadAllSourceData(data);
+        Map<String, List<JsonElement>> userSurveyDataMap = loadAllSourceData(data, ptpLookupFile);
 
         migrationRunReport = new ArrayList<>();
         failedList = new ArrayList<>();
@@ -818,7 +817,8 @@ public class StudyDataLoaderMainAT {
             int counter = 1;
             //String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
             for (JsonElement surveyDataEl : surveyData) {
-                LOG.info("---loading MH for CPTID: {} ", surveyDataEl.getAsJsonObject().get("genome_study_cpt_id").getAsString());
+                String cptID = surveyDataEl.getAsJsonObject().get("genome_study_cpt_id").getAsString();
+                LOG.info("---loading MH for CPTID: {} ", cptID);
                 String createdAt = surveyDataEl.getAsJsonObject().get("datstat.startdatetime").getAsString();
                 String completedAt = surveyDataEl.getAsJsonObject().get("datstat.enddatetime").getAsString();
 
@@ -839,7 +839,8 @@ public class StudyDataLoaderMainAT {
                         activityInstanceDao,
                         activityInstanceStatusDao,
                         true);
-                LOG.info("---created new activity instance: {} for user: {}.. total count: {} ", instanceDto.getGuid(), userGuid, counter);
+                LOG.info("---created new activity instance: {} for user: {}.. CPTID: {} total count: {} ",
+                        instanceDto.getGuid(), userGuid, cptID, counter);
                 dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                         mappingData.get("atcp_registry_questionnaire"),
                         studyDto, userDto, instanceDto,
@@ -919,7 +920,8 @@ public class StudyDataLoaderMainAT {
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
                                 true);
-                        LOG.info("---created new activity instance: {} for user: {}.. total count: {} ", instanceDto.getGuid(), userGuid, counter);
+                        LOG.info("---created new activity instance: {} for user: {}.. total count: {} ", instanceDto.getGuid(),
+                                userGuid, counter);
                         dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                                 mappingData.get("atcp_registry_questionnaire"),
                                 studyDto, userDto, instanceDto,

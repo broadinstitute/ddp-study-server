@@ -816,7 +816,8 @@ public class StudyDataLoaderAT {
                 value = sourceDataElement.getAsJsonObject().get(key);
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
-            if (value != null && !value.isJsonNull() && !value.getAsString().isEmpty() && (key.contains("medication") || key.contains("sibling"))) {
+            if (value != null && !value.isJsonNull() && !value.getAsString().isEmpty() && (key.contains("medication")
+                    || key.contains("sibling"))) {
                 int intValue = value.getAsInt();
                 if (intValue == -1) {
                     intValue = 2;
