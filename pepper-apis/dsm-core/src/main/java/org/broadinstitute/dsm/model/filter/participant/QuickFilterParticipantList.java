@@ -29,6 +29,9 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
         ParticipantWrapperPayload.Builder participantWrapperPayload =
                 new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy);
         ElasticSearch elasticSearch = new ElasticSearch();
+        if (deserializer != null) {
+            elasticSearch.setDeserializer(deserializer);
+        }
         return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList(mainQuery);
     }
 
