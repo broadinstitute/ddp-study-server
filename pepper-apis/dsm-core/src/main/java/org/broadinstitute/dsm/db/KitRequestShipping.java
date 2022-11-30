@@ -685,11 +685,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     target) || OVERVIEW.equals(target) || WAITING.equals(target)) {
 
                 DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.NEEDS_NAME_LABELS);
-                if (StringUtils.isBlank(ddpInstance.getParticipantIndexES())) {
-                    throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstance.getName());
+                Map<String, Map<String, Object>> participantsESData = null;
+                if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
+                    participantsESData =
+                            ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
                 }
-                Map<String, Map<String, Object>> participantsESData =
-                        ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
 
                 for (String key : kitRequests.keySet()) {
                     List<KitRequestShipping> kitRequest = kitRequests.get(key);
@@ -986,9 +986,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
                         new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
-                logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
-                        + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
-                e.printStackTrace();
+                //This error will trigger on studies with no participants, this skips
+                //the error log if that is the reason for the upsert failure.
+                if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
+                    logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
+                            + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
+                    e.printStackTrace();
+                }
             }
 
             logger.info("Added kitRequest w/ ddpKitRequestId " + ddpKitRequestId);
