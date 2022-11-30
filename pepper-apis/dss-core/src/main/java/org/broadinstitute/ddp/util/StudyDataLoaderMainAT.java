@@ -389,7 +389,7 @@ public class StudyDataLoaderMainAT {
             JsonObject jsonObj = thisElement.getAsJsonObject();
             cptUserMap.put(jsonObj.get("GENOME_STUDY_CPT_ID").getAsString().toLowerCase(), jsonObj.get("HRUID").getAsString());
         }
-        LOG.info("---CPT user count: {}", cptUserMap.size());
+        LOG.info("CPT user count: {}", cptUserMap.size());
 
         JsonElement data;
         try {
@@ -405,14 +405,10 @@ public class StudyDataLoaderMainAT {
         JsonArray surveys = surveyElement.getAsJsonArray();
         for (JsonElement thisElement : surveys) {
             JsonElement cptId = thisElement.getAsJsonObject().get("genome_study_cpt_id");
-            //LOG.info("*******---------GENOME_CPT_ID : {}", cptId);
             String hruid = cptUserMap.get(cptId.getAsString());
-            //if (cptId.e)
             if (hruid == null) {
-                //LOG.info("*******---------NO MATCH in ptp list MAP for GENOME_CPT_ID : {}", cptId);
                 continue;
             }
-            //LOG.info("*******---------GENOME_CPT_ID : {}", cptId);
             List<JsonElement> surveyList = userMedicalDataMap
                     .computeIfAbsent(hruid, key -> new ArrayList<JsonElement>());
             surveyList.add(thisElement);
@@ -812,13 +808,11 @@ public class StudyDataLoaderMainAT {
                     .get("activity_code").getAsString();
             List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                     .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-            LOG.info("  --USER : {} has {} instances : {} ", userDto.getUserHruid(), activityInstanceDtoList.size());
+            LOG.info("USER : {} has {} instances : {} ", userDto.getUserHruid(), activityInstanceDtoList.size());
 
             int counter = 1;
-            //String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
             for (JsonElement surveyDataEl : surveyData) {
                 String cptID = surveyDataEl.getAsJsonObject().get("genome_study_cpt_id").getAsString();
-                LOG.info("---loading MH for CPTID: {} ", cptID);
                 String createdAt = surveyDataEl.getAsJsonObject().get("datstat.startdatetime").getAsString();
                 String completedAt = surveyDataEl.getAsJsonObject().get("datstat.enddatetime").getAsString();
 
@@ -830,8 +824,6 @@ public class StudyDataLoaderMainAT {
                 Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
                 long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
 
-                //ActivityInstanceDto instanceDto = activityInstanceDao.findByActivityInstanceGuid(instanceGuids[counter]).get();
-                //ZTR51QCIJB A6IP3SCN7A Q01SODUT1L
                 ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
                         userGuid, studyId,
                         activityCode, createdToMillis++, lastSubmitedToMillis++,
@@ -839,7 +831,7 @@ public class StudyDataLoaderMainAT {
                         activityInstanceDao,
                         activityInstanceStatusDao,
                         true);
-                LOG.info("---created new activity instance: {} for user: {}.. CPTID: {} total count: {} ",
+                LOG.info("created new activity instance: {} for user: {}.. CPTID: {} total count: {} ",
                         instanceDto.getGuid(), userGuid, cptID, counter);
                 dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                         mappingData.get("atcp_registry_questionnaire"),
@@ -855,97 +847,6 @@ public class StudyDataLoaderMainAT {
         }
     }
 
-    private void processParticipantATOLD(String studyGuid, String hruid, List<JsonElement> surveyData,
-                                         Map<String, JsonElement> mappingData, StudyDataLoaderAT dataLoader) {
-
-        //load ptp
-        LOG.info("loading participant: {} ", hruid);
-
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-            String userGuid = null;
-            Boolean hasMedicalHistory = false;
-            Boolean hasMedicalHistoryUpdate = false;
-            StudyMigrationRun migrationRun;
-
-            JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-            ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
-            ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
-            JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
-            JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
-            StudyDto studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyGuid);
-            long studyId = studyDto.getId();
-
-            try {
-                //verify if participant is already loaded..
-                JdbiUser jdbiUser = handle.attach(JdbiUser.class);
-                userGuid = jdbiUser.getUserGuidByHruid(hruid);
-                if (userGuid == null) {
-                    throw new Exception(" AT User not found for hruid: " + hruid);
-                } else {
-
-                    UserDto userDto = jdbiUser.findByUserGuid(userGuid);
-
-                    hasMedicalHistory = true;
-                    hasMedicalHistoryUpdate = true;
-
-                    var answerDao = handle.attach(AnswerDao.class);
-
-                    String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
-                            .get("activity_code").getAsString();
-                    List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
-                            .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                    LOG.info("  --USER : {} has {} instances : {} ", userDto.getUserHruid(), activityInstanceDtoList.size());
-
-                    int counter = 1;
-                    //String[] instanceGuids = {"ZTR51QCIJB", "A6IP3SCN7A", "Q01SODUT1L"};
-                    for (JsonElement surveyDataEl : surveyData) {
-                        LOG.info("---loading MH for CPTID: {} ", surveyDataEl.getAsJsonObject().get("genome_study_cpt_id").getAsString());
-                        String createdAt = surveyDataEl.getAsJsonObject().get("datstat.startdatetime").getAsString();
-                        String completedAt = surveyDataEl.getAsJsonObject().get("datstat.enddatetime").getAsString();
-
-                        LocalDateTime createdDateTime = LocalDateTime.parse(createdAt, dataLoader.formatter);
-                        Instant createdDateTimeInst = createdDateTime.toInstant(ZoneOffset.UTC);
-                        long createdToMillis = createdDateTimeInst.toEpochMilli();
-
-                        LocalDateTime lastSubmitedDateTime = LocalDateTime.parse(completedAt, dataLoader.formatter);
-                        Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
-                        long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
-
-                        //ActivityInstanceDto instanceDto = activityInstanceDao.findByActivityInstanceGuid(instanceGuids[counter]).get();
-                        //ZTR51QCIJB A6IP3SCN7A Q01SODUT1L
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstanceAT(surveyDataEl,
-                                userGuid, studyId,
-                                activityCode, createdToMillis++, lastSubmitedToMillis++,
-                                jdbiActivity,
-                                activityInstanceDao,
-                                activityInstanceStatusDao,
-                                true);
-                        LOG.info("---created new activity instance: {} for user: {}.. total count: {} ", instanceDto.getGuid(),
-                                userGuid, counter);
-                        dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
-                                mappingData.get("atcp_registry_questionnaire"),
-                                studyDto, userDto, instanceDto,
-                                answerDao);
-
-                        activityInstanceStatusDao
-                                .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
-                                        lastSubmitedToMillis + 1, userGuid);
-                        counter++;
-
-                    }
-                }
-            } catch (Exception e) {
-                failedList.add(hruid);
-                LOG.error("Failed to load Participant: " + e.getMessage());
-                e.printStackTrace();
-                handle.rollback();
-                //isSuccess = false;
-                LOG.error("Rolled back...");
-            }
-
-        });
-
-    }
 
     @SuppressWarnings("checkstyle:WhitespaceAfter")
     private void processParticipant(String studyGuid, Map<String, JsonElement> sourceData,

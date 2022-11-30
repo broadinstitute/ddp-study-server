@@ -642,7 +642,6 @@ public class StudyDataLoaderAT {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
-            //LOG.info("---PL QStableID: {} .. selected options: {}", stableId, selectedPicklistOptions);
             answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
         }
         return answerGuid;
@@ -691,7 +690,6 @@ public class StudyDataLoaderAT {
                             && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
                         foundSpecify = true;
                         String otherText = specifyKeyElement.getAsString();
-                        LOG.debug("-----has specify: {} .. optionName:{}", otherText, optionName);
                         selectedPicklistOptions
                                 .add(new SelectedPicklistOption(val, getStringValueFromElement(sourceDataElement, questionName + "."
                                         + otherText)));
@@ -1141,7 +1139,6 @@ public class StudyDataLoaderAT {
 
     public String answerPickListQuestion(String questionStableId, String participantGuid, String instanceGuid,
                                          List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
-        //LOG.info("---PL QSID: {}", questionStableId);
         Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
         return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
@@ -1164,12 +1161,6 @@ public class StudyDataLoaderAT {
                     childrenAnswerIds.add(childAnswerId);
                 }
             }
-            //LOG.debug("--------chd answers: {} orderIds : {} ", childrenAnswerIds.size(), compositeAnswerOrders.size());
-            if (childrenAnswerIds.size() != compositeAnswerOrders.size()) {
-                //LOG.info("----------Not equal----STBLID: {} ", pepperQuestionStableId);
-            } else {
-                //LOG.info("----------EQUAL----");
-            }
             jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
         }
         return parentAnswer.getAnswerGuid();
@@ -1178,7 +1169,6 @@ public class StudyDataLoaderAT {
     private String processMedicalCompositeQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                                    String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
-        LOG.debug("---processMedicalCompositeQuestion------");
         String answerGuid = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
@@ -1249,7 +1239,7 @@ public class StudyDataLoaderAT {
                         break;
                     case "ClinicalTrialPicklist":
                         //todo .. revisit and make it generic
-                        LOG.info("-------ClinicalTrialPicklist------");
+                        LOG.debug("ClinicalTrialPicklist...");
                         String childStableId = childEl.getAsJsonObject().get("stable_id").getAsString();
                         JsonElement thisDataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
                         if (thisDataArrayEl != null && !thisDataArrayEl.isJsonNull()) {
@@ -1278,10 +1268,6 @@ public class StudyDataLoaderAT {
         List<String> filteredQAGuids = nestedQAGuids.stream().filter(value ->
                 value != null && value.length() > 0
         ).collect(Collectors.toList());
-
-
-        LOG.debug("--------nested GUIDs in processMED sableID: {} .. : {} .. nestedAnswerOrders: {} .. filteredQAGUids: {}",
-                stableId, nestedQAGuids.size(), nestedAnsOrders.size(), filteredQAGuids.size());
 
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
@@ -1372,9 +1358,7 @@ public class StudyDataLoaderAT {
                 }
             }
 
-            LOG.info("--------nested GUIDs : {}", nestedQAGuids.size());
             nestedQAGuids.remove(null);
-            LOG.info("--------nested GUIDs in processMED : {} .. nestedAnswerOrders: {}", nestedQAGuids.size(), nestedAnsOrders.size());
             if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
                 answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid, nestedQAGuids,
                         nestedAnsOrders, answerDao);
