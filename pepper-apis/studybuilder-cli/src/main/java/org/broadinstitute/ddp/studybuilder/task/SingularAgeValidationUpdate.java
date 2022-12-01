@@ -108,6 +108,12 @@ public class SingularAgeValidationUpdate implements CustomTask {
                 studyGuid));
     }
 
+    /**
+     * This weird SQL query is required because we don't want to care about the whitespaces and line endings
+     * that came from the study definition to the database. By extending the query with REPLACE statements
+     * we guarantee that all spaces, tabulations and new lines will be removed from the beginning and ending
+     * of the both strings: from the database and query parameter using the same algorithm
+     **/
     private interface SqlHelper extends SqlObject {
         @SqlUpdate("DELETE av "
                  + "FROM activity_validation av "
