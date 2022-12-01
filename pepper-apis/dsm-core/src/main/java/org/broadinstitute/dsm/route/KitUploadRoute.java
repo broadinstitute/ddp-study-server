@@ -231,8 +231,10 @@ public class KitUploadRoute extends RequestHandler {
                 String participantGuid = "";
                 String participantLegacyAltPid = "";
                 String collaboratorParticipantId = "";
-                //if kit has ddpParticipantId use that (RGP!)
-                if (StringUtils.isBlank(kit.getParticipantId())) {
+                //if kit has ddpParticipantId use that (RGP!) and
+                //For any studies that do not have participants the search will fail and error so
+                //we check if ddpInstance.getParticipantIndexES() != null
+                if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES())) && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
                     participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
@@ -393,10 +395,20 @@ public class KitUploadRoute extends RequestHandler {
                     errorMessage += "collaboratorSampleId was too long ";
                 }
             }
-            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
+
+            String participantID = kit.getShortId();
+
+            //If there is a participant change the participantID to the ID of the existing
+            //participant
+            if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
+                participantID = kit.getParticipantId().trim();
+            }
+
+            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, participantID,
                     collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
                     uploadReason, ddpInstance);
             kit.setDdpLabel(shippingId);
+
         }
     }
 
