@@ -26,6 +26,6 @@ public class NewDashboardRoute extends RequestHandler {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         String part = Optional.ofNullable(request.queryMap().get("part").value()).orElse("CHART").toUpperCase();
         DashboardUseCase dashboardUseCase = new DashboardUseCase(new DashboardDaoImpl(), new ElasticSearch());
-        return dashboardUseCase.getByDdpInstance(ddpInstanceDto, startDate, endDate, part.equals("COUNT") ? true : false);
+        return dashboardUseCase.getByDdpInstance(ddpInstanceDto, startDate, endDate, part.equals("CHART") ? true : false);
     }
 }
