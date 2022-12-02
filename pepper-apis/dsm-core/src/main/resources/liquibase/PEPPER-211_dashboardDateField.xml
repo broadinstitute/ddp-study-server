@@ -11,4 +11,10 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="PEPPER-211_dashboardPermission" author="simone">
+        <insert tableName="access_role">
+            <column name="name" value="dashboard_view"/>
+        </insert>
+    </changeSet>
 </databaseChangeLog>
