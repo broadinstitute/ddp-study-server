@@ -94,7 +94,7 @@ public class GPReceivedKit {
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
-        if (!StringUtils.isNotBlank((ddpInstanceDto.getEsParticipantIndex()))) {
+        if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex())) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
                         ESObjectConstants.KIT_LABEL, kitLabel, new PutToNestedScriptBuilder()).export();
@@ -102,8 +102,7 @@ public class GPReceivedKit {
                 logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
                 e.printStackTrace();
             }
-        }
-        else {
+        } else {
             logger.info("No participant index.");
         }
     }

@@ -38,7 +38,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     private static final Logger logger = LoggerFactory.getLogger(BaseFilterParticipantList.class);
     public static final String PARTICIPANT_DATA = "participantData";
     protected static final Gson GSON = new Gson();
-    private Deserializer deserializer = null;
+    public Deserializer deserializer = null;
 
     public BaseFilterParticipantList() {
         super(null);
