@@ -9,6 +9,7 @@ import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
@@ -94,8 +95,12 @@ public class SingleQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getNonActivityQueryBuilder(filter);
 
         BoolQueryBuilder expected = new BoolQueryBuilder();
-        expected.must(new RangeQueryBuilder("PREQUAL.completedAt").gte("01/01/2020"));
-        expected.must(new RangeQueryBuilder("PREQUAL.completedAt").lte("01/01/2022"));
+        expected.must(QueryBuilders.nestedQuery("activities",
+                QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                        .must(new RangeQueryBuilder("activities.completedAt").gte("01/01/2020")), ScoreMode.Avg));
+        expected.must(QueryBuilders.nestedQuery("activities",
+                QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                        .must(new RangeQueryBuilder("activities.completedAt").lte("01/01/2022")), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -115,6 +120,16 @@ public class SingleQueryBuilderTest {
         expectedQuery.must(mustExists2);
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(filter));
+    }
+
+    @Test
+    public void status() {
+        String andFilter = "AND ( data.status = 'ENROLLED' )";
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(new BoolQueryBuilder().should(new MatchQueryBuilder("status", "ENROLLED").operator(Operator.OR)));
+
+        Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(andFilter));
     }
 
     @Test
