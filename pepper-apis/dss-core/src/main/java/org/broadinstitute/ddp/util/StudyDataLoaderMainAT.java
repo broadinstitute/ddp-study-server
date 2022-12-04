@@ -831,8 +831,8 @@ public class StudyDataLoaderMainAT {
                         activityInstanceDao,
                         activityInstanceStatusDao,
                         true);
-                LOG.info("created new activity instance: {} for user: {}.. CPTID: {} total count: {} ",
-                        instanceDto.getGuid(), userGuid, cptID, counter);
+                LOG.info("created new activity instance: {} for user: {}.. hruid: {} CPTID: {} total count: {} ",
+                        instanceDto.getGuid(), userGuid, hruid, cptID, counter);
                 dataLoader.loadMedicalHistorySurveyData(handle, surveyDataEl,
                         mappingData.get("atcp_registry_questionnaire"),
                         studyDto, userDto, instanceDto,
