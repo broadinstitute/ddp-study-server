@@ -14,8 +14,8 @@ import org.jdbi.v3.core.Handle;
 
 @Slf4j
 public class OsteoInsertEvents extends InsertStudyEvents {
-    OsteoInsertEvents() {
-        super("osteo", "patches/osteo-new-events.conf");
+    public OsteoInsertEvents() {
+        super("CMI-OSTEO", "patches/osteo-new-events.conf");
     }
 
     @Override

@@ -22,6 +22,7 @@ public class OsteoV3Updates implements CustomTask {
         tasks.add(new UpdateStudyNonSyncEvents());
         tasks.add(new OsteoInsertSyncEvents());
         tasks.add(new UpdateStudyWorkflows());
+        tasks.add(new OsteoInsertEvents());
 
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
