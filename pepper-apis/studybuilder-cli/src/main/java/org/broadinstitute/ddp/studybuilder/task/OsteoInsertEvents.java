@@ -25,15 +25,14 @@ public class OsteoInsertEvents extends InsertStudyEvents {
     }
 
     private void removeExistingEvents(final Handle handle) {
-        final var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-
         var eventDao = handle.attach(EventDao.class);
-        StreamEx.of(eventDao.getAllEventConfigurationsByStudyId(studyDto.getId()))
+        StreamEx.of(eventDao.getAllEventConfigurationsByStudyId(handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid).getId()))
                 .filterBy(EventConfiguration::getEventActionType, EventActionType.ACTIVITY_INSTANCE_CREATION)
                 .filterBy(EventConfiguration::getEventTriggerType, EventTriggerType.DSM_NOTIFICATION)
                 .filter(this::hasDSMNotificationTrigger)
                 .filter(this::isExpectedTrigger)
-                .forEach(e -> handle.attach(JdbiEventConfiguration.class).updateIsActiveById(e.getEventConfigurationId(), false));
+                .map(EventConfiguration::getEventConfigurationId)
+                .forEach(id -> handle.attach(JdbiEventConfiguration.class).updateIsActiveById(id, false));
 
         log.info("Successfully removed DSM Notification events that create new activities of {}.", studyGuid);
     }
