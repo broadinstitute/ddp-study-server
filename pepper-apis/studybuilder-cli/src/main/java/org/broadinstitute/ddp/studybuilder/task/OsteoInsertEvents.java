@@ -25,16 +25,23 @@ public class OsteoInsertEvents extends InsertStudyEvents {
     }
 
     private void removeExistingEvents(final Handle handle) {
-        var eventDao = handle.attach(EventDao.class);
-        StreamEx.of(eventDao.getAllEventConfigurationsByStudyId(handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid).getId()))
+        final var eventDao = handle.attach(EventDao.class);
+        final var count = StreamEx.of(eventDao.getAllEventConfigurationsByStudyId(handle.attach(JdbiUmbrellaStudy.class)
+                        .findByStudyGuid(studyGuid).getId()))
                 .filterBy(EventConfiguration::getEventActionType, EventActionType.ACTIVITY_INSTANCE_CREATION)
                 .filterBy(EventConfiguration::getEventTriggerType, EventTriggerType.DSM_NOTIFICATION)
                 .filter(this::hasDSMNotificationTrigger)
                 .filter(this::isExpectedTrigger)
                 .map(EventConfiguration::getEventConfigurationId)
-                .forEach(id -> handle.attach(JdbiEventConfiguration.class).updateIsActiveById(id, false));
+                .map(id -> deactivateEventConfiguration(handle, id))
+                .count();
 
-        log.info("Successfully removed DSM Notification events that create new activities of {}.", studyGuid);
+        log.info("Successfully deactivated {} DSM Notification events that create new activities of {}.", count, studyGuid);
+    }
+
+    private static int deactivateEventConfiguration(final Handle handle, final Long id) {
+        log.info("Event configuration #{} was deactivated", id);
+        return handle.attach(JdbiEventConfiguration.class).updateIsActiveById(id, false);
     }
 
     private boolean hasDSMNotificationTrigger(final EventConfiguration event) {
