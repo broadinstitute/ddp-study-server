@@ -11,7 +11,8 @@ public enum ApplicationProperty {
     GOOGLE_SECRET_VERSION("google.secret.version"),
     GOOGLE_SECRET_NAME("google.secret.name"),
     ITEXT_LICENSE("itext.license"),
-    APPLICATION_CONFIG("config.file");
+    APPLICATION_CONFIG("config.file"),
+    JCACHE_DISABLED("cachingDisabled");
 
     private final String propertyName;
 }

@@ -144,6 +144,12 @@ public class ConfigFile {
 
     public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
     public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";
+    public static final String REDISSON_CONFIG = "redisson";
+
+    public static final class Redisson {
+        public static final String DEFAULT_CONFIG = "default";
+        public static final String JCACHE_CONFIG = "jcache";
+    }
 
     public static final class API_RATE_LIMIT {
         public static final String MAX_QUERIES_PER_SECOND = "rateLimit.apiLimitRate";
