@@ -29,7 +29,6 @@ public class DownloadPDFRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        logger.info(request.url());
         QueryParamsMap queryParams = request.queryMap();
         String realm = null;
         if (queryParams.value(RoutePath.REALM) != null) {
@@ -51,6 +50,7 @@ public class DownloadPDFRoute extends RequestHandler {
                 String tempUserIdR = jsonObject.get(RequestParameter.USER_ID).getAsString();
                 Long userIdRequest = Long.parseLong(tempUserIdR);
                 DownloadPDF downloadPDFRequest = new DownloadPDF(requestBody);
+                logger.info( String.format("Starting PDF download for %s at %s", downloadPDFRequest.getDdpParticipantId(), realm));
                 Optional<byte[]> pdfBytes = downloadPDFRequest.getPDFs(userIdRequest, realm, requestBody);
                 pdfBytes.ifPresent(pdfBytesArray -> {
                     try {
@@ -60,7 +60,7 @@ public class DownloadPDFRoute extends RequestHandler {
                         rawResponse.getOutputStream().flush();
                         rawResponse.getOutputStream().close();
                     } catch (IOException e) {
-                        throw new RuntimeException("Couldn't make pdf of ddpInstance " + queryParams.get(RoutePath.REALM).value(), e);
+                        throw new RuntimeException("Couldn't create pdf ", e);
                     }
                 });
                 return null;
