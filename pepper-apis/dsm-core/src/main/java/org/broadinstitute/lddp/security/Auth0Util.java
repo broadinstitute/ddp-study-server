@@ -1,6 +1,6 @@
 package org.broadinstitute.lddp.security;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,8 +24,12 @@ import com.auth0.net.Request;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.security.RSAKeyProviderFactory;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,37 +37,27 @@ public class Auth0Util {
 
     private static final Logger logger = LoggerFactory.getLogger(Auth0Util.class);
     private static String account;
-    private final String ddpKey;
-    private final String ddpSecret;
-    private final String mgtApiUrl;
+    private final String mgmtApiUrl;
     private final List<String> connections;
-    private byte[] decodedSecret;
-    private AuthAPI ddpAuthApi = null;
-    private AuthAPI mgtAuthApi = null;
-    private boolean emailVerificationRequired;
+    private final String mgmtClientId;
+    private final String mgmtClientSecret;
+    private AuthAPI api;
+    private AuthAPI mgmtApi;
     private String audience;
     private String token;
     private Long expiresAt;
 
-    public Auth0Util(@NonNull String account, @NonNull List<String> connections, boolean secretEncoded,
-                     @NonNull String ddpKey, @NonNull String ddpSecret,
-                     @NonNull String mgtKey, @NonNull String mgtSecret, @NonNull String mgtApiUrl, boolean emailVerificationRequired,
+    public Auth0Util(@NonNull String account, @NonNull List<String> connections,
+                     @NonNull String clientId, @NonNull String clientSecret,
+                     @NonNull String mgmtClientId, @NonNull String mgmtClientSecret, @NonNull String mgmtApiUrl,
                      String audience) {
-        this.ddpSecret = ddpSecret;
-
-        byte[] tempSecret = ddpSecret.getBytes();
-        if (secretEncoded) {
-            tempSecret = Base64.decodeBase64(ddpSecret);
-        }
-        this.decodedSecret = tempSecret;
-
         this.account = account;
-        this.ddpKey = ddpKey;
         this.connections = connections;
-        this.ddpAuthApi = new AuthAPI(account, ddpKey, ddpSecret);
-        this.mgtAuthApi = new AuthAPI(account, mgtKey, mgtSecret);
-        this.mgtApiUrl = mgtApiUrl;
-        this.emailVerificationRequired = emailVerificationRequired;
+        this.api = new AuthAPI(account, clientId, clientSecret);
+        this.mgmtClientId = mgmtClientId;
+        this.mgmtClientSecret = mgmtClientSecret;
+        this.mgmtApi = new AuthAPI(account, mgmtClientId, mgmtClientSecret);
+        this.mgmtApiUrl = mgmtApiUrl;
         this.audience = audience;
     }
 
@@ -82,7 +76,7 @@ public class Auth0Util {
     private ManagementAPI configManagementApi() {
         TokenHolder tokenHolder = null;
         try {
-            AuthRequest requestToken = mgtAuthApi.requestToken(mgtApiUrl);
+            AuthRequest requestToken = mgmtApi.requestToken(mgmtApiUrl);
             tokenHolder = requestToken.execute();
 
             if (tokenHolder.getAccessToken() == null) {
@@ -126,7 +120,7 @@ public class Auth0Util {
     }
 
     public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
-        Map<String, Claim> auth0Claims = new HashMap<>();
+        Map<String, Claim> auth0Claims;
         try {
             Optional<DecodedJWT> maybeToken = verifyAuth0Token(auth0Token, auth0Domain);
             maybeToken.orElseThrow();
@@ -153,7 +147,7 @@ public class Auth0Util {
         if (token == null) {
             if (StringUtils.isNotBlank(audience)) {
                 try {
-                    AuthRequest request = ddpAuthApi.requestToken(audience);
+                    AuthRequest request = api.requestToken(audience);
                     TokenHolder tokenHolder = request.execute();
                     token = tokenHolder.getAccessToken();
                     expiresAt = System.currentTimeMillis() + (tokenHolder.getExpiresIn() * 1000);
@@ -230,6 +224,44 @@ public class Auth0Util {
         }
 
         return Optional.ofNullable(validToken);
+    }
+
+    public String requestAuth0Token(String auth0Domain,
+                                    String audienceNameSpace, Map<String, String> claims) throws AuthenticationException {
+        String requestUrl = "https://" + auth0Domain + "/oauth/token";
+        Map<String, String> headers = Map.of("content-type", "application/x-www-form-urlencoded");
+
+        List<NameValuePair> requestParams = buildAuth0TokenRequestParams(audienceNameSpace, claims);
+        Auth0M2MResponse response;
+        try {
+            response = DDPRequestUtil.postRequestWithResponse(requestUrl, headers, requestParams, Auth0M2MResponse.class, "auth0 M2M");
+            if (response == null) {
+                throw new AuthenticationException("Didn't receive a token from auth0!");
+            }
+        } catch (Exception e) {
+            throw new AuthenticationException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
+        }
+        if (response.getError() != null) {
+            throw new AuthenticationException("Got Auth0 M2M error " + response.getError() + " : " + response.getErrorDescription());
+        }
+        return response.getAccessToken();
+    }
+
+    private List<NameValuePair> buildAuth0TokenRequestParams(String audienceNameSpace, Map<String, String> claims) {
+        List<NameValuePair> params = new ArrayList<>();
+        for (String key : claims.keySet()) {
+            String finalKey = key;
+            if (key.indexOf(audienceNameSpace) == -1) {
+                finalKey = audienceNameSpace + key;
+            }
+            params.add(new BasicNameValuePair(finalKey, claims.get(key)));
+        }
+
+        params.add(new BasicNameValuePair("client_id", this.mgmtClientId));
+        params.add(new BasicNameValuePair("grant_type", "client_credentials"));
+        params.add(new BasicNameValuePair("client_secret", this.mgmtClientSecret));
+        params.add(new BasicNameValuePair("audience", this.audience));
+        return params;
     }
 
     public static class Auth0UserInfo {

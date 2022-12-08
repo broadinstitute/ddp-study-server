@@ -596,10 +596,9 @@ public class DSMServer {
 
         auth0Util = new Auth0Util(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS),
-                cfg.getBoolean(ApplicationConfigConstants.AUTH0_IS_BASE_64_ENCODED),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), false,
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
 
         before(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
@@ -637,9 +636,6 @@ public class DSMServer {
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
                 userUtil,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
         );
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());

@@ -33,16 +33,18 @@ import spark.Response;
 public class ParticipantExitRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ParticipantExitRoute.class);
+    private static final String ROLE = "participant_exit";
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
         String realm = request.params(RequestParameter.REALM);
         if (StringUtils.isNotBlank(realm)) {
-            if (UserUtil.checkUserAccess(realm, userId, "participant_exit", null)) {
+            if (UserUtil.checkUserAccess(realm, userId, ROLE, null)) {
                 return ParticipantExit.getExitedParticipants(realm).values();
             } else {
                 response.status(500);
+                logger.warn("User with id={} could not access realm={} with role={}", userId, realm, ROLE);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
         }
@@ -51,7 +53,7 @@ public class ParticipantExitRoute extends RequestHandler {
             long currentTime = System.currentTimeMillis();
             JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
             realm = jsonObject.getAsJsonObject().get("realm").getAsString();
-            if (UserUtil.checkUserAccess(realm, userId, "participant_exit", null)) {
+            if (UserUtil.checkUserAccess(realm, userId, ROLE, null)) {
                 String ddpParticipantId = jsonObject.getAsJsonObject().get("participantId").getAsString();
                 String userIdRequest = jsonObject.getAsJsonObject().get("user").getAsString();
                 boolean inDDP = jsonObject.getAsJsonObject().get("inDDP").getAsBoolean();
@@ -79,6 +81,7 @@ public class ParticipantExitRoute extends RequestHandler {
                 }
             } else {
                 response.status(500);
+                logger.warn("User with id={} could not access realm={} with role={}", userId, realm, ROLE);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
         }

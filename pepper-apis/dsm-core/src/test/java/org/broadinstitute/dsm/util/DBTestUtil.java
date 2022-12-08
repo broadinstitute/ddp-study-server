@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.util;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.TestHelper.TEST_DDP;
 
 import java.lang.reflect.Type;
 import java.sql.Connection;
@@ -235,6 +236,10 @@ public class DBTestUtil {
                 + "( SELECT something.field_settings_id FROM (SELECT * from field_settings) as something WHERE "
                 + "something.ddp_instance_id = ?)";
         executeQuery(query, instance.getDdpInstanceId());
+    }
+
+    public static void makeTestDDPInstanceActive(boolean makeActive) {
+        DDPInstance.setDdpInstanceActive(TEST_DDP, makeActive);
     }
 
     public static void removedUnsentEmails() {
@@ -966,7 +971,7 @@ public class DBTestUtil {
                                                      List<Value> possibleValuesList) {
         String possibleValues = new GsonBuilder().create().toJson(possibleValuesList, ArrayList.class);
         List<String> strings = new ArrayList<>();
-        strings.add(TestHelper.TEST_DDP);
+        strings.add(TEST_DDP);
         String instanceId = getStringFromQuery("SELECT * FROM ddp_instance where instance_name = ?; ", strings, "ddp_instance_id");
         List<String> strings2 = new ArrayList<>();
         strings2.add(instanceId);
