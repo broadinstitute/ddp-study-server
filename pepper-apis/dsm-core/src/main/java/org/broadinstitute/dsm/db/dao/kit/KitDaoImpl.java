@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -86,7 +87,7 @@ public class KitDaoImpl implements KitDao {
             + "req.kit_type_id, req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
             + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
             + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
-            + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, "
+            + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, kit.dsm_kit_id,"
             + "kt.requires_insert_in_kit_tracking, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
             + "FROM ddp_kit as kit "
             + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
@@ -126,6 +127,9 @@ public class KitDaoImpl implements KitDao {
             + "external_order_number, "
             + "upload_reason) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+
+    private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
+            + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND receive_date IS NOT NULL ";
 
     private static final String SQL_DELETE_KIT_REQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
 
@@ -417,6 +421,7 @@ public class KitDaoImpl implements KitDao {
                         kitRequestShipping.setKitLabel(rs.getString(DBConstants.KIT_LABEL));
                         kitRequestShipping.setKitLabelPrefix(rs.getString(DBConstants.KIT_LABEL_PREFIX));
                         kitRequestShipping.setKitLabelLength(rs.getLong(DBConstants.KIT_LABEL_LENGTH));
+                        kitRequestShipping.setDsmKitId(rs.getLong(DBConstants.DSM_KIT_ID));
                         dbVals.resultValue = kitRequestShipping;
                     }
                 }
@@ -581,5 +586,18 @@ public class KitDaoImpl implements KitDao {
             result = Optional.ofNullable((ScanError) results.resultValue);
         }
         return result;
+    }
+
+    public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
+        try (PreparedStatement stmt = connection.prepareStatement(SQL_SELECT_RECEIVED_KITS)) {
+            stmt.setString(1, ddpParticipantId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(String.format("Error getting kits for %s", ddpParticipantId));
+        }
+        return false;
     }
 }

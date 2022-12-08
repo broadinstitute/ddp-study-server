@@ -23,6 +23,16 @@ public class PdfBucketService {
     private final String bucketName;
     private final boolean useCloudStorage;
 
+    /**
+     * Generates name from the passed values.
+     *
+     * @param umbrellaGuid umbrella guid
+     * @param studyGuid study guid
+     * @param userGuid  user guid
+     * @param pdfConfigName pdf config name
+     * @param pdfVersionTag pdf version
+     * @return generated name
+     */
     public static String getBlobName(String umbrellaGuid, String studyGuid, String userGuid, String pdfConfigName, String pdfVersionTag) {
         return String.format("%s/%s/%s_%s_%s.pdf", umbrellaGuid, studyGuid, userGuid, pdfConfigName, pdfVersionTag);
     }

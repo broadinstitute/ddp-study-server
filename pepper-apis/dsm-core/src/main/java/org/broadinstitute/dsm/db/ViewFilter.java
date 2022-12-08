@@ -318,7 +318,7 @@ public class ViewFilter {
         if (!rs.getString(DBConstants.CREATED_BY).contains("System")) {
             String queryToParse = rs.getString(DBConstants.QUERY_ITEMS);
             try {
-                filter = parseFilteringQuery(queryToParse, filter);
+                filter = parseQueryToViewFilterObject(queryToParse, filter);
             } catch (Exception e) {
                 return filter;
 
@@ -487,7 +487,7 @@ public class ViewFilter {
      * @param viewFilter: ViewFilter to return with Filter[] of query String in it
      * @return ViewFilter which the input string is parsed and is in as a Filter[]
      */
-    public static ViewFilter parseFilteringQuery(String str, ViewFilter viewFilter) {
+    public static ViewFilter parseQueryToViewFilterObject(String str, ViewFilter viewFilter) {
         String[] conditions = str.split("(and\\s)|(AND\\s)");
         Map<String, Filter> filters = new HashMap<>(conditions.length);
         for (String condition : conditions) {
@@ -601,12 +601,12 @@ public class ViewFilter {
                                 value = word;
                                 type = Filter.BOOLEAN;
                                 state = 40;
-                            } else if (StringUtils.isNumeric(word)) {
+                            } else if (isNumeric(word) && !longWord) {
                                 value = word;
                                 type = Filter.NUMBER;
                                 state = 40;
                             } else {
-                                tempValue = word;
+                                tempValue = word.trim();
                                 if (!longWord) {
                                     if (tempValue.contains(Filter.SINGLE_QUOTE)) {
                                         if (tempValue.indexOf(Filter.SINGLE_QUOTE) != tempValue.lastIndexOf(Filter.SINGLE_QUOTE)) {
@@ -677,8 +677,8 @@ public class ViewFilter {
 
                         case 8: // query contained word "LIKE", exact match is false then
                             exact = false;
-                            if (word.equals("'1'") || (word.equals("1") && (Filter.CHECKBOX.equals(
-                                    type)))) { // check boxes are either 1 or 0
+                            if (word.equals("'1'") || (word.equals("1")
+                                    && (Filter.CHECKBOX.equals(type)))) { // check boxes are either 1 or 0
                                 if (StringUtils.isNotBlank(type)) {
                                     filter2 = new NameValue(columnName, true);
                                 } else {
@@ -688,17 +688,43 @@ public class ViewFilter {
                                 state = 9;
                                 break;
                             } else { // "LIKE %?% query
-                                value = word;
-                                if (value.contains(Filter.PERCENT_SIGN)) {
+                                if (word.contains(Filter.PERCENT_SIGN) || longWord) {
                                     exact = false;
-                                    int first = value.indexOf(Filter.PERCENT_SIGN);
-                                    int last = value.lastIndexOf(Filter.PERCENT_SIGN);
-                                    if (first != -1) {
-                                        value = value.substring(first + 1, last);
+                                    int first = word.indexOf(Filter.PERCENT_SIGN);
+                                    int last = word.lastIndexOf(Filter.PERCENT_SIGN);
+                                    if (first != -1 && first != last) {
+                                        value = word.substring(first + 1, last);
+                                        state = 11;
+                                    } else {
+                                        // "LIKE %more than 1 word% query
+                                        tempValue = word.trim();
+                                        if (!longWord) {
+                                            if (tempValue.contains(Filter.SINGLE_QUOTE)) {
+                                                if (tempValue.indexOf(Filter.SINGLE_QUOTE) != tempValue.lastIndexOf(Filter.SINGLE_QUOTE)) {
+                                                    value = trimValue(tempValue);
+                                                    state = 11;
+                                                    break;
+                                                } else {
+                                                    longWord = true;
+                                                    value += trimValue(tempValue) + " ";
+                                                }
+                                            } else {
+                                                value = word;
+                                                state = 11;
+                                                exact = true;
+                                                break;
+                                            }
+                                        } else if (longWord && tempValue.contains(Filter.SINGLE_QUOTE)) {
+                                            value += trimValue(tempValue) + Filter.SPACE;
+                                            longWord = false;
+                                            value = value.trim();
+                                            state = 11;
+                                            break;
+                                        } else if (longWord) {
+                                            value += tempValue + Filter.SPACE;
+                                        }
                                     }
                                 }
-
-                                state = 11;
                             }
                             break;
                         case 9:// termination state
@@ -751,9 +777,7 @@ public class ViewFilter {
                                 tableName = names[0];
                                 columnName = names[1];
                                 state = 18;
-
                             }
-
                             break;
                         case 18:
                             if (word.equals(",")) { // need to look for the path in the query since it is a MySQL json query
@@ -986,11 +1010,6 @@ public class ViewFilter {
                     }
                     if (path != null && !f2) { //additional field
                         filter.setFilter2(new NameValue(path, ""));
-                    }
-                    if (f1 && !f2 && Filter.DATE.equals(filter.type) && filter.isRange()) {
-                        // set max date to very far in the future
-                        filter.setFilter2(new NameValue(filter.getFilter1().getName(),
-                                LocalDateTime.now().plusYears(10).format(DateTimeFormatter.ISO_LOCAL_DATE)));
                     }
                     if (f2) { // maximum set in a range filter
                         if (filter.getFilter1() == null) {
@@ -1249,23 +1268,32 @@ public class ViewFilter {
         return value;
     }
 
-    public static String getDate() {
+    private static String getDate() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime now = LocalDateTime.now();
         return (dtf.format(now));
     }
 
-    public static String getDate(LocalDateTime date) {
+    private static String getDate(LocalDateTime date) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return (dtf.format(date));
     }
 
-    public static String getDate(int numberOfDays, char operator) {
+    private static String getDate(int numberOfDays, char operator) {
         if (operator == '-') {
             numberOfDays *= -1;
         }
         LocalDateTime today = LocalDateTime.now();     //Today
         LocalDateTime tomorrow = today.plusDays(numberOfDays);
         return getDate(tomorrow);
+    }
+
+    private static boolean isNumeric(String value) {
+        try {
+            Double.parseDouble(value);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
     }
 }

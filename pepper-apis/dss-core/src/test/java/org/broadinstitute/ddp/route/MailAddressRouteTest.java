@@ -295,7 +295,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
         createdAddressFromServer.setCountry("CA");
         createdAddressFromServer.setZip("H3G 2R9");
         createdAddressFromServer.setPhone("777-222-3333");
-        createdAddressFromServer.setPlusCode("87Q8FCXF+G5");
+        createdAddressFromServer.setPlusCode("87Q8FCXF+F3");
         createdAddressFromServer.setDefault(true);
         Response putResponse = putMailAddress(createdAddressFromServer, true);
         assertEquals(204, putResponse.returnResponse().getStatusLine().getStatusCode());

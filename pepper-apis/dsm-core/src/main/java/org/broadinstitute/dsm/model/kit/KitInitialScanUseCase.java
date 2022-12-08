@@ -29,7 +29,7 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
         List<KitRequestShipping> kitList = kitDao.getKitsByHruid(hruid);
         if (kitList != null && !kitList.isEmpty()) {
             if (kitList.size() > 2) {
-                Optional.ofNullable(new ScanError(kit,
+                return Optional.ofNullable(new ScanError(kit,
                         "Too many active kits found for \"" + hruid + "\".\n" + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
 

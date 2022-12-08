@@ -29,6 +29,9 @@ public class PatchFactory {
             } else if (isParticipantIdForRecord(patch)) {
                 patcher = new ParticipantRecordPatch(patch);
             }
+        } else if (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
+                    && StringUtils.isNotBlank(patch.getDdpParticipantId())) {
+            patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
             throw new RuntimeException("Id and parentId was null");

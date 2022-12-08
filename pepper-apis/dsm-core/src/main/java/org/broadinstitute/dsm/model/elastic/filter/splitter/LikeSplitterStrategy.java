@@ -12,7 +12,7 @@ public class LikeSplitterStrategy extends SplitterStrategy {
     public String[] split() {
         String[] splittedFilter = filter.split(Filter.LIKE_TRIMMED);
         return Arrays.stream(splittedFilter)
-                .map(str -> str.replace("%", ""))
+                .map(str -> str.replace("%", "").replaceAll("( )+", " "))
                 .collect(Collectors.toList())
                 .toArray(new String[] {});
     }

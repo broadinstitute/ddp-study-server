@@ -75,7 +75,7 @@ public class ParticipantWrapper {
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
-            fetchAndPrepareDataByFilters(filters);
+            fetchAndPrepareDataByFilters(filters, ddpInstanceDto.getInstanceName());
             return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData();
@@ -83,10 +83,28 @@ public class ParticipantWrapper {
         });
     }
 
-    private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
+    public ParticipantWrapperResult getFilteredList(AbstractQueryBuilder<?> mainQuery) {
+        logger.info("Getting list of participant information");
+
+        DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
+
+        if (StringUtils.isBlank(ddpInstanceDto.getEsParticipantIndex())) {
+            throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstanceDto.getInstanceName());
+        }
+
+        fetchAndPrepareDataByAbstractQuery(mainQuery, ddpInstanceDto.getInstanceName());
+        return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+    }
+
+    private void fetchAndPrepareDataByAbstractQuery(AbstractQueryBuilder<?> mainQuery, String instanceName) {
+        esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
+                participantWrapperPayload.getTo(), mainQuery, instanceName);
+    }
+
+    private void fetchAndPrepareDataByFilters(Map<String, String> filters, String instanceName) {
         AbstractQueryBuilder<?> mainQuery = prepareQuery(filters);
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), mainQuery);
+                participantWrapperPayload.getTo(), mainQuery, instanceName);
     }
 
     AbstractQueryBuilder<?> prepareQuery(Map<String, String> filters) {
@@ -94,7 +112,7 @@ public class ParticipantWrapper {
         boolean hasSeveralFilters = filters.size() > 1;
         for (String alias : filters.keySet()) {
             if (StringUtils.isNotBlank(filters.get(alias))) {
-                BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(alias, filters.get(alias));
+                BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(filters.get(alias));
                 queryBuilder.setEsIndex(getEsParticipantIndex());
                 if (hasSeveralFilters) {
                     ((BoolQueryBuilder) mainQuery).must(queryBuilder.build());
@@ -232,6 +250,9 @@ public class ParticipantWrapper {
 
     private void addProxyDataToDto(UnparsedESParticipantDto esDto, ElasticSearch proxiesByIds) {
         List<String> participantProxyGuids = (List<String>) esDto.getDataAsMap().get("proxies");
+        if (participantProxyGuids == null) {
+            return;
+        }
         List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
                 .filter(proxyEsDto -> {
                     Map<String, Object> profile = (Map<String, Object>) ((UnparsedESParticipantDto) proxyEsDto).getDataAsMap()

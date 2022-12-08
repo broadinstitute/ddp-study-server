@@ -241,15 +241,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.DSM_TRACKING_URL_RETURN)
     private String easypostTrackingReturnUrl;
 
-    private String collaboratorParticipantId;
-
     private String firstName;
     private String lastName;
     private String dateOfBirth;
 
-    @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
+    @ColumnName(DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
 
+    @ColumnName(DBConstants.COLLABORATOR_PARTICIPANT_ID)
     private String bspCollaboratorParticipantId;
     private String easypostAddressId;
     private String realm;
@@ -309,7 +308,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
-    private long ddpInstanceId;
+    private Long ddpInstanceId;
     @ColumnName(DBConstants.COLLECTION_DATE)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String collectionDate;
@@ -331,19 +330,19 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.ddpInstanceId = ddpInstanceId;
     }
 
-    public KitRequestShipping(String collaboratorParticipantId, String kitTypeName, Long dsmKitRequestId, Long scanDate, Boolean error,
+    public KitRequestShipping(String bspCollaboratorParticipantId, String kitTypeName, Long dsmKitRequestId, Long scanDate, Boolean error,
                               Long receiveDate, Long deactivatedDate, String testResult, String upsTrackingStatus, String upsReturnStatus,
                               String externalOrderStatus, String externalOrderNumber, Long externalOrderDate, Boolean careEvolve,
                               String uploadReason) {
-        this(null, collaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
+        this(null, bspCollaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
                 scanDate, error, null, receiveDate, null, deactivatedDate, null, null, null, null, null, null, externalOrderNumber, null,
                 externalOrderStatus, null, testResult, upsTrackingStatus, upsReturnStatus, externalOrderDate, careEvolve, uploadReason,
                 null, null, null, null, null, null, null, null, null);
     }
 
-    public KitRequestShipping(String participantId, String collaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
+    public KitRequestShipping(String participantId, String bspCollaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
                               String receiveDateString, String hruid, String gender) {
-        this(participantId, collaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
+        this(participantId, bspCollaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
                 null, null, null, null, null, null, null, dsmKitId, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, receiveDateString, hruid, gender, null, null, null, null, null, null);
     }
@@ -356,7 +355,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     // shippingId = ddp_label !!!
-    public KitRequestShipping(String participantId, String collaboratorParticipantId, String bspCollaboratorSampleId, String shippingId,
+    public KitRequestShipping(String participantId, String bspCollaboratorParticipantId, String bspCollaboratorSampleId, String shippingId,
                               String realm, String kitTypeName, Long dsmKitRequestId, Long dsmKitId, String labelUrlTo,
                               String labelUrlReturn, String trackingToId, String trackingReturnId, String easypostTrackingToUrl,
                               String trackingUrlReturn, Long scanDate, Boolean error, String message, Long receiveDate,
@@ -367,7 +366,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction,
                               String receivedBy, String sampleNotes, String kitLabelPrefix, Long kitLabelLength) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
-        this.collaboratorParticipantId = collaboratorParticipantId;
+        this.bspCollaboratorParticipantId = bspCollaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
         this.realm = realm;
         this.kitTypeName = kitTypeName;
@@ -443,6 +442,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES),
                         rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+        kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);
@@ -538,12 +538,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequests;
     }
 
-    public static Map<String, List<KitRequestShipping>> getKitRequestsByParticipantIds(@NonNull DDPInstance instance,
-                                                                                       List<String> participantIds) {
-        String queryAddition = " AND request.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getKitRequests(instance, queryAddition);
-    }
-
     private static void addKitRequest(ResultSet rs, Map<String, List<KitRequestShipping>> kitRequests) throws SQLException {
         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
         List<KitRequestShipping> kitRequestList = new ArrayList<>();
@@ -584,8 +578,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestList.add(krs);
             kitRequests.put(ddpParticipantId, kitRequestList);
         }
-
-
     }
 
     public static List<KitRequestShipping> getKitRequestsByParticipant(@NonNull String realm, @NonNull String ddpParticipantId,
@@ -656,9 +648,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 .getParticipantsByIds(new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex(),
                         wholeList.stream().map(KitRequestShipping::getDdpParticipantId).collect(Collectors.toList()));
         List<ElasticSearchParticipantDto> esParticipants = participantsByIds.getEsParticipants();
-        for (KitRequestShipping kit: wholeList) {
+        for (KitRequestShipping kit : wholeList) {
             esParticipants.stream().filter(elasticSearchParticipantDto ->
-                            existsParticipant(kit, elasticSearchParticipantDto))
+                    existsParticipant(kit, elasticSearchParticipantDto))
                     .findFirst()
                     .ifPresent(elasticSearchParticipantDto -> setFirstLastShortIdDOB(kit, elasticSearchParticipantDto));
         }
@@ -693,11 +685,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     target) || OVERVIEW.equals(target) || WAITING.equals(target)) {
 
                 DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.NEEDS_NAME_LABELS);
-                if (StringUtils.isBlank(ddpInstance.getParticipantIndexES())) {
-                    throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstance.getName());
+                Map<String, Map<String, Object>> participantsESData = null;
+                if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
+                    participantsESData =
+                            ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
                 }
-                Map<String, Map<String, Object>> participantsESData =
-                        ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
 
                 for (String key : kitRequests.keySet()) {
                     List<KitRequestShipping> kitRequest = kitRequests.get(key);
@@ -714,8 +706,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             if ((ERROR.equals(target) || ((QUEUE.equals(target) || UPLOADED.equals(target)) && ddpInstance.isHasRole()))
                                     || (
                                     (UPLOADED.equals(target) || DEACTIVATED.equals(target) || TRIGGERED.equals(target) || OVERVIEW.equals(
-                                            target) || WAITING.equals(target)) && StringUtils.isBlank(
-                                            kit.getCollaboratorParticipantId()))) {
+                                            target) || WAITING.equals(target))
+                                            && StringUtils.isBlank(kit.getBspCollaboratorParticipantId()))) {
                                 String apiKey = DSMServer.getDDPEasypostApiKey(ddpInstance.getName());
                                 if (StringUtils.isNotBlank(apiKey) && kit.getEasypostAddressId() != null && StringUtils.isNotBlank(
                                         kit.getEasypostAddressId())) {
@@ -794,7 +786,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     new DDPParticipant(kitRequest.getParticipantId(), null, participantAddress.getName(), participantAddress.getCountry(),
                             participantAddress.getCity(), participantAddress.getZip(), participantAddress.getStreet1(),
                             participantAddress.getStreet2(), participantAddress.getState(),
-                            kitRequest.getShortId(kitRequest.getCollaboratorParticipantId()), null);
+                            kitRequest.getShortId(kitRequest.getBspCollaboratorParticipantId()), null);
             kitRequest.setParticipant(participant);
             if (ddpInstance.isHasRole()) { //if instance hasRole NEEDS_NAME_LABELS
                 kitRequest.setNameLabel(participantAddress.getName());
@@ -925,7 +917,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     // 1. hourly job to add kit requests into db
     // 2. kit upload
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
-                                      @NonNull String ddpParticipantId, String collaboratorPatientId, String collaboratorSampleId,
+                                      @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
         String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
@@ -937,7 +929,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 insertKitRequest.setString(2, ddpKitRequestId);
                 insertKitRequest.setInt(3, kitTypeId);
                 insertKitRequest.setString(4, ddpParticipantId);
-                insertKitRequest.setObject(5, collaboratorPatientId);
+                insertKitRequest.setObject(5, bspCollaboratorParticipantId);
                 insertKitRequest.setObject(6, collaboratorSampleId);
                 insertKitRequest.setObject(7, ddpLabel); //ddp_label or shipping_id
                 insertKitRequest.setString(8, createdBy);
@@ -976,13 +968,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         if (Objects.nonNull(ddpInstance)) {
             KitRequestShipping kitRequestShipping = (KitRequestShipping) results.resultValue;
             kitRequestShipping.setParticipantId(ddpParticipantId);
-            kitRequestShipping.setCollaboratorParticipantId(collaboratorPatientId);
+            kitRequestShipping.setBspCollaboratorParticipantId(bspCollaboratorParticipantId);
             kitRequestShipping.setBspCollaboratorSampleId(collaboratorSampleId);
             kitRequestShipping.setMessage(errorMessage);
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
-            kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
+            kitRequestShipping.setDdpInstanceId((long) ddpInstance.getDdpInstanceIdAsInt());
             kitRequestShipping.setDdpLabel(ddpLabel);
 
             DDPInstanceDto ddpInstanceDto =
@@ -994,9 +986,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
                         new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
-                logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
-                        + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
-                e.printStackTrace();
+                //This error will trigger on studies with no participants, this skips
+                //the error log if that is the reason for the upsert failure.
+                if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
+                    logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
+                            + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
+                    e.printStackTrace();
+                }
             }
 
             logger.info("Added kitRequest w/ ddpKitRequestId " + ddpKitRequestId);
@@ -1346,7 +1342,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public static Address getToAddressId(@NonNull EasyPostUtil easyPostUtil, KitRequestSettings kitRequestSettings, String addressId,
-                                         DDPParticipant participant) throws Exception {
+                                         DDPParticipant participant, DDPInstanceDto ddpInstanceDto) throws Exception {
         Address toAddress = null;
         if (addressId == null && participant == null) { //if both are set to null then it is return label!
             toAddress = easyPostUtil.createBroadAddress(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
@@ -1356,8 +1352,44 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             if (StringUtils.isNotBlank(addressId)) {
                 toAddress = easyPostUtil.getAddress(addressId);
             } else if (participant != null) {
+                if (kitRequestSettings.getHasCareOF() != 1) {
+                    // aside form singular, all other studies should go here and proceed with normal label
+                    toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
+                    return toAddress;
+                }
+                toAddress = getAddressForStudiesWithCareOfField(easyPostUtil, kitRequestSettings, participant, ddpInstanceDto);
+            }
+        }
+        return toAddress;
+    }
+
+    private static Address getAddressForStudiesWithCareOfField(@NonNull EasyPostUtil easyPostUtil, KitRequestSettings kitRequestSettings,
+                                                               DDPParticipant participant, DDPInstanceDto ddpInstanceDto)
+            throws EasyPostException {
+        Address toAddress = null;
+        String proxyFirstName = null;
+        String proxyLastName = null;
+        Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstanceDto,
+                ElasticSearchUtil.BY_GUID + participant.getParticipantId());
+        if (participantESData != null && !participantESData.isEmpty()) {
+            ArrayList<String> proxies =
+                    (ArrayList<String>) participantESData.get(participant.getParticipantId()).get(ElasticSearchUtil.PROXIES);
+            if (proxies != null && proxies.size() > 0) {
+                String proxyParticipantId = proxies.get(0);
+                Map<String, Map<String, Object>> proxyESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstanceDto,
+                        ElasticSearchUtil.BY_GUID + proxyParticipantId);
+                Map<String, Object> proxyProfile = (Map<String, Object>) proxyESData.get(proxyParticipantId)
+                        .get(ElasticSearchUtil.PROFILE);
+                proxyFirstName = (String) proxyProfile.get("firstName");
+                proxyLastName = (String) proxyProfile.get("lastName");
+                String careOf = String.format("C/O %s %s", Objects.toString(proxyFirstName, ""),
+                        Objects.toString(proxyLastName, ""));
+                toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone(), careOf);
+            } else { // participant doesn't have proxies, proceed with normal label
                 toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
             }
+        } else { // participant is not in ES
+            throw new RuntimeException(String.format("Participant %s was not found in ES", participant.getParticipantId()));
         }
         return toAddress;
     }
@@ -1737,7 +1769,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     @Override
     public Optional<Long> extractDdpInstanceId() {
-        return Optional.of(ddpInstanceId);
+        return Optional.of(ddpInstanceId != null ? ddpInstanceId : 0);
     }
 
     public boolean isKitRequiringTrackingScan() {

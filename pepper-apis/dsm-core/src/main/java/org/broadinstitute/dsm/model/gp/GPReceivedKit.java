@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.gp;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -32,7 +33,8 @@ public class GPReceivedKit {
         BSPKitDao bspKitDao = new BSPKitDao();
         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(bspKitQueryResult.getInstanceName());
         instanceSettingsDto.getKitBehaviorChange().flatMap(
-                        kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
+                kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED))
+                        .findFirst())
                 .ifPresentOrElse(received -> {
                     Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + bspKitQueryResult.getDdpParticipantId());
@@ -56,9 +58,9 @@ public class GPReceivedKit {
                         }
                         updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, triggerDDP, receiver);
                     }
-                }, () -> {
-                    updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true, receiver);
-                });
+                },  () -> {
+                        updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true, receiver);
+                    });
 
         String bspParticipantId = bspKitQueryResult.getBspParticipantId();
         String bspSampleId = bspKitQueryResult.getBspSampleId();
@@ -92,12 +94,16 @@ public class GPReceivedKit {
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
-        try {
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                    ESObjectConstants.KIT_LABEL, kitLabel, new PutToNestedScriptBuilder()).export();
-        } catch (Exception e) {
-            logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
-            e.printStackTrace();
+        if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex())) {
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
+                        ESObjectConstants.KIT_LABEL, kitLabel, new PutToNestedScriptBuilder()).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
+                e.printStackTrace();
+            }
+        } else {
+            logger.info("No participant index.");
         }
     }
 }

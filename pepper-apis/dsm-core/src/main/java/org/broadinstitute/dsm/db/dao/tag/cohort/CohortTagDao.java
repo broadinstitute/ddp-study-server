@@ -13,4 +13,5 @@ public interface CohortTagDao extends Dao<CohortTag> {
 
     int removeCohortByCohortTagNameAndGuid(String cohortTagName, String ddpParticipantId);
 
+    boolean participantHasTag(String ddpParticipantId, String tagName);
 }

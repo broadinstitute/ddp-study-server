@@ -106,6 +106,9 @@
     <include file="liquibase/CMI/DDP-8113_invitaeTab.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8569_sampleNotes.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-8806_singular_field_changes.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/PEPPER-104_care_of.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-8712_kit-prefix.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-4_viewDSSonly.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/Pepper-195_geneticTestingUpdate.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/PEPPER-285_block_id_shl.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

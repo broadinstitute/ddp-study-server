@@ -13,7 +13,7 @@ public class DateSplitterTest {
         SplitterStrategy splitter = Operator.DATE.getSplitterStrategy();
         splitter.setFilter(filter);
 
-        Assert.assertEquals("1640563200", splitter.getValue()[0]);
+        Assert.assertEquals("2021-12-27", splitter.getValue()[0]);
         Assert.assertEquals("scanDate", splitter.getInnerProperty());
 
     }

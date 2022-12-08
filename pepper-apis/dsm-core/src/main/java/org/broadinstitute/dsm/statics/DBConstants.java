@@ -145,6 +145,7 @@ public class DBConstants {
     public static final String SAMPLE_NOTES = "sample_notes";
     public static final String KIT_LABEL_PREFIX = "kit_label_prefix";
     public static final String KIT_LABEL_LENGTH = "kit_label_length";
+    public static final String HAS_CARE_OF = "has_care_of";
 
     public static final String ONC_HISTORY_ID = "onc_history_id";
 
@@ -252,6 +253,7 @@ public class DBConstants {
     public static final String TISSUE_RETURN_DATE = "return_date";
     public static final String RETURN_FEDEX_ID = "return_fedex_id";
     public static final String EXPECTED_RETURN = "expected_return";
+    public static final String BLOCK_ID_SHL = "block_id_shl";
     public static final String SHL_WORK_NUMBER = "shl_work_number";
     public static final String TISSUE_SEQUENCE = "tissue_sequence";
     public static final String TUMOR_PERCENTAGE = "tumor_percentage";
