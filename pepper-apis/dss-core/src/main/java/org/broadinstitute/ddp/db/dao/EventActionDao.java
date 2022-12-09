@@ -155,6 +155,12 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
+    default long insertCreateKitAction(long kitTypeId) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.CREATE_KIT);
+        DBUtils.checkInsert(1, getEventActionSql().insertCreateKitEventAction(actionId,kitTypeId));
+        return actionId;
+    }
+
     default void deleteAnnouncementAction(long eventActionId) {
         int numDeleted = getJdbiUserAnnouncementEventAction().deleteById(eventActionId);
         if (numDeleted != 1) {

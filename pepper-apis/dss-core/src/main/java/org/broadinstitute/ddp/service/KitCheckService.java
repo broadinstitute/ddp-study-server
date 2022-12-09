@@ -111,7 +111,7 @@ public class KitCheckService {
         return kitCheckResult;
     }
 
-    private void processPotentialKitRecipient(String studyGuid, long kitTypeId,
+    public KitCheckResult processPotentialKitRecipient(String studyGuid, long kitTypeId,
                                               KitCheckResult kitCheckResult,
                                               KitConfiguration kitConfiguration,
                                               PotentialRecipient candidate) {
@@ -119,13 +119,13 @@ public class KitCheckService {
 
         if (candidate.getAddressId() == null) {
             log.warn("Participant {} is missing a default mailing address", userGuid);
-            return;
+            return null;
         }
 
         if (candidate.getAddressValidationStatus() == null
                 || candidate.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
             log.warn("Participant {} has an invalid mailing address", userGuid);
-            return;
+            return null;
         }
 
         boolean wasSuccessful = withAPIsTxn(handle -> {
@@ -159,6 +159,8 @@ public class KitCheckService {
         } else {
             log.warn("Participant {} was ineligible for a kit", userGuid);
         }
+
+        return kitCheckResult;
     }
 
     /**

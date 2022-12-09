@@ -91,6 +91,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.model.event.KitCreationEventAction;
 import org.broadinstitute.ddp.model.event.UpdateUserStatusEventAction;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
@@ -889,6 +890,38 @@ public class Housekeeping {
             apisHandle.attach(DataExportDao.class).queueDataSync(participant.getId(), studyDto.getId());
             return true;
         }
+
+        if (actionType == EventActionType.CREATE_KIT) {
+            EventConfiguration event = eventDao
+                    .getEventConfigurationDtoById(pendingEvent.getEventConfigurationId())
+                    .map(EventConfiguration::new)
+                    .orElse(null);
+            if (event == null) {
+                log.error("No event configuration found for id={}, skipping queued event {}",
+                        pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
+                return true;
+            }
+
+            long operatorUserId = pendingEvent.getOperatorUserId() != null
+                    ? pendingEvent.getOperatorUserId() : participant.getId();
+            String operatorGuid = pendingEvent.getOperatorGuid() != null
+                    ? pendingEvent.getOperatorGuid() : participant.getGuid();
+            StudyDto studyDto = new JdbiUmbrellaStudyCached(apisHandle)
+                    .findByStudyGuid(pendingEvent.getStudyGuid());
+            var signal = new EventSignal(
+                    operatorUserId,
+                    participant.getId(),
+                    participant.getGuid(),
+                    operatorGuid,
+                    studyDto.getId(),
+                    studyDto.getGuid(),
+                    pendingEvent.getTriggerType());
+
+            var action = (KitCreationEventAction) event.getEventAction();
+            action.doActionSynchronously(apisHandle, signal);
+
+        }
+
         return false;
     }
 

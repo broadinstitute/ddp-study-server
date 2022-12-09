@@ -50,7 +50,7 @@ public class UpdateCustomWorkflowEventActionTest extends TxnAwareBaseTest {
                     null, 1L, null, null, null, null, null, null, null,
                     null, null, null, 1L,
                     null, null, null, null, null, null,
-                    workflow, status, false, null, null);
+                    workflow, status, false, null, null, null);
             var event = new EventConfiguration(eventDto);
             var updateCustomWorkflowEventAction = new UpdateCustomWorkflowEventAction(event, eventDto, new TestTaskPublisher());
             updateCustomWorkflowEventAction.doAction(null, handle, signal);
