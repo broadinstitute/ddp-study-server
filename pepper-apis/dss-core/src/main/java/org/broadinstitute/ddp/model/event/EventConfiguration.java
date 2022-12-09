@@ -118,7 +118,7 @@ public class EventConfiguration {
                 eventAction = new UpdateCustomWorkflowEventAction(this, dto, new TaskPubSubPublisher());
                 break;
             case CREATE_KIT:
-                eventAction = new KitCreationEventAction(this, dto);
+                eventAction = new CreateKitEventAction(this, dto);
                 break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "

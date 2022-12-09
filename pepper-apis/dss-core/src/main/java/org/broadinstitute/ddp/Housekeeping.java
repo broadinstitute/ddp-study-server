@@ -91,7 +91,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.EventSignal;
-import org.broadinstitute.ddp.model.event.KitCreationEventAction;
+import org.broadinstitute.ddp.model.event.CreateKitEventAction;
 import org.broadinstitute.ddp.model.event.UpdateUserStatusEventAction;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
@@ -917,7 +917,7 @@ public class Housekeeping {
                     studyDto.getGuid(),
                     pendingEvent.getTriggerType());
 
-            var action = (KitCreationEventAction) event.getEventAction();
+            var action = (CreateKitEventAction) event.getEventAction();
             action.doActionSynchronously(apisHandle, signal);
 
         }
