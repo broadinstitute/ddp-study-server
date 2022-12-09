@@ -53,8 +53,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         String collaboratorParticipantId = KitRequestShipping
                 .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                         ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, "4");
-        int randomINT = new Random().nextInt(10000);
-        updateTissue(tissueId, collaboratorParticipantId + "_" + randomINT);
+        int randomINT = new Random().nextInt(100000);
+        updateTissue(tissueId, collaboratorParticipantId + "_T" + randomINT);
 
     }
 
