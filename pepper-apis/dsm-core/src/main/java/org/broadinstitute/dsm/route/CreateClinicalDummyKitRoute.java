@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -52,7 +53,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         String collaboratorParticipantId = KitRequestShipping
                 .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                         ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, "4");
-        updateTissue(tissueId, collaboratorParticipantId + "_T1");
+        int randomINT = new Random().nextInt(100000);
+        updateTissue(tissueId, collaboratorParticipantId + "_T" + randomINT);
 
     }
 
@@ -197,9 +199,9 @@ public class CreateClinicalDummyKitRoute implements Route {
             List<Tissue> tissueIds =
                     oncHistoryDetailDaoImpl.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
             String tissueId = null;
-            if (!tissueIds.isEmpty()) {
+            if (tissueIds != null && !tissueIds.isEmpty()) {
                 Optional<Tissue> tissue = tissueIds.stream().filter(tissue1 ->
-                        StringUtils.isNotBlank(tissue1.getCollaboratorSampleId())
+                        tissue1 != null && StringUtils.isNotBlank(tissue1.getCollaboratorSampleId())
                 ).findAny();
                 tissueId = tissue.isPresent() ? String.valueOf(tissue.get().getTissueId()) : null;
             }
