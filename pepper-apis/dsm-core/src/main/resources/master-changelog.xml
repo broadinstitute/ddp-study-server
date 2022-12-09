@@ -111,4 +111,5 @@
     <include file="liquibase/PEPPER-4_viewDSSonly.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/Pepper-195_geneticTestingUpdate.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/PEPPER-285_block_id_shl.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/PEPPER-270_cardiacMalformationTabChanges.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
