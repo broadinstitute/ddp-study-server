@@ -7,8 +7,8 @@
     <changeSet id="PEPPER-271_GROUP_CLINICAL_NOTES" author="pegah">
         <sql>
             SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
-            SELECT @orderNumber := order_number FROM dev_dsm_db.field_settings where ddp_instance_id = 32 and column_display = 'Protein-losing enteropathy' and
-            field_type = 'GROUP_CLINICAL_NOTES' ;
+            SELECT @orderNumber := order_number FROM field_settings where ddp_instance_id = @realm
+            and column_display = 'Protein-losing enteropathy' and field_type = 'GROUP_CLINICAL_NOTES' ;
 
             update field_settings set order_number = order_number + 2
             where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
