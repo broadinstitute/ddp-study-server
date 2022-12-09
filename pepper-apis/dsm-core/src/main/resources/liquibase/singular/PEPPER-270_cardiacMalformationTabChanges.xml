@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-270_Conotruncal" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @orderNumber := order_number from field_settings where column_display = "PA-VSD (TOF anatomy)"
+            and ddp_instance_id = @realm and field_type = 'CONOTRUNCAL_GROUP' ;
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'CONOTRUNCAL_GROUP' and order_number >= @orderNumber) and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'CONOTRUNCAL_GROUP', 'TOF_MAPCA' ,'TOF + pulmonary atresia with MAPCAs',
+            'CHECKBOX', @orderNumber from ddp_instance where instance_name = 'Singular';
+
+            SELECT @orderNumber := order_number from field_settings where column_display = "DORV, os"
+            and ddp_instance_id = @realm and field_type = 'CONOTRUNCAL_GROUP' ;
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'CONOTRUNCAL_GROUP' and order_number >= @orderNumber) and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'CONOTRUNCAL_GROUP', 'DORV_UNCOMMITTED_VSD' ,'DORV (uncommitted VSD)',
+            'CHECKBOX', @orderNumber from ddp_instance where instance_name = 'Singular';
+
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-270_LVOTO_GROUP" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @orderNumber := order_number from field_settings where column_display = "IAA, A" and ddp_instance_id = @realm
+            and field_type = 'LVOTO_GROUP' ;
+
+            update field_settings set order_number = order_number + 3
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'LVOTO_GROUP' and order_number >= @orderNumber) and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'LVOTO_GROUP', 'HLHS_MITRAL_STENOSIS_AORTIC_STENOSIS' ,'HLHS with mitral stenosis and aortic stenosis',
+            'CHECKBOX', @orderNumber from ddp_instance where instance_name = 'Singular';
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'LVOTO_GROUP', 'HLHS_MITRAL_STENOSIS_AORTIC_ARTESIA' ,'HLHS with mitral stenosis and aortic atresia',
+            'CHECKBOX', @orderNumber + 1 from ddp_instance where instance_name = 'Singular';
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'LVOTO_GROUP', 'HLHS_MITRAL_ARTESIA_AORTIC_ARTESIA' ,'HLHS with mitral atresia and aortic atresia',
+            'CHECKBOX', @orderNumber + 2 from ddp_instance where instance_name = 'Singular';
+
+
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-270_RVOTO_GROUP" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @orderNumber := order_number from field_settings where column_display = "Tricuspid stenosis or hypoplasia"
+            and ddp_instance_id = @realm and field_type = 'RVOTO_GROUP' ;
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'RVOTO_GROUP' and order_number >= @orderNumber) and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'RVOTO_GROUP', 'TRICUSPID_ARTESIA_VSD_TGA' ,'Tricuspid atresia + VSD and TGA',
+            'CHECKBOX', @orderNumber from ddp_instance where instance_name = 'Singular';
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-270_SEPTAL_GROUP" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @orderNumber := order_number from field_settings where column_display = "ASD, nos"
+            and ddp_instance_id = @realm and field_type = 'SEPTAL_GROUP';
+
+            update field_settings set order_number = order_number + 2
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'SEPTAL_GROUP' and order_number >= @orderNumber) and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'SEPTAL_GROUP', 'SINUS_VENOSUS_SUPERIOR', 'Sinus venosus defect, superior type',
+            'CHECKBOX', @orderNumber from ddp_instance where instance_name = 'Singular';
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'SEPTAL_GROUP', 'SINUS_VENOSUS_INFERIOR', 'Sinus venosus defect, inferior type',
+            'CHECKBOX', @orderNumber + 1 from ddp_instance where instance_name = 'Singular';
+        </sql>
+
+        <sql>
+            UPDATE field_settings set deleted = 1
+            WHERE column_display = "ASD, sinus venosus defect"
+            AND ddp_instance_id IN ( SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular');
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-270_SINGLE_VENTRICLE_GROUP" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @orderNumber := order_number from field_settings where column_display = "DILV, normally related great vessels"
+            and ddp_instance_id = @realm and field_type = 'SINGLE_VENTRICLE_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'SINGLE_VENTRICLE_GROUP' and order_number >= @orderNumber) and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'SINGLE_VENTRICLE_GROUP', 'SINGLE_VENTRICLE_DILV-ABNORMAL', 'DILV, abnormally related great vessels',
+            'CHECKBOX', @orderNumber from ddp_instance where instance_name = 'Singular';
+
+        </sql>
+        <sql>
+            UPDATE field_settings set deleted = 1
+            WHERE column_display = "DILV, normally related great vessels"
+            AND ddp_instance_id IN ( SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular');
+        </sql>
+    </changeSet>
+</databaseChangeLog>
