@@ -306,7 +306,7 @@
     <include file="db-changes/seed/DDP-7709-add-boolean-render-mode-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7709-add-boolean-render-mode.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8012.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/schema/DDP-7713.xml" relativeToChangelogFile="true"/>
+<!--    <include file="db-changes/schema/DDP-7713.xml" relativeToChangelogFile="true"/>-->
     <include file="db-changes/schema/DDP-7248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7890-add-new-event-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7931.xml" relativeToChangelogFile="true"/>
@@ -314,13 +314,13 @@
     <include file="db-changes/schema/DDP-7931-user-email.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7931-user-created-by-not-required.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8309-fon-zip-code-validation.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/schema/DDP-8270-composite-add-tabular-separator.xml" relativeToChangelogFile="true"/>
+<!--    <include file="db-changes/schema/DDP-8270-composite-add-tabular-separator.xml" relativeToChangelogFile="true"/>-->
     <include file="db-changes/schema/DDP-8248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8484-copy-configuration-operator.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8631-add-country-field-to-medical-provider.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8606.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8554.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/seed/PEPPER-37-add-auth0-log-event-code.xml" relativeToChangelogFile="true"/>
+<!--    <include file="db-changes/seed/PEPPER-37-add-auth0-log-event-code.xml" relativeToChangelogFile="true"/>-->
     <include file="db-changes/schema/PEPPER-235-create-kit-event-action.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/PEPPER-235-add-kit-creation.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

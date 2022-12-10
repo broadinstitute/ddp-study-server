@@ -64,7 +64,7 @@ public class CreateKitEventAction extends EventAction {
         List<KitConfigurationDto> kitConfigs = handle.attach(KitConfigurationDao.class)
                 .getKitConfigurationDtosByStudyId(signal.getStudyId());
         if (kitConfigs == null || kitConfigs.isEmpty()) {
-            return;
+            return; //todo.. event.. no kitConfig
         }
 
         //load user and address
@@ -93,7 +93,8 @@ public class CreateKitEventAction extends EventAction {
         Optional<KitConfigurationDto> kitConfigByTypeOpt = kitConfigs.stream().filter(dto -> dto.getKitTypeId()
                 == kitTypeId).findFirst();
         if (!kitConfigByTypeOpt.isPresent()) {
-            // todo warn and move on
+            // todo warn and move on ?
+            //log.warn("No KitConfig for study : {} . kit type Id: {}", signal.getStudyGuid(), kitTypeId);
         } else {
             kitConfig = handle.attach(KitConfigurationDao.class).getKitConfigurationForDto(kitConfigByTypeOpt.get());
         }

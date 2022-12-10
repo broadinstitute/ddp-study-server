@@ -385,7 +385,7 @@ public class Housekeeping {
                                                             .orElse(false);
                                                     if (shouldDeleteEvent) {
                                                         log.warn("Unable to create message for event with "
-                                                                + "queued_event_id={}, proceeding to delete",
+                                                                        + "queued_event_id={}, proceeding to delete",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                         queuedEventDao.deleteAllByQueuedEventId(
                                                                 pendingEvent.getQueuedEventId());
@@ -393,8 +393,8 @@ public class Housekeeping {
                                                         // event.
                                                     } else {
                                                         log.error("Could not create message for event with "
-                                                                + "queued_event_id={}"
-                                                                + " because there is no email address to sent to",
+                                                                        + "queued_event_id={}"
+                                                                        + " because there is no email address to sent to",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                     }
                                                 } catch (MessageBuilderException e) {
@@ -919,7 +919,9 @@ public class Housekeeping {
 
             var action = (CreateKitEventAction) event.getEventAction();
             action.doActionSynchronously(apisHandle, signal);
-
+            jdbiQueuedEvent.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+            log.info("Deleted queued create kit event {}", pendingEvent.getQueuedEventId());
+            return true;
         }
 
         return false;
@@ -954,7 +956,8 @@ public class Housekeeping {
     /**
      * Supplier of SendGrid service.
      */
-    @FunctionalInterface interface SendGridSupplier {
+    @FunctionalInterface
+    interface SendGridSupplier {
         SendGridClient get(String apiKey);
     }
 }

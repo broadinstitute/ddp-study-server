@@ -47,6 +47,7 @@ import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
+import org.broadinstitute.ddp.housekeeping.message.CreateKitMessage;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -297,10 +298,17 @@ public class PubSubMessageBuilder {
                     queuedPdfGenerationDto.getEventConfigurationId(),
                     queuedPdfGenerationDto.getPdfDocumentConfigurationId());
             messageJson = gson.toJson(pdfGenerationMessage);
+        } else if (pendingEvent.getActionType() == EventActionType.CREATE_KIT) {
+            CreateKitMessage pdfGenerationMessage = new CreateKitMessage(
+                    participantGuid,
+                    studyGuid,
+                    pendingEvent.getEventConfigurationId());
+            messageJson = gson.toJson(pdfGenerationMessage);
         } else {
             throw new MessageBuilderException("message has not been determined for queued event " + pendingEvent
                     .getQueuedEventId());
         }
+
         PubsubMessage.Builder messageBuilder = PubsubMessage.newBuilder()
                 .setData(ByteString.copyFromUtf8(messageJson))
                 .putAttributes(DDP_EVENT_ID, pendingEvent.getDdpEventId())
