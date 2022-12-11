@@ -6,6 +6,10 @@ public enum DsmNotificationEventType {
      */
     SALIVA_RECEIVED,
     /**
+     * Message sent by DSM when saliva kit has been sent
+     */
+    SALIVA_SENT,
+    /**
      * Message sent by DSM when blood kit has been returned to Broad
      */
     BLOOD_RECEIVED,

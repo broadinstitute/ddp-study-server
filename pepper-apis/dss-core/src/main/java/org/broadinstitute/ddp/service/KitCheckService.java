@@ -136,11 +136,13 @@ public class KitCheckService {
 
             if (success) {
                 //default numKits to 1 if event and no config or config.numKits < 1
-                int numKits = (event && (kitConfiguration == null || kitConfiguration.getNumKits() <= 1)) ? 1: kitConfiguration.getNumKits();
+                int numKits = (event && (kitConfiguration == null || kitConfiguration.getNumKits() <= 1))
+                        ? 1 : kitConfiguration.getNumKits();
                 for (int i = 0; i < numKits; i++) {
                     log.info("Creating kit request for {} by {}", userGuid, event ? "event" : "job");
                     Long kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
-                            candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
+                            candidate.getAddressId(), kitTypeId,
+                            kitConfiguration != null ? kitConfiguration.needsApproval() : false);
                     log.info("Created kit request id {} for {}. Completed {} out of {} kits",
                             kitRequestId, userGuid, i + 1, numKits);
                 }
