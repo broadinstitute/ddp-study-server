@@ -919,7 +919,7 @@ public class Housekeeping {
 
             var action = (CreateKitEventAction) event.getEventAction();
             action.doActionSynchronously(apisHandle, signal);
-            jdbiQueuedEvent.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+            jdbiQueuedEvent.delete(pendingEvent.getQueuedEventId());
             log.info("Deleted queued create kit event {}", pendingEvent.getQueuedEventId());
             return true;
         }

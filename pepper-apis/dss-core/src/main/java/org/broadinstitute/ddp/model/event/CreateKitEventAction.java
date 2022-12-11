@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS;
+
 @Slf4j
 public class CreateKitEventAction extends EventAction {
 
@@ -63,26 +65,28 @@ public class CreateKitEventAction extends EventAction {
 
         List<KitConfigurationDto> kitConfigs = handle.attach(KitConfigurationDao.class)
                 .getKitConfigurationDtosByStudyId(signal.getStudyId());
-        if (kitConfigs == null || kitConfigs.isEmpty()) {
-            return; //todo.. event.. no kitConfig
-        }
 
         //load user and address
-        User user = handle.attach(UserDao.class).findUserByGuid(signal.getParticipantGuid()).get();
-        List<MailAddress> allAddresses = handle.attach(JdbiMailAddress.class)
-                .findAllAddressesForParticipant(signal.getParticipantGuid());
-        MailAddress address = null;
         DsmAddressValidationStatus statusType = null;
-        Optional<MailAddress> defaultAddressOpt = allAddresses.stream().filter(mailAddress -> mailAddress.isDefault()).findFirst();
-        if (!defaultAddressOpt.isPresent()) {
-            log.warn("No default address for ptp : {} ", signal.getParticipantGuid());
-            //no default mailing address ??
+        User user = handle.attach(UserDao.class).findUserByGuid(signal.getParticipantGuid()).get();
+        MailAddress defaultAddress = handle.attach(JdbiMailAddress.class)
+                .findDefaultAddressForParticipant(signal.getParticipantGuid())
+                .orElse(null);
+
+        if (defaultAddress == null) {
+            log.warn("Participant {} is missing a default mailing address. Deleting the create kit event", signal.getParticipantGuid());
+            return;
+        }
+
+        if (defaultAddress.getValidationStatus() == DSM_INVALID_ADDRESS_STATUS.getCode()) {
+            log.warn("Participant {} has an invalid mailing address", signal.getParticipantGuid());
+            return;
         } else {
-            address = defaultAddressOpt.get();
             try {
-                statusType = DsmAddressValidationStatus.getByCode(address.getValidationStatus());
+                statusType = DsmAddressValidationStatus.getByCode(defaultAddress.getValidationStatus());
             } catch (Exception e) {
                 log.warn(e.getMessage() + ". Participant: {} ", signal.getParticipantGuid());
+                return;
             }
         }
 
@@ -94,9 +98,9 @@ public class CreateKitEventAction extends EventAction {
 
         KitCheckService service = new KitCheckService();
         KitCheckService.PotentialRecipient candidate = new KitCheckService.PotentialRecipient(user.getId(),
-                user.getGuid(), address.getId(), statusType);
+                user.getGuid(), defaultAddress.getId(), statusType);
         KitCheckService.KitCheckResult kitCheckResult = new KitCheckService.KitCheckResult();
-        kitCheckResult = service.processPotentialKitRecipient(signal.getParticipantGuid(), kitTypeId,
+        kitCheckResult = service.processPotentialKitRecipient(signal.getStudyGuid(), kitTypeId,
                 kitCheckResult, kitConfig, candidate, true);
 
         //send metric by study
