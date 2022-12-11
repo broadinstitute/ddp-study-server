@@ -96,7 +96,7 @@ public class KitCheckService {
                 while (!batch.isEmpty()) {
                     PotentialRecipient candidate = batch.remove();
                     try {
-                        processPotentialKitRecipient(studyGuid, kitTypeId, kitCheckResult, kitConfig, candidate);
+                        processPotentialKitRecipient(studyGuid, kitTypeId, kitCheckResult, kitConfig, candidate, false);
                     } catch (Exception e) {
                         log.error("Error while checking potential kit recipient {}, continuing", candidate.getUserGuid(), e);
                     }
@@ -114,7 +114,7 @@ public class KitCheckService {
     public KitCheckResult processPotentialKitRecipient(String studyGuid, long kitTypeId,
                                               KitCheckResult kitCheckResult,
                                               KitConfiguration kitConfiguration,
-                                              PotentialRecipient candidate) {
+                                              PotentialRecipient candidate, boolean event) {
         String userGuid = candidate.getUserGuid();
 
         if (candidate.getAddressId() == null) {
@@ -129,13 +129,13 @@ public class KitCheckService {
         }
 
         boolean wasSuccessful = withAPIsTxn(handle -> {
-            boolean success = kitConfiguration.evaluate(handle, userGuid);
+            boolean success = (event && kitConfiguration == null) ? true : kitConfiguration.evaluate(handle, userGuid);
 
             KitScheduleDao kitScheduleDao = handle.attach(KitScheduleDao.class);
             DsmKitRequestDao kitRequestDao = handle.attach(DsmKitRequestDao.class);
 
             if (success) {
-                int numKits = kitConfiguration.getNumKits();
+                int numKits = kitConfiguration != null ? kitConfiguration.getNumKits() : 0;
                 for (int i = 0; i < numKits; i++) {
                     log.info("Creating kit request for {}", userGuid);
                     Long kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
@@ -143,7 +143,7 @@ public class KitCheckService {
                     log.info("Created kit request id {} for {}. Completed {} out of {} kits",
                             kitRequestId, userGuid, i + 1, numKits);
                 }
-                if (kitConfiguration.getSchedule() != null) {
+                if (kitConfiguration != null  && kitConfiguration.getSchedule() != null) {
                     // Add a tracking record for participant if kit has a reoccurring schedule.
                     long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId());
                     log.info("Added kit schedule record with id={} for tracking reoccurring kits"

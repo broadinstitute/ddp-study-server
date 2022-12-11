@@ -53,7 +53,7 @@ public class CreateKitEventAction extends EventAction {
                         + " delayed Kit Creation events should set dispatchToHousekeeping");
             }
             long queuedEventId = queueDelayedEvent(handle, signal);
-            log.info("Queued Kit Creation event with id {}", queuedEventId);
+            log.info("Queued Create Kit event with id {}", queuedEventId);
         } else {
             doActionSynchronously(handle, signal);
         }
@@ -81,30 +81,23 @@ public class CreateKitEventAction extends EventAction {
             address = defaultAddressOpt.get();
             try {
                 statusType = DsmAddressValidationStatus.getByCode(address.getValidationStatus());
-                //address.setValidationStatus(DsmAddressValidationStatus.getByCode(address.getValidationStatus()));
             } catch (Exception e) {
-                //todo warn and move on or halt
-                log.warn("Invalid address validation statusId {}  found for participant: {} ",
-                        address.getValidationStatus(), signal.getParticipantGuid());
+                log.warn(e.getMessage() + ". Participant: {} ", signal.getParticipantGuid());
             }
         }
 
-        KitConfiguration kitConfig = null;
         Optional<KitConfigurationDto> kitConfigByTypeOpt = kitConfigs.stream().filter(dto -> dto.getKitTypeId()
                 == kitTypeId).findFirst();
-        if (!kitConfigByTypeOpt.isPresent()) {
-            // todo warn and move on ?
-            //log.warn("No KitConfig for study : {} . kit type Id: {}", signal.getStudyGuid(), kitTypeId);
-        } else {
-            kitConfig = handle.attach(KitConfigurationDao.class).getKitConfigurationForDto(kitConfigByTypeOpt.get());
-        }
-        //should be only one !
+
+        KitConfiguration kitConfig = kitConfigByTypeOpt.isPresent()
+                ? handle.attach(KitConfigurationDao.class).getKitConfigurationForDto(kitConfigByTypeOpt.get()) : null;
+
         KitCheckService service = new KitCheckService();
         KitCheckService.PotentialRecipient candidate = new KitCheckService.PotentialRecipient(user.getId(),
                 user.getGuid(), address.getId(), statusType);
         KitCheckService.KitCheckResult kitCheckResult = new KitCheckService.KitCheckResult();
         kitCheckResult = service.processPotentialKitRecipient(signal.getParticipantGuid(), kitTypeId,
-                kitCheckResult, kitConfig, candidate);
+                kitCheckResult, kitConfig, candidate, true);
 
         //send metric by study
         if (kitCheckResult != null) {
