@@ -57,6 +57,8 @@ public class DownloadPDF {
     private String medicalRecordId;
     private List<PDF> pdfs;
 
+    private static long retryWaitMillis = 2 * 1000;
+
     public DownloadPDF(@NonNull String requestBody) {
         JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
 
@@ -84,39 +86,60 @@ public class DownloadPDF {
 
     public Optional<byte[]> getPDFs(long userIdRequest, String realm, String requestBody) {
         UserDto user = new UserDao().get(userIdRequest).orElseThrow();
-        Optional<byte[]> pdfBytes = Optional.empty();
+        Optional<byte[]> maybePdf = Optional.empty();
         if (StringUtils.isNotBlank(this.ddpParticipantId)) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
             if (ddpInstance != null && StringUtils.isNotBlank(ddpParticipantId)) {
                 String fileName = "";
                 if (configName == null) {
-                    pdfBytes = getPDFBundle(ddpInstance, requestBody, user);
+                    maybePdf = getPDFBundle(ddpInstance, requestBody, user);
                 } else {
-                    pdfBytes = generateSinglePDF(requestBody, configName, user, ddpInstance);
+                    maybePdf = generateSinglePDF(requestBody, configName, user, ddpInstance);
                 }
-                pdfBytes.ifPresent(bytes -> {
-                    savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(bytes), fileName, user.getId());
-                });
-                pdfBytes.orElseThrow();
+                if (maybePdf.isPresent()) {
+                    byte[] pdfByte = maybePdf.get();
+                    if (pdfByte.length > 0) {
+                        savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(pdfByte),
+                                fileName, user.getId());
+                    } else {
+                        throw new RuntimeException("PDF size was zero!" + fileName);
+                    }
+                }
+                maybePdf.orElseThrow();
+
             } else {
                 throw new RuntimeException("DDPInstance of participant " + ddpParticipantId + " not found");
             }
         }
-        return pdfBytes;
+        return maybePdf;
     }
 
     private Optional<byte[]> generateSinglePDF(@NonNull String requestBody, String configName, UserDto user, DDPInstance ddpInstance) {
         byte[] pdfByte = null;
-        if (COVER.equals(configName)) {
-            pdfByte = new MRCoverPDF(this).getMRCoverPDF(requestBody, ddpInstance, user);
-        } else if (IRB.equals(configName)) {
-            String groupId = DDPInstance.getDDPGroupId(ddpInstance.getName());
-            pdfByte = PDFProcessor.getTemplateFromGoogleBucket(groupId + "_IRB_Letter.pdf");
-        } else if (TISSUE.equals(configName) || REQUEST.equals(configName)) {
-            TissueCoverPDF tissueCoverPDF = new TissueCoverPDF(this);
-            pdfByte = tissueCoverPDF.getTissueCoverPDF(ddpInstance, user);
-        } else if (configName != null) {
-            pdfByte = requestPDF(ddpInstance, ddpParticipantId, configName);
+        int turn = 0;
+        while (turn < 5) {
+            if (COVER.equals(configName)) {
+                pdfByte = new MRCoverPDF(this).getMRCoverPDF(requestBody, ddpInstance, user);
+            } else if (IRB.equals(configName)) {
+                String groupId = DDPInstance.getDDPGroupId(ddpInstance.getName());
+                pdfByte = PDFProcessor.getTemplateFromGoogleBucket(groupId + "_IRB_Letter.pdf");
+            } else if (TISSUE.equals(configName) || REQUEST.equals(configName)) {
+                TissueCoverPDF tissueCoverPDF = new TissueCoverPDF(this);
+                pdfByte = tissueCoverPDF.getTissueCoverPDF(ddpInstance, user);
+            } else if (configName != null) {
+                pdfByte = requestPDF(ddpInstance, ddpParticipantId, configName);
+            }
+            if (pdfByte.length > 0) {
+                break;
+            } else {
+                try {
+                    Thread.sleep(retryWaitMillis);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            turn += 1;
         }
         return Optional.ofNullable(pdfByte);
     }
