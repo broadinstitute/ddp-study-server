@@ -11,6 +11,7 @@ public class QueryExtension {
     public static final String BY_ROLE_NAME_START_WITH = " and role.name regexp \'^%1\' ";
 
     public static final String BY_DDP_PARTICIPANT_ID = " AND p.ddp_participant_id = ?";
+    public static final String PECGS_TEST_ELIGIBLE_ONC_HISTORY = " AND oD.accession_number IS NOT NULL AND oD.date_px IS NOT NULL ";
     public static final String BY_MEDICAL_RECORD_ID = " AND m.medical_record_id = ?";
 
     public static final String BY_INSTITUTION_ID = " AND m.institution_id = ?";

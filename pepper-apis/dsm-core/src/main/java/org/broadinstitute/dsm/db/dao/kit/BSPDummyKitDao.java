@@ -146,7 +146,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     DBUtil.getFinalQuery(OncHistoryDetail.SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_DDP_PARTICIPANT_ID
-                                    + " AND oD.accession_number is not null ",
+                                    + QueryExtension.PECGS_TEST_ELIGIBLE_ONC_HISTORY,
                             SQL_SELECT_RANDOM_SUFFIX))) {
                 stmt.setString(1, ddpInstanceName);
                 stmt.setString(2, ddpParticipantId);
