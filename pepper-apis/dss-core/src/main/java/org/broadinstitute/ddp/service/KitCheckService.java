@@ -139,7 +139,7 @@ public class KitCheckService {
                 int numKits = (event && (kitConfiguration == null || kitConfiguration.getNumKits() <= 1))
                         ? 1 : kitConfiguration.getNumKits();
                 for (int i = 0; i < numKits; i++) {
-                    log.info("Creating kit request for {} by {}", userGuid, event ? "event" : "job");
+                    log.info("Creating kit request for {} by {}. kit type Id: {} ", userGuid, event ? "event" : "job", kitTypeId);
                     Long kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
                             candidate.getAddressId(), kitTypeId,
                             kitConfiguration != null ? kitConfiguration.needsApproval() : false);

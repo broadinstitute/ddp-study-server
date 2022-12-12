@@ -40,10 +40,6 @@ public class CreateKitEventAction extends EventAction {
     public CreateKitEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
         kitTypeId = dto.getKitTypeId();
-        if (kitTypeId == null) {
-            //todo
-            throw new DDPException("NO kitType in config");
-        }
     }
 
     @Override
