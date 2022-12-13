@@ -299,11 +299,11 @@ public class PubSubMessageBuilder {
                     queuedPdfGenerationDto.getPdfDocumentConfigurationId());
             messageJson = gson.toJson(pdfGenerationMessage);
         } else if (pendingEvent.getActionType() == EventActionType.CREATE_KIT) {
-            CreateKitMessage pdfGenerationMessage = new CreateKitMessage(
+            CreateKitMessage createKitMessage = new CreateKitMessage(
                     participantGuid,
                     studyGuid,
                     pendingEvent.getEventConfigurationId());
-            messageJson = gson.toJson(pdfGenerationMessage);
+            messageJson = gson.toJson(createKitMessage);
         } else {
             throw new MessageBuilderException("message has not been determined for queued event " + pendingEvent
                     .getQueuedEventId());

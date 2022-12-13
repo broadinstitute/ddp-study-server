@@ -908,7 +908,7 @@ public class Housekeeping {
                     ? pendingEvent.getOperatorGuid() : participant.getGuid();
             StudyDto studyDto = new JdbiUmbrellaStudyCached(apisHandle)
                     .findByStudyGuid(pendingEvent.getStudyGuid());
-            var signal = new EventSignal(
+            EventSignal signal = new EventSignal(
                     operatorUserId,
                     participant.getId(),
                     participant.getGuid(),
@@ -917,7 +917,7 @@ public class Housekeeping {
                     studyDto.getGuid(),
                     pendingEvent.getTriggerType());
 
-            var action = (CreateKitEventAction) event.getEventAction();
+            CreateKitEventAction action = (CreateKitEventAction) event.getEventAction();
             action.doActionSynchronously(apisHandle, signal);
             jdbiQueuedEvent.delete(pendingEvent.getQueuedEventId());
             log.info("Deleted queued create kit event {}", pendingEvent.getQueuedEventId());
