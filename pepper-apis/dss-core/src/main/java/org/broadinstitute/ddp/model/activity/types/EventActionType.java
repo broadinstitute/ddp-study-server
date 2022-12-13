@@ -12,7 +12,9 @@ public enum EventActionType {
     REVOKE_PROXIES(true),
     UPDATE_CUSTOM_WORKFLOW(false),
     UPDATE_USER_STATUS(false),
-    USER_ENROLLED(true);
+    USER_ENROLLED(true),
+    CREATE_KIT(false);
+
 
     private boolean isStatic;
 

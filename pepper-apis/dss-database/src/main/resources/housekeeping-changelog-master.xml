@@ -4,4 +4,5 @@
     <include file="db-changes/seed/housekeeping/event-types.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/housekeeping/create-backup-job-table.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/housekeeping/DDP-3618-add-pdf-generation-event-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/housekeeping/PEPPER-235-add-create-kit-event-type.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

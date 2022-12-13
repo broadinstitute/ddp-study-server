@@ -52,7 +52,8 @@ SELECT
      ucwea.custom_workflow_status,
      aica.create_from_answer,
      aica.source_question_stable_id,
-     aica.target_question_stable_id
+     aica.target_question_stable_id,
+     ckea.kit_type_id
 FROM
      event_configuration ec
 JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
@@ -79,6 +80,8 @@ LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.
 LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.event_action_id
 LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
 LEFT JOIN update_custom_workflow_event_action as ucwea on ucwea.event_action_id = ea.event_action_id
+LEFT JOIN create_kit_event_action as ckea on ckea.event_action_id = ea.event_action_id
+
 >>
 
 getEventConfigurationByEventConfigurationId() ::= <<

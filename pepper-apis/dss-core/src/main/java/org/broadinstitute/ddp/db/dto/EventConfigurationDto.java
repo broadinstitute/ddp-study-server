@@ -111,6 +111,9 @@ public class EventConfigurationDto {
     /* MARK_ACTIVITIES_READ_ONLY, HIDE_ACTIVITIES */
     Set<Long> targetActivityIds = new HashSet<>();
 
+    /* CREATE_KIT kit_type_id */
+    Long kitTypeId;
+
     public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean alwaysGenerate) {
         notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, alwaysGenerate));
     }

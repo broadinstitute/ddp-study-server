@@ -56,6 +56,13 @@ public interface EventActionSql extends SqlObject {
             @Bind("status") String status
      );
 
+    @SqlUpdate("insert into create_kit_event_action (event_action_id, kit_type_id)"
+            + " values (:actionId, :kitTypeId)")
+    int insertCreateKitEventAction(
+            @Bind("actionId") long actionId,
+            @Bind("kitTypeId") long kitTypeId
+    );
+
     @SqlUpdate("delete from activity_instance_creation_action where activity_instance_creation_action_id = :actionId")
     int deleteActivityInstanceCreationAction(@Bind("actionId") long eventActionId);
 
