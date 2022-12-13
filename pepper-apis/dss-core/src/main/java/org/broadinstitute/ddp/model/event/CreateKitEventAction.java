@@ -25,13 +25,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS;
 
 @Slf4j
 public class CreateKitEventAction extends EventAction {
 
-    Long kitTypeId;
+    private Long kitTypeId;
     /**
      * Key is study guid, value is the metrics transmitter for the study
      */
@@ -70,27 +71,27 @@ public class CreateKitEventAction extends EventAction {
                 .orElse(null);
 
         if (defaultAddress == null) {
-            log.warn("Participant {} is missing a default mailing address. Deleting the create kit event", signal.getParticipantGuid());
+            log.error("Participant {} is missing a default mailing address. Deleting the create kit event", signal.getParticipantGuid());
             return;
         }
 
         if (defaultAddress.getValidationStatus() == DSM_INVALID_ADDRESS_STATUS.getCode()) {
-            log.warn("Participant {} has an invalid mailing address", signal.getParticipantGuid());
+            log.error("Participant {} has an invalid mailing address", signal.getParticipantGuid());
             return;
         } else {
             try {
                 statusType = DsmAddressValidationStatus.getByCode(defaultAddress.getValidationStatus());
             } catch (Exception e) {
-                log.warn(e.getMessage() + ". Participant: {} ", signal.getParticipantGuid());
+                log.error(e.getMessage() + ". Participant: {} ", signal.getParticipantGuid());
                 return;
             }
         }
 
-        Optional<KitConfigurationDto> kitConfigByTypeOpt = kitConfigs.stream().filter(dto -> dto.getKitTypeId()
-                == kitTypeId).findFirst();
-
-        KitConfiguration kitConfig = kitConfigByTypeOpt.isPresent()
-                ? handle.attach(KitConfigurationDao.class).getKitConfigurationForDto(kitConfigByTypeOpt.get()) : null;
+        KitConfiguration kitConfig = kitConfigs.stream()
+                .filter(dto -> dto.getKitTypeId() == kitTypeId)
+                .findFirst()
+                .map(dto -> handle.attach(KitConfigurationDao.class).getKitConfigurationForDto(dto))
+                .orElse(null);
 
         KitCheckService service = new KitCheckService();
         KitCheckService.PotentialRecipient candidate = new KitCheckService.PotentialRecipient(user.getId(),
@@ -99,9 +100,9 @@ public class CreateKitEventAction extends EventAction {
         kitCheckResult = service.processPotentialKitRecipient(signal.getStudyGuid(), kitTypeId,
                 kitCheckResult, kitConfig, candidate, true);
 
-        //send metric by study
+        //send metric for the study
         if (kitCheckResult != null) {
-            sendKitMetrics(kitCheckResult);
+            sendKitMetrics(signal.getStudyGuid(), kitCheckResult);
             log.info("Queued {} participants for Kit creation", kitCheckResult.getTotalNumberOfParticipantsQueuedForKit());
         }
     }
@@ -115,15 +116,11 @@ public class CreateKitEventAction extends EventAction {
                 eventConfiguration.getPostDelaySeconds());
     }
 
-    private void sendKitMetrics(KitCheckService.KitCheckResult kitCheckResult) {
-        for (var queuedParticipantsByStudy : kitCheckResult.getQueuedParticipantsByStudy()) {
-            String studyGuid = queuedParticipantsByStudy.getKey();
-            int numQueuedParticipants = queuedParticipantsByStudy.getValue().size();
-            var tracker = kitCounterMonitorByStudy.computeIfAbsent(studyGuid, key ->
-                    new StackdriverMetricsTracker(StackdriverCustomMetric.KITS_REQUESTED, studyGuid,
-                            PointsReducerFactory.buildSumReducer()));
-            tracker.addPoint(numQueuedParticipants, Instant.now().toEpochMilli());
-        }
+    private void sendKitMetrics(String studyGuid, KitCheckService.KitCheckResult kitCheckResult) {
+        StackdriverMetricsTracker tracker = kitCounterMonitorByStudy.computeIfAbsent(studyGuid, key ->
+                new StackdriverMetricsTracker(StackdriverCustomMetric.KITS_REQUESTED, studyGuid,
+                        PointsReducerFactory.buildSumReducer()));
+        tracker.addPoint(kitCheckResult.getTotalNumberOfParticipantsQueuedForKit(), Instant.now().toEpochMilli());
     }
 
 }
