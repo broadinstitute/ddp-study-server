@@ -37,7 +37,7 @@ public interface EventDao extends SqlObject {
 
     default List<EventConfiguration> getAllEventConfigurationsByStudyId(long studyId) {
         return getEventConfigurationDtosByStudyId(studyId).stream()
-                .map(EventConfiguration::new)
+                .map(dto -> new EventConfiguration(dto))
                 .collect(Collectors.toList());
     }
 
