@@ -47,11 +47,6 @@ public final class PancanAddAdditionalDiagnosis implements CustomTask {
         private final String key;
     }
 
-    @FunctionalInterface
-    private static interface DeleteAction {
-        public void delete(Handle handle);
-    }
-
     private static interface SqlHelper extends SqlObject {
         
         @SqlQuery("SELECT"
@@ -109,18 +104,11 @@ public final class PancanAddAdditionalDiagnosis implements CustomTask {
         public long fetchQuestionIdForGroup(@Bind("groupId") long groupId);
 
         @SqlQuery("SELECT"
-                + "    po.picklist_question_id"
-                + "  FROM picklist_option AS po"
-                + "  WHERE po.picklist_option_id = :groupId")
-        public long fetchQuestionIdForOption(@Bind("optionId") long optionId);
-
-        @SqlQuery("SELECT"
                 + "    qsc.stable_id"
                 + "  FROM question AS q"
                 + "    JOIN question_stable_code AS qsc ON qsc.question_stable_code_id = q.question_stable_code_id"
                 + " WHERE q.question_id = :questionId")
         public String fetchQuestionStableIdById(@Bind("questionId") long questionId);
-
 
         @SqlUpdate("INSERT INTO picklist_grouped_option (picklist_group_id, picklist_option_id)"
                 + " VALUES (:groupId, :optionId)")
