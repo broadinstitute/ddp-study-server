@@ -174,6 +174,7 @@ public final class PancanAddAdditionalDiagnosis implements CustomTask {
     @Override
     public void run(Handle handle) {
         log.info("TASK::{}", getTaskName());
+        log.info("description: {}", patchConfiguration.getString(Metadata.DESCRIPTION.getKey()));
 
         final var jdbiPatchHelper = handle.attach(SqlHelper.class);
         final var jdbiPicklistQuestion = handle.attach(PicklistQuestionDao.class);
