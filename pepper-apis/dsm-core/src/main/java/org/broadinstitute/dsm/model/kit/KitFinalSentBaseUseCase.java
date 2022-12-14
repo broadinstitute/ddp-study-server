@@ -26,7 +26,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
 
     protected void trigerEventsIfSuccessfulKitUpdate(Optional<ScanError> result, String kit,
                                                      KitRequestShipping kitRequestShipping) {
-        if (isKitUpdateSuccessful(result)) {
+        if (isKitUpdateSuccessful(result, kitRequestShipping.getBspCollaboratorParticipantId())) {
             triggerEvents(kit, kitRequestShipping);
         }
     }
