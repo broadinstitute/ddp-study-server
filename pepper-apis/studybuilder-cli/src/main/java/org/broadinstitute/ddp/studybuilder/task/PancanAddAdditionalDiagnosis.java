@@ -71,33 +71,6 @@ public final class PancanAddAdditionalDiagnosis implements CustomTask {
                 @Bind("groupStableId") String groupStableId);
 
         @SqlQuery("SELECT"
-                + "    po.picklist_option_id AS picklist_option_id,"
-                + "    po.picklist_option_stable_id AS picklist_option_stable_id,"
-                + "    po.value AS value,"
-                + "    po.option_label_template_id AS option_label_template_id,"
-                + "    po.tooltip_template_id AS tooltip_template_id,"
-                + "    po.detail_label_template_id AS detail_label_template_id,"
-                + "    po.allow_details AS allow_details,"
-                + "    po.is_exclusive AS is_exclusive,"
-                + "    po.is_default AS is_default,"
-                + "    po.display_order AS display_order,"
-                + "    po.nested_options_template_id AS nested_options_template_id,"
-                + "    revision.revision_id AS revision_id,"
-                + "    revision.start_date AS revision_start_timestamp,"
-                + "    revision.end_date AS revision_end_timestamp"
-                + "  FROM picklist_option AS po"
-                + "    JOIN picklist_grouped_option AS pgo ON pgo.picklist_option_id = po.picklist_option_id"
-                + "    JOIN picklist_group AS pg ON pg.picklist_group_id = pgo.picklist_group_id"
-                + "    JOIN picklist_question AS pq ON pq.question_id = po.picklist_question_id"
-                + "    JOIN revision ON revision.revision_id = po.revision_id"
-                + "  WHERE"
-                + "    pg.picklist_group_id = :groupId"
-                + "  ORDER BY"
-                + "    po.display_order ASC")
-        @RegisterConstructorMapper(PicklistOptionDto.class)
-        public List<PicklistOptionDto> fetchPicklistOptionsByGroup(@Bind("groupId") long groupId);
-
-        @SqlQuery("SELECT"
                 + "    pg.picklist_question_id"
                 + "  FROM picklist_group AS pg"
                 + "  WHERE pg.picklist_group_id = :groupId")
@@ -186,8 +159,8 @@ public final class PancanAddAdditionalDiagnosis implements CustomTask {
                 .map((group) -> jdbiPatchHelper.fetchQuestionIdForGroup(group.getId()))
                 .collect(Collectors.toList());
 
-        final var nowTimestamp = Instant.now().toEpochMilli();
-        final var questionToGroupObjects = jdbiPicklistQuestion.findOrderedGroupAndOptionDtos(containingQuestionIds, nowTimestamp);
+        final var questionToGroupObjects = jdbiPicklistQuestion.findOrderedGroupAndOptionDtos(containingQuestionIds,
+                Instant.now().toEpochMilli());
 
         for (final var questionOptionDetails : questionToGroupObjects.entrySet()) {
             /*
