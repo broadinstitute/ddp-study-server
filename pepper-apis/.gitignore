@@ -34,3 +34,6 @@ appengine/deploy/*.conf
 appengine
 .idea
 /config/dev-gcloud-creds.json
+
+# Used for passing eclipse build parameters to VSCode
+.prefs
