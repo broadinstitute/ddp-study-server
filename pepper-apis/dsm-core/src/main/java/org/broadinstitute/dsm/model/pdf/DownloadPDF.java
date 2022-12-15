@@ -102,11 +102,11 @@ public class DownloadPDF {
                         savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(pdfByte),
                                 fileName, user.getId());
                     } else {
-                        throw new RuntimeException("PDF size was zero!" + fileName);
+                        throw new RuntimeException("PDF size was zero!" + configName);
                     }
+                } else {
+                    throw new RuntimeException("PDF was not present, or null " + fileName);
                 }
-                maybePdf.orElseThrow();
-
             } else {
                 throw new RuntimeException("DDPInstance of participant " + ddpParticipantId + " not found");
             }
@@ -133,6 +133,7 @@ public class DownloadPDF {
                 break;
             } else {
                 try {
+                    logger.error(String.format("Got %s PDF with size zero in try %d", configName, turn));
                     Thread.sleep(retryWaitMillis);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -230,6 +231,7 @@ public class DownloadPDF {
                     GoogleBucket.uploadFile(credentials, gcpName, bucketName,
                             ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileType + "_" + userId + "_download_"
                                     + time + ".pdf", stream);
+                    fileType =  ddpParticipantId + "_" + fileType + "_" + userId + "_download_" + time + ".pdf";
                 }
             } catch (Exception e) {
                 logger.error("Failed to check for GCP bucket " + bucketName, e);
