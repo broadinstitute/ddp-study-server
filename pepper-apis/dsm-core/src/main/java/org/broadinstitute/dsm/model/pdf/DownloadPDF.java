@@ -90,7 +90,6 @@ public class DownloadPDF {
         if (StringUtils.isNotBlank(this.ddpParticipantId)) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
             if (ddpInstance != null && StringUtils.isNotBlank(ddpParticipantId)) {
-                String fileName = "";
                 if (configName == null) {
                     maybePdf = getPDFBundle(ddpInstance, requestBody, user);
                 } else {
@@ -100,12 +99,12 @@ public class DownloadPDF {
                     byte[] pdfByte = maybePdf.get();
                     if (pdfByte.length > 0) {
                         savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(pdfByte),
-                                fileName, user.getId());
+                                configName, user.getId());
                     } else {
                         throw new RuntimeException("PDF size was zero!" + configName);
                     }
                 } else {
-                    throw new RuntimeException("PDF was not present, or null " + fileName);
+                    throw new RuntimeException("PDF was not present, or null " + configName);
                 }
             } else {
                 throw new RuntimeException("DDPInstance of participant " + ddpParticipantId + " not found");
@@ -231,7 +230,6 @@ public class DownloadPDF {
                     GoogleBucket.uploadFile(credentials, gcpName, bucketName,
                             ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileType + "_" + userId + "_download_"
                                     + time + ".pdf", stream);
-                    fileType =  ddpParticipantId + "_" + fileType + "_" + userId + "_download_" + time + ".pdf";
                 }
             } catch (Exception e) {
                 logger.error("Failed to check for GCP bucket " + bucketName, e);
