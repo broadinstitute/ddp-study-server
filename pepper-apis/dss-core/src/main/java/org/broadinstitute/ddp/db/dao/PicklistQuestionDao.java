@@ -35,7 +35,7 @@ public interface PicklistQuestionDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(PicklistQuestionDao.class);
 
-    public final int DISPLAY_ORDER_GAP = 10;
+    int DISPLAY_ORDER_GAP = 10;
 
     @CreateSqlObject
     JdbiPicklistQuestion getJdbiPicklistQuestion();
@@ -187,7 +187,7 @@ public interface PicklistQuestionDao extends SqlObject {
      * @param revisionId   the revision to use, will be shared for all created data
      * @return the option id
      */
-    public default long insertOption(long questionId, PicklistOptionDef option, int displayOrder, long revisionId) {
+    default long insertOption(long questionId, PicklistOptionDef option, int displayOrder, long revisionId) {
         JdbiPicklistOption jdbiOption = getJdbiPicklistOption();
         TemplateDao templateDao = getTemplateDao();
 
