@@ -96,7 +96,7 @@ public class KitCheckService {
                 while (!batch.isEmpty()) {
                     PotentialRecipient candidate = batch.remove();
                     try {
-                        processPotentialKitRecipient(studyGuid, kitTypeId, kitCheckResult, kitConfig, candidate);
+                        processPotentialKitRecipient(studyGuid, kitTypeId, kitCheckResult, kitConfig, candidate, false);
                     } catch (Exception e) {
                         log.error("Error while checking potential kit recipient {}, continuing", candidate.getUserGuid(), e);
                     }
@@ -111,39 +111,42 @@ public class KitCheckService {
         return kitCheckResult;
     }
 
-    private void processPotentialKitRecipient(String studyGuid, long kitTypeId,
+    public KitCheckResult processPotentialKitRecipient(String studyGuid, long kitTypeId,
                                               KitCheckResult kitCheckResult,
                                               KitConfiguration kitConfiguration,
-                                              PotentialRecipient candidate) {
+                                              PotentialRecipient candidate, boolean event) {
         String userGuid = candidate.getUserGuid();
 
         if (candidate.getAddressId() == null) {
             log.warn("Participant {} is missing a default mailing address", userGuid);
-            return;
+            return null;
         }
 
         if (candidate.getAddressValidationStatus() == null
                 || candidate.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
             log.warn("Participant {} has an invalid mailing address", userGuid);
-            return;
+            return null;
         }
 
         boolean wasSuccessful = withAPIsTxn(handle -> {
-            boolean success = kitConfiguration.evaluate(handle, userGuid);
+            boolean success = (event && kitConfiguration == null) ? true : kitConfiguration.evaluate(handle, userGuid);
 
             KitScheduleDao kitScheduleDao = handle.attach(KitScheduleDao.class);
             DsmKitRequestDao kitRequestDao = handle.attach(DsmKitRequestDao.class);
 
             if (success) {
-                int numKits = kitConfiguration.getNumKits();
+                //default numKits to 1 if event and no config or config.numKits < 1
+                int numKits = (event && (kitConfiguration == null || kitConfiguration.getNumKits() <= 1))
+                        ? 1 : kitConfiguration.getNumKits();
                 for (int i = 0; i < numKits; i++) {
-                    log.info("Creating kit request for {}", userGuid);
+                    log.info("Creating kit request for {} by {}. kit type Id: {} ", userGuid, event ? "event" : "job", kitTypeId);
                     Long kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
-                            candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
+                            candidate.getAddressId(), kitTypeId,
+                            kitConfiguration != null ? kitConfiguration.needsApproval() : false);
                     log.info("Created kit request id {} for {}. Completed {} out of {} kits",
                             kitRequestId, userGuid, i + 1, numKits);
                 }
-                if (kitConfiguration.getSchedule() != null) {
+                if (kitConfiguration != null  && kitConfiguration.getSchedule() != null) {
                     // Add a tracking record for participant if kit has a reoccurring schedule.
                     long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId());
                     log.info("Added kit schedule record with id={} for tracking reoccurring kits"
@@ -159,6 +162,8 @@ public class KitCheckService {
         } else {
             log.warn("Participant {} was ineligible for a kit", userGuid);
         }
+
+        return kitCheckResult;
     }
 
     /**

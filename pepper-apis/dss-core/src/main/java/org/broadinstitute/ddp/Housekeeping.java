@@ -91,6 +91,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.model.event.CreateKitEventAction;
 import org.broadinstitute.ddp.model.event.UpdateUserStatusEventAction;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
@@ -384,7 +385,7 @@ public class Housekeeping {
                                                             .orElse(false);
                                                     if (shouldDeleteEvent) {
                                                         log.warn("Unable to create message for event with "
-                                                                + "queued_event_id={}, proceeding to delete",
+                                                                        + "queued_event_id={}, proceeding to delete",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                         queuedEventDao.deleteAllByQueuedEventId(
                                                                 pendingEvent.getQueuedEventId());
@@ -392,8 +393,8 @@ public class Housekeeping {
                                                         // event.
                                                     } else {
                                                         log.error("Could not create message for event with "
-                                                                + "queued_event_id={}"
-                                                                + " because there is no email address to sent to",
+                                                                        + "queued_event_id={}"
+                                                                        + " because there is no email address to sent to",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                     }
                                                 } catch (MessageBuilderException e) {
@@ -889,6 +890,40 @@ public class Housekeeping {
             apisHandle.attach(DataExportDao.class).queueDataSync(participant.getId(), studyDto.getId());
             return true;
         }
+
+        if (actionType == EventActionType.CREATE_KIT) {
+            EventConfiguration event = eventDao
+                    .getEventConfigurationDtoById(pendingEvent.getEventConfigurationId())
+                    .map(EventConfiguration::new)
+                    .orElse(null);
+            if (event == null) {
+                log.error("No event configuration found for id={}, skipping queued event {}",
+                        pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
+                return true;
+            }
+
+            long operatorUserId = pendingEvent.getOperatorUserId() != null
+                    ? pendingEvent.getOperatorUserId() : participant.getId();
+            String operatorGuid = pendingEvent.getOperatorGuid() != null
+                    ? pendingEvent.getOperatorGuid() : participant.getGuid();
+            StudyDto studyDto = new JdbiUmbrellaStudyCached(apisHandle)
+                    .findByStudyGuid(pendingEvent.getStudyGuid());
+            EventSignal signal = new EventSignal(
+                    operatorUserId,
+                    participant.getId(),
+                    participant.getGuid(),
+                    operatorGuid,
+                    studyDto.getId(),
+                    studyDto.getGuid(),
+                    pendingEvent.getTriggerType());
+
+            CreateKitEventAction action = (CreateKitEventAction) event.getEventAction();
+            action.doActionSynchronously(apisHandle, signal);
+            jdbiQueuedEvent.delete(pendingEvent.getQueuedEventId());
+            log.info("Deleted queued create kit event {}", pendingEvent.getQueuedEventId());
+            return true;
+        }
+
         return false;
     }
 
@@ -921,7 +956,8 @@ public class Housekeeping {
     /**
      * Supplier of SendGrid service.
      */
-    @FunctionalInterface interface SendGridSupplier {
+    @FunctionalInterface
+    interface SendGridSupplier {
         SendGridClient get(String apiKey);
     }
 }

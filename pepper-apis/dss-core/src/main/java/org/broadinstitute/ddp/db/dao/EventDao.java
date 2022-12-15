@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.SqlConstants;
+import org.broadinstitute.ddp.db.dto.CreateKitDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
@@ -36,7 +37,7 @@ public interface EventDao extends SqlObject {
 
     default List<EventConfiguration> getAllEventConfigurationsByStudyId(long studyId) {
         return getEventConfigurationDtosByStudyId(studyId).stream()
-                .map(EventConfiguration::new)
+                .map(dto -> new EventConfiguration(dto))
                 .collect(Collectors.toList());
     }
 
@@ -157,6 +158,7 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(NotificationDetailsDto.class)
     @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
     @RegisterConstructorMapper(QueuedPdfGenerationDto.class)
+    @RegisterConstructorMapper(CreateKitDto.class)
     @UseRowReducer(QueuedEventDtoReducer.class)
     List<QueuedEventDto> findPublishableQueuedEvents();
 
@@ -169,6 +171,7 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(QueuedPdfGenerationDto.class)
     @UseRowReducer(QueuedEventDtoReducer.class)
     @RegisterConstructorMapper(QueuedEventDto.class)
+    @RegisterConstructorMapper(CreateKitDto.class)
     List<QueuedEventDto> findAllQueuedEvents();
 
     @UseStringTemplateSqlLocator
@@ -180,6 +183,7 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(QueuedPdfGenerationDto.class)
     @UseRowReducer(QueuedEventDtoReducer.class)
     @RegisterConstructorMapper(QueuedEventDto.class)
+    @RegisterConstructorMapper(CreateKitDto.class)
     Optional<QueuedEventDto> findQueuedEventById(@Bind("id") long queuedEventId);
 
     // Used by Study Builder do not delete

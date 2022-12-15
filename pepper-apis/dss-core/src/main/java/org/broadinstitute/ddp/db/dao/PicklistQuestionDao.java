@@ -178,6 +178,8 @@ public interface PicklistQuestionDao extends SqlObject {
 
     /**
      * Create a new picklist option for given question.
+     * 
+     * <p>The `option` parameter <b>will be modified</b> by this method.
      *
      * @param questionId   the associated picklist question
      * @param option       the picklist option definition
