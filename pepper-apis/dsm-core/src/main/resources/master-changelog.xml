@@ -113,4 +113,5 @@
     <include file="liquibase/CMI/PEPPER-285_block_id_shl.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-271_clinicalNotesChanges.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-270_cardiacMalformationTabChanges.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-445_eventQueue.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
