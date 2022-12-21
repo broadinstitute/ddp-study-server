@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
+import spark.utils.StringUtils;
 
 @Setter
 public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
@@ -35,8 +36,13 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
 
     protected abstract Optional<ScanError> process(ScanPayload scanPayload);
 
-    protected boolean isKitUpdateSuccessful(Optional<ScanError> maybeScanError) {
-        return maybeScanError.isEmpty();
+    protected boolean isKitUpdateSuccessful(Optional<ScanError> maybeScanError, String bspCollaboratorParticipantId) {
+        return maybeScanError.isEmpty() || isScanErrorOnlyBspParticipantId(maybeScanError.get(), bspCollaboratorParticipantId);
+    }
+
+    private boolean isScanErrorOnlyBspParticipantId(ScanError scanError, String bspCollaboratorParticipantId) {
+        return (StringUtils.isBlank(scanError.getError()) && StringUtils.isBlank(scanError.getKit()))
+                || (scanError.getError().equals(scanError.getKit()) && scanError.getError().equals(bspCollaboratorParticipantId));
     }
 
     protected BaseKitUseCase getDecoratedScanUseCase() {

@@ -50,7 +50,7 @@ public class DownloadPDFRoute extends RequestHandler {
                 String tempUserIdR = jsonObject.get(RequestParameter.USER_ID).getAsString();
                 Long userIdRequest = Long.parseLong(tempUserIdR);
                 DownloadPDF downloadPDFRequest = new DownloadPDF(requestBody);
-                logger.info( String.format("Starting PDF download for %s at %s", downloadPDFRequest.getDdpParticipantId(), realm));
+                logger.info(String.format("Starting PDF download for %s at %s", downloadPDFRequest.getDdpParticipantId(), realm));
                 Optional<byte[]> pdfBytes = downloadPDFRequest.getPDFs(userIdRequest, realm, requestBody);
                 pdfBytes.ifPresent(pdfBytesArray -> {
                     try {
