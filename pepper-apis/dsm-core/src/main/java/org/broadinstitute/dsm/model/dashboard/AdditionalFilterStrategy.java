@@ -31,35 +31,44 @@ public class AdditionalFilterStrategy {
         for (Map.Entry<String, List<String>> parsedFilter : getSeparatedFilters().entrySet()) {
             FilterStrategy filterStrategy = FilterStrategy.of(parsedFilter.getKey());
             for (String filterValue : parsedFilter.getValue()) {
-                buildQueryBuilderFromQueryString(boolQueryBuilder, filterStrategy, filterValue);
+                buildQueryBuilderFromQueryString(boolQueryBuilder, filterStrategy, filterValue, null);
             }
         }
-        addDatePeriod(boolQueryBuilder, queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField(),
-                Filter.LARGER_EQUALS_TRIMMED, queryBuildPayload.getStartDate());
-        addDatePeriod(boolQueryBuilder, queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField(),
-                Filter.SMALLER_EQUALS_TRIMMED, queryBuildPayload.getEndDate());
+        if (queryBuildPayload.getStartDate() != null && StringUtils.isNotBlank(
+                queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())) {
+            addDatePeriod(boolQueryBuilder, queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField(),
+                    Filter.LARGER_EQUALS_TRIMMED, queryBuildPayload.getStartDate());
+            addDatePeriod(boolQueryBuilder, queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField(),
+                    Filter.SMALLER_EQUALS_TRIMMED, queryBuildPayload.getEndDate());
+        }
         return boolQueryBuilder;
     }
 
-    private void addDatePeriod(BoolQueryBuilder boolQueryBuilder, String field, String queryOperator, String date) {
-        if (queryBuildPayload.getStartDate() != null
-                && StringUtils.isNotBlank(queryBuildPayload.getLabel().getDashboardFilterDto().getDatePeriodField())) {
-            FilterStrategy filterStrategy = FilterStrategy.of(Filter.AND_TRIMMED);
-            String filter = String.format("%s %s '%s' ", field, queryOperator, date);
-            //TODO test is changing it to right query. here not
-            // still prequal instead of nested!
-            buildQueryBuilderFromQueryString(boolQueryBuilder, filterStrategy, filter);
-        }
+    private void addDatePeriod(BoolQueryBuilder boolQueryBuilder, String datePeriodField, String queryOperator, String date) {
+        FilterStrategy filterStrategy = FilterStrategy.of(Filter.AND_TRIMMED);
+        String filter = String.format("%s %s '%s' ", datePeriodField, queryOperator, date);
+        buildQueryBuilderFromQueryString(boolQueryBuilder, filterStrategy, filter, datePeriodField);
     }
 
-    private void buildQueryBuilderFromQueryString(BoolQueryBuilder boolQueryBuilder, FilterStrategy filterStrategy, String filter) {
+    private void buildQueryBuilderFromQueryString(BoolQueryBuilder boolQueryBuilder, FilterStrategy filterStrategy, String filter,
+                                                  String datePeriodField) {
         Operator operator = Operator.extract(filter);
         SplitterStrategy splitterStrategy = operator.getSplitterStrategy();
         splitterStrategy.setFilter(filter);
-        QueryPayload queryPayload = buildQueryPayload(splitterStrategy);
+        QueryPayload queryPayload = buildQueryPayload(splitterStrategy, datePeriodField);
         BuildQueryStrategy queryStrategy = getQueryStrategy(operator, queryPayload);
-        filterStrategy.build(boolQueryBuilder,
-                getBaseQueryBuilder(queryPayload).build(buildQueries(queryStrategy)));
+        filterStrategy.build(boolQueryBuilder, getBaseQueryBuilder(queryPayload).build(buildQueries(queryStrategy)));
+    }
+
+    protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy, String datePeriodField) {
+        if (datePeriodField != null) {
+            return new QueryPayload(splitterStrategy.getAlias(), splitterStrategy.getInnerProperty(), splitterStrategy.getAlias(),
+                    valueParser.parse(splitterStrategy.getValue()), queryBuildPayload.getEsParticipantsIndex());
+        }
+        return new QueryPayload(queryBuildPayload.getLabel().getDashboardFilterDto().getEsNestedPath(),
+                queryBuildPayload.getLabel().getDashboardFilterDto().getEsFilterPath(),
+                valueParser.parse(splitterStrategy.getValue()),
+                queryBuildPayload.getEsParticipantsIndex());
     }
 
     protected List<QueryBuilder> buildQueries(BuildQueryStrategy queryStrategy) {
@@ -77,12 +86,6 @@ public class AdditionalFilterStrategy {
 
     protected BaseQueryBuilder getBaseQueryBuilder(QueryPayload queryPayload) {
         return queryBuildPayload.getBaseQueryBuilder();
-    }
-
-    protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy) {
-        return new QueryPayload(queryBuildPayload.getLabel().getDashboardFilterDto().getEsNestedPath(),
-                queryBuildPayload.getLabel().getDashboardFilterDto().getEsFilterPath(), valueParser.parse(splitterStrategy.getValue()),
-                queryBuildPayload.getEsParticipantsIndex());
     }
 
     protected Map<String, List<String>> getSeparatedFilters() {

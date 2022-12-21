@@ -34,7 +34,6 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     private List<String> splitConcreteFiltersFromAdditionalFilter() {
         String[] separatedFiltersWithDelimiters =
                 queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter().split(FILTER_AND_OR_DELIMITER);
-
         return buildFiltersWithOperators(separatedFiltersWithDelimiters);
     }
 
@@ -63,24 +62,9 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
     }
 
     @Override
-    protected Map<String, List<String>> getSeparatedFilters() {
-        List<String> separatedFilters = splitConcreteFiltersFromAdditionalFilter();
-        return extractFilters(separatedFilters, AndOrFilterSeparator.class);
-    }
-
-    @Override
-    protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy) {
+    protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy, String datePeriodField) {
         return new QueryPayload(splitterStrategy.getAlias(), splitterStrategy.getInnerProperty(), splitterStrategy.getAlias(),
                 valueParser.parse(splitterStrategy.getValue()), queryBuildPayload.getEsParticipantsIndex());
-    }
-
-    @Override
-    protected BaseQueryBuilder getBaseQueryBuilder(QueryPayload queryPayload) {
-        BaseQueryBuilder result = super.getBaseQueryBuilder(queryPayload);
-        if (Alias.of(queryPayload.getAlias()).isCollection()) {
-            result = new CollectionQueryBuilder(queryPayload);
-        }
-        return result;
     }
 
     @Override
@@ -96,5 +80,20 @@ public class CountAdditionalFilterStrategy extends AdditionalFilterStrategy {
             result = baseActivitiesStrategy.build();
         }
         return result;
+    }
+
+    @Override
+    protected BaseQueryBuilder getBaseQueryBuilder(QueryPayload queryPayload) {
+        BaseQueryBuilder result = super.getBaseQueryBuilder(queryPayload);
+        if (Alias.of(queryPayload.getAlias()).isCollection()) {
+            result = new CollectionQueryBuilder(queryPayload);
+        }
+        return result;
+    }
+
+    @Override
+    protected Map<String, List<String>> getSeparatedFilters() {
+        List<String> separatedFilters = splitConcreteFiltersFromAdditionalFilter();
+        return extractFilters(separatedFilters, AndOrFilterSeparator.class);
     }
 }
