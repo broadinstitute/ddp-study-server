@@ -59,10 +59,7 @@ public class ApplicationConfigConstants {
     public static final String QUARTZ_NOTIFICATION_JOB_INTERVAL_SEC = "quartz.notificationJob_jobIntervalInSeconds";
     public static final String QUARTZ_LABEL_CREATION_JOB_INTERVAL_SEC = "quartz.labelCreationJob_jobIntervalInSeconds";
     public static final String QUARTZ_CRON_EXPRESSION_FOR_DDP_EVENT_TRIGGER = "quartz.ddp_event_trigger_cron_expression";
-    public static final String QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER = "quartz.externalShipper_cron_expression";
-    public static final String QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL = "quartz.externalShipper_cron_expression_additional";
     public static final String QUARTZ_CRON_STATUS_SHIPMENT = "quartz.shipmentStatusJob_cron_expression";
-    public static final String QUARTZ_UPS_LOOKUP_JOB = "quartz.ups_lookup_cron_expression";
 
     //email
     public static final String EMAIL_CRON_EXPRESSION_FOR_GP_NOTIFICATION = "email.cron_expression_GP_notification";
@@ -77,12 +74,8 @@ public class ApplicationConfigConstants {
     public static final String EMAIL_NOTIFICATIONS_SEND_GRID_TEMPLATE_ID = "sendGridTemplate";
 
     //db queries
-    public static final String GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectReceivedKitForNotification";
     public static final String GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectSentKitForNotification";
     public static final String GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE = "portal.selectAllowedRealmsStartsLike";
-    public static final String GET_ROLES_LIKE = "portal.getRoles";
-    public static final String UPDATE_KIT_REQUEST = "portal.updateKitRequest";
-    public static final String INSERT_KIT_TRACKING = "portal.insertKitTrackingRequest";
     public static final String UPDATE_KIT_ERROR = "portal.updateKitRequestError";
     public static final String GET_DDP_PARTICIPANT_ID = "portal.getDDPParticipantId";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS = "portal.dashboardKitRequests";
@@ -90,10 +83,7 @@ public class ApplicationConfigConstants {
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_SENT_REPORT = "portal.dashboardReportKitSent";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_RECEIVED_REPORT = "portal.dashboardReportKitReceived";
     public static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS = "portal.checkDdpLabelIdQuery";
-    public static final String GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE = "portal.checkTrackingQuery";
-    public static final String GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL = "portal.checkKitTypeNeedsTrackingQuery";
     public static final String INSERT_KIT_REQUEST = "portal.insertKitRequest";
-    public static final String INSERT_KIT = "portal.insertKit";
     public static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE = "portal.counterCollaboratorSample";
     public static final String GET_UNSENT_KIT_REQUESTS_FOR_REALM = "portal.unsentKitRequestsPerRealmQuery";
     public static final String GET_UPLOADED_KITS = "portal.selectUploadedKits";
@@ -102,7 +92,6 @@ public class ApplicationConfigConstants {
     public static final String INSERT_LABEL_SETTINGS = "portal.insertLabelSettings";
 
     public static final String GET_PARTICIPANT_EVENTS = "portal.selectParticipantEvents";
-    public static final String GET_PARTICIPANT_EVENT = "portal.selectParticipantEvent";
     public static final String INSERT_PARTICIPANT_EVENT = "portal.insertParticipantEvent";
     public static final String INSERT_SURVEY_TRIGGER = "portal.insertSurveyTrigger";
     public static final String GET_KIT_OF_EXITED_PARTICIPANTS = "portal.exitedKits";

@@ -37,6 +37,13 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                     + "left join kit_type kt on request.kit_type_id = kt.kit_type_id "
                     + "left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and "
                     + "request.ddp_instance_id = ex.ddp_instance_id) where  kit.kit_label = ?";
+    public static final String SELECT_RECEIVED_KIT_FOR_NOTIFICATION = "select eve.event_name, eve.event_type, request.ddp_participant_id, "
+            + "request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, realm.ddp_instance_id, realm.instance_name, "
+            + "realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date "
+            + "from ddp_kit_request request, ddp_kit kit, event_type eve, ddp_instance realm "
+            + "where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_instance_id = realm.ddp_instance_id "
+            + "and (eve.ddp_instance_id = request.ddp_instance_id and eve.kit_type_id = request.kit_type_id) "
+            + "and eve.event_type = 'RECEIVED' and kit.kit_label = ?";
 
     Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
 
@@ -113,7 +120,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
             }
             if (triggerDDP) {
                 BSPKit bspKit = new BSPKit();
-                bspKit.triggerDDP(conn, bspKitDto, firstTimeReceived, kitLabel);
+                bspKit.triggerDDP(conn, bspKitDto, firstTimeReceived, kitLabel, SELECT_RECEIVED_KIT_FOR_NOTIFICATION);
             }
             return firstTimeReceived;
         });

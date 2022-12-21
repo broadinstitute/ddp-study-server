@@ -3,13 +3,12 @@ package org.broadinstitute.dsm.model.stool.upload;
 import java.util.List;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.dao.kit.BSPKitDao;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDto;
 import org.broadinstitute.dsm.files.parser.AbstractRecordsParser;
 import org.broadinstitute.dsm.files.parser.stool.TSVStoolUploadRecordsParser;
 import org.broadinstitute.dsm.model.KitDDPNotification;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +32,7 @@ public class StoolUploadService {
     private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {
         boolean updated = stoolUploadDao.updateKit(stoolUploadDto);
         if (updated) {
-            KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
+            KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(BSPKitDao.SELECT_RECEIVED_KIT_FOR_NOTIFICATION,
                     stoolUploadDto.getMfBarcode(), 1);
             if (kitDDPNotification != null) {
                 logger.info("Triggering DDP to send emails");
@@ -48,4 +46,3 @@ public class StoolUploadService {
         }
     }
 }
-

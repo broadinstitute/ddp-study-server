@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 @Data
 public class KitDDPNotification {
 
+    private static final Logger logger = LoggerFactory.getLogger(KitDDPNotification.class);
     public static final String RECEIVED = "RECEIVED";
     public static final String REMINDER = "REMINDER";
     public static final String SENT = "SENT";
-    private static final Logger logger = LoggerFactory.getLogger(KitDDPNotification.class);
     private final String participantId;
     private final String dsmKitRequestId;
     private final String ddpInstanceId;
@@ -46,6 +46,37 @@ public class KitDDPNotification {
         this.hasAuth0Token = hasAuth0Token;
         this.uploadReason = uploadReason;
         this.ddpKitRequestId = ddpKitRequestId;
+    }
+
+    public static KitDDPNotification getKitDDPNotificationForTissue(@NonNull String query, @NonNull String kitLabel, int expectedCount) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+                stmt.setString(1, kitLabel);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    rs.last();
+                    int count = rs.getRow();
+                    rs.beforeFirst();
+                    if (count == expectedCount
+                            && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
+                        dbVals.resultValue = new KitDDPNotification(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                rs.getString(DBConstants.SM_ID_VALUE), rs.getString("ddp." + DBConstants.DDP_INSTANCE_ID),
+                                rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
+                                rs.getString(DBConstants.EVENT_NAME), rs.getString(DBConstants.EVENT_TYPE),
+                                System.currentTimeMillis(), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
+                                null, rs.getString(DBConstants.SM_ID_VALUE));
+                    }
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            logger.error("Failed to get KitDDPNotification w/ label " + kitLabel, results.resultException);
+        }
+        return (KitDDPNotification) results.resultValue;
     }
 
     public static KitDDPNotification getKitDDPNotification(@NonNull String query, @NonNull String kitLabel, int expectedCount) {

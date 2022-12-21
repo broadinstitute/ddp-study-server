@@ -8,8 +8,6 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
 import org.broadinstitute.dsm.route.ClinicalKitsRoute;
@@ -18,6 +16,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
 public class ClinicalKitDao {
+
     public static final String PECGS = "PE-CGS";
     private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
             "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, date_px,  "
@@ -29,12 +28,12 @@ public class ClinicalKitDao {
                     + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
-                    + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) WHERE sm.sm_id_value = ? "
-                    + "AND NOT sm.deleted <=> 1 ";
-    private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ? "
-                    + "AND NOT deleted <=> 1";
+                    + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
+                    + "WHERE sm.sm_id_value = ? AND NOT sm.deleted <=> 1 ";
+    private static final String SQL_SET_ACCESSION_TIME =
+            "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ? AND NOT deleted <=> 1";
 
-    public Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
+    public static Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE)) {
@@ -69,22 +68,7 @@ public class ClinicalKitDao {
         return Optional.ofNullable((ClinicalKitWrapper) results.resultValue);
     }
 
-    public ClinicalKitDto getClinicalKitBasedOnSmId(String smIdValue) {
-        log.info("Checking the kit for SM Id value " + smIdValue);
-        Optional<ClinicalKitWrapper> maybeClinicalKitWrapper = getClinicalKitFromSMId(smIdValue);
-        maybeClinicalKitWrapper.orElseThrow();
-        ClinicalKitWrapper clinicalKitWrapper = maybeClinicalKitWrapper.get();
-        ClinicalKitDto clinicalKitDto = clinicalKitWrapper.getClinicalKitDto();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(clinicalKitWrapper.getDdpInstanceId());
-        clinicalKitDto.setNecessaryParticipantDataToClinicalKit(clinicalKitWrapper.getDdpParticipantId(), ddpInstance);
-        if (StringUtils.isNotBlank(clinicalKitDto.getAccessionNumber())) {
-            setAccessionTimeForSMID(smIdValue);
-            return clinicalKitDto;
-        }
-        throw new RuntimeException("The kit doesn't have an accession number! SM ID is: " + smIdValue);
-    }
-
-    private void setAccessionTimeForSMID(String smIdValue) {
+    public static void setAccessionTimeForSMID(String smIdValue) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SET_ACCESSION_TIME)) {
@@ -93,8 +77,7 @@ public class ClinicalKitDao {
                 stmt.setString(3, smIdValue);
                 int r = stmt.executeUpdate();
                 if (r != 1) { //number of sm ids with that value
-                    throw new RuntimeException(
-                            "Update query for smId accession time updated " + r + " rows! with smId value " + smIdValue);
+                    throw new RuntimeException("Update query for smId accession time updated " + r + " rows! with smId value " + smIdValue);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
