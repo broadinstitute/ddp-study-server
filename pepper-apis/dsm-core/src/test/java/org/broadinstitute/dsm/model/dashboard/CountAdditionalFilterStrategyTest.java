@@ -50,7 +50,7 @@ public class CountAdditionalFilterStrategyTest {
     @Test
     public void processNonNestedMultipleAdditionalFilterRange() {
         DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder().withEsFilterPath("profile.createdAt")
-                .withAdditionalFilter("AND profile.createdAt IS NOT NULL AND profile.createdAt >= 1658222730748").build();
+                .withAdditionalFilter("AND profile.createdAt IS NOT NULL AND profile.createdAt >= '01/01/2020'").build();
         DashboardLabelDto labelDto = new DashboardLabelDto.Builder().withDashboardLabelFilter(labelFilterDto).build();
         QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
         CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
@@ -58,7 +58,7 @@ public class CountAdditionalFilterStrategyTest {
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
         expectedQuery.must(QueryBuilders.boolQuery().must(QueryBuilders.existsQuery("profile.createdAt")));
-        expectedQuery.must(QueryBuilders.matchQuery("profile.createdAt", 1658222730748L).operator(Operator.AND));
+        expectedQuery.must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"));
 
         assertEquals(expectedQuery, actualQuery);
     }
@@ -87,11 +87,12 @@ public class CountAdditionalFilterStrategyTest {
 
         assertEquals(expectedQuery, actualQuery);
     }
+
     @Test
     public void processStatusAndCreatedRange() {
-        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder().withEsFilterPath("data.status")
-                .withAdditionalFilter(" AND ( data.status = 'ENROLLED' )  "
-                        + "AND profile.createdAt  >= '01/01/2020' AND profile.createdAt  <= '01/01/2022'").build();
+        DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder().withEsFilterPath("status")
+                .withAdditionalFilter("AND ( data.status = 'ENROLLED' ) "
+                        + " AND profile.createdAt  >= '01/01/2020' AND profile.createdAt  <= '01/01/2022'").build();
         DashboardLabelDto labelDto = new DashboardLabelDto.Builder().withDashboardLabelFilter(labelFilterDto).build();
         QueryBuildPayload queryBuildPayload = new QueryBuildPayload(new DDPInstanceDto.Builder().build(), DisplayType.COUNT, labelDto);
         CountAdditionalFilterStrategy countAdditionalFilterStrategy = new CountAdditionalFilterStrategy(queryBuildPayload);
@@ -104,7 +105,6 @@ public class CountAdditionalFilterStrategyTest {
 
         assertEquals(expectedQuery, actualQuery);
     }
-
 
     @Test
     public void processMultipleDifferentAdditionalFilter() {
