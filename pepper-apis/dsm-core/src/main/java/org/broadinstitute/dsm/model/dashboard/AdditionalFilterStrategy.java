@@ -11,8 +11,11 @@ import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.query.CollectionQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
+import org.broadinstitute.dsm.model.elastic.filter.query.SingleQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
@@ -57,7 +60,16 @@ public class AdditionalFilterStrategy {
         splitterStrategy.setFilter(filter);
         QueryPayload queryPayload = buildQueryPayload(splitterStrategy, datePeriodField);
         BuildQueryStrategy queryStrategy = getQueryStrategy(operator, queryPayload);
-        filterStrategy.build(boolQueryBuilder, getBaseQueryBuilder(queryPayload).build(buildQueries(queryStrategy)));
+        BaseQueryBuilder baseQueryBuilder = getBaseQueryBuilder(queryPayload);
+        if (datePeriodField != null) {
+            baseQueryBuilder = new SingleQueryBuilder();
+            if (Alias.of(queryPayload.getAlias()).isCollection()) {
+                baseQueryBuilder = new CollectionQueryBuilder(queryPayload);
+            }
+        }
+        List queryBuilders = buildQueries(queryStrategy);
+        QueryBuilder newQuery = baseQueryBuilder.build(queryBuilders);
+        filterStrategy.build(boolQueryBuilder, newQuery);
     }
 
     protected QueryPayload buildQueryPayload(SplitterStrategy splitterStrategy, String datePeriodField) {
