@@ -27,9 +27,9 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 @Slf4j
 @NoArgsConstructor
 public class SingularAgeValidationUpdate implements CustomTask {
-    protected Path cfgPath;
-    protected Config cfg;
-    protected Config varsCfg;
+    private Path cfgPath;
+    private Config cfg;
+    private Config varsCfg;
 
     @Override
     public void init(final Path cfgPath, final Config studyCfg, final Config varsCfg) {
