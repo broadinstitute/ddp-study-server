@@ -27,13 +27,15 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 @Slf4j
 @NoArgsConstructor
 public class SingularAgeValidationUpdate implements CustomTask {
+    private static final String TARGET_STUDY = "singular";
+
     private Path cfgPath;
     private Config cfg;
     private Config varsCfg;
 
     @Override
     public void init(final Path cfgPath, final Config studyCfg, final Config varsCfg) {
-        if (!studyCfg.getString("study.guid").equals("singular")) {
+        if (!studyCfg.getString("study.guid").equals(TARGET_STUDY)) {
             throw new DDPException("This task is only for the singular study!");
         }
 
