@@ -47,19 +47,27 @@ public class SingularRemoveDeprecatedValidations implements CustomTask {
             throw new DDPException("Data file is missing: " + PATCH_FILE);
         }
 
-        final File validationToRemove = cfgPath.getParent().resolve("patches/pepper-18-validations-to-remove.conf").toFile();
-        removeValidations(handle, "ADD_PARTICIPANT_PARENTAL", ConfigFactory.parseFile(validationToRemove).resolveWith(varsCfg));
+        final var validationToRemove = cfgPath.getParent().resolve(PATCH_FILE).toFile();
+        final var patchConfig = ConfigFactory.parseFile(validationToRemove).resolveWith(varsCfg);
+
+        removeValidations(handle, TARGET_STUDY, patchConfig.getString("activity"), patchConfig.getConfigList("validations"));
 
         log.info("Patch {} applied", PATCH_FILE);
     }
 
-    private void removeValidations(final Handle handle, final String activityCode, final Config config) {
-        List.copyOf(config.getConfigList("validations")).forEach(validation -> removeValidation(handle, activityCode, validation));
+    private void removeValidations(final Handle handle,
+            final String studyGuid,
+            final String activityCode,
+            final List<? extends Config> config) {
+        config.forEach(validation -> removeValidation(handle, studyGuid, activityCode, validation));
     }
 
-    private void removeValidation(final Handle handle, final String activityCode, final Config validation) {
+    private void removeValidation(final Handle handle, final String studyGuid, final String activityCode, final Config validation) {
         handle.attach(SqlHelper.class)
-                .removeValidation(activityCode, validation.getString("precondition"), validation.getString("expression"));
+                .removeValidation(studyGuid,
+                        activityCode,
+                        validation.getString("precondition"),
+                        validation.getString("expression"));
     }
 
     /**
@@ -73,12 +81,14 @@ public class SingularRemoveDeprecatedValidations implements CustomTask {
                  + "FROM activity_validation av "
                  + "JOIN study_activity sa ON av.study_activity_id = sa.study_activity_id "
                  + "WHERE sa.study_activity_code = :activityCode "
+                 + "  AND sa.guid = :studyGuid "
                  + "AND REPLACE(REPLACE(REPLACE(REPLACE(av.expression_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
                  + "    REPLACE(REPLACE(REPLACE(REPLACE(:expression, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') "
                  + "AND REPLACE(REPLACE(REPLACE(REPLACE(av.precondition_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
                  + "    REPLACE(REPLACE(REPLACE(REPLACE(:precondition, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') ")
-        void removeValidation(@Bind("activityCode") final String activityCode,
-                              @Bind("precondition") final String precondition,
-                              @Bind("expression") final String expression);
+         void removeValidation(@Bind("studyGuid") String studyGuid,
+                                @Bind("activityCode") final String activityCode,
+                                @Bind("precondition") final String precondition,
+                                @Bind("expression") final String expression);
     }
 }
