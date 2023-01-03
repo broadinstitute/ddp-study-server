@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.google.gson.Gson;
@@ -1130,6 +1131,9 @@ public class DBTestUtil {
                                                        String ddpInstanceName) {
         ddpInstanceDto = new DDPInstanceDto.Builder().build();
         ddpInstanceDto.setInstanceName(ddpInstanceName);
+        ddpInstanceDto.setIsActive(true);
+        ddpInstanceDto.setAuth0Token(false);
+        ddpInstanceDto.setMigratedDdp(false);
         int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
         ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
         return ddpInstanceDto;

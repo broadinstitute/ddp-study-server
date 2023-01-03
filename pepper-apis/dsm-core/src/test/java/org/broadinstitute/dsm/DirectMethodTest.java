@@ -802,6 +802,7 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void osteoSingleCountry() {
+        DDPInstance.setDdpInstanceActive("Osteo", true);
         DDPInstance instance = DDPInstance.getDDPInstance("Osteo");
         String filter = " AND ( PREQUAL.SELF_COUNTRY = 'US' )";
         Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, filter);
@@ -810,6 +811,7 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void osteoTwoCountries() {
+        DDPInstance.setDdpInstanceActive("Osteo", true);
         DDPInstance instance = DDPInstance.getDDPInstance("Osteo");
         String filter = " AND ( PREQUAL.SELF_COUNTRY = 'US' OR PREQUAL.SELF_COUNTRY = 'CA' )";
         Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, filter);

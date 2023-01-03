@@ -206,7 +206,7 @@ public class RouteTest extends TestHelper {
     public static void exitPat(@NonNull String particpantId) throws Exception {
         DBTestUtil.createTestData(TEST_DDP, particpantId, "TEST_INSTITUTION");
         String json = "{\"realm\": \"" + TEST_DDP + "\", \"participantId\": \"" + particpantId + "\", \"user\": \"1\", \"inDDP\":true}";
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "exitParticipant"), json, testUtil.buildAuthHeaders(particpantId))
+        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "exitParticipant"), json, testUtil.buildAuthHeaders())
                 .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         ArrayList strings = new ArrayList<>();

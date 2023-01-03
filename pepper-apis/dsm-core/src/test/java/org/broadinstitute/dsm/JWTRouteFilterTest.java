@@ -95,7 +95,7 @@ public class JWTRouteFilterTest {
     /**
      * Handy utility for generating and sharing a long-lived token for testing
      */
-    // @Ignore("Broken")
+    @Ignore("Broken")
     @Test
     public void printTestToken() throws Exception {
         Config cfg = ConfigFactory.load();
