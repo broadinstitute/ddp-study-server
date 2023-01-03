@@ -1,13 +1,17 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -16,10 +20,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Task to replace age validations to singular activities
