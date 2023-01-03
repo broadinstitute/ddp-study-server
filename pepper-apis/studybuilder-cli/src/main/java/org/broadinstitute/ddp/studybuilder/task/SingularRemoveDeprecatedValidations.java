@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import java.nio.file.Path;
+import java.util.List;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NoArgsConstructor;
@@ -9,10 +12,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Task to replace age validations to singular activities
