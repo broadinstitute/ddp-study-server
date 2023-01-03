@@ -19,6 +19,8 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 @Slf4j
 @NoArgsConstructor
 public class SingularRemoveDeprecatedValidations implements CustomTask {
+
+    private static final String TARGET_STUDY = "singular";
     private static final String PATCH_FILE = "patches/pepper-486-deprecated-validations.conf";
 
     private Path cfgPath;
