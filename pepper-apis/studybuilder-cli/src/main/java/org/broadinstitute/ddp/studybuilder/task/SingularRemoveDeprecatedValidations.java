@@ -42,13 +42,12 @@ public class SingularRemoveDeprecatedValidations implements CustomTask {
     public void run(final Handle handle) {
         log.info("TASK::{}", SingularRemoveDeprecatedValidations.class.getSimpleName());
 
-        final var file = cfgPath.getParent().resolve(PATCH_FILE).toFile();
-        if (!file.exists()) {
+        final var patchConfigFile = cfgPath.getParent().resolve(PATCH_FILE).toFile();
+        if (!patchConfigFile.exists()) {
             throw new DDPException("Data file is missing: " + PATCH_FILE);
         }
 
-        final var validationToRemove = cfgPath.getParent().resolve(PATCH_FILE).toFile();
-        final var patchConfig = ConfigFactory.parseFile(validationToRemove).resolveWith(varsCfg);
+        final var patchConfig = ConfigFactory.parseFile(patchConfigFile).resolveWith(varsCfg);
 
         removeValidations(handle, TARGET_STUDY, patchConfig.getString("activity"), patchConfig.getConfigList("validations"));
 
