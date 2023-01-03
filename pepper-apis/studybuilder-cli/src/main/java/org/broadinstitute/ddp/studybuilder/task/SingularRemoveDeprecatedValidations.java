@@ -29,7 +29,7 @@ public class SingularRemoveDeprecatedValidations implements CustomTask {
 
     @Override
     public void init(final Path cfgPath, final Config studyCfg, final Config varsCfg) {
-        if (!studyCfg.getString("study.guid").equals("singular")) {
+        if (!studyCfg.getString("study.guid").equals(TARGET_STUDY)) {
             throw new DDPException("This task is only for the singular study!");
         }
 
