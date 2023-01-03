@@ -49,20 +49,28 @@ public class SingularRemoveDeprecatedValidations implements CustomTask {
 
         final var patchConfig = ConfigFactory.parseFile(patchConfigFile).resolveWith(varsCfg);
 
-        removeValidations(handle, TARGET_STUDY, patchConfig.getString("activity"), patchConfig.getConfigList("validations"));
+        final var removedCount = removeValidations(handle,
+                TARGET_STUDY,
+                patchConfig.getString("activity"),
+                patchConfig.getConfigList("validations"));
+        
+        log.info("Deleted {} activity validations", removedCount);
 
         log.info("Patch {} applied", PATCH_FILE);
     }
 
-    private void removeValidations(final Handle handle,
+    private int removeValidations(final Handle handle,
             final String studyGuid,
             final String activityCode,
             final List<? extends Config> config) {
-        config.forEach(validation -> removeValidation(handle, studyGuid, activityCode, validation));
+        return config.stream()
+                .map(validation -> (Integer)removeValidation(handle, studyGuid, activityCode, validation))
+                .mapToInt(Integer::intValue)
+                .reduce(0, Integer::sum);
     }
 
-    private void removeValidation(final Handle handle, final String studyGuid, final String activityCode, final Config validation) {
-        handle.attach(SqlHelper.class)
+    private int removeValidation(final Handle handle, final String studyGuid, final String activityCode, final Config validation) {
+        return handle.attach(SqlHelper.class)
                 .removeValidation(studyGuid,
                         activityCode,
                         validation.getString("precondition"),
@@ -86,7 +94,7 @@ public class SingularRemoveDeprecatedValidations implements CustomTask {
                  + "    REPLACE(REPLACE(REPLACE(REPLACE(:expression, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') "
                  + "AND REPLACE(REPLACE(REPLACE(REPLACE(av.precondition_text, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') = "
                  + "    REPLACE(REPLACE(REPLACE(REPLACE(:precondition, ' ', ''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '') ")
-         void removeValidation(@Bind("studyGuid") String studyGuid,
+         int removeValidation(@Bind("studyGuid") String studyGuid,
                                 @Bind("activityCode") final String activityCode,
                                 @Bind("precondition") final String precondition,
                                 @Bind("expression") final String expression);
