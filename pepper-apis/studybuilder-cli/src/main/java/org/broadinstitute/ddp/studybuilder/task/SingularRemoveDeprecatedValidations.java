@@ -21,9 +21,9 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public class SingularRemoveDeprecatedValidations implements CustomTask {
     private static final String PATCH_FILE = "patches/pepper-486-deprecated-validations.conf";
 
-    protected Path cfgPath;
-    protected Config cfg;
-    protected Config varsCfg;
+    private Path cfgPath;
+    private Config cfg;
+    private Config varsCfg;
 
     @Override
     public void init(final Path cfgPath, final Config studyCfg, final Config varsCfg) {
