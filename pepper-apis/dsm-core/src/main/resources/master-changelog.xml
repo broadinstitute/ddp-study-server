@@ -113,6 +113,7 @@
     <include file="liquibase/CMI/PEPPER-285_block_id_shl.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-271_clinicalNotesChanges.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-270_cardiacMalformationTabChanges.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/PEPPER-322_dataCollectionStatus.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-264_ParticipantEnrollmentStatusChanges.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-407_NextOutreachDate.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
