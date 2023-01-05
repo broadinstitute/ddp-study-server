@@ -503,7 +503,7 @@ public class KitDaoImpl implements KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = (Optional<ScanError>) results.resultValue;
+            result = Optional.ofNullable((ScanError)results.resultValue);
         }
         return result;
     }
