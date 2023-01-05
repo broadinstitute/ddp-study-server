@@ -209,12 +209,14 @@ public class ExistingRecordPatch extends BasePatch {
         if (Patch.patch(patch.getId(), patch.getUser(), patch.getNameValue(), dbElement)) {
             nameValues.addAll(setWorkflowRelatedFields(patch));
             exportToESWithId(patch.getId(), patch.getNameValue());
-            if (patch.getNameValue().getName().equals("oD.tissueReceived")) {
+            if (patch.getNameValue().getName().equals(DBConstants.OD_TISSUE_RECEIVED)) {
                 if (StringUtils.isBlank(patch.getParentId()) && StringUtils.isNotBlank(patch.getDdpParticipantId())) {
                     patch.setParentId(patch.getDdpParticipantId());
                 }
                 if (StringUtils.isNotBlank(patch.getParentId())) {
-                    triggerParticipantEvent(ddpInstance, patch, new Value(null, EventTypeDao.EVENT, "TISSUE_RECEIVED"));
+                    triggerParticipantEvent(ddpInstance, patch, new Value(null, EventTypeDao.EVENT, DBConstants.TISSUE_RECEIVED_EVENT));
+                } else {
+                    logger.warn("ParentId was empty - not going to trigger DSS for " + DBConstants.TISSUE_RECEIVED_EVENT);
                 }
             }
             return nameValues;
