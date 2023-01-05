@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.model.elastic.search.SourceMapDeserializer;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class DynamicFieldsParser extends BaseParser {
@@ -24,6 +25,7 @@ public class DynamicFieldsParser extends BaseParser {
     protected String displayType;
     private String possibleValuesJson;
     private BaseParser parser;
+    SourceMapDeserializer sourceMapDeserializer = new SourceMapDeserializer();
 
     public void setDisplayType(String displayType) {
         this.displayType = displayType;
@@ -91,8 +93,13 @@ public class DynamicFieldsParser extends BaseParser {
     private Optional<FieldSettingsDto> getFieldSettingsByColumnName() {
         Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
         String fieldName = super.fieldName;
+        String pascalSnakeCaseFieldName = sourceMapDeserializer.camelCaseToPascalSnakeCase(fieldName);
         if (isNotFieldSettingCached(fieldName)) {
             fieldSettingsByInstanceNameAndColumnName = fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
+            if (!fieldSettingsByInstanceNameAndColumnName.isPresent()) {
+                fieldSettingsByInstanceNameAndColumnName =
+                        fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, pascalSnakeCaseFieldName);
+            }
             if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
                 fieldSettingsDtoByColumnName.put(fieldName, fieldSettingsByInstanceNameAndColumnName.get());
             }
