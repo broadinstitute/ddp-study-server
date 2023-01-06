@@ -492,6 +492,7 @@ public class KitDaoImpl implements KitDao {
                     dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
                             "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
                                     + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+                    logger.error("The number of affected rows for kit label " + kitRequestShipping.getKitLabel() + "is not 1.");
                 } else {
                     logger.info("Added tracking for kit w/ kit_label " + kitRequestShipping.getKitLabel());
                 }
@@ -499,11 +500,12 @@ public class KitDaoImpl implements KitDao {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
                         "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
                                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+                logger.error("Unable to save kit tracking information for kit label " + kitRequestShipping.getKitLabel(), ex);
             }
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = (Optional<ScanError>) results.resultValue;
+            result = Optional.ofNullable((ScanError)results.resultValue);
         }
         return result;
     }
