@@ -1,1 +1,0 @@
-"{\"users.cmi.cmi-osteo\":{\"settings\":{\"index\":{\"number_of_shards\":\"1\",\"auto_expand_replicas\":\"0-1\",\"blocks\":{\"read_only_allow_delete\":\"false\"},\"analysis\":{\"normalizer\":{\"my_normalizer\":{\"filter\":[\"lowercase\"],\"type\":\"custom\"}}},\"number_of_replicas\":\"0\"}}}}"
