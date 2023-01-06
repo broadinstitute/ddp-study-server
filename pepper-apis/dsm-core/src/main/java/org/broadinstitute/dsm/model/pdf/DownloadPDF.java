@@ -98,6 +98,9 @@ public class DownloadPDF {
                 if (maybePdf.isPresent()) {
                     byte[] pdfByte = maybePdf.get();
                     if (pdfByte.length > 0) {
+                        if (configName == null) {
+                            configName = "";
+                        }
                         savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(pdfByte),
                                 configName, user.getId());
                     } else {
