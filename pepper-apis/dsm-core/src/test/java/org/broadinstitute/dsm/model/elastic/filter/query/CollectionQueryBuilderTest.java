@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.regex.Pattern;
 
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.filter.participant.BaseFilterParticipantList;
@@ -69,32 +68,7 @@ public class CollectionQueryBuilderTest {
     public void mrNotRequestedYet() {
 
         String filter = "AND k.receive_date IS NOT NULL AND m.fax_sent IS NULL AND NOT m.mr_problem <=> 1 "
-                        + "AND NOT m.unable_obtain <=> 1 AND NOT m.duplicate <=> 1 AND ( data.status = 'ENROLLED' )";
-
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
-
-
-        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
-                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
-                new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.kitRequestShipping.receiveDate")), ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord",
-                new BoolQueryBuilder().mustNot(new ExistsQueryBuilder("dsm.medicalRecord.faxSent")), ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord",
-                        new MatchQueryBuilder("dsm.medicalRecord.mrProblem", false).operator(Operator.AND), ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord",
-                        new MatchQueryBuilder("dsm.medicalRecord.unableObtain", false).operator(Operator.AND), ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord",
-                        new MatchQueryBuilder("dsm.medicalRecord.duplicate", false).operator(Operator.AND), ScoreMode.Avg))
-                .must(new BoolQueryBuilder().should(new MatchQueryBuilder("status", "ENROLLED")));
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void mrNotRequestedYetTry() {
-
-        String filter = "AND k.receive_date IS NOT NULL AND m.fax_sent IS NULL AND NOT m.mr_problem <=> 1 "
-                        + "AND NOT m.unable_obtain <=> 1 AND NOT m.duplicate <=> 1 AND ( data.status = 'ENROLLED' )";
+                + "AND NOT m.unable_obtain <=> 1 AND NOT m.duplicate <=> 1 AND ( data.status = 'ENROLLED' )";
 
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
@@ -108,7 +82,7 @@ public class CollectionQueryBuilderTest {
                 .must(new BoolQueryBuilder().should(new MatchQueryBuilder("status", "ENROLLED")))
                 .must(new NestedQueryBuilder("dsm.medicalRecord", nestedPart, ScoreMode.Avg))
                 .must(new NestedQueryBuilder("dsm.kitRequestShipping",
-                new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.kitRequestShipping.receiveDate")), ScoreMode.Avg));
+                        new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.kitRequestShipping.receiveDate")), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
