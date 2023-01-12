@@ -116,4 +116,5 @@
     <include file="liquibase/singular/PEPPER-322_dataCollectionStatus.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-264_ParticipantEnrollmentStatusChanges.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/PEPPER-407_NextOutreachDate.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/PEPPER-445_tissueReceivedEvent.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
