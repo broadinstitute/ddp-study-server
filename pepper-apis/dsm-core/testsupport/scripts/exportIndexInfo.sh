@@ -5,14 +5,14 @@ set +e
 # set -x
 
 if [ -z "$1" ] || [ "$1" = "--help" ]; then
-    echo "Usage: $0 [indexName]"
+    echo "Usage: $0 <indexName> [dataDirectory]"
     echo "Options:"
     echo "  --help      show this help message and exit"
     exit 0
 fi
 
 INDEX_NAME=$1
-DATA_FILE_DIR='../esdata'
+DATA_FILE_DIR=${2:-../esdata}
 
 # Going to extract needed info out of vault
 ES_ADMIN_NAME='pepper_engineering'

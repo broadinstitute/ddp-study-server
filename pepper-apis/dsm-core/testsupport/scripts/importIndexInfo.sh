@@ -6,7 +6,7 @@
 
 # if first argument is empty or if it is equal to --help, print the command usage
 if [ -z "$1" ] || [ -z "$2" ] || [ "$1" = "--help" ]; then
-  echo "Usage: $0 [serverBaseUrl] [indexName]"
+  echo "Usage: $0 <serverBaseUrl> <indexName> [dataDirectory]"
   echo "Options:"
   echo "  --help            show this help message and exit"
   exit 0
@@ -17,7 +17,9 @@ INDEX_NAME=$2
 
 ES_INDEX_URL=${ES_SERVER_BASE_URL}/${INDEX_NAME}
 
-DATA_FILE_DIR='../esdata'
+# Set DATA_FILE_DIR to be the third argument if provided, otherwise default to ../esdata
+DATA_FILE_DIR=${3:-../esdata}
+
 
 #Types of imports. Order is important
 DATA_TYPES=("analyzer" "mapping" "data")
