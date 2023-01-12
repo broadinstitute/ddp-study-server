@@ -170,8 +170,9 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         }
     }
 
-    public static AbstractQueryBuilder<?> createMixedSourceBaseAbstractQueryBuilder(String filterQuery) {
+    public static AbstractQueryBuilder<?> createMixedSourceBaseAbstractQueryBuilder(String filterQuery, Integer ddpInstanceId) {
         BaseAbstractQueryBuilder abstractQueryBuilder = AbstractQueryBuilderFactory.create(filterQuery);
+        abstractQueryBuilder.setDdpInstanceId(ddpInstanceId);
         abstractQueryBuilder.setParser(new FilterParser());
         return abstractQueryBuilder.build();
     }
