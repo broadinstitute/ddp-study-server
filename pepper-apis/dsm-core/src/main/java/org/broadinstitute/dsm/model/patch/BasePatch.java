@@ -37,7 +37,6 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public abstract class BasePatch {
 
     protected static final String PARTICIPANT_ID = "participantId";
@@ -259,7 +258,7 @@ public abstract class BasePatch {
             nameValues.add(setAdditionalValue("oD.faxSent3By", patch, patch.getUser()));
             nameValues.add(setAdditionalValue("oD.faxConfirmed3", patch, patch.getNameValue().getValue()));
             nameValues.add(setAdditionalValue("oD.request", patch, "sent"));
-        } else if (patch.getNameValue().getName().equals("oD.tissueReceived")) {
+        } else if (patch.getNameValue().getName().equals(DBConstants.OD_TISSUE_RECEIVED)) {
             nameValues.add(setAdditionalValue("oD.request", patch, "received"));
         } else if (patch.getNameValue().getName().equals("t.returnDate")) {
             if (StringUtils.isNotBlank(patch.getNameValue().getValue().toString())) {
