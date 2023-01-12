@@ -232,6 +232,7 @@ public class DBConstants {
     public static final String GENDER = "gender";
     public static final String DESTRUCTION_POLICY = "destruction_policy";
     public static final String UNABLE_OBTAIN_TISSUE = "unable_obtain_tissue";
+    public static final String OD_TISSUE_RECEIVED = "oD.tissueReceived";
 
     //Tissue
     public static final String TISSUE_ID = "tissue_id";
@@ -545,4 +546,7 @@ public class DBConstants {
     public static final String DDP_MERCURY_SEQUENCING_ALIAS = "cl";
     public static final String DDP_KIT_ALIAS = "kit";
     public static final String TRACKING = "tracking";
+
+    //EVENTS
+    public static final String TISSUE_RECEIVED_EVENT = "TISSUE_RECEIVED";
 }
