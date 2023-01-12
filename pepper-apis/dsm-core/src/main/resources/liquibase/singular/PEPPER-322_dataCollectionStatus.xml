@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-322_PS_DATA_COLLECTION_STATUS" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @orderNumber := order_number FROM field_settings where ddp_instance_id = @realm
+            and column_display = 'Participant Enrollment Status' and field_type = 'r' ;
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+            where field_type = 'r' and order_number &gt;= @orderNumber AND ddp_instance_id = @realm )
+            and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number,
+            possible_values )
+            SELECT ddp_instance_id , 'r', 'DATA_COLLECTION_STATUS' ,'Data Collection Status',
+            'OPTIONS', @orderNumber,  '[{"value":"INCOMPLETE","name":"Incomplete"},{"value":"COMPLETE","name":"Complete"},{"value":"NA","name":"N/A"}]'
+            from ddp_instance where instance_name = 'singular';
+        </sql>
+    </changeSet>
+</databaseChangeLog>
