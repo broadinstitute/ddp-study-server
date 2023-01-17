@@ -188,13 +188,13 @@ public interface JdbiClient extends SqlObject {
     @SqlQuery("SELECT COUNT(*) FROM client WHERE auth0_client_id = :auth0ClientId")
     int countClientsWithSameAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
 
-    @SqlQuery("UPDATE client"
+    @SqlUpdate("UPDATE client"
             + "  SET"
             + "    auth0_client_id = :auth0ClientId,"
             + "    auth0_signing_secret = :auth0EncryptedSecret,"
             + "    web_password_redirect_url = :webPasswordRedirectUrl,"
             + "    is_revoked = :revoked,"
             + "    auth0_tenant_id = :auth0TenantId"
-            + "  WHERE client.client_id = :id")
+            + "  WHERE client_id = :id")
     int update(@BindBean ClientDto client);
 }
