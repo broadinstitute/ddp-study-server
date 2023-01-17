@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
@@ -15,17 +14,12 @@ import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
-import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 import org.broadinstitute.dsm.model.participant.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.ExistsQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 
 public class BaseAbstractQueryBuilder {
 
@@ -87,25 +81,28 @@ public class BaseAbstractQueryBuilder {
         for (String filterValue : filterValues) {
             creatingQueryBuilder(filterValue, filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
         }
-        //just osteo2
-        if (ddpInstanceId != null) {
-            if (nestedQueryBuilderLists.containsKey("dsm.kitRequestShipping")) {
-                creatingQueryBuilder("k.ddpInstanceId = " + ddpInstanceId,
+        //including check for ddpInstanceId only needed for OS studies
+        if (ddpInstanceId != null && esIndex != null && DBConstants.OSTEO_INDEX.equals(esIndex)) {
+            if (nestedQueryBuilderLists.containsKey(ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER + ESObjectConstants.KIT_REQUEST_SHIPPING)) {
+                creatingQueryBuilder(DBConstants.DDP_KIT_REQUEST_ALIAS + DBConstants.ALIAS_DELIMITER
+                                + DBConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
                         filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
             }
-            if (nestedQueryBuilderLists.containsKey("dsm.medicalRecord")) {
-                creatingQueryBuilder("m.ddpInstanceId = " + ddpInstanceId,
+            if (nestedQueryBuilderLists.containsKey(ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER + ESObjectConstants.MEDICAL_RECORD)) {
+                creatingQueryBuilder(DBConstants.DDP_MEDICAL_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
+                                + DBConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
                         filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
             }
-            if (nestedQueryBuilderLists.containsKey("dsm.oncHistoryDetail")) {
-                creatingQueryBuilder("oD.ddpInstanceId = " + ddpInstanceId,
+            if (nestedQueryBuilderLists.containsKey(ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER + ESObjectConstants.ONC_HISTORY_DETAIL)) {
+                creatingQueryBuilder(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER
+                                + DBConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
                         filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
             }
+            //tissue and oncHistory objects do currently not have ddpInstanceId set
         }
         if (!nestedQueryBuilderLists.isEmpty() && nestedQueryBuilderLists.size() == correctBaseQueryBuilder.size()) {
             nestedQueryBuilderLists.entrySet().stream().forEach(entrySet -> filterStrategy.build(boolQueryBuilder,
                     correctBaseQueryBuilder.get(entrySet.getKey()).build(entrySet.getValue())));
-
         }
     }
 
@@ -146,27 +143,4 @@ public class BaseAbstractQueryBuilder {
             filterStrategy.build(boolQueryBuilder, baseQueryBuilder.build(queryBuilders));
         }
     }
-
-    private AbstractQueryBuilder addOsteo2InstanceFilter(AbstractQueryBuilder queryBuilder) {
-        //just osteo2
-        BoolQueryBuilder osteo2QueryBuilder = new BoolQueryBuilder();
-        osteo2QueryBuilder.should(osteoVersion2Surveys("CONSENT"));
-        osteo2QueryBuilder.should(osteoVersion2Surveys("CONSENT_ASSENT"));
-        osteo2QueryBuilder.should(osteoVersion2Surveys("PARENTAL_CONSENT"));
-        osteo2QueryBuilder.should(osteoVersion2Surveys("LOVEDONE"));
-        ((BoolQueryBuilder) queryBuilder).must(osteo2QueryBuilder);
-        return queryBuilder;
-    }
-
-    private NestedQueryBuilder osteoVersion2Surveys(String stableId) {
-        BoolQueryBuilder queryBuilderConsentV2 = new BoolQueryBuilder();
-        queryBuilderConsentV2.must(new MatchQueryBuilder("activities.activityCode", stableId).operator(
-                org.elasticsearch.index.query.Operator.AND));
-        queryBuilderConsentV2.must(
-                QueryBuilders.matchQuery("activities.activityVersion", "v2").operator(org.elasticsearch.index.query.Operator.AND));
-        queryBuilderConsentV2.must(new BoolQueryBuilder().must(new ExistsQueryBuilder("activities.completedAt")));
-        NestedQueryBuilder expectedNestedQueryConsent = new NestedQueryBuilder("activities", queryBuilderConsentV2, ScoreMode.Avg);
-        return expectedNestedQueryConsent;
-    }
-
 }

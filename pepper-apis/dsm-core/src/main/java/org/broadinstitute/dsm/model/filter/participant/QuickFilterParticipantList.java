@@ -24,7 +24,7 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
         if (StringUtils.isNotBlank(ddpInstanceDto.getQueryItems())) {
             filterQuery = filterQuery + ddpInstanceDto.getQueryItems();
         }
-        AbstractQueryBuilder<?> mainQuery = createMixedSourceBaseAbstractQueryBuilder(filterQuery, ddpInstanceDto.getDdpInstanceId());
+        AbstractQueryBuilder<?> mainQuery = createMixedSourceBaseAbstractQueryBuilder(filterQuery, ddpInstanceDto);
 
         ParticipantWrapperPayload.Builder participantWrapperPayload =
                 new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy);
