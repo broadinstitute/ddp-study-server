@@ -61,7 +61,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
             return UserErrorMessages.NO_RIGHTS;
         }
         Instant startInstant = Instant.now();
-        DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
+        DDPInstance instance = DDPInstance.getDDPInstance(realm);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
                 params.isHumanReadable(), params.isOnlyMostRecent(), null);
