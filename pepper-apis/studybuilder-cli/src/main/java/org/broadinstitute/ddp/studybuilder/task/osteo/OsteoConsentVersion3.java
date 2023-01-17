@@ -112,13 +112,14 @@ public class OsteoConsentVersion3 implements CustomTask {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
             revisionAdultVariableTranslation(config.getString(ADULT_TRANSLATION_KEY),
-                    config.getString(ADULT_TRANSLATION_NEW), handle, meta, version2);
+                    config.getString(ADULT_TRANSLATION_NEW), meta, version2);
         }
     }
 
 
-    private void revisionAdultVariableTranslation(String varName, String newTemplateText, Handle handle,
+    private void revisionAdultVariableTranslation(String varName, String newTemplateText,
                                                   RevisionMetadata meta, ActivityVersionDto version3) {
+        log.info("revisioning and updating template variable: {}", varName);
         List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(varName);
         for (Long tmplVarId : templateVariableIdByVariableNames) {
             //Long tmplVarId = templateVariableIdByVariableNames.get(0);
@@ -129,6 +130,7 @@ public class OsteoConsentVersion3 implements CustomTask {
             long[] revIds = {newFullNameSubRevId};
             jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
             jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
+            log.info("revisioned and updated template variable: {}", tmplVarId);
         }
     }
 
