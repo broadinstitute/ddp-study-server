@@ -17,7 +17,6 @@ import org.broadinstitute.dsm.model.participant.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -39,7 +38,6 @@ import java.util.zip.ZipOutputStream;
 
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
-
 
 public class DownloadParticipantListRoute extends RequestHandler {
 
@@ -127,6 +125,5 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
         return allResults;
     }
-
 
 }
