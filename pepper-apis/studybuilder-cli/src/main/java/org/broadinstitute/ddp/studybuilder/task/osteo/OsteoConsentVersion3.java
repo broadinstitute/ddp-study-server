@@ -105,19 +105,6 @@ public class OsteoConsentVersion3 implements CustomTask {
         return activityDao.changeVersion(activityId, "v3", meta);
     }
 
-    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle,
-                                             RevisionMetadata meta, ActivityVersionDto version3) {
-        long tmplVarId = sqlHelper.findTemplateVariableIdByVariableName(varName);
-        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-        Translation currTranslation = transList.get(0);
-
-        long newVarSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
-        long[] revIds = {newVarSubRevId};
-        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
-    }
-
-
     private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version3) {
 
         updateAdultVariables(handle, meta, version3, dataCfg);
@@ -137,6 +124,7 @@ public class OsteoConsentVersion3 implements CustomTask {
                                                   RevisionMetadata meta, ActivityVersionDto version3) {
         List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(varName);
         for (Long tmplVarId : templateVariableIdByVariableNames) {
+            //Long tmplVarId = templateVariableIdByVariableNames.get(0);
             List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
             Translation currTranslation = transList.get(0);
 
