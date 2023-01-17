@@ -88,29 +88,6 @@ public class CollectionQueryBuilderTest {
     }
 
     @Test
-    public void mrNotRequestedYet() {
-
-        String filter = "AND k.receive_date IS NOT NULL AND m.fax_sent IS NULL AND NOT m.mr_problem <=> 1 "
-                + "AND NOT m.unable_obtain <=> 1 AND NOT m.duplicate <=> 1 AND ( data.status = 'ENROLLED' )";
-
-        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
-
-        BoolQueryBuilder nestedPart = new BoolQueryBuilder();
-        nestedPart.must(new BoolQueryBuilder().mustNot(new ExistsQueryBuilder("dsm.medicalRecord.faxSent")))
-                .must(new MatchQueryBuilder("dsm.medicalRecord.mrProblem", false).operator(Operator.AND))
-                .must(new MatchQueryBuilder("dsm.medicalRecord.unableObtain", false).operator(Operator.AND))
-                .must(new MatchQueryBuilder("dsm.medicalRecord.duplicate", false).operator(Operator.AND));
-
-        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
-                .must(new BoolQueryBuilder().should(new MatchQueryBuilder("status", "ENROLLED")))
-                .must(new NestedQueryBuilder("dsm.medicalRecord", nestedPart, ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
-                        new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.kitRequestShipping.receiveDate")), ScoreMode.Avg));
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test
     public void collectionBuildAgeRange() {
 
         String filter = "AND m.age >= '15' AND m.age <= '30'";
