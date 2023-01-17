@@ -128,4 +128,6 @@ Each study required at least 2 Auth0 clients for proper functioning. The first i
   * `update:client_keys`
 
 ### Rotating the client secrets
-In the event that the client secrets need to be rotated, `studybuilder-cli` has functionality perform that operation using `--only-rotate-client-secrets`. This functionality will go through each tenant and, using the tenant's management client, rotate the client secret for each client, encrypt the result, and update the database. This functionality is also useful if the `encryptionSecret` is changed in the DSS configuration.
+In the event that the client secrets need to be re-synced (in this context, fetched from Auth0, encrypted using the `auth0.encryptedKey` value, and stored in the database), `studybuilder-cli` has functionality perform that operation using `--only-sync-client-secrets`. This functionality will go through each tenant and, using the tenant's management client, encrypt the result, and update the database. This functionality is also useful if the `encryptionSecret` is changed in the DSS configuration.
+
+If the `--rotate` flag is specified, each client's client secrets will be rotate before being fetched from Auth0.
