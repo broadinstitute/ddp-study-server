@@ -15,6 +15,9 @@ import java.util.function.Consumer;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -32,6 +35,7 @@ import org.jdbi.v3.core.Handle;
 /**
  * Main entry point for command-line tool that helps stand up a study.
  */
+@Slf4j
 public class StudyBuilderCli {
 
     private static final String USAGE = "StudyBuilder [-h, --help] [OPTIONS] <STUDY_CONFIG_FILE | STUDY_KEY>";
@@ -50,6 +54,8 @@ public class StudyBuilderCli {
     private static final String OPT_PROCESS_TRANSLATIONS = "process-translations";
     private static final String OPT_I18N_PATH = "i18n-path";
     private static final String OPT_TRANSLATIONS_TO_DB_JSON = "translations-to-db-json";
+    private static final String OPT_ROTATE_CLIENT_SECRETS = "only-rotate-client-secrets";
+    private static final String OPT_DRY_RUN = "dry-run";
 
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
@@ -58,6 +64,8 @@ public class StudyBuilderCli {
     public static void main(String[] args) throws Exception {
         var app = new StudyBuilderCli();
         app.run(args);
+        log.info("studybuilder-cli completed.");
+        System.exit(0);
     }
 
     private void run(String[] args) throws Exception {
@@ -65,13 +73,14 @@ public class StudyBuilderCli {
         options.addOption("h", "help", false, "print this help message");
         options.addOption(null, "vars", true, "study variables file");
         options.addOption(null, "substitutions", true, "study-wide substitutions file");
-        options.addOption(null, "dry-run", false, "run study setup or custom task without saving");
+        options.addOption(null, OPT_DRY_RUN, false, "run study setup or custom task without saving");
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
         options.addOption(null, "only-recreate-workflow", false, "recreate workflow from configuration file");
         options.addOption(null, "only-events", false, "only run events setup");
         options.addOption(null, "only-labeled-events", true, "only run events in comma-separated list of labels");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
+        options.addOption(null, OPT_ROTATE_CLIENT_SECRETS, false, "rotate the client secrets for all study clients");
         options.addOption(null, "no-workflow", false, "do not run workflow setup");
         options.addOption(null, "no-events", false, "do not run events setup");
         options.addOption(null, "enable-events", true, "enable or disable all the events for a study, accepts true/false");
@@ -140,7 +149,7 @@ public class StudyBuilderCli {
 
         log("resolving study configuration...");
         studyCfg = studyCfg.withFallback(varsCfg).resolve();
-        boolean isDryRun = cmd.hasOption("dry-run");
+        boolean isDryRun = cmd.hasOption(OPT_DRY_RUN);
         if (cmd.hasOption(OPT_RUN_TASK)) {
             String taskName = cmd.getOptionValue(OPT_RUN_TASK);
             runCustomTask(args, taskName, cfgPath, studyCfg, varsCfg, isDryRun);
@@ -212,6 +221,15 @@ public class StudyBuilderCli {
             }
             runEmails(cmd, cfgPath, studyCfg, varsCfg);
             return;
+        } else if (cmd.hasOption(OPT_ROTATE_CLIENT_SECRETS)) {
+            if (isDryRun) {
+                throw new DDPException("-" + OPT_ROTATE_CLIENT_SECRETS + " does not support -" + OPT_DRY_RUN);
+            }
+
+            promptForConfirmation("A client secret rotation can not be undone. Do you wish to proceed?");
+            execute(handle -> builder.runRotateClientSecrets(handle), false);
+            log("secret rotation done.");
+            return;
         }
 
         if (cmd.hasOption("no-workflow")) {
@@ -250,9 +268,8 @@ public class StudyBuilderCli {
         }
     }
 
-
     private void log(String fmt, Object... args) {
-        System.out.println("[builder] " + String.format(fmt, args));
+        System.err.println("[builder] " + String.format(fmt, args));
     }
 
     private Path resolvePathToStudyConfigFile(String filepathOrKey) {

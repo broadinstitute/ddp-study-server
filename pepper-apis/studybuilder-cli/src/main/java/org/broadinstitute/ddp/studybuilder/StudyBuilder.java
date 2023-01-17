@@ -1,11 +1,18 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.auth0.client.auth.AuthAPI;
+import com.auth0.client.mgmt.ManagementAPI;
+import com.auth0.exception.Auth0Exception;
+import com.auth0.json.auth.TokenHolder;
+import com.auth0.json.mgmt.client.Client;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -217,6 +224,116 @@ public class StudyBuilder {
 
         StudyDto renamedStudy = handle.attach(JdbiUmbrellaStudy.class).findById(studyDto.getId());
         log.info("renamed study with guid={} and moved to umbrella '{}'", renamedStudy.getGuid(), UMBRELLA_UNASSIGNED);
+    }
+
+    /**
+     * Rotates and updates the client secrets for authorized clients.
+     * 
+     * <p>Requires that the Management client for the tenant have the 
+     * following permissions in Auth0:
+     * <ul>
+     *  <li>read:clients</li>
+     *  <li>update:clients</li>
+     *  <li>read:client_keys</li>
+     *  <li>update:client_keys</li>
+     * </ul>
+     * 
+     * <p>This method does not (and can not) update the secrets for the
+     * management clients. If these secrets need to be rolled, it must
+     * be done manually.
+     */
+    public void runRotateClientSecrets(Handle handle) {
+        final var sqlTenants = handle.attach(JdbiAuth0Tenant.class);
+
+        for (final var tenant : sqlTenants.fetchAll()) {
+            final String domain;
+
+            // Typically, the "domain" used for Auth0 tenants in DSS has been a full
+            //  https URL with a trailing '/' instead of just the host.
+            // If it looks like we're working with a URL, attempt to extract the host
+            //  (what Auth0 considers the "domain"). If not, just use the field as-is and
+            //  hope for the best.
+            if (tenant.getDomain().toLowerCase().startsWith("https://")) {
+                try {
+                    final var domainUrl = new URL(tenant.getDomain());
+                    domain = domainUrl.getHost();
+                } catch (MalformedURLException cause) {
+                    log.error("failed to parse domain for tenant {}. The domain is in an unexpected format.", tenant.getDomain());
+                    throw new DDPException(String.format("failed to parse domain for tenant %s (%d)", tenant.getDomain(), tenant.getId()));
+                }
+            } else {
+                domain = tenant.getDomain();
+            }
+
+            if (StringUtils.isAnyBlank(tenant.getManagementClientId(), tenant.getManagementClientSecret())) {
+                log.warn("skipping key rotation for tenant {} ({}) as it does not have an associated management client",
+                        tenant.getDomain(),
+                        tenant.getId());
+                continue;
+            }
+
+            final var authClient = new AuthAPI(domain, tenant.getManagementClientId(), tenant.getManagementClientSecret());
+
+            final var auth0MgmtAudience = String.format("https://%s/api/v2/", domain);
+            final TokenHolder managementToken;
+            
+            try {
+                // todo (bskinner): Once the Auth0 SDK is updated, this code should be refactored to also
+                //  catch RateLimitException objects. The handling is up to the dev, but they will at
+                //  least include the date at which the rate limits expire.
+                managementToken = authClient.requestToken(auth0MgmtAudience).execute();
+            } catch (Auth0Exception cause) {
+                final var message = String.format("an unknown error occurred while requesting a management token for tenant %s.",
+                        tenant.getDomain());
+                throw new DDPException(message, cause);
+            }
+            
+            final var managementClient = new ManagementAPI(domain, managementToken.getAccessToken());
+            final var auth0Clients = managementClient.clients();
+
+            final var sqlClients = handle.attach(JdbiClient.class);
+
+            // Grabbing the "domain" from the current tenant instead of using the reformatted domain
+            //  because of the differences between what Auth0 expects (a FQDN), and what we're using
+            //  (an HTTPS URL)
+            for (final var dssClient : sqlClients.fetchAll(tenant.getDomain())) {
+                if (StringUtils.isBlank(dssClient.getAuth0ClientId())) {
+                    log.warn("client with id {}, in tenant {} ({}), does not have an associated client id.",
+                            dssClient.getId(),
+                            tenant.getDomain(),
+                            tenant.getId());
+                    continue;
+                }
+
+                final Client auth0Client;
+                
+                try {
+                    auth0Client = auth0Clients.get(dssClient.getAuth0ClientId()).execute();
+                } catch (Auth0Exception cause) {
+                    log.warn(String.format("failed to fetch details from Auth0 for client id %s (%d) in tenant %s, skipping...",
+                            dssClient.getAuth0ClientId(),
+                            dssClient.getId(),
+                            tenant.getDomain()));
+                    continue;
+                }
+
+                log.info("got the details for client {}", auth0Client.getClientId());
+                log.info("auth0Clients.rotateSecret(auth0Client.getClientId());");
+                assert StringUtils.isNotBlank(auth0Client.getClientSecret());
+                
+                final var encryptionKey = EncryptionKey.getEncryptionKey();
+                final var encryptedSecret = AesUtil.encrypt(auth0Client.getClientSecret(), encryptionKey);
+                final var updatedStudyClient = new ClientDto(dssClient.getId(),
+                        dssClient.getAuth0ClientId(),
+                        encryptedSecret,
+                        dssClient.getWebPasswordRedirectUrl(),
+                        dssClient.isRevoked(),
+                        dssClient.getAuth0TenantId(),
+                        dssClient.getAuth0Domain());
+
+                sqlClients.update(updatedStudyClient);
+            }
+        }
     }
 
     public Auth0TenantDto getTenantOrInsert(Handle handle) {
