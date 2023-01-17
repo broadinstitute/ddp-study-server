@@ -54,7 +54,12 @@ public class StudyBuilderCli {
     private static final String OPT_PROCESS_TRANSLATIONS = "process-translations";
     private static final String OPT_I18N_PATH = "i18n-path";
     private static final String OPT_TRANSLATIONS_TO_DB_JSON = "translations-to-db-json";
-    private static final String OPT_ROTATE_CLIENT_SECRETS = "only-rotate-client-secrets";
+    private static final String OPT_SYNC_CLIENT_SECRETS = "only-sync-client-secrets";
+
+    /**
+     * If --only-sync-client-secrets is used, this forces a rotation of the client secrets.
+     */
+    private static final String OPT_ROTATE_SECRETS = "rotate";
     private static final String OPT_DRY_RUN = "dry-run";
 
     private static final String DEFAULT_STUDIES_DIR = "studies";
@@ -80,7 +85,9 @@ public class StudyBuilderCli {
         options.addOption(null, "only-events", false, "only run events setup");
         options.addOption(null, "only-labeled-events", true, "only run events in comma-separated list of labels");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
-        options.addOption(null, OPT_ROTATE_CLIENT_SECRETS, false, "rotate the client secrets for all study clients");
+        options.addOption(null, OPT_SYNC_CLIENT_SECRETS, false, "sync the client secrets for all study clients");
+        options.addOption(null, OPT_ROTATE_SECRETS, false, "rotate the client secrets before syncing them. "
+                + "This is a destructive operation.");
         options.addOption(null, "no-workflow", false, "do not run workflow setup");
         options.addOption(null, "no-events", false, "do not run events setup");
         options.addOption(null, "enable-events", true, "enable or disable all the events for a study, accepts true/false");
@@ -221,14 +228,24 @@ public class StudyBuilderCli {
             }
             runEmails(cmd, cfgPath, studyCfg, varsCfg);
             return;
-        } else if (cmd.hasOption(OPT_ROTATE_CLIENT_SECRETS)) {
+        } else if (cmd.hasOption(OPT_SYNC_CLIENT_SECRETS)) {
             if (isDryRun) {
-                throw new DDPException("-" + OPT_ROTATE_CLIENT_SECRETS + " does not support -" + OPT_DRY_RUN);
+                throw new DDPException("-" + OPT_SYNC_CLIENT_SECRETS + " does not support -" + OPT_DRY_RUN);
             }
 
-            promptForConfirmation("A client secret rotation can not be undone. Do you wish to proceed?");
-            execute(handle -> builder.runRotateClientSecrets(handle), false);
-            log("secret rotation done.");
+            final var rotateSecrets = cmd.hasOption(OPT_ROTATE_SECRETS);
+
+            if (rotateSecrets) {
+                final var shouldContinue = promptForConfirmation("A client secret rotation can not be undone. Do you wish to proceed?");
+
+                if (!shouldContinue) {
+                    log("Aborting rotation of client secrets.");
+                    return;
+                }
+            }
+            
+            execute(handle -> builder.runSyncClientSecrets(handle, rotateSecrets), false);
+            log("secret sync completed successfully.");
             return;
         }
 
@@ -256,15 +273,17 @@ public class StudyBuilderCli {
 
     private boolean promptForConfirmation(String prompt) {
         System.out.println(prompt);
-        System.out.println("Type YES to proceed:");
-        Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine().trim();
+        System.out.print("Type YES to proceed: ");
+        
+        try (var scanner = new Scanner(System.in)) {
+            String input = scanner.nextLine().trim();
 
-        if (!"YES".equals(input)) {
-            System.out.println("Did not type YES. Quitting.");
-            return false;
-        } else {
-            return true;
+            if (!"YES".equalsIgnoreCase(input)) {
+                System.out.println("Did not type YES. Quitting.");
+                return false;
+            } else {
+                return true;
+            }
         }
     }
 

@@ -242,7 +242,7 @@ public class StudyBuilder {
      * management clients. If these secrets need to be rolled, it must
      * be done manually.
      */
-    public void runRotateClientSecrets(Handle handle) {
+    public void runSyncClientSecrets(Handle handle, boolean rotateSecrets) {
         final var sqlTenants = handle.attach(JdbiAuth0Tenant.class);
 
         for (final var tenant : sqlTenants.fetchAll()) {
@@ -279,11 +279,11 @@ public class StudyBuilder {
             
             try {
                 // todo (bskinner): Once the Auth0 SDK is updated, this code should be refactored to also
-                //  catch RateLimitException objects. The handling is up to the dev, but they will at
+                //  catch RateLimitException objects. The handling is up to the dev, but RateLimitExceptions will at
                 //  least include the date at which the rate limits expire.
                 managementToken = authClient.requestToken(auth0MgmtAudience).execute();
             } catch (Auth0Exception cause) {
-                final var message = String.format("an unknown error occurred while requesting a management token for tenant %s.",
+                final var message = String.format("an error occurred while requesting a management token for tenant %s.",
                         tenant.getDomain());
                 throw new DDPException(message, cause);
             }
@@ -302,24 +302,52 @@ public class StudyBuilder {
                             dssClient.getId(),
                             tenant.getDomain(),
                             tenant.getId());
+                    // The flow control here leaves a lot to be desired.
+                    // This code would likely be improved by separating out
+                    // chunks of the for-loops into separate functions so
+                    // we could just `return` here instead.
                     continue;
                 }
 
-                final Client auth0Client;
+                Client auth0Client;
                 
                 try {
                     auth0Client = auth0Clients.get(dssClient.getAuth0ClientId()).execute();
                 } catch (Auth0Exception cause) {
-                    log.warn(String.format("failed to fetch details from Auth0 for client id %s (%d) in tenant %s, skipping...",
+                    log.warn("failed to fetch details from Auth0 for client id {} ({}) in tenant {}. {}",
                             dssClient.getAuth0ClientId(),
                             dssClient.getId(),
-                            tenant.getDomain()));
+                            tenant.getDomain(),
+                            cause.getLocalizedMessage());
+                    // Same as the prior `continue`
                     continue;
                 }
 
-                log.info("got the details for client {}", auth0Client.getClientId());
-                log.info("auth0Clients.rotateSecret(auth0Client.getClientId());");
-                assert StringUtils.isNotBlank(auth0Client.getClientSecret());
+                log.info("fetched the details for client {}", auth0Client.getClientId());
+
+                if (!StringUtils.isNotBlank(auth0Client.getClientSecret())) {
+                    final var message = String.format("auth0 did not return a client secret for the client with identifier %s",
+                            auth0Client.getClientId());
+                    log.error("{}. Ensure the management client {} has the `read:client_keys` permission for the Auth0 Management API",
+                            message,
+                            tenant.getManagementClientId());
+                    throw new DDPException(message);
+                }
+
+                if (rotateSecrets) {
+                    log.info("performing client secret rotation for client {}", auth0Client.getClientId());
+
+                    try {
+                        auth0Client = auth0Clients.rotateSecret(auth0Client.getClientId()).execute();
+                    } catch (Auth0Exception cause) {
+                        log.error("failed to rotate the client secret for client {} ({}) in tenant {}. {}",
+                                dssClient.getAuth0ClientId(),
+                                dssClient.getId(),
+                                tenant.getDomain(),
+                                cause.getLocalizedMessage());
+                        throw new DDPException("An error occurred while rotating client secrets.", cause);
+                    }
+                }
                 
                 final var encryptionKey = EncryptionKey.getEncryptionKey();
                 final var encryptedSecret = AesUtil.encrypt(auth0Client.getClientSecret(), encryptionKey);
