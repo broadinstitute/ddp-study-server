@@ -74,14 +74,11 @@ public class ActivitiesCollectionQueryBuilderTest {
         BoolQueryBuilder nestedBoolQuery = new BoolQueryBuilder();
         nestedBoolQuery.must(new MatchQueryBuilder("activities.activityCode", "ANGIORELEASE").operator(Operator.AND));
         nestedBoolQuery.must(new RangeQueryBuilder("activities.lastUpdatedAt").gte("2022-04-21"));
+        nestedBoolQuery.must(new MatchQueryBuilder("activities.activityCode", "ANGIORELEASE").operator(Operator.AND));
+        nestedBoolQuery.must(new RangeQueryBuilder("activities.lastUpdatedAt").lte("2022-07-28"));
         NestedQueryBuilder expectedNestedQuery = new NestedQueryBuilder("activities", nestedBoolQuery, ScoreMode.Avg);
         expected.must(expectedNestedQuery);
-
-        BoolQueryBuilder nestedBoolQuery2 = new BoolQueryBuilder();
-        nestedBoolQuery2.must(new MatchQueryBuilder("activities.activityCode", "ANGIORELEASE").operator(Operator.AND));
-        nestedBoolQuery2.must(new RangeQueryBuilder("activities.lastUpdatedAt").lte("2022-07-28"));
-        NestedQueryBuilder expectedNestedQuery2 = new NestedQueryBuilder("activities", nestedBoolQuery2, ScoreMode.Avg);
-        expected.must(expectedNestedQuery2);
+        
         Assert.assertEquals(expected, actual);
     }
 

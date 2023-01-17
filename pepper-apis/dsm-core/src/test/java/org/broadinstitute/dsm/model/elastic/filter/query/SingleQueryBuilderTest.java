@@ -82,8 +82,9 @@ public class SingleQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getNonActivityQueryBuilder(filter);
 
         BoolQueryBuilder expected = new BoolQueryBuilder();
-        expected.must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"));
-        expected.must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022"));
+        expected.must(new BoolQueryBuilder()
+                .must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"))
+                .must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022")));
 
         Assert.assertEquals(expected, actual);
     }
@@ -116,8 +117,9 @@ public class SingleQueryBuilderTest {
         mustExists2.must(new ExistsQueryBuilder("profile.lastName"));
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
-        expectedQuery.must(mustExists1);
-        expectedQuery.must(mustExists2);
+        expectedQuery.must(new BoolQueryBuilder()
+                .must(mustExists1)
+                .must(mustExists2));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(filter));
     }

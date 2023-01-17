@@ -1,9 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
@@ -68,6 +70,9 @@ public class BaseAbstractQueryBuilder {
     }
 
     protected void buildUpQuery(List<String> filterValues, FilterStrategy filterStrategy) {
+        Map<String, List<QueryBuilder>> nestedQueryBuilderLists = new HashMap<>();
+        Map<String, BaseQueryBuilder> correctBaseQueryBuilder = new HashMap<>();
+        //all alias are mixed in here. order them per alias?
         for (String filterValue : filterValues) {
             Operator operator = Operator.extract(filterValue);
             if (operator == null) {
@@ -90,7 +95,23 @@ public class BaseAbstractQueryBuilder {
             baseQueryBuilder = BaseQueryBuilder.of(queryPayload);
             List<QueryBuilder> queryBuilders =
                     QueryStrategyFactory.create(new QueryStrategyFactoryPayload(baseQueryBuilder, operator, parser)).build();
-            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.build(queryBuilders));
+
+            if (StringUtils.isNotBlank(path)) {
+                if (!nestedQueryBuilderLists.containsKey(path)) {
+                    nestedQueryBuilderLists.put(path, queryBuilders);
+                    correctBaseQueryBuilder.put(path, baseQueryBuilder);
+                } else {
+                    List<QueryBuilder> queryBuildersFromMap = nestedQueryBuilderLists.get(path);
+                    queryBuildersFromMap.addAll(queryBuilders);
+                }
+            } else {
+                filterStrategy.build(boolQueryBuilder, baseQueryBuilder.build(queryBuilders));
+            }
+        }
+        if (!nestedQueryBuilderLists.isEmpty() && nestedQueryBuilderLists.size() == correctBaseQueryBuilder.size()) {
+            nestedQueryBuilderLists.entrySet().stream().forEach(entrySet -> filterStrategy.build(boolQueryBuilder,
+                    correctBaseQueryBuilder.get(entrySet.getKey()).build(entrySet.getValue())));
+
         }
     }
 
