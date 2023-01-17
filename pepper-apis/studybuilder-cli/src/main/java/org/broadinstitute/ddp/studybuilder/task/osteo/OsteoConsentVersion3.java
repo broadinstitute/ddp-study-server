@@ -106,7 +106,7 @@ public class OsteoConsentVersion3 implements CustomTask {
     }
 
     private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle,
-                                             RevisionMetadata meta, ActivityVersionDto version2) {
+                                             RevisionMetadata meta, ActivityVersionDto version3) {
         long tmplVarId = sqlHelper.findTemplateVariableIdByVariableName(varName);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
         Translation currTranslation = transList.get(0);
@@ -114,7 +114,7 @@ public class OsteoConsentVersion3 implements CustomTask {
         long newVarSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
         long[] revIds = {newVarSubRevId};
         jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
     }
 
 
@@ -134,7 +134,7 @@ public class OsteoConsentVersion3 implements CustomTask {
 
 
     private void revisionAdultVariableTranslation(String varName, String newTemplateText, Handle handle,
-                                                  RevisionMetadata meta, ActivityVersionDto version2) {
+                                                  RevisionMetadata meta, ActivityVersionDto version3) {
         List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(varName);
         for (Long tmplVarId : templateVariableIdByVariableNames) {
             List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
@@ -143,7 +143,7 @@ public class OsteoConsentVersion3 implements CustomTask {
             long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
             long[] revIds = {newFullNameSubRevId};
             jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-            jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+            jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
         }
     }
 
