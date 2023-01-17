@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -11,6 +12,15 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiAuth0Tenant extends SqlObject {
+
+    @SqlQuery("SELECT "
+            + "  auth0_tenant_id,"
+            + "  management_client_id,"
+            + "  management_client_secret,"
+            + "  auth0_domain"
+            + " FROM auth0_tenant")
+    @RegisterConstructorMapper(Auth0TenantDto.class)
+    List<Auth0TenantDto> fetchAll();
 
     @SqlQuery("select * from auth0_tenant where auth0_tenant_id = :id")
     @RegisterConstructorMapper(Auth0TenantDto.class)

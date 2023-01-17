@@ -8,6 +8,7 @@ import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -26,6 +27,20 @@ public interface JdbiClient extends SqlObject {
                       @Bind("auth0Secret") String auth0Secret,
                       @Bind("auth0TenantId") long auth0TenantId,
                       @Bind("redirectUrl") String redirectUrl);
+
+    @SqlQuery("SELECT "
+            + "    client.client_id AS client_id,"
+            + "    tenant.auth0_domain AS auth0_domain,"
+            + "    client.auth0_client_id AS auth0_client_id,"
+            + "    client.auth0_signing_secret AS auth0_signing_secret,"
+            + "    client.web_password_redirect_url AS web_password_redirect_url,"
+            + "    client.is_revoked AS is_revoked,"
+            + "    client.auth0_tenant_id AS auth0_tenant_id"
+            + "  FROM client"
+            + "    JOIN auth0_tenant AS tenant ON tenant.auth0_tenant_id = client.auth0_tenant_id"
+            + "  WHERE tenant.auth0_domain LIKE :auth0Domain")
+    @RegisterConstructorMapper(ClientDto.class)
+    List<ClientDto> fetchAll(@Bind("auth0Domain") String auth0Domain);
 
     @SqlQuery("SELECT "
             + "     client.client_id, "
@@ -172,4 +187,14 @@ public interface JdbiClient extends SqlObject {
 
     @SqlQuery("SELECT COUNT(*) FROM client WHERE auth0_client_id = :auth0ClientId")
     int countClientsWithSameAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
+
+    @SqlQuery("UPDATE client"
+            + "  SET"
+            + "    auth0_client_id = :auth0ClientId,"
+            + "    auth0_signing_secret = :auth0EncryptedSecret,"
+            + "    web_password_redirect_url = :webPasswordRedirectUrl,"
+            + "    is_revoked = :revoked,"
+            + "    auth0_tenant_id = :auth0TenantId"
+            + "  WHERE client.client_id = :id")
+    int update(@BindBean ClientDto client);
 }
