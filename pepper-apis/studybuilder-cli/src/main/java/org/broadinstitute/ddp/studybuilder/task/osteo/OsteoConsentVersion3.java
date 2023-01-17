@@ -10,7 +10,6 @@ import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
-import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -20,10 +19,8 @@ import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -139,33 +136,9 @@ public class OsteoConsentVersion3 implements CustomTask {
 
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
                 + "order by template_variable_id desc")
-        long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
-
-        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
-                + "order by template_variable_id desc")
         List<Long> findTemplateVariableIdByVariableNames(@Bind("variable_name") String variableName);
 
-        @SqlQuery("select bt.* from block_content as bt"
-                + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
-                + " where tmpl.template_text like :text"
-                + "   and bt.block_id in (select fsb.block_id"
-                + "                         from form_activity__form_section as fafs"
-                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
-                + "                        where fafs.form_activity_id = :activityId"
-                + "                        union"
-                + "                       select bn.nested_block_id"
-                + "                         from form_activity__form_section as fafs"
-                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
-                + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
-                + "                        where fafs.form_activity_id = :activityId)")
-        @RegisterConstructorMapper(BlockContentDto.class)
-        BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
-
-        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
-        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
-                                        @Bind("name") String name,
-                                        @Bind("title") String title);
-
     }
+
 }
 
