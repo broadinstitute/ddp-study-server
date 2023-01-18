@@ -140,6 +140,7 @@ public class ParticipantWrapper {
         List<String> proxyGuids = new ArrayList<>();
 
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
+            //TODO now filter OS1/2 data out of participantEsDataMaps here?
             if (elasticSearchParticipantDto instanceof UnparsedESParticipantDto) {
                 addWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result);
             } else {
