@@ -182,6 +182,7 @@ import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
+import org.broadinstitute.ddp.util.PdfLicenseUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -313,6 +314,9 @@ public class DataDonationPlatform {
         // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
         // only once server has fully booted.
         registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
+
+        /* Load in the iText license key */
+        PdfLicenseUtil.loadITextLicense();
 
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
