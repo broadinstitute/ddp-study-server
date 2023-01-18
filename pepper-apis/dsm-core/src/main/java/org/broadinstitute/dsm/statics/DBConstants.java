@@ -548,5 +548,5 @@ public class DBConstants {
     public static final String TRACKING = "tracking";
 
     //EVENTS
-    public static final String TISSUE_RECEIVED_EVENT = "TISSUE_RECEIVED";
+    public static final String REQUIRED_SAMPLES_RECEIVED_EVENT = "REQUIRED_SAMPLES_RECEIVED";
 }

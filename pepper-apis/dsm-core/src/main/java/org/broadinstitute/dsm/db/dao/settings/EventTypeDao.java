@@ -75,12 +75,12 @@ public class EventTypeDao implements Dao<EventTypeDto> {
         return eventTypeList;
     }
 
-    public Optional<EventTypeDto> getEventTypeByEventTypeAndInstanceId(@NotNull String eventType, @NonNull String instanceId) {
+    public Optional<EventTypeDto> getEventTypeByEventNameAndInstanceId(@NotNull String eventName, @NonNull String instanceId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(GET_EVENT_TYPE_BY_EVENT_NAME_AND_INSTANCE_ID,
                     ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-                stmt.setString(1, eventType);
+                stmt.setString(1, eventName);
                 stmt.setString(2, instanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();

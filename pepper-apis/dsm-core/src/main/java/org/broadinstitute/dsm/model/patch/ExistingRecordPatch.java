@@ -214,9 +214,10 @@ public class ExistingRecordPatch extends BasePatch {
                     patch.setParentId(patch.getDdpParticipantId());
                 }
                 if (StringUtils.isNotBlank(patch.getParentId())) {
-                    triggerParticipantEvent(ddpInstance, patch, new Value(null, EventTypeDao.EVENT, DBConstants.TISSUE_RECEIVED_EVENT));
+                    triggerParticipantEvent(ddpInstance, patch,
+                            new Value(null, EventTypeDao.EVENT, DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT));
                 } else {
-                    logger.warn("ParentId was empty - not going to trigger DSS for " + DBConstants.TISSUE_RECEIVED_EVENT);
+                    logger.warn("ParentId was empty - not going to trigger DSS for " + DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
                 }
             }
             return nameValues;
