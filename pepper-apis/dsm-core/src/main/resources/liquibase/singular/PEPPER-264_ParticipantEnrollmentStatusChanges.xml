@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-264_PARTICIPANT_ENROLLMENT_STATUS_PS" author="pegah">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='singular';
+            SELECT @fieldSettingsId := field_settings_id FROM field_settings where ddp_instance_id = @realm
+            and column_display = 'Participant Enrollment Status' and field_type = 'r' ;
+
+            update field_settings set
+            possible_values = '[ {"name": "Enrolled", "value": "ENROLLED", "default": true},
+            {"name": "Withdrawn from Study (Self)", "value": "SELF_WITHDRAWN"},
+            {"name": "Withdrawn from Study (Staff)", "value": "STAFF_WITHDRAWN"}, {"name": "N/A", "value": "NA"}]'
+            where field_settings_id = @fieldSettingsId AND ddp_instance_id = @realm;
+
+        </sql>
+    </changeSet>
+</databaseChangeLog>

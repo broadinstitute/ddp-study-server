@@ -15,6 +15,7 @@ import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//Patch class only for new added oncHistoryDetails otherwise ExistingRecordPatch is used
 public class OncHistoryDetailPatch extends BasePatch {
 
     static final Logger logger = LoggerFactory.getLogger(OncHistoryDetailPatch.class);

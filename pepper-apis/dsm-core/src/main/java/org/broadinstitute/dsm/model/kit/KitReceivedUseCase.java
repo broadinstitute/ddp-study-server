@@ -30,7 +30,7 @@ public class KitReceivedUseCase extends BaseKitUseCase {
         kitRequestShipping.setKitLabel(kitLabel);
         Optional<ScanError> maybeScanError =
                 kitDao.updateKitReceived(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
-        if (!isKitUpdateSuccessful(maybeScanError)) {
+        if (!isKitUpdateSuccessful(maybeScanError, kitRequestShipping.getBspCollaboratorParticipantId())) {
             if (isReceiveATKitRequest(kitLabel)) {
                 maybeScanError = Optional.empty();
             } else {

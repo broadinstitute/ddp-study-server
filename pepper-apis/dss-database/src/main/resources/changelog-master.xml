@@ -321,4 +321,7 @@
     <include file="db-changes/schema/DDP-8606.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8554.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/PEPPER-37-add-auth0-log-event-code.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/PEPPER-235-create-kit-event-action.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/PEPPER-235-add-kit-creation.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/PEPPER-235-add-saliva-sent-dsm-event-type.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

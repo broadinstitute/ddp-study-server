@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUserNotificationPdf;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowState;
+import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
@@ -336,6 +337,10 @@ public class EventBuilder {
             String workflow = actionCfg.getString("workflow");
             String status = actionCfg.getString("status");
             return actionDao.insertUpdateCustomWorkflowAction(workflow, status);
+        } else if (EventActionType.CREATE_KIT.name().equals(type)) {
+            String kitType = actionCfg.getString("kitType");
+            long kitTypeId = handle.attach(KitTypeDao.class).getKitTypeByName(kitType).get().getId();
+            return actionDao.insertCreateKitAction(kitTypeId);
         } else {
             return actionDao.insertStaticAction(EventActionType.valueOf(type));
         }

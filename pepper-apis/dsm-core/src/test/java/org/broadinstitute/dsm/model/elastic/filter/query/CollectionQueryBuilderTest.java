@@ -24,13 +24,12 @@ public class CollectionQueryBuilderTest {
 
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
-        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                        new NestedQueryBuilder("dsm.medicalRecord", new MatchQueryBuilder("dsm.medicalRecord.medicalRecordId", "15")
-                                .operator(Operator.AND),
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new NestedQueryBuilder("dsm.medicalRecord", new BoolQueryBuilder()
+                                .must(new MatchQueryBuilder("dsm.medicalRecord.medicalRecordId", "15").operator(Operator.AND))
+                                .must(new MatchQueryBuilder("dsm.medicalRecord.type", "PHYSICIAN").operator(Operator.AND)),
                                 ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord", new MatchQueryBuilder("dsm.medicalRecord.type", "PHYSICIAN")
-                        .operator(Operator.AND),
-                        ScoreMode.Avg)).should(new NestedQueryBuilder("dsm.kitRequestShipping",
+                .should(new NestedQueryBuilder("dsm.kitRequestShipping",
                         new MatchQueryBuilder("dsm.kitRequestShipping.bspCollaboratorSampleId", "ASCProject_PZ8GJC_SALIVA")
                                 .operator(Operator.AND),
                         ScoreMode.Avg));
@@ -52,14 +51,38 @@ public class CollectionQueryBuilderTest {
         boolQueryBuilder.must(new ExistsQueryBuilder("dsm.participant.participantId"));
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                        new NestedQueryBuilder("dsm.medicalRecord", new RangeQueryBuilder("dsm.medicalRecord.medicalRecordId").gte("15"),
+                        new NestedQueryBuilder("dsm.medicalRecord", new BoolQueryBuilder()
+                                .must(new RangeQueryBuilder("dsm.medicalRecord.medicalRecordId").gte("15"))
+                                .must(new MatchQueryBuilder("dsm.medicalRecord.type", "PHYSICIAN")),
                                 ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord", new MatchQueryBuilder("dsm.medicalRecord.type", "PHYSICIAN"),
-                        ScoreMode.Avg)).should(new NestedQueryBuilder("dsm.kitRequestShipping",
+                .should(new NestedQueryBuilder("dsm.kitRequestShipping",
                         new MatchQueryBuilder("dsm.kitRequestShipping.bspCollaboratorSampleId", "ASCProject_PZ8GJC_SALIVA")
                                 .operator(Operator.AND), ScoreMode.Avg))
                 .must(new NestedQueryBuilder("dsm.tissue", new RangeQueryBuilder("dsm.tissue.returnDate").lte("2015-01-01"), ScoreMode.Avg))
                 .must(boolQueryBuilder);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void mrNotRequestedYet() {
+
+        String filter = "AND k.receive_date IS NOT NULL AND m.fax_sent IS NULL AND NOT m.mr_problem <=> 1 "
+                + "AND NOT m.unable_obtain <=> 1 AND NOT m.duplicate <=> 1 AND ( data.status = 'ENROLLED' )";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        BoolQueryBuilder nestedPart = new BoolQueryBuilder();
+        nestedPart.must(new BoolQueryBuilder().mustNot(new ExistsQueryBuilder("dsm.medicalRecord.faxSent")))
+                .must(new MatchQueryBuilder("dsm.medicalRecord.mrProblem", false).operator(Operator.AND))
+                .must(new MatchQueryBuilder("dsm.medicalRecord.unableObtain", false).operator(Operator.AND))
+                .must(new MatchQueryBuilder("dsm.medicalRecord.duplicate", false).operator(Operator.AND));
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
+                .must(new BoolQueryBuilder().should(new MatchQueryBuilder("status", "ENROLLED")))
+                .must(new NestedQueryBuilder("dsm.medicalRecord", nestedPart, ScoreMode.Avg))
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
+                        new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.kitRequestShipping.receiveDate")), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -72,10 +95,9 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                        new NestedQueryBuilder("dsm.medicalRecord",
-                                new RangeQueryBuilder("dsm.medicalRecord.age").gte("15"), ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord",
-                        new RangeQueryBuilder("dsm.medicalRecord.age").lte("30"), ScoreMode.Avg));
+                new NestedQueryBuilder("dsm.medicalRecord", new BoolQueryBuilder()
+                        .must(new RangeQueryBuilder("dsm.medicalRecord.age").gte("15"))
+                        .must(new RangeQueryBuilder("dsm.medicalRecord.age").lte("30")), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -129,10 +151,10 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
-                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
-                        new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").gte(1664928000000L), ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.kitRequestShipping",
-                        new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").lte(1665014399999L), ScoreMode.Avg));
+                .must(new NestedQueryBuilder("dsm.kitRequestShipping", new BoolQueryBuilder()
+                                .must(new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").gte(1664928000000L))
+                                .must(new RangeQueryBuilder("dsm.kitRequestShipping.scanDate").lte(1665014399999L)),
+                        ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -157,8 +179,9 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         BoolQueryBuilder expected = new BoolQueryBuilder();
-        expected.must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"));
-        expected.must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022"));
+        expected.must(new BoolQueryBuilder()
+                .must(new RangeQueryBuilder("profile.createdAt").gte("01/01/2020"))
+                .must(new RangeQueryBuilder("profile.createdAt").lte("01/01/2022")));
 
         Assert.assertEquals(expected, actual);
     }
@@ -177,7 +200,8 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                new NestedQueryBuilder("dsm.medicalRecord", new MatchQueryBuilder("dsm.medicalRecord.followUp", true), ScoreMode.Avg));
+                new NestedQueryBuilder("dsm.medicalRecord", new MatchQueryBuilder("dsm.medicalRecord.followUp", true),
+                        ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -188,7 +212,7 @@ public class CollectionQueryBuilderTest {
 
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.smId",
-                            new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.smId.smIdValue")), ScoreMode.Avg));
+                new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.smId.smIdValue")), ScoreMode.Avg));
         Assert.assertEquals(expected, actual);
     }
 
@@ -227,10 +251,10 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                        new NestedQueryBuilder("dsm.medicalRecord", new RangeQueryBuilder("dsm.medicalRecord.received").gte("2012-01-01"),
-                                ScoreMode.Avg))
-                .must(new NestedQueryBuilder("dsm.medicalRecord", new RangeQueryBuilder("dsm.medicalRecord.received").lte("2015-01-01"),
-                        ScoreMode.Avg));
+                        new NestedQueryBuilder("dsm.medicalRecord", new BoolQueryBuilder()
+                                .must(new RangeQueryBuilder("dsm.medicalRecord.received").gte("2012-01-01"))
+                                .must(new RangeQueryBuilder("dsm.medicalRecord.received").lte("2015-01-01")),
+                                ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -244,14 +268,11 @@ public class CollectionQueryBuilderTest {
 
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
-
-        NestedQueryBuilder nestedQueryBuilder = new NestedQueryBuilder("dsm.medicalRecord",
-                new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.tryAgain")),
-                ScoreMode.Avg);
-
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.medicalRecord",
-                new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.seeingIfBugExists", true).operator(Operator.AND),
-                ScoreMode.Avg)).must(nestedQueryBuilder);
+                new BoolQueryBuilder()
+                        .must(new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.seeingIfBugExists", true).operator(Operator.AND))
+                        .must(new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.tryAgain"))),
+                ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
@@ -270,8 +291,8 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                        new NestedQueryBuilder("dsm.cohortTag",
-                                new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "Oct 7 2022")
                                 .operator(Operator.AND), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
@@ -284,8 +305,8 @@ public class CollectionQueryBuilderTest {
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
-                        new NestedQueryBuilder("dsm.cohortTag",
-                                new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "7")
+                new NestedQueryBuilder("dsm.cohortTag",
+                        new MatchQueryBuilder("dsm.cohortTag.cohortTagName", "7")
                                 .operator(Operator.AND), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
