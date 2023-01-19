@@ -35,6 +35,7 @@ public class DBConstants {
     public static final String DDP_ABSTRACTION_ALIAS = "a";
     public static final String DRUG_ALIAS = "d";
     public static final String ALIAS_DELIMITER = ".";
+    public static final String DDP_INSTANCE_ID_CAMEL_CASE = "ddpInstanceId";
 
     //ddp instance
     public static final String DDP_INSTANCE_ID = "ddp_instance_id";
@@ -549,4 +550,7 @@ public class DBConstants {
 
     //EVENTS
     public static final String TISSUE_RECEIVED_EVENT = "TISSUE_RECEIVED";
+
+    //INDEXES
+    public static final String OSTEO_INDEX = "participants_structured.cmi.cmi-osteo";
 }
