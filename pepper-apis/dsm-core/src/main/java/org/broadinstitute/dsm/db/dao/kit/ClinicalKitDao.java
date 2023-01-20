@@ -35,7 +35,7 @@ public class ClinicalKitDao {
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
                     + "WHERE sm.sm_id_value = ? AND NOT sm.deleted <=> 1 ";
-    private static final String SQL_GET_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID = "SELECT kit.received_date FROM ddp_kit "
+    private static final String SQL_GET_RECEIVED_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID = "SELECT kit.received_date FROM ddp_kit "
                     + "LEFT JOIN ddp_tissue t on (t.tissue_id  = sm.tissue_id) "
                     + "LEFT JOIN ddp_onc_history_detail oD on (oD.onc_history_detail_id = t.onc_history_detail_id) "
                     + "LEFT JOIN ddp_medical_record mr on (mr.medical_record_id = oD.medical_record_id) "
@@ -46,7 +46,7 @@ public class ClinicalKitDao {
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
                     + "WHERE p.ddp_participant_id = ? AND ddp.instance_name = ? AND NOT sm.deleted <=> 1 AND sm.received_date IS NOT NULL ";
 
-    public static final String SQL_GET_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID = "SELECT received_date "
+    public static final String SQL_GET_RECEIVED_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID = "SELECT received_date "
                     + "FROM ddp_kit_request req LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = req.ddp_instance_id) "
                     + "LEFT JOIN kit_type ty ON (req.kit_type_id = ty.kit_type_id) "
@@ -131,16 +131,16 @@ public class ClinicalKitDao {
         }
     }
 
-    public void ifTissueAccessionedTriggerDDP(String ddpParticipantId, DDPInstance ddpInstance) {
+    public static void ifTissueAccessionedTriggerDDP(String ddpParticipantId, DDPInstance ddpInstance) {
         if (hasTissueAccessioned(ddpParticipantId, ddpInstance)) {
             triggerParticipantEvent(ddpInstance, ddpParticipantId, DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
         }
     }
 
-    public boolean hasTissueAccessioned(String ddpParticipantId, DDPInstance ddpInstance) {
+    private static boolean hasTissueAccessioned(String ddpParticipantId, DDPInstance ddpInstance) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_RECEIVED_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID)) {
                 stmt.setString(1, ddpParticipantId);
                 stmt.setString(2, ddpInstance.getName());
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -165,7 +165,7 @@ public class ClinicalKitDao {
     public boolean hasKitsAccessioned(String ddpParticipantId, DDPInstance ddpInstance) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_RECEIVED_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID)) {
                 stmt.setString(1, ddpParticipantId);
                 stmt.setString(2, ddpInstance.getName());
                 stmt.setString(3, MERCURY);
@@ -188,7 +188,7 @@ public class ClinicalKitDao {
         return false;
     }
 
-    private void triggerParticipantEvent(DDPInstance ddpInstance, String ddpParticipantId, String eventName) {
+    private static void triggerParticipantEvent(DDPInstance ddpInstance, String ddpParticipantId, String eventName) {
         final EventDao eventDao = new EventDao();
         final EventTypeDao eventTypeDao = new EventTypeDao();
         Optional<EventTypeDto> eventType =

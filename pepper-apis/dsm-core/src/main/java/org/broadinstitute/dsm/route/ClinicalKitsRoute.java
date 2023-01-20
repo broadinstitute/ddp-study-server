@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.route;
 
-
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -73,7 +72,7 @@ public class ClinicalKitsRoute implements Route {
             clinicalKit.setSampleCollection(ClinicalKitDao.PECGS);
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitInfo.getRealm());
             clinicalKit.setNecessaryParticipantDataToClinicalKit(ddpParticipantId, ddpInstance);
-            new ClinicalKitDao().ifTissueAccessionedTriggerDDP(ddpParticipantId, ddpInstance);
+            ClinicalKitDao.ifTissueAccessionedTriggerDDP(ddpParticipantId, ddpInstance);
             return clinicalKit;
         }
     }
