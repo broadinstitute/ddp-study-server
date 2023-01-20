@@ -115,6 +115,7 @@ public class ParticipantWrapper {
             if (StringUtils.isNotBlank(filters.get(alias))) {
                 BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(filters.get(alias));
                 queryBuilder.setEsIndex(getEsParticipantIndex());
+                queryBuilder.setDdpInstanceId(getInstanceId());
                 if (hasSeveralFilters) {
                     ((BoolQueryBuilder) mainQuery).must(queryBuilder.build());
                 } else {
@@ -127,6 +128,10 @@ public class ParticipantWrapper {
 
     private String getEsParticipantIndex() {
         return participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsParticipantIndex();
+    }
+
+    private Integer getInstanceId() {
+        return participantWrapperPayload.getDdpInstanceDto().orElseThrow().getDdpInstanceId();
     }
 
     private void fetchAndPrepareData() {
