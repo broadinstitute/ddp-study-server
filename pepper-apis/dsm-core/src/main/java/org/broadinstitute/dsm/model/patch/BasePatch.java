@@ -213,7 +213,7 @@ public abstract class BasePatch {
         final EventDao eventDao = new EventDao();
         final EventTypeDao eventTypeDao = new EventTypeDao();
         Optional<EventTypeDto> eventType =
-                eventTypeDao.getEventTypeByEventTypeAndInstanceId(action.getName(), ddpInstance.getDdpInstanceId());
+                eventTypeDao.getEventTypeByEventNameAndInstanceId(action.getName(), ddpInstance.getDdpInstanceId());
         eventType.ifPresent(eventTypeDto -> {
             boolean participantHasTriggeredEventByEventType =
                     eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(action.getName(), patch.getParentId()).orElse(false);
