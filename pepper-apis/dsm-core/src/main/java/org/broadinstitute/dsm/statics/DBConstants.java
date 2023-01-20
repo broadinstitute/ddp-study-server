@@ -47,9 +47,6 @@ public class DBConstants {
     public static final String ES_PARTICIPANT_INDEX = "es_participant_index";
     public static final String ES_ACTIVITY_DEFINITION_INDEX = "es_activity_definition_index";
     public static final String ES_USERS_INDEX = "es_users_index";
-    public static final String CARRIER_USERNAME = "carrier_username";
-    public static final String CARRIER_PASSWORD = "carrier_password";
-    public static final String CARRIER_ACCESSKEY = "carrier_accesskey";
     public static final String BSP_COLLECTION = "bsp_collection";
     public static final String BSP_ORGANISM = "bsp_organism";
     public static final String RESEARCH_PROJECT = "research_project";
@@ -66,9 +63,6 @@ public class DBConstants {
     public static final String DDP_KIT_REQUEST_ID = "ddp_kit_request_id";
     public static final String UPS_TRACKING_STATUS = "ups_tracking_status";
     public static final String UPS_RETURN_STATUS = "ups_return_status";
-    public static final String UPS_TRACKING_DATE = "ups_tracking_date";
-    public static final String UPS_RETURN_DATE = "ups_return_date";
-    public static final String SAMPLE_TYPE = "sample_type";
     public static final String DDP_KIT_REQUEST_TABLE_ABBR = "req.";
     public static final String BSP_MATERIAL_TYPE = "bsp_material_type";
     public static final String BSP_RECEPTABLE_TYPE = "bsp_receptacle_type";
@@ -148,7 +142,6 @@ public class DBConstants {
     public static final String HAS_CARE_OF = "has_care_of";
 
     public static final String ONC_HISTORY_ID = "onc_history_id";
-
 
     //carrier service
     public static final String CARRIER = "carrier";
@@ -548,5 +541,8 @@ public class DBConstants {
     public static final String TRACKING = "tracking";
 
     //EVENTS
-    public static final String TISSUE_RECEIVED_EVENT = "TISSUE_RECEIVED";
+    public static final String REQUIRED_SAMPLES_RECEIVED_EVENT = "REQUIRED_SAMPLES_RECEIVED";
+
+    //INDEXES
+    public static final String OSTEO_INDEX = "participants_structured.cmi.cmi-osteo";
 }

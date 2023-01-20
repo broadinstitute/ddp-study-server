@@ -48,6 +48,7 @@ public class ESObjectConstants {
 
     //common
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
+    public static final String DDP_INSTANCE_ID_CAMEL_CASE = "ddpInstanceId";
 
     //dsm
     public static final String DSM = "dsm";
