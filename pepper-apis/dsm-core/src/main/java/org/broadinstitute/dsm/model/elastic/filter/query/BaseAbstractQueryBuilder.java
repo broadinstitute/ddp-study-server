@@ -85,17 +85,17 @@ public class BaseAbstractQueryBuilder {
         if (ddpInstanceId != null && esIndex != null && DBConstants.OSTEO_INDEX.equals(esIndex)) {
             if (nestedQueryBuilderLists.containsKey(ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER + ESObjectConstants.KIT_REQUEST_SHIPPING)) {
                 creatingQueryBuilder(DBConstants.DDP_KIT_REQUEST_ALIAS + DBConstants.ALIAS_DELIMITER
-                                + DBConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
+                                + ESObjectConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
                         filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
             }
             if (nestedQueryBuilderLists.containsKey(ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER + ESObjectConstants.MEDICAL_RECORD)) {
                 creatingQueryBuilder(DBConstants.DDP_MEDICAL_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
-                                + DBConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
+                                + ESObjectConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
                         filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
             }
             if (nestedQueryBuilderLists.containsKey(ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER + ESObjectConstants.ONC_HISTORY_DETAIL)) {
                 creatingQueryBuilder(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER
-                                + DBConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
+                                + ESObjectConstants.DDP_INSTANCE_ID_CAMEL_CASE + Filter.EQUALS + ddpInstanceId,
                         filterStrategy, nestedQueryBuilderLists, correctBaseQueryBuilder);
             }
             //tissue and oncHistory objects do currently not have ddpInstanceId set

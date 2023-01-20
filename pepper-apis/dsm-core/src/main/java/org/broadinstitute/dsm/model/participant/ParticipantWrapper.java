@@ -34,6 +34,7 @@ import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -146,7 +147,7 @@ public class ParticipantWrapper {
 
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
             if (elasticSearchParticipantDto instanceof UnparsedESParticipantDto) {
-                addWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result);
+                addUnparsedWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result, ddpInstanceDto);
             } else {
                 addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto);
             }
@@ -156,9 +157,46 @@ public class ParticipantWrapper {
         return result;
     }
 
-    private void addWrapperToList(UnparsedESParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result) {
+    private void filterOsteoFromOtherOsteoOutForExport(UnparsedESParticipantDto unparsedESParticipantDto, Integer ddpInstanceId) {
+        Map<String, Object> dataAsMap = unparsedESParticipantDto.getDataAsMap();
+        Object dsmObject = dataAsMap.get(ESObjectConstants.DSM);
+        if (dsmObject != null) {
+            filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.KIT_REQUEST_SHIPPING, ddpInstanceId);
+            filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.MEDICAL_RECORD, ddpInstanceId);
+            filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.ONC_HISTORY_DETAIL, ddpInstanceId);
+        }
+        dataAsMap.size();
+    }
+
+    private void filterData(Map<String, List<Map<String, Object>>> dsmObject, String dsmObjectKey, Integer ddpInstanceId) {
+        List<Map<String, Object>> dsmObjectListNew = new ArrayList<>();
+        List<Map<String, Object>> dsmObjectList = dsmObject.get(dsmObjectKey);
+        if (dsmObjectList != null && !dsmObjectList.isEmpty()) {
+            for (Map<String, Object> dsmObjectMap : dsmObjectList) {
+                Object ddpInstanceIdFromKitRequestShippingMap = dsmObjectMap.get(ESObjectConstants.DDP_INSTANCE_ID_CAMEL_CASE);
+                if (ddpInstanceIdFromKitRequestShippingMap != null) {
+                    if (ddpInstanceIdFromKitRequestShippingMap == ddpInstanceId) {
+                        //only add the object if "ddpInstanceId" matches the id for that osteo instance
+                        dsmObjectListNew.add(dsmObjectMap);
+                    }
+                } else {
+                    //if the object doesn't have a "ddpInstanceId" key just add it back in
+                    dsmObjectListNew.add(dsmObjectMap);
+                }
+            }
+        }
+        dsmObject.put(dsmObjectKey, dsmObjectListNew);
+    }
+
+    private void addUnparsedWrapperToList(UnparsedESParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result,
+                                          DDPInstanceDto ddpInstanceDto) {
         // don't do any copying of the main attributes, but do keep track of the proxies so that we can fetch them in bulk
         ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
+        //if instance is osteo: filter out the sample information collected under the other study
+        if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex()) &&
+                ddpInstanceDto.getEsParticipantIndex().equals(DBConstants.OSTEO_INDEX)) {
+            filterOsteoFromOtherOsteoOutForExport(elasticSearchParticipantDto, ddpInstanceDto.getDdpInstanceId());
+        }
         participantWrapperDto.setEsData(elasticSearchParticipantDto);
         result.add(participantWrapperDto);
     }
