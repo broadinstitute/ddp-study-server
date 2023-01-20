@@ -35,7 +35,6 @@ public class TabularParticipantParser {
     private static final String COLUMN_SELECTED = "1";
     private static final String COLUMN_UNSELECTED = "0";
     private final List<Filter> filters;
-    private final DDPInstance ddpInstance;
     private final boolean humanReadable;
     private final boolean onlyMostRecent;
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
@@ -44,7 +43,6 @@ public class TabularParticipantParser {
     public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean humanReadable, boolean onlyMostRecent,
                                     Map<String, Map<String, Object>> activityDefs) {
         this.filters = filters;
-        this.ddpInstance = ddpInstance;
         this.humanReadable = humanReadable;
         this.onlyMostRecent = onlyMostRecent;
         if (activityDefs == null) {
