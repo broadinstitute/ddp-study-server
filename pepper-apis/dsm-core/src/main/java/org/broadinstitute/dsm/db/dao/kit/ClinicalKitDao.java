@@ -35,7 +35,7 @@ public class ClinicalKitDao {
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
                     + "WHERE sm.sm_id_value = ? AND NOT sm.deleted <=> 1 ";
-    private static final String SQL_GET_RECEIVED_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID = "SELECT kit.received_date FROM ddp_kit "
+    private static final String SQL_GET_RECEIVED_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID = "SELECT sm.received_date FROM sm_id sm "
                     + "LEFT JOIN ddp_tissue t on (t.tissue_id  = sm.tissue_id) "
                     + "LEFT JOIN ddp_onc_history_detail oD on (oD.onc_history_detail_id = t.onc_history_detail_id) "
                     + "LEFT JOIN ddp_medical_record mr on (mr.medical_record_id = oD.medical_record_id) "
