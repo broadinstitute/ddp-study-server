@@ -173,7 +173,7 @@ public class ParticipantWrapper {
         List<Map<String, Object>> dsmObjectList = dsmObject.get(dsmObjectKey);
         if (dsmObjectList != null && !dsmObjectList.isEmpty()) {
             for (Map<String, Object> dsmObjectMap : dsmObjectList) {
-                Object ddpInstanceIdFromKitRequestShippingMap = dsmObjectMap.get(DBConstants.DDP_INSTANCE_ID_CAMEL_CASE);
+                Object ddpInstanceIdFromKitRequestShippingMap = dsmObjectMap.get(ESObjectConstants.DDP_INSTANCE_ID_CAMEL_CASE);
                 if (ddpInstanceIdFromKitRequestShippingMap != null) {
                     if (ddpInstanceIdFromKitRequestShippingMap == ddpInstanceId) {
                         //only add the object if "ddpInstanceId" matches the id for that osteo instance
