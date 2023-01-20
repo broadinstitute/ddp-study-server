@@ -157,7 +157,7 @@ public class ParticipantWrapper {
         return result;
     }
 
-    private void filterOSKitsFromExport(UnparsedESParticipantDto unparsedESParticipantDto, Integer ddpInstanceId) {
+    private void filterOsteoFromOtherOsteoOutForExport(UnparsedESParticipantDto unparsedESParticipantDto, Integer ddpInstanceId) {
         Map<String, Object> dataAsMap = unparsedESParticipantDto.getDataAsMap();
         Object dsmObject = dataAsMap.get(ESObjectConstants.DSM);
         if (dsmObject != null) {
@@ -195,7 +195,7 @@ public class ParticipantWrapper {
         //if instance is osteo: filter out the sample information collected under the other study
         if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex()) &&
                 ddpInstanceDto.getEsParticipantIndex().equals(DBConstants.OSTEO_INDEX)) {
-            filterOSKitsFromExport(elasticSearchParticipantDto, ddpInstanceDto.getDdpInstanceId());
+            filterOsteoFromOtherOsteoOutForExport(elasticSearchParticipantDto, ddpInstanceDto.getDdpInstanceId());
         }
         participantWrapperDto.setEsData(elasticSearchParticipantDto);
         result.add(participantWrapperDto);
