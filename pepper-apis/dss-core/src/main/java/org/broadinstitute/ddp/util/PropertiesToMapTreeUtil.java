@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * Converts properties to hierarchy of maps: properties names are split into parts which separated by '.'
@@ -33,7 +33,8 @@ public class PropertiesToMapTreeUtil {
             Map<String, Object> valueMap = createTree(keyList, map);
             Object value = properties.get(key);
             if (value instanceof String) {
-                value = StringEscapeUtils.unescapeHtml((String)value);
+                // todo arz double check this
+                value = StringEscapeUtils.unescapeHtml3((String)value);
             }
             valueMap.put(keyList.get(keyList.size() - 1), value);
         }

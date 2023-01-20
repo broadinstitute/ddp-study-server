@@ -18,7 +18,6 @@ import liquibase.exception.MigrationFailedException;
 import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.servicelocator.ServiceLocator;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -90,7 +89,6 @@ public class LiquibaseUtil implements AutoCloseable {
     }
 
     public static void releaseResources() {
-        ServiceLocator.setInstance(null);
         DatabaseFactory.setInstance(null);
     }
 
@@ -133,9 +131,6 @@ public class LiquibaseUtil implements AutoCloseable {
     private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
         Liquibase liquibase = null;
         String tag = null;
-        if (ServiceLocator.getInstance() == null) {
-            ServiceLocator.reset();
-        }
         try {
             liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
             logLocks(liquibase.listLocks());

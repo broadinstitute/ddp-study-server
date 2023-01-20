@@ -38,7 +38,7 @@ import com.google.gson.JsonPrimitive;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
-import liquibase.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;

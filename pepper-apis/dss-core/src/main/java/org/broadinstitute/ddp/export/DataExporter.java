@@ -36,7 +36,7 @@ import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
