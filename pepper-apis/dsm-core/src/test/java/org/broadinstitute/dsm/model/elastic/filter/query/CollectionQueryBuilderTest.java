@@ -135,7 +135,7 @@ public class CollectionQueryBuilderTest {
 
         String filter = " AND c.cohort_tag_name = '7'";
 
-        AbstractQueryBuilder<?> actual = BaseFilterParticipantList.createMixedSourceBaseAbstractQueryBuilder(filter);
+        AbstractQueryBuilder<?> actual = BaseFilterParticipantList.createMixedSourceBaseAbstractQueryBuilder(filter, null);
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder()
                 .must(new NestedQueryBuilder("dsm.cohortTag",
