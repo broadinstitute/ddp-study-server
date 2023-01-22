@@ -21,7 +21,7 @@ public class OsteoInsertDsmEvents extends InsertStudyEvents {
     @Override
     public void run(final Handle handle) {
         removeExistingEvents(handle);
-        //super.run(handle);
+        super.run(handle);
     }
 
     private void removeExistingEvents(final Handle handle) {
@@ -35,15 +35,13 @@ public class OsteoInsertDsmEvents extends InsertStudyEvents {
                 .map(EventConfiguration::getEventConfigurationId)
                 .map(id -> deactivateEventConfiguration(handle, id))
                 .count();
-        //todo ^^ disables email notifications.. we only want activity instance creation disabled ???
 
         log.info("Successfully deactivated {} DSM Notification events that create new activities of {}.", count, studyGuid);
     }
 
     private static int deactivateEventConfiguration(final Handle handle, final Long id) {
         log.info("Event configuration #{} was deactivated", id);
-        //return handle.attach(JdbiEventConfiguration.class).updateIsActiveById(id, false);
-        return 1;
+        return handle.attach(JdbiEventConfiguration.class).updateIsActiveById(id, false);
     }
 
     private boolean hasDSMNotificationTrigger(final EventConfiguration event) {
