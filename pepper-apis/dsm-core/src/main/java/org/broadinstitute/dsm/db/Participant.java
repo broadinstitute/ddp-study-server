@@ -182,11 +182,11 @@ public class Participant implements Cloneable {
         String assigneeTissue = null;
         if (assignees != null && !assignees.isEmpty()) {
             String assigneeIdMR = rs.getString(DBConstants.ASSIGNEE_ID_MR);
-            if (StringUtils.isNotBlank(assigneeIdMR)) {
+            if (StringUtils.isNotBlank(assigneeIdMR) && assignees.get(assigneeIdMR) != null) {
                 assigneeMR = assignees.get(assigneeIdMR).getName();
             }
             String assigneeIdTissue = rs.getString(DBConstants.ASSIGNEE_ID_TISSUE);
-            if (StringUtils.isNotBlank(assigneeIdTissue)) {
+            if (StringUtils.isNotBlank(assigneeIdTissue) && assignees.get(assigneeIdTissue) != null) {
                 assigneeTissue = assignees.get(assigneeIdTissue).getName();
             }
         }
