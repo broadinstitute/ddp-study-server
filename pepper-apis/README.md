@@ -20,7 +20,7 @@ install the `google-cloud-sdk` cask. Otherwise, follow the instructions
 [here][gcloud-install]. Once the SDK is installed, we can install the emulator:
 
 ```bash
-gcloud components install beta --quiet
+gcloud components install --quiet
 gcloud components install pubsub-emulator --quiet
 gcloud components update --quiet
 ```
@@ -96,7 +96,7 @@ database, which is the default.
    
 4. Copy the command-line flags from `output-build-config/local-java-props.txt`
 5. Run the JAR
-    * `java [the copied cmd line flags] -jar ./target/DataDonationPlatform.jar`
+    * `java [the copied cmd line flags] -jar ./dss-server/target/DataDonationPlatform.jar`
 6. Make sure the server has started
     * `curl -i http://localhost:5555`
     * You'll get a `404` but at least it verifies the server is responding
@@ -113,14 +113,17 @@ The `api-build.sh` script helps with a few automation steps. Try the `--help` fl
 ### Running tests and main apps (DataDonationPlatform.java and Housekeeping.java) in intellij and mvn
 After running `api-build.sh` (you ran that already, right?), take a look at the `output-build-config/local-java-props.txt`
 file.  This file contains a bunch of `-D` vars that you'll need to put into either your
-intellij run/debug profiles or your command-line `mvn` command.
+intellij run/debug profiles or your command-line `mvn` command.  When you use file paths from the `local-java-props.txt` file,
+replace any relative paths with absolute paths.  Otherwise you may see errors about `java.lang.NoClassDefFoundError: Could not initialize class org.broadinstitute.ddp.util.ConfigManager`
+due to static initializers failing to find necessary config values.
 
 Before starting the tests or running the apps, you need to setup the coordinates for the pubsub emulator:
 ```
 $ export PUBSUB_EMULATOR_HOST=localhost:8442
 ```
 
-The you can run the tests:
+The you can run the tests on the command line.  Copy the `-D` vars from `output-build-config/local-java-props.txt` into the shell command,
+replacing relative paths with the full paths on your machine.
 ```sh
 $ mvn test [pile of -D vars copy-pasted from output-build-config/local-java-props.txt]
 ```

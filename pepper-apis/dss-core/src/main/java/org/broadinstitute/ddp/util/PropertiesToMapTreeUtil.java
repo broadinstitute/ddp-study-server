@@ -33,8 +33,7 @@ public class PropertiesToMapTreeUtil {
             Map<String, Object> valueMap = createTree(keyList, map);
             Object value = properties.get(key);
             if (value instanceof String) {
-                // todo arz double check this
-                value = StringEscapeUtils.unescapeHtml3((String)value);
+                value = StringEscapeUtils.unescapeHtml4((String)value);
             }
             valueMap.put(keyList.get(keyList.size() - 1), value);
         }

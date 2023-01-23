@@ -6,8 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 public class PasswordPolicyTest {
 
