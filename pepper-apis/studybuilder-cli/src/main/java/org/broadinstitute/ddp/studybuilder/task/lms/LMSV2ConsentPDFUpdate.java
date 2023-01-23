@@ -17,7 +17,7 @@ import org.jdbi.v3.core.Handle;
 
 public class LMSV2ConsentPDFUpdate implements CustomTask {
 
-    private static final String DATA_FILE = "patches/consent-version2.conf";
+    private static final String DATA_FILE = "patches/consent-version2-pdf.conf";
     private static final String STUDY_GUID = "cmi-lms";
 
     private Path cfgPath;
