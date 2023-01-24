@@ -62,5 +62,16 @@ public enum DsmNotificationEventType {
     /**
      * Message sent by DSM on stool received event.
      */
-    STOOL_RECEIVED
+    STOOL_RECEIVED,
+
+    /**
+     * Message sent by DSM on tissue received event.
+     */
+    TISSUE_RECEIVED,
+
+    /**
+     * Message sent by DSM on required samples received.
+     */
+    REQUIRED_SAMPLES_RECEIVED
+
 }

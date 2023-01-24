@@ -46,11 +46,11 @@ public class ClinicalKitDao {
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
                     + "WHERE p.ddp_participant_id = ? AND ddp.instance_name = ? AND NOT sm.deleted <=> 1 AND sm.received_date IS NOT NULL ";
 
-    public static final String SQL_GET_RECEIVED_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID = "SELECT received_date "
+    public static final String SQL_GET_RECEIVED_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID = "SELECT receive_date "
                     + "FROM ddp_kit_request req LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = req.ddp_instance_id) "
                     + "LEFT JOIN kit_type ty ON (req.kit_type_id = ty.kit_type_id) "
-                    + "WHERE req.ddp_participant_id = ? AND realm.instance_name = ? AND received_date IS NOT NULL AND received_by = ?";
+                    + "WHERE req.ddp_participant_id = ? AND realm.instance_name = ? AND receive_date IS NOT NULL AND receive_by = ?";
     private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ? "
                     + "AND NOT deleted <=> 1";
 
