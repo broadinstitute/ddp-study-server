@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.route;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +33,12 @@ import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.model.elastic.search.UnparsedDeserializer;
+import org.broadinstitute.dsm.model.filter.FilterFactory;
+import org.broadinstitute.dsm.model.filter.Filterable;
+import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -119,7 +126,7 @@ public class DashboardRoute extends RequestHandler {
                         if (request.url().contains(RoutePath.SAMPLE_REPORT_REQUEST)) {
                             return getShippingReport(userIdRequest, start, end);
                         } else {
-                            return getMedicalRecordDashboard(start, end, RoutePath.getRealm(request));
+                            return getMedicalRecordDashboard(start, end, RoutePath.getRealm(request), request);
                         }
                     } else {
                         throw new RuntimeException("End date is missing");
@@ -248,8 +255,13 @@ public class DashboardRoute extends RequestHandler {
      *
      * @return DashboardInformation
      */
-    public DashboardInformation getMedicalRecordDashboard(@NonNull long start, @NonNull long end, @NonNull String realm) {
+    public DashboardInformation getMedicalRecordDashboard(@NonNull long start, @NonNull long end, @NonNull String realm,
+                                                          Request request) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
+
+        String jsonBody = "";
+        Filterable filterable = new ManualFilterParticipantList(jsonBody);
+        List<ParticipantWrapperDto> participantsNewWay = fetchParticipantEsData(filterable, request.queryMap());
 
         Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getESData(ddpInstance);
         Map<String, Participant> participants = Participant.getParticipants(realm);
@@ -825,5 +837,26 @@ public class DashboardRoute extends RequestHandler {
             }
         }
         return kitTypeId;
+    }
+
+    private List<ParticipantWrapperDto> fetchParticipantEsData(Filterable filter, QueryParamsMap queryParamsMap) {
+        List<ParticipantWrapperDto> allResults = new ArrayList<ParticipantWrapperDto>();
+        int currentFrom = DEFAULT_FROM;
+        int currentTo = MAX_RESULT_SIZE;
+        while (true) {
+            // For each batch of results, add the DTOs to the allResults list
+            filter.setFrom(currentFrom);
+            filter.setTo(currentTo);
+            ParticipantWrapperResult filteredSubset = (ParticipantWrapperResult) filter.filter(queryParamsMap, new UnparsedDeserializer());
+            allResults.addAll(filteredSubset.getParticipants());
+            // if the total count is less than the range we are currently on, stop fetching
+            if (filteredSubset.getTotalCount() < currentTo) {
+                break;
+            }
+            currentFrom = currentTo;
+            currentTo += MAX_RESULT_SIZE;
+        }
+
+        return allResults;
     }
 }
