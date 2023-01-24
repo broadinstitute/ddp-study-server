@@ -19,7 +19,6 @@
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
         <liquibase.version>4.8.0</liquibase.version>
         <elasticsearch.version>6.8.2</elasticsearch.version>
-        <logback.version>1.4.5</logback.version>
         <velocity.version>2.3</velocity.version>
     </properties>
 
@@ -138,18 +137,6 @@
                 <groupId>com.brsanthu</groupId>
                 <artifactId>google-analytics-java</artifactId>
                 <version>2.0.0</version>
-            </dependency>
-
-            <!-- logging and notifications -->
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
             </dependency>
 
             <dependency>

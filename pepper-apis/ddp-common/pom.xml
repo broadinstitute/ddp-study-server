@@ -11,9 +11,11 @@
 
     <artifactId>ddp-common</artifactId>
 
+    <properties>
+        <logback.version>1.4.5</logback.version>
+    </properties>
+
     <dependencies>
-        <!-- unclear why we need to put logback here explicitly vs. inheriting it, but without it dsm's SlackAppender.java won't
-        compile -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
