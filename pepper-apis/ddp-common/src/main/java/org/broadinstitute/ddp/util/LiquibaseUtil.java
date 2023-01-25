@@ -140,14 +140,17 @@ public class LiquibaseUtil implements AutoCloseable {
             log.info("Tagged database with tag {}", tag);
 
             liquibase.update(new Contexts());
-        } catch (MigrationFailedException originalError) {
+        } catch (LiquibaseException originalError) {
             if (liquibase != null && tag != null) {
-                try {
-                    log.info("Attempting to rollback changesets to tag {}", tag);
-                    liquibase.rollback(tag, new Contexts());
-                    log.info("Successfully rolled back changesets to tag {}", tag);
-                } catch (RollbackFailedException e) {
-                    log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                if (originalError.getCause().getClass() == MigrationFailedException.class ||
+                        originalError.getCause().getMessage().contains("Migration failed for change set " + changelogFile)) {
+                    try {
+                        log.info("Attempting to rollback changesets to tag {}", tag);
+                        liquibase.rollback(tag, new Contexts());
+                        log.info("Successfully rolled back changesets to tag {}", tag);
+                    } catch (RollbackFailedException e) {
+                        log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                    }
                 }
             } else {
                 log.error("No liquibase object or tag to rollback changesets");
