@@ -44,7 +44,8 @@ public class ConfigManager {
 
         TYPESAFE_CONFIG_FILE = Optional.ofNullable(configFileName).map(File::new).orElse(null);
         if (TYPESAFE_CONFIG_FILE != null && !TYPESAFE_CONFIG_FILE.exists()) {
-            throw new DDPException("The config file " + TYPESAFE_CONFIG_FILE.getAbsolutePath() + " doesn't exist");
+            throw new DDPException("The config file " + TYPESAFE_CONFIG_FILE.getAbsolutePath() + " doesn't exist.  If you're using a "
+                    + "relative path in your config, try an absolute path instead.");
         }
     }
 
