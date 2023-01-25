@@ -4,9 +4,11 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.broadinstitute.ddp.content.I18nTemplateConstants.DDP;
 import static org.broadinstitute.ddp.util.PropertiesToMapTreeUtil.propertiesToMap;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 
 import org.apache.velocity.runtime.RuntimeInstance;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -14,6 +16,7 @@ import org.apache.velocity.runtime.parser.Token;
 import org.apache.velocity.runtime.parser.node.ASTReference;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.runtime.visitor.BaseVisitor;
+
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
@@ -92,7 +95,7 @@ public class VelocityUtil {
     public static List<String> extractVelocityVariablesFromTemplate(String templateText) {
         try {
             RuntimeInstance ri = new RuntimeInstance();
-            SimpleNode node = ri.parse(templateText, TEMPLATE_NAME);
+            SimpleNode node = ri.parse(new StringReader(templateText), new org.apache.velocity.Template());
             TemplateParserVisitor visitor = new TemplateParserVisitor();
             visitor.visit(node, null);
             return visitor.getVariables();
