@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
+import static org.apache.commons.lang3.time.DateUtils.MILLIS_PER_SECOND;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.MAX_ID;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 

@@ -21,6 +21,7 @@ import com.google.maps.model.PlusCode;
 import com.google.openlocationcode.OpenLocationCode;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.GoogleMapsClient;
@@ -37,7 +38,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 @Slf4j
 public class OLCServiceTest extends TxnAwareBaseTest {

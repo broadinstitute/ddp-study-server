@@ -264,7 +264,7 @@ public class ElasticSearch implements ElasticSearchable {
     private NestedQueryBuilder osteoVersion2Surveys(String stableId) {
         BoolQueryBuilder queryBuilderConsentV2 = new BoolQueryBuilder();
         queryBuilderConsentV2.must(new MatchQueryBuilder("activities.activityCode", stableId).operator(Operator.AND));
-        queryBuilderConsentV2.must(QueryBuilders.matchQuery("activities.activityVersion", "v2").operator(Operator.AND));
+        queryBuilderConsentV2.mustNot(QueryBuilders.matchQuery("activities.activityVersion", "v1").operator(Operator.AND));
         queryBuilderConsentV2.must(new BoolQueryBuilder().must(new ExistsQueryBuilder("activities.completedAt")));
         NestedQueryBuilder expectedNestedQueryConsent = new NestedQueryBuilder("activities", queryBuilderConsentV2, ScoreMode.Avg);
         return expectedNestedQueryConsent;

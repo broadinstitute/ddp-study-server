@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;

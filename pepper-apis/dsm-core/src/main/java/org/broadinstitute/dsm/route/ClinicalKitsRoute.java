@@ -24,7 +24,6 @@ public class ClinicalKitsRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
 
-    public static final String MERCURY = "MERCURY";
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
@@ -57,7 +56,9 @@ public class ClinicalKitsRoute implements Route {
             //kit not found in ddp_kit table -> check tissue smi-ids
             return new ClinicalKitDao().getClinicalKitBasedOnSmId(kitLabel);
         } else {
-            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.orElseThrow(), notificationUtil, MERCURY);
+            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.orElseThrow(), notificationUtil,
+                    ClinicalKitDao.MERCURY);
+            String ddpParticipantId = optionalBSPKitDto.get().getDdpParticipantId();
             KitInfo kitInfo = maybeKitInfo.orElseThrow();
             ClinicalKitDto clinicalKit = new ClinicalKitDto();
             logger.info("Creating clinical kit to return to GP " + kitLabel);
@@ -70,9 +71,9 @@ public class ClinicalKitsRoute implements Route {
             clinicalKit.setCollectionDate(kitInfo.getCollectionDate());
             clinicalKit.setSampleCollection(ClinicalKitDao.PECGS);
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitInfo.getRealm());
-            clinicalKit.setNecessaryParticipantDataToClinicalKit(optionalBSPKitDto.get().getDdpParticipantId(), ddpInstance);
+            clinicalKit.setNecessaryParticipantDataToClinicalKit(ddpParticipantId, ddpInstance);
+            ClinicalKitDao.ifTissueAccessionedTriggerDDP(ddpParticipantId, ddpInstance);
             return clinicalKit;
         }
     }
-
 }
