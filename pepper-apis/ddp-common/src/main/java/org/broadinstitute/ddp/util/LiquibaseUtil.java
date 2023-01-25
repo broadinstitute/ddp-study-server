@@ -142,8 +142,8 @@ public class LiquibaseUtil implements AutoCloseable {
             liquibase.update(new Contexts());
         } catch (LiquibaseException originalError) {
             if (liquibase != null && tag != null) {
-                if (originalError.getCause().getClass() == MigrationFailedException.class ||
-                        originalError.getCause().getMessage().contains("Migration failed for change set " + changelogFile)) {
+                if (originalError.getCause().getClass() == MigrationFailedException.class
+                        || originalError.getCause().getMessage().contains("Migration failed for change set " + changelogFile)) {
                     try {
                         log.info("Attempting to rollback changesets to tag {}", tag);
                         liquibase.rollback(tag, new Contexts());

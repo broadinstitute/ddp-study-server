@@ -91,7 +91,9 @@ public class LiquibaseUtilTest extends TxnAwareBaseTest {
             // these assertions are brittle--upgrades to liquibase may require some fiddling
             // as exception types change and messages in exceptions change
             assertTrue(e.getMessage().contains("migrations"));
-            assertTrue(e.getCause() instanceof MigrationFailedException || e.getCause().getMessage().contains("RollbackImpossibleException") ||  e.getCause().getMessage().contains("RollbackFailedException"));
+            assertTrue(e.getCause() instanceof MigrationFailedException
+                    || e.getCause().getMessage().contains("RollbackImpossibleException")
+                    ||  e.getCause().getMessage().contains("RollbackFailedException"));
             TransactionWrapper.useTxn(handle -> {
                 // Check that test data is not rolled back since rollback instructions are not provided.
                 List<String> names = handle.select("select name from liquibase_test_table").mapTo(String.class).list();
