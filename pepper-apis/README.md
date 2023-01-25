@@ -369,4 +369,21 @@ added to the JWT without requiring a live connection between auth0 and a deploye
 instance of pepper.
 
 # Housekeeping
-TBD...
+You would need to run Housekeeping to send out emails and create the PDFs. 
+
+You need to create th schema first (name does not matter)
+```sql
+ CREATE DATABASE housekeepinglocal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+Grant access to your user
+```sql
+GRANT ALL ON housekeepinglocal.* TO '[your user]'@'%';
+```
+Add the following line to your `testing-inmemorydb.conf` config
+```
+"housekeepingDbUrl": "jdbc:mysql://127.0.0.1:3306/housekeepinglocal?user=[your user]&password=[your password]&serverTimezone=UTC",
+```
+Run Housekeeping.java with the following vm environment
+```shell
+-Dconfig.file=output-build-config/testing-inmemorydb.conf
+```
