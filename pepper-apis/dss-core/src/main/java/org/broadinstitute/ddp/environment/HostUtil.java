@@ -5,7 +5,7 @@ import java.net.UnknownHostException;
 
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import spark.utils.StringUtils;
 
 /**

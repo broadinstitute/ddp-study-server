@@ -9,7 +9,6 @@ public class KitInfo {
 
     private static final Logger logger = LoggerFactory.getLogger(KitInfo.class);
     private final int organismClassificationId;
-
     private String collaboratorParticipantId;
     private String collaboratorSampleId;
     private String sampleCollectionBarcode;

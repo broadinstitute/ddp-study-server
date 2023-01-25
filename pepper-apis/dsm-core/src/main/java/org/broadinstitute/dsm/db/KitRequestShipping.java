@@ -908,7 +908,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 }
             }
             writeRequest(instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId, "SYSTEM",
-                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance);
+                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance, bspCollaboratorSampleType);
             return null;
         });
     }
@@ -919,7 +919,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
-                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
+                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName) {
         String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -974,6 +974,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
+            kitRequestShipping.setKitTypeName(kitTypeName);
             kitRequestShipping.setDdpInstanceId((long) ddpInstance.getDdpInstanceIdAsInt());
             kitRequestShipping.setDdpLabel(ddpLabel);
 

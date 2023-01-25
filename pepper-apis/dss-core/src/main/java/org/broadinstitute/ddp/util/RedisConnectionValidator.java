@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import redis.clients.jedis.Jedis;
 
