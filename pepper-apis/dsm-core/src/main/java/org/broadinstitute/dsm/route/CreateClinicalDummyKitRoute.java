@@ -140,7 +140,8 @@ public class CreateClinicalDummyKitRoute implements Route {
             //if instance not null
             String dsmKitRequestId = KitRequestShipping
                     .writeRequest(ddpInstance.getDdpInstanceId(), kitRequestId, desiredKitType.getKitId(), ddpParticipantId,
-                            participantCollaboratorId, collaboratorSampleId, USER_ID, "", "", "", false, "", ddpInstance);
+                            participantCollaboratorId, collaboratorSampleId, USER_ID, "", "", "",
+                            false, "", ddpInstance, desiredKitType.getName());
             bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
             bspDummyKitDao.updateCollectionDate(dsmKitRequestId);
             logger.info("Inserted new " + kitTypeString + " for participant " + participantCollaboratorId);
