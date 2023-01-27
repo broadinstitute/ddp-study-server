@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-456_SPECIALTY_PROJECTS" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                                                                      AND column_name = 'EXPECTED_NUMBER_TO_SEQUENCE' AND field_type = 'r';
+
+            UPDATE field_settings SET order_number = order_number + 1
+            WHERE field_settings_id in ( SELECT field_settings_id from (SELECT * from field_settings) as tmp
+                                         where field_type = 'r' and order_number &gt;= @orderNumber) and field_type = 'r'
+              AND field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
+            values (@realm, 'r', 'SPECIAL_PROJECTS', 'Specialty projects',
+                    '[{"value":"R21","name":"R21"},{"value":"CAGI_2022","name":"CAGI 2022"},{"value":"CAGI_2023","name":"CAGI 2023"},{"value":"CZI","name":"CZI"}]','OPTIONS', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_TISSUE_PROCESSING" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @fieldSettingsId := field_settings_id FROM field_settings
+            WHERE ddp_instance_id = @realm AND column_name = 'TISSUE_PROCESSING' AND field_type = 'RGP_TISSUE_GROUP';
+
+            UPDATE field_settings
+            SET possible_values =
+                    '[{"value":"EXTRACT","name":"Extract"},{"value":"NA","name":"N/A","default":true},{"value":"OTHER","name":"Other"},{"value":"RNASEQ","name":"RNASeq"},{"value":"STORE","name":"Store"},{"value":"RNAWGS","name":"RNA+WGS"},{"value":"WGS","name":"WGS"}]'
+            WHERE field_settings_id = @fieldSettingsId AND ddp_instance_id = @realm;
+
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_KIT_REQUEST" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @fieldSettingsId := field_settings_id FROM field_settings
+            WHERE ddp_instance_id = @realm AND column_name = 'KIT_TYPE_TO_REQUEST' AND field_type =
+                'RGP_SAMPLE_COLLECTION_GROUP';
+
+            UPDATE field_settings
+            SET possible_values =
+                    '[{"value":"BLOOD","name":"Blood"},{"value":"SALIVA","name":"Saliva"},{"value":"NONE","name":"None"},{"value":"NONEDO","name":"None - data only"},{"value":"NONE_EXT_DNA","name":"None - external DNA"},{"value":"NONE_EXT_DNA_BLOOD","name":"None - external DNA from blood"},{"value":"NONE_EXT_DNA_SALIVA","name":"None - external DNA from saliva"},{"value":"BUCCAL","name":"Buccal"}]'
+            WHERE field_settings_id = @fieldSettingsId AND ddp_instance_id = @realm;
+
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_SAMPLE_RECEIVED" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @fieldSettingsId := field_settings_id FROM field_settings
+            WHERE ddp_instance_id = @realm AND column_name = 'DATE_KIT_RECEIVED'
+                AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
+
+            UPDATE field_settings
+            SET column_display = 'Date EDTA Sample Received***'
+            WHERE field_settings_id = @fieldSettingsId AND ddp_instance_id = @realm;
+
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_OUTREACH_DATE" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'SENT_TO_GP' AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            SELECT ddp_instance_id , 'RGP_SAMPLE_COLLECTION_GROUP', 'NEXT_OUTREACH_DATE' ,'Next Outreach Date', 'DATE', @orderNumber
+            from ddp_instance where instance_name = 'rgp';
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_PAX_SAMPLE_RECEIVED" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'SENT_TO_GP' AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            values (@realm, 'RGP_SAMPLE_COLLECTION_GROUP', 'PAX_GENE_RECEIVED', 'Date PAXgene Sample Received', 'DATE', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_PAX_EDTA_SAMPLE_RECEIVED" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'SENT_TO_GP' AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            values (@realm, 'RGP_SAMPLE_COLLECTION_GROUP', 'PAX_GENE_EDTA_RECEIVED', 'Date back-up EDTA tube received',
+                    'DATE', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_LONG_READ" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'RNA_SEQ' AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
+            values (@realm, 'RGP_SAMPLE_COLLECTION_GROUP', 'LONG_READ_WGS', 'Long-read WGS',
+                    '[{"value":"Y_BROWNSTEIN","name":"Y - Brownstein/BioNano"},{"value":"Y_BROAD","name":"Y - Broad/PacBio"},{"value":"Y_SHASTA","name":"Y - Shasta/ONT"},{"value":"Y_TALKOWSKI","name":"Y - Talkowski Fetal"},{"value":"Y_OTHER","name":"Y - Other"},{"value":"No","name":"No","default":true}]','OPTIONS', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_METHYLATION" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'RNA_SEQ' AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
+            values (@realm, 'RGP_SAMPLE_COLLECTION_GROUP', 'METHYLATION', 'Methylation',
+                    '[{"value":"Y_Weksberg","name":"Y - Weksberg"},{"value":"Y_OTHER","name":"Y - Other"},{"value":"No","name":"No","default":true}]','OPTIONS', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_CLINICAL_REF_FORM" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'CONSENT_SPEAK_CLINICIAN' AND field_type = 'RGP_MEDICAL_RECORDS_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_MEDICAL_RECORDS_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_MEDICAL_RECORDS_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
+            values (@realm, 'RGP_MEDICAL_RECORDS_GROUP', 'CLINICAL_REF_FORM', 'Clinician Referral Form',
+                    '[{"value":"YES","name":"Yes"},{"value":"No","name":"No"}]','OPTIONS', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_REF_SOURCE" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'REFERRING_CLINICIAN' AND field_type = 'RGP_MEDICAL_RECORDS_GROUP';
+
+            update field_settings set order_number = order_number + 1
+            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
+                                         where field_type = 'RGP_MEDICAL_RECORDS_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_MEDICAL_RECORDS_GROUP'
+              and field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
+            values (@realm, 'RGP_MEDICAL_RECORDS_GROUP', 'REF_SOURCE', 'Referral Source',
+                    '[{"value":"DOC","name":"Doctor"},{"value":"FAM_OR_FRIEND","name":"Family or friend"},{"value":"GROUP","name":"Advocacy/Support Group"},{"value":"CURRENT_PT","name":"Current Participant"},{"value":"FACEBOOK","name":"Facebook"},{"value":"TWITTER","name":"Twitter"},{"value":"GOOGLE","name":"Google or other search engine"},{"value":"WORD","name":"Word of mouth"},{"value":"NEWSPAPER","name":"Newspaper story"},{"value":"YOUTUBE","name":"Youtube"},{"value":"LETTER","name":"Partner’s research letter"},{"value":"OTHER","name":"Other"},{"value":"MORE_THAN_ONE","name":"More than one"},{"value":"NA","name":"Not provided"}]','OPTIONS',
+                    @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_REFERRAL_NOTES" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'REFERRING_CLINICIAN' AND field_type = 'RGP_MEDICAL_RECORDS_GROUP';
+
+            UPDATE field_settings SET order_number = order_number + 1
+            WHERE field_settings_id in ( SELECT field_settings_id from (SELECT * from field_settings) as tmp
+                                         where field_type = 'RGP_MEDICAL_RECORDS_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_MEDICAL_RECORDS_GROUP'
+              AND field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            values (@realm, 'RGP_MEDICAL_RECORDS_GROUP', 'REFERRAL_NOTES', 'Referral Notes',
+                    'TEXTAREA', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-456_COLLABORATION" author="simone">
+        <sql>
+            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
+            SELECT @fieldSettingsId := field_settings_id FROM field_settings
+            WHERE ddp_instance_id = @realm AND column_name = 'COLLABORATION'
+                AND field_type = 'RGP_RETURN_RESULTS_GROUP';
+
+            UPDATE field_settings
+            SET possible_values =
+                    '[{"value":"SAMPLES","name":"Yes - samples"},{"value":"CLINICAL","name":"Yes - clinical info/photos"},{"value":"BOTH","name":"Yes - both"},{"value":"DATA","name":"Yes - data"},{"value":"NO","name":"No"},{"value":"NA","name":"N/A","default":true}]'
+            WHERE field_settings_id = @fieldSettingsId AND ddp_instance_id = @realm;
+
+        </sql>
+    </changeSet>
+</databaseChangeLog>
