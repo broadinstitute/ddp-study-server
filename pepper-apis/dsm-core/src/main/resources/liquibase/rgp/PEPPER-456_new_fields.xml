@@ -4,7 +4,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="PEPPER-456_SPECIAL_PROJECTS" author="simone">
+    <changeSet id="PEPPER-456_SPECIALTY_PROJECTS" author="simone">
         <sql>
             SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
             SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
@@ -18,8 +18,7 @@
             INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
                                         possible_values, display_type, order_number)
             values (@realm, 'r', 'SPECIAL_PROJECTS', 'Specialty projects',
-                    '[{"value":"R21","name":"R21"},{"value":"CAGI_2022","name":"CAGI
-                    2022"},{"value":"CAGI_2023","name":"CAGI 2023"},{"value":"CZI","name":"CZI"}]','OPTIONS', @orderNumber);
+                    '[{"value":"R21","name":"R21"},{"value":"CAGI_2022","name":"CAGI 2022"},{"value":"CAGI_2023","name":"CAGI 2023"},{"value":"CZI","name":"CZI"}]','OPTIONS', @orderNumber);
         </sql>
     </changeSet>
     <changeSet id="PEPPER-456_TISSUE_PROCESSING" author="simone">
