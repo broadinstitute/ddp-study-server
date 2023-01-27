@@ -61,22 +61,6 @@
 
         </sql>
     </changeSet>
-    <changeSet id="PEPPER-456_OUTREACH_DATE" author="simone">
-        <sql>
-            SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
-            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
-                AND column_name = 'SENT_TO_GP' AND field_type = 'RGP_SAMPLE_COLLECTION_GROUP';
-
-            update field_settings set order_number = order_number + 1
-            where field_settings_id in ( select field_settings_id from (select * from field_settings) as tmp
-                                         where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
-              and field_settings_id &lt;&gt; 0;
-
-            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
-            SELECT ddp_instance_id , 'RGP_SAMPLE_COLLECTION_GROUP', 'NEXT_OUTREACH_DATE' ,'Next Outreach Date', 'DATE', @orderNumber
-            from ddp_instance where instance_name = 'rgp';
-        </sql>
-    </changeSet>
     <changeSet id="PEPPER-456_PAX_SAMPLE_RECEIVED" author="simone">
         <sql>
             SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
