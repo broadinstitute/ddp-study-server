@@ -260,7 +260,6 @@ public class ParticipantWrapper {
             participantWrapperDto.setKits(kitRequestShipping);
             result.add(participantWrapperDto);
         });
-        System.currentTimeMillis();
     }
 
 
