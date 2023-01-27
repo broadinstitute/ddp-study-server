@@ -15,6 +15,7 @@ import java.util.Set;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitReport;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.KitType;
@@ -229,9 +230,15 @@ public class DashboardRoute extends RequestHandler {
         Map<String, Integer> dashboardValuesDetailed = new HashMap(); //counts number of institutions in total
         Map<String, Integer> dashboardValuesPeriod = new HashMap(); //counts only pt per period
         Map<String, Integer> dashboardValuesPeriodDetailed = new HashMap(); //counts number of institutions in total per period
-        fetchParticipantEsDataAndCalculateDashboardNumbers(filterable, request.queryMap(), dashboardValues, dashboardValuesDetailed,
-                dashboardValuesPeriod, dashboardValuesPeriodDetailed, start, end);
 
+        String realm = request.queryMap().get(RoutePath.REALM).value();
+        if (StringUtils.isNotEmpty(realm)) {
+            DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+            if (StringUtils.isNotEmpty(ddpInstance.getParticipantIndexES())) {
+                fetchParticipantEsDataAndCalculateDashboardNumbers(filterable, request.queryMap(), dashboardValues, dashboardValuesDetailed,
+                        dashboardValuesPeriod, dashboardValuesPeriodDetailed, start, end);
+            }
+        }
         return new DashboardInformation(dashboardValues, dashboardValuesDetailed, dashboardValuesPeriod, dashboardValuesPeriodDetailed);
     }
 

@@ -76,7 +76,7 @@ public class ParticipantWrapper {
         DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
 
         if (StringUtils.isBlank(ddpInstanceDto.getEsParticipantIndex())) {
-            throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstanceDto.getInstanceName());
+            return new ParticipantWrapperResult(0, new ArrayList<>());
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
