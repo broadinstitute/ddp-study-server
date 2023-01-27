@@ -15,8 +15,8 @@
                                          where field_type = 'r' and order_number &gt;= @orderNumber) and field_type = 'r'
               AND field_settings_id &lt;&gt; 0;
 
-            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type,
-                                        possible_values, order_number)
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
             values (@realm, 'r', 'SPECIAL_PROJECTS', 'Specialty projects',
                     '[{"value":"R21","name":"R21"},{"value":"CAGI_2022","name":"CAGI
                     2022"},{"value":"CAGI_2023","name":"CAGI 2023"},{"value":"CZI","name":"CZI"}]','OPTIONS', @orderNumber);
@@ -62,7 +62,7 @@
 
         </sql>
     </changeSet>
-    <changeSet id="PEPPER-456_PAX_SAMPLE_RECEIVED" author="simone">
+    <changeSet id="PEPPER-456_OUTREACH_DATE" author="simone">
         <sql>
             SELECT @realm:= ddp_instance_id FROM ddp_instance WHERE instance_name='rgp';
             SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
@@ -120,13 +120,10 @@
                                          where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
               and field_settings_id &lt;&gt; 0;
 
-            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type,
-                                        possible_values, order_number)
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
             values (@realm, 'RGP_SAMPLE_COLLECTION_GROUP', 'LONG_READ_WGS', 'Long-read WGS',
-                    '[{"value":"Y_BROWNSTEIN","name":"Y - Brownstein/BioNano"},' ||
-                    '{"value":"Y_BROAD","name":"Y - Broad/PacBio"},{"value":"Y_SHASTA","name":"Y - Shasta/ONT"},' ||
-                    '{"value":"Y_TALKOWSKI","name":"Y - Talkowski Fetal"},{"value":"Y_OTHER","name":"Y - Other"},' ||
-                    '{"value":"No","name":"No","default":true}]','OPTIONS', @orderNumber);
+                    '[{"value":"Y_BROWNSTEIN","name":"Y - Brownstein/BioNano"},{"value":"Y_BROAD","name":"Y - Broad/PacBio"},{"value":"Y_SHASTA","name":"Y - Shasta/ONT"},{"value":"Y_TALKOWSKI","name":"Y - Talkowski Fetal"},{"value":"Y_OTHER","name":"Y - Other"},{"value":"No","name":"No","default":true}]','OPTIONS', @orderNumber);
         </sql>
     </changeSet>
     <changeSet id="PEPPER-456_METHYLATION" author="simone">
@@ -140,8 +137,8 @@
                                          where field_type = 'RGP_SAMPLE_COLLECTION_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_SAMPLE_COLLECTION_GROUP'
               and field_settings_id &lt;&gt; 0;
 
-            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type,
-                                        possible_values, order_number)
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
             values (@realm, 'RGP_SAMPLE_COLLECTION_GROUP', 'METHYLATION', 'Methylation',
                     '[{"value":"Y_Weksberg","name":"Y - Weksberg"},{"value":"Y_OTHER","name":"Y - Other"},{"value":"No","name":"No","default":true}]','OPTIONS', @orderNumber);
         </sql>
@@ -157,8 +154,8 @@
                                          where field_type = 'RGP_MEDICAL_RECORDS_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_MEDICAL_RECORDS_GROUP'
               and field_settings_id &lt;&gt; 0;
 
-            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type,
-                                        possible_values, order_number)
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
             values (@realm, 'RGP_MEDICAL_RECORDS_GROUP', 'CLINICAL_REF_FORM', 'Clinician Referral Form',
                     '[{"value":"YES","name":"Yes"},{"value":"No","name":"No"}]','OPTIONS', @orderNumber);
         </sql>
@@ -174,12 +171,10 @@
                                          where field_type = 'RGP_MEDICAL_RECORDS_GROUP' and order_number &gt;= @orderNumber) and field_type = 'RGP_MEDICAL_RECORDS_GROUP'
               and field_settings_id &lt;&gt; 0;
 
-            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type,
-                                        possible_values, order_number)
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display,
+                                        possible_values, display_type, order_number)
             values (@realm, 'RGP_MEDICAL_RECORDS_GROUP', 'REF_SOURCE', 'Referral Source',
-                    '[{"value":"DOC","name":"Doctor"},{"value":"FAM_OR_FRIEND","name":"Family or friend"},' ||
-                    '{"value":"GROUP","name":"Advocacy/Support Group"},{"value":"CURRENT_PT","name":"Current
-                    Participant"},{"value":"FACEBOOK","name":"Facebook"},{"value":"TWITTER","name":"Twitter"},{"value":"GOOGLE","name":"Google or other search engine"},{"value":"WORD","name":"Word of mouth"},{"value":"NEWSPAPER","name":"Newspaper story"},{"value":"YOUTUBE","name":"Youtube"},{"value":"LETTER","name":"Partner’s research letter"},{"value":"OTHER","name":"Other"},{"value":"MORE_THAN_ONE","name":"More than one"},{"value":"NA","name":"Not provided"}]','OPTIONS',
+                    '[{"value":"DOC","name":"Doctor"},{"value":"FAM_OR_FRIEND","name":"Family or friend"},{"value":"GROUP","name":"Advocacy/Support Group"},{"value":"CURRENT_PT","name":"Current Participant"},{"value":"FACEBOOK","name":"Facebook"},{"value":"TWITTER","name":"Twitter"},{"value":"GOOGLE","name":"Google or other search engine"},{"value":"WORD","name":"Word of mouth"},{"value":"NEWSPAPER","name":"Newspaper story"},{"value":"YOUTUBE","name":"Youtube"},{"value":"LETTER","name":"Partner’s research letter"},{"value":"OTHER","name":"Other"},{"value":"MORE_THAN_ONE","name":"More than one"},{"value":"NA","name":"Not provided"}]','OPTIONS',
                     @orderNumber);
         </sql>
     </changeSet>
@@ -208,9 +203,7 @@
 
             UPDATE field_settings
             SET possible_values =
-                    '[{"value":"SAMPLES","name":"Yes - samples"},{"value":"CLINICAL","name":"Yes - clinical
-                    info/photos"},{"value":"BOTH","name":"Yes - both"},{"value":"DATA","name":"Yes -
-                    data"},{"value":"NO","name":"No"},{"value":"NA","name":"N/A","default":true}]'
+                    '[{"value":"SAMPLES","name":"Yes - samples"},{"value":"CLINICAL","name":"Yes - clinical info/photos"},{"value":"BOTH","name":"Yes - both"},{"value":"DATA","name":"Yes - data"},{"value":"NO","name":"No"},{"value":"NA","name":"N/A","default":true}]'
             WHERE field_settings_id = @fieldSettingsId AND ddp_instance_id = @realm;
 
         </sql>
