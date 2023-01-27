@@ -461,26 +461,31 @@ public class DashboardRoute extends RequestHandler {
                            @NonNull Map<String, Integer> dashboardValuesDetailed,
                            @NonNull Map<String, Integer> dashboardValuesPeriodDetailed, long start, long end) {
         for (KitRequestShipping kit : kits) {
+            String kitTypeName = kit.getKitTypeName();
+            if (StringUtils.isEmpty(kitTypeName)) {
+                kitTypeName = getKitTypeNameFromSampleId(kit.getBspCollaboratorSampleId());
+            }
             if (kit.getScanDate() != null && kit.getScanDate() != 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".sent", foundAtPT);
-                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".sent", kit.getScanDate(), start,
+                incrementCounter(dashboardValuesDetailed, "kit." + kitTypeName + ".sent", foundAtPT);
+                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kitTypeName + ".sent", kit.getScanDate(), start,
                         end, foundAtPtPeriod);
             }
-            if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() == 0 || (kit.getScanDate() == null && kit.getDeactivatedDate() == null)) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".waiting", foundAtPT);
+            if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() == 0
+                    || (kit.getScanDate() == null && kit.getDeactivatedDate() == null)) {
+                incrementCounter(dashboardValuesDetailed, "kit." + kitTypeName + ".waiting", foundAtPT);
             }
             if (kit.getReceiveDate() != null && kit.getReceiveDate() != 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".received", foundAtPT);
-                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".received", kit.getReceiveDate(),
+                incrementCounter(dashboardValuesDetailed, "kit." + kitTypeName + ".received", foundAtPT);
+                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kitTypeName + ".received", kit.getReceiveDate(),
                         start, end, foundAtPtPeriod);
             }
             if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() != 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".deactivated", foundAtPT);
-                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".deactivated",
+                incrementCounter(dashboardValuesDetailed, "kit." + kitTypeName + ".deactivated", foundAtPT);
+                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kitTypeName + ".deactivated",
                         kit.getDeactivatedDate(), start, end, foundAtPtPeriod);
             }
             if (StringUtils.isNotBlank(kit.getEasypostShipmentStatus())) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + "." + kit.getEasypostShipmentStatus(), foundAtPT);
+                incrementCounter(dashboardValuesDetailed, "kit." + kitTypeName + "." + kit.getEasypostShipmentStatus(), foundAtPT);
             }
         }
     }
@@ -823,5 +828,23 @@ public class DashboardRoute extends RequestHandler {
             currentFrom = currentTo;
             currentTo += 1000;
         }
+    }
+
+    private String getKitTypeNameFromSampleId(String bspCollaboratorSampleId) {
+        if (StringUtils.isNotEmpty(bspCollaboratorSampleId)) {
+            if (bspCollaboratorSampleId.contains("BLOOD")) {
+                return "BLOOD";
+            }
+            if (bspCollaboratorSampleId.contains("SALIVA")) {
+                return "SALIVA";
+            }
+            if (bspCollaboratorSampleId.contains("BUCCAL")) {
+                return "BUCCAL";
+            }
+            if (bspCollaboratorSampleId.contains("STOOL")) {
+                return "STOOL";
+            }
+        }
+        return "";
     }
 }
