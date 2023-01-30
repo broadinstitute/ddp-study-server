@@ -9,8 +9,6 @@ public interface Filterable<T> {
 
     T filter(QueryParamsMap queryParamsMap, Deserializer deserializer);
 
-    T filter(QueryParamsMap queryParamsMap, boolean noProxyDataNeeded);
-
     void setFrom(int from);
 
     void setTo(int to);
