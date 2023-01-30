@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
@@ -16,7 +17,6 @@ import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 public class FileUploadDaoTest extends TxnAwareBaseTest {
 

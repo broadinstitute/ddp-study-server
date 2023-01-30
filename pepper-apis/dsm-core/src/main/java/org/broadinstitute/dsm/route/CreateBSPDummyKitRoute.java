@@ -48,7 +48,8 @@ public class CreateBSPDummyKitRoute implements Route {
                 //if instance not null
                 String dsmKitRequestId = KitRequestShipping.writeRequest(mockDdpInstance.getDdpInstanceId(), mercuryKitRequestId, kitTypeId,
                         ddpParticipantId, participantCollaboratorId, collaboratorSampleId,
-                        USER_ID, "", "", "", false, "", null);
+                        USER_ID, "", "", "", false, "", null,
+                        DUMMY_KIT_TYPE_NAME);
                 new BSPDummyKitDao().updateKitLabel(kitLabel, dsmKitRequestId);
             }
             logger.info("Returning 200 to Mercury");

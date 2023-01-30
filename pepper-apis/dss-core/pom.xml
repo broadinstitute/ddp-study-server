@@ -70,16 +70,6 @@
             <artifactId>google-analytics-java</artifactId>
         </dependency>
 
-        <!-- logging and notifications -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-
         <dependency>
             <!-- configuration -->
             <groupId>com.typesafe</groupId>
@@ -221,7 +211,8 @@
         <!-- utilities for parsing and templating -->
         <dependency>
             <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
+            <artifactId>velocity-engine-core</artifactId>
+            <version>${velocity.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>

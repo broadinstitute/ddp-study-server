@@ -67,21 +67,40 @@ public class ParticipantWrapper {
     }
 
     public ParticipantWrapperResult getFilteredList() {
+        return getFilteredList(false);
+    }
+
+    public ParticipantWrapperResult getFilteredList(boolean noProxyDataNeeded) {
         logger.info("Getting list of participant information");
 
         DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
 
         if (StringUtils.isBlank(ddpInstanceDto.getEsParticipantIndex())) {
-            throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstanceDto.getInstanceName());
+            return new ParticipantWrapperResult(0, new ArrayList<>());
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
             fetchAndPrepareDataByFilters(filters, ddpInstanceDto.getInstanceName());
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+            return new ParticipantWrapperResult(esData.getTotalCount(), getParticipantWrapperDtoList(ddpInstanceDto, noProxyDataNeeded));
         }).orElseGet(() -> {
             fetchAndPrepareData();
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+            return new ParticipantWrapperResult(esData.getTotalCount(), getParticipantWrapperDtoList(ddpInstanceDto, noProxyDataNeeded));
         });
+    }
+
+    private List<ParticipantWrapperDto> getParticipantWrapperDtoList(DDPInstanceDto ddpInstanceDto, boolean noProxyDataNeeded) {
+        if (noProxyDataNeeded) {
+            return createParticipantWrapperDtoListWithoutProxy(ddpInstanceDto);
+        }
+        return collectProxyData(ddpInstanceDto);
+    }
+
+    private List<ParticipantWrapperDto> createParticipantWrapperDtoListWithoutProxy(DDPInstanceDto ddpInstanceDto) {
+        List<ParticipantWrapperDto> result = new ArrayList<>();
+        for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
+            addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto);
+        }
+        return result;
     }
 
     public ParticipantWrapperResult getFilteredList(AbstractQueryBuilder<?> mainQuery) {
@@ -94,7 +113,7 @@ public class ParticipantWrapper {
         }
 
         fetchAndPrepareDataByAbstractQuery(mainQuery, ddpInstanceDto.getInstanceName());
-        return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+        return new ParticipantWrapperResult(esData.getTotalCount(), collectProxyData(ddpInstanceDto));
     }
 
     private void fetchAndPrepareDataByAbstractQuery(AbstractQueryBuilder<?> mainQuery, String instanceName) {
@@ -140,8 +159,8 @@ public class ParticipantWrapper {
     }
 
 
-    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto) {
-        logger.info("Collecting participant data...");
+    private List<ParticipantWrapperDto> collectProxyData(DDPInstanceDto ddpInstanceDto) {
+        logger.info("Collecting participant proxy data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
 

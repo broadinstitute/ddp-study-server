@@ -2,7 +2,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.questio
 
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;

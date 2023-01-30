@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
+import static org.apache.commons.lang3.time.DateUtils.MILLIS_PER_SECOND;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
