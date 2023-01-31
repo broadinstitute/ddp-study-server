@@ -8,7 +8,6 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,17 +53,7 @@ public class FilterExportConfig {
         List<Map<String, Object>> childQuestions = getChildQuestions();
         if (childQuestions != null) {
             this.childConfigs = IntStream.range(0, childQuestions.size())
-                    .mapToObj(qNum -> {
-                            FilterExportConfig filterExportConfig = new FilterExportConfig(this, childQuestions.get(qNum), qNum);
-                            if (filterExportConfig.getOptions() != null) {
-                                if (this.options == null) {
-                                    this.options = new ArrayList<>();
-                                }
-                                this.options.addAll(filterExportConfig.getOptions());
-                            }
-                            return filterExportConfig;
-                        }
-                    ).collect(Collectors.toList());
+                    .mapToObj(qNum -> new FilterExportConfig(this, childQuestions.get(qNum), qNum)).collect(Collectors.toList());
         }
     }
 
