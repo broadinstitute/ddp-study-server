@@ -40,7 +40,8 @@ public class BaseFilter {
     protected void prepareNecessaryData(QueryParamsMap queryParamsMap) {
         parent = Objects.requireNonNull(queryParamsMap).get(DBConstants.FILTER_PARENT).value();
         if (StringUtils.isBlank(parent)) {
-            throw new RuntimeException("parent is necessary");
+            //if no parent is set then it was the dashboard route that called
+            parent = PARENT_PARTICIPANT_LIST;
         }
         realm = queryParamsMap.get(RoutePath.REALM).value();
         if (StringUtils.isBlank(realm)) {
