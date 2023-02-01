@@ -69,34 +69,6 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
         });
     }
 
-    /*
-
-    "picklistOptions": [
-              {
-                "stableId": "GRADE-HIGH",
-                "optionLabelTemplate": {
-                  "templateType": "TEXT",
-                  "templateCode": null,
-                  "templateText": "$BRAIN_CANCER_GRADE_grade-high",
-                  "variables": [
-                    {
-                      "name": "BRAIN_CANCER_GRADE_grade-high",
-                      "translations": [
-                        {
-                          "language": "en",
-                          "text": "High"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                "detailLabelTemplate": null,
-                "allowDetails": false,
-                "exclusive": false
-              },
-     */
-
-
     @Test
     public void testRenderPepper506CancerGrade() {
         TransactionWrapper.useTxn(handle -> {
@@ -166,29 +138,6 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
         });
     }
 
-    /*
-
-  "questionType": "DATE",
-          "stableId": "CHILD_DIAGNOSIS_DATE",
-          "isRestricted": false,
-          "isDeprecated": false,
-          "promptTemplate": {
-            "templateType": "HTML",
-            "templateCode": null,
-            "templateText": "$prompt_CHILD_DIAGNOSIS_DATE",
-            "variables": [
-              {
-                "name": "prompt_CHILD_DIAGNOSIS_DATE",
-                "translations": [
-                  {
-                    "language": "en",
-                    "text": "When was your child first diagnosed with brain cancer? Please include \"month\" if known"
-                  }
-                ]
-              }
-            ]
-          },
-   */
     @Test
     public void testRenderPepper506Cancer() {
         TransactionWrapper.useTxn(handle -> {
@@ -197,7 +146,8 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
 
             Template tmpl = new Template(TemplateType.HTML, null, "$prompt_CHILD_DIAGNOSIS_DATE");
             tmpl.addVariable(new TemplateVariable("prompt_CHILD_DIAGNOSIS_DATE", Arrays.asList(
-                    new Translation("en", "When was your child first diagnosed with brain cancer? Please include \\\"month\\\" if known"))));
+                    new Translation("en", "When was your child first diagnosed with brain cancer? "
+                            + "Please include \\\"month\\\" if known"))));
             long timestamp = Instant.now().toEpochMilli();
             long revId = jdbiRev.insert(userId, timestamp, null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
