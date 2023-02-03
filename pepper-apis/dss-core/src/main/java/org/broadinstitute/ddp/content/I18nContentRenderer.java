@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
 
 import java.io.StringWriter;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.time.ZoneId;
 import java.time.LocalDate;
@@ -130,8 +131,10 @@ public class I18nContentRenderer {
      * @return An initialized VelocityEngine instance
      */
     private VelocityEngine createVelocityEngine() {
+        Properties velocityProps = new Properties();
+        velocityProps.setProperty("parser.allow_hyphen_in_identifiers", "true");
         VelocityEngine engine = new VelocityEngine();
-        engine.init();
+        engine.init(velocityProps);
         return engine;
     }
 

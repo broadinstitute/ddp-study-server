@@ -70,6 +70,99 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testRenderPepper506CancerGrade() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "$BRAIN_CANCER_GRADE_grade-high");
+            tmpl.addVariable(new TemplateVariable("BRAIN_CANCER_GRADE_grade-high", Arrays.asList(
+                    new Translation("en", "High"))));
+            long timestamp = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(userId, timestamp, null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "High";
+            String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId, timestamp);
+            assertEquals(expected, actual);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testRenderPepper506CancerGradeUnderscore() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "$BRAIN_CANCER_GRADE_grade_high");
+            tmpl.addVariable(new TemplateVariable("BRAIN_CANCER_GRADE_grade_high", Arrays.asList(
+                    new Translation("en", "High"))));
+            long timestamp = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(userId, timestamp, null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "High";
+            String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId, timestamp);
+            assertEquals(expected, actual);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testRenderPepper506CancerGradeLowerCase() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "$brain_cancer_grade_grade-high");
+            tmpl.addVariable(new TemplateVariable("brain_cancer_grade_grade-high", Arrays.asList(
+                    new Translation("en", "High"))));
+            long timestamp = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(userId, timestamp, null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "High";
+            String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId, timestamp);
+            assertEquals(expected, actual);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testRenderPepper506Cancer() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "$prompt_CHILD_DIAGNOSIS_DATE");
+            tmpl.addVariable(new TemplateVariable("prompt_CHILD_DIAGNOSIS_DATE", Arrays.asList(
+                    new Translation("en", "When was your child first diagnosed with brain cancer? "
+                            + "Please include \\\"month\\\" if known"))));
+            long timestamp = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(userId, timestamp, null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "When was your child first diagnosed with brain cancer? Please include \\\"month\\\" if known";
+            String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId, timestamp);
+            assertEquals(expected, actual);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testDoubleRenderPass() {
         TransactionWrapper.useTxn(handle -> {
             TemplateDao tmplDao = handle.attach(TemplateDao.class);
