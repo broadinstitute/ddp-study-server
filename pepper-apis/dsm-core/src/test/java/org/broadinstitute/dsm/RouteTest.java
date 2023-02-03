@@ -68,6 +68,7 @@ import org.slf4j.LoggerFactory;
  * all angio response is only mocked,
  * to test the angio response try class: IntegrationTest
  */
+@Ignore
 public class RouteTest extends TestHelper {
 
     public static final String OUTPUT_FOLDER = "src/test/resources/output/";

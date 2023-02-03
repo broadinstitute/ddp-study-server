@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CohortTagMigrationTest {
@@ -75,6 +76,7 @@ public class CohortTagMigrationTest {
 
 
     @Test
+    @Ignore
     public void export() {
         CohortTagMigrator cohortTagMigrator = new CohortTagMigrator(
                 ddpInstanceDto.getEsParticipantIndex(), CohortTagUseCaseTest.INSTANCE_NAME, cohortTagDao

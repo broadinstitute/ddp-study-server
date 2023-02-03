@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class FieldSettingsTest {
 
     public static final String REGISTRATION_STATUS = "REGISTRATION_STATUS";

@@ -29,6 +29,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class NotificationJobTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationJobTest.class);

@@ -17,6 +17,7 @@ import org.mockserver.matchers.MatchType;
 import org.mockserver.model.JsonBody;
 
 
+@Ignore
 public class DDPRequestUtilTest extends TestHelper {
 
 

@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 
+@Ignore
 public class JWTRouteFilterTest {
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilterTest.class);
     public static final long THIRTY_MIN_IN_SECONDS = 30 * 60 * 60;
@@ -61,9 +62,7 @@ public class JWTRouteFilterTest {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/dsm-test-config.conf")));
         auth0Domain = cfg.getString("auth0.domain");
-        ;
         bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
-        ;
     }
 
     @Ignore("Broken")

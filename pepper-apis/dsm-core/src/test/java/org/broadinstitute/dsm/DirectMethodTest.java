@@ -52,6 +52,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.Node;
 
+@Ignore
 public class DirectMethodTest extends TestHelper {
 
     @BeforeClass

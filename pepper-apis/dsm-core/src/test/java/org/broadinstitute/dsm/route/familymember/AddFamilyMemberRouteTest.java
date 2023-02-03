@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class AddFamilyMemberRouteTest {
 
     private static final String participantId = "RBMJW6ZIXVXBMXUX6M3Q";

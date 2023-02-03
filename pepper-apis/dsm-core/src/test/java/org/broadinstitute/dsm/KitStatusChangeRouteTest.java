@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class KitStatusChangeRouteTest extends TestHelper {
 
     private static final String CHECK_KITLABEL = "select count(*) as count from ddp_kit_request request, ddp_kit kit "

@@ -64,8 +64,12 @@ public class TestUtil {
                 config.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), config.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 config.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 config.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
-        return auth0Util.requestAuth0Token(config.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
-                config.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE), Map.of("USER_ID", userId + ""));
+        return auth0Util.getNewAuth0TokenWithCustomClaims(Map.of("USER_ID", userId + ""),
+                config.getString(ApplicationConfigConstants.AUTH0_SECRET),
+                config.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
+                config.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
+                config.getString(ApplicationConfigConstants.AUTH0_AUDIENCE),
+                config.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE));
                // cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE), new HashMap<>());
 
 //        RSAKeyProvider keyProvider = null;
