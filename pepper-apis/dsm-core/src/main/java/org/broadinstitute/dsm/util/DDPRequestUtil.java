@@ -312,17 +312,17 @@ public class DDPRequestUtil {
         return null;
     }
 
-    public static <T> T postRequestWithResponse(String uri, Map<String, String> headers, Object objectToPost, Class<T> responseClass,
-                                                String name) {
-        logger.info("Requesting data from " + name + " w/ " + uri);
-        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeaderNoToken(uri, headers, objectToPost);
+    public static <T> T postRequestWithResponse(Class<T> responseClass, String sendRequest, Object objectToPost, String name, Map<String,
+            String> header) {
+        logger.info("Requesting data from " + name + " w/ " + sendRequest);
+        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeaderNoToken(sendRequest, header, objectToPost);
 
         T objects = null;
         try {
             Response response = request.execute();
-            objects = response.handleResponse(res -> getResponse(res, responseClass, uri));
+            objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
         } catch (IOException e) {
-            throw new RuntimeException("Post request to " + uri + " was not completed successfully", e);
+            throw new RuntimeException("Post request to " + sendRequest + " was not completed successfully", e);
         }
         return objects;
     }

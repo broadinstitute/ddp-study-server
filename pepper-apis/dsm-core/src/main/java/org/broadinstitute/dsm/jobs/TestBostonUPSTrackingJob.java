@@ -98,9 +98,10 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         logger.info("Starting the UPS lookup job");
         auth0Util = new Auth0Util(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS),
+                cfg.getBoolean(ApplicationConfigConstants.AUTH0_IS_BASE_64_ENCODED),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), false,
                 cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
         String data = new String(Base64.getDecoder().decode(message.data));
         UPSKit[] kitsToLookFor = new Gson().fromJson(data, UPSKit[].class);
