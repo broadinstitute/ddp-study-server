@@ -29,7 +29,7 @@ import org.broadinstitute.dsm.security.RSAKeyProviderFactory;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.TestUtil;
-import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import org.easymock.EasyMock;
 import org.junit.Assert;
