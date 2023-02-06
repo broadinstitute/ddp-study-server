@@ -111,12 +111,7 @@ public enum Operator {
                     return Operator.DIAMOND_EQUALS;
                 case "JSON_CONTAINS":
                     return Operator.JSON_CONTAINS;
-                case "JSON_EXTRACT =":
-                case "JSON_EXTRACT >=":
-                case "JSON_EXTRACT <=":
-                case "JSON_EXTRACT LIKE":
-                case "JSON_EXTRACT IS NOT NULL":
-                case "JSON_EXTRACT IS NULL":
+                case "JSON_EXTRACT":
                     return buildJsonExtractOperator(filter);
                 default:
                     return Operator.getOperator(operator);
