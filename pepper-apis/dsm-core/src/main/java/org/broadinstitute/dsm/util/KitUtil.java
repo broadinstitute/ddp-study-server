@@ -120,7 +120,7 @@ public class KitUtil {
     private static final String EASYPOST_FAILURE_STATUS = "failure";
     private static final String EASYPOST_RETURN_SENDER_STATUS = "return_to_sender";
     private static final String EASYPOST_ERROR_STATUS = "error";
-    private static final String PECGS_RESEARCH = "PECGS_RESEARCH";
+    public static final String PECGS_RESEARCH = "PECGS_RESEARCH";
 
     public static void createLabel(List<KitRequestCreateLabel> kitsLabelTriggered) {
         DBUtil.updateBookmark(System.currentTimeMillis(), BOOKMARK_LABEL_CREATION_RUNNING);

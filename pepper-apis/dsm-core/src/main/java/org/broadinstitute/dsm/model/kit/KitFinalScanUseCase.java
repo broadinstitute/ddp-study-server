@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.KitUtil;
 
 //connects kit request with an actual mf barcode on the tub
 public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
@@ -31,11 +32,19 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel, kitLabel);
         if (kitByDdpLabel.isPresent()) {
             KitRequestShipping kitRequestShipping = kitByDdpLabel.get();
-            if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix()) && !kitLabel.startsWith(
-                    kitRequestShipping.getKitLabelPrefix())) {
-                //prefix is configured and doesn't match kit label
+            if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
+                    && !kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
+                    && StringUtils.isBlank(kitRequestShipping.getMessage())) {
+                //prefix is configured and doesn't match kit label and kit error message was not PECGS_RESEARCH
                 result = Optional.of((new ScanError(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
                         + "Please check to see if this is the correct kit for this project before proceeding.")));
+            } else if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
+                    && kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
+                    && StringUtils.isNotBlank(kitRequestShipping.getMessage())
+                    && KitUtil.PECGS_RESEARCH.equals(kitRequestShipping.getMessage())) {
+                //prefix is configured and match kit label and kit error message was PECGS_RESEARCH
+                result = Optional.of((new ScanError(ddpLabel,
+                        "Please check to see if this is the correct kit for this participant before proceeding.")));
             } else if (kitRequestShipping.getKitLabelLength() != null && kitRequestShipping.getKitLabelLength() != 0
                     && kitLabel.length() != kitRequestShipping.getKitLabelLength()) {
                 //barcode length doesn't fit configured length
@@ -45,6 +54,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             } else if ((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan())
                     || (!kitRequestShipping.isKitRequiringTrackingScan())) {
                 //tracking scan needed and done OR no tracking scan needed
+                //successfully scanned and going to update db and ES
                 if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
                         || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
                     kitRequestShipping.setKitLabel(kitLabel);
