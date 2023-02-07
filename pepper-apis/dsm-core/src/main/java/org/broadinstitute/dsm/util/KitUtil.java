@@ -49,9 +49,9 @@ public class KitUtil {
                     + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
     public static final String BOOKMARK_LABEL_CREATION_RUNNING = "label_creation_running";
     public static final String IGNORE_AUTO_DEACTIVATION = "ignore_auto_deactivation";
-    public static final String SYSTEM_AUTOMATICALLY_DEACTIVATED = "system_automatically_deactivated";
+    private static final String SYSTEM_AUTOMATICALLY_DEACTIVATED = "system_automatically_deactivated";
     //easypost end statuses
-    public static final String EASYPOST_DELIVERED_STATUS = "delivered";
+    private static final String EASYPOST_DELIVERED_STATUS = "delivered";
     private static final Logger logger = LoggerFactory.getLogger(KitUtil.class);
     private static final String SQL_SELECT_KIT_REQUESTS_ALL_INFO =
             "SELECT *, cs_to.carrier as carrierTo, cs_to.easypost_carrier_id as carrierToId, "
@@ -120,6 +120,7 @@ public class KitUtil {
     private static final String EASYPOST_FAILURE_STATUS = "failure";
     private static final String EASYPOST_RETURN_SENDER_STATUS = "return_to_sender";
     private static final String EASYPOST_ERROR_STATUS = "error";
+    private static final String PECGS_RESEARCH = "PECGS_RESEARCH";
 
     public static void createLabel(List<KitRequestCreateLabel> kitsLabelTriggered) {
         DBUtil.updateBookmark(System.currentTimeMillis(), BOOKMARK_LABEL_CREATION_RUNNING);
@@ -276,12 +277,11 @@ public class KitUtil {
         Shipment returnShipment = null;
         Address toAddress = null;
         try {
-            toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressIdTo, null,
-                    ddpInstanceDto);
+            toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressIdTo, null, ddpInstanceDto);
             participantShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, false, toAddress);
         } catch (Exception e) {
-            errorMessage = "To: " + e.getMessage();
+            errorMessage += "To: " + e.getMessage();
         }
         try {
             Address returnAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, null, null,
@@ -291,6 +291,7 @@ public class KitUtil {
         } catch (Exception e) {
             errorMessage += "Return: " + e.getMessage();
         }
+        errorMessage = messageBasedOnLocationAndInstance(errorMessage, ddpInstanceDto, toAddress);
         KitRequestShipping.updateKit(dsmKitId, participantShipment, returnShipment, errorMessage, toAddress, false, ddpInstanceDto);
     }
 
@@ -622,5 +623,15 @@ public class KitUtil {
         }
         logger.info("Found " + notShippedKits.size() + " ddp and type combinations unsent kits");
         return notShippedKits;
+    }
+
+    public static String messageBasedOnLocationAndInstance(String errorMessage, DDPInstanceDto ddpInstanceDto, Address toAddress) {
+        //overwriting error message if study is PE-CGS and Participant is CA or NY otherwise keep the old error message
+        if (StringUtils.isNotBlank(ddpInstanceDto.getResearchProject().get())) {
+            if (toAddress.getCountry().equals("CA") || toAddress.getState().equals("NY")) {
+                return PECGS_RESEARCH;
+            }
+        }
+        return errorMessage;
     }
 }
