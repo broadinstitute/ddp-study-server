@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-572_REMOVE_SPECIALTY_PROJECTS" author="simone">
+        <sql>
+            SELECT @realm := ddp_instance_id FROM ddp_instance WHERE instance_name = 'rgp';
+            SELECT @fieldId := field_settings_id FROM field_settings WHERE column_name = 'SPECIAL_PROJECTS'
+                AND field_type = 'r' AND ddp_instance_id = @realm;
+
+            UPDATE field_settings SET deleted = 1 WHERE field_settings_id = @fieldId;
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_R21" author="simone">
+        <sql>
+            SELECT @realm := ddp_instance_id FROM ddp_instance WHERE instance_name = 'rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'EXPECTED_NUMBER_TO_SEQUENCE' AND field_type = 'r';
+
+            UPDATE field_settings SET order_number = order_number + 1
+                WHERE field_settings_id in ( SELECT field_settings_id FROM (SELECT * FROM field_settings) as tmp
+                WHERE field_type = 'r' AND order_number &gt;= @orderNumber) AND field_type = 'r'
+                AND field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            VALUES (@realm, 'r', 'SP_R21', 'Specialty Project: R21', 'CHECKBOX', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_CAGI_2022" author="simone">
+        <sql>
+            SELECT @realm := ddp_instance_id FROM ddp_instance WHERE instance_name = 'rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'EXPECTED_NUMBER_TO_SEQUENCE' AND field_type = 'r';
+
+            UPDATE field_settings SET order_number = order_number + 1
+                WHERE field_settings_id in ( SELECT field_settings_id FROM (SELECT * FROM field_settings) as tmp
+                WHERE field_type = 'r' AND order_number &gt;= @orderNumber) AND field_type = 'r'
+                AND field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            VALUES (@realm, 'r', 'SP_CAGI_2022', 'Specialty Project: CAGI 2022', 'CHECKBOX', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_CAGI_2023" author="simone">
+        <sql>
+            SELECT @realm := ddp_instance_id FROM ddp_instance WHERE instance_name = 'rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'EXPECTED_NUMBER_TO_SEQUENCE' AND field_type = 'r';
+
+            UPDATE field_settings SET order_number = order_number + 1
+                WHERE field_settings_id in ( SELECT field_settings_id FROM (SELECT * FROM field_settings) as tmp
+                WHERE field_type = 'r' AND order_number &gt;= @orderNumber) AND field_type = 'r'
+                AND field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            VALUES (@realm, 'r', 'SP_CAGI_2023', 'Specialty Project: CAGI 2023', 'CHECKBOX', @orderNumber);
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_CZI" author="simone">
+        <sql>
+            SELECT @realm := ddp_instance_id FROM ddp_instance WHERE instance_name = 'rgp';
+            SELECT @orderNumber := order_number FROM field_settings WHERE ddp_instance_id = @realm
+                AND column_name = 'EXPECTED_NUMBER_TO_SEQUENCE' AND field_type = 'r';
+
+            UPDATE field_settings SET order_number = order_number + 1
+                WHERE field_settings_id in ( SELECT field_settings_id FROM (SELECT * FROM field_settings) as tmp
+                WHERE field_type = 'r' AND order_number &gt;= @orderNumber) AND field_type = 'r'
+                AND field_settings_id &lt;&gt; 0;
+
+            INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
+            VALUES (@realm, 'r', 'SP_CZI', 'Specialty Project: CZI', 'CHECKBOX', @orderNumber);
+        </sql>
+    </changeSet>
+</databaseChangeLog>
