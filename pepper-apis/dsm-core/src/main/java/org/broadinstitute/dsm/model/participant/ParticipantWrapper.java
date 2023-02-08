@@ -212,8 +212,8 @@ public class ParticipantWrapper {
         // don't do any copying of the main attributes, but do keep track of the proxies so that we can fetch them in bulk
         ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
         //if instance is osteo: filter out the sample information collected under the other study
-        if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex()) &&
-                ddpInstanceDto.getEsParticipantIndex().equals(DBConstants.OSTEO_INDEX)) {
+        if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex())
+                && ddpInstanceDto.getEsParticipantIndex().equals(DBConstants.OSTEO_INDEX)) {
             filterOsteoFromOtherOsteoOutForExport(elasticSearchParticipantDto, ddpInstanceDto.getDdpInstanceId());
         }
         participantWrapperDto.setEsData(elasticSearchParticipantDto);
