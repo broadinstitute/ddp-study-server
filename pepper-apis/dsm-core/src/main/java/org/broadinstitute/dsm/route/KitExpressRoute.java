@@ -30,6 +30,7 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -115,6 +116,7 @@ public class KitExpressRoute extends RequestHandler {
         } catch (Exception e) {
             errorMessage = "To: " + e.getMessage();
         }
+        errorMessage = KitUtil.messageBasedOnLocationAndInstance(errorMessage, ddpInstanceDto, toAddress);
         KitRequestShipping.updateKit(kitId, participantShipment, null, errorMessage, toAddress, true, ddpInstanceDto);
     }
 
