@@ -409,4 +409,19 @@ public class CollectionQueryBuilderTest {
 
         Assert.assertEquals(expected, actual);
     }
+
+    @Test
+    public void activityValue() {
+        //TODO exception needs to get fixed to the new filter
+        String filter = " AND ( ABOUT_CANCER.DIAGNOSIS_TYPE = 'C_GROUP_LUNGS_LUNG_CANCERS.C_LUNGS_SCLC_SMALL_CELL_LUNG' ) ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(
+                new NestedQueryBuilder("activities",
+                        new MatchQueryBuilder("activities.activityCode", "ABOUT_CANCER")
+                                .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
 }

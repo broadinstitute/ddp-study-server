@@ -37,6 +37,17 @@ public class QuestionsAnswersActivityStrategy extends BaseActivitiesStrategy {
         answerCollectionQueryBuilder.setPayload(answerQueryPayload);
         answerStrategy.setBaseQueryBuilder(answerCollectionQueryBuilder);
 
+        //TODO make it nicer
+        if (operator.getSplitterStrategy().getValue().length != 0 && operator.getSplitterStrategy().getValue().length == 1
+                && operator.getSplitterStrategy().getValue()[0].contains(".")) {
+            String[] temp= operator.getSplitterStrategy().getValue()[0].split("\\.");
+            answerQueryPayload =
+                    new QueryPayload(
+                            activitiesQuestionsAnswers, "groupedOptions".concat(".").concat(temp[0].replaceAll("'","")),
+                    parser.parse(new String[]{temp[1].replaceAll("'","")}));
+        }
+        answerCollectionQueryBuilder.setPayload(answerQueryPayload);
+
         CompositeNestedQueryStrategy nestedQueryStrategy = new CompositeNestedQueryStrategy(activitiesQuestionsAnswers);
         nestedQueryStrategy.addStrategy(stableIdQueryStrategy, answerStrategy);
         nestedQueryStrategy.setBaseQueryBuilder(stableIdCollectionQueryBuilder);
