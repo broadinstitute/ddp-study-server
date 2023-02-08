@@ -11,10 +11,6 @@ public class JsonExtractSplitterStrategy extends SplitterStrategy {
 
     private SplitterStrategy decoratedSplitter;
 
-    public JsonExtractSplitterStrategy(SplitterStrategy splitter) {
-        this.decoratedSplitter = splitter;
-    }
-
     public JsonExtractSplitterStrategy() {
         decoratedSplitter = new EqualsSplitterStrategy();
     }
