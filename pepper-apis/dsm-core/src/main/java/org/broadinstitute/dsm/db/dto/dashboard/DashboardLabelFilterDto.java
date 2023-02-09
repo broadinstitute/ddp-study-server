@@ -10,6 +10,7 @@ public class DashboardLabelFilterDto {
     private String esFilterPathValue;
     private String esNestedPath;
     private String additionalFilter;
+    private String datePeriodField;
     private Integer labelId;
 
     private DashboardLabelFilterDto(Builder builder) {
@@ -18,6 +19,7 @@ public class DashboardLabelFilterDto {
         this.esFilterPathValue = builder.esFilterPathValue;
         this.esNestedPath = builder.esNestedPath;
         this.additionalFilter = builder.additionalFilter;
+        this.datePeriodField = builder.datePeriodField;
         this.labelId = builder.labelId;
     }
 
@@ -28,6 +30,7 @@ public class DashboardLabelFilterDto {
         private String esFilterPathValue;
         private String esNestedPath;
         private String additionalFilter;
+        private String datePeriodField;
         private Integer labelId;
 
         public Builder withLabelFilterId(int labelFilterId) {
@@ -52,6 +55,11 @@ public class DashboardLabelFilterDto {
 
         public Builder withAdditionalFilter(String additionalFilter) {
             this.additionalFilter = additionalFilter;
+            return this;
+        }
+
+        public Builder withDatePeriodField(String datePeriodField) {
+            this.datePeriodField = datePeriodField;
             return this;
         }
 

@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.Util;
 import org.broadinstitute.dsm.db.dao.dashboard.DashboardDao;
 import org.broadinstitute.dsm.db.dao.dashboard.DashboardDaoImpl;
 import org.broadinstitute.dsm.db.dao.dashboard.DashboardDaoImplTest;
@@ -20,11 +21,11 @@ import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.Util;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -278,7 +279,11 @@ public class DashboardUseCaseTest {
             answer3.put(RACE, RACES.get(i));
             elasticSearchable.createDocumentById(ddpInstanceDto.getEsParticipantIndex(), guid, activities);
         }
-        Util.waitForCreationInElasticSearch();
+        try {
+            Util.waitForCreationInElasticSearch();
+        } catch (InterruptedException e) {
+            Assert.fail();
+        }
     }
 
 
