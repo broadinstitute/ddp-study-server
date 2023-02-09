@@ -134,7 +134,8 @@ public class KitUtil {
 
                 //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
                 ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
-                        .withEsParticipantIndex(ddpInstance.getParticipantIndexES()).build();
+                        .withEsParticipantIndex(ddpInstance.getParticipantIndexES())
+                        .withResearchProject(ddpInstance.getResearchProject()).build();
 
                 if (StringUtils.isBlank(kitLabelTriggered.getAddressIdTo())) {
 
