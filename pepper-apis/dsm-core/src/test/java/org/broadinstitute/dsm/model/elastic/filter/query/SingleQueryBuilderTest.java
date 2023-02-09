@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
