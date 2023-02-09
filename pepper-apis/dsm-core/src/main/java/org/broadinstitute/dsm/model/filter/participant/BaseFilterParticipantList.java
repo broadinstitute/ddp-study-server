@@ -64,7 +64,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         return filterParticipantList(filters, columnNameMap, false);
     }
 
-    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap, boolean noProxyDataNeeded) {
+    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap,
+                                                             boolean noProxyDataNeeded) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload.Builder participantWrapperPayload =

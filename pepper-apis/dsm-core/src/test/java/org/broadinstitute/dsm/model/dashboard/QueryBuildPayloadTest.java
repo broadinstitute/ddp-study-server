@@ -12,13 +12,10 @@ public class QueryBuildPayloadTest {
     public void getFilterSeparator() {
 
         QueryBuildPayload queryBuildPayload = new QueryBuildPayload();
-        //      DashboardLabelFilterDto dashboardLabelFilterDto = new DashboardLabelFilterDto.Builder()
-        //      .withEsFilterPath("profile.createdAt").build();
-        //      assertEquals(NonDsmAndOrFilterSeparator.class, queryBuildPayload.getFilterSeparator(dashboardLabelFilterDto).getClass());
 
         DashboardLabelFilterDto dashboardLabelFilterDto =
                 new DashboardLabelFilterDto.Builder().withEsNestedPath("dsm.kitRequestShipping").build();
-        assertEquals(AndOrFilterSeparator.class, queryBuildPayload.getFilterSeparator(dashboardLabelFilterDto).getClass());
+        assertEquals(AndOrFilterSeparator.class, queryBuildPayload.getFilterSeparator().getClass());
 
         //      dashboardLabelFilterDto = new DashboardLabelFilterDto.Builder().withEsFilterPath("status").build();
         //      assertEquals(NonDsmAndOrFilterSeparator.class, queryBuildPayload.getFilterSeparator(dashboardLabelFilterDto).getClass());

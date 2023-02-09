@@ -13,6 +13,7 @@ import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CollectionQueryBuilderTest {
@@ -261,18 +262,35 @@ public class CollectionQueryBuilderTest {
 
     @Test
     public void dynamicFieldsQueryBuild() {
-
         String filter =
                 "AND JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = 'true' "
                         + "AND JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' ) IS NOT NULL";
 
         AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
-
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.medicalRecord",
                 new BoolQueryBuilder()
                         .must(new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.seeingIfBugExists", true).operator(Operator.AND))
                         .must(new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.tryAgain"))),
                 ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Ignore("This is the case that needs to get fixed for PEPPER-508")
+    @Test
+    public void dynamicFieldsOptionsQueryBuild() {
+        String filter =
+                "AND ( JSON_EXTRACT ( m.additional_values_json , '$.status' ) = 'COMPLETE' "
+                        + "OR JSON_EXTRACT ( m.additional_values_json , '$.status' ) = 'INCOMPLETE' ) ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+        boolQueryBuilder.should(new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.status", "COMPLETE"));
+        boolQueryBuilder.should(new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.status", "INCOMPLETE"));
+
+        AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.medicalRecord",
+                new BoolQueryBuilder().must(boolQueryBuilder), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }

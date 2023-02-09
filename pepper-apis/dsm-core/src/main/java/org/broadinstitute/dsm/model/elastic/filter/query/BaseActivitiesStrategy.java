@@ -40,10 +40,6 @@ public abstract class BaseActivitiesStrategy extends BaseQueryStrategy {
         return !BASE_ACTIVITY_PROPERTIES.contains(operator.getSplitterStrategy().getFieldName());
     }
 
-    public static boolean isQuestionsAnswersField(String property) {
-        return !BASE_ACTIVITY_PROPERTIES.contains(property);
-    }
-
     @Override
     protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         throw new UnsupportedOperationException();

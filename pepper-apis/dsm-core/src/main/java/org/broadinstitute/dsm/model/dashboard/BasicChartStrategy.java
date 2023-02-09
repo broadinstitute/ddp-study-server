@@ -41,7 +41,11 @@ abstract class BasicChartStrategy implements Supplier<DashboardData> {
         MultiSearchResponse msearch = chartStrategyPayload.getMultiSearchResponse();
         for (int i = 0; i < dashboardDto.getLabels().size(); i++) {
             MultiSearchResponse.Item response = msearch.getResponses()[i];
-            fillData(values, labels, dashboardDto.getLabels().get(i), response.getResponse().getHits().getTotalHits());
+            long count = 0;
+            if (response != null && response.getResponse() != null) {
+                count = response.getResponse().getHits().getTotalHits();
+            }
+            fillData(values, labels, dashboardDto.getLabels().get(i), count);
         }
     }
 
