@@ -97,9 +97,8 @@ public class SingleQueryBuilderTest {
         BoolQueryBuilder expected = new BoolQueryBuilder();
         expected.must(QueryBuilders.nestedQuery("activities",
                 QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
-                        .must(new RangeQueryBuilder("activities.completedAt").gte("01/01/2020")), ScoreMode.Avg));
-        expected.must(QueryBuilders.nestedQuery("activities",
-                QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                        .must(new RangeQueryBuilder("activities.completedAt").gte("01/01/2020"))
+                        .must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
                         .must(new RangeQueryBuilder("activities.completedAt").lte("01/01/2022")), ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
