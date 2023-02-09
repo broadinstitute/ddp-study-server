@@ -241,7 +241,11 @@ public class TabularParticipantParser {
                 if (filterConfig.getChildConfigs() != null) {
                     // if this is a composite question, we need a separate column for each child question
                     for (int childIndex = 0; childIndex < filterConfig.getChildConfigs().size(); childIndex++) {
-                        addSingleResponseToMap(Collections.singletonList(responseValues.get(childIndex)),
+                        List<String> childResponse = new ArrayList<>();
+                        if (childIndex < responseValues.size()) {
+                            childResponse = Collections.singletonList(responseValues.get(childIndex));
+                        }
+                        addSingleResponseToMap(childResponse,
                                 filterConfig.getChildConfigs().get(childIndex), options, moduleRepeatNum, responseNum, esModuleMap,
                                 valueProvider, participantMap, filterConfig);
                     }

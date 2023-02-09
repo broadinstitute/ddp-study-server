@@ -131,4 +131,3 @@ public class FilterExportConfig {
         return ElasticSearchUtil.QUESTIONS_ANSWER.equals(column.getObject());
     }
 }
-
