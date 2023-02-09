@@ -17,4 +17,10 @@ public class ManualFilterParticipantList extends BaseFilterParticipantList {
         return filterParticipantList(filters, PatchUtil.getColumnNameMap());
     }
 
+    @Override
+    public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap, boolean noProxyDataNeeded) {
+        prepareNecessaryData(queryParamsMap);
+        return filterParticipantList(filters, PatchUtil.getColumnNameMap(), noProxyDataNeeded);
+    }
+
 }

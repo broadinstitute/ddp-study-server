@@ -242,6 +242,7 @@ public class ElasticSearchUtil {
     }
 
 
+    //Dashboard used
     public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index,
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();

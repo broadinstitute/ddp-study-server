@@ -1,13 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;

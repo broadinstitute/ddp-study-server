@@ -32,6 +32,11 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
     }
 
     @Override
+    public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap, boolean noProxyDataNeeded) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     /** Custom tissue deserializers are not yet needed/implemented */
     public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap, Deserializer deserializer) {
         throw new NotImplementedException();

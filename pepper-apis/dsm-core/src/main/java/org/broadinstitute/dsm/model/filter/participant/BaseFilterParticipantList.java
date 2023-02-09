@@ -55,8 +55,17 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         return filter(queryParamsMap);
     }
 
+    @Override
+    public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap, boolean noProxyDataNeeded) {
+        return filter(queryParamsMap, false);
+    }
 
     protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
+        return filterParticipantList(filters, columnNameMap, false);
+    }
+
+    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap,
+                                                             boolean noProxyDataNeeded) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload.Builder participantWrapperPayload =
@@ -115,10 +124,10 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                 }
             }
             logger.info("Found query conditions for " + mergeConditions.size() + " tables");
-            return new ParticipantWrapper(participantWrapperPayload.withFilter(mergeConditions).build(), elasticSearch).getFilteredList();
-        } else {
-            return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList();
+            return new ParticipantWrapper(participantWrapperPayload.withFilter(mergeConditions).build(), elasticSearch)
+                    .getFilteredList(noProxyDataNeeded);
         }
+        return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList(noProxyDataNeeded);
     }
 
     private static Map<String, String> updateQueryConditions(Map<String, String> queryConditions, DDPInstanceDto ddpInstanceDto) {

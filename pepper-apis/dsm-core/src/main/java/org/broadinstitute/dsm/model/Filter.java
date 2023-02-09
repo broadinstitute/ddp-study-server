@@ -250,6 +250,7 @@ public class Filter {
     }
 
     private static String buildJsonExtract(Filter filter, DBElement dbElement) {
+        //PEPPER-508 needs to get changed to make the AND (option1 OR option2) for additional values
         String query;
         String finalQuery;
         String jsonExtract = "JSON_EXTRACT ( ";

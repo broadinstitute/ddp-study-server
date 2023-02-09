@@ -117,6 +117,7 @@ public class AndOrFilterSeparator {
     }
 
     private boolean isOperatorWrappedInParenthesis(int startIndex) {
+        //PEPPER-508: closing parenthesis from "JSON_EXTRACT (" is seen as the closing parenthesis from the AND (
         boolean exists = false;
         for (int i = startIndex; i > 2; i--) {
             char c = filter.charAt(i);
