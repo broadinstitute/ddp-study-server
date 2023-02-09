@@ -37,14 +37,10 @@ public class QuestionsAnswersActivityStrategy extends BaseActivitiesStrategy {
         answerCollectionQueryBuilder.setPayload(answerQueryPayload);
         answerStrategy.setBaseQueryBuilder(answerCollectionQueryBuilder);
 
-        //TODO make it nicer
-        if (operator.getSplitterStrategy().getValue().length != 0 && operator.getSplitterStrategy().getValue().length == 1
-                && operator.getSplitterStrategy().getValue()[0].contains(".")) {
+        if (operatorHasGroupedOptions()) {
             String[] temp= operator.getSplitterStrategy().getValue()[0].split("\\.");
             answerQueryPayload =
-                    new QueryPayload(
-                            activitiesQuestionsAnswers, "groupedOptions".concat(".").concat(temp[0].replaceAll("'","")),
-                    parser.parse(new String[]{temp[1].replaceAll("'","")}));
+                    new QueryPayload(activitiesQuestionsAnswers, createPathFromSplitterValue(temp[0]), parser.parse(createOptionNameFromSplitterValue(temp[1])));
         }
         answerCollectionQueryBuilder.setPayload(answerQueryPayload);
 
@@ -52,5 +48,19 @@ public class QuestionsAnswersActivityStrategy extends BaseActivitiesStrategy {
         nestedQueryStrategy.addStrategy(stableIdQueryStrategy, answerStrategy);
         nestedQueryStrategy.setBaseQueryBuilder(stableIdCollectionQueryBuilder);
         return nestedQueryStrategy.build();
+    }
+
+    private boolean operatorHasGroupedOptions() {
+        return operator.getSplitterStrategy().getValue().length != 0 && operator.getSplitterStrategy().getValue().length == 1
+                && operator.getSplitterStrategy().getValue()[0].contains(".");
+    }
+
+    private String[] createOptionNameFromSplitterValue(String optionName) {
+        String optionNameTrimmed = optionName.replaceAll("'","");
+        return new String[]{optionNameTrimmed};
+    }
+
+    private String createPathFromSplitterValue( String groupName){
+        return ESObjectConstants.GROUPED_OPTIONS.concat(".").concat(groupName.replaceAll("'",""));
     }
 }
