@@ -18,3 +18,4 @@ class QueryBuilderStrategyFactory {
     }
 
 }
+//TODO removing this class and combine NestedQueryBuilderStrategy and SingleQueryBuilderStrategy???

@@ -11,16 +11,11 @@ import org.broadinstitute.dsm.model.Filter;
 //class to separate 'AND' or 'OR' conditions into type of Map<String, List<String>>
 public class AndOrFilterSeparator {
 
-    private static final String DSM_ALIAS_REGEX = "(NO|c|m|p|r|t|d|o|k|s|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";
     private static final String GENERAL_REGEX = "([A-z]|\\W|\\w)+";
 
     protected String orDsmAliasRegex = "(OR) " + getGeneralRegex();
 
     protected String andDsmAliasRegex = "(AND) " + getGeneralRegex();
-
-    protected String getDsmAliasRegex() {
-        return DSM_ALIAS_REGEX;
-    }
 
     protected String getGeneralRegex() {
         return GENERAL_REGEX;

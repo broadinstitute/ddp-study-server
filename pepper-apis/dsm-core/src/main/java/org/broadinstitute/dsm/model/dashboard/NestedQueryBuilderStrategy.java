@@ -6,7 +6,6 @@ class NestedQueryBuilderStrategy extends BaseQueryBuilderStrategy {
 
     public NestedQueryBuilderStrategy(QueryBuildPayload queryBuildPayload) {
         super(queryBuildPayload);
-
     }
 
     @Override

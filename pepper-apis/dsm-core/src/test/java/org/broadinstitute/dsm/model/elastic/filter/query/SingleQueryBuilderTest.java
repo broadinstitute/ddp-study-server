@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
@@ -7,6 +8,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
@@ -87,6 +89,22 @@ public class SingleQueryBuilderTest {
     }
 
     @Test
+    public void collectionBuildActivityCompletedRange() {
+        String filter = "AND PREQUAL.completedAt >= '01/01/2020' AND PREQUAL.completedAt <= '01/01/2022'";
+
+        AbstractQueryBuilder<?> actual = getNonActivityQueryBuilder(filter);
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(QueryBuilders.nestedQuery("activities",
+                QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                        .must(new RangeQueryBuilder("activities.completedAt").gte("01/01/2020"))
+                        .must(QueryBuilders.matchQuery("activities.activityCode", "PREQUAL").operator(Operator.AND))
+                        .must(new RangeQueryBuilder("activities.completedAt").lte("01/01/2022")), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
     public void twoValueNotEmpty() {
         String filter = " AND profile.firstName IS NOT NULL  AND profile.lastName IS NOT NULL ";
 
@@ -102,6 +120,16 @@ public class SingleQueryBuilderTest {
                 .must(mustExists2));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(filter));
+    }
+
+    @Test
+    public void status() {
+        String andFilter = "AND ( data.status = 'ENROLLED' )";
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+        expectedQuery.must(new BoolQueryBuilder().should(new MatchQueryBuilder("status", "ENROLLED").operator(Operator.OR)));
+
+        Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(andFilter));
     }
 
     @Test
