@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 
 class SingleQueryBuilderStrategy extends BaseQueryBuilderStrategy {
+
     public SingleQueryBuilderStrategy(QueryBuildPayload queryBuildPayload) {
         super(queryBuildPayload);
     }

@@ -28,7 +28,7 @@ public class DashboardDaoImpl implements DashboardDao {
     private static final String SQL_DASHBOARD_DATA_BY_ID = "SELECT d.dashboard_id, d.ddp_instance_id, d.display_text, d.size, "
             + "d.ordering, "
             + "d.display_type, dl.label_id, dl.label_name, dl.color, df.label_filter_id, df.es_filter_path, df.es_filter_path_value, "
-            + "df.es_nested_path, df.additional_filter "
+            + "df.es_nested_path, df.additional_filter, df.date_period_field "
             + "FROM dashboard as d "
             + "LEFT JOIN dashboard_label as dl ON d.dashboard_id = dl.dashboard_id "
             + "LEFT JOIN dashboard_label_filter as df ON dl.label_id = df.label_id "
@@ -37,7 +37,7 @@ public class DashboardDaoImpl implements DashboardDao {
     private static final String SQL_DASHBOARD_DATAS_BY_INSTANCE_ID = "SELECT d.dashboard_id, d.ddp_instance_id, d.display_text, d.size, "
             + "d.ordering, "
             + "d.display_type, dl.label_id, dl.label_name, dl.color, df.label_filter_id, df.es_filter_path, df.es_filter_path_value, "
-            + "df.es_nested_path, df.additional_filter "
+            + "df.es_nested_path, df.additional_filter, df.date_period_field "
             + "FROM dashboard as d "
             + "LEFT JOIN dashboard_label as dl ON d.dashboard_id = dl.dashboard_id "
             + "LEFT JOIN dashboard_label_filter as df ON dl.label_id = df.label_id "
@@ -59,8 +59,8 @@ public class DashboardDaoImpl implements DashboardDao {
             + "VALUES (?, ?, ?)";
 
     private static final String SQL_INSERT_LABEL_FILTER = "INSERT INTO dashboard_label_filter"
-            + "(es_filter_path, es_filter_path_value, es_nested_path, additional_filter, label_id) "
-            + "VALUES (?, ?, ?, ?, ?)";
+            + "(es_filter_path, es_filter_path_value, es_nested_path, additional_filter, date_period_field, label_id) "
+            + "VALUES (?, ?, ?, ?, ?, ?)";
     public static final String DASHBOARD_ID = "dashboard_id";
     public static final String DDP_INSTANCE_ID = "ddp_instance_id";
     public static final String DISPLAY_TEXT = "display_text";
@@ -75,6 +75,7 @@ public class DashboardDaoImpl implements DashboardDao {
     public static final String ES_FILTER_PATH_VALUE = "es_filter_path_value";
     public static final String ES_NESTED_PATH = "es_nested_path";
     public static final String ADDITIONAL_FILTER = "additional_filter";
+    public static final String DATE_PERIOD_FIELD = "date_period_field";
 
     @Override
     public int create(DashboardDto dashboardDto) {
@@ -176,6 +177,7 @@ public class DashboardDaoImpl implements DashboardDao {
                 .withEsFilterPathValue(rs.getString(ES_FILTER_PATH_VALUE))
                 .withEsNestedPath(rs.getString(ES_NESTED_PATH))
                 .withAdditionalFilter(rs.getString(ADDITIONAL_FILTER))
+                .withDatePeriodField(rs.getString(DATE_PERIOD_FIELD))
                 .withLabelId(rs.getInt(LABEL_ID))
                 .build();
     }
@@ -259,7 +261,8 @@ public class DashboardDaoImpl implements DashboardDao {
                 stmt.setString(2, dashboardLabelFilterDto.getEsFilterPathValue());
                 stmt.setString(3, dashboardLabelFilterDto.getEsNestedPath());
                 stmt.setString(4, dashboardLabelFilterDto.getAdditionalFilter());
-                stmt.setInt(5, dashboardLabelFilterDto.getLabelId());
+                stmt.setString(5, dashboardLabelFilterDto.getDatePeriodField());
+                stmt.setInt(6, dashboardLabelFilterDto.getLabelId());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
