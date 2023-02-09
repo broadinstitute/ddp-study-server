@@ -38,9 +38,9 @@ public class QuestionsAnswersActivityStrategy extends BaseActivitiesStrategy {
         answerStrategy.setBaseQueryBuilder(answerCollectionQueryBuilder);
 
         if (operatorHasGroupedOptions()) {
-            String[] temp= operator.getSplitterStrategy().getValue()[0].split("\\.");
+            String[] activityGroupPath = operator.getSplitterStrategy().getValue()[0].split("\\.");
             answerQueryPayload =
-                    new QueryPayload(activitiesQuestionsAnswers, createPathFromSplitterValue(temp[0]), parser.parse(createOptionNameFromSplitterValue(temp[1])));
+                    new QueryPayload(activitiesQuestionsAnswers, createPathFromSplitterValue(activityGroupPath[0]), parser.parse(createOptionNameFromSplitterValue(activityGroupPath[1])));
         }
         answerCollectionQueryBuilder.setPayload(answerQueryPayload);
 
@@ -56,11 +56,14 @@ public class QuestionsAnswersActivityStrategy extends BaseActivitiesStrategy {
     }
 
     private String[] createOptionNameFromSplitterValue(String optionName) {
-        String optionNameTrimmed = optionName.replaceAll("'","");
-        return new String[]{optionNameTrimmed};
+        return new String[]{trimSingleQuote(optionName)};
     }
 
     private String createPathFromSplitterValue( String groupName){
-        return ESObjectConstants.GROUPED_OPTIONS.concat(".").concat(groupName.replaceAll("'",""));
+        return ESObjectConstants.GROUPED_OPTIONS.concat(".").concat(trimSingleQuote(groupName));
+    }
+
+    private String trimSingleQuote(String s){
+        return s.replaceAll("'","");
     }
 }
