@@ -215,7 +215,9 @@ public class TriggerSurveyRoute extends RequestHandler {
                     }
                 }
             } else {
+                //@todo This is permissions error not a 500 error. Need to fix this
                 response.status(500);
+                logger.warn("User with id={} could not access realm={} with role={}", userId, realm, "survey_creation");
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
         }

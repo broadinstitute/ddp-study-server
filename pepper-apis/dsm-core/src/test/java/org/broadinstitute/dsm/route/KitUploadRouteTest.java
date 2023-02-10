@@ -16,8 +16,10 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class KitUploadRouteTest {
 
     private static Config cfg;

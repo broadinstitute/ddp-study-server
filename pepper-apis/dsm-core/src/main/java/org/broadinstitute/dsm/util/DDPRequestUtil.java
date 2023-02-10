@@ -35,7 +35,7 @@ import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
 import org.broadinstitute.lddp.handlers.util.SurveyInfo;
-import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

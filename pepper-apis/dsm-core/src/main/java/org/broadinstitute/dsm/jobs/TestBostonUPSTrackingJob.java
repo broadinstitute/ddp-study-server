@@ -43,7 +43,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
-import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
@@ -62,7 +62,6 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
     String password;
     String accessKey;
     Date ignoreScheduledOrdersAfter;
-    Connection conn = null;
     UPSTracker upsTracker = null;
     private String studyManagerSchema = System.getenv("STUDY_MANAGER_SCHEMA") + ".";
     private String selectByExternalOrderNumber = "and request.external_order_number = ?";
@@ -97,11 +96,9 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         upsTracker = new UPSTracker(endpoint, username, password, accessKey);
         logger.info("Starting the UPS lookup job");
         auth0Util = new Auth0Util(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
-                cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS),
-                cfg.getBoolean(ApplicationConfigConstants.AUTH0_IS_BASE_64_ENCODED),
-                cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), false,
+                cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS), cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY),
+                cfg.getString(ApplicationConfigConstants.AUTH0_SECRET), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
         String data = new String(Base64.getDecoder().decode(message.data));
         UPSKit[] kitsToLookFor = new Gson().fromJson(data, UPSKit[].class);

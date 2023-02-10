@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -468,6 +469,12 @@ public class DDPInstance {
             throw new RuntimeException("Error getting ddpInstances ", results.resultException);
         }
         return ddpInstances;
+    }
+
+    public static void setDdpInstanceActive(String instanceName, boolean isActive) {
+        TransactionWrapper.useTxn(TransactionWrapper.DB.DSM, handle -> {
+            handle.execute("UPDATE ddp_instance SET is_active=?  WHERE instance_name=?", isActive, instanceName);
+        });
     }
 
     public int getDdpInstanceIdAsInt() {

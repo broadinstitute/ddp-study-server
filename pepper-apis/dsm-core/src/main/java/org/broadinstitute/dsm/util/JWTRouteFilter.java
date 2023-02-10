@@ -9,7 +9,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;

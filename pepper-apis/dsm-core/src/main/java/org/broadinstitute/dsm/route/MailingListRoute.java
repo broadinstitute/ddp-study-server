@@ -21,6 +21,7 @@ import spark.Response;
 public class MailingListRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(MailingListRoute.class);
+    private static final String ROLE = "mailingList_view";
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -28,10 +29,11 @@ public class MailingListRoute extends RequestHandler {
         if (StringUtils.isBlank(realm)) {
             throw new RuntimeException("Realm missing");
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mailingList_view", null)) {
+        if (UserUtil.checkUserAccess(realm, userId, ROLE, null)) {
             return getMailingListContacts(realm);
         } else {
             response.status(500);
+            logger.warn("User with id={} could not access realm={} with role={}", userId, realm, ROLE);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
     }

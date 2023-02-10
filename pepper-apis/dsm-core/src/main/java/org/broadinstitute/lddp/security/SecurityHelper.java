@@ -9,6 +9,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
