@@ -37,9 +37,33 @@ public class QuestionsAnswersActivityStrategy extends BaseActivitiesStrategy {
         answerCollectionQueryBuilder.setPayload(answerQueryPayload);
         answerStrategy.setBaseQueryBuilder(answerCollectionQueryBuilder);
 
+        if (operatorHasGroupedOptions()) {
+            String[] activityGroupPath = operator.getSplitterStrategy().getValue()[0].split("\\.");
+            answerQueryPayload =
+                    new QueryPayload(activitiesQuestionsAnswers, createPathFromSplitterValue(activityGroupPath[0]), parser.parse(createOptionNameFromSplitterValue(activityGroupPath[1])));
+        }
+        answerCollectionQueryBuilder.setPayload(answerQueryPayload);
+
         CompositeNestedQueryStrategy nestedQueryStrategy = new CompositeNestedQueryStrategy(activitiesQuestionsAnswers);
         nestedQueryStrategy.addStrategy(stableIdQueryStrategy, answerStrategy);
         nestedQueryStrategy.setBaseQueryBuilder(stableIdCollectionQueryBuilder);
         return nestedQueryStrategy.build();
+    }
+
+    private boolean operatorHasGroupedOptions() {
+        return operator.getSplitterStrategy().getValue().length != 0 && operator.getSplitterStrategy().getValue().length == 1
+                && operator.getSplitterStrategy().getValue()[0].contains(".");
+    }
+
+    private String[] createOptionNameFromSplitterValue(String optionName) {
+        return new String[]{trimSingleQuote(optionName)};
+    }
+
+    private String createPathFromSplitterValue( String groupName){
+        return ESObjectConstants.GROUPED_OPTIONS.concat(".").concat(trimSingleQuote(groupName));
+    }
+
+    private String trimSingleQuote(String s){
+        return s.replaceAll("'","");
     }
 }

@@ -11,6 +11,7 @@ import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -424,6 +425,27 @@ public class CollectionQueryBuilderTest {
                 new NestedQueryBuilder("dsm.participantData",
                         new MatchQueryBuilder("dsm.participantData.dynamicFields.importantNotes", "Test")
                                 .operator(Operator.AND), ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void activityValue() {
+        String filter = " AND ( ABOUT_CANCER.DIAGNOSIS_TYPE = 'C_GROUP_LUNGS_LUNG_CANCERS.C_LUNGS_SCLC_SMALL_CELL_LUNG' ) ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(QueryBuilders.nestedQuery("activities",
+                QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "ABOUT_CANCER").operator(Operator.AND))
+                        .must(QueryBuilders.nestedQuery(
+                                        "activities.questionsAnswers", QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.questionsAnswers.stableId", "DIAGNOSIS_TYPE").operator(Operator.AND))
+                                        .must(QueryBuilders.boolQuery().should(QueryBuilders.matchQuery("activities.questionsAnswers.groupedOptions.C_GROUP_LUNGS_LUNG_CANCERS", "C_LUNGS_SCLC_SMALL_CELL_LUNG").
+                                        operator(Operator.OR)))
+                                                , ScoreMode.Avg
+
+                                ))
+                        , ScoreMode.Avg));
 
         Assert.assertEquals(expected, actual);
     }
