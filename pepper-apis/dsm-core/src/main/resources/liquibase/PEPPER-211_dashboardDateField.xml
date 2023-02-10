@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="PEPPER-211_dashboardDateField" author="simone">
+        <addColumn tableName="dashboard_label_filter">
+            <column name="date_period_field" type="VARCHAR(256)" afterColumn="additional_filter">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="PEPPER-211_dashboardPermission" author="simone">
+        <insert tableName="access_role">
+            <column name="name" value="dashboard_view"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
