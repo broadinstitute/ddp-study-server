@@ -43,10 +43,4 @@ public class StudyTest {
 
         }
     }
-
-    @Test
-    public void fail() {
-        Assert.fail("Fail on purpose! To see what happens =)");
-    }
-
 }
