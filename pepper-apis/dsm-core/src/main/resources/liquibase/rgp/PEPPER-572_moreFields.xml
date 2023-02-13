@@ -25,7 +25,7 @@
                 AND field_settings_id &lt;&gt; 0;
 
             INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
-            VALUES (@realm, 'r', 'SP_R21', 'Specialty Project: R21', 'CHECKBOX', @orderNumber);
+            VALUES (@realm, 'r', 'R21', 'Specialty Project: R21', 'CHECKBOX', @orderNumber);
         </sql>
     </changeSet>
     <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_CAGI_2022" author="simone">
@@ -40,7 +40,7 @@
                 AND field_settings_id &lt;&gt; 0;
 
             INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
-            VALUES (@realm, 'r', 'SP_CAGI_2022', 'Specialty Project: CAGI 2022', 'CHECKBOX', @orderNumber);
+            VALUES (@realm, 'r', 'CAGI2022', 'Specialty Project: CAGI 2022', 'CHECKBOX', @orderNumber);
         </sql>
     </changeSet>
     <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_CAGI_2023" author="simone">
@@ -55,7 +55,7 @@
                 AND field_settings_id &lt;&gt; 0;
 
             INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
-            VALUES (@realm, 'r', 'SP_CAGI_2023', 'Specialty Project: CAGI 2023', 'CHECKBOX', @orderNumber);
+            VALUES (@realm, 'r', 'CAGI2023', 'Specialty Project: CAGI 2023', 'CHECKBOX', @orderNumber);
         </sql>
     </changeSet>
     <changeSet id="PEPPER-572_SPECIALTY_PROJECTS_CZI" author="simone">
@@ -70,7 +70,7 @@
                 AND field_settings_id &lt;&gt; 0;
 
             INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, display_type, order_number)
-            VALUES (@realm, 'r', 'SP_CZI', 'Specialty Project: CZI', 'CHECKBOX', @orderNumber);
+            VALUES (@realm, 'r', 'CZI', 'Specialty Project: CZI', 'CHECKBOX', @orderNumber);
         </sql>
     </changeSet>
 </databaseChangeLog>

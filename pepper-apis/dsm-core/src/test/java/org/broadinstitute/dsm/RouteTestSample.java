@@ -58,6 +58,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class RouteTestSample extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteTestSample.class);

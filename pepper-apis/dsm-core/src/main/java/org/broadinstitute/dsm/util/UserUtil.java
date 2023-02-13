@@ -252,7 +252,9 @@ public class UserUtil {
 
     public static boolean checkUserAccess(String realm, String userId, String role, String userIdRequest) {
         if (StringUtils.isNotBlank(userIdRequest) && !userId.equals(userIdRequest)) {
-            throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
+            String msg = "User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest;
+            logger.warn(msg);
+            throw new RuntimeException(msg);
         }
         List<String> roles;
         if (StringUtils.isBlank(realm)) {

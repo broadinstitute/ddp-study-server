@@ -56,7 +56,7 @@ public class GBFOrderFinder {
                     + "        and not exists (select 1 from ddp_participant_exit e where e.ddp_instance_id = i.ddp_instance_id "
                     + "and e.ddp_participant_id = untransmitted.ddp_participant_id) "
                     + "    union select distinct req.external_order_number, req.ddp_participant_id, req.ddp_instance_id, "
-                    + "      req.kit_type_id, req.dsm_kit_request_id rom ddp_kit_request req, ddp_instance i where  "
+                    + "      req.kit_type_id, req.dsm_kit_request_id from ddp_kit_request req, ddp_instance i where  "
                     + "      i.instance_name = ? and req.upload_reason is null and req.order_transmitted_at is null "
                     + "      and req.ddp_instance_id = i.ddp_instance_id "
                     + "        and 1 = (select count(distinct req2.external_order_number) from ddp_kit_request req2 "

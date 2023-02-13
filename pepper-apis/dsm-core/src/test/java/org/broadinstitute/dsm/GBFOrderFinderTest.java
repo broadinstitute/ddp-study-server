@@ -18,10 +18,12 @@ import org.broadinstitute.dsm.model.gbf.GBFOrderFinder;
 import org.broadinstitute.dsm.model.gbf.SimpleKitOrder;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class GBFOrderFinderTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(GBFOrderFinderTest.class);

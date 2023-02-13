@@ -294,6 +294,7 @@ public class TestHelper {
         if (!cfg.getString("portal.environment").startsWith("Local")) {
             throw new RuntimeException("Not local environment");
         }
+        DSM_BASE_URL = "http://localhost:" + (cfg.getInt("portal.port") + "");
         server.configureServer(cfg);
     }
 
