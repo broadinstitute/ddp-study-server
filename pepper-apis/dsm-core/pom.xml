@@ -275,30 +275,30 @@
         </plugins>
     </build>
     <properties>
-            <dsm.test.excludes></dsm.test.excludes>
-            <dsm.test.ci.excludes>
-                org.broadinstitute.dsm.DDPRequestRouteTest,
-                org.broadinstitute.dsm.DDPRequestUtilTest,
-                org.broadinstitute.dsm.DirectMethodTest,
-                org.broadinstitute.dsm.ElasticSearchTest,
-                org.broadinstitute.dsm.GBFOrderFinderTest,
-                org.broadinstitute.dsm.GBFTest,
-                org.broadinstitute.dsm.JWTRouteFilterTest,
-                org.broadinstitute.dsm.NotificationJobTest,
-                org.broadinstitute.dsm.QuartzDDPRequestTest,
-                org.broadinstitute.dsm.RouteInfoTest,
-                org.broadinstitute.dsm.files.parser.TSVRecordsParserTest,
-                org.broadinstitute.dsm.model.elastic.export.generate.MappingGeneratorTest,
-                org.broadinstitute.dsm.model.participant.data.AddFamilyMemberPayloadTest,
-                org.broadinstitute.dsm.model.patch.DefaultDBElementBuilderTest,
-                org.broadinstitute.dsm.model.settings.field.FieldSettingsTest,
-                org.broadinstitute.dsm.model.ups.UPSActivityTest,
-                org.broadinstitute.dsm.pubsub.EditParticipantTest,
-                org.broadinstitute.dsm.pubsub.UpdateWorkflowStatusTest,
-                org.broadinstitute.dsm.RouteTest,
-                org.broadinstitute.dsm.route.familymember.AddFamilyMemberRouteTest,
-                org.broadinstitute.dsm.route.KitUploadRouteTest,
-                org.broadinstitute.dsm.KitStatusChangeRouteTest
-            </dsm.test.ci.excludes>
+        <dsm.test.excludes></dsm.test.excludes>
+        <dsm.test.ci.excludes>
+            org.broadinstitute.dsm.DDPRequestRouteTest,
+            org.broadinstitute.dsm.DDPRequestUtilTest,
+            org.broadinstitute.dsm.DirectMethodTest,
+            org.broadinstitute.dsm.ElasticSearchTest,
+            org.broadinstitute.dsm.GBFOrderFinderTest,
+            org.broadinstitute.dsm.GBFTest,
+            org.broadinstitute.dsm.JWTRouteFilterTest,
+            org.broadinstitute.dsm.KitStatusChangeRouteTest,
+            org.broadinstitute.dsm.NotificationJobTest,
+            org.broadinstitute.dsm.QuartzDDPRequestTest,
+            org.broadinstitute.dsm.RouteInfoTest,
+            org.broadinstitute.dsm.RouteTest,
+            org.broadinstitute.dsm.files.parser.TSVRecordsParserTest,
+            org.broadinstitute.dsm.model.elastic.export.generate.MappingGeneratorTest,
+            org.broadinstitute.dsm.model.participant.data.AddFamilyMemberPayloadTest,
+            org.broadinstitute.dsm.model.patch.DefaultDBElementBuilderTest,
+            org.broadinstitute.dsm.model.settings.field.FieldSettingsTest,
+            org.broadinstitute.dsm.model.ups.UPSActivityTest,
+            org.broadinstitute.dsm.pubsub.EditParticipantTest,
+            org.broadinstitute.dsm.pubsub.UpdateWorkflowStatusTest,
+            org.broadinstitute.dsm.route.familymember.AddFamilyMemberRouteTest,
+            org.broadinstitute.dsm.route.KitUploadRouteTest
+        </dsm.test.ci.excludes>
     </properties>
 </project>

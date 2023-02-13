@@ -24,7 +24,7 @@ import org.broadinstitute.dsm.model.birch.TestBostonResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

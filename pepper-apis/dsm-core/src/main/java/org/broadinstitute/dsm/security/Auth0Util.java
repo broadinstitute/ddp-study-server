@@ -1,5 +1,6 @@
-package org.broadinstitute.lddp.security;
+package org.broadinstitute.dsm.security;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +25,11 @@ import com.auth0.net.Request;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.exception.AuthenticationException;
-import org.broadinstitute.dsm.security.RSAKeyProviderFactory;
+import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,37 +37,28 @@ public class Auth0Util {
 
     private static final Logger logger = LoggerFactory.getLogger(Auth0Util.class);
     private static String account;
-    private final String ddpKey;
-    private final String ddpSecret;
+    private static final String clientIdKey = "client_id";
+    private static final String grantTypeKey = "grant_type";
+    private static final String clientSecretKey = "client_secret";
+    private static final String audienceKey = "audience";
+    private static final String api = "/oauth/token";
+    private static final String contentType = "application/x-www-form-urlencoded";
+    private static final String clientCredentials = "client_credentials";
     private final String mgtApiUrl;
     private final List<String> connections;
-    private byte[] decodedSecret;
     private AuthAPI ddpAuthApi = null;
     private AuthAPI mgtAuthApi = null;
-    private boolean emailVerificationRequired;
     private String audience;
     private String token;
     private Long expiresAt;
 
-    public Auth0Util(@NonNull String account, @NonNull List<String> connections, boolean secretEncoded,
-                     @NonNull String ddpKey, @NonNull String ddpSecret,
-                     @NonNull String mgtKey, @NonNull String mgtSecret, @NonNull String mgtApiUrl, boolean emailVerificationRequired,
-                     String audience) {
-        this.ddpSecret = ddpSecret;
-
-        byte[] tempSecret = ddpSecret.getBytes();
-        if (secretEncoded) {
-            tempSecret = Base64.decodeBase64(ddpSecret);
-        }
-        this.decodedSecret = tempSecret;
-
+    public Auth0Util(@NonNull String account, @NonNull List<String> connections, @NonNull String ddpKey, @NonNull String ddpSecret,
+                     @NonNull String mgtKey, @NonNull String mgtSecret, @NonNull String mgtApiUrl, String audience) {
         this.account = account;
-        this.ddpKey = ddpKey;
         this.connections = connections;
         this.ddpAuthApi = new AuthAPI(account, ddpKey, ddpSecret);
         this.mgtAuthApi = new AuthAPI(account, mgtKey, mgtSecret);
         this.mgtApiUrl = mgtApiUrl;
-        this.emailVerificationRequired = emailVerificationRequired;
         this.audience = audience;
     }
 
@@ -93,7 +88,6 @@ public class Auth0Util {
         }
 
         String mgmtToken = tokenHolder.getAccessToken(); //these tokens only last 24 hours by default!!
-
         return new ManagementAPI(account, mgmtToken);
     }
 
@@ -230,6 +224,46 @@ public class Auth0Util {
         }
 
         return Optional.ofNullable(validToken);
+    }
+
+    public String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain,
+                                                    String auth0Audience, String audienceNameSpace) throws AuthenticationException {
+        String requestUrl = "https://" + auth0Domain + api;
+        Map<String, String> headers = new HashMap<>();
+        headers.put("content-type", contentType);
+
+        List<NameValuePair> requestParams =
+                buildRequestParams(clientId, clientCredentials, clientSecret, auth0Audience, claims, audienceNameSpace);
+        Auth0M2MResponse response;
+        try {
+            response = DDPRequestUtil.postRequestWithResponse(Auth0M2MResponse.class, requestUrl, requestParams, "auth0 M2M", headers);
+            if (response == null) {
+                throw new AuthenticationException("Didn't receive a token from auth0!");
+            }
+        } catch (Exception e) {
+            throw new AuthenticationException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
+        }
+        if (response.getError() != null) {
+            throw new AuthenticationException("Got Auth0 M2M error " + response.getError() + " : " + response.getErrorDescription());
+        }
+        return response.getAccessToken();
+    }
+
+    private List<NameValuePair> buildRequestParams(@NonNull String clientId, @NonNull String grantType, @NonNull String clientSecret,
+                                                   @NonNull String audience, Map<String, String> claims, String audienceNameSpace) {
+        List<NameValuePair> params = new ArrayList<>();
+        for (String key : claims.keySet()) {
+            String finalKey = key;
+            if (key.indexOf(audienceNameSpace) == -1) {
+                finalKey = audienceNameSpace + key;
+            }
+            params.add(new BasicNameValuePair(finalKey, claims.get(key)));
+        }
+        params.add(new BasicNameValuePair(clientIdKey, clientId));
+        params.add(new BasicNameValuePair(grantTypeKey, grantType));
+        params.add(new BasicNameValuePair(clientSecretKey, clientSecret));
+        params.add(new BasicNameValuePair(audienceKey, audience));
+        return params;
     }
 
     public static class Auth0UserInfo {

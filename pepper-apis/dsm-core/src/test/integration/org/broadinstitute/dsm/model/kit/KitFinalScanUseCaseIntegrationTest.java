@@ -64,7 +64,7 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
 
 
         ScanError scanError =
-                new ScanError("ddpLabel", "Kit with DSM Label " + "ddpLabel" + " does not have a Tracking Label");
+                new ScanError("ddpLabel", "Kit with DSM Label " + "ddpLabel" + " does not exist");
         List<ScanPayload> scanPayloads = List.of(
                 new SentAndFinalScanPayload("ddpLabel", "kitLabelMoreThan14")
         );

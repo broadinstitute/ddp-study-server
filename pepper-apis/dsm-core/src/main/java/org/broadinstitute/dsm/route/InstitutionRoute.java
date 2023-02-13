@@ -35,7 +35,7 @@ public class InstitutionRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
-        JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
         String user = String.valueOf(jsonObject.get(RequestParameter.USER_ID));
         if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
             if (StringUtils.isNotBlank(requestBody)) {

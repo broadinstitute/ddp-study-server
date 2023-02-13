@@ -22,7 +22,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
 import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import spark.Request;
 
@@ -147,10 +147,10 @@ public class SecurityUtil {
         return addBodyToRequest(objectToPost, request);
     }
 
-    public static org.apache.http.client.fluent.Request createPostRequestWithHeaderNoToken(@NonNull String requestString,
+    public static org.apache.http.client.fluent.Request createPostRequestWithHeaderNoToken(@NonNull String uri,
                                                                                            Map<String, String> headers,
                                                                                            Object objectToPost) {
-        org.apache.http.client.fluent.Request request = Post(requestString);
+        org.apache.http.client.fluent.Request request = Post(uri);
         if (headers != null) {
             for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
                 request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
