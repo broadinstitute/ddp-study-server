@@ -449,4 +449,26 @@ public class CollectionQueryBuilderTest {
 
         Assert.assertEquals(expected, actual);
     }
+
+    @Test
+    public void activityValueMultipleSelection() {
+        String filter = " AND ( ABOUT_CANCER.DIAGNOSIS_TYPE = 'C_GROUP_GYNECOLOGIC_GYNECOLOGIC_CANCERS.C_GYNECOLOGIC_CERVICAL_CANCER' OR ABOUT_CANCER.DIAGNOSIS_TYPE = 'C_GROUP_LUNGS_LUNG_CANCERS.C_LUNGS_SCLC_SMALL_CELL_LUNG' ) ";
+
+        AbstractQueryBuilder<?> actual = getAbstractQueryBuilder(filter).build();
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        expected.must(QueryBuilders.nestedQuery("activities",
+                QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.activityCode", "ABOUT_CANCER").operator(Operator.AND))
+                        .must(QueryBuilders.nestedQuery(
+                                "activities.questionsAnswers", QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("activities.questionsAnswers.stableId", "DIAGNOSIS_TYPE").operator(Operator.AND))
+                                        .must(QueryBuilders.boolQuery().should(QueryBuilders.matchQuery("activities.questionsAnswers.groupedOptions.C_GROUP_GYNECOLOGIC_GYNECOLOGIC_CANCERS", "C_GYNECOLOGIC_CERVICAL_CANCER").
+                                                operator(Operator.OR)).should(QueryBuilders.matchQuery("activities.questionsAnswers.groupedOptions.C_GROUP_LUNGS_LUNG_CANCERS", "C_LUNGS_SCLC_SMALL_CELL_LUNG").
+                                                operator(Operator.OR)))
+                                , ScoreMode.Avg
+
+                        ))
+                , ScoreMode.Avg));
+
+        Assert.assertEquals(expected, actual);
+    }
 }
