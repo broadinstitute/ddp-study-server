@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="PEPPER-454_RNA">
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="RNA"/>
+            <column name="bsp_material_type" value="Whole Blood: PAXgene Preserved"/>
+            <column name="bsp_receptacle_type" value="Vacutainer PAXGene Tube [10mL]"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="PEPPER-454_RNABLOOD">
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="BLOOD &amp; RNA"/>
+            <column name="bsp_material_type" value="new RGP kits"/>
+            <column name="bsp_receptacle_type" value="new RGP kits"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="PEPPER-454_subKits">
+        <addColumn tableName="sub_kits_settings">
+            <column name="hide_on_sample_pages" type="tinyint(1)"></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

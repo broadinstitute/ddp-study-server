@@ -21,7 +21,7 @@ public class KitSubKits {
     private static final Logger logger = LoggerFactory.getLogger(KitSubKits.class);
 
     private static final String SQL_SELECT_SUB_KIT_TYPES =
-            "SELECT kit.kit_type_id, kit.kit_type_name, subK.kit_count FROM ddp_kit_request_settings dkc "
+            "SELECT kit.kit_type_id, kit.kit_type_name, subK.kit_count , subK.hide_on_sample_pages FROM ddp_kit_request_settings dkc "
                     + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) "
                     + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = dkc.ddp_instance_id) "
                     + "LEFT JOIN kit_type kit ON (subK.kit_type_id = kit.kit_type_id) "
@@ -31,11 +31,13 @@ public class KitSubKits {
     private int kitTypeId;
     private String kitName;
     private int kitCount;
+    private boolean hideOnSamplePages;
 
-    public KitSubKits(int kitTypeId, String kitName, int kitCount) {
+    public KitSubKits(int kitTypeId, String kitName, int kitCount, boolean hideOnSamplePages) {
         this.kitTypeId = kitTypeId;
         this.kitName = kitName;
         this.kitCount = kitCount;
+        this.hideOnSamplePages = hideOnSamplePages;
     }
 
     /**
@@ -51,7 +53,7 @@ public class KitSubKits {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         subKits.add(new KitSubKits(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getString(DBConstants.KIT_TYPE_NAME),
-                                rs.getInt(DBConstants.KIT_COUNT)));
+                                rs.getInt(DBConstants.KIT_COUNT), rs.getBoolean(DBConstants.HIDE_ON_SAMPLE_PAGES)));
                     }
                 }
             } catch (SQLException ex) {

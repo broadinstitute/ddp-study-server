@@ -119,4 +119,5 @@
     <include file="liquibase/rgp/PEPPER-456_new_fields.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/rgp/PEPPER-572_moreFields.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-211_dashboardDateField.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/PEPPER-454_RNA.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

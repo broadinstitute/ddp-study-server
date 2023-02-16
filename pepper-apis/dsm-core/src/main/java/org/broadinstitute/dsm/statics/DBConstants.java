@@ -121,6 +121,7 @@ public class DBConstants {
     public static final String HAS_SUB_KITS = "has_sub_kits";
     public static final String KIT_TYPE_SUB_KIT = "subK.kit_type_id";
     public static final String KIT_COUNT = "kit_count";
+    public static final String HIDE_ON_SAMPLE_PAGES = "hide_on_sample_pages";
     public static final String SUB_KIT_NAME = "subKitName";
     public static final String GBF_CONFIRMATION = "gbf_confirmation";
     public static final String EXTERNAL_ORDER_NUMBER = "external_order_number";

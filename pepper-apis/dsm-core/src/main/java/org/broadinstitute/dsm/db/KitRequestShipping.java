@@ -636,9 +636,12 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             if (subKits != null && !subKits.isEmpty()) {
                 List<KitRequestShipping> wholeList = new ArrayList<>();
                 for (KitSubKits kit : subKits) {
-                    Collection<List<KitRequestShipping>> kits = getAllKitRequestsByRealm(realm, target, kit.getKitName(), false).values();
-                    for (List<KitRequestShipping> kitRequestList : kits) {
-                        wholeList.addAll(kitRequestList);
+                    if (!kit.isHideOnSamplePages()) {
+                        Collection<List<KitRequestShipping>> kits =
+                                getAllKitRequestsByRealm(realm, target, kit.getKitName(), false).values();
+                        for (List<KitRequestShipping> kitRequestList : kits) {
+                            wholeList.addAll(kitRequestList);
+                        }
                     }
                 }
                 return wholeList;
