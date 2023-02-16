@@ -10,4 +10,6 @@ public interface ScanPayload {
 
     String getHruid();
 
+    String getRNA();
+
 }

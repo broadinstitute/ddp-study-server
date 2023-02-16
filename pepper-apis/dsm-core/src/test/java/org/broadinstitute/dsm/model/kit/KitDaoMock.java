@@ -83,6 +83,11 @@ public class KitDaoMock implements KitDao {
     }
 
     @Override
+    public Optional<List<KitRequestShipping>> getSubkitsByDdpLabel(String ddpLabel, String kitLabel) {
+        return null;
+    }
+
+    @Override
     public List<KitRequestShipping> getKitsByHruid(String hruid) {
         return null;
     }

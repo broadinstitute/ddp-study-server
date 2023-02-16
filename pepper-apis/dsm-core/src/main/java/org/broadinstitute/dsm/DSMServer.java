@@ -113,6 +113,7 @@ import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
+import org.broadinstitute.dsm.route.kit.RGPKitFinalScanRoute;
 import org.broadinstitute.dsm.route.kit.ReceivedKitsRoute;
 import org.broadinstitute.dsm.route.kit.SentKitRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
@@ -757,6 +758,7 @@ public class DSMServer {
         get(uiRoot + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
         post(uiRoot + RoutePath.FINAL_SCAN_REQUEST, new KitFinalScanRoute(), new JsonTransformer());
+        post(uiRoot + RoutePath.RGP_FINAL_SCAN_REQUEST, new RGPKitFinalScanRoute(), new JsonTransformer());
         post(uiRoot + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new JsonTransformer());
         post(uiRoot + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new JsonTransformer());
         post(uiRoot + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new JsonTransformer());
