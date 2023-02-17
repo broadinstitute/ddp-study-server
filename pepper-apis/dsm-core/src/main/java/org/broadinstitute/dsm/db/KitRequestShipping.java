@@ -100,7 +100,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
                     + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
-                    + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, "
+                    + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
+                    + " if (LOCATE('_',req.ddp_label)>0, LEFT(req.ddp_label,LOCATE('_',req.ddp_label) - 1), req.ddp_label) as ddp_label, "
                     + "req.dsm_kit_request_id, "
                     + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
                     + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
@@ -164,6 +165,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "GROUP BY dsm_kit_request_id) groupedtt ON k.dsm_kit_request_id = groupedtt.dsm_kit_request_id "
                     + "AND k.dsm_kit_id = groupedtt.kit_id) AS wtf) AS kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id"
                     + " WHERE request.dsm_kit_request_id = ?";
+
+    public static final String INSERT_KIT_REQUEST = "insert into ddp_kit_request (ddp_instance_id,  ddp_kit_request_id, kit_type_id,"
+            + "  ddp_participant_id, bsp_collaborator_participant_id, bsp_collaborator_sample_id, ddp_label, created_by, created_date,"
+            + " external_order_number, upload_reason) values (?,?,?,?,?,?,?,?,?,?,?)";
     public static final String DEACTIVATION_REASON = "Generated Express";
     public static final String UPLOADED = "uploaded";
     private static final Logger logger = LoggerFactory.getLogger(KitRequestShipping.class);
@@ -631,9 +636,18 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             if (subKits != null && !subKits.isEmpty()) {
                 List<KitRequestShipping> wholeList = new ArrayList<>();
                 for (KitSubKits kit : subKits) {
-                    Collection<List<KitRequestShipping>> kits = getAllKitRequestsByRealm(realm, target, kit.getKitName(), false).values();
-                    for (List<KitRequestShipping> kitRequestList : kits) {
-                        wholeList.addAll(kitRequestList);
+                    if (!kit.isHideOnSamplePages()) {
+                        Collection<List<KitRequestShipping>> kits =
+                                getAllKitRequestsByRealm(realm, target, kit.getKitName(), false).values();
+                        for (List<KitRequestShipping> kitRequestList : kits) {
+                            wholeList.addAll(kitRequestList);
+                        }
+                    } else if(!target.equals(UPLOADED) && !target.equals(ERROR) && !target.equals(QUEUE) && !target.equals(DEACTIVATED)) {
+                        Collection<List<KitRequestShipping>> kits =
+                                getAllKitRequestsByRealm(realm, target, kit.getKitName(), false).values();
+                        for (List<KitRequestShipping> kitRequestList : kits) {
+                            wholeList.addAll(kitRequestList);
+                        }
                     }
                 }
                 return wholeList;
@@ -826,7 +840,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     results.resultException);
         }
         if (Objects.nonNull(ddpInstanceDto)) {
-
             KitRequestShipping kitRequestShipping = new KitRequestShipping();
             kitRequestShipping.setDsmKitRequestId(dsmKitRequestId);
             kitRequestShipping.setDeactivationReason(deactivationReason);
@@ -880,16 +893,17 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     //adding kit request to db (called by hourly job to add kits into DSM)
     public static void addKitRequests(@NonNull String instanceId, @NonNull KitDetail kitDetail, @NonNull int kitTypeId,
                                       @NonNull KitRequestSettings kitRequestSettings, String collaboratorParticipantId,
-                                      String externalOrderNumber, String uploadReason, DDPInstance ddpInstance) {
+                                      String externalOrderNumber, String uploadReason, DDPInstance ddpInstance, String subkitsDdpLabel) {
         addKitRequests(instanceId, kitDetail.getKitType(), kitDetail.getParticipantId(), kitDetail.getKitRequestId(), kitTypeId,
-                kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason, ddpInstance);
+                kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason, ddpInstance,
+                subkitsDdpLabel);
     }
 
     //adding kit request to db (called by hourly job to add kits into DSM)
     public static void addKitRequests(@NonNull String instanceId, @NonNull String kitType, @NonNull String participantId,
                                       @NonNull String kitRequestId, @NonNull int kitTypeId, @NonNull KitRequestSettings kitRequestSettings,
                                       String collaboratorParticipantId, boolean needsApproval, String externalOrderNumber,
-                                      String uploadReason, DDPInstance ddpInstance) {
+                                      String uploadReason, DDPInstance ddpInstance, String subkitsDdpLabel) {
         inTransaction((conn) -> {
             String errorMessage = "";
             String collaboratorSampleId = null;
@@ -908,7 +922,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 }
             }
             writeRequest(instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId, "SYSTEM",
-                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance, bspCollaboratorSampleType);
+                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance, bspCollaboratorSampleType, subkitsDdpLabel);
             return null;
         });
     }
@@ -919,12 +933,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
-                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName) {
-        String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
+                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName, String subKitddpLabel) {
+
+        String ddpLabel = StringUtils.isBlank(subKitddpLabel) ?
+                (StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()) : subKitddpLabel;
+
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement insertKitRequest = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_REQUEST), Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement insertKitRequest = conn.prepareStatement(INSERT_KIT_REQUEST, Statement.RETURN_GENERATED_KEYS)) {
                 insertKitRequest.setString(1, instanceId);
                 insertKitRequest.setString(2, ddpKitRequestId);
                 insertKitRequest.setInt(3, kitTypeId);

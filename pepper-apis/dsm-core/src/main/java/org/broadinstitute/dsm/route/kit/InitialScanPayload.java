@@ -26,4 +26,9 @@ public class InitialScanPayload extends BaseScanPayload {
     public String getHruid() {
         return hruid;
     }
+
+    @Override
+    public String getRNA() {
+        throw new UnsupportedOperationException();
+    }
 }

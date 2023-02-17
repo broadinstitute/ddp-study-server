@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.kit;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.kit.KitPayload;
@@ -23,5 +24,10 @@ public class KitSentUseCase extends KitFinalSentBaseUseCase {
                 kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         trigerEventsIfSuccessfulKitUpdate(result, kitLabel, kitRequestShipping);
         return result;
+    }
+
+    @Override
+    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+        throw new NotImplementedException();
     }
 }

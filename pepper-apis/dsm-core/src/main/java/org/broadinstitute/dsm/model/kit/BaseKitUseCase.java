@@ -34,7 +34,16 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
         return result;
     }
 
+    public List<ScanError> getRGPFinalScan() {
+        List<ScanError> result = new ArrayList<>();
+        for (ScanPayload scanPayload : kitPayload.getScanPayloads()) {
+            processRGPFinalScan(scanPayload).ifPresent(result::add);
+        }
+        return result;
+    }
+
     protected abstract Optional<ScanError> process(ScanPayload scanPayload);
+    protected abstract Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload);
 
     protected boolean isKitUpdateSuccessful(Optional<ScanError> maybeScanError, String bspCollaboratorParticipantId) {
         return maybeScanError.isEmpty() || isScanErrorOnlyBspParticipantId(maybeScanError.get(), bspCollaboratorParticipantId);

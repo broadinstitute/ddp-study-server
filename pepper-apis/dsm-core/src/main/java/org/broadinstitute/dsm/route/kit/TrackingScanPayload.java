@@ -23,4 +23,10 @@ public class TrackingScanPayload extends BaseScanPayload {
     public String getHruid() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String getRNA() {
+        throw new UnsupportedOperationException();
+    }
+
 }

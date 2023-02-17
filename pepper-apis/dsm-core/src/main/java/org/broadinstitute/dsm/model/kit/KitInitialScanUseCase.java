@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.kit;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
@@ -63,5 +64,10 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
     private void setKitInformation(KitRequestShipping kitRequestShipping, String kit, String hruid) {
         kitRequestShipping.setKitLabel(kit);
         kitRequestShipping.setHruid(hruid);
+    }
+
+    @Override
+    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+        throw new NotImplementedException();
     }
 }

@@ -94,7 +94,7 @@ public class DDPKitRequest {
                                                             } else {
                                                                 KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail,
                                                                         kitType.getKitTypeId(), kitRequestSettings,
-                                                                        collaboratorParticipantId, null, null, ddpInstance);
+                                                                        collaboratorParticipantId, null, null, ddpInstance, null);
                                                             }
                                                         } else {
                                                             logger.error(
@@ -143,13 +143,14 @@ public class DDPKitRequest {
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             externalOrderNumber = generateExternalOrderNumber();
         }
+        String subKitsDdpLabel = KitRequestShipping.generateDdpLabelID();
         for (KitSubKits subKit : subKits) {
             for (int i = 0; i < subKit.getKitCount(); i++) {
                 //kitRequestId needs to stay unique -> add `_[SUB_COUNTER]` to it
                 KitRequestShipping.addKitRequests(instanceId, subKit.getKitName(), kitDetail.getParticipantId(),
                         subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter,
                         subKit.getKitTypeId(), kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(),
-                        externalOrderNumber, uploadReason, ddpInstance);
+                        externalOrderNumber, uploadReason, ddpInstance, subCounter == 0 ? subKitsDdpLabel : subKitsDdpLabel + "_" + subCounter);
                 subCounter = subCounter + 1;
             }
         }

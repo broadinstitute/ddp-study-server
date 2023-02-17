@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.kit;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
@@ -44,6 +45,11 @@ public class KitReceivedUseCase extends BaseKitUseCase {
 
     private boolean isReceiveATKitRequest(String kit) {
         return ReceiveKitRequest.receiveATKitRequest(notificationUtil, kit);
+    }
+
+    @Override
+    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+        throw new NotImplementedException();
     }
 
 }
