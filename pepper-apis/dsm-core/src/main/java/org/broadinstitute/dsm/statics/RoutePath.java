@@ -39,6 +39,7 @@ public class RoutePath {
     public static final String AUTHENTICATION_REQUEST = "auth0";
     public static final String KIT_REQUESTS_PATH = "kitRequests";
     public static final String FINAL_SCAN_REQUEST = "finalScan";
+    public static final String RGP_FINAL_SCAN_REQUEST = "rgpFinalScan";
     public static final String INITIAL_SCAN_REQUEST = "initialScan";
     public static final String TRACKING_SCAN_REQUEST = "trackingScan";
     public static final String SENT_KIT_REQUEST = "sentKits";

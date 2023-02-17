@@ -92,7 +92,6 @@ public class ApplicationConfigConstants {
     public static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS = "portal.checkDdpLabelIdQuery";
     public static final String GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE = "portal.checkTrackingQuery";
     public static final String GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL = "portal.checkKitTypeNeedsTrackingQuery";
-    public static final String INSERT_KIT_REQUEST = "portal.insertKitRequest";
     public static final String INSERT_KIT = "portal.insertKit";
     public static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE = "portal.counterCollaboratorSample";
     public static final String GET_UNSENT_KIT_REQUESTS_FOR_REALM = "portal.unsentKitRequestsPerRealmQuery";

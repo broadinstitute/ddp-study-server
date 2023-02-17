@@ -32,7 +32,8 @@ public class KitRequestSettings {
                     + "ret.return_address_street1, ret.return_address_street2, "
                     + "ret.return_address_city, ret.return_address_state, ret.return_address_zip, ret.return_address_country, "
                     + "ret.return_address_phone, dkc.kit_type_display_name, dkc.external_shipper, "
-                    + "dkc.external_name, dkc.external_client_id, subK.kit_type_id, subK.external_name, subK.kit_count, dkc.has_care_of,  "
+                    + "dkc.external_name, dkc.external_client_id, dkc.has_care_of, "
+                    + "subK.kit_type_id, subK.external_name, subK.kit_count, subK.hide_on_sample_pages, "
                     + "(SELECT kit.kit_type_name FROM kit_type kit WHERE kit.kit_type_id = subK.kit_type_id) AS subKitName, "
                     + "(SELECT count(dkc2.ddp_kit_request_settings_id) FROM ddp_kit_request_settings dkc2 LEFT JOIN sub_kits_settings subK "
                     + "ON (subK.ddp_kit_request_settings_id = dkc2.ddp_kit_request_settings_id) "
@@ -129,7 +130,7 @@ public class KitRequestSettings {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         KitSubKits subKit = new KitSubKits(rs.getInt(DBConstants.KIT_TYPE_SUB_KIT), rs.getString(DBConstants.SUB_KIT_NAME),
-                                rs.getInt(DBConstants.KIT_COUNT));
+                                rs.getInt(DBConstants.KIT_COUNT), rs.getBoolean(DBConstants.HIDE_ON_SAMPLE_PAGES));
                         int key = rs.getInt(DBConstants.KIT_TYPE_ID);
                         if (carrierService.containsKey(key)) {
                             KitRequestSettings settings = carrierService.get(key);

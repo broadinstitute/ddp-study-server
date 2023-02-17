@@ -628,7 +628,7 @@ public class KitUtil {
 
     public static String messageBasedOnLocationAndInstance(String errorMessage, DDPInstanceDto ddpInstanceDto, Address toAddress) {
         //overwriting error message if study is PE-CGS and Participant is CA or NY otherwise keep the old error message
-        if (StringUtils.isNotBlank(ddpInstanceDto.getResearchProject().get())) {
+        if (!ddpInstanceDto.getResearchProject().isEmpty() && StringUtils.isNotBlank(ddpInstanceDto.getResearchProject().get())) {
             if (toAddress.getCountry().equals("CA") || toAddress.getState().equals("NY")) {
                 return PECGS_RESEARCH;
             }

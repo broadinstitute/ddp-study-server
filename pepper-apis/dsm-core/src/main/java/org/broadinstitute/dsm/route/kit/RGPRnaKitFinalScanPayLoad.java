@@ -1,15 +1,12 @@
 package org.broadinstitute.dsm.route.kit;
 
-import lombok.NoArgsConstructor;
+public class RGPRnaKitFinalScanPayLoad extends SentAndFinalScanPayload{
 
-@NoArgsConstructor
-public class SentAndFinalScanPayload extends BaseScanPayload {
+    String RNA;
 
-    String ddpLabel;
-
-    public SentAndFinalScanPayload(String ddpLabel, String kitLabel) {
-        this.ddpLabel = ddpLabel;
-        this.kitLabel = kitLabel;
+    public RGPRnaKitFinalScanPayLoad(String ddpLabel, String kitLabel, String RNA) {
+        super(ddpLabel, kitLabel);
+        this.RNA = RNA;
     }
 
     @Override
@@ -26,10 +23,9 @@ public class SentAndFinalScanPayload extends BaseScanPayload {
     public String getHruid()  {
         throw new UnsupportedOperationException();
     }
+
     @Override
     public String getRNA() {
-        throw new UnsupportedOperationException();
+        return RNA;
     }
-
-
 }

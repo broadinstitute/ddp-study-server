@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.kit;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -69,7 +70,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 }
             } else if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
                 //tracking scan required and missing
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
             } else {
                 //wasn't saved
                 result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
@@ -97,5 +98,122 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    @Override
+    public Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+        Optional<ScanError> result;
+        String kitLabel = scanPayload.getKitLabel();
+        String ddpLabel = scanPayload.getDdpLabel();
+        String RNA = scanPayload.getRNA();
+
+        Optional<List<KitRequestShipping>> kitsByDdpLabel = kitDao.getSubkitsByDdpLabel(ddpLabel, kitLabel);
+        if (kitsByDdpLabel.isPresent()) {
+            List<KitRequestShipping> subkits = kitsByDdpLabel.get();
+            if (subkits == null || subkits.size() == 0) {
+                result = Optional.of(new ScanError(ddpLabel, "Kits with DDP Label " + ddpLabel + " does not exist"));
+                return result;
+            }
+            if (subkits.size() > 2) {
+                result = Optional.of(new ScanError(ddpLabel, "More than one kit with DDP Label " + ddpLabel + "was found"));
+                return result;
+            }
+
+            KitRequestShipping rgpBloodKit =
+                    subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("BLOOD")).findFirst().orElseThrow();
+            result = checkForKitErrors(rgpBloodKit, kitLabel, ddpLabel);
+            if (!result.isEmpty()) {
+                return result;
+            }
+             if (((rgpBloodKit.isKitRequiringTrackingScan() && rgpBloodKit.hasTrackingScan())
+                    || (!rgpBloodKit.isKitRequiringTrackingScan()))) {
+                //tracking scan needed and done OR no tracking scan needed
+                //successfully scanned and going to update db and ES
+                if (StringUtils.isNotEmpty(rgpBloodKit.getKitLabel()) && kitLabel.equals(rgpBloodKit.getKitLabel())
+                        || StringUtils.isEmpty(rgpBloodKit.getKitLabel())) {
+                    rgpBloodKit.setKitLabel(kitLabel);
+                    rgpBloodKit.setDdpLabel(ddpLabel);
+                    rgpBloodKit.setScanDate(System.currentTimeMillis());
+                    result = updateKitRequest(rgpBloodKit);
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, rgpBloodKit);
+                    this.writeSampleSentToES(rgpBloodKit);
+                } else {
+                    result = Optional.of(
+                            new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
+                    return result;
+                }
+            } else {
+                 result = Optional.of(
+                         new ScanError(ddpLabel, "DDP Label " + rgpBloodKit.getDdpLabel() + " requires tracking scan"));
+                 return result;
+             }
+            KitRequestShipping rgpRnaKit =
+                    subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("RNA")).findFirst().orElseThrow();
+            result = checkForKitErrors(rgpRnaKit, kitLabel, rgpRnaKit.getDdpLabel());
+            if (!result.isEmpty()) {
+                return result;
+            }
+            if (((rgpRnaKit.isKitRequiringTrackingScan() && rgpRnaKit.hasTrackingScan())
+                    || (!rgpRnaKit.isKitRequiringTrackingScan()))) {
+                //tracking scan needed and done OR no tracking scan needed
+                //successfully scanned and going to update db and ES
+                if (StringUtils.isEmpty(rgpRnaKit.getKitLabel())) {
+                    rgpRnaKit.setKitLabel(RNA);
+                    rgpRnaKit.setDdpLabel(rgpRnaKit.getDdpLabel());
+                    rgpRnaKit.setScanDate(System.currentTimeMillis());
+                    result = updateKitRequest(rgpRnaKit);
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, rgpRnaKit);
+                    this.writeSampleSentToES(rgpRnaKit);
+                } else {
+                    result = Optional.of(
+                            new ScanError(rgpRnaKit.getDdpLabel(),
+                                    "Designated RNA kit with Kit Label " + rgpRnaKit.getKitLabel() + " was scanned on Initial Scan page "));
+                }
+            } else {
+                result = Optional.of(
+                        new ScanError(ddpLabel, "DDP Label " + rgpRnaKit.getDdpLabel() + " requires tracking scan"));
+                return result;
+            }
+        } else {
+            //DSM label doesn't exist
+            result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
+        }
+        return result;
+    }
+
+    public Optional<ScanError> checkForKitErrors(KitRequestShipping kitRequestShipping, String kitLabel, String ddpLabel) {
+        Optional<ScanError> result = Optional.empty();
+        if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
+                && !kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
+                && StringUtils.isBlank(kitRequestShipping.getMessage())) {
+            //prefix is configured and doesn't match kit label and kit error message was not PECGS_RESEARCH
+            result = Optional.of((new ScanError(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
+                    + "Please check to see if this is the correct kit for this project before proceeding.")));
+        } else if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
+                && kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
+                && StringUtils.isNotBlank(kitRequestShipping.getMessage())
+                && KitUtil.PECGS_RESEARCH.equals(kitRequestShipping.getMessage())) {
+            //prefix is configured and match kit label and kit error message was PECGS_RESEARCH
+            result = Optional.of((new ScanError(ddpLabel,
+                    "Please check to see if this is the correct kit for this participant before proceeding.")));
+        } else if (kitRequestShipping.getKitLabelLength() != null && kitRequestShipping.getKitLabelLength() != 0
+                && kitLabel.length() != kitRequestShipping.getKitLabelLength()) {
+            //barcode length doesn't fit configured length
+            result = Optional.of(new ScanError(ddpLabel,
+                    "Barcode doesn't contain " + kitRequestShipping.getKitLabelLength() + " digits. You can manually enter any"
+                            + " missing digits above."));
+
+        } else if (!((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan())
+                || (!kitRequestShipping.isKitRequiringTrackingScan()))) { // something is wrong about tracking scan
+            if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
+                //tracking scan required and missing
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
+            } else {
+                //wasn't saved
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
+            }
+        }
+        return result;
     }
 }
