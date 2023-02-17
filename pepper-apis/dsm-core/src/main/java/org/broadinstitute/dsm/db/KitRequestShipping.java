@@ -642,6 +642,12 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         for (List<KitRequestShipping> kitRequestList : kits) {
                             wholeList.addAll(kitRequestList);
                         }
+                    } else if(!target.equals(UPLOADED) && !target.equals(ERROR) && !target.equals(QUEUE) && !target.equals(DEACTIVATED)) {
+                        Collection<List<KitRequestShipping>> kits =
+                                getAllKitRequestsByRealm(realm, target, kit.getKitName(), false).values();
+                        for (List<KitRequestShipping> kitRequestList : kits) {
+                            wholeList.addAll(kitRequestList);
+                        }
                     }
                 }
                 return wholeList;
@@ -834,7 +840,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     results.resultException);
         }
         if (Objects.nonNull(ddpInstanceDto)) {
-
             KitRequestShipping kitRequestShipping = new KitRequestShipping();
             kitRequestShipping.setDsmKitRequestId(dsmKitRequestId);
             kitRequestShipping.setDeactivationReason(deactivationReason);

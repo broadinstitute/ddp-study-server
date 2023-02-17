@@ -70,7 +70,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 }
             } else if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
                 //tracking scan required and missing
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
             } else {
                 //wasn't saved
                 result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
@@ -111,7 +111,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         Optional<List<KitRequestShipping>> kitsByDdpLabel = kitDao.getSubkitsByDdpLabel(ddpLabel, kitLabel);
         if (kitsByDdpLabel.isPresent()) {
             List<KitRequestShipping> subkits = kitsByDdpLabel.get();
-            if (subkits == null || subkits.size() == 0){
+            if (subkits == null || subkits.size() == 0) {
                 result = Optional.of(new ScanError(ddpLabel, "Kits with DDP Label " + ddpLabel + " does not exist"));
                 return result;
             }
@@ -120,23 +120,24 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 return result;
             }
 
-            KitRequestShipping subkit1 = subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("BLOOD")).findFirst().orElseThrow();
-            result = checkForKitErrors(subkit1, kitLabel, ddpLabel);
+            KitRequestShipping rgpBloodKit =
+                    subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("BLOOD")).findFirst().orElseThrow();
+            result = checkForKitErrors(rgpBloodKit, kitLabel, ddpLabel);
             if (!result.isEmpty()) {
                 return result;
             }
-             if (((subkit1.isKitRequiringTrackingScan() && subkit1.hasTrackingScan())
-                    || (!subkit1.isKitRequiringTrackingScan()))) {
+             if (((rgpBloodKit.isKitRequiringTrackingScan() && rgpBloodKit.hasTrackingScan())
+                    || (!rgpBloodKit.isKitRequiringTrackingScan()))) {
                 //tracking scan needed and done OR no tracking scan needed
                 //successfully scanned and going to update db and ES
-                if (StringUtils.isNotEmpty(subkit1.getKitLabel()) && kitLabel.equals(subkit1.getKitLabel())
-                        || StringUtils.isEmpty(subkit1.getKitLabel())) {
-                    subkit1.setKitLabel(kitLabel);
-                    subkit1.setDdpLabel(ddpLabel);
-                    subkit1.setScanDate(System.currentTimeMillis());
-                    result = updateKitRequest(subkit1);
-                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, subkit1);
-                    this.writeSampleSentToES(subkit1);
+                if (StringUtils.isNotEmpty(rgpBloodKit.getKitLabel()) && kitLabel.equals(rgpBloodKit.getKitLabel())
+                        || StringUtils.isEmpty(rgpBloodKit.getKitLabel())) {
+                    rgpBloodKit.setKitLabel(kitLabel);
+                    rgpBloodKit.setDdpLabel(ddpLabel);
+                    rgpBloodKit.setScanDate(System.currentTimeMillis());
+                    result = updateKitRequest(rgpBloodKit);
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, rgpBloodKit);
+                    this.writeSampleSentToES(rgpBloodKit);
                 } else {
                     result = Optional.of(
                             new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
@@ -144,32 +145,34 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 }
             } else {
                  result = Optional.of(
-                         new ScanError(ddpLabel, "DDP Label " + subkit1.getDdpLabel() + " requires tracking scan"));
+                         new ScanError(ddpLabel, "DDP Label " + rgpBloodKit.getDdpLabel() + " requires tracking scan"));
                  return result;
              }
-            KitRequestShipping subkit2 = subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("RNA")).findFirst().orElseThrow();
-            result = checkForKitErrors(subkit2, kitLabel, subkit2.getDdpLabel());
+            KitRequestShipping rgpRnaKit =
+                    subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("RNA")).findFirst().orElseThrow();
+            result = checkForKitErrors(rgpRnaKit, kitLabel, rgpRnaKit.getDdpLabel());
             if (!result.isEmpty()) {
                 return result;
             }
-            if (((subkit2.isKitRequiringTrackingScan() && subkit2.hasTrackingScan())
-                    || (!subkit2.isKitRequiringTrackingScan()))) {
+            if (((rgpRnaKit.isKitRequiringTrackingScan() && rgpRnaKit.hasTrackingScan())
+                    || (!rgpRnaKit.isKitRequiringTrackingScan()))) {
                 //tracking scan needed and done OR no tracking scan needed
                 //successfully scanned and going to update db and ES
-                if ( StringUtils.isEmpty(subkit2.getKitLabel())) {
-                    subkit1.setKitLabel(RNA);
-                    subkit1.setDdpLabel(subkit2.getDdpLabel());
-                    subkit1.setScanDate(System.currentTimeMillis());
-                    result = updateKitRequest(subkit2);
-                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, subkit2);
-                    this.writeSampleSentToES(subkit2);
+                if (StringUtils.isEmpty(rgpRnaKit.getKitLabel())) {
+                    rgpRnaKit.setKitLabel(RNA);
+                    rgpRnaKit.setDdpLabel(rgpRnaKit.getDdpLabel());
+                    rgpRnaKit.setScanDate(System.currentTimeMillis());
+                    result = updateKitRequest(rgpRnaKit);
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, rgpRnaKit);
+                    this.writeSampleSentToES(rgpRnaKit);
                 } else {
                     result = Optional.of(
-                            new ScanError(subkit2.getDdpLabel(), "Designated RNA kit with Kit Label " + subkit2.getKitLabel() + " was scanned on Initial Scan page "));
+                            new ScanError(rgpRnaKit.getDdpLabel(),
+                                    "Designated RNA kit with Kit Label " + rgpRnaKit.getKitLabel() + " was scanned on Initial Scan page "));
                 }
             } else {
                 result = Optional.of(
-                        new ScanError(ddpLabel, "DDP Label " + subkit2.getDdpLabel() + " requires tracking scan"));
+                        new ScanError(ddpLabel, "DDP Label " + rgpRnaKit.getDdpLabel() + " requires tracking scan"));
                 return result;
             }
         } else {
@@ -205,7 +208,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 || (!kitRequestShipping.isKitRequiringTrackingScan()))) { // something is wrong about tracking scan
             if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
                 //tracking scan required and missing
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
             } else {
                 //wasn't saved
                 result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
