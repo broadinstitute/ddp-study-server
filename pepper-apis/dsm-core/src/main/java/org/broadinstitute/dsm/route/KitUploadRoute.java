@@ -260,15 +260,16 @@ public class KitUploadRoute extends RequestHandler {
                     boolean alreadyExists = false;
                     String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
                     String ddpLabel = KitRequestShipping.generateDdpLabelID();
+                    boolean doesKitExist = false;
                     for (int j = 0; j < subKits.size(); j++) {
                         KitSubKits subKit = subKits.get(j);
-                        if (j > 0) {
+                        if (j == 0) {
+                            doesKitExist = checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId,
+                                    subKit.getKitTypeId());
+                        } else {
                             shippingId += "_" + j;
                             ddpLabel += "_" + j;
                         }
-                        //check with ddp_participant_id if participant already has a kit in DSM db
-                        boolean doesKitExist = checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId,
-                                        subKit.getKitTypeId());
                         if (doesKitExist) {
                             kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
                         }
@@ -411,7 +412,6 @@ public class KitUploadRoute extends RequestHandler {
                     collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
                     uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel);
             kit.setDdpLabel(shippingId);
-
         }
     }
 
