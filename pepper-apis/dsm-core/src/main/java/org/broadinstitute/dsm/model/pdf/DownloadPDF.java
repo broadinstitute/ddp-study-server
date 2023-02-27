@@ -131,7 +131,7 @@ public class DownloadPDF {
             } else if (configName != null) {
                 pdfByte = requestPDF(ddpInstance, ddpParticipantId, configName);
             }
-            if (pdfByte.length > 0) {
+            if (pdfByte != null && pdfByte.length > 0) {
                 break;
             } else {
                 try {
