@@ -29,7 +29,7 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
     public List<ScanError> get() {
         List<ScanError> result = new ArrayList<>();
         for (ScanPayload scanPayload : kitPayload.getScanPayloads()) {
-            process(scanPayload).ifPresent(result::add);
+            process(scanPayload).ifPresentOrElse(maybeScanError -> result.add(maybeScanError), () -> result.add(null));
         }
         return result;
     }
@@ -37,7 +37,7 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
     public List<ScanError> getRGPFinalScan() {
         List<ScanError> result = new ArrayList<>();
         for (ScanPayload scanPayload : kitPayload.getScanPayloads()) {
-            processRGPFinalScan(scanPayload).ifPresent(result::add);
+            process(scanPayload).ifPresentOrElse(maybeScanError -> result.add(maybeScanError), () -> result.add(null));
         }
         return result;
     }
