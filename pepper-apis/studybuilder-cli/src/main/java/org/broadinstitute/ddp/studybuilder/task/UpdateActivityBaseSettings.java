@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -64,6 +66,25 @@ public class UpdateActivityBaseSettings implements CustomTask {
             compareBasicSettings(handle, definition, activityId);
             compareNamingDetails(handle, definition, activityId, versionDto);
             compareStatusSummaries(handle, definition, activityId);
+
+            //nested activities
+            if (activityCfg.hasPath("nestedActivities")) {
+                List<String> nestedPaths = activityCfg.hasPath("nestedActivities")
+                        ? activityCfg.getStringList("nestedActivities")
+                        : Collections.emptyList();
+                for (var nestedPath : nestedPaths) {
+                    Config nestedConf = activityBuilder.readDefinitionConfig(nestedPath);
+                    //compare and update
+                    String nestedActivityCode = nestedConf.getString("activityCode");
+                    String nestedVersionTag = nestedConf.getString("versionTag");
+                    long nestedActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), nestedActivityCode);
+                    ActivityVersionDto nestedVersionDto = jdbiActVersion.findByActivityIdAndVersionTag(nestedActivityId, nestedVersionTag).orElseThrow();
+                    log.info("Working on nested activity {} version {} (revisionId={})...", nestedActivityCode, nestedVersionDto, nestedVersionDto.getRevId());
+                    compareBasicSettings(handle, nestedConf, nestedActivityId);
+                    compareNamingDetails(handle, nestedConf, nestedActivityId, nestedVersionDto);
+                    compareStatusSummaries(handle, nestedConf, nestedActivityId);
+                }
+            }
         }
     }
 
