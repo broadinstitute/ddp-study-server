@@ -19,7 +19,6 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -56,16 +55,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
 
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
             Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"));
-            String activityCode = definition.getString("activityCode");
-            String versionTag = definition.getString("versionTag");
-
-            long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
-            log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
-
-            compareBasicSettings(handle, definition, activityId);
-            compareNamingDetails(handle, definition, activityId, versionDto);
-            compareStatusSummaries(handle, definition, activityId);
+            updateActivityBaseSettings(handle, studyDto, jdbiActVersion, definition);
 
             //nested activities
             if (activityCfg.hasPath("nestedActivities")) {
@@ -75,17 +65,23 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 for (var nestedPath : nestedPaths) {
                     Config nestedConf = activityBuilder.readDefinitionConfig(nestedPath);
                     //compare and update
-                    String nestedActivityCode = nestedConf.getString("activityCode");
-                    String nestedVersionTag = nestedConf.getString("versionTag");
-                    long nestedActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), nestedActivityCode);
-                    ActivityVersionDto nestedVersionDto = jdbiActVersion.findByActivityIdAndVersionTag(nestedActivityId, nestedVersionTag).orElseThrow();
-                    log.info("Working on nested activity {} version {} (revisionId={})...", nestedActivityCode, nestedVersionDto, nestedVersionDto.getRevId());
-                    compareBasicSettings(handle, nestedConf, nestedActivityId);
-                    compareNamingDetails(handle, nestedConf, nestedActivityId, nestedVersionDto);
-                    compareStatusSummaries(handle, nestedConf, nestedActivityId);
+                    updateActivityBaseSettings(handle, studyDto, jdbiActVersion, nestedConf);
                 }
             }
         }
+    }
+
+    private void updateActivityBaseSettings(Handle handle, StudyDto studyDto, JdbiActivityVersion jdbiActVersion, Config activityCfg) {
+        String activityCode = activityCfg.getString("activityCode");
+        String versionTag = activityCfg.getString("versionTag");
+
+        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+        ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
+        log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
+
+        compareBasicSettings(handle, activityCfg, activityId);
+        compareNamingDetails(handle, activityCfg, activityId, versionDto);
+        compareStatusSummaries(handle, activityCfg, activityId);
     }
 
     private void compareBasicSettings(Handle handle, Config definition, long activityId) {
