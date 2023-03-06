@@ -110,7 +110,7 @@ public class ActivityBuilder {
         }
     }
 
-    private List<ActivityDef> loadNestedActivities(Config activityCfg) {
+    public List<ActivityDef> loadNestedActivities(Config activityCfg) {
         List<String> nestedPaths = activityCfg.hasPath("nestedActivities")
                 ? activityCfg.getStringList("nestedActivities")
                 : Collections.emptyList();

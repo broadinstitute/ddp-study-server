@@ -1,6 +1,10 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +21,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
@@ -68,19 +73,33 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
 
         boolean found = false;
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
-            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"), false);
+            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"), true);
             String activityCode = definition.getString("activityCode");
             String versionTag = definition.getString("versionTag");
 
             if (this.activityCode.equals(activityCode)) {
                 log.info("Found activity definition for {}", activityCode);
-
-                ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode).get();
-                ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
-                FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
-
                 var updateTask = new UpdateTemplatesInPlace();
-                updateTask.traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
+                updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, versionTag,
+                        definition, updateTask, activityCode);
+
+                //load nestedActivities
+                List<ActivityDef> nestedDefs = activityBuilder.loadNestedActivities(activityCfg);
+                Map<String, Config> nestedActivityConf = new HashMap<>();
+                if (!nestedDefs.isEmpty()) {
+                    log.info("Working on nested activities templates for {}", activityCode);
+                    List<String> nestedPaths = activityCfg.hasPath("nestedActivities")
+                            ? activityCfg.getStringList("nestedActivities")
+                            : Collections.emptyList();
+                    for (var nestedPath : nestedPaths) {
+                        Config nestedConf = activityBuilder.readDefinitionConfig(nestedPath);
+                        nestedActivityConf.put(nestedConf.getString("activityCode"), nestedConf);
+                    }
+                }
+                for (ActivityDef nestedDef : nestedDefs) {
+                    updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, versionTag,
+                            nestedActivityConf.get(nestedDef.getActivityCode()), updateTask, nestedDef.getActivityCode());
+                }
                 found = true;
                 break;
             }
@@ -90,4 +109,15 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
             log.info("Could not find activity definition for {}", activityCode);
         }
     }
+
+    private void updateActivityTemplates(Handle handle, long studyId, ActivityDao activityDao, JdbiActivity jdbiActivity,
+                                         JdbiActivityVersion jdbiActVersion, String versionTag, Config activityCfg,
+                                         UpdateTemplatesInPlace updateTask, String activityCode) {
+        log.info("Working on activity definition/templates for {}", activityCode);
+        ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode).get();
+        ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
+        FormActivityDef activityDef = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
+        updateTask.traverseActivity(handle, activityCode, activityCfg, activityDef, versionDto.getRevStart());
+    }
+
 }

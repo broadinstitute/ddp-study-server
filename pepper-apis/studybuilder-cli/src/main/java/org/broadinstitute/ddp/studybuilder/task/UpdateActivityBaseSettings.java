@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,17 +55,33 @@ public class UpdateActivityBaseSettings implements CustomTask {
 
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
             Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"));
-            String activityCode = definition.getString("activityCode");
-            String versionTag = definition.getString("versionTag");
+            updateActivityBaseSettings(handle, studyDto, jdbiActVersion, definition);
 
-            long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
-            log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
-
-            compareBasicSettings(handle, definition, activityId);
-            compareNamingDetails(handle, definition, activityId, versionDto);
-            compareStatusSummaries(handle, definition, activityId);
+            //nested activities
+            if (activityCfg.hasPath("nestedActivities")) {
+                List<String> nestedPaths = activityCfg.hasPath("nestedActivities")
+                        ? activityCfg.getStringList("nestedActivities")
+                        : Collections.emptyList();
+                for (var nestedPath : nestedPaths) {
+                    Config nestedConf = activityBuilder.readDefinitionConfig(nestedPath);
+                    //compare and update
+                    updateActivityBaseSettings(handle, studyDto, jdbiActVersion, nestedConf);
+                }
+            }
         }
+    }
+
+    private void updateActivityBaseSettings(Handle handle, StudyDto studyDto, JdbiActivityVersion jdbiActVersion, Config activityCfg) {
+        String activityCode = activityCfg.getString("activityCode");
+        String versionTag = activityCfg.getString("versionTag");
+
+        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+        ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
+        log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
+
+        compareBasicSettings(handle, activityCfg, activityId);
+        compareNamingDetails(handle, activityCfg, activityId, versionDto);
+        compareStatusSummaries(handle, activityCfg, activityId);
     }
 
     private void compareBasicSettings(Handle handle, Config definition, long activityId) {
