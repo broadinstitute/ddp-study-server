@@ -50,7 +50,7 @@ public class MedicalRecord implements HasDdpInstanceId {
             + "m.medical_record_id, m.name, m.contact, m.phone, m.fax, m.fax_sent, m.fax_sent_by, m.fax_confirmed, m.fax_sent_2, "
             + "m.fax_sent_2_by, "
             + "m.fax_confirmed_2, m.fax_sent_3, m.fax_sent_3_by, m.fax_confirmed_3, m.mr_received, m.follow_ups, m.mr_document, "
-            + "m.mr_document_file_names, "
+            + "m.mr_document_file_names, m.no_action_needed, "
             + "m.mr_problem, m.mr_problem_text, m.unable_obtain, m.unable_obtain_text, m.duplicate, m.followup_required, "
             + "m.followup_required_text, m.international, m.cr_required, m.pathology_present, "
             + "m.notes, m.additional_values_json, (SELECT sum(log.comments is null and log.type = \"DATA_REVIEW\") as reviewMedicalRecord"
@@ -136,6 +136,9 @@ public class MedicalRecord implements HasDdpInstanceId {
     private boolean international;
     @ColumnName(DBConstants.CR_REQUIRED)
     private boolean crRequired;
+
+    @ColumnName(DBConstants.NO_ACTION_NEEDED)
+    private boolean noActionNeeded;
     @ColumnName(DBConstants.NOTES)
     private String notes;
     @ColumnName(DBConstants.FOLLOW_UP_REQUESTS)
@@ -175,7 +178,7 @@ public class MedicalRecord implements HasDdpInstanceId {
                          boolean unableObtain, boolean duplicate, boolean international, boolean crRequired, String pathologyPresent,
                          String notes, boolean reviewMedicalRecord, FollowUp[] followUps, boolean followUpRequired,
                          String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId,
-                         long ddpInstanceId) {
+                         long ddpInstanceId, boolean noActionNeeded) {
         this.medicalRecordId = medicalRecordId;
         this.institutionId = institutionId;
         this.ddpInstitutionId = ddpInstitutionId;
@@ -212,6 +215,7 @@ public class MedicalRecord implements HasDdpInstanceId {
         this.unableObtainText = unableObtainText;
         this.ddpParticipantId = ddpParticipantId;
         this.ddpInstanceId = ddpInstanceId;
+        this.noActionNeeded = noActionNeeded;
     }
 
     public static MedicalRecord getMedicalRecord(@NonNull ResultSet rs) throws SQLException {
@@ -230,7 +234,8 @@ public class MedicalRecord implements HasDdpInstanceId {
                 new Gson().fromJson(rs.getString(DBConstants.FOLLOW_UP_REQUESTS), FollowUp[].class),
                 rs.getBoolean(DBConstants.FOLLOWUP_REQUIRED), rs.getString(DBConstants.FOLLOWUP_REQUIRED_TEXT),
                 rs.getString(DBConstants.ADDITIONAL_VALUES_JSON), rs.getString(DBConstants.MR_UNABLE_OBTAIN_TEXT),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
+                rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID),
+                rs.getBoolean(DBConstants.NO_ACTION_NEEDED));
         return medicalRecord;
     }
 

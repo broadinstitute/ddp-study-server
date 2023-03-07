@@ -175,6 +175,7 @@ public class DBConstants {
     public static final String FOLLOWUP_REQUIRED = "followup_required";
     public static final String FOLLOWUP_REQUIRED_TEXT = "followup_required_text";
     public static final String DUPLICATE = "duplicate";
+    public static final String NO_ACTION_NEEDED = "no_action_needed";
     public static final String INTERNATIONAL = "international";
     public static final String NOTES = "notes";
     public static final String FOLLOW_UP_REQUESTS = "follow_ups";
