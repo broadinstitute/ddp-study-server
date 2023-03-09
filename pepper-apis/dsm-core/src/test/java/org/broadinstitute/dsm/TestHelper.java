@@ -101,10 +101,18 @@ public class TestHelper {
     protected static RestHighLevelClient esClient;
 
     public static void setupDB() {
-        setupDB(false);
+        setupDB(false, false);
+    }
+
+    public static void setupDBIgnoreLocal(boolean ignoreLocalEnv) {
+        setupDB(false, ignoreLocalEnv);
     }
 
     public static void setupDB(boolean setupDDPConfigLookup) {
+        setupDB(setupDDPConfigLookup, false);
+    }
+
+    public static void setupDB(boolean setupDDPConfigLookup, boolean ignoreLocalEnv) {
         cfg = ConfigFactory.load();
         //  secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/dsm-test-config.conf")));
@@ -112,7 +120,7 @@ public class TestHelper {
         cfg = cfg.withValue("quartz.enableJobs", ConfigValueFactory.fromAnyRef("false"));
         cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
         cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
-        if (!cfg.getString("portal.environment").startsWith("Local")) {
+        if (!ignoreLocalEnv && !cfg.getString("portal.environment").startsWith("Local")) {
             throw new RuntimeException("Not local environment");
         }
 

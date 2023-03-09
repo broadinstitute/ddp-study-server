@@ -37,18 +37,18 @@ public class ElasticSearchAndDBComparison extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchAndDBComparison.class);
 
-    String STUDY_NAME = "angio";
+    String STUDY_NAME = "osteo2";
     String ENV = "dev";
-    String STUDY_INDEX= "participants_structured.cmi.angio";
+    String STUDY_INDEX= "participants_structured.cmi.cmi-osteo";
     String WORK_SPACE_PATH= "/Users/ptaheri/IdeaProjects/ddp-study-server";
 
     @BeforeClass
     public static void before() throws Exception {
-        setupDB();
+        setupDBIgnoreLocal(true);
     }
 
     @Test
-    public void allParticipants() throws Exception {
+    public void compareESAndDBMedicalRecords() throws Exception {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date date = new Date();
         File outputFile = new File(WORK_SPACE_PATH+"/ES_DB_COMPARE_"+STUDY_NAME+"_"+dateFormat.format(date)+".txt");
