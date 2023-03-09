@@ -60,6 +60,22 @@ public class MedicalRecord implements HasDdpInstanceId {
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) "
             + "WHERE ddp.instance_name = ? AND inst.type != 'NOT_SPECIFIED' AND NOT m.deleted <=> 1 ";
+
+    public static final String SQL_SELECT_MEDICAL_RECORD_SIMPLE = "SELECT p.ddp_participant_id, p.ddp_instance_id, "
+            + "inst.institution_id, inst.ddp_institution_id, inst.type, inst.participant_id, "
+            + "m.medical_record_id, m.name, m.contact, m.phone, m.fax, m.fax_sent, m.fax_sent_by, m.fax_confirmed, m.fax_sent_2, "
+            + "m.fax_sent_2_by, "
+            + "m.fax_confirmed_2, m.fax_sent_3, m.fax_sent_3_by, m.fax_confirmed_3, m.mr_received, m.follow_ups, m.mr_document, "
+            + "m.mr_document_file_names, "
+            + "m.mr_problem, m.mr_problem_text, m.unable_obtain, m.unable_obtain_text, m.duplicate, m.followup_required, "
+            + "m.followup_required_text, m.international, m.cr_required, m.pathology_present, "
+            + "m.notes, m.additional_values_json, (SELECT sum(log.comments is null and log.type = \"DATA_REVIEW\") as reviewMedicalRecord"
+            + " FROM ddp_medical_record rec2 LEFT JOIN ddp_medical_record_log log on (rec2.medical_record_id = log.medical_record_id) "
+            + "WHERE rec2.institution_id = inst.institution_id) as reviewMedicalRecord "
+            + "FROM ddp_institution inst LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
+            + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
+            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) "
+            + "WHERE m.medical_record_id = ? ";
     public static final String SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED = "SELECT m.last_changed FROM ddp_institution inst "
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
@@ -235,7 +251,7 @@ public class MedicalRecord implements HasDdpInstanceId {
                 rs.getBoolean(DBConstants.FOLLOWUP_REQUIRED), rs.getString(DBConstants.FOLLOWUP_REQUIRED_TEXT),
                 rs.getString(DBConstants.ADDITIONAL_VALUES_JSON), rs.getString(DBConstants.MR_UNABLE_OBTAIN_TEXT),
                 rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID),
-                rs.getBoolean(DBConstants.NO_ACTION_NEEDED));
+                false);
         return medicalRecord;
     }
 
