@@ -77,8 +77,8 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             throw new RuntimeException(String.format("Could not create data for participant data with id: %s for participant with guid: %s",
                     participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
         }
-        logger.info(String.format("Created data for participant data with id: %s for participant with guid: %s",
-                participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
+        logger.info(String.format("Created data for participant data with id: %d for participant with guid: %s",
+                (int) simpleResult.resultValue, participantData.getDdpParticipantId()));
         return (int) simpleResult.resultValue;
 
     }
