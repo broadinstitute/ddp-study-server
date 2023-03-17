@@ -92,10 +92,11 @@ public final class ElasticsearchServiceUtil {
                         httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
                     }
                     return httpClientBuilder;
-                })
-                .setMaxRetryTimeoutMillis(100000);
+                });
+                //.setMaxRetryTimeoutMillis(100000);
 
-        esClient = new RestHighLevelClient(builder);
+       esClient = new RestHighLevelClient(builder);
+
         ES_CLIENTS.put(key, esClient);
         log.info("Created new Elasticsearch client for URL: {}", url);
 

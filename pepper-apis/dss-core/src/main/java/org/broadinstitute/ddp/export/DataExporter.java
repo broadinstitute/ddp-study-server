@@ -145,7 +145,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.xcontent.XContentType;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -373,6 +373,7 @@ public class DataExporter {
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 log.error("[export] failed to export participants for study {}, continuing... ", studyDto.getGuid(), e);
             }
         }
