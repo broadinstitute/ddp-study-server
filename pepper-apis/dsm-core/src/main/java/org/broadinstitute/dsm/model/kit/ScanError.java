@@ -11,7 +11,6 @@ public class ScanError {
     public ScanError(String kit, String error) {
         this.kit = kit;
         this.error = error;
-        this.shortId = null;
     }
 
     public ScanError(String kit, String error, String shortId) {
