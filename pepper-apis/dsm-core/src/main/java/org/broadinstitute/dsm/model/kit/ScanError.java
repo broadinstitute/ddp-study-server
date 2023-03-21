@@ -6,9 +6,17 @@ import lombok.Data;
 public class ScanError {
     private String kit;
     private String error;
+    private String shortId;
 
     public ScanError(String kit, String error) {
         this.kit = kit;
         this.error = error;
+        this.shortId = null;
+    }
+
+    public ScanError(String kit, String error, String shortId) {
+        this.kit = kit;
+        this.error = error;
+        this.shortId = shortId;
     }
 }

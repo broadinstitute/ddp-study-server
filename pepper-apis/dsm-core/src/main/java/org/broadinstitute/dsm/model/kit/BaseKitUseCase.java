@@ -51,7 +51,7 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
 
     private boolean isScanErrorOnlyBspParticipantId(ScanError scanError, String bspCollaboratorParticipantId) {
         return (StringUtils.isBlank(scanError.getError()) && StringUtils.isBlank(scanError.getKit()))
-                || (scanError.getError().equals(scanError.getKit()) && scanError.getError().equals(bspCollaboratorParticipantId));
+                || (StringUtils.isBlank(scanError.getError()) && scanError.getShortId().equals(bspCollaboratorParticipantId));
     }
 
     protected BaseKitUseCase getDecoratedScanUseCase() {
