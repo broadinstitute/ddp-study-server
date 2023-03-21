@@ -75,14 +75,7 @@ public class DSMtasksSubscription {
                         break;
                     case ELASTIC_EXPORT:
                         consumer.ack();
-                        ExportToES.ExportPayload exportPayload = new Gson().fromJson(data, ExportToES.ExportPayload.class);
-                        if (exportPayload.isMigration()) {
-                            migrateToES(exportPayload);
-                        } else {
-                            boolean clearBeforeUpdate = attributesMap.containsKey(CLEAR_BEFORE_UPDATE) && Boolean.parseBoolean(
-                                    attributesMap.get(CLEAR_BEFORE_UPDATE));
-                            new ExportToES().exportObjectsToES(data, clearBeforeUpdate);
-                        }
+                        doESExport(attributesMap, data);
                         break;
                     case PARTICIPANT_REGISTERED:
                         generateStudyDefaultValues(consumer, attributesMap);
@@ -104,6 +97,17 @@ public class DSMtasksSubscription {
             logger.info("Started pubsub subscription receiver DSM tasks subscription");
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out while starting pubsub subscription for DSM tasks", e);
+        }
+    }
+
+    public static void doESExport(Map<String, String> attributesMap, String data) {
+        ExportToES.ExportPayload exportPayload = new Gson().fromJson(data, ExportToES.ExportPayload.class);
+        if (exportPayload.isMigration()) {
+            migrateToES(exportPayload);
+        } else {
+            boolean clearBeforeUpdate = attributesMap.containsKey(CLEAR_BEFORE_UPDATE) && Boolean.parseBoolean(
+                    attributesMap.get(CLEAR_BEFORE_UPDATE));
+            new ExportToES().exportObjectsToES(data, clearBeforeUpdate);
         }
     }
 
