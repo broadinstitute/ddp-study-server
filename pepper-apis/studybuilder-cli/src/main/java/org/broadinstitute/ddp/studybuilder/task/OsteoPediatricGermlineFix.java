@@ -25,9 +25,9 @@ public class OsteoPediatricGermlineFix implements CustomTask {
     private Config varsCfg;
 
     private String newExpr = " user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n" +
-            "                              && (( (operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n" +
-            "                                  || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n" +
-            "                                  )) ";
+            "  && (( (operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n" +
+            "  || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n" +
+            "  )) ";
 
 
     @Override
