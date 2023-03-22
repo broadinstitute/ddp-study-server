@@ -24,10 +24,14 @@ public class OsteoPediatricGermlineFix implements CustomTask {
     private Config studyCfg;
     private Config varsCfg;
 
-    private String newExpr = " user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n" +
-            "  && (( (operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n" +
-            "  || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n" +
-            "  )) ";
+    private String newExpr = " user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"]"
+            + ".questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"]"
+            + ".answers.hasTrue()\n"
+            + "  && (( (operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"CMI-OSTEO\"]"
+            + ".forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n"
+            + "  || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"]"
+            + ".questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7)\n"
+            + "  )) ";
 
 
     @Override
@@ -46,18 +50,19 @@ public class OsteoPediatricGermlineFix implements CustomTask {
         log.info("TASK:: OsteoPediatricGermlineFix  ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class)
                 .findByStudyGuid(studyCfg.getString("study.guid"));
-        long activityId = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(studyDto.getId(), "GERMLINE_CONSENT_ADDENDUM_PEDIATRIC").get();
+        long activityId = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(studyDto.getId(),
+                "GERMLINE_CONSENT_ADDENDUM_PEDIATRIC").get();
 
         List<Long> exprIds = new ArrayList<>();
         exprIds.add(getExpressionIdByActivityContentBlock(handle, activityId));
-        exprIds.add(getExpressionIdByQuestionStableCode(handle, activityId, "ADDENDUM_CONSENT_PATIENT_SINGATURE_PEDIATRIC", newExpr));
-        exprIds.add(getExpressionIdByQuestionStableCode(handle, activityId, "ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC", newExpr));
+        exprIds.add(getExpressionIdByQuestionStableCode(handle, activityId, "ADDENDUM_CONSENT_PATIENT_SINGATURE_PEDIATRIC"));
+        exprIds.add(getExpressionIdByQuestionStableCode(handle, activityId, "ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC"));
         SqlHelper helper = handle.attach(OsteoPediatricGermlineFix.SqlHelper.class);
         helper.updateExpressionText(newExpr, exprIds);
         log.info("updated expression Ids: {}", exprIds);
     }
 
-    private long getExpressionIdByQuestionStableCode(Handle handle, long activityId, String questionStableCode, String expr) {
+    private long getExpressionIdByQuestionStableCode(Handle handle, long activityId, String questionStableCode) {
         SqlHelper helper = handle.attach(OsteoPediatricGermlineFix.SqlHelper.class);
         Long exprId = helper.findBlockExpressionIdsByQuestionStableCode(activityId, questionStableCode);
         return exprId;
@@ -89,15 +94,16 @@ public class OsteoPediatricGermlineFix implements CustomTask {
                                                               @Bind("stableId") String stableId);
 
 
-        @SqlQuery("select e.expression_id, e.* from block_content as bt \n" +
-                "  left join block__expression be on be.block_id = bt.block_id \n" +
-                "  join expression e on e.expression_id = be.expression_id \n" +
-                "  where e.expression_text like '%operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7%'\n" +
-                "  and bt.block_id in \n" +
-                "  (select fsb.block_id \n" +
-                "  from form_activity__form_section as fafs \n" +
-                "  join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id \n" +
-                "  where fafs.form_activity_id = :activityId)")
+        @SqlQuery("select e.expression_id, e.* from block_content as bt \n"
+                + "  left join block__expression be on be.block_id = bt.block_id \n"
+                + "  join expression e on e.expression_id = be.expression_id \n"
+                + "  where e.expression_text like '%operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"]"
+                + ".questions[\"CHILD_CURRENT_AGE\"].answers.value() > 7%'\n"
+                + "  and bt.block_id in \n"
+                + "  (select fsb.block_id \n"
+                + "  from form_activity__form_section as fafs \n"
+                + "  join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id \n"
+                + "  where fafs.form_activity_id = :activityId)")
         Long findBlockExpressionIdByActivityContentAndExpr(@Bind("activityId") long activityId);
 
     }
