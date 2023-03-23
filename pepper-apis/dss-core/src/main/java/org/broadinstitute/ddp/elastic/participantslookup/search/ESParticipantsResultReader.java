@@ -70,7 +70,6 @@ public class ESParticipantsResultReader {
         }
         participantsLookupResult.setTotalCount((int) response.getHits().getTotalHits().value);
 
-        //participantsLookupResult.setTotalCount(Long.valueOf(response.getHits().getTotalHits()).intValue());
         return results;
     }
 }

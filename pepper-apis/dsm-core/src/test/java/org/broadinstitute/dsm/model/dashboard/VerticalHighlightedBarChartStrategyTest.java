@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.dashboard;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
@@ -15,7 +16,7 @@ public class VerticalHighlightedBarChartStrategyTest {
 
 
     @Test
-    public void get() {
+    public void get() throws IOException {
         String darkIndigo = "dark indigo";
         String yourCenter = "Your center";
         DashboardLabelDto mainLabel = new DashboardLabelDto.Builder()
