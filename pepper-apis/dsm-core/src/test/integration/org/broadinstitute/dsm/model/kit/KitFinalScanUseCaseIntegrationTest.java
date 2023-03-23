@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.model.kit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -74,6 +76,41 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(1, scanErrors.size());
         assertEquals(scanError, scanErrors.get(0));
+    }
+
+    @Test
+    public void kitFinalScanError() {
+        KitRequestShipping kitRequestShipping = getKitRequestShipping("ddpLabel", "TEST4");
+        kitRequestShipping.setDdpParticipantId("TEST_PARTICIPANT_GUID");
+        kitRequestShipping.setBspCollaboratorParticipantId("TEST_BSP_ID");
+
+        KitTypeDto kitTypeDto = KitTypeDto.builder()
+                .withRequiresInsertInKitTracking(false)
+                .withRequiredRole(0)
+                .withManualSentTrack(true)
+                .withNoReturn(true)
+                .build();
+        int kitTypeId = kitTypeDao.create(kitTypeDto);
+        kitTypeIds.add(kitTypeId);
+
+        kitRequestShipping.setKitTypeId(String.valueOf(kitTypeId));
+        setAndSaveKitRequestId(kitRequestShipping);
+        Integer kitId = kitDao.insertKit(kitRequestShipping);
+
+        kitIds.add(kitId);
+
+        List<ScanPayload> scanPayloads = Arrays.asList(
+                new SentAndFinalScanPayload("ddpLabel", "kitLabelMoreThan14")
+        );
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
+        KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
+        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
+        List<ScanError> scanErrors = kitFinalScanUseCase.get();
+        assertEquals(1, scanErrors.size());
+        assertNull(scanErrors.get(0).getError());
+        assertNotNull(scanErrors.get(0).getShortId());
+        assertEquals(scanErrors.get(0).isScanErrorOnlyBspParticipantId("TEST_BSP_ID"), true);
+
     }
 
 }

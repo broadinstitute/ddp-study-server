@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.kit;
 
 import lombok.Data;
+import spark.utils.StringUtils;
 
 @Data
 public class ScanError {
@@ -17,5 +18,10 @@ public class ScanError {
         this.kit = kit;
         this.error = error;
         this.shortId = shortId;
+    }
+
+    public boolean isScanErrorOnlyBspParticipantId(String bspCollaboratorParticipantId) {
+        return (StringUtils.isBlank(getError()) && StringUtils.isBlank(getKit()))
+                || (StringUtils.isBlank(getError()) && getShortId().equals(bspCollaboratorParticipantId));
     }
 }
