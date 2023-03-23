@@ -5,7 +5,7 @@ import org.broadinstitute.dsm.model.kit.ScanError;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class KitFinalScanTest {
+public class KitScanErrorTest {
 
     @Test
     public void testIsScanErrorOnlyBspParticipantId(){
