@@ -152,7 +152,7 @@ public class ATCPConsentVersion2 implements CustomTask {
     private void revisionVariableTranslation(TemplateVariable templateVariable,
                                              RevisionMetadata meta, ActivityVersionDto version2) {
         log.info("revisioning and updating template variable: {}", templateVariable.getName());
-        List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(templateVariable.getName());
+        List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdsByVariableName(templateVariable.getName());
         log.info("Tmpl variableId count: {} ", templateVariableIdByVariableNames.size());
         for (Long tmplVarId : templateVariableIdByVariableNames) {
             List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
@@ -171,8 +171,13 @@ public class ATCPConsentVersion2 implements CustomTask {
                         newTxt, currentText);
 
                 substitutionIds.add(currTranslation.getId().get());
-                jdbiVarSubst.insert(currTranslation.getLanguageCode(), templateVariable.getTranslation(language).get().getText(),
-                        version2.getRevId(), tmplVarId);
+                if ("en".equalsIgnoreCase(currTranslation.getLanguageCode())) {
+                    jdbiVarSubst.insert(currTranslation.getLanguageCode(), templateVariable.getTranslation(language).get().getText(),
+                            version2.getRevId(), tmplVarId);
+                } else {
+                    //use the value in DB
+                    jdbiVarSubst.insert(currTranslation.getLanguageCode(), currTranslation.getText(), version2.getRevId(), tmplVarId);
+                }
             }
             int[] ids = jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(substitutionIds, revIds);
             if (ids.length != revIds.length) {
@@ -227,7 +232,7 @@ public class ATCPConsentVersion2 implements CustomTask {
         //would be nice if we can filter by studyId so that we query only latest active study variables
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variableName "
                 + "order by template_variable_id desc")
-        List<Long> findTemplateVariableIdByVariableNames(@Bind("variableName") String variableName);
+        List<Long> findTemplateVariableIdsByVariableName(@Bind("variableName") String variableName);
 
         /**
          * Find the content block that has the given body template text. Make sure it is from a block that belongs in the expected activity
