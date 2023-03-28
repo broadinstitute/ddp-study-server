@@ -43,6 +43,7 @@ import java.util.List;
 public class ATCPConsentVersion2 implements CustomTask {
 
     private static final String DATA_FILE = "patches/consent-version-2.conf";
+    private static final String DATA_FILE_2 = "patches/consent-edit-version-2.conf";
     private static final String ATCP_STUDY = "atcp";
     private static final String VARIABLES_UPD = "variables-update";
     private static final String BLOCK_KEY = "blockNew";
@@ -52,6 +53,7 @@ public class ATCPConsentVersion2 implements CustomTask {
     private static final Gson gson = GsonUtil.standardGson();
 
     private Config dataCfg;
+    private Config dataCfg2;
     private Config varsCfg;
     private Path cfgPath;
     private Instant timestamp;
@@ -70,6 +72,11 @@ public class ATCPConsentVersion2 implements CustomTask {
             throw new DDPException("Data file is missing: " + file);
         }
         dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
+        File file2 = cfgPath.getParent().resolve(DATA_FILE_2).toFile();
+        if (!file2.exists()) {
+            throw new DDPException("Consent edit Data file is missing: " + file);
+        }
+        dataCfg2 = ConfigFactory.parseFile(file2).resolveWith(varsCfg);
         this.cfgPath = cfgPath;
         this.varsCfg = varsCfg;
 
@@ -105,6 +112,9 @@ public class ATCPConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForConsent = getVersion2(handle, studyDto, metaConsent, activityCodeConsent);
         runConsentUpdate(handle, metaConsent, version2ForConsent);
 
+        //revision CONSENT_EDIT
+        ActivityVersionDto version2ForConsentEdit = getVersion2(handle, studyDto, metaConsent, "CONSENT_EDIT");
+        runConsentEditUpdate(metaConsent, version2ForConsentEdit);
     }
 
     private ActivityVersionDto getVersion2(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
@@ -113,8 +123,12 @@ public class ATCPConsentVersion2 implements CustomTask {
     }
 
     private void runConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
-        updateTemplates(handle, meta, version2);
-        updateTemplateVariables(meta, version2, dataCfg);
+        updateTemplates(handle, meta, version2); //revision full Template
+        updateTemplateVariables(meta, version2, dataCfg); //revision only variables in the Template
+    }
+
+    private void runConsentEditUpdate(RevisionMetadata meta, ActivityVersionDto version2) {
+        updateTemplateVariables(meta, version2, dataCfg2);
     }
 
     private void updateTemplates(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
@@ -164,7 +178,6 @@ public class ATCPConsentVersion2 implements CustomTask {
             if (ids.length != revIds.length) {
                 throw new DDPException("returned ids length " + ids.length + "  doesnt match revIds passed length " + revIds.length);
             }
-            log.info("updated ids: {}", ids);
             log.info("revisioned and updated template variable: {}", tmplVarId);
         }
     }
@@ -237,11 +250,6 @@ public class ATCPConsentVersion2 implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
-        @SqlQuery("select bt.* from block_content as bt"
-                + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
-                + " where tmpl.template_text like :text")
-        @RegisterConstructorMapper(BlockContentDto.class)
-        BlockContentDto findContentBlockByBodyTextSimplified(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
     }
 
 }
