@@ -101,7 +101,6 @@ public class AtcpAssentV2 implements CustomTask {
         long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
         JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-        List<Long> transListIds = transList.stream().map(Translation::getId).map(Optional::get).collect(Collectors.toList());
         List<Long> revisionIdList = transList.stream().map(Translation::getRevisionId).map(Optional::get).collect(Collectors.toList());
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         long newSubRevId = jdbiRevision.copyAndTerminate(revisionIdList.get(0), meta.getTimestamp(), meta.getUserId(), meta.getReason());
