@@ -691,6 +691,15 @@ commands:
         default: *ddp_cache_md5_file
     steps:
       - run:
+          name: Check CircleToken API Credentials
+          command: |
+            token_status_code=$(curl -s -o /dev/null -w "%{http_code}" "https://circleci.com/api/v2/me" --header "Circle-Token:$CIRCLE_TOKEN")
+            if [[ $token_status_code != "200" ]]; then
+              echo "The CircleCI *personal* API Token is no longer valid.  Please update the value of the environment variable CIRCLE_TOKEN."
+              echo "Stopping build"
+              exit 1
+            fi
+      - run:
           name: Download ddp-cache-md5 artifact
           command: |
             ddp_cache_md5='<<parameters.ddp_cache_md5_file>>'
