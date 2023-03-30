@@ -31,7 +31,7 @@ public class KitReceivedUseCaseTest extends KitBaseUseCaseTest {
                 new SentAndFinalScanPayload("ddpLabel", "kitLabel")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
-        KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
+        KitPayload kitPayload = new KitPayload(scanPayloads, USER_ID, ddpInstanceDto);
         KitReceivedUseCase kitReceivedUseCase = new KitReceivedUseCase(kitPayload, kitDao, null);
         List<ScanError> scanErrors = kitReceivedUseCase.get();
         assertEquals(0, scanErrors.size());

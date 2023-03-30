@@ -35,4 +35,34 @@ public class KitScanErrorTest {
         ScanError realScanError2 = new ScanError(kit, error, shortId);
         Assert.assertFalse(realScanError2.isScanErrorOnlyBspParticipantId("TEST_SHORT_ID"));
     }
+
+    @Test
+    public void testScanErrorNullShortIdBroken(){
+        String kit = "TEST_KIT_LABEL";
+        String error = null;
+        String shortId = "TEST_SHORT_ID";
+
+        ScanError realScanError2 = new ScanError(kit, error, shortId);
+        Assert.assertFalse(realScanError2.isScanErrorOnlyBspParticipantId("TEST_SHORT_ID_BROKEN"));
+    }
+
+    @Test
+    public void testScanErrorNullShortIdNull(){
+        String kit = "TEST_KIT_LABEL";
+        String error = null;
+        String shortId = null;
+
+        ScanError realScanError2 = new ScanError(kit, error, shortId);
+        Assert.assertFalse(realScanError2.isScanErrorOnlyBspParticipantId("TEST_SHORT_ID"));
+    }
+
+    @Test
+    public void testScanErrorNullKitNull(){
+        String kit = null;
+        String error = null;
+        String shortId = "TEST_SHORT_ID";
+
+        ScanError realScanError2 = new ScanError(kit, error, shortId);
+        Assert.assertTrue(realScanError2.isScanErrorOnlyBspParticipantId("TEST_SHORT_ID"));
+    }
 }

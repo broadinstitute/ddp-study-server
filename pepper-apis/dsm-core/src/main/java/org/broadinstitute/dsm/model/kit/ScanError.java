@@ -21,7 +21,7 @@ public class ScanError {
     }
 
     public boolean isScanErrorOnlyBspParticipantId(String bspCollaboratorParticipantId) {
-        return (StringUtils.isBlank(getError()) && StringUtils.isBlank(getKit()))
-                || (StringUtils.isBlank(getError()) && getShortId().equals(bspCollaboratorParticipantId));
+        return (StringUtils.isBlank(getError()) && StringUtils.isBlank(getKit())) || (StringUtils.isBlank(getError())
+                && StringUtils.isNotBlank(getShortId()) && getShortId().equalsIgnoreCase(bspCollaboratorParticipantId));
     }
 }

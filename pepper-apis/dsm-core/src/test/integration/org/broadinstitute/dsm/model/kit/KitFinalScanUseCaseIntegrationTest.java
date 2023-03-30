@@ -38,7 +38,7 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
                 new SentAndFinalScanPayload("ddpLabel2", "kitLabelMoreThan142")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
-        KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
+        KitPayload kitPayload = new KitPayload(scanPayloads, USER_ID, ddpInstanceDto);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(0, scanErrors.size());
@@ -71,7 +71,7 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
                 new SentAndFinalScanPayload("ddpLabel", "kitLabelMoreThan14")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
-        KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
+        KitPayload kitPayload = new KitPayload(scanPayloads, USER_ID, ddpInstanceDto);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(1, scanErrors.size());
@@ -103,7 +103,7 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
                 new SentAndFinalScanPayload("ddpLabel", "kitLabelMoreThan14")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
-        KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
+        KitPayload kitPayload = new KitPayload(scanPayloads, USER_ID, ddpInstanceDto);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(1, scanErrors.size());

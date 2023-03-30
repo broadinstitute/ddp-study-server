@@ -21,6 +21,8 @@ public class KitBaseUseCaseTest {
     protected static final List<Integer> kitTypeIds = new ArrayList<>();
     protected static final TestInstanceCreator testInstance = new TestInstanceCreator();
 
+    protected static int USER_ID = 94;
+
     @BeforeClass
     public static void setUp() {
         testInstance.create();
