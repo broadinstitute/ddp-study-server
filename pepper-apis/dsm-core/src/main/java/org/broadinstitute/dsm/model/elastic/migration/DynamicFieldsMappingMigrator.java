@@ -45,6 +45,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
         for (FieldSettingsDto fieldSettingsDto : fieldSettingsByStudyName) {
             parser.setDisplayType(fieldSettingsDto.getDisplayType());
             parser.setPossibleValuesJson(fieldSettingsDto.getPossibleValues());
+            parser.setFieldName(fieldSettingsDto.getColumnName());
             String fieldType = fieldSettingsDto.getFieldType();
             PropertyInfo propertyInfo = PropertyInfo.of(fieldType);
             if (propertyInfo != null) {
