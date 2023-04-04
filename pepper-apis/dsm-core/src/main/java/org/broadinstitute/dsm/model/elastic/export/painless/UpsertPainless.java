@@ -41,7 +41,6 @@ public class UpsertPainless implements Exportable {
         updateByQueryRequest.setMaxRetries(5);
         updateByQueryRequest.setRefresh(true);
         updateByQueryRequest.setAbortOnVersionConflict(false);
-        logger.info("Export isAbortOnVersionConflict: " + updateByQueryRequest.isAbortOnVersionConflict());
         for (int tryNum = 1; tryNum < 3; tryNum++) {
             if (executeExport(clientInstance, updateByQueryRequest, tryNum)) {
                 break;
