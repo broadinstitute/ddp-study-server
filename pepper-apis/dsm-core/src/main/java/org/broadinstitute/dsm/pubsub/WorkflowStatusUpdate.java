@@ -81,10 +81,8 @@ public class WorkflowStatusUpdate {
                                 participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
                                         participantDataDto.getFieldTypeId().get()));
                         logger.info("ddpParticipantId: " + ddpParticipantId + " hasGenomicStudyGroup " + hasGenomicStudyGroup);
-                        if (!hasGenomicStudyGroup) {
-                            ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
-                            basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
-                        }
+                        ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
+                        basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
                     }
                 } catch (Exception e) {
                     logger.error("Couldn't add AT default values");
