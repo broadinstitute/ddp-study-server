@@ -502,8 +502,6 @@ public class ElasticSearchUtil {
             Map<String, Object> workflowMapES = getObjectsMap(client, index, participantId, ESObjectConstants.WORKFLOWS);
             String workflow = workflowForES.getWorkflow();
             String status = workflowForES.getStatus();
-            logger.info("STATUS: "+status);
-            logger.info("Workflow: "+workflow);
             if (workflowMapES != null && !workflowMapES.isEmpty() && !clearBeforeUpdate) {
                 List<Map<String, Object>> workflowListES = (List<Map<String, Object>>) workflowMapES.get(ESObjectConstants.WORKFLOWS);
                 if (workflowListES != null && !workflowListES.isEmpty()) {
@@ -518,7 +516,6 @@ public class ElasticSearchUtil {
             } else {
                 workflowMapES = addWorkflows(workflow, status, workflowForES.getStudySpecificData());
             }
-            logger.info("WorkflowMapES: "+ workflowMapES);
 
             if (client != null) {
                 updateRequest(client, ddpParticipantId, index, workflowMapES);
