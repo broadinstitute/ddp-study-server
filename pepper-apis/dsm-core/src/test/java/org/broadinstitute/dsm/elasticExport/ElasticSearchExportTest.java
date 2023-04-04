@@ -12,7 +12,7 @@ import org.junit.Test;
 @Slf4j
 public class ElasticSearchExportTest {
     @Before
-    public static void first(){
+    public void first(){
         setupDB();
     }
 
