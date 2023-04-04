@@ -111,7 +111,7 @@ public class DSMtasksSubscription {
         }
     }
 
-    private static void migrateToES(ExportToES.ExportPayload exportPayload) {
+    public static void migrateToES(ExportToES.ExportPayload exportPayload) {
         String study = exportPayload.getStudy();
         Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
         maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {

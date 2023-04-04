@@ -53,5 +53,13 @@ public class ExportToES {
         public boolean isMigration() {
             return isMigration;
         }
+
+        public void setStudy(String study) {
+            this.study = study;
+        }
+
+        public void setIsMigration(boolean isMigration) {
+            this.isMigration = isMigration;
+        }
     }
 }
