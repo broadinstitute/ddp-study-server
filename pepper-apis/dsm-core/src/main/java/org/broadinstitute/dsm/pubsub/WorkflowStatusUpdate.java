@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
@@ -26,6 +27,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class WorkflowStatusUpdate {
     public static final String STUDY_GUID = "studyGuid";
     public static final String PARTICIPANT_GUID = "participantGuid";
@@ -77,14 +79,9 @@ public class WorkflowStatusUpdate {
 
                 try {
                     if (isATRelatedStatusUpdate(studyGuid)) {
-                        boolean hasGenomicStudyGroup = participantDatas.stream().anyMatch(
-                                participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
-                                        participantDataDto.getFieldTypeId().get()));
-                        logger.info("ddpParticipantId: " + ddpParticipantId + " hasGenomicStudyGroup " + hasGenomicStudyGroup);
-                        if (!hasGenomicStudyGroup) {
-                            ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
-                            basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
-                        }
+                        log.info("uploading AT values for ddpParticipantId: ", ddpParticipantId);
+                        ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
+                        basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
                     }
                 } catch (Exception e) {
                     logger.error("Couldn't add AT default values");
