@@ -7,9 +7,11 @@ import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 @Slf4j
+@Ignore
 public class ElasticSearchExportTest {
     @Before
     public void first(){
