@@ -1,18 +1,19 @@
 package org.broadinstitute.dsm.elasticExport;
 
+import static org.broadinstitute.dsm.TestHelper.setupDB;
+
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 @Slf4j
 public class ElasticSearchExportTest {
-    @BeforeClass
+    @Before
     public static void first(){
-        TestHelper.setupDB();
+        setupDB();
     }
 
     @Test
