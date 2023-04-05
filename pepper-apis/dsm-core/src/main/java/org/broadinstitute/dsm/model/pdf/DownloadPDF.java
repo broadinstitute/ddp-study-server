@@ -199,10 +199,12 @@ public class DownloadPDF {
                     ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
             ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, ddpParticipantId);
             if (ddpParticipant == null) {
+                logger.info("No participant found with guid "+ ddpParticipantId+ ", going to check legacy id");
                 Profile participantProfile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(
                         ddpInstance.getParticipantIndexES(), ddpParticipantId).orElseThrow();
                 if (StringUtils.isNotBlank(participantProfile.getLegacyAltPid())) {
                     String legacyAltPid = participantProfile.getLegacyAltPid();
+                    logger.info("Participant has legacy id "+ legacyAltPid);
                     ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, legacyAltPid);
                     medicalInfo = ElasticSearchUtil.getParticipantAsMedicalInfo(participantsESData, legacyAltPid);
                 } else {

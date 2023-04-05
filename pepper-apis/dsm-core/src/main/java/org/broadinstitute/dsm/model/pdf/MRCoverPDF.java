@@ -10,6 +10,7 @@ import java.util.Set;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -24,6 +25,7 @@ import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 
+@Slf4j
 public class MRCoverPDF {
     private final String jsonStartDate = "startDate";
     private final String jsonEndDate = "endDate";
@@ -59,7 +61,8 @@ public class MRCoverPDF {
         if (medicalRecord == null) {
             Profile participantProfile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(
                     ddpInstance.getParticipantIndexES(), originalDownloadPDF.getDdpParticipantId()).orElseThrow();
-            if (StringUtils.isNotBlank(participantProfile.getLegacyAltPid())){
+            if (StringUtils.isNotBlank(participantProfile.getLegacyAltPid())) {
+                log.info("Participant has legacy id "+ participantProfile.getLegacyAltPid());
                 medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), participantProfile.getLegacyAltPid(),
                         originalDownloadPDF.getMedicalRecordId());
             }
