@@ -79,7 +79,7 @@ public class WorkflowStatusUpdate {
 
                 try {
                     if (isATRelatedStatusUpdate(studyGuid)) {
-                        log.info("uploading AT values for ddpParticipantId: ", ddpParticipantId);
+                        log.info("uploading AT values for ATCP participant: {} .. workflow: {} .. status: {} ", ddpParticipantId, workflow, status);
                         ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
                         basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
                     }
