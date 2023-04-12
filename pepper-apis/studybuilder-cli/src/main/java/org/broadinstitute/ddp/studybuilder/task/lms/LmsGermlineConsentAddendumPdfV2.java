@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.lms;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -8,13 +8,14 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.PdfBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-public class LmsGermlineConsentPdfV2 implements CustomTask {
+public class LmsGermlineConsentAddendumPdfV2 implements CustomTask {
 
     private static final String DATA_FILE = "patches/germline-consent-addendum-pdfs-v2.conf";
     private static final String STUDY_GUID = "cmi-lms";
@@ -47,25 +48,9 @@ public class LmsGermlineConsentPdfV2 implements CustomTask {
 
         List<? extends Config> pdfs = dataCfg.getConfigList("pdfs");
 
-        //insert new version
+        //insert pdf configs and templates
         PdfBuilder pdfBuilder = new PdfBuilder(cfgPath.getParent(), studyCfg, studyDto, adminUser.getUserId());
         pdfs.forEach(pdf -> pdfBuilder.insertPdfConfig(handle, pdf));
-
-        //insert email events
-        //LmsInsertGermlinePdfEmailEvents pdfEmailEvents = new LmsInsertGermlinePdfEmailEvents();
-        //pdfEmailEvents.run(handle);
-
-    }
-
-    public class LmsInsertGermlinePdfEmailEvents extends InsertStudyEvents {
-        public LmsInsertGermlinePdfEmailEvents() {
-            super("cmi-lms", DATA_FILE);
-        }
-
-        @Override
-        public void run(final Handle handle) {
-            super.run(handle);
-        }
     }
 
 }
