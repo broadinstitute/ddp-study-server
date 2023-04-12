@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 
 public class DateValueProvider extends TextValueProvider {
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
 
     private static String parseDate(Object dateValue) {
         if (dateValue == null) {
