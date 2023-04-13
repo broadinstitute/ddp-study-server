@@ -6,13 +6,18 @@ import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
+import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -46,6 +51,8 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
     private static final String VARIABLES_UPD = "variables-update";
     private static final String BLOCK_KEY = "blockNew";
     private static final String BLOCK_UPDATES = "block-updates";
+    private static final String BLOCK_ADD = "block-add";
+
     private static final String OLD_TEMPLATE_KEY = "old_template_search_text";
 
     private static final Gson gson = GsonUtil.standardGson();
@@ -104,7 +111,11 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
 
         log.info("Revisioning: {} ", activityCode);
         ActivityVersionDto version2ForConsent = getVersion2(handle, studyDto, metaConsent, activityCode);
+
         runGermlinePedConsentUpdate(handle, metaConsent, version2ForConsent, dataCfg);
+
+        //disable Child Date Question & add new Content block with sys date
+        disableQuestion(handle, studyDto.getId(), metaConsent, version2ForConsent);
     }
 
     private ActivityVersionDto getVersion2(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
@@ -115,6 +126,7 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
     private void runGermlinePedConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version2, Config dataCfg) {
         updateTemplates(handle, meta, version2, dataCfg); //revision full Template
         updateTemplateVariables(meta, version2, dataCfg); //revision only variables in the Template
+
     }
 
     private void updateTemplates(Handle handle, RevisionMetadata meta, ActivityVersionDto version2, Config dataCfg) {
@@ -206,6 +218,35 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
+    private void addContentBlock(Handle handle, ActivityVersionDto versionDto, Config conf
+            , long sectionId, int displayOrder) {
+
+        ContentBlockDef contentBlockDef = gson.fromJson(ConfigUtil.toJson(conf), ContentBlockDef.class);
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        sectionBlockDao.insertBlockForSection(versionDto.getActivityId(), sectionId,
+                displayOrder, contentBlockDef, versionDto.getRevId());
+        log.info("Created block_content");
+    }
+
+    private void disableQuestion(Handle handle, Long studyId, RevisionMetadata meta, ActivityVersionDto versionDto) {
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        JdbiFormSectionBlock jdbiFormSectionBlock = handle.attach(JdbiFormSectionBlock.class);
+
+        QuestionDto dateDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC").get();
+        long childDateBlockId = this.sqlHelper.findQuestionBlockId(dateDto.getId());
+        SectionBlockMembershipDto dateSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(childDateBlockId).get();
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        sectionBlockDao.disableBlock(childDateBlockId, meta);
+        log.info("Disabled Question: ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC . blockId: {} ", childDateBlockId);
+
+        dateSectionDto.getDisplayOrder();
+
+        long sectionId = dateSectionDto.getSectionId();
+        addContentBlock(handle, versionDto, dataCfg.getConfig(BLOCK_ADD), sectionId, dateSectionDto.getDisplayOrder() + 10);
+        log.info("Added new sysdate content block");
+
+    }
+
     private interface SqlHelper extends SqlObject {
 
         /**
@@ -245,6 +286,10 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
                 + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
                 + "                        where fafs.form_activity_id = :activityId)")
         Long findVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
+
+        @SqlQuery("select block_id from block__question where question_id = :questionId")
+        int findQuestionBlockId(@Bind("questionId") long questionId);
+
     }
 
 }
