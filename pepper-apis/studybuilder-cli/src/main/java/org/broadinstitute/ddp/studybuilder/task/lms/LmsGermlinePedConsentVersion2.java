@@ -52,9 +52,8 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
     private static final String BLOCK_KEY = "blockNew";
     private static final String BLOCK_UPDATES = "block-updates";
     private static final String BLOCK_ADD = "block-add";
-
     private static final String OLD_TEMPLATE_KEY = "old_template_search_text";
-
+    private static final String DATE_QUESTION_STABLEID = "ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC";
     private static final Gson gson = GsonUtil.standardGson();
 
     private Config dataCfg;
@@ -218,8 +217,8 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
-    private void addContentBlock(Handle handle, ActivityVersionDto versionDto, Config conf
-            , long sectionId, int displayOrder) {
+    private void addContentBlock(Handle handle, ActivityVersionDto versionDto, Config conf,
+                                 long sectionId, int displayOrder) {
 
         ContentBlockDef contentBlockDef = gson.fromJson(ConfigUtil.toJson(conf), ContentBlockDef.class);
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
@@ -231,20 +230,16 @@ public class LmsGermlinePedConsentVersion2 implements CustomTask {
     private void disableQuestion(Handle handle, Long studyId, RevisionMetadata meta, ActivityVersionDto versionDto) {
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
         JdbiFormSectionBlock jdbiFormSectionBlock = handle.attach(JdbiFormSectionBlock.class);
-
-        QuestionDto dateDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC").get();
+        QuestionDto dateDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, DATE_QUESTION_STABLEID).get();
         long childDateBlockId = this.sqlHelper.findQuestionBlockId(dateDto.getId());
         SectionBlockMembershipDto dateSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(childDateBlockId).get();
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         sectionBlockDao.disableBlock(childDateBlockId, meta);
-        log.info("Disabled Question: ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC . blockId: {} ", childDateBlockId);
-
+        log.info("Disabled Question: {} . blockId: {} ", DATE_QUESTION_STABLEID, childDateBlockId);
         dateSectionDto.getDisplayOrder();
-
         long sectionId = dateSectionDto.getSectionId();
         addContentBlock(handle, versionDto, dataCfg.getConfig(BLOCK_ADD), sectionId, dateSectionDto.getDisplayOrder() + 10);
         log.info("Added new sysdate content block");
-
     }
 
     private interface SqlHelper extends SqlObject {
