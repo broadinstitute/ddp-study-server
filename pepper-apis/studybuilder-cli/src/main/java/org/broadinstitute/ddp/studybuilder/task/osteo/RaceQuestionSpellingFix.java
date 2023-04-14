@@ -46,10 +46,10 @@ public class RaceQuestionSpellingFix implements CustomTask {
     public void run(Handle handle) {
         helper = handle.attach(RaceQuestionSpellingFix.SqlHelper.class);
         log.info("Fix Race question prompt in study: {} activity: {}.", STUDY, dataCfg.getString("activityCode"));
-        updateQuestionPromptNoteText();
+        updateQuestionPromptNote();
     }
 
-    private void updateQuestionPromptNoteText() {
+    private void updateQuestionPromptNote() {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
             String oldValue = config.getString(TRANSLATION_OLD);
