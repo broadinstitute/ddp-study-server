@@ -24,6 +24,7 @@ public class RaceQuestionSpellingFix implements CustomTask {
     private static final String TRANSLATION_UPDATES = "translation-updates";
     private static final String TRANSLATION_NEW = "newValue";
     private static final String TRANSLATION_OLD = "oldValue";
+    private static final String TRANSLATION_LANG = "language";
 
     private Config dataCfg;
     private SqlHelper helper;
@@ -52,10 +53,9 @@ public class RaceQuestionSpellingFix implements CustomTask {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
             String oldValue = config.getString(TRANSLATION_OLD);
-            String language = config.getString("language");
+            String language = config.getString(TRANSLATION_LANG);
             List<Long> templateSubstitutionIdList = helper.findTemplateSubstitutionIdBySubstitutionValue(oldValue, language);
             templateSubstitutionIdList.forEach((id) -> helper.updateVarSubstitutionValue(id, config.getString(TRANSLATION_NEW)));
-            log.info("Updated total DB rows: {}", templateSubstitutionIdList.size());
         }
     }
 
@@ -76,7 +76,6 @@ public class RaceQuestionSpellingFix implements CustomTask {
                 throw new DDPException("Expected to update 1 substitution_value for i18n_template_substitution_id = "
                         + templateSubsId + " but updated " + numUpdated);
             }
-            log.info("Updated substitution_value for i18n_template_substitution_id = {} row in i18n_template_substitution", templateSubsId);
         }
     }
 }
