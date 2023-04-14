@@ -94,11 +94,11 @@ public class LmsConsentVersion2 implements CustomTask {
 
     private ActivityVersionDto getVersion2(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-        return activityDao.changeVersion(activityId, "v3", meta);
+        return activityDao.changeVersion(activityId, "v2", meta);
     }
 
-    private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version3) {
-        updateAdultVariables(handle, meta, version3, dataCfg);
+    private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+        updateAdultVariables(handle, meta, version2, dataCfg);
     }
 
     private void updateAdultVariables(Handle handle, RevisionMetadata meta,
