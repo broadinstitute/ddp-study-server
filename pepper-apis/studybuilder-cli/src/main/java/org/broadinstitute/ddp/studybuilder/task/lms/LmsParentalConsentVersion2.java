@@ -44,7 +44,6 @@ public class LmsParentalConsentVersion2 implements CustomTask {
     private Config cfg;
     private ActivityDao activityDao;
     private SqlHelper sqlHelper;
-    //private SectionBlockDao sectionBlockDao;
     private JdbiVariableSubstitution jdbiVarSubst;
     private JdbiRevision jdbiRevision;
 
@@ -83,7 +82,6 @@ public class LmsParentalConsentVersion2 implements CustomTask {
         RevisionMetadata metaConsent = new RevisionMetadata(ts, adminUser.getId(), reasonConsent);
         this.activityDao = handle.attach(ActivityDao.class);
         this.sqlHelper = handle.attach(SqlHelper.class);
-        //this.sectionBlockDao = handle.attach(SectionBlockDao.class);
         this.jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         this.jdbiRevision = handle.attach(JdbiRevision.class);
 
