@@ -116,7 +116,6 @@ public class LmsConsentAssentVersion2 implements CustomTask {
         log.info("revisioning and updating template variable: {}", varName);
         List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(varName);
         for (Long tmplVarId : templateVariableIdByVariableNames) {
-            //Long tmplVarId = templateVariableIdByVariableNames.get(0);
             List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
             Translation currTranslation = transList.get(0);
 
