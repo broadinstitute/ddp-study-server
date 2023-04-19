@@ -4,30 +4,32 @@ package org.broadinstitute.dsm.model.filter.postfilter.osteo;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.postfilter.BaseStudyPostFilter;
-import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterStrategy;
 
 
-public class OldOsteoPostFilter extends BaseStudyPostFilter {
+/**
+ * A class that filters Activity and nested Medical Record, OncHistory and KitShippingRequest documents so that
+ * information commingled in an Elasticsearch index is cleaned and tailored to the OS1 use case.
+ */
+public class ActivityAndDdpIdPostFilter extends BaseStudyPostFilter {
 
     private final StudyPostFilterStrategy<Activities> oldOsteoFilter;
 
-    private final NewOsteoPostFilterStrategy oldOsteoOncHistoryFilter;
+    private final DsmDdpInstanceIdPostFilter ddpInstanceIdFilter;
 
-    protected OldOsteoPostFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
+    protected ActivityAndDdpIdPostFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         super(elasticSearchParticipantDto, ddpInstanceDto);
         this.oldOsteoFilter = new OldOsteoPostFilterStrategy();
-        this.oldOsteoOncHistoryFilter = new NewOsteoPostFilterStrategy(ddpInstanceDto);
+        this.ddpInstanceIdFilter = new DsmDdpInstanceIdPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
     }
 
     public static StudyPostFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
-        return new OldOsteoPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
+        return new ActivityAndDdpIdPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
     }
 
     @Override
@@ -36,12 +38,7 @@ public class OldOsteoPostFilter extends BaseStudyPostFilter {
                 .filter(oldOsteoFilter)
                 .collect(Collectors.toList());
         elasticSearchParticipantDto.setActivities(filteredActivities);
-        elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-            List<OncHistoryDetail> filteredOncHistoryDetails = esDsm.getOncHistoryDetail().stream()
-                    .filter(oldOsteoOncHistoryFilter)
-                    .collect(Collectors.toList());
-            esDsm.setOncHistoryDetail(filteredOncHistoryDetails);
-        });
+        this.ddpInstanceIdFilter.filter();
     }
 
 }

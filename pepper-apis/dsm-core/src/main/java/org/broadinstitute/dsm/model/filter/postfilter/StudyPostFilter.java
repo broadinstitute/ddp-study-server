@@ -3,8 +3,8 @@ package org.broadinstitute.dsm.model.filter.postfilter;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.filter.postfilter.osteo.NewOsteoPostFilter;
-import org.broadinstitute.dsm.model.filter.postfilter.osteo.OldOsteoPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.osteo.DsmDdpInstanceIdPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.osteo.ActivityAndDdpIdPostFilter;
 
 public interface StudyPostFilter {
 
@@ -15,9 +15,9 @@ public interface StudyPostFilter {
         Optional<StudyPostFilter> studyPostFilter = Optional.empty();
         DDPInstanceDto ddpInstanceDto = studyPostFilterPayload.getDdpInstanceDto();
         if (isNewOsteoInstance(ddpInstanceDto)) {
-            studyPostFilter = Optional.of(NewOsteoPostFilter.of(studyPostFilterPayload.getElasticSearchParticipantDto(), ddpInstanceDto));
+            studyPostFilter = Optional.of(DsmDdpInstanceIdPostFilter.of(studyPostFilterPayload.getElasticSearchParticipantDto(), ddpInstanceDto));
         } else if (isOldOsteoInstance(ddpInstanceDto)) {
-            studyPostFilter = Optional.of(OldOsteoPostFilter.of(studyPostFilterPayload.getElasticSearchParticipantDto(), ddpInstanceDto));
+            studyPostFilter = Optional.of(ActivityAndDdpIdPostFilter.of(studyPostFilterPayload.getElasticSearchParticipantDto(), ddpInstanceDto));
         }
         return studyPostFilter;
     }

@@ -4,11 +4,14 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterStrategy;
 
-public class NewOsteoPostFilterStrategy implements StudyPostFilterStrategy<HasDdpInstanceId> {
+/**
+ * A class that implements the StudyPostFilterStrategy by checking if a document has a specific Instance ID value.
+ */
+public class DdpInstanceIdPostFilterStrategy implements StudyPostFilterStrategy<HasDdpInstanceId> {
 
     private final DDPInstanceDto ddpInstanceDto;
 
-    public NewOsteoPostFilterStrategy(DDPInstanceDto ddpInstanceDto) {
+    public DdpInstanceIdPostFilterStrategy(DDPInstanceDto ddpInstanceDto) {
         this.ddpInstanceDto = ddpInstanceDto;
     }
 
