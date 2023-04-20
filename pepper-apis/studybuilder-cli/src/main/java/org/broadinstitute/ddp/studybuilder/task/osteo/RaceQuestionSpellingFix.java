@@ -57,9 +57,10 @@ public class RaceQuestionSpellingFix implements CustomTask {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
             String oldValue = config.getString(OLD_VALUE);
+            String newValue = config.getString(NEW_VALUE);
             String language = config.getString(LANGUAGE);
             List<Long> templateSubstitutionIdList = helper.findTemplateSubstitutionIdBySubstitutionValue(oldValue, language);
-            templateSubstitutionIdList.forEach((id) -> helper.updateVarSubstitutionValue(id, config.getString(NEW_VALUE)));
+            templateSubstitutionIdList.forEach((id) -> helper.updateVarSubstitutionValue(id, newValue));
         }
     }
 
