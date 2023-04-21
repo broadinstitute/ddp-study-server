@@ -22,9 +22,10 @@ public class RaceQuestionSpellingFix implements CustomTask {
     private static final String STUDY = "CMI-OSTEO";
 
     private static final String TRANSLATION_UPDATES = "translation-updates";
-    private static final String TRANSLATION_NEW = "newValue";
-    private static final String TRANSLATION_OLD = "oldValue";
-    private static final String TRANSLATION_LANG = "language";
+    private static final String TRANSLATION_REPLACE = "translation-replace";
+    private static final String NEW_VALUE = "newValue";
+    private static final String OLD_VALUE = "oldValue";
+    private static final String LANGUAGE = "language";
 
     private Config dataCfg;
     private SqlHelper helper;
@@ -45,21 +46,37 @@ public class RaceQuestionSpellingFix implements CustomTask {
     @Override
     public void run(Handle handle) {
         helper = handle.attach(RaceQuestionSpellingFix.SqlHelper.class);
-        log.info("Fix Race question prompt in study: {} activity: {}.", STUDY, dataCfg.getString("activityCode"));
+        log.info("Correct any misspelled word \"examle\" in Race question prompt in study: {}", STUDY);
         updateQuestionPromptNote();
+        log.info("Correct any misspelled word \"chid\" in Thank You Announcement message in study: {}", STUDY);
+        // Use MySQL REPLACE to fix misspelled word because the message contains new-line breaks
+        updateAnnouncementMessage();
     }
 
     private void updateQuestionPromptNote() {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
-            String oldValue = config.getString(TRANSLATION_OLD);
-            String language = config.getString(TRANSLATION_LANG);
+            String oldValue = config.getString(OLD_VALUE);
+            String newValue = config.getString(NEW_VALUE);
+            String language = config.getString(LANGUAGE);
             List<Long> templateSubstitutionIdList = helper.findTemplateSubstitutionIdBySubstitutionValue(oldValue, language);
-            templateSubstitutionIdList.forEach((id) -> helper.updateVarSubstitutionValue(id, config.getString(TRANSLATION_NEW)));
+            templateSubstitutionIdList.forEach((id) -> helper.updateVarSubstitutionValue(id, newValue));
+        }
+    }
+
+    private void updateAnnouncementMessage() {
+        List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_REPLACE);
+        for (Config config : configList) {
+            String oldValue = config.getString(OLD_VALUE);
+            String newValue = config.getString(NEW_VALUE);
+            String language = config.getString(LANGUAGE);
+            List<Long> templateSubstitutionIdList = helper.findTemplateSubstitutionIdByLikeSubstitutionValue(oldValue, language);
+            templateSubstitutionIdList.forEach((id) -> helper.replaceSubstitutionValueById(id, oldValue, newValue));
         }
     }
 
     private interface SqlHelper extends SqlObject {
+
         @SqlQuery("SELECT sub.i18n_template_substitution_id AS substitution_id "
                 + "FROM i18n_template_substitution AS sub "
                 + "INNER JOIN language_code AS lc ON lc.language_code_id = sub.language_code_id "
@@ -72,6 +89,25 @@ public class RaceQuestionSpellingFix implements CustomTask {
 
         default void updateVarSubstitutionValue(long templateSubsId, String value) {
             int numUpdated = _updateSubstitutionValueById(templateSubsId, value);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 substitution_value for i18n_template_substitution_id = "
+                        + templateSubsId + " but updated " + numUpdated);
+            }
+        }
+
+        @SqlQuery("SELECT sub.i18n_template_substitution_id AS substitution_id "
+                + "FROM i18n_template_substitution AS sub "
+                + "INNER JOIN language_code AS lc ON lc.language_code_id = sub.language_code_id "
+                + "WHERE sub.substitution_value LIKE CONCAT('%', :value, '%') AND lc.iso_language_code = :lang")
+        List<Long> findTemplateSubstitutionIdByLikeSubstitutionValue(@Bind("value") String value, @Bind("lang") String lang);
+
+        @SqlUpdate("UPDATE i18n_template_substitution "
+                + "SET substitution_value = REPLACE(substitution_value, :oldValue, :newValue) "
+                + "WHERE i18n_template_substitution_id = :id;")
+        int _replaceSubstitutionValueById(@Bind("id") long id, @Bind("oldValue") String oldValue, @Bind("newValue") String newValue);
+
+        default void replaceSubstitutionValueById(long templateSubsId, String oldValue, String newValue) {
+            int numUpdated = _replaceSubstitutionValueById(templateSubsId, oldValue, newValue);
             if (numUpdated != 1) {
                 throw new DDPException("Expected to update 1 substitution_value for i18n_template_substitution_id = "
                         + templateSubsId + " but updated " + numUpdated);
