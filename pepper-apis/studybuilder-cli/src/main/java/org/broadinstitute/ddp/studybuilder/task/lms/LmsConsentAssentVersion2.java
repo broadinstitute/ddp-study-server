@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
-public class LmsConsentVersion2 implements CustomTask {
-    private static final String DATA_FILE = "patches/consent-version-2.conf";
+public class LmsConsentAssentVersion2 implements CustomTask {
+    private static final String DATA_FILE = "patches/consent-assent-v2.conf";
     private static final String CMI_LMS = "cmi-lms";
 
     private static final String TRANSLATION_UPDATES = "translation-updates";
@@ -73,14 +73,14 @@ public class LmsConsentVersion2 implements CustomTask {
     public void run(Handle handle) {
         User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
 
-        String activityCodeConsent = "CONSENT";
+        String activityCode = dataCfg.getString("activityCode");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
-        log.info("Changing version of {} to {} with timestamp={}", activityCodeConsent, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         long ts = this.timestamp.toEpochMilli();
 
         String reasonConsent = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
-                studyDto.getGuid(), activityCodeConsent, versionTag);
+                studyDto.getGuid(), activityCode, versionTag);
         RevisionMetadata metaConsent = new RevisionMetadata(ts, adminUser.getId(), reasonConsent);
         this.activityDao = handle.attach(ActivityDao.class);
         this.sqlHelper = handle.attach(SqlHelper.class);
@@ -88,20 +88,20 @@ public class LmsConsentVersion2 implements CustomTask {
         this.jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         this.jdbiRevision = handle.attach(JdbiRevision.class);
 
-        ActivityVersionDto version2ForConsent = getVersion2(handle, studyDto, metaConsent, activityCodeConsent);
-        runAdultConsentUpdate(handle, metaConsent, version2ForConsent);
+        ActivityVersionDto activityVer2 = getVersion2(handle, studyDto, metaConsent, activityCode);
+        activityUpdate(metaConsent, activityVer2);
     }
 
     private ActivityVersionDto getVersion2(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-        return activityDao.changeVersion(activityId, "v2", meta);
+        return activityDao.changeVersion(activityId, versionTag, meta);
     }
 
-    private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
-        updateAdultVariables(handle, meta, version2, dataCfg);
+    private void activityUpdate(RevisionMetadata meta, ActivityVersionDto version2) {
+        updateAdultVariables(meta, version2, dataCfg);
     }
 
-    private void updateAdultVariables(Handle handle, RevisionMetadata meta,
+    private void updateAdultVariables(RevisionMetadata meta,
                                       ActivityVersionDto version2, Config dataCfg) {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
@@ -116,7 +116,6 @@ public class LmsConsentVersion2 implements CustomTask {
         log.info("revisioning and updating template variable: {}", varName);
         List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(varName);
         for (Long tmplVarId : templateVariableIdByVariableNames) {
-            //Long tmplVarId = templateVariableIdByVariableNames.get(0);
             List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
             Translation currTranslation = transList.get(0);
 
