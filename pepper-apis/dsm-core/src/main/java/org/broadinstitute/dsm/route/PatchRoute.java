@@ -50,8 +50,7 @@ public class PatchRoute extends RequestHandler {
         if ((UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_VIEW, userIdRequest, patch)
                 || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_ABSTRACTER, userIdRequest, patch)
                 || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, userIdRequest, patch))
-                || ( UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.KIT_SHIPPING, userIdRequest, patch)
-                && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias()))) {
+                || ( UserUtil.checkGPUserAccessForPatch(realm, userId, userIdRequest, patch))) {
             try {
                 BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
                 return patcher.doPatch();

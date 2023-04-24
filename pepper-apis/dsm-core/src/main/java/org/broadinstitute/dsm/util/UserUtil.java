@@ -324,6 +324,11 @@ public class UserUtil {
         return roles;
     }
 
+    public static boolean checkGPUserAccessForPatch(String realm, String userId, String userIdRequest, Patch patch) {
+        return UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.KIT_SHIPPING, userIdRequest, patch)
+                && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias());
+    }
+
     public ArrayList<String> getUserAccessRoles(@NonNull String email) {
         ArrayList<String> roles = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
