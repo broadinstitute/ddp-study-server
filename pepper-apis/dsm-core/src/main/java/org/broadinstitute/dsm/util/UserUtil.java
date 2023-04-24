@@ -16,7 +16,10 @@ import java.util.Map;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.UserSettings;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -266,6 +269,29 @@ public class UserUtil {
             return roles.contains(role);
         }
         return false;
+    }
+
+    public static boolean checkUserAccessForPatch(String realm, String userId, String role, String userIdRequest, Patch patch) {
+        String userEmailOrIdInPatch = patch.getUser();
+        String userIdFromPatch;
+        if (userEmailOrIdInPatch.contains("@")) {
+            // patches come with both user id or email in them, this is to find the id in case it was an email
+            UserDto user = new UserDao().getUserByEmail(userEmailOrIdInPatch).orElseThrow();
+            userIdFromPatch = user.getId() + "";
+        } else if (StringUtils.isNumeric(userEmailOrIdInPatch)) {
+            userIdFromPatch = userEmailOrIdInPatch;
+        } else {
+            // for now, let's do what DSM did previously and let them change the data.
+            // Still we need to log this and fix the patch from frontend
+            logger.error("The id in patch is not a number and also not an email, id in patch is "+ userEmailOrIdInPatch + "and id in token is "+ userId);
+            return checkUserAccess(realm, userId, role, userIdRequest);
+        }
+        if (!userId.equals(userIdFromPatch)){
+            String msg = "User id in patch did not match the one in token, user Id in patch is " + userIdFromPatch + " user Id in token " + userIdRequest;
+            logger.warn(msg);
+            throw new RuntimeException(msg);
+        }
+        return checkUserAccess(realm, userId, role, userIdRequest);
     }
 
     public static boolean checkUserAccess(String realm, String userId, String role) {
