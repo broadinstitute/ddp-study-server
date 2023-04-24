@@ -277,7 +277,7 @@ public class UserUtil {
         if (userEmailOrIdInPatch.contains("@")) {
             // patches come with both user id or email in them, this is to find the id in case it was an email
             UserDto user = new UserDao().getUserByEmail(userEmailOrIdInPatch).orElseThrow();
-            userIdFromPatch = user.getId() + "";
+            userIdFromPatch = Integer.toString(user.getId());
         } else if (StringUtils.isNumeric(userEmailOrIdInPatch)) {
             userIdFromPatch = userEmailOrIdInPatch;
         } else {
@@ -324,7 +324,7 @@ public class UserUtil {
         return roles;
     }
 
-    public static boolean checkGPUserAccessForPatch(String realm, String userId, String userIdRequest, Patch patch) {
+    public static boolean checkKitShippingAccessForPatch(String realm, String userId, String userIdRequest, Patch patch) {
         return UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.KIT_SHIPPING, userIdRequest, patch)
                 && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias());
     }

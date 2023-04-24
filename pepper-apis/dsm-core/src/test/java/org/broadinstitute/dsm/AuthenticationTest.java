@@ -29,12 +29,12 @@ public class AuthenticationTest {
     public void GPPatchKitAccessTest(){
         String realm = "osteo2";
 
-        String gpUserId = new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() + "";
+        String gpUserId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
 
         Patch patch = new Patch("0",  "dsmKitRequestId", "0", gpUserId , new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("kit");
 
-        Assert.assertTrue(UserUtil.checkGPUserAccessForPatch(realm, gpUserId, null, patch));
+        Assert.assertTrue(UserUtil.checkKitShippingAccessForPatch(realm, gpUserId, null, patch));
     }
 
     @Test
@@ -42,12 +42,12 @@ public class AuthenticationTest {
     public void GPPatchOtherAccessTest(){
         String realm = "osteo2";
 
-        String gpUserId = new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() + "";
+        String gpUserId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
 
         Patch patch = new Patch("0", "participantId", "0", gpUserId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("oD");
 
-        Assert.assertFalse(UserUtil.checkGPUserAccessForPatch(realm, gpUserId, null, patch));
+        Assert.assertFalse(UserUtil.checkKitShippingAccessForPatch(realm, gpUserId, null, patch));
     }
 
     @Test
@@ -55,8 +55,8 @@ public class AuthenticationTest {
     public void mismatchAccessTest(){
         String realm = "osteo2";
 
-        String userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() +"";
-        String gpUserId = new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() + "";
+        String userId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
+        String gpUserId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() );
 
         Patch patch1 = new Patch("0", "participantId", "0", userId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch1.setTableAlias("oD");
@@ -80,7 +80,7 @@ public class AuthenticationTest {
         Patch gpPatch = new Patch("0",  "dsmKitRequestId", "0", gpUserId , new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         gpPatch.setTableAlias("kit");
         try {
-            Assert.assertFalse(UserUtil.checkGPUserAccessForPatch(realm, userId, null, gpPatch));
+            Assert.assertFalse(UserUtil.checkKitShippingAccessForPatch(realm, userId, null, gpPatch));
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
         }
@@ -92,7 +92,7 @@ public class AuthenticationTest {
     public void userPatchAccessTest(){
         String realm = "osteo2";
 
-        String userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() + "";
+        String userId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
 
         Patch patch = new Patch("0", "participantId", "0", userId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("oD");
