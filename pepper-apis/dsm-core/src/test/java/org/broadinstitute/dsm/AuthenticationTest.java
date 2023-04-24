@@ -97,12 +97,12 @@ public class AuthenticationTest {
         Patch patch = new Patch("0", "participantId", "0", userId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("oD");
 
-        UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, null, patch);
+        Assert.assertTrue(UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, null, patch));
 
-        Patch patch2 = new Patch("0", "participantId", "0", UNIT_TESTER_EMAIL , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch2 = new Patch("0", "participantId", "0", cfg.getString(UNIT_TESTER_EMAIL) , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("m");
 
-        UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, null, patch2);
+        Assert.assertTrue(UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, null, patch2));
     }
 
 
