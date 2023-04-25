@@ -42,29 +42,31 @@ public class PatchRoute extends RequestHandler {
             response.status(500);
             throw new RuntimeException("ColumnNameMap is null!");
         }
-        String userIdRequest = UserUtil.getUserId(request);
-        String requestBody = request.body();
-        Patch patch = GSON.fromJson(requestBody, Patch.class);
-        String realm = patch.getRealm();
-        logger.info("Received a patch request, made by " + userId + " in realm "+realm +" for table alias " + patch.getTableAlias());
-        if ((UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_VIEW, userIdRequest, patch)
-                || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_ABSTRACTER, userIdRequest, patch)
-                || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, userIdRequest, patch))
-                || ( UserUtil.checkKitShippingAccessForPatch(realm, userId, userIdRequest, patch))) {
-            try {
-                BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
-                return patcher.doPatch();
-            } catch (DuplicateException e) {
-                response.status(500);
-                throw new RuntimeException("Duplicate value", e);
-            } catch (Exception e) {
-                response.status(500);
-                throw new RuntimeException("An error occurred while attempting to patch ", e);
+        try {
+            String userIdRequest = UserUtil.getUserId(request);
+            String requestBody = request.body();
+            Patch patch = GSON.fromJson(requestBody, Patch.class);
+            String realm = patch.getRealm();
+            logger.info("Received a patch request, made by " + userId + " in realm "+realm +" for table alias " + patch.getTableAlias());
+            if ((UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_VIEW, userIdRequest, patch)
+                    || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_ABSTRACTER, userIdRequest, patch)
+                    || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, userIdRequest, patch))
+                    || ( UserUtil.checkKitShippingAccessForPatch(realm, userId, userIdRequest, patch))) {
+
+                    BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
+                    return patcher.doPatch();
+
+            } else {
+                response.status(403);
+                logger.warn("User with id {} does not have needed privileges", userId);
+                return UserErrorMessages.NO_RIGHTS;
             }
-        } else {
-            response.status(403);
-            logger.warn("User with id {} does not have needed privileges", userId);
-            return UserErrorMessages.NO_RIGHTS;
+        } catch (DuplicateException e) {
+            response.status(500);
+            throw new RuntimeException("Duplicate value", e);
+        } catch (Exception e) {
+            response.status(500);
+            throw new RuntimeException("An error occurred while attempting to patch ", e);
         }
     }
 }
