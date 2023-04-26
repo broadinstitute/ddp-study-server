@@ -6,7 +6,7 @@
   "dependencies": {
     "@redocly/cli": "v1.0.0-beta.109",
     "redoc": "^2.0.0",
-    "redoc-cli": "0.13.20"
+    "redoc-cli": "0.13.21"
   },
   "scripts": {
     "start": "npx @redocly/cli preview-docs",
