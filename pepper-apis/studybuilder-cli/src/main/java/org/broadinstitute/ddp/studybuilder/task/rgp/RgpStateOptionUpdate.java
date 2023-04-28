@@ -23,7 +23,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 @Slf4j
-public class PicklistStateUpdate implements CustomTask {
+public class RgpStateOptionUpdate implements CustomTask {
 
     private static final String STUDY_GUID = "RGP";
     private static final String DATA_FILE = "patches/state-picklist-puerto-rico.conf";
@@ -60,7 +60,7 @@ public class PicklistStateUpdate implements CustomTask {
         Config option = dataCfg.getConfig("statePR");
         PicklistOptionDef pickListOptionDef = gson.fromJson(ConfigUtil.toJson(option), PicklistOptionDef.class);
 
-        Long activityId = helper.findActivityIdByQuestionId(questionId);
+        long activityId = helper.findActivityIdByQuestionId(questionId);
         ActivityVersionDto versionDto = handle.attach(JdbiActivityVersion.class)
                 .getActiveVersion(activityId)
                 .orElseThrow(() -> new DDPException("Could not find latest version for activity " + activityId));
@@ -68,8 +68,8 @@ public class PicklistStateUpdate implements CustomTask {
         long revisionId = versionDto.getRevId();
 
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
-        Long optionId = plQuestionDao.insertOption(questionId, pickListOptionDef, DISPLAY_ORDER, revisionId);
-        log.info("Inserted new picklist option 'Puerto Rico' with picklist_option_id: {}", pickListOptionDef.getStableId(), optionId);
+        long optionId = plQuestionDao.insertOption(questionId, pickListOptionDef, DISPLAY_ORDER, revisionId);
+        log.info("Inserted new picklist option 'Puerto Rico' with option id {}", optionId);
     }
 
     private interface SqlHelper extends SqlObject {
