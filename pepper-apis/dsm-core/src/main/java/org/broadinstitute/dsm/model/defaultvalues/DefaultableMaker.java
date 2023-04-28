@@ -11,7 +11,7 @@ public class DefaultableMaker {
                 defaultable = new ATDefaultValues();
                 break;
             case RGP:
-                defaultable = new RgpProbandDataCreator();
+                defaultable = new RgpAutomaticProbandDataCreator();
                 break;
             case CMI_OSTEO:
                 defaultable = new NewOsteoDefaultValues();

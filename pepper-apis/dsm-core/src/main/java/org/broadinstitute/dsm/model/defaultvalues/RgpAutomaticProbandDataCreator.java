@@ -21,7 +21,7 @@ import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 
-public class RgpProbandDataCreator extends BasicDefaultDataMaker {
+public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 
     public static final String RGP_FAMILY_ID = "rgp_family_id";
     public static final String REFERRAL_SOURCE_ID = "REF_SOURCE";

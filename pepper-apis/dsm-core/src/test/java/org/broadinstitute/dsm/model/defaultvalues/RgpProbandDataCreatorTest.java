@@ -45,7 +45,7 @@ public class RgpProbandDataCreatorTest {
 
     @Test
     public void getRefSourceOneProvided() throws Exception {
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
         List<String> answer = List.of("TWITTER");
         applyFoundOutAnswer(activities, answer);
@@ -55,7 +55,7 @@ public class RgpProbandDataCreatorTest {
 
     @Test
     public void getRefSourceMultipleProvided() {
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
         List<String> answer = Arrays.asList("TWITTER", "FACEBOOK", "FAMILY");
         applyFoundOutAnswer(activities, answer);
@@ -65,7 +65,7 @@ public class RgpProbandDataCreatorTest {
 
     @Test
     public void getRefSourceNoneProvided() {
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
         List<String> answer = new ArrayList<>();
         applyFoundOutAnswer(activities, answer);
@@ -75,7 +75,7 @@ public class RgpProbandDataCreatorTest {
 
     @Test
     public void getRefSourceBadProvided() {
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
         List<String> answer = List.of("POSTER");
         applyFoundOutAnswer(activities, answer);
@@ -103,7 +103,7 @@ public class RgpProbandDataCreatorTest {
         enrollment.setQuestionsAnswers(qa);
         logger.info("Enrollment: " + enrollment);
 
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
         String refSourceId = dataCreator.convertReferralSources(dataCreator.getReferralSources(lessActivities));
         Assert.assertEquals("NA", refSourceId);
     }
@@ -111,7 +111,7 @@ public class RgpProbandDataCreatorTest {
     @Test
     public void getRefSourceBadPossibleValues() throws Exception {
         mockDao.refSourceValues = TestUtil.readFile("RefSourceFieldSettingsBadValues.json");
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
         // this possible value is still intact
         List<String> answer = List.of("FACEBOOK");
@@ -133,7 +133,7 @@ public class RgpProbandDataCreatorTest {
     @Test
     public void getRefSourceBadDetails() throws Exception {
         mockDao.refSourceDetails = TestUtil.readFile("RefSourceFieldSettingsBadDetails.json");
-        RgpProbandDataCreator dataCreator = new RgpProbandDataCreator();
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
         // this answer is not a valid map key
         List<String> answer = List.of("FACEBOOK");
