@@ -1,6 +1,11 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,6 +31,12 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
     public static final String RGP_FAMILY_ID = "rgp_family_id";
     public static final String REFERRAL_SOURCE_ID = "REF_SOURCE";
 
+    /**
+     * Given an elasticSearchParticipantDto, get selected data from ES and put it in DSM DB.
+     * Log errors for severe problems.
+     *
+     * @return false if participant does not have an ES profile, true for all other cases, including errors
+     */
     @Override
     protected boolean setDefaultData() {
 
@@ -43,12 +54,13 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 
             Optional<BookmarkDto> familyIdOfBookmark = bookmarkDao.getBookmarkByInstance(RGP_FAMILY_ID);
             if (familyIdOfBookmark.isEmpty()) {
-                // nothing in the call stack will handle a throw properly, so log the error and use the return value
-                // to unwind
-                logger.error("RGP family ID not found in Bookmark table");
-                return false;
+                // internal error but nothing in the call stack will properly note the severity, so log the error
+                String msg = String.format("Could not set DSM default values for participant %s and DDP instance %s: "
+                        + "RGP family ID not found in Bookmark table", participantId, instance.getName());
+                logger.error(msg);
+                throw new RuntimeException(msg);
             }
-            BookmarkDto familyIdBookmarkDto =  familyIdOfBookmark.get();
+            BookmarkDto familyIdBookmarkDto = familyIdOfBookmark.get();
 
             List<Activities> activities = elasticSearchParticipantDto.getActivities();
             Map<String, String> probandDataMap =
@@ -58,8 +70,11 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
                 String refSourceId = convertReferralSources(getReferralSources(activities));
                 probandDataMap.put(REFERRAL_SOURCE_ID, refSourceId);
             } catch (Exception e) {
-                // not good, but not fatal for this process
-                logger.error("Error deriving participant referral source for {}", participantId, e);
+                // not good: we could not convert referral source, but not fatal for this process since this is
+                // currently called during pubsub message processing so there is not a better way to note the problem.
+                // Use error level so humans get alerted to intervene and possibly fix the issue
+                logger.error("Error deriving participant referral source for participant {} and DDP instance {}: {}",
+                        participantId, instance.getName(), e.getMessage());
             }
 
             participantData.setData(participantId, Integer.parseInt(instance.getDdpInstanceId()),
@@ -151,7 +166,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
      * @param sources referral sources provided as DSS stable IDs
      * @return a referral source ID
      * @throws RuntimeException If the expected referral source values are not present or the referral source mapping is
-     * missing or out of sync
+     *                          missing or out of sync
      */
     protected String convertReferralSources(List<String> sources) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
@@ -166,22 +181,22 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }
         Optional<String> possibleValues = refSource.map(FieldSettingsDto::getPossibleValues);
         if (possibleValues.isEmpty()) {
-            throw new RuntimeException("FieldSettings 'possibleValues' is empty for " + "" +
-                    "RGP_MEDICAL_RECORDS_GROUP REF_SOURCE");
+            throw new RuntimeException("FieldSettings 'possibleValues' is empty for "
+                    + "RGP_MEDICAL_RECORDS_GROUP REF_SOURCE");
         }
 
         return this.deriveReferralSource(sources, details.get(), possibleValues.get());
-     }
+    }
 
     /**
      * Given the referral sources provided using DSS FOUND_OUT IDs, get the corresponding DSM referral source ID
      *
-     * @param sources referral sources provided as DSS stable IDs
-     * @param refDetails JSON string of FieldSettings REF_SOURCE details column
+     * @param sources           referral sources provided as DSS stable IDs
+     * @param refDetails        JSON string of FieldSettings REF_SOURCE details column
      * @param refPossibleValues JSON string of FieldSettings REF_SOURCE possibleValues column
      * @return a referral source ID
      * @throws RuntimeException If the expected REF_SOURCE values are not present or the referral source mapping is
-     * out of sync, the method logs errors, but will throw if the provided referral sources cannot be mapped.
+     *                          out of sync, the method logs errors, but will throw if the provided referral sources cannot be mapped.
      */
     protected String deriveReferralSource(List<String> sources, String refDetails, String refPossibleValues) {
         // algorithm: if more than one answer chosen, then use REF_SOURCE MORE_THAN_ONE,
@@ -189,19 +204,20 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 
         // details column holds a map of FIND_OUT answers to REF_SOURCE IDs
         Map<String, String> refMap = ObjectMapperSingleton.readValue(
-                refDetails, new TypeReference<Map<String, String>>() {});
+                refDetails, new TypeReference<>() {
+                });
 
         // get the REF_SOURCE IDs to verify the map is still in sync
         List<Map<String, String>> refValues = ObjectMapperSingleton.readValue(
-                refPossibleValues, new TypeReference<List<Map<String, String>>>() {});
+                refPossibleValues, new TypeReference<>() {
+                });
 
         Set<String> refIDs = refValues.stream().map(m -> m.get("value")).collect(Collectors.toSet());
         Set<String> refMapValues = new HashSet<>(refMap.values());
         // "NA" and "MORE_THAN_ONE" are not mapped
-        if (refMapValues.size()+2 != refIDs.size() || !refIDs.containsAll(refMapValues)) {
+        if (refMapValues.size() + 2 != refIDs.size() || !refIDs.containsAll(refMapValues)) {
             // if IDs have diverged, don't stop this operation: log error and see if something is salvageable (below)
-            logger.error("RGP_MEDICAL_RECORDS_GROUP REF_SOURCE 'possibleValues' do not match REF_SOURCE map in " +
-                    "'details'");
+            logger.error("RGP_MEDICAL_RECORDS_GROUP REF_SOURCE 'possibleValues' do not match REF_SOURCE map in 'details'");
         }
 
         if (sources.size() == 0) {
@@ -214,28 +230,28 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         if (sources.size() > 1) {
             if (!refIDs.contains("MORE_THAN_ONE")) {
                 StringBuilder sb = new StringBuilder(sources.get(0));
-                for (int i=1; i <= sources.size(); i++) {
+                for (int i = 1; i <= sources.size(); i++) {
                     sb.append(", ").append(sources.get(i));
                 }
-                throw new RuntimeException("REF_SOURCE does not include a 'MORE_THAN_ONE' key. " +
-                                "Participant provided referral sources: " + sb.toString());
+                throw new RuntimeException("REF_SOURCE does not include a 'MORE_THAN_ONE' key. "
+                        + "Participant provided referral sources: " + sb);
             }
             return "MORE_THAN_ONE";
         }
 
         String refSource = refMap.get(sources.get(0));
         if (refSource == null) {
-            throw new RuntimeException("There is no corresponding REF_SOURCE for participant provided referral " +
-                    "source: " + sources.get(0));
+            throw new RuntimeException("There is no corresponding REF_SOURCE for participant provided referral "
+                    + "source: " + sources.get(0));
         }
         if (!refIDs.contains(refSource)) {
-            throw new RuntimeException(String.format("Invalid REF_SOURCE ID for participant provided referral " +
-                    "source %s: %s", sources.get(0), refSource));
+            throw new RuntimeException(String.format("Invalid REF_SOURCE ID for participant provided referral "
+                    + "source %s: %s", sources.get(0), refSource));
         }
         return refSource;
     }
 
-    void insertFamilyIdToDsmES(@NonNull String esIndex, @NonNull String participantId, @NonNull long familyId) {
+    void insertFamilyIdToDsmES(@NonNull String esIndex, @NonNull String participantId, long familyId) {
         try {
             Map<String, Object> esObjectMap = ElasticSearchUtil.getObjectsMap(esIndex, participantId, ESObjectConstants.DSM);
             Map<String, Object> esDsmObjectMap = (Map<String, Object>) esObjectMap.get(ESObjectConstants.DSM);

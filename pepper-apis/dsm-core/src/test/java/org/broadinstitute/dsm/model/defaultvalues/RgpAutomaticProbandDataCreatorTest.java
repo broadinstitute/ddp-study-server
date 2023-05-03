@@ -1,5 +1,12 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
@@ -15,21 +22,18 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
 
+public class RgpAutomaticProbandDataCreatorTest {
 
-public class RgpProbandDataCreatorTest {
-
-    private static final Logger logger = LoggerFactory.getLogger(RgpProbandDataCreatorTest.class);
-    private static List<Activities> activities;
+    private static final Logger logger = LoggerFactory.getLogger(RgpAutomaticProbandDataCreatorTest.class);
+    private static List<org.broadinstitute.dsm.model.elastic.Activities> activities;
     private static String refSourceValues;
     private static String refSourceDetails;
     private static MockFieldSettingsDao mockDao;
 
     @BeforeClass
-    public static void Setup() throws Exception {
-        activities = RgpProbandDataCreatorTest.getActivities();
+    public static void setup() throws Exception {
+        activities = RgpAutomaticProbandDataCreatorTest.getActivities();
 
         refSourceValues = TestUtil.readFile("RefSourceFieldSettingsValues.json");
         refSourceDetails = TestUtil.readFile("RefSourceFieldSettingsDetails.json");
@@ -80,7 +84,7 @@ public class RgpProbandDataCreatorTest {
         List<String> answer = List.of("POSTER");
         applyFoundOutAnswer(activities, answer);
         try {
-            String refSourceId = dataCreator.convertReferralSources(dataCreator.getReferralSources(activities));
+            dataCreator.convertReferralSources(dataCreator.getReferralSources(activities));
             Assert.fail("convertReferralSources should throw when bad FOUND_OUT provided");
         } catch (RuntimeException e) {
             Assert.assertTrue(e.getMessage().contains("no corresponding REF_SOURCE"));
@@ -140,8 +144,8 @@ public class RgpProbandDataCreatorTest {
         applyFoundOutAnswer(activities, answer);
         try {
             dataCreator.convertReferralSources(dataCreator.getReferralSources(activities));
-            Assert.fail("convertReferralSources should throw when there is no corresponding REF_SOURCE for " +
-                    "participant provided referral source");
+            Assert.fail("convertReferralSources should throw when there is no corresponding REF_SOURCE for "
+                    + "participant provided referral source");
         } catch (RuntimeException e) {
             Assert.assertTrue(e.getMessage().contains("no corresponding REF_SOURCE"));
         }
@@ -151,8 +155,8 @@ public class RgpProbandDataCreatorTest {
         applyFoundOutAnswer(activities, answer);
         try {
             dataCreator.convertReferralSources(dataCreator.getReferralSources(activities));
-            Assert.fail("convertReferralSources should throw when participant provided referral source maps to " +
-                    "an invalid REF_SOURCE ID");
+            Assert.fail("convertReferralSources should throw when participant provided referral source maps to "
+                    + "an invalid REF_SOURCE ID");
         } catch (RuntimeException e) {
             Assert.assertTrue(e.getMessage().contains("Invalid REF_SOURCE ID"));
         }
@@ -177,12 +181,12 @@ public class RgpProbandDataCreatorTest {
 
     private static List<Activities> getActivities() throws Exception {
         String json = TestUtil.readFile("activities.json");
-        JsonArray jArray = (JsonArray) JsonParser.parseString(json);
-        Assert.assertNotNull(jArray);
+        JsonArray jsonArray = (JsonArray) JsonParser.parseString(json);
+        Assert.assertNotNull(jsonArray);
 
         List<Activities> activitiesList = new ArrayList<>();
         Gson gson = new Gson();
-        jArray.forEach(a -> activitiesList.add(gson.fromJson(a.getAsJsonObject(), Activities.class)));
+        jsonArray.forEach(a -> activitiesList.add(gson.fromJson(a.getAsJsonObject(), Activities.class)));
         return activitiesList;
     }
 }
