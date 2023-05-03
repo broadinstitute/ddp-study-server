@@ -112,19 +112,21 @@ public class LmsConsentAssentVersion2 implements CustomTask {
 
 
     private void revisionAdultVariableTranslation(String varName, String newTemplateText,
-                                                  RevisionMetadata meta, ActivityVersionDto version3) {
-        log.info("revisioning and updating template variable: {}", varName);
-        List<Long> templateVariableIdByVariableNames = sqlHelper.findTemplateVariableIdByVariableNames(varName);
-        for (Long tmplVarId : templateVariableIdByVariableNames) {
-            List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-            Translation currTranslation = transList.get(0);
+                                                  RevisionMetadata meta, ActivityVersionDto version2) {
+        log.info("revisioning and updating template variable: {} with new revisionId:{} ", varName, version2.getRevId());
+        Long tmplVarId = sqlHelper.findVariableIdByNameAndActivityId(varName, version2.getActivityId());
 
-            long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
-            long[] revIds = {newFullNameSubRevId};
-            jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-            jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
-            log.info("revisioned and updated template variable: {}", tmplVarId);
-        }
+        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+        Translation currTranslation = transList.get(0);
+
+        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+        long[] revIds = {newFullNameSubRevId};
+        List<Long> subIds = Arrays.asList(currTranslation.getId().get());
+        log.info("updating template substitutionIds: {} ", subIds);
+        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(subIds, revIds);
+        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+        log.info("revisioned and updated template variable: {}", tmplVarId);
+
     }
 
     private interface SqlHelper extends SqlObject {
@@ -132,6 +134,22 @@ public class LmsConsentAssentVersion2 implements CustomTask {
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
                 + "order by template_variable_id desc")
         List<Long> findTemplateVariableIdByVariableNames(@Bind("variable_name") String variableName);
+
+        @SqlQuery("select tv.template_variable_id from block_content as bt"
+                + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
+                + "  join template_variable tv on tv.template_id = tmpl.template_id "
+                + " where tv.variable_name = :variableName"
+                + "   and bt.block_id in (select fsb.block_id"
+                + "                         from form_activity__form_section as fafs"
+                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + "                        where fafs.form_activity_id = :activityId"
+                + "                        union"
+                + "                       select bn.nested_block_id"
+                + "                         from form_activity__form_section as fafs"
+                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
+                + "                        where fafs.form_activity_id = :activityId)")
+        Long findVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
 
     }
 
