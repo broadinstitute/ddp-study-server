@@ -12,11 +12,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
-import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.WorkflowForES;
+import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
@@ -35,7 +36,9 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
      * Given an elasticSearchParticipantDto, get selected data from ES and put it in DSM DB.
      * Log errors for severe problems.
      *
-     * @return false if participant does not have an ES profile, true for all other cases, including errors
+     * @return false if participant does not have an ES profile, true for all other cases, including some errors
+     * @throws RuntimeException when there is no way to continue. We use this sparingly since the error handling
+     *      in callers is not robust
      */
     @Override
     protected boolean setDefaultData() {
@@ -44,41 +47,27 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
                 FieldSettingsDao.of().getOptionAndRadioFieldSettingsByInstanceId(Integer.parseInt(instance.getDdpInstanceId()));
 
         return elasticSearchParticipantDto.getProfile().map(esProfile -> {
-            logger.info("Got ES profile of participant: " + esProfile.getGuid());
+            logger.info("Got ES profile of participant: {}", esProfile.getGuid());
+            String participantId = StringUtils.isNotBlank(esProfile.getLegacyAltPid()) ? esProfile.getLegacyAltPid() : esProfile.getGuid();
+            String instanceName = instance.getName();
+
+            // ensure we can get a family ID before writing things to the DB
+            // this will increment the family value (which we want to ensure we are not messed up by concurrency)
+            // but will leave an unused family ID if we abort later. As things stand now that is not a concern.
+            long familyId = getFamilyId(participantId, bookmark);
+            insertFamilyIdToDsmES(instance.getParticipantIndexES(), participantId, familyId);
+
+            Map<String, String> probandDataMap = buildDataMap(participantId, familyId, instanceName,
+                    elasticSearchParticipantDto.getActivities(), esProfile);
+
             Map<String, String> columnsWithDefaultOptions =
                     fieldSettings.getColumnsWithDefaultValues(fieldSettingsDtosByOptionAndInstanceId);
             Map<String, String> columnsWithDefaultOptionsFilteredByElasticExportWorkflow =
                     fieldSettings.getColumnsWithDefaultOptionsFilteredByElasticExportWorkflow(fieldSettingsDtosByOptionAndInstanceId);
-            String participantId = StringUtils.isNotBlank(esProfile.getLegacyAltPid()) ? esProfile.getLegacyAltPid() : esProfile.getGuid();
             ParticipantData participantData = new ParticipantData(participantDataDao);
 
-            Optional<BookmarkDto> familyIdOfBookmark = bookmarkDao.getBookmarkByInstance(RGP_FAMILY_ID);
-            if (familyIdOfBookmark.isEmpty()) {
-                // internal error but nothing in the call stack will properly note the severity, so log the error
-                String msg = String.format("Could not set DSM default values for participant %s and DDP instance %s: "
-                        + "RGP family ID not found in Bookmark table", participantId, instance.getName());
-                logger.error(msg);
-                throw new RuntimeException(msg);
-            }
-            BookmarkDto familyIdBookmarkDto = familyIdOfBookmark.get();
-
-            List<Activities> activities = elasticSearchParticipantDto.getActivities();
-            Map<String, String> probandDataMap =
-                    extractProbandDefaultData(activities, familyIdBookmarkDto.getValue());
-
-            try {
-                String refSourceId = convertReferralSources(getReferralSources(activities));
-                probandDataMap.put(REFERRAL_SOURCE_ID, refSourceId);
-            } catch (Exception e) {
-                // not good: we could not convert referral source, but not fatal for this process since this is
-                // currently called during pubsub message processing so there is not a better way to note the problem.
-                // Use error level so humans get alerted to intervene and possibly fix the issue
-                logger.error("Error deriving participant referral source for participant {} and DDP instance {}: {}",
-                        participantId, instance.getName(), e.getMessage());
-            }
-
             participantData.setData(participantId, Integer.parseInt(instance.getDdpInstanceId()),
-                    instance.getName().toUpperCase() + ParticipantData.FIELD_TYPE_PARTICIPANTS, probandDataMap);
+                    instanceName.toUpperCase() + ParticipantData.FIELD_TYPE_PARTICIPANTS, probandDataMap);
             participantData.addDefaultOptionsValueToData(columnsWithDefaultOptions);
             participantData.insertParticipantData(SystemUtil.SYSTEM);
 
@@ -88,10 +77,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
                                     probandDataMap.get(FamilyMemberConstants.FIRSTNAME),
                                     probandDataMap.get(FamilyMemberConstants.LASTNAME))), false));
 
-            insertFamilyIdToDsmES(instance.getParticipantIndexES(), participantId, familyIdBookmarkDto.getValue());
-            familyIdBookmarkDto.setValue(familyIdBookmarkDto.getValue() + 1);
-            bookmarkDao.updateBookmarkValueByBookmarkId(familyIdBookmarkDto.getBookmarkId(), familyIdBookmarkDto.getValue());
-            logger.info("Automatic proband data for participant with id: " + participantId + " has been created");
+            logger.info("Automatic proband data for participant with id: {} has been created", participantId);
             return true;
         }).orElseGet(() -> {
             logger.info("Participant does not have ES profile yet...");
@@ -99,24 +85,63 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         });
     }
 
-    private Map<String, String> extractProbandDefaultData(List<Activities> participantActivities, long familyId) {
+    protected static long getFamilyId(String participantId, Bookmark bookmark) {
+        try {
+            return bookmark.getThenIncrementBookmarkValue(RGP_FAMILY_ID);
+        } catch (Exception e) {
+            // internal error but nothing in the call stack will properly note the severity, so log the error
+            String msg = String.format("Could not set DSM default values for participant %s and DDP instance %s: "
+                    + "RGP family ID not found in Bookmark table", participantId, RGP_FAMILY_ID);
+            logger.error(msg);
+            throw new RuntimeException(msg, e);
+        }
+    }
+
+    protected Map<String, String> buildDataMap(String participantId, long familyId, String instanceName,
+                                               List<Activities> activities, Profile esProfile) {
+        Map<String, String> probandDataMap;
+
+        try {
+            probandDataMap = extractProbandDefaultData(esProfile, activities, familyId, instanceName);
+        } catch (Exception e) {
+            // if we can't make the participant data map, abort
+            // internal error but nothing in the call stack will properly note the severity, so log the error
+            // Use error level so humans get alerted to intervene and possibly fix the issue
+            String msg = String.format("Error creating participant data map for participant %s and DDP instance %s: %s",
+                    participantId, instanceName, e.getMessage());
+            logger.error(msg);
+            throw new RuntimeException(msg, e);
+        }
+
+        try {
+            String refSourceId = convertReferralSources(getReferralSources(activities));
+            probandDataMap.put(REFERRAL_SOURCE_ID, refSourceId);
+        } catch (Exception e) {
+            // not good: we could not convert referral source, but not fatal for this process.
+            // Use error level so humans get alerted to intervene and possibly fix the issue
+            logger.error("Error deriving participant referral source for participant {} and DDP instance {}: {}",
+                    participantId, instanceName, e.getMessage());
+        }
+        return probandDataMap;
+    }
+
+    private Map<String, String> extractProbandDefaultData(Profile esProfile, List<Activities> participantActivities,
+                                                          long familyId, String instanceName) {
         String mobilePhone = getPhoneNumberFromActivities(participantActivities);
-        return elasticSearchParticipantDto.getProfile().map(esProfile -> {
-            logger.info("Starting extracting data from participant: " + esProfile.getGuid() + " ES profile");
-            String firstName = esProfile.getFirstName();
-            String lastName = esProfile.getLastName();
-            String collaboratorParticipantId =
-                    instance.getName().toUpperCase() + "_" + familyId + "_" + FamilyMemberConstants.PROBAND_RELATIONSHIP_ID;
-            String memberType = FamilyMemberConstants.MEMBER_TYPE_SELF;
-            String email = esProfile.getEmail();
-            FamilyMemberDetails probandMemberDetails =
-                    new FamilyMemberDetails(firstName, lastName, memberType, familyId, collaboratorParticipantId);
-            probandMemberDetails.setMobilePhone(mobilePhone);
-            probandMemberDetails.setEmail(email);
-            probandMemberDetails.setApplicant(true);
-            logger.info("Profile data extracted from participant: " + esProfile.getGuid() + " ES profile");
-            return probandMemberDetails.toMap();
-        }).orElse(Map.of());
+        logger.info("Starting extracting data from participant: " + esProfile.getGuid() + " ES profile");
+        String firstName = esProfile.getFirstName();
+        String lastName = esProfile.getLastName();
+        String collaboratorParticipantId =
+                instanceName.toUpperCase() + "_" + familyId + "_" + FamilyMemberConstants.PROBAND_RELATIONSHIP_ID;
+        String memberType = FamilyMemberConstants.MEMBER_TYPE_SELF;
+        String email = esProfile.getEmail();
+        FamilyMemberDetails probandMemberDetails =
+                new FamilyMemberDetails(firstName, lastName, memberType, familyId, collaboratorParticipantId);
+        probandMemberDetails.setMobilePhone(mobilePhone);
+        probandMemberDetails.setEmail(email);
+        probandMemberDetails.setApplicant(true);
+        logger.info("Profile data extracted from participant: " + esProfile.getGuid() + " ES profile");
+        return probandMemberDetails.toMap();
     }
 
     private String getPhoneNumberFromActivities(List<Activities> activities) {
@@ -153,9 +178,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
             logger.info("Could not derive referral source data, participant has no referral source data");
             return new ArrayList<>();
         }
-        logger.info("refSourceQA: {}", refSourceQA);
         Object answers = refSourceQA.get().get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER);
-        logger.info("Answers: {}", answers);
         return (List<String>) answers;
     }
 
@@ -171,7 +194,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
     protected String convertReferralSources(List<String> sources) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         Optional<FieldSettingsDto> refSource = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(
-                "RGP_MEDICAL_RECORDS_GROUP", "REF_SOURCE");
+                "RGP_MEDICAL_RECORDS_GROUP", REFERRAL_SOURCE_ID);
 
         // for REF_SOURCE, the details column hold the mapping between DSS referral sources (answers to FIND_OUT
         // enrollment question) to DSM ref sources
@@ -220,7 +243,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
             logger.error("RGP_MEDICAL_RECORDS_GROUP REF_SOURCE 'possibleValues' do not match REF_SOURCE map in 'details'");
         }
 
-        if (sources.size() == 0) {
+        if (sources.isEmpty()) {
             if (!refIDs.contains("NA")) {
                 throw new RuntimeException("REF_SOURCE does not include a 'NA' key.");
             }
@@ -257,7 +280,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
             Map<String, Object> esDsmObjectMap = (Map<String, Object>) esObjectMap.get(ESObjectConstants.DSM);
             esDsmObjectMap.put(ESObjectConstants.FAMILY_ID, familyId);
             ElasticSearchUtil.updateRequest(participantId, esIndex, esObjectMap);
-            logger.info("Family id for participant" + participantId + "has successfully added to ES");
+            logger.info("Family id for participant {} successfully added to ES", participantId);
         } catch (Exception e) {
             logger.error("Could not insert family id for participant: " + participantId, e);
         }
