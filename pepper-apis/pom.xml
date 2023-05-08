@@ -776,8 +776,15 @@
                 <artifactId>liquibase-maven-plugin</artifactId>
                 <version>${liquibase.version}</version>
                 <configuration>
-                    <changeLogFile>src/main/resources/changelog-master.xml</changeLogFile>
+                    <changeLogFile>src/main/resources/master-changelog.xml</changeLogFile>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>8.0.18</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
             <plugin>
