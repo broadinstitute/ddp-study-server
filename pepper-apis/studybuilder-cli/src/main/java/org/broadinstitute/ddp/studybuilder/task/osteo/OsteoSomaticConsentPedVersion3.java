@@ -85,8 +85,6 @@ public class OsteoSomaticConsentPedVersion3 implements CustomTask {
 
         String activityCode = dataCfg.getString("activityCode");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
-        //log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
-        //long ts = this.timestamp.toEpochMilli();
 
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
