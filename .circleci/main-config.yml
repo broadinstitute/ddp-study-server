@@ -646,7 +646,7 @@ commands:
             - run:
                 name: Run sonar scan
                 command: |
-                  mvn sonar:sonar
+                  mvn verify sonar:sonar
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
