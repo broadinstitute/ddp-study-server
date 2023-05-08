@@ -606,12 +606,7 @@ commands:
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
             fi
-            SONAR_GOAL=''
-            if [[ <<parameters.sonar_scan>> = true ]]; then
-              SONAR_GOAL='sonar:sonar'
-            fi
-
-            mvn <<parameters.phase>> $SONAR_GOAL --batch-mode \
+            mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
@@ -645,6 +640,13 @@ commands:
                 name: Generate coverage report
                 command: |
                   mvn jacoco:report
+      - when:
+          condition: << parameters.sonar_scan >>
+          steps:
+            - run:
+                name: Run sonar scan
+                command: |
+                  mvn sonar:sonar
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
