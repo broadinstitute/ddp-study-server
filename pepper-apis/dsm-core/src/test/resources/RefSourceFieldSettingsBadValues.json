@@ -1,0 +1,46 @@
+[
+  {
+    "value": "DOC",
+    "name": "Doctor"
+  },
+  {
+    "value": "FAM_OR_FRIEND",
+    "name": "Family or friend"
+  },
+  {
+    "value": "GROUP",
+    "name": "Advocacy/Support Group"
+  },
+  {
+    "value": "CURRENT_PT",
+    "name": "Current Participant"
+  },
+  {
+    "value": "FACEBOOK",
+    "name": "Facebook"
+  },
+  {
+    "value": "GOOGLE",
+    "name": "Google or other search engine"
+  },
+  {
+    "value": "WORD",
+    "name": "Word of mouth"
+  },
+  {
+    "value": "NEWSPAPER",
+    "name": "Newspaper story"
+  },
+  {
+    "value": "YOUTUBE",
+    "name": "Youtube"
+  },
+  {
+    "value": "LETTER",
+    "name": "Partner’s research letter"
+  },
+  {
+    "value": "OTHER",
+    "name": "Other"
+  }
+]
