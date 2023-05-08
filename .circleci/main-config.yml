@@ -575,6 +575,9 @@ commands:
       coverage_report:
         type: boolean
         default: false
+      sonar_scan:
+        type: boolean
+        default: false
     steps:
       - when:
           condition: << parameters.restore_m2_cache >>
@@ -603,7 +606,12 @@ commands:
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
             fi
-            mvn <<parameters.phase>> --batch-mode \
+            SONAR_GOAL=''
+            if [[ <<parameters.sonar_scan>> = true ]]; then
+              SONAR_GOAL='sonar:sonar'
+            fi
+
+            mvn <<parameters.phase>> $SONAR_GOAL --batch-mode \
                     -f <<parameters.pom_file>> \
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
@@ -625,6 +633,7 @@ commands:
           command: |
             mkdir -p ~/test-results/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+            mkdir -p ~/test-results/jacoco/
             find . -type f -regex ".*/target/site/jacoco/.*xml" -exec cp {} ~/test-results/jacoco/ \;
           when: always
       - store_test_results:
@@ -846,6 +855,7 @@ jobs:
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
+                sonar_scan: true
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -889,6 +899,7 @@ jobs:
                 additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
                 coverage_report: true
+                sonar_scan: true
             - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
@@ -935,6 +946,7 @@ jobs:
                 additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
                 coverage_report: true
+                sonar_scan: true
             - save-ddp-cache
             - run:
                 name: 'Check node index to save workspace only once'
