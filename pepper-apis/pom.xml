@@ -12,10 +12,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>dsp-appsec</sonar.organization>
         <sonar.projectName>ddp-study-server</sonar.projectName>
         <sonar.projectKey>broadinstitute_ddp-study-server</sonar.projectKey>
-        <sonar.organization>dsp-appsec</sonar.organization>
-        <sonar.sources>ddp-common/src,dsm-core/src,dss-core/src</sonar.sources>
+        <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
         <sonar.jacoco.reportPaths>target/jacoco.exec</sonar.jacoco.reportPaths>
         <jdbi.version>3.28.0</jdbi.version>

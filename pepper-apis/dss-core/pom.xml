@@ -12,6 +12,10 @@
     <artifactId>dss-core</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <sonar.sources>src/main/java</sonar.sources>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.broadinstitute.ddp</groupId>

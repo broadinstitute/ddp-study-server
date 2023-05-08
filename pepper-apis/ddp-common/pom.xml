@@ -13,6 +13,7 @@
 
     <properties>
         <logback.version>1.4.5</logback.version>
+        <sonar.sources>src/main/java</sonar.sources>
     </properties>
 
     <dependencies>
