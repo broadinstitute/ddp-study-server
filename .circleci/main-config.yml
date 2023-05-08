@@ -849,7 +849,7 @@ jobs:
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dsm-core
-                phase: verify
+                phase: test
                 skip_tests: false
                 config_file_path: ''
                 skip_checkstyle: true
@@ -895,7 +895,7 @@ jobs:
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dss-core
-                phase: verify
+                phase: test
                 skip_tests: false
                 skip_checkstyle: true
                 additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
@@ -942,7 +942,7 @@ jobs:
             - compute-parallel-test-split
             - restore-ddp-cache
             - run-maven-with-pepper-options: # Running the tests. Only those assigned to this parallel job!
-                phase: verify
+                phase: test
                 skip_tests: false
                 module: dss-core
                 additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
