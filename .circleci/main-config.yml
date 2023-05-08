@@ -572,6 +572,9 @@ commands:
       ddp_cache_dir:
         type: string
         default: *ddp_cache_dir
+      coverage_report:
+        type: boolean
+        default: false
     steps:
       - when:
           condition: << parameters.restore_m2_cache >>
@@ -622,9 +625,18 @@ commands:
           command: |
             mkdir -p ~/test-results/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+            find . -type f -regex ".*/target/site/jacoco/.*xml" -exec cp {} ~/test-results/jacoco/ \;
           when: always
       - store_test_results:
           path: ~/test-results
+      - when:
+          condition: << parameters.coverage_report >>
+          steps:
+            - run:
+                name: Generate coverage report
+                command: |
+                  mvn jacoco:report
+      - sonarcloud/scan
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
@@ -827,13 +839,14 @@ jobs:
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dsm-core
-                phase: test
+                phase: verify
                 skip_tests: false
                 config_file_path: ''
                 skip_checkstyle: true
                 additional_options: -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
+                coverage_report: true
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -871,11 +884,12 @@ jobs:
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dss-core
-                phase: test
+                phase: verify
                 skip_tests: false
                 skip_checkstyle: true
                 additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
+                coverage_report: true
             - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
@@ -916,11 +930,12 @@ jobs:
             - compute-parallel-test-split
             - restore-ddp-cache
             - run-maven-with-pepper-options: # Running the tests. Only those assigned to this parallel job!
-                phase: test
+                phase: verify
                 skip_tests: false
                 module: dss-core
                 additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
+                coverage_report: true
             - save-ddp-cache
             - run:
                 name: 'Check node index to save workspace only once'
