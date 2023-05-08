@@ -34,7 +34,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 @Slf4j
 public class OsteoSomaticAssentV3 implements CustomTask {
 
-    private static final String DATA_FILE = "patches/somatic-assent-updates-pepper-468.conf";
+    private static final String DATA_FILE = "patches/somatic-assent-v3-updates-pepper-468.conf";
     private static final String STUDY = "cmi-osteo";
     private static final String VARIABLES_UPD = "variables-update";
     private static final String VARIABLES_UPD_QS = "question-variables-update";
