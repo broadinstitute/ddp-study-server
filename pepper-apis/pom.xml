@@ -15,8 +15,7 @@
         <sonar.projectName>ddp-study-server</sonar.projectName>
         <sonar.projectKey>broadinstitute_ddp-study-server</sonar.projectKey>
         <sonar.organization>dsp-appsec</sonar.organization>
-        <sonar.includedModules>pepper-parent,dsm-core,dss-core</sonar.includedModules>
-        <sonar.tests>src/test/java/org/broadinstitute/ddp/</sonar.tests>
+        <sonar.sources>ddp-common/src,dsm-core/src,dss-core/src</sonar.sources>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
         <sonar.jacoco.reportPaths>target/jacoco.exec</sonar.jacoco.reportPaths>
         <jdbi.version>3.28.0</jdbi.version>
