@@ -636,7 +636,6 @@ commands:
                 name: Generate coverage report
                 command: |
                   mvn jacoco:report
-      - sonarcloud/scan
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
