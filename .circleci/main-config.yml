@@ -646,7 +646,13 @@ commands:
             - run:
                 name: Run sonar scan
                 command: |
-                  mvn verify sonar:sonar
+                  mvn verify sonar:sonar --batch-mode \
+                    -Dcheckstyle.skip \
+                    -DskipTests=true \
+                    -Dddp.cacheDir="$ddp_cache_dir" \
+                    -Ditext.license=output-config/itextkey.xml \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>> \
+                    $MODULES_OPTION
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
