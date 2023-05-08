@@ -4,9 +4,9 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
+import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -18,7 +18,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
     protected static final Logger logger = LoggerFactory.getLogger(BasicDefaultDataMaker.class);
 
     protected final FieldSettings fieldSettings = new FieldSettings();
-    protected final BookmarkDao bookmarkDao = new BookmarkDao();
+    protected final Bookmark bookmark = new Bookmark();
     protected final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     protected final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     protected DDPInstance instance;

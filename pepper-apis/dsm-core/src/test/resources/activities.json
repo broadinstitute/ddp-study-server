@@ -1,0 +1,517 @@
+[
+  {
+    "activityCode": "PREQUAL",
+    "createdAt": 1681502711192,
+    "completedAt": 1681502959710,
+    "activityVersion": "v2",
+    "lastUpdatedAt": 1681502959710,
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "GENERAL_INFO",
+        "answer": [
+          "ENGLISH",
+          "RARE_CONDITION",
+          "RESIDENT",
+          "UNDER_CARE"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "GENERAL_INFO": [
+          "ENGLISH",
+          "RARE_CONDITION",
+          "RESIDENT",
+          "UNDER_CARE"
+        ],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "LU0BSQE4HV",
+    "attributes": {},
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "ENROLLMENT",
+    "createdAt": 1681502959840,
+    "completedAt": 1681503653569,
+    "activityVersion": "v2",
+    "lastUpdatedAt": 1681503653569,
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "FILLER_TITLE",
+        "answer": [
+          "MR"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "FILLER_TITLE": [
+          "MR"
+        ]
+      },
+      {
+        "stableId": "FILLER_FIRST_NAME",
+        "answer": "Dennis",
+        "FILLER_FIRST_NAME": "Dennis",
+        "questionType": "TEXT"
+      },
+      {
+        "stableId": "FILLER_PHONE",
+        "FILLER_PHONE": "6177147395",
+        "answer": "6177147395",
+        "questionType": "TEXT"
+      },
+      {
+        "stableId": "RELATIONSHIP",
+        "answer": [
+          "MYSELF"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "RELATIONSHIP": [
+          "MYSELF"
+        ],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "STATE",
+        "answer": [
+          "MA"
+        ],
+        "groupedOptions": {},
+        "STATE": [
+          "MA"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "DESCRIPTION",
+        "answer": "15 toes",
+        "DESCRIPTION": "15 toes",
+        "questionType": "TEXT"
+      },
+      {
+        "CLINICAL_DIAGNOSES": [
+          "YES"
+        ],
+        "stableId": "CLINICAL_DIAGNOSES",
+        "answer": [
+          "YES"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "CLINICAL_DIAGNOSES_DETAILS",
+        "answer": "Extra toes syndrome",
+        "questionType": "TEXT",
+        "CLINICAL_DIAGNOSES_DETAILS": "Extra toes syndrome"
+      },
+      {
+        "stableId": "GENETIC_DIAGNOSES",
+        "answer": [
+          "UNSURE"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "GENETIC_DIAGNOSES": [
+          "UNSURE"
+        ]
+      },
+      {
+        "stableId": "FIND_OUT",
+        "answer": [
+          "PARTICIPANT",
+          "PARTNERS",
+          "SEARCH"
+        ],
+        "FIND_OUT": [
+          "PARTICIPANT",
+          "PARTNERS",
+          "SEARCH"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "PATIENT_AGE",
+        "answer": "24",
+        "questionType": "TEXT",
+        "PATIENT_AGE": "24"
+      },
+      {
+        "stableId": "CONDITION_AGE",
+        "answer": "22",
+        "CONDITION_AGE": "22",
+        "questionType": "TEXT"
+      },
+      {
+        "stableId": "PATIENT_SEX",
+        "answer": [
+          "MALE"
+        ],
+        "groupedOptions": {},
+        "PATIENT_SEX": [
+          "MALE"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "RACE",
+        "answer": [
+          "WHITE"
+        ],
+        "groupedOptions": {},
+        "RACE": [
+          "WHITE"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "ETHNICITY",
+        "answer": [
+          "NOT_HISPANIC"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "ETHNICITY": [
+          "NOT_HISPANIC"
+        ],
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "DOCTOR_TYPES",
+        "answer": [
+          "NEURO"
+        ],
+        "groupedOptions": {},
+        "DOCTOR_TYPES": [
+          "NEURO"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "TESTS",
+        "TESTS": [
+          "NONE"
+        ],
+        "answer": [
+          "NONE"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "BIOPSY",
+        "answer": [
+          "SKIN"
+        ],
+        "groupedOptions": {},
+        "BIOPSY": [
+          "SKIN"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "OTHER_STUDIES",
+        "answer": [
+          "NO"
+        ],
+        "OTHER_STUDIES": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "NO_SIBLINGS",
+        "answer": [
+          "YES"
+        ],
+        "groupedOptions": {},
+        "NO_SIBLINGS": [
+          "YES"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "NO_CHILDREN": [
+          "YES"
+        ],
+        "stableId": "NO_CHILDREN",
+        "answer": [
+          "YES"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "NO_RELATIVE_AFFECTED",
+        "answer": [
+          "YES"
+        ],
+        "groupedOptions": {},
+        "NO_RELATIVE_AFFECTED": [
+          "YES"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "AGREEMENT",
+        "answer": [
+          "CONTACT",
+          "DATA",
+          "REMOVE"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "AGREEMENT": [
+          "CONTACT",
+          "DATA",
+          "REMOVE"
+        ],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "EM6N8RDLXE",
+    "attributes": {},
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "MOTHER",
+    "createdAt": 1681502959874,
+    "completedAt": 1681503652930,
+    "activityVersion": "v1",
+    "lastUpdatedAt": 1681503652930,
+    "parentInstanceGuid": "EM6N8RDLXE",
+    "questionsAnswers": [
+      {
+        "stableId": "MOTHER_RACE",
+        "answer": [
+          "WHITE"
+        ],
+        "MOTHER_RACE": [
+          "WHITE"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "MOTHER_ETHNICITY",
+        "answer": [
+          "NOT_HISPANIC"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "MOTHER_ETHNICITY": [
+          "NOT_HISPANIC"
+        ]
+      },
+      {
+        "stableId": "MOTHER_SAME_CONDITION",
+        "answer": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "MOTHER_SAME_CONDITION": [
+          "NO"
+        ]
+      },
+      {
+        "stableId": "MOTHER_CAN_PARTICIPATE",
+        "answer": [
+          "NO"
+        ],
+        "MOTHER_CAN_PARTICIPATE": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "MOTHER_DECEASED",
+        "MOTHER_DECEASED": [
+          "YES"
+        ],
+        "answer": [
+          "YES"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "MOTHER_DECEASED_DNA",
+        "answer": [
+          "NO"
+        ],
+        "MOTHER_DECEASED_DNA": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "N6N8FQG9L1",
+    "attributes": {},
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "FATHER",
+    "createdAt": 1681502959900,
+    "completedAt": 1681503652895,
+    "activityVersion": "v1",
+    "lastUpdatedAt": 1681503652895,
+    "parentInstanceGuid": "EM6N8RDLXE",
+    "questionsAnswers": [
+      {
+        "stableId": "FATHER_RACE",
+        "answer": [
+          "WHITE"
+        ],
+        "groupedOptions": {},
+        "FATHER_RACE": [
+          "WHITE"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FATHER_ETHNICITY",
+        "answer": [
+          "NOT_HISPANIC"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "FATHER_ETHNICITY": [
+          "NOT_HISPANIC"
+        ],
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FATHER_SAME_CONDITION",
+        "answer": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "FATHER_SAME_CONDITION": [
+          "NO"
+        ]
+      },
+      {
+        "stableId": "FATHER_CAN_PARTICIPATE",
+        "answer": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "FATHER_CAN_PARTICIPATE": [
+          "NO"
+        ],
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FATHER_DECEASED",
+        "answer": [
+          "NO"
+        ],
+        "FATHER_DECEASED": [
+          "NO"
+        ],
+        "groupedOptions": {},
+        "optionDetails": [],
+        "nestedOptions": {},
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "YXVKQWTU88",
+    "attributes": {},
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "SIBLING",
+    "createdAt": 1681502959925,
+    "completedAt": null,
+    "activityVersion": "v1",
+    "lastUpdatedAt": 1681502959936,
+    "parentInstanceGuid": "EM6N8RDLXE",
+    "questionsAnswers": [],
+    "guid": "HALTKVT560",
+    "attributes": {},
+    "status": "CREATED"
+  },
+  {
+    "activityCode": "CHILD",
+    "createdAt": 1681502959958,
+    "completedAt": null,
+    "activityVersion": "v1",
+    "lastUpdatedAt": 1681502959962,
+    "parentInstanceGuid": "EM6N8RDLXE",
+    "questionsAnswers": [],
+    "guid": "JRBJ94DUPU",
+    "attributes": {},
+    "status": "CREATED"
+  },
+  {
+    "activityCode": "RELATIVE",
+    "createdAt": 1681502959983,
+    "completedAt": null,
+    "activityVersion": "v1",
+    "lastUpdatedAt": 1681502959987,
+    "parentInstanceGuid": "EM6N8RDLXE",
+    "questionsAnswers": [],
+    "guid": "WBQSA8QTPC",
+    "attributes": {},
+    "status": "CREATED"
+  }
+]
