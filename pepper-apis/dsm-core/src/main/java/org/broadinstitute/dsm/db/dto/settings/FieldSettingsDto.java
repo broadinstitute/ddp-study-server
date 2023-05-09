@@ -14,6 +14,7 @@ public class FieldSettingsDto {
     private String displayType;
     private String possibleValues;
     private String actions;
+    private String details;
     private boolean readonly;
     private int orderNumber;
     private boolean deleted;
@@ -30,6 +31,7 @@ public class FieldSettingsDto {
         this.displayType = builder.displayType;
         this.possibleValues = builder.possibleValues;
         this.actions = builder.actions;
+        this.details = builder.details;
         this.readonly = builder.readonly;
         this.orderNumber = builder.orderNumber;
         this.deleted = builder.deleted;
@@ -48,6 +50,7 @@ public class FieldSettingsDto {
         private String displayType;
         private String possibleValues;
         private String actions;
+        private String details;
         private boolean readonly;
         private int orderNumber;
         private boolean deleted;
@@ -91,6 +94,11 @@ public class FieldSettingsDto {
 
         public Builder withActions(String actions) {
             this.actions = actions;
+            return this;
+        }
+
+        public Builder withDetails(String details) {
+            this.details = details;
             return this;
         }
 
