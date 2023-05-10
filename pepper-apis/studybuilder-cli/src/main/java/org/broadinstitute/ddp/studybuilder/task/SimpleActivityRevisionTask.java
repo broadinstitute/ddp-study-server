@@ -44,13 +44,13 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 @Slf4j
 public class SimpleActivityRevisionTask implements CustomTask {
-    private static final String VARIABLES_UPD = "variables-update";
+    private static final String VARIABLES_UPDATES = "variable-updates";
 
-    private static final String STUDY_UPDATES = "activity-updates";
+    private static final String ACTIVITY_UPDATES = "activity-updates";
     private static final String BLOCK_KEY = "blockNew";
     private static final String BLOCK_UPDATES = "block-updates";
     private static final String OLD_TEMPLATE_KEY = "old_template_search_text";
-    private static final String VARIABLES_UPD_QS = "question-variables-update";
+    private static final String QUESTION_VARIABLE_UPDATES = "question-variable-updates";
 
     private static final Gson gson = GsonUtil.standardGson();
 
@@ -60,7 +60,6 @@ public class SimpleActivityRevisionTask implements CustomTask {
     private Config varsCfg;
     private Path cfgPath;
     private Instant timestamp;
-    private Config cfg;
     private Config studyCfg;
 
     private ActivityDao activityDao;
@@ -92,7 +91,6 @@ public class SimpleActivityRevisionTask implements CustomTask {
         }
         dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
 
-        cfg = studyCfg;
         timestamp = Instant.now();
     }
 
@@ -105,11 +103,17 @@ public class SimpleActivityRevisionTask implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        this.adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
+        this.adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
 
         this.studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
 
-        List<? extends Config> activityUpdateConfigs = dataCfg.getConfigList(STUDY_UPDATES);
+        List<? extends Config> activityUpdateConfigs = null;
+
+        try {
+            activityUpdateConfigs = dataCfg.getConfigList(ACTIVITY_UPDATES);
+        } catch (Exception e) {
+            throw new DDPException("The activity-updates field is required to run this task.");
+        }
 
         this.sqlHelper = handle.attach(SimpleActivityRevisionTask.SqlHelper.class);
         this.activityDao = handle.attach(ActivityDao.class);
@@ -151,7 +155,7 @@ public class SimpleActivityRevisionTask implements CustomTask {
     }
 
     private void updateTemplates(RevisionMetadata meta, ActivityVersionDto version, Config activityConfig) {
-        log.info("UPDATE Templates/Content Blocks");
+        log.info("Started Updating Templates/Content Blocks");
         List<? extends Config> configList = null;
 
         try {
@@ -164,6 +168,7 @@ public class SimpleActivityRevisionTask implements CustomTask {
         for (Config config : configList) {
             revisionContentBlockTemplate(meta, version, config);
         }
+        log.info("Finished Updating Templates/Content Blocks");
     }
 
     private void revisionContentBlockTemplate(RevisionMetadata meta, ActivityVersionDto versionDto, Config conf) {
@@ -204,11 +209,11 @@ public class SimpleActivityRevisionTask implements CustomTask {
 
     private void updateTemplateVariables(RevisionMetadata meta,
                                          ActivityVersionDto version, Config activityConfig) {
-        log.info("UPDATE Template variables");
+        log.info("Started Updating Template Variables");
         List<? extends Config> configList = null;
 
         try {
-            configList = activityConfig.getConfigList(VARIABLES_UPD);
+            configList = activityConfig.getConfigList(VARIABLES_UPDATES);
         } catch (Exception e) {
             log.info("No Template Variable updates found for activity={}", version.getActivityId());
             return;
@@ -218,17 +223,18 @@ public class SimpleActivityRevisionTask implements CustomTask {
             TemplateVariable templateVariable = gson.fromJson(ConfigUtil.toJson(config), TemplateVariable.class);
             revisionVariableTranslation(templateVariable, meta, version);
         }
+        log.info("Finished Updating Template Variables");
     }
 
     private void updateQuestionTemplateVariables(RevisionMetadata meta,
                                                  ActivityVersionDto version, Config activityConfig) {
-        log.info("UPDATE QUESTION Template variables");
+        log.info("Started Updating Question Template Variables");
         List<? extends Config> configList = null;
 
         try {
-            configList = activityConfig.getConfigList(VARIABLES_UPD_QS);
+            configList = activityConfig.getConfigList(QUESTION_VARIABLE_UPDATES);
         } catch (Exception e) {
-            log.info("No Question updates found for activity={}", version.getActivityId());
+            log.info("No Question updates found for activity={}. Skipping.", version.getActivityId());
             return;
         }
 
@@ -240,14 +246,14 @@ public class SimpleActivityRevisionTask implements CustomTask {
             revisionVariable(templateVariable, meta, version, variableId);
         }
 
-        log.info("Updated Question Template Variables");
+        log.info("Finished Updating Question Template Variables");
     }
 
     private void revisionVariableTranslation(TemplateVariable templateVariable,
                                              RevisionMetadata meta, ActivityVersionDto version) {
         log.info("revisioning and updating template variable: {}", templateVariable.getName());
         Long templateVariableId = sqlHelper.findVariableIdByNameAndActivityId(templateVariable.getName(), version.getActivityId());
-        log.info("Tmpl variableId  {} ", templateVariableId);
+
         revisionVariable(templateVariable, meta, version, templateVariableId);
     }
 
@@ -274,7 +280,9 @@ public class SimpleActivityRevisionTask implements CustomTask {
         }
         int[] ids = jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(substitutionIds, revIds);
         if (ids.length != revIds.length) {
-            throw new DDPException("returned ids length " + ids.length + "  doesnt match revIds passed length " + revIds.length);
+            throw new DDPException(
+                    String.format("returned ids length %s doesnt match revIds passed length %s",
+                            ids.length, revIds.length));
         }
         log.info("revision and updated template variable: {}", templateVariableId);
     }
