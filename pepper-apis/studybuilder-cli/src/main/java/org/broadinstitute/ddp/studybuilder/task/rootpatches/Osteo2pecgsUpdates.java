@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task.rootpatches;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.OsteoSomaticAssentV3;
+import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlineConsentAddendumPdfV3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlineConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlinePedConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2SomaticConsentVersion3;
@@ -29,6 +30,8 @@ public class Osteo2pecgsUpdates implements CustomTask {
         taskList.add(new OsteoSomaticConsentAddendumPdfV3());
         taskList.add(new Osteo2GermlineConsentVersion3());
         taskList.add(new Osteo2GermlinePedConsentVersion3());
+        taskList.add(new Osteo2GermlineConsentAddendumPdfV3());
+
 
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
     }
