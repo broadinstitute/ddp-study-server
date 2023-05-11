@@ -80,6 +80,7 @@ public class DataSyncJob implements Job {
 
     @Override
     public void execute(JobExecutionContext ctx) throws JobExecutionException {
+        log.info("Executing DataSyncJob");
         try {
             boolean exportCurrentlyRunning = ctx.getScheduler()
                     .getCurrentlyExecutingJobs().stream()
@@ -89,12 +90,14 @@ public class DataSyncJob implements Job {
                 return;
             }
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> run(handle, exporter));
+            log.info("Completed executing DataSyncJob");
         } catch (Exception e) {
             throw new JobExecutionException(e, false);
         }
     }
 
     private void run(Handle handle, DataExporter exporter) {
+        log.info("Running DataSyncJob");
         List<DataSyncRequest> requests = handle.attach(DataExportDao.class).findLatestDataSyncRequests();
         if (requests.isEmpty()) {
             return;
