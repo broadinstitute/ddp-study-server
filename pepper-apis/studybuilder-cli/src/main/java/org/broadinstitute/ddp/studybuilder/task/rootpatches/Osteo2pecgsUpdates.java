@@ -6,8 +6,11 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.OsteoSomaticAssentV3;
 import org.broadinstitute.ddp.studybuilder.task.SimpleActivityRevisionTask;
+import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlineConsentVersion3;
+import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlinePedConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2SomaticConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion3;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoSomaticConsentAddendumPdfV3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoSomaticConsentPedVersion3;
 import org.jdbi.v3.core.Handle;
 
@@ -26,6 +29,9 @@ public class Osteo2pecgsUpdates implements CustomTask {
         taskList.add(new Osteo2SomaticConsentVersion3());
         taskList.add(new OsteoSomaticAssentV3()); //assent portion of  CONSENT_ADDENDUM_PEDIATRIC
         taskList.add(new OsteoSomaticConsentPedVersion3()); //consent portion of  CONSENT_ADDENDUM_PEDIATRIC
+        taskList.add(new OsteoSomaticConsentAddendumPdfV3());
+        taskList.add(new Osteo2GermlineConsentVersion3());
+        taskList.add(new Osteo2GermlinePedConsentVersion3());
 
         SimpleActivityRevisionTask osteoPediatricConsentAndAssentVersion3 = new SimpleActivityRevisionTask();
         taskList.add(osteoPediatricConsentAndAssentVersion3);
