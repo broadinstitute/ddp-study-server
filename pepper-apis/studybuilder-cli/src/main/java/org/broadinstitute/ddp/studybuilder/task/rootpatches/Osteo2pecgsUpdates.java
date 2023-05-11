@@ -34,13 +34,17 @@ public class Osteo2pecgsUpdates implements CustomTask {
         taskList.add(new Osteo2GermlinePedConsentVersion3());
 
         SimpleActivityRevisionTask osteoPediatricConsentAndAssentVersion3 = new SimpleActivityRevisionTask();
+        SimpleActivityRevisionTask osteoMedicalRecordTextUpdateVersion3 = new SimpleActivityRevisionTask();
         taskList.add(osteoPediatricConsentAndAssentVersion3);
+        taskList.add(osteoMedicalRecordTextUpdateVersion3);
 
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
 
         try {
             osteoPediatricConsentAndAssentVersion3.consumeArguments(
                     new String[]{"patches/osteo-version-3-changes.conf"});
+            osteoMedicalRecordTextUpdateVersion3.consumeArguments(
+                    new String[]{"patches/osteo-medical-records-release-text-version3-changes.conf"});
         } catch (ParseException parseException) {
             throw new DDPException(parseException.getMessage());
         }
