@@ -6,6 +6,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.OsteoSomaticAssentV3;
 import org.broadinstitute.ddp.studybuilder.task.SimpleActivityRevisionTask;
+import org.broadinstitute.ddp.studybuilder.task.SimplePdfRevisionTask;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlineConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlinePedConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2SomaticConsentVersion3;
@@ -36,11 +37,16 @@ public class Osteo2pecgsUpdates implements CustomTask {
         SimpleActivityRevisionTask osteoPediatricConsentAndAssentVersion3 = new SimpleActivityRevisionTask();
         taskList.add(osteoPediatricConsentAndAssentVersion3);
 
+        SimplePdfRevisionTask osteoPdfRevisionVersion3 = new SimplePdfRevisionTask();
+        taskList.add(osteoPdfRevisionVersion3);
+
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
 
         try {
             osteoPediatricConsentAndAssentVersion3.consumeArguments(
                     new String[]{"patches/osteo-version-3-changes.conf"});
+            osteoPdfRevisionVersion3.consumeArguments(
+                    new String[]{"patches/osteo-consent-parental-v3.conf"});
         } catch (ParseException parseException) {
             throw new DDPException(parseException.getMessage());
         }

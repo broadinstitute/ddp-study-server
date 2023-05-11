@@ -1,28 +1,17 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -43,7 +32,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 @Slf4j
-public class SimpleActivityRevisionTask implements CustomTask {
+public class SimpleActivityRevisionTask extends SimpleRevisionTask {
     private static final String VARIABLES_UPDATES = "variable-updates";
 
     private static final String ACTIVITY_UPDATES = "activity-updates";
@@ -53,14 +42,6 @@ public class SimpleActivityRevisionTask implements CustomTask {
     private static final String QUESTION_VARIABLE_UPDATES = "question-variable-updates";
 
     private static final Gson gson = GsonUtil.standardGson();
-
-    private String dataFile;
-
-    private Config dataCfg;
-    private Config varsCfg;
-    private Path cfgPath;
-    private Instant timestamp;
-    private Config studyCfg;
 
     private ActivityDao activityDao;
     private TemplateDao templateDao;
@@ -74,46 +55,17 @@ public class SimpleActivityRevisionTask implements CustomTask {
     private User adminUser;
 
     @Override
-    public void consumeArguments(String[] args) throws ParseException {
-        log.info(String.join(", ", args));
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(new Options(), args);
-        String[] positional = cmd.getArgs();
-        if (positional.length < 1) {
-            throw new ParseException("Patch File is required to run.");
-        }
-        log.info(positional[0]);
-        this.dataFile = positional[0];
-
-        File file = cfgPath.getParent().resolve(this.dataFile).toFile();
-        if (!file.exists()) {
-            throw new DDPException("Data file is missing: " + file);
-        }
-        dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
-
-        timestamp = Instant.now();
-    }
-
-    @Override
-    public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        this.cfgPath = cfgPath;
-        this.varsCfg = varsCfg;
-        this.studyCfg = studyCfg;
-    }
-
-    @Override
     public void run(Handle handle) {
-        this.adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
+        this.adminUser = this.getAdminUser(handle);
 
-        this.studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
+        this.studyDto = this.getStudyDto(handle);
 
-        List<? extends Config> activityUpdateConfigs = null;
-
-        try {
-            activityUpdateConfigs = dataCfg.getConfigList(ACTIVITY_UPDATES);
-        } catch (Exception e) {
-            throw new DDPException("The activity-updates field is required to run this task.");
-        }
+        List<? extends Config> activityUpdateConfigs = getConfigList(
+                dataCfg,
+                ACTIVITY_UPDATES,
+                () -> {
+                    throw new DDPException("The activity-updates field is required to run this task.");
+                });
 
         this.sqlHelper = handle.attach(SimpleActivityRevisionTask.SqlHelper.class);
         this.activityDao = handle.attach(ActivityDao.class);
@@ -156,14 +108,11 @@ public class SimpleActivityRevisionTask implements CustomTask {
 
     private void updateTemplates(RevisionMetadata meta, ActivityVersionDto version, Config activityConfig) {
         log.info("Started Updating Templates/Content Blocks");
-        List<? extends Config> configList = null;
 
-        try {
-            configList = activityConfig.getConfigList(BLOCK_UPDATES);
-        } catch (Exception e) {
-            log.info("No Template updates found for activity={}", version.getActivityId());
-            return;
-        }
+        List<? extends Config> configList = getConfigList(
+                activityConfig,
+                BLOCK_UPDATES,
+                () -> log.info("No Template updates found for activity={}", version.getActivityId()));
 
         for (Config config : configList) {
             revisionContentBlockTemplate(meta, version, config);
@@ -210,14 +159,11 @@ public class SimpleActivityRevisionTask implements CustomTask {
     private void updateTemplateVariables(RevisionMetadata meta,
                                          ActivityVersionDto version, Config activityConfig) {
         log.info("Started Updating Template Variables");
-        List<? extends Config> configList = null;
 
-        try {
-            configList = activityConfig.getConfigList(VARIABLES_UPDATES);
-        } catch (Exception e) {
-            log.info("No Template Variable updates found for activity={}", version.getActivityId());
-            return;
-        }
+        List<? extends Config> configList = getConfigList(
+                activityConfig,
+                VARIABLES_UPDATES,
+                () -> log.info("No Template Variable updates found for activity={}", version.getActivityId()));
 
         for (Config config : configList) {
             TemplateVariable templateVariable = gson.fromJson(ConfigUtil.toJson(config), TemplateVariable.class);
@@ -229,14 +175,11 @@ public class SimpleActivityRevisionTask implements CustomTask {
     private void updateQuestionTemplateVariables(RevisionMetadata meta,
                                                  ActivityVersionDto version, Config activityConfig) {
         log.info("Started Updating Question Template Variables");
-        List<? extends Config> configList = null;
 
-        try {
-            configList = activityConfig.getConfigList(QUESTION_VARIABLE_UPDATES);
-        } catch (Exception e) {
-            log.info("No Question updates found for activity={}. Skipping.", version.getActivityId());
-            return;
-        }
+        List<? extends Config> configList = getConfigList(
+                activityConfig,
+                QUESTION_VARIABLE_UPDATES,
+                () -> log.info("No Question updates found for activity={}", version.getActivityId()));
 
         for (Config config : configList) {
             TemplateVariable templateVariable = gson.fromJson(ConfigUtil.toJson(config), TemplateVariable.class);
