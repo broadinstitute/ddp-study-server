@@ -95,6 +95,7 @@ import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
 import org.broadinstitute.dsm.route.KitExpressRoute;
+import org.broadinstitute.dsm.route.RegisterParticipantRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.KitLabelRoute;
 import org.broadinstitute.dsm.route.KitRequestRoute;
@@ -893,6 +894,9 @@ public class DSMServer {
 
         FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
         patch(uiRoot + RoutePath.GoogleAnalytics, frontendAnalyticsRoute, new JsonTransformer());
+
+        RegisterParticipantRoute registerParticipantRoute = new RegisterParticipantRoute();
+        post(uiRoot + RoutePath.REGISTER_PARTICIPANT, registerParticipantRoute, new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
