@@ -247,7 +247,7 @@ public class Osteo2GermlinePedConsentVersion3 implements CustomTask {
         log.info("Disabled Question: {} . blockId: {} ", questionStableId, dateBlockId);
         dateSectionDto.getDisplayOrder();
         long sectionId = dateSectionDto.getSectionId();
-        addContentBlock(handle, versionDto, dataCfg.getConfig(blockToAdd), sectionId, dateSectionDto.getDisplayOrder() + 10);
+        addContentBlock(handle, versionDto, dataCfg.getConfig(blockToAdd), sectionId, dateSectionDto.getDisplayOrder());
         log.info("Added new sysdate content block");
     }
 
