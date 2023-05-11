@@ -22,6 +22,8 @@ import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Singleton that grabs a connection and calls
@@ -32,6 +34,8 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
  */
 @Slf4j
 public class TransactionWrapper {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionWrapper.class);
+
     // We are setting the VMs default timezone expectation that it will be same on server
     // or at least specified in DB connection URL
     // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
@@ -278,12 +282,29 @@ public class TransactionWrapper {
      * @throws DDPException if error getting a raw connection
      */
     public static <R, X extends Exception> R withTxn(DB db, HandleCallback<R, X> callback) throws X {
+        // hopefully temporary code to detect long-running connections
+        long startTime = System.currentTimeMillis();
         try {
             try (Handle h = openJdbiWithAuthRetry(db)) {
-                return h.inTransaction(callback);
+                R res =  h.inTransaction(callback);
+                long endTime = System.currentTimeMillis();
+                // 30s threshold
+                if (endTime - startTime > 30000) {
+                    logger.warn("DB transaction open for > 30s\n {}",
+                            stackTraceToString(Thread.currentThread().getStackTrace()));
+                }
+                return res;
             }
         } catch (ConnectionException e) {
             throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            // 30s threshold
+            if (endTime - startTime > 30000) {
+                logger.warn("DB transaction open for > 30s. Exception: {}\n {}", e.getMessage(),
+                        stackTraceToString(Thread.currentThread().getStackTrace()));
+            }
+            throw e;
         }
     }
 
@@ -300,13 +321,7 @@ public class TransactionWrapper {
      * @throws DDPException if error getting a raw connection
      */
     public static <R, X extends Exception> R withTxn(HandleCallback<R, X> callback) throws X {
-        try {
-            try (Handle h = openJdbiWithAuthRetry(getDB())) {
-                return h.inTransaction(callback);
-            }
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
-        }
+        return withTxn(getDB(), callback);
     }
 
     /**
@@ -347,10 +362,26 @@ public class TransactionWrapper {
      * @throws DDPException if error getting a raw connection
      */
     public static <X extends Exception> void useTxn(DB db, HandleConsumer<X> callback) throws X {
+        // hopefully temporary code to detect long-running connections
+        long startTime = System.currentTimeMillis();
         try (Handle h = openJdbiWithAuthRetry(db)) {
             h.useTransaction(callback);
+            long endTime = System.currentTimeMillis();
+            // 30s threshold
+            if (endTime - startTime > 30000) {
+                logger.warn("DB transaction open for > 30s\n {}",
+                        stackTraceToString(Thread.currentThread().getStackTrace()));
+            }
         } catch (ConnectionException e) {
             throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            // 30s threshold
+            if (endTime - startTime > 30000) {
+                logger.warn("DB transaction open for > 30s. Exception: {}\n {}", e.getMessage(),
+                        stackTraceToString(Thread.currentThread().getStackTrace()));
+            }
+            throw e;
         }
     }
 
@@ -364,11 +395,18 @@ public class TransactionWrapper {
      * @throws DDPException if error getting a raw connection
      */
     public static <X extends Exception> void useTxn(HandleConsumer<X> callback) throws X {
-        try (Handle h = openJdbiWithAuthRetry(getDB())) {
-            h.useTransaction(callback);
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+        useTxn(getDB(), callback);
+    }
+
+    /**
+     * Temporary (see usage)
+     */
+    private static String stackTraceToString(StackTraceElement[] stackTrace) {
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement element : stackTrace) {
+            sb.append(element.toString()).append("\n");
         }
+        return sb.toString();
     }
 
     /**

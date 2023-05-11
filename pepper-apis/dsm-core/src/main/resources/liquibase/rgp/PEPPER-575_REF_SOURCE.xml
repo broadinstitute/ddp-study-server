@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-575_REF_SOURCE" author="cunningh">
+        <sql>
+            UPDATE field_settings SET details = '{"DOCTOR": "DOC", "FAMILY": "FAM_OR_FRIEND", "GROUP": "GROUP", "PARTICIPANT": "CURRENT_PT",    "FACEBOOK": "FACEBOOK", "TWITTER": "TWITTER", "SEARCH": "GOOGLE", "WORD": "WORD", "NEWSPAPER": "NEWSPAPER", "YOUTUBE": "YOUTUBE", "PARTNERS": "LETTER", "OTHER": "OTHER"}'
+            WHERE field_settings_id in ( SELECT field_settings_id FROM (SELECT * FROM field_settings) as tmp
+                                         WHERE field_type = 'RGP_MEDICAL_RECORDS_GROUP' AND column_name = 'REF_SOURCE');
+        </sql>
+    </changeSet>
+</databaseChangeLog>

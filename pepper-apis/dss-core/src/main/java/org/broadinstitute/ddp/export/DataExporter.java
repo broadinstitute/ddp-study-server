@@ -445,6 +445,7 @@ public class DataExporter {
         if (bulkResponse.hasFailures()) {
             log.error(bulkResponse.buildFailureMessage());
         }
+        log.info("Exported data to ES");
     }
 
     public void exportUsersToElasticsearch(Handle handle, StudyDto studyDto, Set<Long> userIds) {
@@ -519,6 +520,8 @@ public class DataExporter {
         } catch (IOException e) {
             log.error("[export] failed during export to index {}", index, e);
         }
+        log.info("[export] completed exporting {} user records to index {}", allUsers.size(), index);
+
     }
 
     private UserRecord createUserRecord(User user,
