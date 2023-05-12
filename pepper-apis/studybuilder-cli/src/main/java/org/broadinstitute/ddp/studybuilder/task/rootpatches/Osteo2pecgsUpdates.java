@@ -40,7 +40,9 @@ public class Osteo2pecgsUpdates implements CustomTask {
         taskList.add(osteoMedicalRecordTextUpdateVersion3);
 
         SimplePdfRevisionTask osteoPdfRevisionVersion3 = new SimplePdfRevisionTask();
+        SimplePdfRevisionTask osteoMRPdfRevisionVersion3 = new SimplePdfRevisionTask();
         taskList.add(osteoPdfRevisionVersion3);
+        taskList.add(osteoMRPdfRevisionVersion3);
 
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
 
@@ -51,6 +53,9 @@ public class Osteo2pecgsUpdates implements CustomTask {
                     new String[]{"patches/osteo-consent-parental-v3.conf"});
             osteoMedicalRecordTextUpdateVersion3.consumeArguments(
                     new String[]{"patches/osteo-medical-records-release-text-version3-changes.conf"});
+            osteoMRPdfRevisionVersion3.consumeArguments(
+                    new String[]{"patches/osteo-v3-medicalrecords-pdfs.conf"}
+            );
         } catch (ParseException parseException) {
             throw new DDPException(parseException.getMessage());
         }
