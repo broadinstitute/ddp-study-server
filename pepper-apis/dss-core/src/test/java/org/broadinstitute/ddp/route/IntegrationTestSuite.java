@@ -46,9 +46,9 @@ import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.security.JWTConverterTest;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.DBTestContainer;
 import org.broadinstitute.ddp.util.JavaProcessSpawner;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
-import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -176,7 +176,7 @@ public class IntegrationTestSuite {
     private static void initializeDatabase() {
         RouteTestUtil.loadConfig();
         RouteTestUtil.loadSqlConfig();
-        MySqlTestContainerUtil.initializeTestDbs();
+        DBTestContainer.initializeTestDbs();
     }
 
     public static void startupTestServer(boolean isCacheDisabled) {
