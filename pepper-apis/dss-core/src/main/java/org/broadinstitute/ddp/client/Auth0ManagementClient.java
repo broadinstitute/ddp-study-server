@@ -295,16 +295,16 @@ public class Auth0ManagementClient {
         String msg = String.format(
                 "Hit rate limit while creating auth0 user with email %s in connection %s, retrying",
                 email, connection);
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(password);
+        user.setConnection(connection);
+        if (emailVerified != null) {
+            user.setEmailVerified(emailVerified);
+        }
         return withRetries(msg, () -> {
             try {
                 mgmtApi.setApiToken(getToken());
-                User user = new User();
-                user.setEmail(email);
-                user.setPassword(password);
-                user.setConnection(connection);
-                if (emailVerified != null) {
-                    user.setEmailVerified(emailVerified);
-                }
                 User createdUser = mgmtApi.users().create(user).execute();
                 return ApiResult.ok(200, createdUser);
             } catch (APIException e) {
@@ -538,6 +538,7 @@ public class Auth0ManagementClient {
                 break;
             }
             if (res.getStatusCode() == 429) {
+                this.backoffMillis = 30 * 1000; // More backoff time for Auth0 429 error code
                 log.error(retryMessage, res.getError());
                 long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
                 try {
