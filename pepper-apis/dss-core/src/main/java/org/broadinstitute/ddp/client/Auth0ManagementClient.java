@@ -297,16 +297,16 @@ public class Auth0ManagementClient {
         String msg = String.format(
                 "Hit rate limit while creating auth0 user with email %s in connection %s, retrying",
                 email, connection);
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setConnection(connection);
-        if (emailVerified != null) {
-            user.setEmailVerified(emailVerified);
-        }
         return withRetries(msg, () -> {
             try {
                 mgmtApi.setApiToken(getToken());
+                User user = new User();
+                user.setEmail(email);
+                user.setPassword(password);
+                user.setConnection(connection);
+                if (emailVerified != null) {
+                    user.setEmailVerified(emailVerified);
+                }
                 User createdUser = mgmtApi.users().create(user).execute();
                 return ApiResult.ok(200, createdUser);
             } catch (APIException e) {
