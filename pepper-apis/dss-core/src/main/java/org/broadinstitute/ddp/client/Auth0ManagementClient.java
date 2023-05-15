@@ -550,7 +550,6 @@ public class Auth0ManagementClient {
                     if (unixTimeAtWhichToRetry != -1) {
                         long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
                         if (suggestedWaitTime > 0) {
-                            // Set 10 seconds max wait time
                             long suggestedWaitTimeMilliSecond = suggestedWaitTime * 1000;
                             // Set max wait time to 10 seconds
                             wait = suggestedWaitTimeMilliSecond > 10000 ? 10000 : suggestedWaitTimeMilliSecond;
