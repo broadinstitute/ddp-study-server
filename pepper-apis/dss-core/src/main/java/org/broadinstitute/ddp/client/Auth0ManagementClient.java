@@ -533,7 +533,7 @@ public class Auth0ManagementClient {
         ApiResult<B, E> res = null;
         int numTries = 0;
         int maxTries = maxRetries + 1;
-        long totalSleepTimeSeconds = 0L;
+        long totalSleepTimeMilliSecond = 0L;
         while (numTries < maxTries) {
             res = callback.get();
             numTries++;
@@ -551,21 +551,22 @@ public class Auth0ManagementClient {
                         long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
                         if (suggestedWaitTime > 0) {
                             // Set 10 seconds max wait time
-                            long timeSeconds = suggestedWaitTime * 1000;
-                            wait = timeSeconds > 10000 ? 10000 : timeSeconds;
+                            long suggestedWaitTimeMilliSecond = suggestedWaitTime * 1000;
+                            // Set max wait time to 10 seconds
+                            wait = suggestedWaitTimeMilliSecond > 10000 ? 10000 : suggestedWaitTimeMilliSecond;
                         }
                     }
-                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " seconds based on Auth0 headers.");
+                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds based on Auth0 headers.");
                 } else {
-                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " seconds");
+                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds");
                 }
                 try {
                     TimeUnit.MILLISECONDS.sleep(wait);
                 } catch (InterruptedException e) {
                     log.warn("Interrupted while waiting after rate limit", e);
                 }
-                totalSleepTimeSeconds += wait;
-                log.warn("Hit Auth0 rate limit: Total wait time is " + totalSleepTimeSeconds + " seconds");
+                totalSleepTimeMilliSecond += wait;
+                log.warn("Hit Auth0 rate limit: Total wait time is " + totalSleepTimeMilliSecond + " milliseconds");
             } else {
                 break;
             }
