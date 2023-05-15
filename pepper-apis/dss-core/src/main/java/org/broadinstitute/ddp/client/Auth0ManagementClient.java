@@ -546,9 +546,13 @@ public class Auth0ManagementClient {
                 if (res.getError() instanceof RateLimitException) {
                     RateLimitException rateLimit = (RateLimitException) res.getError();
                     long unixTimeAtWhichToRetry = rateLimit.getReset();
-                    long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
-                    if (suggestedWaitTime > 0) {
-                        wait = suggestedWaitTime * 1000;
+                    if (unixTimeAtWhichToRetry != -1) {
+                        long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
+                        if (suggestedWaitTime > 0) {
+                            // Set 10 seconds max wait time
+                            long waitTime = suggestedWaitTime * 1000;
+                            wait = waitTime > 10000 ? 10000 : waitTime ;
+                        }
                     }
                     log.warn("Hit auth0 rate limit.  Pausing for " + wait + "s based on auth0 headers.");
                 } else {
