@@ -160,7 +160,7 @@ public class Osteo2GermlinePedConsentVersion3 implements CustomTask {
         Long templateVariableId = sqlHelper.findVariableIdByNameAndActivityId(templateVariable.getName(), version2.getActivityId());
         log.info("Tmpl variableId  {} ", templateVariableId);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(templateVariableId);
-        //all translations have same revision.. hence using first.. lms has only en any way.
+        //all translations have same revision.. hence using first.. Osteo has only en any way.
         long revId = jdbiRevision.copyAndTerminate(transList.get(0).getRevisionId().get(), meta);
         long[] revIds = new long[transList.size()];
         Arrays.fill(revIds, revId);
