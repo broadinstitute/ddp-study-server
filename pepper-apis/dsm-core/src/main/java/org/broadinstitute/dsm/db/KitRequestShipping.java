@@ -1184,8 +1184,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         if (results.resultException != null) {
             logger.error("Error updating kit w/ dsm_kit_id " + dsmKitId, results.resultException);
         } else {
-            logger.info("Updated kit w/ dsm_kit_id " + dsmKitId, results.resultException);
-
+            logger.info("Updated kit w/ dsm_kit_id " + dsmKitId);
+        }
+        if (ddpInstanceDto.getEsParticipantIndex()!=null) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                         ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
