@@ -550,8 +550,8 @@ public class Auth0ManagementClient {
                         long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
                         if (suggestedWaitTime > 0) {
                             // Set 10 seconds max wait time
-                            long waitTime = suggestedWaitTime * 1000;
-                            wait = waitTime > 10000 ? 10000 : waitTime ;
+                            long timeSeconds = suggestedWaitTime * 1000;
+                            wait = timeSeconds > 10000 ? 10000 : timeSeconds;
                         }
                     }
                     log.warn("Hit auth0 rate limit.  Pausing for " + wait + "s based on auth0 headers.");
