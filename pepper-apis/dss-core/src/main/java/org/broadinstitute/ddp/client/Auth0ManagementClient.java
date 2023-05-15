@@ -559,6 +559,8 @@ public class Auth0ManagementClient {
                 } catch (InterruptedException e) {
                     log.warn("Interrupted while waiting after rate limit", e);
                 }
+            } else {
+                break;
             }
         }
         return res;
