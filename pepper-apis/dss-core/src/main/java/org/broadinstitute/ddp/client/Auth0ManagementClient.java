@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
+import com.auth0.exception.RateLimitException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -527,7 +529,7 @@ public class Auth0ManagementClient {
         });
     }
 
-    private <B, E> ApiResult<B, E> withRetries(String retryMessage, Supplier<ApiResult<B, E>> callback) {
+    public <B, E> ApiResult<B, E> withRetries(String retryMessage, Supplier<ApiResult<B, E>> callback) {
         ApiResult<B, E> res = null;
         int numTries = 0;
         int maxTries = maxRetries + 1;
@@ -538,16 +540,25 @@ public class Auth0ManagementClient {
                 break;
             }
             if (res.getStatusCode() == 429) {
-                this.backoffMillis = 30 * 1000; // More backoff time for Auth0 429 error code
-                log.error(retryMessage, res.getError());
+                log.error(res.getError() + " " + res.getError().getClass().getName());
                 long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
+                // if we have more information from auth0 about how long to wait, use it.
+                if (res.getError() instanceof RateLimitException) {
+                    RateLimitException rateLimit = (RateLimitException) res.getError();
+                    long unixTimeAtWhichToRetry = rateLimit.getReset();
+                    long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
+                    if (suggestedWaitTime > 0) {
+                        wait = suggestedWaitTime * 1000;
+                    }
+                    log.warn("Hit auth0 rate limit.  Pausing for " + wait + "s based on auth0 headers.");
+                } else {
+                    log.warn("Hit auth0 rate limit.  Pausing for " + wait + "ms");
+                }
                 try {
                     TimeUnit.MILLISECONDS.sleep(wait);
                 } catch (InterruptedException e) {
                     log.warn("Interrupted while waiting after rate limit", e);
                 }
-            } else {
-                break;
             }
         }
         return res;
