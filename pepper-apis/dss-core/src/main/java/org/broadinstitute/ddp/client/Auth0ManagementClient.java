@@ -533,6 +533,7 @@ public class Auth0ManagementClient {
         ApiResult<B, E> res = null;
         int numTries = 0;
         int maxTries = maxRetries + 1;
+        long totalSleepTimeSeconds = 0L;
         while (numTries < maxTries) {
             res = callback.get();
             numTries++;
@@ -554,15 +555,17 @@ public class Auth0ManagementClient {
                             wait = timeSeconds > 10000 ? 10000 : timeSeconds;
                         }
                     }
-                    log.warn("Hit auth0 rate limit.  Pausing for " + wait + "s based on auth0 headers.");
+                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " seconds based on Auth0 headers.");
                 } else {
-                    log.warn("Hit auth0 rate limit.  Pausing for " + wait + "ms");
+                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " seconds");
                 }
                 try {
                     TimeUnit.MILLISECONDS.sleep(wait);
                 } catch (InterruptedException e) {
                     log.warn("Interrupted while waiting after rate limit", e);
                 }
+                totalSleepTimeSeconds += wait;
+                log.warn("Hit Auth0 rate limit: Total wait time is " + totalSleepTimeSeconds + " seconds");
             } else {
                 break;
             }
