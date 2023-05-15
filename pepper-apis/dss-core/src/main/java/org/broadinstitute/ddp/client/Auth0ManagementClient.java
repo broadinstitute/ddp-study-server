@@ -540,7 +540,7 @@ public class Auth0ManagementClient {
                 break;
             }
             if (res.getStatusCode() == 429) {
-                log.error(res.getError() + " " + res.getError().getClass().getName());
+                log.error(retryMessage, res.getError() + " " + res.getError().getClass().getName());
                 long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
                 // if we have more information from auth0 about how long to wait, use it.
                 if (res.getError() instanceof RateLimitException) {
