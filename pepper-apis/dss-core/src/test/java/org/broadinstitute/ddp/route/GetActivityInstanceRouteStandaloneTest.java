@@ -1128,19 +1128,22 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void testSpecialVarsSubstitutions() {
         UserProfile profile = testData.getProfile();
         Response resp = testFor200AndExtractResponse();
+        log.info(resp.prettyPrint());
 
         String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
         /*
-        String expectedBody = String.format("<p>%s<br/>%s<br/>%$ddp.date()</p>", profile.getFirstName(), profile.getLastName(),
+        String expectedBody = String.format("<p>%s<br/>%s<br/>%$ddp.date()</p>", profile.getFirstName(),
+            profile.getLastName(),
                 LocalDate.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("MM-dd-uuuu")));
         // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
         */
         String expectedBody = String.format(
-                "<p>%s<br/>%s<br/>$ddp.date(\"MM-dd-uuuu\")</p>",
+                "<p>%s<br/>%s<br/>%s</p>",
                 profile.getFirstName(),
-                profile.getLastName());
+                profile.getLastName(),
+                LocalDate.now(ZoneOffset.UTC).toString());
         // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
