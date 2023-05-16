@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
+import org.broadinstitute.dsm.model.defaultvalues.RgpAutomaticProbandDataCreator;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -37,6 +38,7 @@ public class WorkflowStatusUpdate {
     public static final String OSTEO_RECONSENTED_WORKFLOW = "OSTEO_RECONSENTED";
     public static final String OSTEO_RECONSENTED_WORKFLOW_STATUS = "Complete";
     public static final String ATCP_STUDY_GUID = "atcp";
+    public static final String RGP_STUDY_GUID = "rgp";
 
     private static final Gson gson = new Gson();
 
@@ -56,36 +58,42 @@ public class WorkflowStatusUpdate {
             Optional<DDPInstanceDto> maybeDDPInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
             maybeDDPInstanceDto.ifPresentOrElse(ddpInstanceDto -> OsteoWorkflowStatusUpdate.of(ddpInstanceDto, ddpParticipantId).update(),
                     () -> logger.info(String.format("Could not find ddp_instance with instance_name %s", OLD_OSTEO_INSTANCE_NAME)));
-        } else {
-            DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
-            List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
-            Optional<FieldSettingsDto> fieldSetting =
-                    fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
-            if (fieldSetting.isEmpty()) {
-                logger.warn("Wrong workflow name " + workflow);
-            } else {
-                FieldSettingsDto setting = fieldSetting.get();
-                boolean isOldParticipant = participantDatas.stream().anyMatch(
-                        participantDataDto -> participantDataDto.getFieldTypeId().get().equals(setting.getFieldType())
-                                || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
-                if (isOldParticipant) {
-                    participantDatas.forEach(participantDataDto -> {
-                        updateProbandStatusInDB(workflow, status, participantDataDto, setting);
-                    });
-                } else {
-                    addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
-                }
-                exportWorkflowToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+            return;
+        }
 
-                try {
-                    if (isATRelatedStatusUpdate(studyGuid)) {
-                        log.info("uploading AT values for ATCP participant: {} .. workflow: {} .. status: {} ", ddpParticipantId, workflow, status);
-                        ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
-                        basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
-                    }
-                } catch (Exception e) {
-                    logger.error("Couldn't add AT default values");
+        // only continue if this code does not handle the message
+        if (isRGPStatusUpdate(studyGuid) && updateRGP(ddpParticipantId, studyGuid, workflow, status)) {
+            return;
+        }
+
+        DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
+        List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        Optional<FieldSettingsDto> fieldSetting =
+                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
+        if (fieldSetting.isEmpty()) {
+            logger.warn("Wrong workflow name " + workflow);
+        } else {
+            FieldSettingsDto setting = fieldSetting.get();
+            boolean isOldParticipant = participantDatas.stream().anyMatch(
+                    participantDataDto -> participantDataDto.getFieldTypeId().get().equals(setting.getFieldType())
+                            || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
+            if (isOldParticipant) {
+                participantDatas.forEach(participantDataDto -> {
+                    updateProbandStatusInDB(workflow, status, participantDataDto, setting);
+                });
+            } else {
+                addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
+            }
+            exportWorkflowToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+
+            try {
+                if (isATRelatedStatusUpdate(studyGuid)) {
+                    log.info("uploading AT values for ATCP participant: {} .. workflow: {} .. status: {} ", ddpParticipantId, workflow, status);
+                    ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
+                    basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
                 }
+            } catch (Exception e) {
+                logger.error("Couldn't add AT default values");
             }
         }
     }
@@ -93,6 +101,10 @@ public class WorkflowStatusUpdate {
     private static boolean isATRelatedStatusUpdate(String studyGuid) {
         logger.info("studyGuid: " + studyGuid);
         return ATCP_STUDY_GUID.equalsIgnoreCase(studyGuid);
+    }
+
+    private static boolean isRGPStatusUpdate(String studyGuid) {
+        return RGP_STUDY_GUID.equalsIgnoreCase(studyGuid);
     }
 
     private static boolean isOsteoRelatedStatusUpdate(String workflow, String status) {
@@ -173,6 +185,27 @@ public class WorkflowStatusUpdate {
 
     private static boolean isProband(Map<String, String> dataMap) {
         return dataMap.containsKey(MEMBER_TYPE) && dataMap.get(MEMBER_TYPE).equals(SELF);
+    }
+
+    private static boolean updateRGP(String participantId, String studyGuid, String workflow, String status) {
+        // only handle this specific case
+        if (!workflow.equals("ENROLLMENT_COMPLETE") || !status.equals("SubmittedEnrollment")) {
+            return false;
+        }
+        log.info("Creating participant data for participant {} in study {} via workflow {} with status {} ",
+                participantId, studyGuid, workflow, status);
+        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
+        try {
+            dataCreator.generateDefaults(studyGuid, participantId);
+        } catch (Exception e) {
+            // we are responding to a pubsub message so ensure we at least record the error for
+            // possible human intervention
+            String msg = String.format("Error creating participant data for participant %s in study %s",
+                    participantId, studyGuid);
+            logger.error(msg);
+            throw new RuntimeException(msg, e);
+        }
+        return true;
     }
 
     public static class WorkflowPayload {
