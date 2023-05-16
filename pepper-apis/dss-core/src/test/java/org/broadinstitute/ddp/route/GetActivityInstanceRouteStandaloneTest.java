@@ -15,10 +15,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.URL;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -277,7 +279,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
-                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"YYYY-MM-DDThh:mm:ss.sssZ\")</p>"));
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
+
+        /*
+        ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
+                String.format(
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>%s</p>",
+                        LocalDate.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("MM-dd-uuuu"))
+                ))); */
+
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         //------------- create SECTION[6] ---------
@@ -1122,8 +1132,13 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
-        String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York"))));
+        /*
+        String expectedBody = String.format("<p>%s<br/>%s<br/>%$ddp.date()</p>", profile.getFirstName(), profile.getLastName(),
+                LocalDate.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("MM-dd-uuuu")));
+        // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
+        */
+        String expectedBody = String.format("<p>%s<br/>%s<br/>$ddp.date(\"MM-dd-uuuu\")</p>", profile.getFirstName(), profile.getLastName());
+        // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
