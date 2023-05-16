@@ -34,6 +34,7 @@ import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
@@ -121,6 +122,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
 
@@ -1115,6 +1117,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @Test
     public void testSpecialVarsSubstitutions() {
         UserProfile profile = testData.getProfile();
+        log.info("profile timezone: ", profile.getTimeZone());
         Response resp = testFor200AndExtractResponse();
 
         String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
