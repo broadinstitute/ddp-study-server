@@ -8,6 +8,7 @@ public class LmsInsertGermlineEmailEvents extends InsertStudyEvents {
 
     public LmsInsertGermlineEmailEvents() {
         super("cmi-lms", "patches/germline-consent-addendum-email-events.conf");
+        log.info("TASK:: LmsInsertGermlineEmailEvents ");
     }
 
     @Override

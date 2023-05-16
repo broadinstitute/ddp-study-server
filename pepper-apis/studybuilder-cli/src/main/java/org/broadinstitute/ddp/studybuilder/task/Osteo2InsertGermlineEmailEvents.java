@@ -10,6 +10,7 @@ public class Osteo2InsertGermlineEmailEvents extends InsertStudyEvents {
 
     public Osteo2InsertGermlineEmailEvents() {
         super(STUDY_GUID, "patches/germline-consent-addendum-email-events.conf");
+        log.info("TASK:: Osteo2InsertGermlineEmailEvents ");
     }
 
     @Override
