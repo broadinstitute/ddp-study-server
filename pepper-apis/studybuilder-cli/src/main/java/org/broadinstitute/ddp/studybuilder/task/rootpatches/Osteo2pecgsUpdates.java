@@ -4,6 +4,7 @@ import com.typesafe.config.Config;
 import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
+import org.broadinstitute.ddp.studybuilder.task.Osteo2InsertGermlineEmailEvents;
 import org.broadinstitute.ddp.studybuilder.task.OsteoSomaticAssentV3;
 import org.broadinstitute.ddp.studybuilder.task.SimpleActivityRevisionTask;
 import org.broadinstitute.ddp.studybuilder.task.SimplePdfRevisionTask;
@@ -35,6 +36,7 @@ public class Osteo2pecgsUpdates implements CustomTask {
         taskList.add(new Osteo2GermlineConsentVersion3());
         taskList.add(new Osteo2GermlinePedConsentVersion3());
         taskList.add(new Osteo2GermlineConsentAddendumPdfV3());
+        taskList.add(new Osteo2InsertGermlineEmailEvents());
 
         SimpleActivityRevisionTask osteoPediatricConsentAndAssentVersion3 = new SimpleActivityRevisionTask();
         SimpleActivityRevisionTask osteoMedicalRecordTextUpdateVersion3 = new SimpleActivityRevisionTask();
