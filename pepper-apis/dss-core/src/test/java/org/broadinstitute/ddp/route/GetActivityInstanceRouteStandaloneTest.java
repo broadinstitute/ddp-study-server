@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
@@ -274,7 +275,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
-                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu Z\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         //------------- create SECTION[6] ---------
@@ -1120,7 +1121,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneOffset.UTC)));
+                DateTimeFormatter.ofPattern("MM-dd-uuuu Z").format(LocalDate.now()));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
