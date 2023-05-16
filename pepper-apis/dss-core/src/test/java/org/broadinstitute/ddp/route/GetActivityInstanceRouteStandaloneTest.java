@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 //import java.time.ZonedDateTime;
 //import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1139,11 +1140,9 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 LocalDate.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("MM-dd-uuuu")));
         // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
         */
-        String expectedBody = String.format(
-                "<p>%s<br/>%s<br/>%s</p>",
-                profile.getFirstName(),
-                profile.getLastName(),
-                LocalDate.now());
+        String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
+                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now()));
+
         // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
