@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -1120,7 +1121,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(Instant.now()));
+                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York"))));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
