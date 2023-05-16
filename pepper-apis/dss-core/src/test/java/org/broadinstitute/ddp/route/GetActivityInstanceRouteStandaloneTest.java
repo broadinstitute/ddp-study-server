@@ -1117,9 +1117,9 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @Test
     public void testSpecialVarsSubstitutions() {
         UserProfile profile = testData.getProfile();
-        log.info("profile timezone: ", profile.getTimeZone());
-        log.info("ddp ", "$ddp");
         Response resp = testFor200AndExtractResponse();
+        log.info("body: ", resp.prettyPrint());
+       
 
         String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
