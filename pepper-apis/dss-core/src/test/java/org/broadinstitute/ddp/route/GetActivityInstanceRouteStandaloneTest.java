@@ -277,7 +277,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
-                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date()</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         //------------- create SECTION[6] ---------
@@ -1118,8 +1118,6 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void testSpecialVarsSubstitutions() {
         UserProfile profile = testData.getProfile();
         Response resp = testFor200AndExtractResponse();
-        log.info("body: ", resp.prettyPrint());
-       
 
         String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
