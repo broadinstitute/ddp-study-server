@@ -279,7 +279,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
-                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"uuuu-MM-dd\")</p>"));
 
         /*
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
@@ -1143,7 +1143,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 "<p>%s<br/>%s<br/>%s</p>",
                 profile.getFirstName(),
                 profile.getLastName(),
-                LocalDate.now(ZoneOffset.UTC).toString());
+                LocalDate.now());
         // DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now(ZoneId.of("America/New_York")))
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
