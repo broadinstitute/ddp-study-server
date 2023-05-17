@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -278,7 +279,6 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
                 "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
-        //"<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         //------------- create SECTION[6] ---------
@@ -1127,7 +1127,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now()));
+                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)));
+       
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 

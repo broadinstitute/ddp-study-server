@@ -1,7 +1,6 @@
 # this file is used when starting test containers
 [client]
 default-character-set=utf8
-default_time_zone=UTC
 
 [mysql]
 default-character-set=utf8
