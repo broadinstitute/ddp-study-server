@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
@@ -33,6 +34,7 @@ import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
@@ -120,6 +122,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
 
@@ -275,6 +278,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
                 "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
+                // "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         //------------- create SECTION[6] ---------
@@ -1113,6 +1117,9 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
     @Test
     public void testSpecialVarsSubstitutions() {
+        TimeZone timeZone = TimeZone.getDefault();
+        log.info("System timezone: " + timeZone);
+
         UserProfile profile = testData.getProfile();
         Response resp = testFor200AndExtractResponse();
 

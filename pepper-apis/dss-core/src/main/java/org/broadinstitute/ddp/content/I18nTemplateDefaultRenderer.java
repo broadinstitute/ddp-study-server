@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 
+@Slf4j
 /**
  * {@link Template} default renderer.
  * Default renderer finds template variables from a list of {@link TemplateVariable}'s
@@ -41,6 +43,7 @@ public class I18nTemplateDefaultRenderer {
                 variablesTxt.put(variable.getName(), translation.<Object>map(Translation::getText).orElse(null));
             }
         }
+        log.info("variablesTxt: ", variablesTxt);
         return renderer.renderToString(templateText, VelocityUtil.convertVariablesWithCompoundNamesToMap(variablesTxt));
     }
 }
