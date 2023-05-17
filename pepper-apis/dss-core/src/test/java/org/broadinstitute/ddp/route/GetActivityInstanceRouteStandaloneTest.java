@@ -1125,6 +1125,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
                 DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)));
 
+        resp.then().log().body(true);
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
