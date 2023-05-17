@@ -155,7 +155,6 @@ public class RenderValueProvider implements Cloneable {
      */
     public String date(String format) {
         try {
-            log.info("DateTimeFormatter date is " + date);
             return DateTimeFormatter.ofPattern(format).format(date);
         } catch (Exception e) {
             log.warn("Error formatting date value '{}' using format '{}'", date, format, e);

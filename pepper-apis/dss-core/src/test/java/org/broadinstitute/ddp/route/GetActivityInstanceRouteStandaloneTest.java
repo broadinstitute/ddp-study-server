@@ -27,7 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
@@ -1117,9 +1116,6 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
     @Test
     public void testSpecialVarsSubstitutions() {
-        TimeZone timeZone = TimeZone.getDefault();
-        log.info("System timezone: " + timeZone);
-
         UserProfile profile = testData.getProfile();
         Response resp = testFor200AndExtractResponse();
 
@@ -1128,7 +1124,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
                 DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)));
-       
+
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
