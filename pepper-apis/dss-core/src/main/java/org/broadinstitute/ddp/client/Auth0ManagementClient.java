@@ -533,44 +533,49 @@ public class Auth0ManagementClient {
         ApiResult<B, E> res = null;
         int numTries = 0;
         int maxTries = maxRetries + 1;
-        long totalSleepTimeMilliSecond = 0L;
+        long waitTotal = 0L;
         while (numTries < maxTries) {
             res = callback.get();
             numTries++;
             if (numTries >= maxTries) {
                 break;
             }
-            if (res.getStatusCode() == 429) {
-                log.error(retryMessage, res.getError() + " " + res.getError().getClass().getName());
-                long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
-                // if we have more information from auth0 about how long to wait, use it.
-                if (res.getError() instanceof RateLimitException) {
-                    RateLimitException rateLimit = (RateLimitException) res.getError();
-                    long unixTimeAtWhichToRetry = rateLimit.getReset();
-                    if (unixTimeAtWhichToRetry != -1) {
-                        long suggestedWaitTime = unixTimeAtWhichToRetry - Instant.now().getEpochSecond();
-                        if (suggestedWaitTime > 0) {
-                            long suggestedWaitTimeMilliSecond = suggestedWaitTime * 1000;
-                            // Set max wait time to 10 seconds
-                            wait = suggestedWaitTimeMilliSecond > 10000 ? 10000 : suggestedWaitTimeMilliSecond;
-                        }
-                    }
-                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds based on Auth0 headers.");
-                } else {
-                    log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds");
-                }
+            long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
+            if (res.getError() instanceof RateLimitException && res.getStatusCode() == 429) {
+                log.error(retryMessage, res.getError());
+                // Get information from auth0 about how long to wait
+                RateLimitException rateLimit = (RateLimitException) res.getError();
+                long retryAfter = auth0BackoffTime(rateLimit);
+                wait = retryAfter > 0 ? retryAfter : wait;
+                log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds");
                 try {
                     TimeUnit.MILLISECONDS.sleep(wait);
                 } catch (InterruptedException e) {
                     log.warn("Interrupted while waiting after rate limit", e);
                 }
-                totalSleepTimeMilliSecond += wait;
-                log.warn("Hit Auth0 rate limit: Total wait time is " + totalSleepTimeMilliSecond + " milliseconds");
+                waitTotal += wait;
+                log.warn("Hit Auth0 rate limit: Total wait time is " + waitTotal + " milliseconds");
             } else {
                 break;
             }
         }
         return res;
+    }
+
+    /**
+     * A function returns the number of milliseconds to wait for Auth0 rate limit to reset
+     *   or -1 if no time information from Auth0.
+     * @param rateLimitException {@link RateLimitException}
+     */
+    private long auth0BackoffTime(RateLimitException rateLimitException) {
+        long wait = -1;
+        long timeWhenReset = rateLimitException.getReset();
+        if (timeWhenReset != -1) {
+            long interval = timeWhenReset - Instant.now().getEpochSecond();
+            long maxInterval = interval > 10 ? 10 : interval; // Specify the maximum interval 10 seconds between retries
+            wait = maxInterval * 1000;
+        }
+        return wait;
     }
 
     private static class ClientCredsPayload {
