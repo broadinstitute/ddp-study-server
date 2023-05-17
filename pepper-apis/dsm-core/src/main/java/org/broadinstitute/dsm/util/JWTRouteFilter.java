@@ -64,6 +64,7 @@ public class JWTRouteFilter {
                                     Optional<DecodedJWT> maybeValidToken = Auth0Util.verifyAuth0Token(jwtToken, auth0Domain);
                                     if (maybeValidToken.isEmpty()) {
                                         logger.warn("The token could not be verified!");
+                                        return false;
                                     }
                                     DecodedJWT validToken = maybeValidToken.get();
                                     verifiedClaims = validToken.getClaims();
