@@ -278,7 +278,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
                 "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
-                // "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
+        //"<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         //------------- create SECTION[6] ---------
