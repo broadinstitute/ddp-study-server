@@ -553,8 +553,8 @@ public class DSMServer {
 
         before(apiRoot + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
-                logger.info("Returning 404 because token was not verified");
-                halt(404);
+                logger.info("Returning 401 because token was not verified");
+                halt(401);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
         });
