@@ -136,7 +136,7 @@ public class DownloadPDF {
                 break;
             } else {
                 try {
-                    logger.error(String.format("Got %s PDF with size zero in try %d", configName, turn));
+                    logger.warn(String.format("Got %s PDF with size zero in try %d", configName, turn));
                     Thread.sleep(retryWaitMillis);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
