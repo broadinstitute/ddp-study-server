@@ -4,6 +4,7 @@ import com.typesafe.config.Config;
 import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
+import org.broadinstitute.ddp.studybuilder.task.Osteo2InsertGermlineEmailEvents;
 import org.broadinstitute.ddp.studybuilder.task.OsteoSomaticAssentV3;
 import org.broadinstitute.ddp.studybuilder.task.SimpleActivityRevisionTask;
 import org.broadinstitute.ddp.studybuilder.task.SimplePdfRevisionTask;
@@ -11,6 +12,7 @@ import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlineConsentAdden
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlineConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2GermlinePedConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.Osteo2SomaticConsentVersion3;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentPdfV3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoSomaticConsentAddendumPdfV3;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoSomaticConsentPedVersion3;
@@ -28,6 +30,7 @@ public class Osteo2pecgsUpdates implements CustomTask {
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
 
         taskList.add(new OsteoConsentVersion3());
+        taskList.add(new OsteoConsentPdfV3());
         taskList.add(new Osteo2SomaticConsentVersion3());
         taskList.add(new OsteoSomaticAssentV3()); //assent portion of  CONSENT_ADDENDUM_PEDIATRIC
         taskList.add(new OsteoSomaticConsentPedVersion3()); //consent portion of  CONSENT_ADDENDUM_PEDIATRIC
@@ -35,6 +38,7 @@ public class Osteo2pecgsUpdates implements CustomTask {
         taskList.add(new Osteo2GermlineConsentVersion3());
         taskList.add(new Osteo2GermlinePedConsentVersion3());
         taskList.add(new Osteo2GermlineConsentAddendumPdfV3());
+        taskList.add(new Osteo2InsertGermlineEmailEvents());
 
         SimpleActivityRevisionTask osteoPediatricConsentAndAssentVersion3 = new SimpleActivityRevisionTask();
         SimpleActivityRevisionTask osteoMedicalRecordTextUpdateVersion3 = new SimpleActivityRevisionTask();
@@ -43,8 +47,10 @@ public class Osteo2pecgsUpdates implements CustomTask {
 
         SimplePdfRevisionTask osteoPdfRevisionVersion3 = new SimplePdfRevisionTask();
         SimplePdfRevisionTask osteoMRPdfRevisionVersion3 = new SimplePdfRevisionTask();
+        SimplePdfRevisionTask osteoConsentAssenPdfRevisionVersion3 = new SimplePdfRevisionTask();
         taskList.add(osteoPdfRevisionVersion3);
         taskList.add(osteoMRPdfRevisionVersion3);
+        taskList.add(osteoConsentAssenPdfRevisionVersion3);
 
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
 
@@ -56,8 +62,9 @@ public class Osteo2pecgsUpdates implements CustomTask {
             osteoMedicalRecordTextUpdateVersion3.consumeArguments(
                     new String[]{"patches/osteo-medical-records-release-text-version3-changes.conf"});
             osteoMRPdfRevisionVersion3.consumeArguments(
-                    new String[]{"patches/osteo-v3-medicalrecords-pdfs.conf"}
-            );
+                    new String[]{"patches/osteo-v3-medicalrecords-pdfs.conf"});
+            osteoConsentAssenPdfRevisionVersion3.consumeArguments(
+                    new String[]{"patches/osteo-consent-assent-pdf-v3.conf"});
         } catch (ParseException parseException) {
             throw new DDPException(parseException.getMessage());
         }
