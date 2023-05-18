@@ -43,11 +43,18 @@ public class RgpPrequalV3 implements CustomTask {
         var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
         var adminUser = handle.attach(JdbiUser.class).findByUserGuid(studyCfg.getString("adminUser.guid"));
         revisionPrequal(handle, studyDto, adminUser);
+        UpdateStudyWorkflows workflowsTask = new UpdateStudyWorkflows();
+        workflowsTask.init(cfgPath, studyCfg, varsCfg);
+        workflowsTask.run(handle);
+
+        UpdateStudyNonSyncEvents eventsTask = new UpdateStudyNonSyncEvents();
+        eventsTask.init(cfgPath, studyCfg, varsCfg);
+        eventsTask.run(handle);
     }
 
     private void revisionPrequal(Handle handle, StudyDto studyDto, UserDto adminUser) {
         String activityCode = varsCfg.getString("id.act.prequal");
-        String versionTag = "v3"; //dataCfg.getString("newVersionTag");
+        String versionTag = "v3";
         log.info("Versioning activity: {}", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
