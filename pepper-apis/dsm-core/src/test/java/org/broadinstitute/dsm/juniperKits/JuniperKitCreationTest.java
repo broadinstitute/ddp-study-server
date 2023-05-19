@@ -51,9 +51,7 @@ public class JuniperKitCreationTest {
                 mockJuniperKit.getStreet2(), mockJuniperKit.getCity(), mockJuniperKit.getState(), mockJuniperKit.getPostalCode(), mockJuniperKit.getCountry(),
                 mockJuniperKit.getPhoneNumber());
         juniperKitToUpload.setJuniperKitId(mockJuniperKit.getJuniperKitId());
-        List<KitRequest> juniperKits = new ArrayList<>();
-        juniperKits.add(juniperKitToUpload);
-        route.createNonPepperKit(juniperKits, instanceGuid, "SALIVA", false, "61", new AtomicReference());
+        route.createNonPepperKit(juniperKitToUpload, instanceGuid, "SALIVA", false, "61", new AtomicReference());
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
     }

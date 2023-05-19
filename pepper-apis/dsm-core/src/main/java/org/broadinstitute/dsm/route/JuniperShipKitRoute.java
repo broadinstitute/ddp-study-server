@@ -48,19 +48,10 @@ public class JuniperShipKitRoute extends RequestHandler {
         return null;
     }
 
-    public Object createNonPepperKit(List<KitRequest> kitUploadObjects, String studyGuid, String kitTypeName,
+    public Object createNonPepperKit(KitRequest kitUploadObject, String studyGuid, String kitTypeName,
                                     boolean skipAddressValidation, String userIdRequest, AtomicReference<String> shippingCarrier) {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByStudyGuid(studyGuid).orElseThrow();
-        InstanceSettings instanceSettings = new InstanceSettings();
-        InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(ddpInstanceDto.getInstanceName());
         StringBuilder specialMessage = new StringBuilder();
-        //TODO Pegah should we consider kits with special behaviors?
-        Value upload = instanceSettingsDto.getKitBehaviorChange().map(kitBehavior -> {
-            Optional<Value> maybeKitBehaviorValue =
-                    kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_UPLOAD)).findFirst();
-            maybeKitBehaviorValue.ifPresent(value -> specialMessage.append(value.getValue()));
-            return maybeKitBehaviorValue.orElse(null);
-        }).orElse(null);
 
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = kitTypeName + "_" + ddpInstanceDto.getDdpInstanceId();
@@ -79,7 +70,7 @@ public class JuniperShipKitRoute extends RequestHandler {
         EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstanceDto.getInstanceName());
 
         Map<String, KitRequest> invalidAddressList =
-                checkAddress(kitUploadObjects, kitRequestSettings.getPhone(), skipAddressValidation, easyPostUtil);
+                checkAddress(kitUploadObject, kitRequestSettings.getPhone(), skipAddressValidation, easyPostUtil);
 
         //TODO Pegah discuss with Juniper if they need this, and if so, how the response should look like
         List<KitRequest> duplicateKitList = new ArrayList<>();
@@ -94,12 +85,11 @@ public class JuniperShipKitRoute extends RequestHandler {
         }
 
         TransactionWrapper.inTransaction(conn -> {
-            createKit(ddpInstance, kitType, kitUploadObjects, kitRequestSettings, easyPostUtil, userIdRequest,
-                    kitTypeName, true, invalidAddressList, duplicateKitList, orderKits, upload,
+            createKit(ddpInstance, kitType, kitUploadObject, kitRequestSettings, easyPostUtil, userIdRequest,
+                    kitTypeName, true, invalidAddressList, duplicateKitList, orderKits,
                     null, null, conn);
 
             //only order if external shipper name is set for that kit request
-            //TODO Pegah check with Juniper if this is needed
             if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
                 try {
                     logger.info("placing order with external shipper");
@@ -119,54 +109,50 @@ public class JuniperShipKitRoute extends RequestHandler {
             return null;
         });
 
-
         //send not valid address back to client
-        //TODO Pegah check with Juniper if this is needed
-        logger.info(kitUploadObjects.size() + " " + ddpInstance.getName() + " " + kitTypeName + " kit uploaded");
+        logger.info(kitUploadObject.getJuniperKitId()+ " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
         logger.info(invalidAddressList.size() + " uploaded addresses were not valid and " + duplicateKitList.size()
                 + " are already in DSM");
         return new KitUploadResponse(invalidAddressList.values(), duplicateKitList, null, specialMessage.toString());
     }
 
-    public Map<String, KitRequest> checkAddress(List<KitRequest> kitUploadObjects, String phone, boolean skipAddressValidation,
+    public Map<String, KitRequest> checkAddress(KitRequest kitUploadObject, String phone, boolean skipAddressValidation,
                                                 EasyPostUtil easyPostUtil) {
         Map<String, KitRequest> noValidAddress = new HashMap<>();
-        for (KitRequest o : kitUploadObjects) {
-            KitUploadObject object = (KitUploadObject) o;
-            //only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
-            if ((StringUtils.isNotBlank(object.getShortId()) || StringUtils.isNotBlank(object.getExternalOrderNumber()))
-                    && StringUtils.isNotBlank(object.getLastName())) {
-                //let's validate the participant's address
-                String name = "";
-                if (StringUtils.isNotBlank(object.getFirstName())) {
-                    name += object.getFirstName() + " ";
-                }
-                name += object.getLastName();
+        KitUploadObject object = (KitUploadObject) kitUploadObject;
+        //only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
+        if ((StringUtils.isNotBlank(object.getShortId()) || StringUtils.isNotBlank(object.getExternalOrderNumber()))
+                && StringUtils.isNotBlank(object.getLastName())) {
+            //let's validate the participant's address
+            String name = "";
+            if (StringUtils.isNotBlank(object.getFirstName())) {
+                name += object.getFirstName() + " ";
+            }
+            name += object.getLastName();
 
-                if (skipAddressValidation) {
-                    try {
-                        Address address = easyPostUtil.createBroadAddress(name, object.getStreet1(), object.getStreet2(), object.getCity(),
-                                object.getPostalCode(), object.getState(), object.getCountry(), phone);
-                        object.setEasyPostAddressId(address.getId());
-                    } catch (EasyPostException e) {
-                        logger.error("Easypost couldn't create an address for " + object.getShortId());
-                    }
-                } else {
-                    DeliveryAddress deliveryAddress =
-                            new DeliveryAddress(object.getStreet1(), object.getStreet2(), object.getCity(), object.getState(),
-                                    object.getPostalCode(), object.getCountry(), name, phone);
-                    deliveryAddress.validate();
-                    if (deliveryAddress.isValid()) {
-                        //store the address back
-                        object.setEasyPostAddressId(deliveryAddress.getId());
-                    } else {
-                        logger.info("Address is not valid " + object.getShortId());
-                        noValidAddress.put(object.getShortId(), object);
-                    }
+            if (skipAddressValidation) {
+                try {
+                    Address address = easyPostUtil.createBroadAddress(name, object.getStreet1(), object.getStreet2(), object.getCity(),
+                            object.getPostalCode(), object.getState(), object.getCountry(), phone);
+                    object.setEasyPostAddressId(address.getId());
+                } catch (EasyPostException e) {
+                    logger.error("Easypost couldn't create an address for " + object.getShortId());
                 }
             } else {
-                noValidAddress.put(object.getShortId(), object);
+                DeliveryAddress deliveryAddress =
+                        new DeliveryAddress(object.getStreet1(), object.getStreet2(), object.getCity(), object.getState(),
+                                object.getPostalCode(), object.getCountry(), name, phone);
+                deliveryAddress.validate();
+                if (deliveryAddress.isValid()) {
+                    //store the address back
+                    object.setEasyPostAddressId(deliveryAddress.getId());
+                } else {
+                    logger.info("Address is not valid " + object.getShortId());
+                    noValidAddress.put(object.getShortId(), object);
+                }
             }
+        } else {
+            noValidAddress.put(object.getShortId(), object);
         }
         return noValidAddress;
     }
@@ -174,35 +160,32 @@ public class JuniperShipKitRoute extends RequestHandler {
     /**
      * This method creates a collaborator participant id for the kit and then inserts in DB
      * */
-    private void createKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, List<KitRequest> kitUploadObjects,
+    private void createKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, KitRequest kit,
                            @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
                            @NonNull String userIdRequest, @NonNull String kitTypeName, boolean uploadAnyway,
                            Map<String, KitRequest> invalidAddressList, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
-                           Value behavior, String uploadReason, String carrier, Connection conn) {
+                           String uploadReason, String carrier, Connection conn) {
 
-        for (KitRequest kit : kitUploadObjects) {
-            String externalOrderNumber = null;
-            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-                externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
+        String externalOrderNumber = null;
+        if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
+            externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
+        }
+        if (invalidAddressList.get(kit.getShortId()) == null) { //kit is not in the noValid list, so enter into db
+            String errorMessage = "";
+            String collaboratorParticipantId = "";
+            if(StringUtils.isBlank(kit.getParticipantId())){
+                //TODO Pegah error here?
             }
-            if (invalidAddressList.get(kit.getShortId()) == null) { //kit is not in the noValid list, so enter into db
-                String errorMessage = "";
-                String collaboratorParticipantId = "";
-                if(StringUtils.isBlank(kit.getParticipantId())){
-                    //TODO Pegah error here?
-                }
-                //this needs to be here with base URL being null for RGP kits
-                collaboratorParticipantId = KitRequestShipping
-                        .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                                ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
-                                kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
+            collaboratorParticipantId = KitRequestShipping
+                    .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
+                            ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                            kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
-                //In case it's needed, subkits handling should be added here
-                handleKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
-                        collaboratorParticipantId, KitUtil.IGNORE_AUTO_DEACTIVATION, uploadAnyway, duplicateKitList, orderKits,
-                        externalOrderNumber, uploadReason, carrier);
+            //In case it's needed, subkits handling should be added here
+            handleKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
+                    collaboratorParticipantId, KitUtil.IGNORE_AUTO_DEACTIVATION, uploadAnyway, duplicateKitList, orderKits,
+                    externalOrderNumber, uploadReason, carrier);
 
-            }
         }
     }
 
