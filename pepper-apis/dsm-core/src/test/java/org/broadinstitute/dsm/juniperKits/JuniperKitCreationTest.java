@@ -21,7 +21,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class JuniperKitIntegration {
+public class JuniperKitCreationTest {
     private static Config cfg;
 
     private static JuniperShipKitRoute route;
@@ -36,7 +36,7 @@ public class JuniperKitIntegration {
 
     @Test
     @Ignore
-    public void createNewMockJuniperKit() {
+    public void createNewMockJuniperKitTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
         String participantId = "JuniperParticipantId";
@@ -53,7 +53,7 @@ public class JuniperKitIntegration {
         juniperKitToUpload.setJuniperKitId(mockJuniperKit.getJuniperKitId());
         List<KitRequest> juniperKits = new ArrayList<>();
         juniperKits.add(juniperKitToUpload);
-        route.createAJuniperKit(juniperKits, instanceGuid, "SALIVA", false, "61", new AtomicReference());
+        route.createNonPepperKit(juniperKits, instanceGuid, "SALIVA", false, "61", new AtomicReference());
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
     }

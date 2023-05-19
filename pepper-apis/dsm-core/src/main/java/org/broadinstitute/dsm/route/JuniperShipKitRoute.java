@@ -48,7 +48,7 @@ public class JuniperShipKitRoute extends RequestHandler {
         return null;
     }
 
-    public Object createAJuniperKit(List<KitRequest> kitUploadObjects, String studyGuid, String kitTypeName,
+    public Object createNonPepperKit(List<KitRequest> kitUploadObjects, String studyGuid, String kitTypeName,
                                     boolean skipAddressValidation, String userIdRequest, AtomicReference<String> shippingCarrier) {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByStudyGuid(studyGuid).orElseThrow();
         InstanceSettings instanceSettings = new InstanceSettings();
@@ -83,7 +83,6 @@ public class JuniperShipKitRoute extends RequestHandler {
 
         //TODO Pegah discuss with Juniper if they need this, and if so, how the response should look like
         List<KitRequest> duplicateKitList = new ArrayList<>();
-        List<KitRequest> specialKitList = new ArrayList<>();
         ArrayList<KitRequest> orderKits = new ArrayList<>();
 
         //TODO Pegah fix uploadKit to accept DDPInstanceDto
@@ -95,8 +94,8 @@ public class JuniperShipKitRoute extends RequestHandler {
         }
 
         TransactionWrapper.inTransaction(conn -> {
-            uploadKit(ddpInstance, kitType, kitUploadObjects, kitRequestSettings, easyPostUtil, userIdRequest,
-                    kitTypeName, true, invalidAddressList, duplicateKitList, orderKits, specialKitList, upload,
+            createKit(ddpInstance, kitType, kitUploadObjects, kitRequestSettings, easyPostUtil, userIdRequest,
+                    kitTypeName, true, invalidAddressList, duplicateKitList, orderKits, upload,
                     null, null, conn);
 
             //only order if external shipper name is set for that kit request
@@ -126,8 +125,7 @@ public class JuniperShipKitRoute extends RequestHandler {
         logger.info(kitUploadObjects.size() + " " + ddpInstance.getName() + " " + kitTypeName + " kit uploaded");
         logger.info(invalidAddressList.size() + " uploaded addresses were not valid and " + duplicateKitList.size()
                 + " are already in DSM");
-        logger.info(specialKitList.size() + " kits didn't meet the kit behaviour");
-        return new KitUploadResponse(invalidAddressList.values(), duplicateKitList, specialKitList, specialMessage.toString());
+        return new KitUploadResponse(invalidAddressList.values(), duplicateKitList, null, specialMessage.toString());
     }
 
     public Map<String, KitRequest> checkAddress(List<KitRequest> kitUploadObjects, String phone, boolean skipAddressValidation,
@@ -135,7 +133,7 @@ public class JuniperShipKitRoute extends RequestHandler {
         Map<String, KitRequest> noValidAddress = new HashMap<>();
         for (KitRequest o : kitUploadObjects) {
             KitUploadObject object = (KitUploadObject) o;
-            //only if participant has shortId, first- and lastName, for Juniper shortId is the juniperParticipantId
+            //only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
             if ((StringUtils.isNotBlank(object.getShortId()) || StringUtils.isNotBlank(object.getExternalOrderNumber()))
                     && StringUtils.isNotBlank(object.getLastName())) {
                 //let's validate the participant's address
@@ -176,71 +174,39 @@ public class JuniperShipKitRoute extends RequestHandler {
     /**
      * This method creates a collaborator participant id for the kit and then inserts in DB
      * */
-    private void uploadKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, List<KitRequest> kitUploadObjects,
+    private void createKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, List<KitRequest> kitUploadObjects,
                            @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
                            @NonNull String userIdRequest, @NonNull String kitTypeName, boolean uploadAnyway,
                            Map<String, KitRequest> invalidAddressList, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
-                           List<KitRequest> specialKitList, Value behavior, String uploadReason, String carrier, Connection conn) {
+                           Value behavior, String uploadReason, String carrier, Connection conn) {
 
         for (KitRequest kit : kitUploadObjects) {
-            //TODO Pegah do we need externalOrderNumber for Juniper currently?
-            String externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
+            String externalOrderNumber = null;
+            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
+                externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
+            }
             if (invalidAddressList.get(kit.getShortId()) == null) { //kit is not in the noValid list, so enter into db
                 String errorMessage = "";
                 String collaboratorParticipantId = "";
-                String participantGuid = kit.getParticipantId();
-                    if(StringUtils.isBlank(participantGuid)){
-                        //TODO Pegah error here?
-                    }
-                    //this needs to be here with base URL being null for RGP kits
-                    collaboratorParticipantId = KitRequestShipping
-                            .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
-                                    kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
+                if(StringUtils.isBlank(kit.getParticipantId())){
+                    //TODO Pegah error here?
+                }
+                //this needs to be here with base URL being null for RGP kits
+                collaboratorParticipantId = KitRequestShipping
+                        .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
+                                ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                                kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
-                //TODO Pegah in case it's needed, subkits handling should be added here
-                    handleNormalKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
-                            collaboratorParticipantId, errorMessage, uploadAnyway, duplicateKitList, orderKits, specialKitList, behavior,
-                            externalOrderNumber, uploadReason, carrier);
+                //In case it's needed, subkits handling should be added here
+                handleKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
+                        collaboratorParticipantId, KitUtil.IGNORE_AUTO_DEACTIVATION, uploadAnyway, duplicateKitList, orderKits,
+                        externalOrderNumber, uploadReason, carrier);
 
             }
         }
     }
 
-    private void handleNormalKit(@NonNull Connection conn, @NonNull DDPInstance ddpInstance, @NonNull KitType kitType,
-                                 @NonNull KitRequest kit, @NonNull KitRequestSettings kitRequestSettings,
-                                 @NonNull EasyPostUtil easyPostUtil, @NonNull String userIdRequest, @NonNull String kitTypeName,
-                                 String collaboratorParticipantId, String errorMessage, boolean uploadAnyway,
-                                 List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits, List<KitRequest> specialKitList,
-                                 Value behavior, String externalOrderNumber, String uploadReason, String carrier) {
-        //TODO Pegah do we need kit special behavior checks? If so, how are we sending the response?
-//        if (behavior != null && StringUtils.isNotBlank(ddpInstance.getParticipantIndexES()) && !uploadAnyway) {
-////            Map<String, Map<String, Object>> participants =
-////                    ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_GUID + kit.getParticipantId());
-////            Map<String, Object> participant = participants.get(kit.getParticipantId());
-////            boolean specialKit = InstanceSettings.shouldKitBehaveDifferently(participant, behavior);
-////            if (specialKit) {
-////                if (InstanceSettings.TYPE_ALERT.equals(behavior.getType())) {
-////                    specialKitList.add(kit);
-////                } else if (InstanceSettings.TYPE_NOTIFICATION.equals(behavior.getType())) {
-////                    String message = "Kit uploaded for participant " + kit.getParticipantId() + ". \n" + behavior.getValue();
-//////                    notificationUtil.sentNotification(ddpInstance.getNotificationRecipient(), message,
-//////                            NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
-////                } else {
-////                    logger.error("Instance settings behavior for kit was not known " + behavior.getType());
-////                }
-////            } else {
-////                //check with ddp_participant_id if participant already has a kit in DSM db
-////                handleKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
-////                        collaboratorParticipantId, errorMessage, uploadAnyway, duplicateKitList, orderKits, externalOrderNumber,
-////                        uploadReason, carrier);
-////            }
-//        } else {
-            handleKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
-                    collaboratorParticipantId, KitUtil.IGNORE_AUTO_DEACTIVATION, uploadAnyway, duplicateKitList, orderKits,
-                    externalOrderNumber, uploadReason, carrier);
-//        }
-    }
+
 
     private void handleKit(@NonNull Connection conn, @NonNull DDPInstance ddpInstance, @NonNull KitType kitType, @NonNull KitRequest kit,
                            @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
@@ -248,6 +214,7 @@ public class JuniperShipKitRoute extends RequestHandler {
                            String errorMessage, boolean uploadAnyway, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
                            String externalOrderNumber, String uploadReason, String carrier) {
         //TODO Pegah do we need duplicate checks? If so, how are we sending the response?
+        //TODO Pegah uploadAnyway should override everything
 //        if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId, kitType.getKitTypeId())
 //                && !uploadAnyway) {
 //            duplicateKitList.add(kit);
@@ -279,8 +246,6 @@ public class JuniperShipKitRoute extends RequestHandler {
         } catch (EasyPostException e) {
             throw new RuntimeException("EasyPost addressId could not be received ", e);
         }
-
-        //Again TODO Pegah: do we have external shippers?
 
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             collaboratorSampleId =
