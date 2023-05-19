@@ -18,7 +18,6 @@
         <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
-        <sonar.jacoco.reportPaths>target/jacoco.exec</sonar.jacoco.reportPaths>
         <jdbi.version>3.28.0</jdbi.version>
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
@@ -813,6 +812,11 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.jacoco</groupId>
+                <artifactId>sonar-jacoco-plugin</artifactId>
+                <version>1.3.0.1538</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
