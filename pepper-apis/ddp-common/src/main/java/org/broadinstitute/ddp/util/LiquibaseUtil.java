@@ -35,7 +35,8 @@ public class LiquibaseUtil implements AutoCloseable {
     public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "housekeeping-changelog-master.xml";
     public static final String DSM_GLOBAL_MIGRATIONS = "master-changelog.xml";
     public static final String AUTH0_TENANT_MIGRATION = "db-changes/tenant-migration.xml";
-
+    public static final String LIQUIBASE_TEST_CONTEXT = "new_db";
+    public static final String LIQUIBASE_APP_CONTEXT = "existing_db";
     private HikariDataSource dataSource;
 
     private LiquibaseUtil(String dbUrl)  {
@@ -56,15 +57,28 @@ public class LiquibaseUtil implements AutoCloseable {
      * Runs the global liquibase migrations against the given database url using a connection that's auto-closed.
      */
     public static void runLiquibase(String dbUrl, DB db) {
+        runLiquibase(dbUrl, db, LIQUIBASE_APP_CONTEXT);
+    }
+
+    /**
+     * Runs the global liquibase migrations against the given database url using a connection that's auto-closed
+     *
+     * @param context Liquibase context (required)
+     */
+    public static void runLiquibase(String dbUrl, DB db, String context) {
+        if (context == null || context.isEmpty()) {
+            throw new RuntimeException("Liquibase context must be provided");
+        }
+
         try {
             try (LiquibaseUtil liquibaseUtil = new LiquibaseUtil(dbUrl)) {
 
                 if (db == DB.APIS) {
-                    liquibaseUtil.runPepperAPIsGlobalMigrations();
+                    liquibaseUtil.runPepperAPIsGlobalMigrations(context);
                 } else if (db == DB.HOUSEKEEPING) {
-                    liquibaseUtil.runHousekeepingGlobalMigrations();
+                    liquibaseUtil.runHousekeepingGlobalMigrations(context);
                 }  else if (db == DB.DSM) {
-                    liquibaseUtil.runDSMGlobalMigrations();
+                    liquibaseUtil.runDSMGlobalMigrations(context);
                 } else {
                     throw new DDPException("Unknown database: " + db.name());
                 }
@@ -81,7 +95,7 @@ public class LiquibaseUtil implements AutoCloseable {
     public static void runChangeLog(String dbUrl, String changeLogFile) {
         try {
             try (LiquibaseUtil util = new LiquibaseUtil(dbUrl)) {
-                util.runMigrations(changeLogFile);
+                util.runMigrations(changeLogFile, LIQUIBASE_TEST_CONTEXT);
             }
         } catch (Exception e) {
             throw new DDPException("Error running liquibase migrations for changeLogFile " + changeLogFile, e);
@@ -95,9 +109,11 @@ public class LiquibaseUtil implements AutoCloseable {
     /**
      * Runs the global migration scripts.  These are the scripts from {@link #PEPPER_APIS_GLOBAL_MIGRATIONS here}
      * which will be applied to test databases as well as production.
+     *
+     * @param context Liquibase context
      */
-    private void runPepperAPIsGlobalMigrations() throws LiquibaseException, SQLException {
-        runMigrations(PEPPER_APIS_GLOBAL_MIGRATIONS);
+    private void runPepperAPIsGlobalMigrations(String context) throws LiquibaseException, SQLException {
+        runMigrations(PEPPER_APIS_GLOBAL_MIGRATIONS, context);
 
         /* 2022.07.07
          * This call is required for proper operation of the DSS backend.
@@ -108,27 +124,33 @@ public class LiquibaseUtil implements AutoCloseable {
         insertLegacyTenant();
 
         // run script to update client -> tenant and study -> tenant and enable constraints
-        runMigrations(AUTH0_TENANT_MIGRATION);
+        runMigrations(AUTH0_TENANT_MIGRATION, context);
     }
 
     /**
      * Runs the global migration scripts.  These are the scripts from {@link #PEPPER_APIS_GLOBAL_MIGRATIONS here}
      * which will be applied to test databases as well as production.
      *
+     * @param context Liquibase context
      * @throws LiquibaseException if something goes wrong
      */
-    private void runHousekeepingGlobalMigrations() throws LiquibaseException, SQLException {
-        runMigrations(HOUSEKEEPING_GLOBAL_MIGRATIONS);
+    private void runHousekeepingGlobalMigrations(String context) throws LiquibaseException, SQLException {
+        runMigrations(HOUSEKEEPING_GLOBAL_MIGRATIONS, context);
     }
 
-    private void runDSMGlobalMigrations() throws LiquibaseException, SQLException {
-        runMigrations(DSM_GLOBAL_MIGRATIONS);
+    private void runDSMGlobalMigrations(String context) throws LiquibaseException, SQLException {
+        runMigrations(DSM_GLOBAL_MIGRATIONS, context);
     }
 
     /**
      * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
+     *
+     * @param context Liquibase context
      */
-    private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
+    private void runMigrations(String changelogFile, String context) throws LiquibaseException, SQLException {
+        if (context == null || context.isEmpty()) {
+            throw new RuntimeException("Liquibase context must be provided");
+        }
         Liquibase liquibase = null;
         String tag = null;
         try {
@@ -139,7 +161,7 @@ public class LiquibaseUtil implements AutoCloseable {
             liquibase.tag(tag);
             log.info("Tagged database with tag {}", tag);
 
-            liquibase.update(new Contexts());
+            liquibase.update(new Contexts(context));
         } catch (LiquibaseException originalError) {
             log.error("LiquibaseException: {}", originalError.getMessage());
             if (liquibase != null && tag != null) {

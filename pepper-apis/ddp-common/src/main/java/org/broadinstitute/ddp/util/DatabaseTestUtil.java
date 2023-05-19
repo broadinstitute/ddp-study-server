@@ -33,7 +33,7 @@ public class DatabaseTestUtil {
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(db, maxConnections, dbUrl));
 
-        LiquibaseUtil.runLiquibase(dbUrl, db);
+        LiquibaseUtil.runLiquibase(dbUrl, db, LiquibaseUtil.LIQUIBASE_TEST_CONTEXT);
     }
 
     public static void closeDbConnection() {

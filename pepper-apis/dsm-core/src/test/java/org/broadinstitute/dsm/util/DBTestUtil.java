@@ -1126,10 +1126,10 @@ public class DBTestUtil {
         }
     }
 
-    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDto ddpInstanceDto, DDPInstanceDao ddpInstanceDao,
-                                                       String ddpInstanceName) {
-        ddpInstanceDto = new DDPInstanceDto.Builder().build();
+    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDao ddpInstanceDao, String ddpInstanceName) {
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
         ddpInstanceDto.setInstanceName(ddpInstanceName);
+        ddpInstanceDto.setStudyGuid(ddpInstanceName);
         ddpInstanceDto.setIsActive(true);
         ddpInstanceDto.setAuth0Token(false);
         ddpInstanceDto.setMigratedDdp(false);

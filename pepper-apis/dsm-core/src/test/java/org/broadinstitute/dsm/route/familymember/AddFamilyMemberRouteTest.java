@@ -45,7 +45,7 @@ public class AddFamilyMemberRouteTest {
         setupDB();
         gson = new Gson();
         String suffix = System.currentTimeMillis() + "";
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDto, ddpInstanceDao, "AddFamilyMemberInstance" + suffix);
+        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, "AddFamilyMemberInstance" + suffix);
 
         userDto = DBTestUtil.createTestDsmUser("AddFamilyMemberUser", "addfamilymember" + suffix + "@family.com", userDao, userDto);
 
