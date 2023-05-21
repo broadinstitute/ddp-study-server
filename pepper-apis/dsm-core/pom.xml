@@ -306,5 +306,9 @@
             org.broadinstitute.dsm.route.KitUploadRouteTest
         </dsm.test.ci.excludes>
         <sonar.sources>src/main/java</sonar.sources>
+        <sonar.java.binaries>target/classes</sonar.java.binaries>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 </project>
