@@ -968,7 +968,7 @@ jobs:
 
   combined-sonar-scan-job:
     executor:
-      name: sonar-scan-executor
+      name: test-executor
     working_directory: *pepper_apis_path
     parameters:
       pepper_apis_path:
