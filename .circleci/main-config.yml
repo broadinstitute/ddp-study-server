@@ -845,7 +845,7 @@ jobs:
                 skip_tests: true
                 skip_checkstyle: false
                 config_file_path: ''
-                additional_options: '-am -DefaultBuild,coverage'
+                additional_options: '-am -PDefaultBuild,coverage'
                 restore_m2_cache: true
                 save_m2_cache: false
             - render-configs
@@ -857,7 +857,7 @@ jobs:
                 skip_tests: false
                 config_file_path: ''
                 skip_checkstyle: true
-                additional_options: '-P DefaultBuild,coverage -Ddsm.test.excludes=${dsm.test.ci.excludes}'
+                additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
@@ -902,7 +902,7 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: '-P DefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
+                additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
                 coverage_report: true
                 sonar_scan: true
