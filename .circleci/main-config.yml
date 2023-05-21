@@ -648,7 +648,10 @@ commands:
             - run:
                 name: Run sonar scan
                 command: |
-                  mvn sonar:sonar  \
+                    if [[ ! -z '<<parameters.module>>' ]]; then
+                      cd <<parameters.module>>
+                    fi
+                    mvn sonar:sonar  \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Dmaven.repo.local=<< parameters.m2_repo >>
 
@@ -861,7 +864,7 @@ jobs:
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
-                sonar_scan: false
+                sonar_scan: true
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -905,7 +908,7 @@ jobs:
                 additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
                 coverage_report: true
-                sonar_scan: false
+                sonar_scan: true
             - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
@@ -952,7 +955,7 @@ jobs:
                 additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
                 coverage_report: true
-                sonar_scan: false
+                sonar_scan: true
             - save-ddp-cache
             - run:
                 name: 'Check node index to save workspace only once'
@@ -965,23 +968,6 @@ jobs:
                 root: *root_path
                 paths:
                   - repo
-
-  combined-sonar-scan-job:
-    executor:
-      name: test-executor
-    working_directory: *pepper_apis_path
-    parameters:
-      pepper_apis_path:
-        type: string
-        default: *pepper_apis_path
-    steps:
-      - run: echo 'Running Sonar scan'
-      - run:
-          name: See directories for << parameters.pepper_apis_path >>
-          command: |
-            ls -l ddp-common/target
-            ls -l dsm-core/target
-            ls -l dss-core/target
 
   dss-store-jar-job:
     description: Build DSS specific jars and store them in buckets
@@ -1166,11 +1152,6 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
-      - combined-sonar-scan-job:
-          requires:
-            - dss-parallel-compile-and-test-job
-            - dss-compile-and-run-test-suite-job
-            - dsm-compile-and-run-tests-job
       - build-api-docs-job
 
   # Build and deploy API docs
