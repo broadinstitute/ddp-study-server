@@ -630,6 +630,9 @@ commands:
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
             mkdir -p ~/test-results/jacoco/
             find . -type f -regex ".*/target/site/jacoco/.*xml" -exec cp {} ~/test-results/jacoco/ \;
+            ls -l ddp-common/target
+            ls -l dsm-core/target
+            ls -l dss-core/target
           when: always
       - store_test_results:
           path: ~/test-results
