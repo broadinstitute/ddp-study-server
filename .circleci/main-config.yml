@@ -845,7 +845,7 @@ jobs:
                 skip_tests: true
                 skip_checkstyle: false
                 config_file_path: ''
-                additional_options: '-am -PDefaultBuild,coverage'
+                additional_options: -am
                 restore_m2_cache: true
                 save_m2_cache: false
             - render-configs
@@ -940,7 +940,7 @@ jobs:
                 restore_m2_cache: true
                 skip_checkstyle: true
                 skip_tests: true
-                additional_options: '-am -PCircleciParallelBuild,coverage'
+                additional_options: -am
             - create-test-dbs
             - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
             - compute-parallel-test-split
