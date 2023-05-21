@@ -16,7 +16,11 @@
         <sonar.projectName>ddp-study-server</sonar.projectName>
         <sonar.projectKey>broadinstitute_ddp-study-server</sonar.projectKey>
         <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
-        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/ddp-common/target/site/jacoco/jacoco.xml
+            ${project.basedir}/dsm-core/target/site/jacoco/jacoco.xml
+            ${project.basedir}/dss-core/target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
         <jdbi.version>3.28.0</jdbi.version>
         <itext.version>7.1.4</itext.version>
@@ -67,6 +71,32 @@
                     *Standalone3Test
                 </exclude.test.pattern>
             </properties>
+        </profile>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.5</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -736,6 +766,11 @@
                 <artifactId>ldd-backend</artifactId>
                 <version>dsm_2.4_20200917e</version>
             </dependency>
+            <dependency>
+                <groupId>org.sonarsource.jacoco</groupId>
+                <artifactId>sonar-jacoco-plugin</artifactId>
+                <version>1.3.0.1538</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -785,38 +820,10 @@
                     </dependency>
                 </dependencies>
             </plugin>
-
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.9.1.2184</version>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <formats>XML,HTML</formats>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonarsource.jacoco</groupId>
-                <artifactId>sonar-jacoco-plugin</artifactId>
-                <version>1.3.0.1538</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

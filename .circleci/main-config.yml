@@ -639,20 +639,18 @@ commands:
             - run:
                 name: Generate coverage report
                 command: |
-                  mvn jacoco:report
+                  mvn jacoco:report \
+                    -Dddp.cacheDir="$ddp_cache_dir" \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
       - when:
           condition: << parameters.sonar_scan >>
           steps:
             - run:
                 name: Run sonar scan
                 command: |
-                  mvn verify sonar:sonar --batch-mode \
-                    -Dcheckstyle.skip \
-                    -DskipTests=true \
+                  mvn sonar:sonar  \
                     -Dddp.cacheDir="$ddp_cache_dir" \
-                    -Ditext.license=output-config/itextkey.xml \
-                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>> \
-                    $MODULES_OPTION
+                    -Dmaven.repo.local=<< parameters.m2_repo >>
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
@@ -847,7 +845,7 @@ jobs:
                 skip_tests: true
                 skip_checkstyle: false
                 config_file_path: ''
-                additional_options: -am
+                additional_options: '-am -DefaultBuild,coverage'
                 restore_m2_cache: true
                 save_m2_cache: false
             - render-configs
@@ -859,7 +857,7 @@ jobs:
                 skip_tests: false
                 config_file_path: ''
                 skip_checkstyle: true
-                additional_options: -Ddsm.test.excludes='${dsm.test.ci.excludes}'
+                additional_options: '-P DefaultBuild,coverage -Ddsm.test.excludes=${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
@@ -904,7 +902,7 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+                additional_options: '-P DefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
                 coverage_report: true
                 sonar_scan: true
@@ -942,7 +940,7 @@ jobs:
                 restore_m2_cache: true
                 skip_checkstyle: true
                 skip_tests: true
-                additional_options: -am
+                additional_options: '-am -PCircleciParallelBuild,coverage'
             - create-test-dbs
             - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
             - compute-parallel-test-split
@@ -951,7 +949,7 @@ jobs:
                 phase: test
                 skip_tests: false
                 module: dss-core
-                additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
+                additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
                 coverage_report: true
                 sonar_scan: true

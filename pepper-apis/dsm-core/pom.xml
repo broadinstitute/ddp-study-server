@@ -305,6 +305,6 @@
             org.broadinstitute.dsm.route.familymember.AddFamilyMemberRouteTest,
             org.broadinstitute.dsm.route.KitUploadRouteTest
         </dsm.test.ci.excludes>
-            <sonar.sources>src/main/java</sonar.sources>
+        <sonar.sources>src/main/java</sonar.sources>
     </properties>
 </project>
