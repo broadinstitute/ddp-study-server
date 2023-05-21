@@ -1166,8 +1166,8 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
-      - combined-sonar-scan-job
-        - requires:
+      - combined-sonar-scan-job:
+          requires:
             - dss-parallel-compile-and-test-job
             - dss-compile-and-run-test-suite-job
             - dsm-compile-and-run-tests-job
