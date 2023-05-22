@@ -578,6 +578,9 @@ commands:
       sonar_scan:
         type: boolean
         default: false
+      sonar_additional_module:
+        type: string
+        default: ''
     steps:
       - when:
           condition: << parameters.restore_m2_cache >>
@@ -652,8 +655,25 @@ commands:
                       cd <<parameters.module>>
                     fi
                     mvn sonar:sonar  \
+                      -Dddp.cacheDir="$ddp_cache_dir" \
+                      -Dmaven.repo.local=<< parameters.m2_repo >>
+                    if [[ ! -z '<<parameters.module>>' ]]; then
+                      cd ..
+                    fi
+      - when:
+          condition:
+            and:
+              - << parameters.sonar_scan >>
+              - << parameters.sonar_additional_module >>
+          steps:
+            - run:
+                name: 'Run sonar scan on <<parameters.sonar_additional_module>>'
+                command: |
+                  cd <<parameters.module>>
+                  mvn sonar:sonar  \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Dmaven.repo.local=<< parameters.m2_repo >>
+                  cd ..
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
@@ -865,6 +885,7 @@ jobs:
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
                 sonar_scan: true
+                sonar_addtional_module: 'ddp-common'
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
