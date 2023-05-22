@@ -885,7 +885,7 @@ jobs:
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
                 sonar_scan: true
-                sonar_addtional_module: 'ddp-common'
+                sonar_additional_module: 'ddp-common'
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
