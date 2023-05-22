@@ -1,13 +1,8 @@
 package org.broadinstitute.ddp.filter;
 
-import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static spark.Spark.awaitInitialization;
-import static spark.Spark.awaitStop;
-import static spark.Spark.get;
-import static spark.Spark.port;
-import static spark.Spark.stop;
+import static spark.Service.ignite;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -22,48 +17,76 @@ import org.broadinstitute.ddp.route.RouteTestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import spark.RouteImpl;
+import spark.Service;
+import spark.route.HttpMethod;
 
 
 public class AllowlistFilterTest {
+
+    public static Service http;
     static int PORT = 6666;
     public static final String ALLOWED = "/allowed";
+    public static final String ALLOWED_TXT = "Welcome to Fantasy Island!";
     public static final String NOT_ALLOWED = "/notallowed";
     public static final String DONT_CARE = "/dontcare";
     public static final String BASEURL = "http://localhost:" + PORT;
 
     public static class TestServer {
-        static void startServer() {
-            port(6666);
+        static Service startServer() {
+            Service http;
             String thisIp;
             try {
                 thisIp = InetAddress.getLocalHost().getHostAddress();
             } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }
-            allowlist(ALLOWED, List.of(thisIp, "127.0.0.1", "55.444.555.555"));
-            get(ALLOWED, (req, res) -> "Welcome to Fantasy Island!");
+            AllowListFilter allowedFilter = new AllowListFilter(List.of(thisIp, "127.0.0.1", "55.444.555.555"));
+            AllowListFilter notAllowedFilter = new AllowListFilter(List.of("55.444.555.555"));
+            RouteImpl simpleAllowedRoute = new RouteImpl(ALLOWED) {
+                @Override
+                public Object handle(spark.Request request, spark.Response response) throws Exception {
+                    return ALLOWED_TXT;
+                }
+            };
 
-            allowlist(NOT_ALLOWED, List.of("55.444.555.555"));
-            get("/notallowed", (req, res) -> "Intruder!");
+            RouteImpl simpleDeniedRoute = new RouteImpl(NOT_ALLOWED) {
+                @Override
+                public Object handle(spark.Request request, spark.Response response) throws Exception {
+                    return "Intruder!";
+                }
+            };
 
-            get(DONT_CARE, (req, res) -> "Aloha my friend!");
-            awaitInitialization();
+            RouteImpl simpleUnfilteredRoute = new RouteImpl(DONT_CARE) {
+                @Override
+                public Object handle(spark.Request request, spark.Response response) throws Exception {
+                    return "Aloha my friend!";
+                }
+            };
+            http = ignite().port(PORT);
+            http.before(ALLOWED, allowedFilter);
+            http.before(NOT_ALLOWED, notAllowedFilter);
+            http.addRoute(HttpMethod.get, simpleAllowedRoute);
+            http.addRoute(HttpMethod.get, simpleDeniedRoute);
+            http.addRoute(HttpMethod.get, simpleUnfilteredRoute);
+            http.awaitInitialization();
+            return http;
         }
 
-        static void stopServer() {
-            stop();
-            awaitStop();
+        static void stopServer(Service http) {
+            http.stop();
+            http.awaitStop();
         }
     }
 
     @BeforeClass
     public static void startTestServer() {
-        TestServer.startServer();
+        http = TestServer.startServer();
     }
 
     @AfterClass
     public static void stopTestServer() {
-        TestServer.stopServer();
+        TestServer.stopServer(http);
     }
 
     @Test
