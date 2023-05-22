@@ -669,7 +669,7 @@ commands:
             - run:
                 name: 'Run sonar scan on <<parameters.sonar_additional_module>>'
                 command: |
-                  cd <<parameters.module>>
+                  cd <<parameters.sonar_additional_module>>
                   mvn sonar:sonar  \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Dmaven.repo.local=<< parameters.m2_repo >>
