@@ -542,11 +542,11 @@ public class Auth0ManagementClient {
             }
             long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
             if (res.getError() instanceof RateLimitException && res.getStatusCode() == 429) {
-                log.error(retryMessage, res.getError());
+                log.warn(retryMessage, res.getError());
                 // Get information from auth0 about how long to wait
                 RateLimitException rateLimit = (RateLimitException) res.getError();
                 long retryAfter = auth0BackoffTime(rateLimit);
-                wait = retryAfter > 0 ? retryAfter : wait;
+                wait = retryAfter != -1 ? retryAfter : wait;
                 log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds");
                 try {
                     TimeUnit.MILLISECONDS.sleep(wait);
