@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.FileInputStream;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
@@ -57,7 +59,6 @@ import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiEventAction;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
-import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -208,7 +209,7 @@ public class TestDataSetupUtil {
 
                 if (cmd.hasOption('n')) {
                     int numberOfUsersToCreate = Integer.parseInt(cmd.getOptionValue('n'));
-                    System.out.println(String.format("--- CREATING %s USERS: ", numberOfUsersToCreate));
+                    System.out.printf("--- CREATING %s USERS: %n", numberOfUsersToCreate);
                     System.out.print("USER_ID\tFIRST_NAME\tLAST_NAME\tSEX\tBIRTHDATE");
                     if (cmd.hasOption('r') && cmd.hasOption('p')) {
                         System.out.println("\tCOMPLETED");
@@ -232,15 +233,15 @@ public class TestDataSetupUtil {
                                 null,
                                 null);
 
-                        System.out.print(String.valueOf(userId) + "\t");
+                        System.out.print(userId + "\t");
                         UserProfile profile = null;
                         if (cmd.hasOption('p')) {
                             profile = createTestingProfile(handle, userId, true);
                             LocalDate birthDate = profile.getBirthDate();
-                            System.out.print(String.format("%s\t%s\t%s\t%s\t", profile.getFirstName(),
+                            System.out.printf("%s\t%s\t%s\t%s\t", profile.getFirstName(),
                                     profile.getLastName(),
                                     profile.getSexType().name(),
-                                    DateTimeFormatter.ISO_DATE.format(birthDate)));
+                                    DateTimeFormatter.ISO_DATE.format(birthDate));
                         }
 
                         GeneratedTestData generatedTestData = new GeneratedTestData(testingUser, profile,
@@ -378,9 +379,9 @@ public class TestDataSetupUtil {
             handle.attach(JdbiClientUmbrellaStudy.class).insert(clientId, study.getId());
         }
 
-        GeneratedTestData generatedTestData = null;
-        Auth0Util.TestingUser testUserBeingUsed = null;
-        UserProfile profile = null;
+        GeneratedTestData generatedTestData;
+        Auth0Util.TestingUser testUserBeingUsed;
+        UserProfile profile;
 
         if (!forceUserCreation) {
             Long userId = null;
@@ -481,9 +482,7 @@ public class TestDataSetupUtil {
      */
     public static synchronized void insertStaticTestData() {
         Config cfg = ConfigManager.getInstance().getConfig();
-        TransactionWrapper.useTxn(handle -> {
-            insertTestingTenant(handle, cfg.getConfig(ConfigFile.AUTH0));
-        });
+        TransactionWrapper.useTxn(handle -> insertTestingTenant(handle, cfg.getConfig(ConfigFile.AUTH0)));
         List<String> scripts = new ArrayList<>();
         // temporarily disable client/study tenant relationships so that we can add
         // legacy seed test data to existing dbs without requiring a drop/reload
@@ -613,16 +612,17 @@ public class TestDataSetupUtil {
                         ? UserProfile.SexType.values()[rand.nextInt(UserProfile.SexType.values().length)]
                         : TestConstants.TEST_USER_PROFILE_SEX)
                 .birthDate(LocalDate.of(
-                        random ? rand.ints(1800, 2017).findFirst().getAsInt()
+                        random ? rand.ints(1800, 2017).findFirst().orElseThrow()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_YEAR,
-                        random ? rand.ints(1, 12).findFirst().getAsInt()
+                        random ? rand.ints(1, 12).findFirst().orElseThrow()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_MONTH,
-                        random ? rand.ints(1, 28).findFirst().getAsInt()
+                        random ? rand.ints(1, 28).findFirst().orElseThrow()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_DAY))
                 .preferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
                 .preferredLangCode(null)
+                .timeZone(ZoneId.of("America/New_York"))
                 .skipLanguagePopup(random
                         ? rand.nextBoolean()
                         : TestConstants.TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP)
@@ -725,15 +725,15 @@ public class TestDataSetupUtil {
 
         AnswerDao answerDao = handle.attach(AnswerDao.class);
         if (hasGivenInformedConsent) {
-            Answer informedConsentAnswer = new TextAnswer(null, generatedTestData.getSignatureQuestionStableId(), null,
+            Answer<String> informedConsentAnswer = new TextAnswer(null, generatedTestData.getSignatureQuestionStableId(), null,
                     generatedTestData.getProfile().getFirstName() + " " + generatedTestData.getProfile().getLastName());
             answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), informedConsentAnswer);
 
-            Answer bloodAnswer = new BoolAnswer(null, generatedTestData.getBloodQuestionStableId(), null,
+            Answer<Boolean> bloodAnswer = new BoolAnswer(null, generatedTestData.getBloodQuestionStableId(), null,
                     hasConsentedToBlood);
             answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), bloodAnswer);
 
-            Answer tissueAnswer = new BoolAnswer(null, generatedTestData.getTissueQuestionStableId(),
+            Answer<Boolean> tissueAnswer = new BoolAnswer(null, generatedTestData.getTissueQuestionStableId(),
                     null, hasConsentedToTissue);
             answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), tissueAnswer);
 
@@ -741,7 +741,7 @@ public class TestDataSetupUtil {
                     generatedTestData.getConsentActivityInstanceGuid(), generatedTestData.getUserGuid());
         }
 
-        Answer birthDateAnswer = new DateAnswer(null, generatedTestData.getDateOfBirthStableId(), null,
+        Answer<DateValue> birthDateAnswer = new DateAnswer(null, generatedTestData.getDateOfBirthStableId(), null,
                 birthYear, birthMonth, birthDay);
         answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), birthDateAnswer);
     }
@@ -826,7 +826,7 @@ public class TestDataSetupUtil {
                 textTmpl("No")).build();
 
         String var = "prompt_" + generatedTestData.getDateOfBirthStableId();
-        Template prompt = Template.html("$" + var + "");
+        Template prompt = Template.html("$" + var);
         prompt.addVariable(TemplateVariable.single(var, "en", "Date of birth"));
         DateQuestionDef birthDateQuestion = DateQuestionDef
                 .builder(DateRenderMode.TEXT, generatedTestData.getDateOfBirthStableId(), prompt)
@@ -1015,7 +1015,7 @@ public class TestDataSetupUtil {
         }
     }
 
-    public static void deleteAuth0User(GeneratedTestData generatedTestData) throws Auth0Exception {
+    public static void deleteAuth0User(GeneratedTestData generatedTestData) {
         String auth0domain = auth0Config.getString(ConfigFile.DOMAIN);
         String mgmtClientId = auth0Config.getString(AUTH0_MGMT_API_CLIENT_ID);
         String mgmtSecret = auth0Config.getString(AUTH0_MGMT_API_CLIENT_SECRET);
@@ -1079,10 +1079,8 @@ public class TestDataSetupUtil {
                     .filter(userStudyEnrollment -> userStudyEnrollment.getUserId() == generatedTestData.getUserId())
                     .findFirst();
 
-            if (enrollmentStatus.isPresent()) {
-                jdbiUserStudyEnrollment.deleteById(enrollmentStatus.get()
-                        .getUserStudyEnrollmentId());
-            }
+            enrollmentStatus.ifPresent(enrollmentStatusDto -> jdbiUserStudyEnrollment.deleteById(enrollmentStatusDto
+                    .getUserStudyEnrollmentId()));
         }
     }
 
