@@ -29,10 +29,15 @@ public class AllowlistFilterTest {
     public static final String ALLOWED = "/allowed";
     public static final String ALLOWED_TXT = "Welcome to Fantasy Island!";
     public static final String NOT_ALLOWED = "/notallowed";
+    public static final String NOT_ALLOWED_TXT = "Intruder!";
     public static final String DONT_CARE = "/dontcare";
+    public static final String DONT_CARE_TXT = "Aloha my friend!";
     public static final String BASEURL = "http://localhost:" + PORT;
 
     public static class TestServer {
+        public static final String LOCALHOST = "127.0.0.1";
+        public static final String FAKE_IP_ADDRESS = "55.444.555.555";
+
         static Service startServer() {
             Service http;
             String thisIp;
@@ -41,26 +46,26 @@ public class AllowlistFilterTest {
             } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }
-            AllowListFilter allowedFilter = new AllowListFilter(List.of(thisIp, "127.0.0.1", "55.444.555.555"));
-            AllowListFilter notAllowedFilter = new AllowListFilter(List.of("55.444.555.555"));
+            AllowListFilter allowedFilter = new AllowListFilter(List.of(thisIp, LOCALHOST, FAKE_IP_ADDRESS));
+            AllowListFilter notAllowedFilter = new AllowListFilter(List.of(FAKE_IP_ADDRESS));
             RouteImpl simpleAllowedRoute = new RouteImpl(ALLOWED) {
                 @Override
-                public Object handle(spark.Request request, spark.Response response) throws Exception {
+                public Object handle(spark.Request request, spark.Response response) {
                     return ALLOWED_TXT;
                 }
             };
 
             RouteImpl simpleDeniedRoute = new RouteImpl(NOT_ALLOWED) {
                 @Override
-                public Object handle(spark.Request request, spark.Response response) throws Exception {
-                    return "Intruder!";
+                public Object handle(spark.Request request, spark.Response response) {
+                    return NOT_ALLOWED_TXT;
                 }
             };
 
             RouteImpl simpleUnfilteredRoute = new RouteImpl(DONT_CARE) {
                 @Override
-                public Object handle(spark.Request request, spark.Response response) throws Exception {
-                    return "Aloha my friend!";
+                public Object handle(spark.Request request, spark.Response response) {
+                    return DONT_CARE_TXT;
                 }
             };
             http = ignite().port(PORT);
