@@ -136,11 +136,6 @@ public class IntegrationTestSuite {
     }
 
     public static void setup(boolean isCachingDisabled) {
-        if (callCounter > 0) {
-            // Test suite has been setup already, increment and exit.
-            callCounter += 1;
-            return;
-        }
         SuiteClasses annotation = IntegrationTestSuite.class.getDeclaredAnnotation(SuiteClasses.class);
 
         List<Class> declaredClasses = Arrays.asList(annotation.value());
