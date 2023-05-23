@@ -12,7 +12,7 @@
     <artifactId>pex-antlr</artifactId>
 
     <properties>
-        <sonar.skip>true</sonar.skip>
+        <sonar.sources>src/main</sonar.sources>
     </properties>
 
     <dependencies>
