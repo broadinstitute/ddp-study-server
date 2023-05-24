@@ -596,7 +596,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
 
     private MailAddress buildValidAddress() {
         return new MailAddress("Gomez Adams", "3348 Ridge Road", "",
-                "Cheyenne", "WY", "US", TEST_ZIP, "617-666-4444", "85HQ46WJ+WF", "fictional",
+                "Cheyenne", "WY", "US", TEST_ZIP, "617-666-4444", "85HQ46WJ+WC", "fictional",
                 DsmAddressValidationStatus.DSM_VALID_ADDRESS_STATUS, false);
     }
 
