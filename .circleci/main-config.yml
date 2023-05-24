@@ -572,6 +572,15 @@ commands:
       ddp_cache_dir:
         type: string
         default: *ddp_cache_dir
+      coverage_report:
+        type: boolean
+        default: false
+      sonar_scan:
+        type: boolean
+        default: false
+      sonar_additional_module:
+        type: string
+        default: ''
     steps:
       - when:
           condition: << parameters.restore_m2_cache >>
@@ -625,6 +634,44 @@ commands:
           when: always
       - store_test_results:
           path: ~/test-results
+      - when:
+          condition: << parameters.coverage_report >>
+          steps:
+            - run:
+                name: Generate coverage report
+                command: |
+                  mvn jacoco:report \
+                    -Dddp.cacheDir="$ddp_cache_dir" \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+      - when:
+          condition: << parameters.sonar_scan >>
+          steps:
+            - run:
+                name: Run sonar scan
+                command: |
+                    if [[ ! -z '<<parameters.module>>' ]]; then
+                      cd <<parameters.module>>
+                    fi
+                    mvn sonar:sonar  \
+                      -Dddp.cacheDir="$ddp_cache_dir" \
+                      -Dmaven.repo.local=<< parameters.m2_repo >>
+                    if [[ ! -z '<<parameters.module>>' ]]; then
+                      cd ..
+                    fi
+      - when:
+          condition:
+            and:
+              - << parameters.sonar_scan >>
+              - << parameters.sonar_additional_module >>
+          steps:
+            - run:
+                name: 'Run sonar scan on <<parameters.sonar_additional_module>>'
+                command: |
+                  cd <<parameters.sonar_additional_module>>
+                  mvn sonar:sonar  \
+                    -Dddp.cacheDir="$ddp_cache_dir" \
+                    -Dmaven.repo.local=<< parameters.m2_repo >>
+                  cd ..
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
@@ -831,9 +878,12 @@ jobs:
                 skip_tests: false
                 config_file_path: ''
                 skip_checkstyle: true
-                additional_options: -Ddsm.test.excludes='${dsm.test.ci.excludes}'
+                additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
+                coverage_report: true
+                sonar_scan: true
+                sonar_additional_module: 'ddp-common'
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -874,8 +924,10 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+                additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
+                coverage_report: true
+                sonar_scan: true
             - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
@@ -919,8 +971,10 @@ jobs:
                 phase: test
                 skip_tests: false
                 module: dss-core
-                additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
+                additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
+                coverage_report: true
+                sonar_scan: true
             - save-ddp-cache
             - run:
                 name: 'Check node index to save workspace only once'
