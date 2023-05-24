@@ -9,9 +9,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import com.auth0.exception.RateLimitException;
 import com.auth0.json.mgmt.Connection;
 import com.auth0.json.mgmt.users.User;
 import com.typesafe.config.Config;
@@ -116,5 +118,27 @@ public class Auth0ManagementClientTest extends TxnAwareBaseTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testAuth0RateLimitBackoffTimeNotFound() {
+        long rateLimit = Long.parseLong("2");
+        long rateRemaining = Long.parseLong("1");
+        long rateReset = Long.parseLong("-1");
+        RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+
+        long wait = client.auth0BackoffTime(rateLimitException);
+        assertEquals(-1, wait);
+    }
+
+    @Test
+    public void testAuth0RateLimitBackoffTime() {
+        long rateLimit = Long.parseLong("2");
+        long rateRemaining = Long.parseLong("1");
+        long rateReset = (Instant.now().getEpochSecond() + 1);
+        RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+
+        long wait = client.auth0BackoffTime(rateLimitException);
+        assertEquals(1000, wait);
     }
 }

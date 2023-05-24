@@ -567,7 +567,7 @@ public class Auth0ManagementClient {
      *   or -1 if no time information from Auth0.
      * @param rateLimitException {@link RateLimitException}
      */
-    private long auth0BackoffTime(RateLimitException rateLimitException) {
+    public long auth0BackoffTime(RateLimitException rateLimitException) {
         long wait = -1;
         long timeWhenReset = rateLimitException.getReset();
         if (timeWhenReset != -1) {
