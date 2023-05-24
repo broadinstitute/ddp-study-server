@@ -15,7 +15,6 @@ import org.broadinstitute.ddp.exception.DDPException;
 public class DatabaseTestUtil {
     public static final String TESTING_ROOT_USERNAME = "root";
     public static final String TESTING_ROOT_PASSWORD = "test";
-
     public static final String MYSQL_VERSION = "mysql:5.7";
 
     // classpath location for init script for disposable mysql test db
@@ -72,10 +71,10 @@ public class DatabaseTestUtil {
                     String newDbUrl = dbUrlValue.replace("&password=" + oldPassword, "&password=" + newPassword);
                     modifiedConfig = modifiedConfig.withValue(dbUrlKey, ConfigValueFactory.fromAnyRef(newDbUrl, "Overridden value"));
                 } else {
-                    throw new DDPException("Could not find old password in config file for db url key: " + dbUrlKey);
+                    throw new DDPException("Could not find old password in config file for database URL key");
                 }
             } else {
-                throw new DDPException("Key " + dbUrlKey + " does not exist in config file");
+                throw new DDPException("Database URL key does not exist in config file");
             }
         }
         return modifiedConfig;
@@ -89,7 +88,7 @@ public class DatabaseTestUtil {
         try {
             ConfigManager.getInstance().overrideValue(dbUrlKey, DatabaseTestUtil.getFullJdbcTestUrl(dbUrl));
         } catch (Exception e) {
-            throw new RuntimeException("Could not rewrite " + dbUrlKey, e);
+            throw new RuntimeException("Could not rewrite database URL", e);
         }
     }
 
