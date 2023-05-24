@@ -122,9 +122,9 @@ public class Auth0ManagementClientTest extends TxnAwareBaseTest {
 
     @Test
     public void testAuth0RateLimitBackoffTimeNotFound() {
-        long rateLimit = Long.parseLong("2");
-        long rateRemaining = Long.parseLong("1");
-        long rateReset = Long.parseLong("-1");
+        long rateLimit = 2L;
+        long rateRemaining = 1L;
+        long rateReset = -1L;
         RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
 
         long wait = client.auth0BackoffTime(rateLimitException);
@@ -133,8 +133,8 @@ public class Auth0ManagementClientTest extends TxnAwareBaseTest {
 
     @Test
     public void testAuth0RateLimitBackoffTime() {
-        long rateLimit = Long.parseLong("2");
-        long rateRemaining = Long.parseLong("1");
+        long rateLimit = 2L;
+        long rateRemaining = 1L;
         long rateReset = (Instant.now().getEpochSecond() + 1);
         RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
 
