@@ -563,7 +563,11 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
         assertEquals(original.getStreet1(), fromServer.getStreet1());
         assertEquals(original.getStreet2(), fromServer.getStreet2());
         assertEquals(original.getZip(), fromServer.getZip());
-        assertEquals(original.getPlusCode(), fromServer.getPlusCode());
+        // we don't care about the plus code content (it can change for a given address),
+        // but want to be sure it is there
+        if (original.getPlusCode() != null) {
+            assertNotNull(fromServer.getPlusCode());
+        }
         assertNull(fromServer.getId());
         assertEquals(original.isDefault(), fromServer.isDefault());
         assertNotNull(fromServer.getGuid());
