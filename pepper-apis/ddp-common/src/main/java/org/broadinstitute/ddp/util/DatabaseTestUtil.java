@@ -94,7 +94,7 @@ public class DatabaseTestUtil {
 
     public static String getFullJdbcTestUrl(String jdbcUrl) {
         return jdbcUrl  + "?user=" + TESTING_ROOT_USERNAME
-                + "&password=" + TESTING_ROOT_PASSWORD
+                + "&password=" + TEST
                 + "&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC"
                 + "&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',"
                 + "sql_mode='TRADITIONAL'";
