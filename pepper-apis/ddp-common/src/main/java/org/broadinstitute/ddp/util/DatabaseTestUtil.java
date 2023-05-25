@@ -14,7 +14,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 @Slf4j
 public class DatabaseTestUtil {
     public static final String TESTING_ROOT_USERNAME = "root";
-    public static final String TESTING_ROOT_PASSWORD = "test";
+    public static final String TEST = "test";
     public static final String MYSQL_VERSION = "mysql:5.7";
 
     // classpath location for init script for disposable mysql test db
