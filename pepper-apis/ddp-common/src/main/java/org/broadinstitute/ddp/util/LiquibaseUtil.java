@@ -37,7 +37,7 @@ public class LiquibaseUtil implements AutoCloseable {
     public static final String AUTH0_TENANT_MIGRATION = "db-changes/tenant-migration.xml";
     public static final String LIQUIBASE_TEST_CONTEXT = "new_db";
     public static final String LIQUIBASE_APP_CONTEXT = "existing_db";
-    private HikariDataSource dataSource;
+    private final HikariDataSource dataSource;
 
     private LiquibaseUtil(String dbUrl)  {
         HikariConfig config = new HikariConfig();
@@ -173,7 +173,8 @@ public class LiquibaseUtil implements AutoCloseable {
                             liquibase.rollback(tag, new Contexts());
                             log.info("Successfully rolled back changesets to tag {}", tag);
                         } catch (RollbackFailedException e) {
-                            log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                            log.error("Failed to rollback changesets to tag {}, database might be in a bad state: {}",
+                                    tag, e);
                         }
                     }
                 } else {
@@ -208,9 +209,7 @@ public class LiquibaseUtil implements AutoCloseable {
         }
         // insert legacy auth0 tenant data
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
-        insertedTenant = TransactionWrapper.withTxn(DB.APIS, handle -> {
-            return insertLegacyTenant(handle, auth0Config);
-        });
+        insertedTenant = TransactionWrapper.withTxn(DB.APIS, handle -> insertLegacyTenant(handle, auth0Config));
         if (resetDb) {
             TransactionWrapper.reset();
         }
@@ -247,13 +246,11 @@ public class LiquibaseUtil implements AutoCloseable {
      */
     private void logLocks(DatabaseChangeLogLock[] databaseChangeLogLocks) {
         boolean hasLocks = false;
-        if (databaseChangeLogLocks != null) {
-            if (databaseChangeLogLocks.length > 0) {
-                hasLocks = true;
-                for (DatabaseChangeLogLock dbLock : databaseChangeLogLocks) {
-                    log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(),
-                            dbLock.getLockGranted(), dbLock.getId());
-                }
+        if (databaseChangeLogLocks != null && databaseChangeLogLocks.length > 0) {
+            hasLocks = true;
+            for (DatabaseChangeLogLock dbLock : databaseChangeLogLocks) {
+                log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(),
+                        dbLock.getLockGranted(), dbLock.getId());
             }
         }
         if (!hasLocks) {
