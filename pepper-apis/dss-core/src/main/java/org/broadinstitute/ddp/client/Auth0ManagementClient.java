@@ -547,14 +547,16 @@ public class Auth0ManagementClient {
                 RateLimitException rateLimit = (RateLimitException) res.getError();
                 long retryAfter = auth0BackoffTime(rateLimit);
                 wait = retryAfter != -1 ? retryAfter : wait;
-                log.warn("Hit Auth0 rate limit: Pausing for " + wait + " milliseconds");
-                try {
-                    TimeUnit.MILLISECONDS.sleep(wait);
-                } catch (InterruptedException e) {
-                    log.warn("Interrupted while waiting after rate limit", e);
-                }
                 waitTotal += wait;
-                log.warn("Hit Auth0 rate limit: Total wait time is " + waitTotal + " milliseconds");
+                log.warn("Hit Auth0 rate limit: Pausing for {} milliseconds. Total wait time is now {} milliseconds",
+                        wait, waitTotal);
+                if (wait > 0) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(wait);
+                    } catch (InterruptedException e) {
+                        log.warn("Interrupted while waiting after rate limit", e);
+                    }
+                }
             } else {
                 break;
             }
@@ -572,8 +574,8 @@ public class Auth0ManagementClient {
         long timeWhenReset = rateLimitException.getReset();
         if (timeWhenReset != -1) {
             long interval = timeWhenReset - Instant.now().getEpochSecond();
-            if (interval <= 0) {
-                interval = 1;
+            if (interval < 0) {
+                interval = 0;
             } else if (interval > 10) {
                 // maximum interval between retries
                 interval = 10;
