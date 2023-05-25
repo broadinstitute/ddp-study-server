@@ -16,8 +16,8 @@ import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.DBTestContainer;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
-import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -41,7 +41,7 @@ public class TransactionWrapperTest {
     public static void setUp() throws SQLException {
         // We're using existing pepper db to test transactions. We can have better isolation by spinning up a new db,
         // but it's a bit too costly in terms of test speed.
-        MySqlTestContainerUtil.initializeTestDbs();
+        DBTestContainer.initializeTestDbs();
         Config cfg = ConfigManager.getInstance().getConfig();
         testDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
         LiquibaseUtil.runChangeLog(testDbUrl, CHANGESET_FILE);
