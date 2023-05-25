@@ -135,10 +135,20 @@ public class Auth0ManagementClientTest extends TxnAwareBaseTest {
     public void testAuth0RateLimitBackoffTime() {
         long rateLimit = 2L;
         long rateRemaining = 1L;
-        long rateReset = (Instant.now().getEpochSecond() + 1);
-        RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
 
+        // auth0BackoffTime should return a value between 0 and 10,000 milliseconds if a positive rateReset
+        // is provided
+        long rateReset = Instant.now().getEpochSecond() - 1;
+        RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+        assertEquals(0, client.auth0BackoffTime(rateLimitException));
+
+        rateReset = Instant.now().getEpochSecond() + 50;
+        rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+        assertEquals(10000, client.auth0BackoffTime(rateLimitException));
+
+        rateReset = Instant.now().getEpochSecond() + 5;
+        rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
         long wait = client.auth0BackoffTime(rateLimitException);
-        assertEquals(1000, wait);
+        assertTrue(wait >= 0 && wait <= 10000);
     }
 }
