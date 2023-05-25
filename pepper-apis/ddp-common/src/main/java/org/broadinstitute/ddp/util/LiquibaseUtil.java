@@ -151,38 +151,38 @@ public class LiquibaseUtil implements AutoCloseable {
         if (context == null || context.isEmpty()) {
             throw new RuntimeException("Liquibase context must be provided");
         }
-        Liquibase liquibase = null;
-        String tag = null;
-        try {
-            liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
-            logLocks(liquibase.listLocks());
 
-            tag = generateDatabaseTag();
-            liquibase.tag(tag);
-            log.info("Tagged database with tag {}", tag);
+        try (Liquibase liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(),
+                new JdbcConnection(dataSource.getConnection()))) {
+            String tag = null;
+            try {
+                logLocks(liquibase.listLocks());
 
-            liquibase.update(new Contexts(context));
-        } catch (LiquibaseException originalError) {
-            log.error("LiquibaseException: {}", originalError.getMessage());
-            if (liquibase != null && tag != null) {
-                if (originalError.getCause().getClass() == MigrationFailedException.class
-                        || originalError.getCause().getMessage().contains("Migration failed for change set " + changelogFile)) {
-                    try {
-                        log.info("Attempting to rollback changesets to tag {}", tag);
-                        liquibase.rollback(tag, new Contexts());
-                        log.info("Successfully rolled back changesets to tag {}", tag);
-                    } catch (RollbackFailedException e) {
-                        log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                tag = generateDatabaseTag();
+                liquibase.tag(tag);
+                log.info("Tagged database with tag {}", tag);
+
+                liquibase.update(new Contexts(context));
+            } catch (LiquibaseException originalError) {
+                log.error("LiquibaseException: {}", originalError.getMessage());
+                if (tag != null) {
+                    if (originalError.getCause().getClass() == MigrationFailedException.class
+                            || originalError.getCause().getMessage().contains("Migration failed for change set " + changelogFile)) {
+                        try {
+                            log.info("Attempting to rollback changesets to tag {}", tag);
+                            liquibase.rollback(tag, new Contexts());
+                            log.info("Successfully rolled back changesets to tag {}", tag);
+                        } catch (RollbackFailedException e) {
+                            log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                        }
                     }
+                } else {
+                    log.error("No liquibase object or tag to rollback changesets");
                 }
-            } else {
-                log.error("No liquibase object or tag to rollback changesets");
-            }
 
-            // Propagate original exception back up.
-            throw originalError;
-        } finally {
-            if (liquibase != null) {
+                // Propagate original exception back up.
+                throw originalError;
+            } finally {
                 liquibase.forceReleaseLocks();
             }
         }
