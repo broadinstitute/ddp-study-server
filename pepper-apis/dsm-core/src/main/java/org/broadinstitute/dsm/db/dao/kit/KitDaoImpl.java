@@ -193,7 +193,7 @@ public class KitDaoImpl implements KitDao {
                 } else {
                     logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
                     if (StringUtils.isNotBlank(kitRequestShipping.getBspCollaboratorParticipantId())) {
-                        dbVals.resultValue = new ScanError(kitRequestShipping.getBspCollaboratorParticipantId(),
+                        dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), null,
                                 kitRequestShipping.getBspCollaboratorParticipantId());
                     }
                 }

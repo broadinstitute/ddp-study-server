@@ -33,6 +33,9 @@ public class TabularParticipantParserTest {
     private static final Filter ALLERGIES_FILTER =
             buildFilter("ALLERGY_DESCRIPTION", "MEDICAL_HISTORY", "questionsAnswers", "TEXT", "describe any allergies");
 
+    private static final Filter REGISTRATION_DATE_FILTER =
+            buildFilter("createdAt", "data", "profile", "DATE", "Registration Date");
+
     @Test
     public void testBasicConfigGeneration() {
         TabularParticipantParser parser = new TabularParticipantParser(
@@ -58,6 +61,15 @@ public class TabularParticipantParserTest {
         // should be sorted into two modules -- data and profile
         assertEquals("correct number of participants not extracted", 1, participantValueMaps.size());
         assertEquals("DDP instance name not parsed", "atcp", participantValueMaps.get(0).get("DATA.DDP"));
+    }
+
+    @Test
+    public void testDateParsing() {
+        TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(REGISTRATION_DATE_FILTER), null, true, true, ATCP_ACTIVITY_DEFS);
+        List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
+        List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
+        // we want MM-dd-yyyy (specifically not dd-MM-yyyy which is wrong)
+        assertEquals("invalid registration date format", "03-30-2023 17:51:13", participantValueMaps.get(0).get("PROFILE.CREATEDAT"));
     }
 
     @Test
@@ -239,7 +251,7 @@ public class TabularParticipantParserTest {
     private static final Map<String, Map<String, Object>> ATCP_ACTIVITY_DEFS = Map.of("MEDICAL_HISTORY_V1", ATCP_MEDICAL_HISTORY_DEF);
 
     private static final Map<String, Object> TEST_ATCP_PARTICIPANT = new HashMap(
-            Map.of("ddp", "atcp", "profile", Map.of("firstName", "Tester", "lastName", "atStudy", "hruid", "PKG8PA"), "activities",
+            Map.of("ddp", "atcp", "profile", Map.of("firstName", "Tester", "lastName", "atStudy", "hruid", "PKG8PA", "createdAt", 1680198673000L), "activities",
                     Arrays.asList(Map.of("activityCode", "MEDICAL_HISTORY", "questionsAnswers",
                             Arrays.asList(Map.of("stableId", "INCONTINENCE", "answer", Arrays.asList("INCONTINENCE_OCCASIONAL")),
                                     Map.of("stableId", "TELANGIECTASIA", "answer", Arrays.asList("TELANGIECTASIA_EYES"), "optionDetails",

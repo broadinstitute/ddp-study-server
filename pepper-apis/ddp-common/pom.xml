@@ -13,6 +13,8 @@
 
     <properties>
         <logback.version>1.4.5</logback.version>
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.java.binaries>target/classes</sonar.java.binaries>
     </properties>
 
     <dependencies>

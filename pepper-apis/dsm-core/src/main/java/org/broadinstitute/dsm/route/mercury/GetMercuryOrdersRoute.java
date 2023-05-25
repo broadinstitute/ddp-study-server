@@ -38,7 +38,8 @@ public class GetMercuryOrdersRoute extends RequestHandler {
         }
         String realm = queryParams.get(RoutePath.REALM).value();
         String userIdRequest = UserUtil.getUserId(request);
-        if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", userIdRequest)) {
+        if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", userIdRequest) &&
+                !UserUtil.checkUserAccess(realm, userId, "view_seq_order_status", userIdRequest)) {
             log.warn("User doesn't have access");
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;

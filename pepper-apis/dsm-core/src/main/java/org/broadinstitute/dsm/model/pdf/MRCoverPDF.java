@@ -10,6 +10,7 @@ import java.util.Set;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -20,8 +21,11 @@ import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.files.CoverPDFProcessor;
 import org.broadinstitute.dsm.files.PDFProcessor;
 import org.broadinstitute.dsm.files.RequestPDFProcessor;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 
+@Slf4j
 public class MRCoverPDF {
     private final String jsonStartDate = "startDate";
     private final String jsonEndDate = "endDate";
@@ -54,7 +58,20 @@ public class MRCoverPDF {
         //get information from db
         MedicalRecord medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), originalDownloadPDF.getDdpParticipantId(),
                 originalDownloadPDF.getMedicalRecordId());
-
+        if (medicalRecord == null) {
+            log.info( String.format("No medical record was found for participant with guid %s, trying legacy id", originalDownloadPDF.getDdpParticipantId()));
+            Profile participantProfile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(
+                    ddpInstance.getParticipantIndexES(), originalDownloadPDF.getDdpParticipantId()).orElseThrow();
+            if (StringUtils.isNotBlank(participantProfile.getLegacyAltPid())) {
+                log.info("Participant has legacy id "+ participantProfile.getLegacyAltPid());
+                medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), participantProfile.getLegacyAltPid(),
+                        originalDownloadPDF.getMedicalRecordId());
+            }
+            if (medicalRecord == null) {
+                throw new RuntimeException(String.format("Medical Record with id %s not found for participant with guid %s",
+                        originalDownloadPDF.getMedicalRecordId(), originalDownloadPDF.getDdpParticipantId()));
+            }
+        }
         Map<String, Object> valueMap = new HashMap<>();
         //values same no matter from where participant/institution data comes from
         valueMap.put(CoverPDFProcessor.FIELD_CONFIRMED_INSTITUTION_NAME, medicalRecord.getName());

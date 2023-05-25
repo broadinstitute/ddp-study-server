@@ -10,6 +10,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>pex-antlr</artifactId>
+
+    <properties>
+        <sonar.sources>src/main</sonar.sources>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.antlr</groupId>

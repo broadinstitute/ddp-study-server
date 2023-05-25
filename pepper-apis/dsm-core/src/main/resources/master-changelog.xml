@@ -121,4 +121,6 @@
     <include file="liquibase/PEPPER-211_dashboardDateField.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/rgp/PEPPER-454_RNA.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/PEPPER-642_MR_NoActionNeeded.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/PEPPER-139_view_seq_order_status.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/PEPPER-575_REF_SOURCE.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

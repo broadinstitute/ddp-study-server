@@ -29,6 +29,7 @@ import org.broadinstitute.dsm.files.CoverPDFProcessor;
 import org.broadinstitute.dsm.files.PDFProcessor;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.PDF;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -135,7 +136,7 @@ public class DownloadPDF {
                 break;
             } else {
                 try {
-                    logger.error(String.format("Got %s PDF with size zero in try %d", configName, turn));
+                    logger.warn(String.format("Got %s PDF with size zero in try %d", configName, turn));
                     Thread.sleep(retryWaitMillis);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -197,7 +198,21 @@ public class DownloadPDF {
             Map<String, Map<String, Object>> participantsESData =
                     ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
             ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, ddpParticipantId);
-            medicalInfo = ElasticSearchUtil.getParticipantAsMedicalInfo(participantsESData, ddpParticipantId);
+            if (ddpParticipant == null) {
+                logger.info("No participant found with guid "+ ddpParticipantId+ ", going to check legacy id");
+                Profile participantProfile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(
+                        ddpInstance.getParticipantIndexES(), ddpParticipantId).orElseThrow();
+                if (StringUtils.isNotBlank(participantProfile.getLegacyAltPid())) {
+                    String legacyAltPid = participantProfile.getLegacyAltPid();
+                    logger.info("Participant has legacy id "+ legacyAltPid);
+                    ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, legacyAltPid);
+                    medicalInfo = ElasticSearchUtil.getParticipantAsMedicalInfo(participantsESData, legacyAltPid);
+                } else {
+                    throw new RuntimeException("No participant found with guid "+ ddpParticipantId + " for study "+ddpInstance.getName());
+                }
+            }else {
+                medicalInfo = ElasticSearchUtil.getParticipantAsMedicalInfo(participantsESData, ddpParticipantId);
+            }
             dob = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, medicalInfo.getDob());
         }
 
