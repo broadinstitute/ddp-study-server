@@ -572,8 +572,13 @@ public class Auth0ManagementClient {
         long timeWhenReset = rateLimitException.getReset();
         if (timeWhenReset != -1) {
             long interval = timeWhenReset - Instant.now().getEpochSecond();
-            long maxInterval = interval > 10 ? 10 : interval; // Specify the maximum interval 10 seconds between retries
-            wait = maxInterval * 1000;
+            if (interval <= 0) {
+                interval = 1;
+            } else if (interval > 10) {
+                // maximum interval between retries
+                interval = 10;
+            }
+            wait = interval * 1000;
         }
         return wait;
     }
