@@ -909,6 +909,12 @@ jobs:
                 root: *root_path
                 paths:
                   - repo
+            - persist_to_workspace:
+                root: *pepper_apis_path
+                paths:
+                  - repo/pepper-apis/dsm-core
+                  - repo/pepper-apis/dpp-common
+                  - repo/pepper-apis/pex-antlr
 
   dss-compile-and-run-test-suite-job:
     description: Job that runs DSS tests that cannot be done in parallel
@@ -1007,6 +1013,11 @@ jobs:
                 root: *root_path
                 paths:
                   - repo
+            - persist_to_workspace:
+                root: *pepper_apis_path
+                paths:
+                  - repo/pepper-apis/dss-core
+                  - repo/pepper-apis/pex-antlr
 
   sonar-scan-job:
     description: Run Sonar scan on built and tested code
@@ -1015,7 +1026,7 @@ jobs:
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
-          at: *root_path
+          at: *pepper_apis_path
       - setup-shared-env
       - run-sonar-with-maven
 
