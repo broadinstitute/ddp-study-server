@@ -915,6 +915,7 @@ jobs:
                   - dsm-core
                   - dsm-server
                   - dpp-common
+                  - pom.xml
 
   dss-compile-and-run-test-suite-job:
     description: Job that runs DSS tests that cannot be done in parallel
