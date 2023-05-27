@@ -914,8 +914,9 @@ jobs:
                 paths:
                   - dsm-core
                   - dsm-server
-                  - dpp-common
+                  - ddp-common
                   - pom.xml
+                  - studybuilder-cli
 
   dss-compile-and-run-test-suite-job:
     description: Job that runs DSS tests that cannot be done in parallel
