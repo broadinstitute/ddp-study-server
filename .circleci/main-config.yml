@@ -1202,7 +1202,11 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
-      - sonar-scan-job
+      - sonar-scan-job:
+          requires:
+            - dss-compile-and-run-test-suite-job
+            - dss-parallel-compile-and-test-job
+            - dsm-compile-and-run-tests-job
       - build-api-docs-job
 
   # Build and deploy API docs
