@@ -673,6 +673,25 @@ commands:
                     -Dmaven.repo.local=<< parameters.m2_repo >>
                   cd ..
 
+  run-sonar-with-maven:
+    parameters:
+      module:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: Run sonar scan
+          command: |
+            if [[ ! -z '<<parameters.module>>' ]]; then
+              cd <<parameters.module>>
+            fi
+            mvn sonar:sonar  \
+              -Dddp.cacheDir="$ddp_cache_dir" \
+              -Dmaven.repo.local=<< parameters.m2_repo >>
+            if [[ ! -z '<<parameters.module>>' ]]; then
+              cd ..
+            fi
+ 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
     parameters:
@@ -881,7 +900,7 @@ jobs:
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: true
-                sonar_scan: true
+                sonar_scan: false
                 sonar_additional_module: 'ddp-common'
             - save-ddp-cache
             - persist_to_workspace:
@@ -926,7 +945,7 @@ jobs:
                 additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
                 coverage_report: true
-                sonar_scan: true
+                sonar_scan: false
             - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
@@ -973,7 +992,7 @@ jobs:
                 additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
                 coverage_report: true
-                sonar_scan: true
+                sonar_scan: false
             - save-ddp-cache
             - run:
                 name: 'Check node index to save workspace only once'
@@ -986,6 +1005,17 @@ jobs:
                 root: *root_path
                 paths:
                   - repo
+
+  sonar-scan-job:
+    description: Run Sonar scan on built and tested code
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - attach_workspace:
+          at: *root_path
+      - setup-shared-env
+      - run-sonar-with-maven
 
   dss-store-jar-job:
     description: Build DSS specific jars and store them in buckets
@@ -1170,6 +1200,7 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
+      - sonar-scan-job
       - build-api-docs-job
 
   # Build and deploy API docs
@@ -1253,6 +1284,14 @@ workflows:
         - << pipeline.parameters.dsm >>
     jobs:
       - deploy-dsm-stored-jar-job
+
+  # Run sonar scan on built and tested code across modules
+  combined-sonar-scan-workflow:
+    when:
+      and:
+        - equal: ["not-implemented", << pipeline.parameters.action >>]
+    jobs:
+      - sonar-scan-job
 
 
 
