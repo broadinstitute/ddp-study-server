@@ -678,6 +678,9 @@ commands:
       module:
         type: string
         default: ''
+      m2_repo:
+        type: string
+        default: *m2_repo_path
     steps:
       - run:
           name: Run sonar scan
@@ -686,7 +689,6 @@ commands:
               cd <<parameters.module>>
             fi
             mvn sonar:sonar  \
-              -Dddp.cacheDir="$ddp_cache_dir" \
               -Dmaven.repo.local=<< parameters.m2_repo >>
             if [[ ! -z '<<parameters.module>>' ]]; then
               cd ..
