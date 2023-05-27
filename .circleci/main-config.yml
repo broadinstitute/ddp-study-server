@@ -905,16 +905,16 @@ jobs:
                 sonar_scan: false
                 sonar_additional_module: 'ddp-common'
             - save-ddp-cache
-            - persist_to_workspace:
-                root: *root_path
-                paths:
-                  - repo
+#            - persist_to_workspace:
+#                root: *root_path
+#                paths:
+#                  - repo
             - persist_to_workspace:
                 root: *pepper_apis_path
                 paths:
-                  - repo/pepper-apis/dsm-core
-                  - repo/pepper-apis/dpp-common
-                  - repo/pepper-apis/pex-antlr
+                  - dsm-core
+                  - dsm-server
+                  - dpp-common
 
   dss-compile-and-run-test-suite-job:
     description: Job that runs DSS tests that cannot be done in parallel
@@ -1009,15 +1009,19 @@ jobs:
                     echo "Skip persist workspace on this node";
                     circleci step halt;
                   fi
-            - persist_to_workspace:
-                root: *root_path
-                paths:
-                  - repo
+#            - persist_to_workspace:
+#                root: *root_path
+#                paths:
+#                  - repo
             - persist_to_workspace:
                 root: *pepper_apis_path
                 paths:
-                  - repo/pepper-apis/dss-core
-                  - repo/pepper-apis/pex-antlr
+                  - dss-core
+                  - dss-server
+                  - dss-database
+                  - pex-antlr
+                  - housekeeping
+                  - output-config
 
   sonar-scan-job:
     description: Run Sonar scan on built and tested code
@@ -1037,7 +1041,7 @@ jobs:
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
-          at: *root_path
+          at: *pepper_apis_path
       - setup-shared-env
       - build-jar:
           module: dss-server
@@ -1057,7 +1061,7 @@ jobs:
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
-          at: *root_path
+          at: *pepper_apis_path
       - setup-shared-env
       - build-jar:
           module: dsm-server
@@ -1071,7 +1075,7 @@ jobs:
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
-          at: *root_path
+          at: *pepper_apis_path
       - setup-shared-env
       # Deploy Housekeeping first so hopefully liquibase migrations
       # are run before DDP boots up.
@@ -1096,7 +1100,7 @@ jobs:
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
-          at: *root_path
+          at: *pepper_apis_path
       - setup-shared-env
       - build-jar:
           module: dsm-server
