@@ -954,6 +954,10 @@ jobs:
                 coverage_report: true
                 sonar_scan: false
             - save-ddp-cache
+            - persist_to_workspace:
+                root: *root_path
+                paths:
+                  - repo/pepper-apis/dss-core/target
 
   dss-parallel-compile-and-test-job:
     description: Job that runs DSS tests that CAN be done in parallel
@@ -1001,6 +1005,10 @@ jobs:
                 coverage_report: true
                 sonar_scan: false
             - save-ddp-cache
+            - persist_to_workspace:
+                root: *root_path
+                paths:
+                  - repo/pepper-apis/dss-core/target
             - run:
                 name: 'Check node index to save workspace only once'
                 command: |
@@ -1011,7 +1019,8 @@ jobs:
             - persist_to_workspace:
                 root: *root_path
                 paths:
-                  - repo/pepper-apis/dss-core
+                  - repo/pepper-apis/dss-core/src
+                  - repo/pepper-apis/dss-core/pom.xml
                   - repo/pepper-apis/dss-server
                   - repo/pepper-apis/dss-database
                   - repo/pepper-apis/pex-antlr
