@@ -687,10 +687,10 @@ commands:
           command: |
             mvn jacoco:report -Pcoverage \
               -Dmaven.repo.local=<< parameters.m2_repo >>
-            ls -l repo/pepper-apis/dss-core/target
-            ls -l repo/pepper-apis/dss-core/target/site/jacoco
-            ls -l repo/pepper-apis/dsm-core/target
-            ls -l repo/pepper-apis/dsm-core/target/site/jacoco
+            ls -l dss-core/target
+            ls -l dss-core/target/site/jacoco
+            ls -l dsm-core/target
+            ls -l dsm-core/target/site/jacoco
       - run:
           name: Run sonar scan
           command: |
