@@ -689,6 +689,7 @@ commands:
               -Dmaven.repo.local=<< parameters.m2_repo >>
             ls -l dss-core/target
             ls -l dss-core/target/site/jacoco
+            ls -l dss-core/target/surefire-reports
             ls -l dsm-core/target
             ls -l dsm-core/target/site/jacoco
       - run:
@@ -1022,6 +1023,7 @@ jobs:
                     mv dss-core/target/jacoco.exec dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
                   ls -l dss-core/target
+                  ls -l dss-core/target/surefire-reports
                 when: always
             - persist_to_workspace:
                 root: *root_path
