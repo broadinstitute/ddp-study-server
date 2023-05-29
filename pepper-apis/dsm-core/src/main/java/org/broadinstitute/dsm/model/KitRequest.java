@@ -35,7 +35,6 @@ public class KitRequest {
     @DbDateConversion(SqlDateConverter.EPOCH)
     private Long externalOrderDate;
 
-    private String juniperKitId;
 
     public KitRequest() {
     }
@@ -57,7 +56,5 @@ public class KitRequest {
         this.externalOrderDate = externalOrderDate;
     }
 
-    public void setJuniperKitId(String kitId) {
-        this.juniperKitId = kitId;
-    }
+
 }

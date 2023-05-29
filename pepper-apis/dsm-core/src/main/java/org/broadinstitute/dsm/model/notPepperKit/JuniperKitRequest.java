@@ -1,11 +1,12 @@
-package org.broadinstitute.dsm.model;
+package org.broadinstitute.dsm.model.notPepperKit;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.broadinstitute.dsm.model.KitRequest;
 
 @AllArgsConstructor
 @Data
-public class JuniperKitRequest {
+public class JuniperKitRequest extends KitRequest {
     //This class is to imagine what the request payload from Juniper will/should look like
     private String firstName;
     private String lastName;
@@ -16,7 +17,9 @@ public class JuniperKitRequest {
     private String postalCode;
     private String country;
     private String phoneNumber;
-    String juniperKitId;
-    String juniperParticipantID;
-    String juniperStudyID;
+    private String juniperKitId;
+    private String juniperParticipantID;
+    private String juniperStudyID;
+    boolean skipAddressValidation;
+    private String easypostAddressId;
 }

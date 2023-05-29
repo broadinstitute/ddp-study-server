@@ -29,6 +29,7 @@ public class RoutePath {
     public static final String CREATE_CLINICAL_KIT_ENDPOINT = "/createClinicalDummy/:label/:type";
     public static final String CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT = "/createClinicalDummy/:label/:type/:participantId";
     public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
+    public static final String SHIP_KIT_ENDPOINT = "/shipKit";
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
     public static final String CANCER_LIST_REQUEST = "/cancers";
