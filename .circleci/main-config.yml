@@ -1017,11 +1017,11 @@ jobs:
             - run:
                 name: Rename jacoco.exe to a unique name
                 command: |
-                  if [[ -f repo/pepper-apis/dss-core/target/jacoco.exec ]]; then
+                  if [[ -f dss-core/target/jacoco.exec ]]; then
                     echo "Moving jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
-                    mv repo/pepper-apis/dss-core/target/jacoco.exec repo/pepper-apis/dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
+                    mv dss-core/target/jacoco.exec dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
-                  ls -l repo/pepper-apis/dss-core/target
+                  ls -l dss-core/target
                 when: always
             - persist_to_workspace:
                 root: *root_path
