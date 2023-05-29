@@ -1014,6 +1014,7 @@ jobs:
                 name: Rename jacoco.exe to a unique name
                 command: |
                   if [[ -f repo/pepper-apis/dss-core/target/jacoco.exec ]]; then
+                    echo "Moving jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
                     mv repo/pepper-apis/dss-core/target/jacoco.exec repo/pepper-apis/dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
                 when: always
@@ -1039,7 +1040,6 @@ jobs:
                   - repo/pepper-apis/pex-antlr
                   - repo/pepper-apis/housekeeping
                   - repo/pepper-apis/output-config
-                  - repo/pepper-apis/dss-core/target/classes
 
   sonar-scan-job:
     description: Run Sonar scan on built and tested code
