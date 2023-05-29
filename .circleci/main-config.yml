@@ -575,12 +575,6 @@ commands:
       coverage_report:
         type: boolean
         default: false
-      sonar_scan:
-        type: boolean
-        default: false
-      sonar_additional_module:
-        type: string
-        default: ''
     steps:
       - when:
           condition: << parameters.restore_m2_cache >>
@@ -644,35 +638,6 @@ commands:
                     $MODULES_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
-      - when:
-          condition: << parameters.sonar_scan >>
-          steps:
-            - run:
-                name: Run sonar scan
-                command: |
-                    if [[ ! -z '<<parameters.module>>' ]]; then
-                      cd <<parameters.module>>
-                    fi
-                    mvn sonar:sonar  \
-                      -Dddp.cacheDir="$ddp_cache_dir" \
-                      -Dmaven.repo.local=<< parameters.m2_repo >>
-                    if [[ ! -z '<<parameters.module>>' ]]; then
-                      cd ..
-                    fi
-      - when:
-          condition:
-            and:
-              - << parameters.sonar_scan >>
-              - << parameters.sonar_additional_module >>
-          steps:
-            - run:
-                name: 'Run sonar scan on <<parameters.sonar_additional_module>>'
-                command: |
-                  cd <<parameters.sonar_additional_module>>
-                  mvn sonar:sonar  \
-                    -Dddp.cacheDir="$ddp_cache_dir" \
-                    -Dmaven.repo.local=<< parameters.m2_repo >>
-                  cd ..
 
   run-sonar-with-maven:
     parameters:
@@ -683,16 +648,16 @@ commands:
         type: string
         default: *m2_repo_path
     steps:
-#      - run:
-#          name: Generate coverage report
-#          command: |
-#            mvn jacoco:report -Pcoverage \
-#              -Dmaven.repo.local=<< parameters.m2_repo >>
-#            ls -l dss-core/target
-#            ls -l dss-core/target/site/jacoco
-#            ls -l dss-core/target/surefire-reports
-#            ls -l dsm-core/target
-#            ls -l dsm-core/target/site/jacoco
+      - run:
+          name: Generate coverage report
+          command: |
+            mvn jacoco:report -Pcoverage \
+              -Dmaven.repo.local=<< parameters.m2_repo >>
+            ls -l dss-core/target
+            ls -l dss-core/target/site/jacoco
+            ls -l dss-core/target/surefire-reports
+            ls -l dsm-core/target
+            ls -l dsm-core/target/site/jacoco
       - run:
           name: Run sonar scan
           command: |
@@ -912,9 +877,7 @@ jobs:
                 additional_options: -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
-                coverage_report: true
-                sonar_scan: false
-                sonar_additional_module: 'ddp-common'
+                coverage_report: false
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -962,8 +925,7 @@ jobs:
                 skip_checkstyle: true
                 additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
-                coverage_report: true
-                sonar_scan: false
+                coverage_report: false
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -1013,8 +975,7 @@ jobs:
                 module: dss-core
                 additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
-                coverage_report: true
-                sonar_scan: false
+                coverage_report: false
             - save-ddp-cache
             - run:
                 name: Rename jacoco.exe to a unique name
@@ -1023,8 +984,6 @@ jobs:
                     echo "Moving jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
                     mv dss-core/target/jacoco.exec dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
-                  ls -l dss-core/target
-                  ls -l dss-core/target/surefire-reports
                 when: always
             - persist_to_workspace:
                 root: *root_path
@@ -1332,14 +1291,5 @@ workflows:
         - << pipeline.parameters.dsm >>
     jobs:
       - deploy-dsm-stored-jar-job
-
-  # Run sonar scan on built and tested code across modules
-  combined-sonar-scan-workflow:
-    when:
-      and:
-        - equal: ["not-implemented", << pipeline.parameters.action >>]
-    jobs:
-      - sonar-scan-job
-
 
 
