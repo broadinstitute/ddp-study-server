@@ -683,6 +683,11 @@ commands:
         default: *m2_repo_path
     steps:
       - run:
+          name: Generate coverage report
+          command: |
+            mvn jacoco:report -Pcoverage \
+              -Dmaven.repo.local=<< parameters.m2_repo >>
+      - run:
           name: Run sonar scan
           command: |
             if [[ ! -z '<<parameters.module>>' ]]; then
@@ -901,7 +906,7 @@ jobs:
                 additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
-                coverage_report: true
+                coverage_report: false
                 sonar_scan: false
                 sonar_additional_module: 'ddp-common'
             - save-ddp-cache
@@ -951,7 +956,7 @@ jobs:
                 skip_checkstyle: true
                 additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
-                coverage_report: true
+                coverage_report: false
                 sonar_scan: false
             - save-ddp-cache
             - persist_to_workspace:
@@ -1002,13 +1007,21 @@ jobs:
                 module: dss-core
                 additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
-                coverage_report: true
+                coverage_report: false
                 sonar_scan: false
             - save-ddp-cache
+            - run:
+                name: Rename jacoco.exe to a unique name
+                command: |
+                  if [[ -f repo/pepper-apis/dss-core/target/jacoco.exec ]]; then
+                    mv repo/pepper-apis/dss-core/target/jacoco.exec repo/pepper-apis/dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
+                  fi
+                when: always
             - persist_to_workspace:
                 root: *root_path
                 paths:
-                  - repo/pepper-apis/dss-core/target
+                  - repo/pepper-apis/dss-core/target/surefire-reports
+                  - repo/pepper-apis/dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
             - run:
                 name: 'Check node index to save workspace only once'
                 command: |
@@ -1026,6 +1039,7 @@ jobs:
                   - repo/pepper-apis/pex-antlr
                   - repo/pepper-apis/housekeeping
                   - repo/pepper-apis/output-config
+                  - repo/pepper-apis/dss-core/target/classes
 
   sonar-scan-job:
     description: Run Sonar scan on built and tested code
