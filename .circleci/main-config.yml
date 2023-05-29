@@ -687,6 +687,10 @@ commands:
           command: |
             mvn jacoco:report -Pcoverage \
               -Dmaven.repo.local=<< parameters.m2_repo >>
+            ls -l repo/pepper-apis/dss-core/target
+            ls -l repo/pepper-apis/dss-core/target/site/jacoco
+            ls -l repo/pepper-apis/dsm-core/target
+            ls -l repo/pepper-apis/dsm-core/target/site/jacoco
       - run:
           name: Run sonar scan
           command: |
@@ -1017,6 +1021,7 @@ jobs:
                     echo "Moving jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
                     mv repo/pepper-apis/dss-core/target/jacoco.exec repo/pepper-apis/dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
+                  ls -l repo/pepper-apis/dss-core/target
                 when: always
             - persist_to_workspace:
                 root: *root_path
