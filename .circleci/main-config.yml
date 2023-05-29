@@ -641,6 +641,7 @@ commands:
                 name: Generate coverage report
                 command: |
                   mvn jacoco:report \
+                    $MODULES_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
       - when:
@@ -682,16 +683,16 @@ commands:
         type: string
         default: *m2_repo_path
     steps:
-      - run:
-          name: Generate coverage report
-          command: |
-            mvn jacoco:report -Pcoverage \
-              -Dmaven.repo.local=<< parameters.m2_repo >>
-            ls -l dss-core/target
-            ls -l dss-core/target/site/jacoco
-            ls -l dss-core/target/surefire-reports
-            ls -l dsm-core/target
-            ls -l dsm-core/target/site/jacoco
+#      - run:
+#          name: Generate coverage report
+#          command: |
+#            mvn jacoco:report -Pcoverage \
+#              -Dmaven.repo.local=<< parameters.m2_repo >>
+#            ls -l dss-core/target
+#            ls -l dss-core/target/site/jacoco
+#            ls -l dss-core/target/surefire-reports
+#            ls -l dsm-core/target
+#            ls -l dsm-core/target/site/jacoco
       - run:
           name: Run sonar scan
           command: |
@@ -908,10 +909,10 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
+                additional_options: -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
-                coverage_report: false
+                coverage_report: true
                 sonar_scan: false
                 sonar_additional_module: 'ddp-common'
             - save-ddp-cache
@@ -959,9 +960,9 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
+                additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
-                coverage_report: false
+                coverage_report: true
                 sonar_scan: false
             - save-ddp-cache
             - persist_to_workspace:
@@ -1010,9 +1011,9 @@ jobs:
                 phase: test
                 skip_tests: false
                 module: dss-core
-                additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
+                additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
-                coverage_report: false
+                coverage_report: true
                 sonar_scan: false
             - save-ddp-cache
             - run:
@@ -1029,8 +1030,8 @@ jobs:
                 root: *root_path
                 paths:
                   - repo/pepper-apis/dss-core/target/surefire-reports
+                  - repo/pepper-apis/dss-core/target/site/jacococ
                   - repo/pepper-apis/dss-core/target/*.exec
-
             - run:
                 name: 'Check node index to save workspace only once'
                 command: |
