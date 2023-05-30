@@ -44,6 +44,12 @@ public class NotPepperKitCreationService {
             return new KitResponse(UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId());
         }
         DDPInstanceDto ddpInstanceDto = maybeDdpInstanceDto.get();
+        //getting the instance with isHasRole being set to true if the instance has role juniper_study
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(ddpInstanceDto.getInstanceName(), "juniper_study");
+
+        if (!ddpInstance.isHasRole()) {
+            throw new RuntimeException("This is not a Juniper study!");
+        }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = kitTypeName + "_" + ddpInstanceDto.getDdpInstanceId();
         KitType kitType = kitTypes.get(key);
@@ -67,12 +73,6 @@ public class NotPepperKitCreationService {
 
         ArrayList<KitRequest> orderKits = new ArrayList<>();
 
-        //getting the instance with isHasRole being set to true if the instance has role juniper_study
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(ddpInstanceDto.getInstanceName(), "juniper_study");
-
-        if (!ddpInstance.isHasRole()) {
-            throw new RuntimeException("This is not a Juniper study!");
-        }
 
         TransactionWrapper.inTransaction(conn -> {
             createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName,  orderKits, conn);
@@ -146,9 +146,7 @@ public class NotPepperKitCreationService {
             externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
         }
         String errorMessage = "";
-        String collaboratorParticipantId = "";
-
-        collaboratorParticipantId = KitRequestShipping
+        String collaboratorParticipantId = KitRequestShipping
                 .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                         ddpInstance.getCollaboratorIdPrefix(), kit.getJuniperParticipantID(), kit.getJuniperParticipantID(),
                         kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
@@ -164,13 +162,13 @@ public class NotPepperKitCreationService {
             log.error("Seems like {} is not a JUNIPER study! ", ddpInstance.getName());
             throw new RuntimeException(ddpInstance.getName() + " study is not configured to use this method.");
         }
-        addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
+        addJuniperKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
                 errorMessage, easyPostUtil, kit, externalOrderNumber, shippingId, null, userId);
         orderKits.add(kit);
 
     }
 
-    private void addKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings, DDPInstance ddpInstance,
+    private void addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings, DDPInstance ddpInstance,
                                int kitTypeId, String collaboratorParticipantId, String errorMessage, EasyPostUtil easyPostUtil,
                                JuniperKitRequest kit, String externalOrderNumber, String shippingId, String ddpLabel, String userId) {
         String collaboratorSampleId = null;
