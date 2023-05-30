@@ -650,7 +650,8 @@ commands:
     steps:
       - run: |
           if [[ ! -f pom.xml ]]; then
-              circleci-agent step halt
+            echo "Not enough module build information available for Sonar analysis"
+            circleci-agent step halt
           fi
       - restore_cache: *m2_cache_keys
       - run:
@@ -1010,12 +1011,37 @@ jobs:
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
+    parameters:
+      module:
+        type: string
+        default: ''
+      m2_repo:
+        type: string
+        default: *m2_repo_path
     steps:
+      - checkout:
+          path: *repo_path
       - attach_workspace:
           at: *root_path
       - setup-shared-env
-      - run-sonar-with-maven
-
+      - restore_cache: *m2_cache_keys
+      - run:
+          name: Generate coverage report
+          command: |
+            mvn jacoco:report -Pcoverage \
+              -Dmaven.repo.local=<< parameters.m2_repo >>
+      - run:
+          name: Run sonar scan
+          command: |
+            if [[ ! -z '<<parameters.module>>' ]]; then
+              cd <<parameters.module>>
+            fi
+            mvn sonar:sonar  \
+              -Dmaven.repo.local=<< parameters.m2_repo >>
+            if [[ ! -z '<<parameters.module>>' ]]; then
+              cd ..
+            fi
+            
   dss-store-jar-job:
     description: Build DSS specific jars and store them in buckets
     executor:
