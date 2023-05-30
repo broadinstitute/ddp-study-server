@@ -35,7 +35,6 @@ public class KitRequest {
     @DbDateConversion(SqlDateConverter.EPOCH)
     private Long externalOrderDate;
 
-
     public KitRequest() {
     }
 
@@ -55,6 +54,4 @@ public class KitRequest {
         this.externalKitName = externalKitName;
         this.externalOrderDate = externalOrderDate;
     }
-
-
 }
