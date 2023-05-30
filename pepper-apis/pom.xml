@@ -910,6 +910,7 @@
                     </environmentVariables>
                 </configuration>
             </plugin>
+<!--
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -929,6 +930,7 @@
                     </execution>
                 </executions>
             </plugin>
+-->
             <plugin>
                 <!-- used to generate single jar for smoketest  -->
                 <groupId>org.apache.maven.plugins</groupId>
