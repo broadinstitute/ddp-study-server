@@ -11,6 +11,10 @@
 
     <artifactId>dsm-server</artifactId>
 
+    <properties>
+        <sonar.skip>true</sonar.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.broadinstitute.ddp</groupId>

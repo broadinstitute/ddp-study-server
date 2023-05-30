@@ -21,6 +21,7 @@ import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -30,8 +31,6 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 
     public static final String RGP_FAMILY_ID = "rgp_family_id";
-    public static final String REFERRAL_SOURCE_ID = "REF_SOURCE";
-
     /**
      * Given an elasticSearchParticipantDto, get selected data from ES and put it in DSM DB.
      * Log errors for severe problems.
@@ -115,7 +114,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 
         try {
             String refSourceId = convertReferralSources(getReferralSources(activities));
-            probandDataMap.put(REFERRAL_SOURCE_ID, refSourceId);
+            probandDataMap.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
         } catch (Exception e) {
             // not good: we could not convert referral source, but not fatal for this process.
             // Use error level so humans get alerted to intervene and possibly fix the issue
@@ -194,7 +193,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
     protected String convertReferralSources(List<String> sources) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         Optional<FieldSettingsDto> refSource = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(
-                "RGP_MEDICAL_RECORDS_GROUP", REFERRAL_SOURCE_ID);
+                "RGP_MEDICAL_RECORDS_GROUP", DBConstants.REFERRAL_SOURCE_ID);
 
         // for REF_SOURCE, the details column hold the mapping between DSS referral sources (answers to FIND_OUT
         // enrollment question) to DSM ref sources

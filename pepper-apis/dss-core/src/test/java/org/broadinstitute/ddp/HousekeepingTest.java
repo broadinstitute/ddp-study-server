@@ -9,8 +9,8 @@ import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.DBTestContainer;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
-import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
 
     @BeforeClass
     public static void setupTransactionWrappersAndBootHousekeeping() {
-        MySqlTestContainerUtil.initializeTestDbs();
+        DBTestContainer.initializeTestDbs();
         String pepperDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
         int maxPepperConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
