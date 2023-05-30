@@ -896,7 +896,7 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run: echo "Doing dss-compile-and-run-test-suite-job << pipeline.parameters.dss >>"
+      - run: "Doing dss-compile-and-run-test-suite-job << pipeline.parameters.dss >>"
       - when:
           condition: << pipeline.parameters.dss >>
           steps:
@@ -930,7 +930,6 @@ jobs:
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
-    parallelism: <<parameters.parallelism>>
     parameters:
       parallelism:
         type: integer
@@ -939,9 +938,9 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run: echo "Doing dss-parallel-compile-and-test-job << pipeline.parameters.dss >>"
       - when:
           condition: << pipeline.parameters.dss >>
+          name: "Running dss-parallel-compile-and-test-job. Parallelism = << parameters.parallelism >>"
           steps:
             - run:
                 name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
@@ -976,7 +975,6 @@ jobs:
                     echo "Renaming jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
                     mv dss-core/target/jacoco.exec dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
-                when: always
             - persist_to_workspace:
                 root: *root_path
                 paths:
