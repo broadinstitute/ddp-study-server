@@ -651,7 +651,7 @@ commands:
       - run:
           name: Generate coverage report
           command: |
-            mvn jacoco:report -Pcoverage \
+            mvn jacoco:report \
               -Dmaven.repo.local=<< parameters.m2_repo >>
             ls -l dss-core/target
             ls -l dss-core/target/surefire-reports

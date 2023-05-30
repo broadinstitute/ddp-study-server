@@ -914,9 +914,6 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.10</version>
-                <configuration>
-                    <dataFile>target/*.exec</dataFile>
-                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
