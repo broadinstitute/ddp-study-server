@@ -31,6 +31,8 @@ public class NotPepperKitCreationService {
     public final static String UNKNOWN_STUDY = "UNKNOWN_STUDY";
     public final static String MISSING_JUNIPER_KIT_ID ="MISSING_JUNIPER_KIT_ID";
     public final static String MISSING_JUNIPER_PARTICIPANT_ID ="MISSING_JUNIPER_PARTICIPANT_ID";
+    public final static String JUNIPER ="JUNIPER";
+    public final static String JUNIPER_UNDERSCORE ="JUNIPER_";
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
@@ -156,8 +158,8 @@ public class NotPepperKitCreationService {
         String userId;
         //checking ddpInstance.isHasRole() to know this is a Juniper Kit
         if (StringUtils.isNotBlank(kit.getJuniperKitId()) || ddpInstance.isHasRole()) {
-            shippingId = "JUNIPER_" + kit.getJuniperKitId();
-            userId = "JUNIPER";
+            shippingId = JUNIPER_UNDERSCORE + kit.getJuniperKitId();
+            userId = JUNIPER;
         } else {
             log.error("Seems like {} is not a JUNIPER study! ", ddpInstance.getName());
             throw new RuntimeException(ddpInstance.getName() + " study is not configured to use this method.");
