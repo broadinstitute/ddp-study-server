@@ -1,7 +1,34 @@
 package org.broadinstitute.dsm.db;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 import com.easypost.exception.EasyPostException;
-import com.easypost.model.*;
+import com.easypost.model.Address;
+import com.easypost.model.CustomsInfo;
+import com.easypost.model.Parcel;
+import com.easypost.model.PostageLabel;
+import com.easypost.model.Shipment;
+import com.easypost.model.Tracker;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -16,8 +43,11 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.KitRequest;
+import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.model.KitShippingIds;
+import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.model.*;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
 import org.broadinstitute.dsm.model.elastic.Dsm;
@@ -32,20 +62,16 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DBUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
+import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.sql.*;
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 @TableName(name = DBConstants.DDP_KIT_REQUEST, alias = DBConstants.DDP_KIT_REQUEST_ALIAS,
@@ -889,7 +915,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 }
             }
             writeRequest(instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId, "SYSTEM",
-                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance, bspCollaboratorSampleType, subkitsDdpLabel);
+                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance, bspCollaboratorSampleType,
+                    subkitsDdpLabel);
             return null;
         });
     }
@@ -900,10 +927,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
-                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName, String subKitddpLabel) {
+                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName,
+                                      String subKitddpLabel) {
 
-        String ddpLabel = StringUtils.isBlank(subKitddpLabel) ?
-                (StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()) : subKitddpLabel;
+        String ddpLabel = StringUtils.isBlank(subKitddpLabel)
+                ? (StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()) : subKitddpLabel;
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -1062,7 +1090,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestShipping.setLabelDate(labelDate);
             if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex())) {
                 try {
-                    UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                    UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+                            ESObjectConstants.DSM_KIT_ID,
                             ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
                     logger.error(String.format("Error updating label date of kit request shipping with dsm kit id: %s in ElasticSearch",

@@ -1,4 +1,9 @@
-package org.broadinstitute.dsm.model.notPepperKit;
+package org.broadinstitute.dsm.model.nonpepperkit;
+
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
@@ -15,21 +20,16 @@ import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.lddp.util.DeliveryAddress;
 
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 public class NonPepperKitCreationService {
 
-    public final static String ADDRESS_VALIDATION_ERROR = "UNABLE_TO_VERIFY_ADDRESS";
-    public final static String UNKNOWN_KIT_TYPE = "UNKNOWN_KIT_TYPE";
-    public final static String UNKNOWN_STUDY = "UNKNOWN_STUDY";
-    public final static String MISSING_JUNIPER_KIT_ID = "MISSING_JUNIPER_KIT_ID";
-    public final static String MISSING_JUNIPER_PARTICIPANT_ID = "MISSING_JUNIPER_PARTICIPANT_ID";
-    public final static String JUNIPER = "JUNIPER";
-    public final static String JUNIPER_UNDERSCORE = "JUNIPER_";
+    public static final String ADDRESS_VALIDATION_ERROR = "UNABLE_TO_VERIFY_ADDRESS";
+    public static final String UNKNOWN_KIT_TYPE = "UNKNOWN_KIT_TYPE";
+    public static final String UNKNOWN_STUDY = "UNKNOWN_STUDY";
+    public static final String MISSING_JUNIPER_KIT_ID = "MISSING_JUNIPER_KIT_ID";
+    public static final String MISSING_JUNIPER_PARTICIPANT_ID = "MISSING_JUNIPER_PARTICIPANT_ID";
+    public static final String JUNIPER = "JUNIPER";
+    public static final String JUNIPER_UNDERSCORE = "JUNIPER_";
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
@@ -56,7 +56,7 @@ public class NonPepperKitCreationService {
         KitRequestSettings kitRequestSettings = kitRequestSettingsMap.get(kitType.getKitTypeId());
 
         // if the kit type has sub kits > like for testBoston
-//        boolean kitHasSubKits = kitRequestSettings.getHasSubKits() != 0;
+        //        boolean kitHasSubKits = kitRequestSettings.getHasSubKits() != 0;
 
         log.info("Setup EasyPost...");
         EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
@@ -71,10 +71,10 @@ public class NonPepperKitCreationService {
         TransactionWrapper.inTransaction(conn -> {
             createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName, orderKits, conn);
 
-//            only order if external shipper name is set for that kit request, not needed for now
-//            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-//                return orderExternalKits(kitRequestSettings, orderKits, easyPostUtil, shippingCarrier, conn);
-//            }
+            //            only order if external shipper name is set for that kit request, not needed for now
+            //            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
+            //                return orderExternalKits(kitRequestSettings, orderKits, easyPostUtil, shippingCarrier, conn);
+            //            }
             return null;
         });
 
@@ -92,7 +92,8 @@ public class NonPepperKitCreationService {
      */
 
     public boolean checkAddress(JuniperKitRequest juniperKitRequest, String phone, EasyPostUtil easyPostUtil) {
-        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID()) && StringUtils.isBlank(juniperKitRequest.getExternalOrderNumber()))
+        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())
+                && StringUtils.isBlank(juniperKitRequest.getExternalOrderNumber()))
                 || StringUtils.isBlank(juniperKitRequest.getLastName())) {
             return false;
         }
@@ -104,7 +105,8 @@ public class NonPepperKitCreationService {
         name += juniperKitRequest.getLastName();
         if (juniperKitRequest.isSkipAddressValidation()) {
             try {
-                Address address = easyPostUtil.createBroadAddress(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(),
+                Address address = easyPostUtil.createBroadAddress(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
+                        juniperKitRequest.getCity(),
                         juniperKitRequest.getPostalCode(), juniperKitRequest.getState(), juniperKitRequest.getCountry(), phone);
                 juniperKitRequest.setEasypostAddressId(address.getId());
                 return true;
@@ -114,7 +116,8 @@ public class NonPepperKitCreationService {
             }
         }
         DeliveryAddress deliveryAddress =
-                new DeliveryAddress(juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(), juniperKitRequest.getState(),
+                new DeliveryAddress(juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(),
+                        juniperKitRequest.getState(),
                         juniperKitRequest.getPostalCode(), juniperKitRequest.getCountry(), name, phone);
         deliveryAddress.validate();
         if (deliveryAddress.isValid()) {
@@ -164,7 +167,8 @@ public class NonPepperKitCreationService {
 
     private void addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings, DDPInstance ddpInstance,
                                       int kitTypeId, String collaboratorParticipantId, String errorMessage, EasyPostUtil easyPostUtil,
-                                      JuniperKitRequest kit, String externalOrderNumber, String shippingId, String ddpLabel, String userId) {
+                                      JuniperKitRequest kit, String externalOrderNumber, String shippingId, String ddpLabel,
+                                      String userId) {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
@@ -208,23 +212,23 @@ public class NonPepperKitCreationService {
         }
     }
 
-//    private Result orderExternalKits(KitRequestSettings kitRequestSettings, ArrayList<KitRequest> orderKits,
-//    EasyPostUtil easyPostUtil, AtomicReference<String> shippingCarrier, Connection conn) {
-//        try {
-//            logger.info("placing order with external shipper");
-//            ExternalShipper shipper =
-//                    (ExternalShipper) Class.forName(DSMServer.getClassName(kitRequestSettings.getExternalShipper()))
-//                            .newInstance();
-//            shipper.orderKitRequests(orderKits, easyPostUtil, kitRequestSettings, shippingCarrier.get());
-//            // mark kits as transmitted so that background jobs don't try to double order it
-//            for (KitRequest orderKit : orderKits) {
-//                KitRequestShipping.markOrderTransmittedAt(conn, orderKit.getExternalOrderNumber(), Instant.now());
-//            }
-//        } catch (Exception e) {
-//            logger.error("Failed to sent kit request order to " + kitRequestSettings.getExternalShipper(), e);
-//            return new Result(500, "Failed to sent kit request order to " + kitRequestSettings.getExternalShipper());
-//        }
-//        return null;
-//    }
+    //    private Result orderExternalKits(KitRequestSettings kitRequestSettings, ArrayList<KitRequest> orderKits,
+    //    EasyPostUtil easyPostUtil, AtomicReference<String> shippingCarrier, Connection conn) {
+    //        try {
+    //            logger.info("placing order with external shipper");
+    //            ExternalShipper shipper =
+    //                    (ExternalShipper) Class.forName(DSMServer.getClassName(kitRequestSettings.getExternalShipper()))
+    //                            .newInstance();
+    //            shipper.orderKitRequests(orderKits, easyPostUtil, kitRequestSettings, shippingCarrier.get());
+    //            // mark kits as transmitted so that background jobs don't try to double order it
+    //            for (KitRequest orderKit : orderKits) {
+    //                KitRequestShipping.markOrderTransmittedAt(conn, orderKit.getExternalOrderNumber(), Instant.now());
+    //            }
+    //        } catch (Exception e) {
+    //            logger.error("Failed to sent kit request order to " + kitRequestSettings.getExternalShipper(), e);
+    //            return new Result(500, "Failed to sent kit request order to " + kitRequestSettings.getExternalShipper());
+    //        }
+    //        return null;
+    //    }
 
 }

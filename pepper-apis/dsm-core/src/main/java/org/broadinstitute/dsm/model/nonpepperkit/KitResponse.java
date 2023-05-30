@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.notPepperKit;
+package org.broadinstitute.dsm.model.nonpepperkit;
 
 import lombok.AllArgsConstructor;
 

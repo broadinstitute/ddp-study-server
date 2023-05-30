@@ -2,7 +2,11 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.notPepperKit.*;
+import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
+import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
+import org.broadinstitute.dsm.model.nonpepperkit.KitStatus;
+import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
+import org.broadinstitute.dsm.model.nonpepperkit.ShipKitRequest;
 import org.broadinstitute.dsm.security.RequestHandler;
 import spark.Request;
 import spark.Response;
