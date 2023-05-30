@@ -269,6 +269,7 @@ public class DBConstants {
     public static final String READONLY = "readonly";
     public static final String MAX_LENGTH = "max_length";
     public static final String DETAILS = "details";
+    public static final String REFERRAL_SOURCE_ID = "REF_SOURCE";
 
     //dashboards
     public static final String PARTICIPANT_COUNT = "participantCount";

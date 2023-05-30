@@ -876,7 +876,6 @@ jobs:
                 module: dsm-core
                 phase: test
                 skip_tests: false
-                config_file_path: ''
                 skip_checkstyle: true
                 additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
