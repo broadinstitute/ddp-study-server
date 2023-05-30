@@ -648,6 +648,10 @@ commands:
         type: string
         default: *m2_repo_path
     steps:
+      - run: |
+          if [[ ! -f pom.xml ]]; then
+              circleci-agent step halt
+          fi
       - restore_cache: *m2_cache_keys
       - run:
           name: Generate coverage report
@@ -880,7 +884,6 @@ jobs:
                   - repo/pepper-apis/dsm-core
                   - repo/pepper-apis/dsm-server
                   - repo/pepper-apis/ddp-common
-                  - repo/pepper-apis/pom.xml
                   - repo/pepper-apis/studybuilder-cli
 
   dss-compile-and-run-test-suite-job:
@@ -930,6 +933,7 @@ jobs:
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
+    parallelism: <<parameters.parallelism>>
     parameters:
       parallelism:
         type: integer
@@ -992,6 +996,7 @@ jobs:
             - persist_to_workspace:
                 root: *root_path
                 paths:
+                  - repo/pepper-apis/pom.xml
                   - repo/pepper-apis/dss-core/src
                   - repo/pepper-apis/dss-core/pom.xml
                   - repo/pepper-apis/dss-server
