@@ -872,7 +872,7 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: -Ddsm.test.excludes='${dsm.test.ci.excludes}'
+                additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
                 coverage_report: false
@@ -921,7 +921,7 @@ jobs:
                 phase: test
                 skip_tests: false
                 skip_checkstyle: true
-                additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+                additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
                 coverage_report: false
             - save-ddp-cache
@@ -971,7 +971,7 @@ jobs:
                 phase: test
                 skip_tests: false
                 module: dss-core
-                additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
+                additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
                 coverage_report: false
             - save-ddp-cache
