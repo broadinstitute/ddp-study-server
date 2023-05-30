@@ -973,7 +973,7 @@ jobs:
                 name: Rename jacoco.exe to a unique name
                 command: |
                   if [[ -f dss-core/target/jacoco.exec ]]; then
-                    echo "Moving jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
+                    echo "Renaming jacoco.exec to jacoco$CIRCLE_NODE_INDEX.exec";
                     mv dss-core/target/jacoco.exec dss-core/target/jacoco$CIRCLE_NODE_INDEX.exec
                   fi
                 when: always
