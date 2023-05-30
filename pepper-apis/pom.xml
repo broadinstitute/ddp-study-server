@@ -18,7 +18,6 @@
         <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
         <sonar.includedModules>dpp-common,dsm-core,dss-core</sonar.includedModules>
-        <sonar.scm.provider>git</sonar.scm.provider>
         <jdbi.version>3.28.0</jdbi.version>
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>

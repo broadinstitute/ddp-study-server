@@ -652,7 +652,6 @@ commands:
       - run:
           name: Generate coverage report
           command: |
-            ls -l
             mvn jacoco:report -Pcoverage \
               -Dmaven.repo.local=<< parameters.m2_repo >>
       - run:
