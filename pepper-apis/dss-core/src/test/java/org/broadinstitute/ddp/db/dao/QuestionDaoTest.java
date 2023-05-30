@@ -2064,7 +2064,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    @Ignore
+    @Test
     public void testGetAgreementQuestion_success() {
         TransactionWrapper.useTxn(handle -> {
             Template agreeTmpl = Template.text("agreement");
@@ -2116,7 +2116,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    @Test
+    @Ignore
     public void testGetCompositeQuestion_success() {
         TransactionWrapper.useTxn(handle -> {
             Template datePrompt = new Template(TemplateType.TEXT, null, "date prompt");
