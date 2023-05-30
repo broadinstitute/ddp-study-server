@@ -648,14 +648,12 @@ commands:
         type: string
         default: *m2_repo_path
     steps:
+      - restore_cache: *m2_cache_keys
       - run:
           name: Generate coverage report
           command: |
             mvn jacoco:report -Pcoverage \
               -Dmaven.repo.local=<< parameters.m2_repo >>
-            ls -l dss-core/target
-            ls -l dss-core/target/surefire-reports
-            ls -l dsm-core/target
       - run:
           name: Run sonar scan
           command: |
@@ -875,7 +873,6 @@ jobs:
                 additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
-                coverage_report: false
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -885,7 +882,6 @@ jobs:
                   - repo/pepper-apis/ddp-common
                   - repo/pepper-apis/pom.xml
                   - repo/pepper-apis/studybuilder-cli
-                  - .m2/repository
 
   dss-compile-and-run-test-suite-job:
     description: Job that runs DSS tests that cannot be done in parallel
@@ -923,7 +919,6 @@ jobs:
                 skip_checkstyle: true
                 additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
-                coverage_report: false
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path
@@ -973,7 +968,6 @@ jobs:
                 module: dss-core
                 additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
-                coverage_report: false
             - save-ddp-cache
             - run:
                 name: Rename jacoco.exe to a unique name

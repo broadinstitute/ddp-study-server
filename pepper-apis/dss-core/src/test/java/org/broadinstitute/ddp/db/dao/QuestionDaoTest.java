@@ -123,7 +123,6 @@ import org.jdbi.v3.core.Handle;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -2116,7 +2115,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    @Ignore
+    @Test
     public void testGetCompositeQuestion_success() {
         TransactionWrapper.useTxn(handle -> {
             Template datePrompt = new Template(TemplateType.TEXT, null, "date prompt");
