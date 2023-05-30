@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.notPepperKit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.notPepperKit.KitResponse;
-import org.broadinstitute.dsm.model.notPepperKit.NotPepperKitCreationService;
+import org.broadinstitute.dsm.model.notPepperKit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.junit.Assert;
 import org.junit.Before;
@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Random;
 
 public class JuniperKitCreationTest {
-    private static Config cfg;
-    NotPepperKitCreationService notPepperKitCreationService = new NotPepperKitCreationService();
+    private Config cfg;
+    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
 
     @Before
     public void beforeClass() {
@@ -50,7 +50,7 @@ public class JuniperKitCreationTest {
                 "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\"," +
                 "\"juniperParticipantID\":\"" + participantId + rand + "\"," +
                 "\"forceUpload\":false," +
-                "\"noAddressValidation\":false," +
+                "\"skipAddressValidation\":false," +
                 "\"juniperStudyID\":\"Juniper-mock-guid\"}";
 
 //        String json3 = "{\"firstName\":\"P\",\"lastName\":\"T\",\"street1\":\"415 Main st\",\"street2\":\"\",\"city\":\"Cambridge\",\"state\":\"MA\",\"postalCode\":\"02142\",\"country\":\"USA\",\"phoneNumber\":\"111-222-3344\",\"juniperKitId\":\"JuniperTestKitId_110958866\",\"juniperParticipantID\":\"JuniperParticipantId_110958866\",\"juniperStudyID\":\"Juniper-mock-guid\"}";
@@ -66,7 +66,7 @@ public class JuniperKitCreationTest {
 //                mockJuniperKit.getStreet2(), mockJuniperKit.getCity(), mockJuniperKit.getState(), mockJuniperKit.getPostalCode(), mockJuniperKit.getCountry(),
 //                mockJuniperKit.getPhoneNumber());
 //        juniperKitToUpload.setJuniperKitId(mockJuniperKit.getJuniperKitId());
-        notPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
+        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
     }
@@ -95,14 +95,14 @@ public class JuniperKitCreationTest {
                 "\"juniperKitId\":null," +
                 "\"juniperParticipantID\":\"" + participantId + rand + "\"," +
                 "\"forceUpload\":false," +
-                "\"noAddressValidation\":false," +
+                "\"skipAddressValidation\":false," +
                 "\"juniperStudyID\":\"Juniper-mock-guid\"}";
 
 
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
-        KitResponse kitResponse = notPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
-        Assert.assertEquals(kitResponse.errorMessage, NotPepperKitCreationService.MISSING_JUNIPER_KIT_ID);
+        KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
+        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.MISSING_JUNIPER_KIT_ID);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());
@@ -132,14 +132,14 @@ public class JuniperKitCreationTest {
                 "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\"," +
                 "\"juniperParticipantID\":\"" + participantId + "\"," +
                 "\"forceUpload\":false," +
-                "\"noAddressValidation\":false," +
+                "\"skipAddressValidation\":false," +
                 "\"juniperStudyID\":\"Juniper-mock-guid\"}";
 
 
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
-        KitResponse kitResponse = notPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
-        Assert.assertEquals(kitResponse.errorMessage, NotPepperKitCreationService.MISSING_JUNIPER_PARTICIPANT_ID);
+        KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
+        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.MISSING_JUNIPER_PARTICIPANT_ID);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());
@@ -169,14 +169,14 @@ public class JuniperKitCreationTest {
                 "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\"," +
                 "\"juniperParticipantID\":\"" + participantId + rand + "\"," +
                 "\"forceUpload\":false," +
-                "\"noAddressValidation\":false," +
+                "\"skipAddressValidation\":false," +
                 "\"juniperStudyID\":\"Juniper-mock-guid\"}";
 
 
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
-        KitResponse kitResponse = notPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
-        Assert.assertEquals(kitResponse.errorMessage, NotPepperKitCreationService.UNKNOWN_KIT_TYPE);
+        KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
+        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.UNKNOWN_KIT_TYPE);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());
@@ -206,14 +206,14 @@ public class JuniperKitCreationTest {
                 "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\"," +
                 "\"juniperParticipantID\":\"" + participantId + rand + "\"," +
                 "\"forceUpload\":false," +
-                "\"noAddressValidation\":false," +
+                "\"skipAddressValidation\":false," +
                 "\"juniperStudyID\":\"Juniper-mock-guid\"}";
 
 
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
-        KitResponse kitResponse = notPepperKitCreationService.createNonPepperKit(mockJuniperKit, fakeInstanceGuid, kitType);
-        Assert.assertEquals(kitResponse.errorMessage, NotPepperKitCreationService.UNKNOWN_STUDY);
+        KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, fakeInstanceGuid, kitType);
+        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.UNKNOWN_STUDY);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());

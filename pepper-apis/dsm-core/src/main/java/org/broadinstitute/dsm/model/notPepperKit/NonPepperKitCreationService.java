@@ -8,8 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
@@ -21,18 +19,17 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
-public class NotPepperKitCreationService {
+public class NonPepperKitCreationService {
 
     public final static String ADDRESS_VALIDATION_ERROR = "UNABLE_TO_VERIFY_ADDRESS";
     public final static String UNKNOWN_KIT_TYPE = "UNKNOWN_KIT_TYPE";
     public final static String UNKNOWN_STUDY = "UNKNOWN_STUDY";
-    public final static String MISSING_JUNIPER_KIT_ID ="MISSING_JUNIPER_KIT_ID";
-    public final static String MISSING_JUNIPER_PARTICIPANT_ID ="MISSING_JUNIPER_PARTICIPANT_ID";
-    public final static String JUNIPER ="JUNIPER";
-    public final static String JUNIPER_UNDERSCORE ="JUNIPER_";
+    public final static String MISSING_JUNIPER_KIT_ID = "MISSING_JUNIPER_KIT_ID";
+    public final static String MISSING_JUNIPER_PARTICIPANT_ID = "MISSING_JUNIPER_PARTICIPANT_ID";
+    public final static String JUNIPER = "JUNIPER";
+    public final static String JUNIPER_UNDERSCORE = "JUNIPER_";
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
@@ -41,33 +38,28 @@ public class NotPepperKitCreationService {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperKitId())) {
             return new KitResponse(MISSING_JUNIPER_KIT_ID, null);
         }
-        Optional<DDPInstanceDto> maybeDdpInstanceDto = new DDPInstanceDao().getDDPInstanceByStudyGuid(studyGuid);
-        if (maybeDdpInstanceDto.isEmpty()) {
-            return new KitResponse(UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId());
-        }
-        DDPInstanceDto ddpInstanceDto = maybeDdpInstanceDto.get();
         //getting the instance with isHasRole being set to true if the instance has role juniper_study
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(ddpInstanceDto.getInstanceName(), "juniper_study");
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
 
         if (!ddpInstance.isHasRole()) {
             throw new RuntimeException("This is not a Juniper study!");
         }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
-        String key = kitTypeName + "_" + ddpInstanceDto.getDdpInstanceId();
+        String key = kitTypeName + "_" + ddpInstance.getDdpInstanceId();
         KitType kitType = kitTypes.get(key);
         if (kitType == null) {
             return new KitResponse(UNKNOWN_KIT_TYPE, juniperKitRequest.getJuniperKitId());
         }
 
         Map<Integer, KitRequestSettings> kitRequestSettingsMap =
-                KitRequestSettings.getKitRequestSettings(String.valueOf(ddpInstanceDto.getDdpInstanceId()));
+                KitRequestSettings.getKitRequestSettings(String.valueOf(ddpInstance.getDdpInstanceId()));
         KitRequestSettings kitRequestSettings = kitRequestSettingsMap.get(kitType.getKitTypeId());
 
         // if the kit type has sub kits > like for testBoston
 //        boolean kitHasSubKits = kitRequestSettings.getHasSubKits() != 0;
 
         log.info("Setup EasyPost...");
-        EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstanceDto.getInstanceName());
+        EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
 
         if (!checkAddress(juniperKitRequest, kitRequestSettings.getPhone(), easyPostUtil)) {
             return new KitResponse(ADDRESS_VALIDATION_ERROR, juniperKitRequest.getJuniperKitId());
@@ -77,7 +69,7 @@ public class NotPepperKitCreationService {
 
 
         TransactionWrapper.inTransaction(conn -> {
-            createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName,  orderKits, conn);
+            createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName, orderKits, conn);
 
 //            only order if external shipper name is set for that kit request, not needed for now
 //            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
@@ -171,8 +163,8 @@ public class NotPepperKitCreationService {
     }
 
     private void addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings, DDPInstance ddpInstance,
-                               int kitTypeId, String collaboratorParticipantId, String errorMessage, EasyPostUtil easyPostUtil,
-                               JuniperKitRequest kit, String externalOrderNumber, String shippingId, String ddpLabel, String userId) {
+                                      int kitTypeId, String collaboratorParticipantId, String errorMessage, EasyPostUtil easyPostUtil,
+                                      JuniperKitRequest kit, String externalOrderNumber, String shippingId, String ddpLabel, String userId) {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;

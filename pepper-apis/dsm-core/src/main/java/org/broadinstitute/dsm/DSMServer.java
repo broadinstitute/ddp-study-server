@@ -62,7 +62,7 @@ import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
-import org.broadinstitute.dsm.model.notPepperKit.NotPepperKitCreationService;
+import org.broadinstitute.dsm.model.notPepperKit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
@@ -571,8 +571,8 @@ public class DSMServer {
         get(apiRoot + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(apiRoot + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
-        NotPepperKitCreationService notPepperKitCreationService = new NotPepperKitCreationService();
-        get(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(notPepperKitCreationService), new JsonTransformer());
+        NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
+        get(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
             get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),

@@ -9,9 +9,9 @@ import spark.Response;
 
 public class JuniperShipKitRoute extends RequestHandler {
 
-    NotPepperKitCreationService kitCreationService;
+    NonPepperKitCreationService kitCreationService;
 
-    public JuniperShipKitRoute(NotPepperKitCreationService kitCreationService) {
+    public JuniperShipKitRoute(NonPepperKitCreationService kitCreationService) {
         this.kitCreationService = kitCreationService;
     }
 
