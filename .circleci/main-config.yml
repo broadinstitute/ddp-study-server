@@ -654,10 +654,8 @@ commands:
             mvn jacoco:report -Pcoverage \
               -Dmaven.repo.local=<< parameters.m2_repo >>
             ls -l dss-core/target
-            ls -l dss-core/target/site/jacoco
             ls -l dss-core/target/surefire-reports
             ls -l dsm-core/target
-            ls -l dsm-core/target/site/jacoco
       - run:
           name: Run sonar scan
           command: |
