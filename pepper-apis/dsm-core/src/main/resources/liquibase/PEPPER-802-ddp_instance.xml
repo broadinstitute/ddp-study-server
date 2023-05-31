@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="rgp_instance" author="cunningh" context="new_db">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="RGP"/>
+            <column name="study_guid" value="RGP"/>
+            <column name="display_name" value="RGP"/>
+            <column name="is_active" value="1"/>
+            <column name="auth0_token" value="1"/>
+            <column name="migrated_ddp" value="1"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="atcp_instance" author="cunningh" context="new_db">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="atcp"/>
+            <column name="study_guid" value="atcp"/>
+            <column name="display_name" value="AT"/>
+            <column name="is_active" value="1"/>
+            <column name="auth0_token" value="1"/>
+            <column name="migrated_ddp" value="1"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="osteo2_instance" author="cunningh" context="new_db">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="osteo2"/>
+            <column name="study_guid" value="cmi-osteo2"/>
+            <column name="display_name" value="OS PE-CGS"/>
+            <column name="is_active" value="1"/>
+            <column name="auth0_token" value="1"/>
+            <column name="migrated_ddp" value="0"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="lms_instance" author="cunningh" context="new_db">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="cmi-lms"/>
+            <column name="study_guid" value="cmi-lms"/>
+            <column name="display_name" value="Leiomyosarcoma"/>
+            <column name="is_active" value="1"/>
+            <column name="auth0_token" value="1"/>
+            <column name="migrated_ddp" value="0"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
