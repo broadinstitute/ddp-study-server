@@ -9,8 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -20,8 +22,13 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.dsm.TriggerActivityPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
@@ -33,6 +40,10 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_BAD_REQUEST;
     }
+
+    private static String RESULT_FILE_STABLE_ID = "RESULT_FILE";
+    private static String RESULT_FILE_ACTIVITY_ID = "SOMATIC_RESULTS";
+
 
     @Override
     public Object handle(Request request, Response response, TriggerActivityPayload payload) {
@@ -101,6 +112,25 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyId);
                 log.info("Created on-demand activity instance {} for study guid {}, activity code {}, participant guid {}",
                         instanceDto.getGuid(), studyGuid, activityCode, participantGuid);
+
+                //create answer for this instance if lms/osteo2:SOMATIC_RESULTS
+                if ((studyGuid.equalsIgnoreCase("cmi-lms") || studyGuid.equalsIgnoreCase("CMI-OSTEO"))
+                        && activityCode.equalsIgnoreCase(RESULT_FILE_ACTIVITY_ID)) {
+                    log.info("Populating answer for {} {}", studyGuid, activityCode);
+                    String resultsFileName = payload.getResultsFileName();
+                    if (StringUtils.isBlank(resultsFileName)) {
+                        ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file");
+                        ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
+                    }
+                    ActivityDefStore activityStore = ActivityDefStore.getInstance();
+                    FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
+                    QuestionDef questionDef = activityDef.getQuestionByStableId(RESULT_FILE_STABLE_ID);
+                    var answerDao = new AnswerCachedDao(handle);
+                    Answer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFileName, instanceDto.getGuid());
+                    String answerGuid = answerDao.createAnswer(user.getId(), instanceDto.getId(), answer, questionDef)
+                            .getAnswerGuid();
+                    log.info("Created answer with guid {} for {} question stable id {}", answerGuid, studyGuid, RESULT_FILE_STABLE_ID);
+                }
             }
         });
 

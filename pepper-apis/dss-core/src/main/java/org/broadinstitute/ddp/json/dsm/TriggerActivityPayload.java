@@ -15,9 +15,18 @@ public class TriggerActivityPayload {
     @SerializedName("triggerId")
     private Long triggerId;
 
+    @SerializedName("resultsFileName")
+    private String resultsFileName;
+
     public TriggerActivityPayload(String participantGuid, Long triggerId) {
         this.participantGuid = participantGuid;
         this.triggerId = triggerId;
+    }
+
+    public TriggerActivityPayload(String participantGuid, Long triggerId, String resultsFileName) {
+        this.participantGuid = participantGuid;
+        this.triggerId = triggerId;
+        this.resultsFileName = resultsFileName;
     }
 
     public String getParticipantGuid() {
@@ -26,5 +35,9 @@ public class TriggerActivityPayload {
 
     public Long getTriggerId() {
         return triggerId;
+    }
+
+    public String getResultsFileName() {
+        return resultsFileName;
     }
 }
