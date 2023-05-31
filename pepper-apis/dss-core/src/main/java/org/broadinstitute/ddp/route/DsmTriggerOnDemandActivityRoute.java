@@ -41,8 +41,8 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
         return HttpStatus.SC_BAD_REQUEST;
     }
 
-    private static String RESULT_FILE_STABLE_ID = "RESULT_FILE";
-    private static String RESULT_FILE_ACTIVITY_ID = "SOMATIC_RESULTS";
+    private static final String RESULT_FILE_STABLE_ID = "RESULT_FILE";
+    private static final String RESULT_FILE_ACTIVITY_ID = "SOMATIC_RESULTS";
 
 
     @Override
