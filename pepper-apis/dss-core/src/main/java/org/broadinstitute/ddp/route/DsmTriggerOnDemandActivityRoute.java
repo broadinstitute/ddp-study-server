@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
+import org.jdbi.v3.core.Handle;
 import spark.Request;
 import spark.Response;
 
@@ -116,24 +117,29 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 //create answer for this instance if lms/osteo2:SOMATIC_RESULTS
                 if ((studyGuid.equalsIgnoreCase("cmi-lms") || studyGuid.equalsIgnoreCase("CMI-OSTEO"))
                         && activityCode.equalsIgnoreCase(RESULT_FILE_ACTIVITY_ID)) {
-                    log.info("Populating answer for {} {}", studyGuid, activityCode);
-                    String resultsFileName = payload.getResultsFileName();
-                    if (StringUtils.isBlank(resultsFileName)) {
-                        ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file");
-                        ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
-                    }
-                    ActivityDefStore activityStore = ActivityDefStore.getInstance();
-                    FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
-                    QuestionDef questionDef = activityDef.getQuestionByStableId(RESULT_FILE_STABLE_ID);
-                    var answerDao = new AnswerCachedDao(handle);
-                    Answer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFileName, instanceDto.getGuid());
-                    String answerGuid = answerDao.createAnswer(user.getId(), instanceDto.getId(), answer, questionDef)
-                            .getAnswerGuid();
-                    log.info("Created answer with guid {} for {} question stable id {}", answerGuid, studyGuid, RESULT_FILE_STABLE_ID);
+                    populateResultsFileNameAnswer(response, payload, studyGuid, activityCode, handle, user, instanceDto);
                 }
             }
         });
 
         return null;
+    }
+
+    private void populateResultsFileNameAnswer(Response response, TriggerActivityPayload payload, String studyGuid,
+                                               String activityCode, Handle handle, User user, ActivityInstanceDto instanceDto) {
+        log.info("Populating answer for {} {}", studyGuid, activityCode);
+        String resultsFileName = payload.getResultsFileName();
+        if (StringUtils.isBlank(resultsFileName)) {
+            ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file");
+            ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
+        }
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+        FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
+        QuestionDef questionDef = activityDef.getQuestionByStableId(RESULT_FILE_STABLE_ID);
+        var answerDao = new AnswerCachedDao(handle);
+        Answer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFileName, instanceDto.getGuid());
+        String answerGuid = answerDao.createAnswer(user.getId(), instanceDto.getId(), answer, questionDef)
+                .getAnswerGuid();
+        log.info("Created answer with guid {} for {} question stable id {}", answerGuid, studyGuid, RESULT_FILE_STABLE_ID);
     }
 }
