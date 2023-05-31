@@ -124,4 +124,5 @@
     <include file="liquibase/CMI/PEPPER-642_MR_NoActionNeeded.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/PEPPER-139_view_seq_order_status.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/rgp/PEPPER-575_REF_SOURCE.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-873_mercury_order_fields.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
