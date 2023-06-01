@@ -21,12 +21,20 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.dsm.TriggerActivityPayload;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.jdbi.v3.core.Handle;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -37,6 +45,7 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
 
     private static String url;
     private static FormActivityDef activity;
+    private static FormActivityDef somaticResultsActivity;
 
     private Set<String> instanceGuidsToDelete = new HashSet<>();
 
@@ -47,9 +56,11 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
                 .replace(PathParam.ACTIVITY_CODE, "{activityCode}");
         url = RouteTestUtil.getTestingBaseUrl() + endpoint;
         TransactionWrapper.useTxn(DsmTriggerOnDemandActivityRouteTest::insertActivity);
+        TransactionWrapper.useTxn(DsmTriggerOnDemandActivityRouteTest::insertSomaticResultsActivity);
     }
 
     private static FormActivityDef insertActivity(Handle handle) {
+
         String code = "DSM_TRIGGER_ONDEMAND_ACTIVITY_TEST" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(code, "v1", studyGuid)
                 .addName(new Translation("en", "test activity for DsmTriggerOnDemandActivityRoute"))
@@ -59,6 +70,24 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
         handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(generatedTestData.getUserId(), "test"));
         assertNotNull(activity.getActivityId());
         return activity;
+    }
+
+    private static FormActivityDef insertSomaticResultsActivity(Handle handle) {
+
+        var textQ = TextQuestionDef.builder()
+                .setStableId("RESULT_FILE")
+                .setPrompt(Template.text("results file question"))
+                .setInputType(TextInputType.TEXT)
+                .build();
+
+        somaticResultsActivity = FormActivityDef.generalFormBuilder("SOMATIC_RESULTS", "v1", studyGuid)
+                .addName(new Translation("en", "test Somatic Results activity for DsmTriggerOnDemandActivityRoute"))
+                .setAllowOndemandTrigger(true)
+                .setClosing(new FormSectionDef(null, List.of(new QuestionBlockDef(textQ))))
+                .build();
+        handle.attach(ActivityDao.class).insertActivity(somaticResultsActivity, RevisionMetadata.now(generatedTestData.getUserId(), "test"));
+        assertNotNull(somaticResultsActivity.getActivityId());
+        return somaticResultsActivity;
     }
 
     @AfterClass
@@ -226,6 +255,48 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
                 .statusCode(500).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.TOO_MANY_INSTANCES))
                 .body("message", containsString("maximum"));
+    }
+
+    @Test
+    public void test_invalidFileName_failTriggering() {
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("activityCode", "SOMATIC_RESULTS")
+                .body(new TriggerActivityPayload(userGuid, 9876L), ObjectMapperType.GSON) //no results file name passed
+                .when().post(url)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_NOT_FOUND))
+                .body("message", containsString("Invalid results file"));
+    }
+
+    @Test
+    public void test_successfulSomaticResultsTrigger() {
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("activityCode", somaticResultsActivity.getActivityCode())
+                .body(new TriggerActivityPayload(userGuid, 9876L, "testSomaticResultsFile.pdf"), ObjectMapperType.GSON)
+                .when().post(url)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON);
+
+        TransactionWrapper.useTxn(handle -> {
+            List<ActivityInstanceDto> dtos = handle.attach(JdbiActivityInstance.class)
+                    .findAllByUserGuidAndActivityCode(userGuid, somaticResultsActivity.getActivityCode(), generatedTestData.getStudyId());
+            assertNotNull(dtos);
+            assertEquals(1, dtos.size());
+
+            ActivityInstanceDto instanceDto = dtos.get(0);
+            System.out.println("instance guid: " +  instanceDto.getGuid() + " activityCode: " + instanceDto.getActivityCode());
+            assertEquals((Long) 9876L, instanceDto.getOnDemandTriggerId());
+
+            //query Answer and assert
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            Answer answer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceDto.getGuid(), "RESULT_FILE").get();
+            assertNotNull(answer.getAnswerGuid());
+            assertEquals("testSomaticResultsFile.pdf", ((TextAnswer)answer).getValue());
+            answerDao.deleteAnswer(answer.getAnswerId());
+
+            instanceGuidsToDelete.add(instanceDto.getGuid());
+        });
     }
 
     private ActivityInstanceDto insertInstanceAndDeferCleanup(Handle handle, Long triggerId) {

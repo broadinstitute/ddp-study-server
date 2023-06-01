@@ -114,9 +114,8 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 log.info("Created on-demand activity instance {} for study guid {}, activity code {}, participant guid {}",
                         instanceDto.getGuid(), studyGuid, activityCode, participantGuid);
 
-                //create answer for this instance if lms/osteo2:SOMATIC_RESULTS
-                if ((studyGuid.equalsIgnoreCase("cmi-lms") || studyGuid.equalsIgnoreCase("CMI-OSTEO"))
-                        && activityCode.equalsIgnoreCase(RESULT_FILE_ACTIVITY_ID)) {
+                //create answer for this instance if SOMATIC_RESULTS actiivty
+                if (activityCode.equalsIgnoreCase(RESULT_FILE_ACTIVITY_ID)) {
                     populateResultsFileNameAnswer(response, payload, studyGuid, activityCode, handle, user, instanceDto);
                 }
             }
