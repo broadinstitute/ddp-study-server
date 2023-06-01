@@ -183,7 +183,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     @Override
     public int create(MercuryOrderDto mercuryOrderDto) {
-        return 0;
+        throw new RuntimeException("This method should not be used");
     }
 
     @Override
