@@ -6,5 +6,5 @@ import lombok.AllArgsConstructor;
 public class KitResponse {
     public String errorMessage;
     public String juniperKitId;
-    public String studyGuid;
+    public Object value;
 }

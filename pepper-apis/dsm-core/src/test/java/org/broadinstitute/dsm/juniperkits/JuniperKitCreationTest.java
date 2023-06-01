@@ -30,12 +30,13 @@ public class JuniperKitCreationTest {
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void createNewMockJuniperKitTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
         String participantId = "OHSALK_";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        String kitType = "SALIVA";
 
         String json = "{ \"firstName\":\"P\","
                 + "\"lastName\":\"T\","
@@ -59,26 +60,19 @@ public class JuniperKitCreationTest {
         //        \"Juniper-mock-guid\"}";
 
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
-        List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
+        List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
 
-        //        JuniperKitRequest
-        //                mockJuniperKit = new JuniperKitRequest("P", "T", "415 Main st", "", "Cambridge", "MA", "02142", "USA",
-        //                "111-222-3344",
-        //                "JuniperTestKitId_" + rand, participantId + rand, instanceGuid);
-        //        KitUploadObject juniperKitToUpload = new KitUploadObject(null, mockJuniperKit.getJuniperParticipantID(),
-        //                mockJuniperKit.getJuniperParticipantID(), mockJuniperKit.getFirstName(), mockJuniperKit.getLastName(),
-        //                mockJuniperKit.getStreet1(),
-        //                mockJuniperKit.getStreet2(), mockJuniperKit.getCity(), mockJuniperKit.getState(), mockJuniperKit.getPostalCode(),
-        //                mockJuniperKit.getCountry(),
-        //                mockJuniperKit.getPhoneNumber());
-        //        juniperKitToUpload.setJuniperKitId(mockJuniperKit.getJuniperKitId());
         nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
+        KitRequestShipping newKit = newKits.stream().filter(kitRequestShipping -> kitRequestShipping.getDdpParticipantId().equals(participantId + rand)).findAny()
+                .get();
+        Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), "JuniperProject_" + participantId + rand);
+        Assert.assertEquals(newKit.getBspCollaboratorSampleId(), "JuniperProject_" + participantId + rand + "_" + kitType);
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void noJuniperKitIdTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -109,13 +103,14 @@ public class JuniperKitCreationTest {
 
         KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
         Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.MISSING_JUNIPER_KIT_ID);
+        Assert.assertEquals(kitResponse.value, null);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void noJuniperParticipantIdTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -146,13 +141,14 @@ public class JuniperKitCreationTest {
 
         KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
         Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.MISSING_JUNIPER_PARTICIPANT_ID);
+        Assert.assertEquals(kitResponse.value, "");
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void invalidKitTypeTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -183,13 +179,14 @@ public class JuniperKitCreationTest {
 
         KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
         Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.UNKNOWN_KIT_TYPE);
+        Assert.assertEquals(kitResponse.value, kitType);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void invalidStudyNameTest() {
         String fakeInstanceGuid = "Juniper-mock-guid-fake";
         String instanceName = "Juniper-mock";
@@ -220,6 +217,7 @@ public class JuniperKitCreationTest {
 
         KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, fakeInstanceGuid, kitType);
         Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.UNKNOWN_STUDY);
+        Assert.assertEquals(kitResponse.value, fakeInstanceGuid);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         Assert.assertEquals(newKits.size(), oldkits.size());

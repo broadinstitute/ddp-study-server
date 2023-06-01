@@ -18,6 +18,7 @@ import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.util.DeliveryAddress;
 
 @Slf4j
@@ -31,26 +32,31 @@ public class NonPepperKitCreationService {
     public static final String UNKNOWN_STUDY = "UNKNOWN_STUDY";
     public static final String MISSING_JUNIPER_KIT_ID = "MISSING_JUNIPER_KIT_ID";
     public static final String MISSING_JUNIPER_PARTICIPANT_ID = "MISSING_JUNIPER_PARTICIPANT_ID";
+    public static final String DSM_ERROR = "DSM_ERROR_SOMETHING_WENT_WRONG";
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
-            return new KitResponse(MISSING_JUNIPER_PARTICIPANT_ID, juniperKitRequest.getJuniperKitId(), studyGuid);
+            return new KitResponse(MISSING_JUNIPER_PARTICIPANT_ID, juniperKitRequest.getJuniperKitId(),
+                    juniperKitRequest.getJuniperParticipantID());
         }
         if (StringUtils.isBlank(juniperKitRequest.getJuniperKitId())) {
-            return new KitResponse(MISSING_JUNIPER_KIT_ID, null, studyGuid);
+            return new KitResponse(MISSING_JUNIPER_KIT_ID, null, juniperKitRequest.getJuniperKitId());
         }
         //getting the instance with isHasRole being set to true if the instance has role juniper_study
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
-
+        if (ddpInstance == null) {
+            log.error(studyGuid + " is not a study!");
+            return new KitResponse(UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(), studyGuid);
+        }
         if (!ddpInstance.isHasRole()) {
-            log.error(ddpInstance + " is not a Juniper study!");
+            log.error(studyGuid + " is not a Juniper study!");
             return new KitResponse(UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(), studyGuid);
         }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
-        String key = kitTypeName + "_" + ddpInstance.getDdpInstanceId();
+        String key = KitType.createKitTypeKey(kitTypeName, ddpInstance.getDdpInstanceId());
         KitType kitType = kitTypes.get(key);
         if (kitType == null) {
-            return new KitResponse(UNKNOWN_KIT_TYPE, juniperKitRequest.getJuniperKitId(), studyGuid);
+            return new KitResponse(UNKNOWN_KIT_TYPE, juniperKitRequest.getJuniperKitId(), kitTypeName);
         }
 
         Map<Integer, KitRequestSettings> kitRequestSettingsMap =
@@ -64,25 +70,31 @@ public class NonPepperKitCreationService {
         EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
 
         if (!checkAddress(juniperKitRequest, kitRequestSettings.getPhone(), easyPostUtil)) {
-            return new KitResponse(ADDRESS_VALIDATION_ERROR, juniperKitRequest.getJuniperKitId(), studyGuid);
+            return new KitResponse(ADDRESS_VALIDATION_ERROR, juniperKitRequest.getJuniperKitId(), null);
         }
 
         ArrayList<KitRequest> orderKits = new ArrayList<>();
 
 
-        TransactionWrapper.inTransaction(conn -> {
-            createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName, orderKits, conn);
+        SimpleResult result = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult transactionResults = new SimpleResult();
+            return createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName, orderKits, conn,
+                    transactionResults);
 
             //            only order if external shipper name is set for that kit request, not needed for now
             //            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             //                return orderExternalKits(kitRequestSettings, orderKits, easyPostUtil, shippingCarrier, conn);
             //            }
-            return null;
         });
 
-        //send not valid address back to client
+        if (result.resultException != null) {
+            log.error(String.format("Unable to create Juniper kit for %s", juniperKitRequest), result.resultException);
+            return new KitResponse(DSM_ERROR, juniperKitRequest.getJuniperKitId(), result.resultException);
+
+        }
+
         log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        return new JuniperKitStatus(null, null);
+        return new JuniperKitStatus(null, null, null);
     }
 
     /**
@@ -94,8 +106,7 @@ public class NonPepperKitCreationService {
      */
 
     public boolean checkAddress(JuniperKitRequest juniperKitRequest, String phone, EasyPostUtil easyPostUtil) {
-        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())
-                && StringUtils.isBlank(juniperKitRequest.getExternalOrderNumber()))
+        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID()))
                 || StringUtils.isBlank(juniperKitRequest.getLastName())) {
             return false;
         }
@@ -113,7 +124,8 @@ public class NonPepperKitCreationService {
                 juniperKitRequest.setEasypostAddressId(address.getId());
                 return true;
             } catch (EasyPostException e) {
-                log.error("Easypost couldn't create an address for " + juniperKitRequest.getShortId());
+                log.warn("Easypost couldn't create an address for " + juniperKitRequest.getShortId());
+                e.printStackTrace();
                 return false;
             }
         }
@@ -135,42 +147,53 @@ public class NonPepperKitCreationService {
 
     /**
      * This method creates a collaborator participant id for the kit and then inserts in DB
+     *
+     * @return SimpleResult of the interaction with database
      */
-    private void createKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, JuniperKitRequest kit,
-                           @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil, @NonNull String kitTypeName,
-                           ArrayList<KitRequest> orderKits, Connection conn) {
+    private SimpleResult createKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, JuniperKitRequest kit,
+                                   @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
+                                   @NonNull String kitTypeName, ArrayList<KitRequest> orderKits, Connection conn,
+                                   SimpleResult transactionResults) {
+        String juniperKitRequestId;
+        String userId;
+        //checking ddpInstance.isHasRole() to know this is a Juniper Kit
+        if (StringUtils.isNotBlank(kit.getJuniperKitId()) || ddpInstance.isHasRole()) {
+            juniperKitRequestId = JUNIPER_UNDERSCORE + kit.getJuniperKitId();
+            userId = JUNIPER;
+        } else {
+            log.warn("Seems like {} is not configured as a JUNIPER study! ", ddpInstance.getName());
+            transactionResults.resultException = new Exception(ddpInstance.getName() + " study is not configured to use this method.");
+            return transactionResults;
+        }
 
         String externalOrderNumber = null;
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
         }
         String errorMessage = "";
+        // collaboratorParticipantId is the id of the participant in GP's view
         String collaboratorParticipantId = KitRequestShipping
                 .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                         ddpInstance.getCollaboratorIdPrefix(), kit.getJuniperParticipantID(), kit.getJuniperParticipantID(),
                         kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
         //In case it's needed, subkits handling should be added here
-        String shippingId;
-        String userId;
-        //checking ddpInstance.isHasRole() to know this is a Juniper Kit
-        if (StringUtils.isNotBlank(kit.getJuniperKitId()) || ddpInstance.isHasRole()) {
-            shippingId = JUNIPER_UNDERSCORE + kit.getJuniperKitId();
-            userId = JUNIPER;
-        } else {
-            log.error("Seems like {} is not a JUNIPER study! ", ddpInstance.getName());
-            throw new RuntimeException(ddpInstance.getName() + " study is not configured to use this method.");
-        }
-        addJuniperKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
-                errorMessage, easyPostUtil, kit, externalOrderNumber, shippingId, null, userId);
-        orderKits.add(kit);
 
+        addJuniperKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
+                errorMessage, easyPostUtil, kit, externalOrderNumber, juniperKitRequestId, null, userId, transactionResults);
+
+        // Not needed now, uncomment later when needed for external shippers
+        //        orderKits.add(kit);
+
+        return transactionResults;
     }
 
-    private void addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings, DDPInstance ddpInstance,
-                                      int kitTypeId, String collaboratorParticipantId, String errorMessage, EasyPostUtil easyPostUtil,
-                                      JuniperKitRequest kit, String externalOrderNumber, String shippingId, String ddpLabel,
-                                      String userId) {
+    private SimpleResult addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings,
+                                              DDPInstance ddpInstance,
+                                              int kitTypeId, String collaboratorParticipantId, String errorMessage,
+                                              EasyPostUtil easyPostUtil,
+                                              JuniperKitRequest kit, String externalOrderNumber, String juniperKitRequestId,
+                                              String ddpLabel, String userId, SimpleResult transactionResults) {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
@@ -184,13 +207,19 @@ public class NonPepperKitCreationService {
         }
 
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-            collaboratorSampleId =
-                    KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
-            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
-                    collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
-                    null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
-            kit.setDdpLabel(shippingId);
-            kit.setExternalOrderNumber(externalOrderNumber);
+            try {
+                // collaborator sample id is the id of the physical sample that GP will work with.
+                collaboratorSampleId =
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
+                        kit.getParticipantId().trim(),
+                        collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
+                        null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
+                //             Not needed now
+                //            kit.setExternalOrderNumber(externalOrderNumber);
+            } catch (Exception e) {
+                transactionResults.resultException = e;
+            }
         } else {
             if (kitRequestSettings.getCollaboratorSampleTypeOverwrite() != null) {
                 bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
@@ -207,11 +236,22 @@ public class NonPepperKitCreationService {
             }
 
             String participantID = kit.getJuniperParticipantID();
-            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, participantID,
-                    collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
-                    null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
-            kit.setDdpLabel(shippingId);
+            try {
+                String dsmKitRequestId =
+                        KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId, participantID,
+                                collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage,
+                                kit.getExternalOrderNumber(),
+                                false,
+                                null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
+                kit.setDdpLabel(juniperKitRequestId);
+                log.info("Created new kit in DSM with dsm_kit_request_id {} and ddpLabel {} for JuniperKitId {}", dsmKitRequestId, ddpLabel,
+                        juniperKitRequestId);
+            } catch (Exception e) {
+                transactionResults.resultException = e;
+            }
+
         }
+        return transactionResults;
     }
 
     //    private Result orderExternalKits(KitRequestSettings kitRequestSettings, ArrayList<KitRequest> orderKits,

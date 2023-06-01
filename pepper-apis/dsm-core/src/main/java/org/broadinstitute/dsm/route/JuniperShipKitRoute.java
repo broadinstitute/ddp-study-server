@@ -29,7 +29,7 @@ public class JuniperShipKitRoute extends RequestHandler {
         JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
         if (juniperKitRequest == null) {
             response.status(400);
-            return new KitResponse("EMPTY_REQUEST", null, shipKitRequest.getJuniperStudyGUID());
+            return new KitResponse("EMPTY_REQUEST", null, juniperKitRequest);
         }
         if (StringUtils.isBlank(shipKitRequest.getJuniperStudyGUID())) {
             response.status(400);
@@ -37,7 +37,7 @@ public class JuniperShipKitRoute extends RequestHandler {
         }
         if (StringUtils.isBlank(shipKitRequest.getKitType())) {
             response.status(400);
-            return new KitResponse("EMPTY_KIT_TYPE", null, shipKitRequest.getJuniperStudyGUID());
+            return new KitResponse("EMPTY_KIT_TYPE", null, shipKitRequest.getKitType());
         }
         KitResponse kitResponse = this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getJuniperStudyGUID(),
                 shipKitRequest.getKitType());
