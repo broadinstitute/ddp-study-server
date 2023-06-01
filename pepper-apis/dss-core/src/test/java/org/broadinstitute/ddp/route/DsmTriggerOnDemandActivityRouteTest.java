@@ -60,7 +60,6 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
     }
 
     private static FormActivityDef insertActivity(Handle handle) {
-
         String code = "DSM_TRIGGER_ONDEMAND_ACTIVITY_TEST" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(code, "v1", studyGuid)
                 .addName(new Translation("en", "test activity for DsmTriggerOnDemandActivityRoute"))
@@ -75,12 +74,13 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
     private static FormActivityDef insertSomaticResultsActivity(Handle handle) {
 
         var textQ = TextQuestionDef.builder()
-                .setStableId("RESULT_FILE")
+                .setStableId(DsmTriggerOnDemandActivityRoute.RESULT_FILE_STABLE_ID)
                 .setPrompt(Template.text("results file question"))
                 .setInputType(TextInputType.TEXT)
                 .build();
 
-        somaticResultsActivity = FormActivityDef.generalFormBuilder("SOMATIC_RESULTS", "v1", studyGuid)
+        somaticResultsActivity = FormActivityDef.generalFormBuilder(DsmTriggerOnDemandActivityRoute.RESULT_FILE_ACTIVITY_ID,
+                        "v1", studyGuid)
                 .addName(new Translation("en", "test Somatic Results activity for DsmTriggerOnDemandActivityRoute"))
                 .setAllowOndemandTrigger(true)
                 .setClosing(new FormSectionDef(null, List.of(new QuestionBlockDef(textQ))))
@@ -261,7 +261,7 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
     @Test
     public void test_invalidFileName_failTriggering() {
         given().auth().oauth2(dsmClientAccessToken)
-                .pathParam("activityCode", "SOMATIC_RESULTS")
+                .pathParam("activityCode", DsmTriggerOnDemandActivityRoute.RESULT_FILE_ACTIVITY_ID)
                 .body(new TriggerActivityPayload(userGuid, 9876L), ObjectMapperType.GSON) //no results file name passed
                 .when().post(url)
                 .then().assertThat()
@@ -286,12 +286,12 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
             assertEquals(1, dtos.size());
 
             ActivityInstanceDto instanceDto = dtos.get(0);
-            System.out.println("instance guid: " +  instanceDto.getGuid() + " activityCode: " + instanceDto.getActivityCode());
             assertEquals((Long) 9876L, instanceDto.getOnDemandTriggerId());
 
             //query Answer and assert
             AnswerDao answerDao = handle.attach(AnswerDao.class);
-            Answer answer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceDto.getGuid(), "RESULT_FILE").get();
+            Answer answer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceDto.getGuid(),
+                    DsmTriggerOnDemandActivityRoute.RESULT_FILE_STABLE_ID).get();
             assertNotNull(answer.getAnswerGuid());
             assertEquals("testSomaticResultsFile.pdf", ((TextAnswer)answer).getValue());
             answerDao.deleteAnswer(answer.getAnswerId());
