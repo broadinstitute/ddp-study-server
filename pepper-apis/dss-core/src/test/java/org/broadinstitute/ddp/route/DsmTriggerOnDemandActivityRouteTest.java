@@ -79,7 +79,8 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
                 .setInputType(TextInputType.TEXT)
                 .build();
 
-        somaticResultsActivity = FormActivityDef.generalFormBuilder(DsmTriggerOnDemandActivityRoute.RESULT_FILE_ACTIVITY_ID, "v1", studyGuid)
+        somaticResultsActivity = FormActivityDef.generalFormBuilder(DsmTriggerOnDemandActivityRoute.RESULT_FILE_ACTIVITY_ID,
+                        "v1", studyGuid)
                 .addName(new Translation("en", "test Somatic Results activity for DsmTriggerOnDemandActivityRoute"))
                 .setAllowOndemandTrigger(true)
                 .setClosing(new FormSectionDef(null, List.of(new QuestionBlockDef(textQ))))
