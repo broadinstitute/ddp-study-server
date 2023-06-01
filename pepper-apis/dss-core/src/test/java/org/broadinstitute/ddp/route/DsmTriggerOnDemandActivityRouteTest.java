@@ -265,7 +265,7 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
                 .body(new TriggerActivityPayload(userGuid, 9876L), ObjectMapperType.GSON) //no results file name passed
                 .when().post(url)
                 .then().assertThat()
-                .statusCode(422).contentType(ContentType.JSON)
+                .statusCode(404).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_NOT_FOUND))
                 .body("message", containsString("Invalid results file"));
     }
