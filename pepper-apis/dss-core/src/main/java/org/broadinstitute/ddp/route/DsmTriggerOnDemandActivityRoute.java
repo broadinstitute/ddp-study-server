@@ -24,7 +24,6 @@ import org.broadinstitute.ddp.json.dsm.TriggerActivityPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -136,7 +135,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
         FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
         QuestionDef questionDef = activityDef.getQuestionByStableId(RESULT_FILE_STABLE_ID);
         var answerDao = new AnswerCachedDao(handle);
-        Answer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFileName, instanceDto.getGuid());
+        TextAnswer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFileName, instanceDto.getGuid());
         String answerGuid = answerDao.createAnswer(user.getId(), instanceDto.getId(), answer, questionDef)
                 .getAnswerGuid();
         log.info("Created answer with guid {} for {} question stable id {}", answerGuid, studyGuid, RESULT_FILE_STABLE_ID);
