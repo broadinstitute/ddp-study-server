@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
-import org.broadinstitute.dsm.model.nonpepperkit.KitStatus;
+import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitStatus;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.ShipKitRequest;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -29,19 +29,19 @@ public class JuniperShipKitRoute extends RequestHandler {
         JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
         if (juniperKitRequest == null) {
             response.status(400);
-            return new KitResponse("EMPTY_REQUEST", null);
+            return new KitResponse("EMPTY_REQUEST", null, shipKitRequest.getJuniperStudyGUID());
         }
         if (StringUtils.isBlank(shipKitRequest.getJuniperStudyGUID())) {
             response.status(400);
-            return new KitResponse("EMPTY_STUDY_NAME", null);
+            return new KitResponse("EMPTY_STUDY_NAME", null, null);
         }
         if (StringUtils.isBlank(shipKitRequest.getKitType())) {
             response.status(400);
-            return new KitResponse("EMPTY_KIT_TYPE", null);
+            return new KitResponse("EMPTY_KIT_TYPE", null, shipKitRequest.getJuniperStudyGUID());
         }
         KitResponse kitResponse = this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getJuniperStudyGUID(),
                 shipKitRequest.getKitType());
-        if (kitResponse instanceof KitStatus) {
+        if (kitResponse instanceof JuniperKitStatus) {
             response.status(200);
         } else {
             response.status(400);
