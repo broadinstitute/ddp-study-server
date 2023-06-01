@@ -1001,11 +1001,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 } catch (Exception e) {
                     //This error will trigger on studies with no participants, this skips
                     //the error log if that is the reason for the upsert failure.
-                    if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
                         logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
                                 + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
                         e.printStackTrace();
-                    }
                 }
             }
 
