@@ -129,7 +129,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
         String resultsFileName = payload.getResultsFileName();
         if (StringUtils.isBlank(resultsFileName)) {
             ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file");
-            ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
+            ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
         }
         ActivityDefStore activityStore = ActivityDefStore.getInstance();
         FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
