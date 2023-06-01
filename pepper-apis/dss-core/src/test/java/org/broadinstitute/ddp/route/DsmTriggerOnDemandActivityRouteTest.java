@@ -85,7 +85,8 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
                 .setAllowOndemandTrigger(true)
                 .setClosing(new FormSectionDef(null, List.of(new QuestionBlockDef(textQ))))
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(somaticResultsActivity, RevisionMetadata.now(generatedTestData.getUserId(), "test"));
+        handle.attach(ActivityDao.class).insertActivity(somaticResultsActivity,
+                RevisionMetadata.now(generatedTestData.getUserId(), "test"));
         assertNotNull(somaticResultsActivity.getActivityId());
         return somaticResultsActivity;
     }
