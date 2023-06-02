@@ -693,7 +693,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
                 DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.NEEDS_NAME_LABELS);
                 Map<String, Map<String, Object>> participantsESData = null;
-                if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
+                if (ddpInstance.isESUpdatePossible()) {
                     participantsESData =
                             ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
                 }
@@ -992,7 +992,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
             // update ES only if it's a pepper study
-            if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
+            if (ddpInstanceDto.isESUpdatePossible()) {
                 try {
                     UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                             ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
@@ -1177,7 +1177,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     private static void upsertUpdatedKitInfoIntoES(DDPInstanceDto ddpInstanceDto, KitRequestShipping kitRequestShipping, Object dsmKitId) {
-        if (ddpInstanceDto.getEsParticipantIndex() != null) {
+        if (ddpInstanceDto.isESUpdatePossible()) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_ID,

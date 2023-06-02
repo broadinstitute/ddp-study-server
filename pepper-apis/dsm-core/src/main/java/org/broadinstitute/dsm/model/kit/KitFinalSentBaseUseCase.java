@@ -43,7 +43,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
                 return null;
             });
         }
-        if (StringUtils.isNotBlank(kitPayload.getDdpInstanceDto().getEsParticipantIndex())) {
+        if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping,
                         kitPayload.getDdpInstanceDto(), "ddpLabel", "ddpLabel",

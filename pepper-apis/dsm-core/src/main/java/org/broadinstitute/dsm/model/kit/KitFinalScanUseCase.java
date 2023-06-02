@@ -62,7 +62,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     kitRequestShipping.setDdpLabel(ddpLabel);
                     kitRequestShipping.setScanDate(System.currentTimeMillis());
                     result = updateKitRequest(kitRequestShipping);
-                    if (StringUtils.isNotBlank(kitPayload.getDdpInstanceDto().getEsParticipantIndex())) {
+                    if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
                         trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, kitRequestShipping);
                         this.writeSampleSentToES(kitRequestShipping);
                     }

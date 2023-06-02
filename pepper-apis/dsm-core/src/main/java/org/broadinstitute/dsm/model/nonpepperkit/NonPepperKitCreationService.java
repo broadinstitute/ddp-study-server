@@ -124,8 +124,8 @@ public class NonPepperKitCreationService {
                 juniperKitRequest.setEasypostAddressId(address.getId());
                 return true;
             } catch (EasyPostException e) {
-                log.warn("Easypost couldn't create an address for " + juniperKitRequest.getShortId());
-                e.printStackTrace();
+                // log the reason for address creation failure and return false. The method will then return the error code
+                log.warn("Easypost couldn't create an address for " + juniperKitRequest.getShortId(), e);
                 return false;
             }
         }
@@ -157,7 +157,7 @@ public class NonPepperKitCreationService {
         String juniperKitRequestId;
         String userId;
         //checking ddpInstance.isHasRole() to know this is a Juniper Kit
-        if (StringUtils.isNotBlank(kit.getJuniperKitId()) || ddpInstance.isHasRole()) {
+        if (ddpInstance.isHasRole()) {
             juniperKitRequestId = JUNIPER_UNDERSCORE + kit.getJuniperKitId();
             userId = JUNIPER;
         } else {
@@ -207,6 +207,7 @@ public class NonPepperKitCreationService {
         }
 
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
+            //             Not needed now but in general, we don't check for overwrite length for an external shipper
             try {
                 // collaborator sample id is the id of the physical sample that GP will work with.
                 collaboratorSampleId =
@@ -215,21 +216,19 @@ public class NonPepperKitCreationService {
                         kit.getParticipantId().trim(),
                         collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
                         null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
-                //             Not needed now
-                //            kit.setExternalOrderNumber(externalOrderNumber);
+                kit.setExternalOrderNumber(externalOrderNumber);
             } catch (Exception e) {
                 transactionResults.resultException = e;
             }
         } else {
+            // trying to generate collaboratorSampleId based on collaboratorParticipantId --
+            // it will be skipped if study did not have the config to get a collaboratorParticipantId
             if (kitRequestSettings.getCollaboratorSampleTypeOverwrite() != null) {
                 bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
             }
             if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                 collaboratorSampleId =
                         KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
-                if (collaboratorParticipantId == null) {
-                    errorMessage += "collaboratorParticipantId was too long ";
-                }
                 if (collaboratorSampleId == null) {
                     errorMessage += "collaboratorSampleId was too long ";
                 }
@@ -237,13 +236,13 @@ public class NonPepperKitCreationService {
 
             String participantID = kit.getJuniperParticipantID();
             try {
+                //insert the kit into DB
                 String dsmKitRequestId =
                         KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId, participantID,
                                 collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage,
                                 kit.getExternalOrderNumber(),
                                 false,
                                 null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
-                kit.setDdpLabel(juniperKitRequestId);
                 log.info("Created new kit in DSM with dsm_kit_request_id {} and ddpLabel {} for JuniperKitId {}", dsmKitRequestId, ddpLabel,
                         juniperKitRequestId);
             } catch (Exception e) {
