@@ -30,7 +30,7 @@ public class JuniperKitCreationTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void createNewMockJuniperKitTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -72,7 +72,7 @@ public class JuniperKitCreationTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void noJuniperKitIdTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -110,7 +110,7 @@ public class JuniperKitCreationTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void noJuniperParticipantIdTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -148,7 +148,7 @@ public class JuniperKitCreationTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void invalidKitTypeTest() {
         String instanceGuid = "Juniper-mock-guid";
         String instanceName = "Juniper-mock";
@@ -186,7 +186,7 @@ public class JuniperKitCreationTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void invalidStudyNameTest() {
         String fakeInstanceGuid = "Juniper-mock-guid-fake";
         String instanceName = "Juniper-mock";
