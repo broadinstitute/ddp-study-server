@@ -7,21 +7,16 @@ import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitStatus;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.ShipKitRequest;
-import org.broadinstitute.dsm.security.RequestHandler;
 import spark.Request;
 import spark.Response;
+import spark.Route;
 
-public class JuniperShipKitRoute extends RequestHandler {
+public class JuniperShipKitRoute implements Route {
 
     NonPepperKitCreationService kitCreationService;
 
     public JuniperShipKitRoute(NonPepperKitCreationService kitCreationService) {
         this.kitCreationService = kitCreationService;
-    }
-
-    @Override
-    protected Object processRequest(Request request, Response response, String userId) throws Exception {
-        return createNonPepperKit(request, response);
     }
 
     public KitResponse createNonPepperKit(Request request, Response response) {
@@ -49,5 +44,8 @@ public class JuniperShipKitRoute extends RequestHandler {
         return kitResponse;
     }
 
-
+    @Override
+    public Object handle(Request request, Response response) throws Exception {
+        return createNonPepperKit(request, response);
+    }
 }

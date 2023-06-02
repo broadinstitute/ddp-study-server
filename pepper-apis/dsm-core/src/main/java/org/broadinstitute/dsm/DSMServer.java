@@ -572,7 +572,7 @@ public class DSMServer {
         get(apiRoot + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
         NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-        get(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+        post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
             get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
