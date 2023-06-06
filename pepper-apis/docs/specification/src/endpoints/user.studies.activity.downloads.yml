@@ -1,0 +1,78 @@
+parameters:
+  - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  - $ref: '../pepper.yml#/components/parameters/userGuid'
+  - $ref: '../pepper.yml#/components/parameters/instanceGuid'
+  - $ref: '../pepper.yml#/components/parameters/questionStableId'
+
+get:
+  operationId: getActivityDownloads
+  tags:
+    - Activities
+  summary: get an authorized file download
+  description: |
+    Request for a new URL for file download. Link is accessible for limited
+    period of time (e.g. 5 mins). With the information in response body,
+    client will be able to dowload the file directly from the Google Bucket.
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - questionStableId
+            - fileName
+            - fileSize
+            - resumable
+          properties:
+            questionStableId:
+              type: string
+              description: The question identifier
+  responses:
+    201:
+      description: Successfully authorized file dowload
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - downloadUrl
+            properties:
+              downloadUrl:
+                type: string
+                description: Signed URL which can be used to download file contents
+    400:
+      description: |
+        Invalid request or bad inputs, such as missing properties in payload.
+        See error message in response payload for more details.
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: Either user, study, instance or question is not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityQuestionNotFound'
+    422:
+      description: |
+        Authorizing file download is not allowed if question that is not answered.
+        See error message in response payload for more details.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - ACTIVITY_NOT_FOUND
+                      - QUESTION_NOT_FOUND
+                      - ANSWER_NOT_FOUND
+                      - NOT_SUPPORTED
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
