@@ -102,6 +102,10 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_UPLOADS = fmt(BASE + "/user/%s/studies/%s/activities/%s/uploads",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
+        public static final String USER_ACTIVITY_DOWNLOADS = fmt(BASE + "/user/%s/studies/%s/activities/%s/questions/%s/downloads",
+                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID, PathParam.QUESTION_STABLE_ID);
+        //public static final String USER_ACTIVITY_DOWNLOADS = fmt(BASE + "/user/%s/studies/%s/activities/%s/downloads",
+        //        PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_QUESTION_OPTIONS = fmt(BASE + "/user/%s/studies/%s/activities/%s/questions/%s/options",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID, PathParam.QUESTION_STABLE_ID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(

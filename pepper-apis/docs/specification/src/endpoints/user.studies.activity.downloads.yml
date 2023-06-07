@@ -14,23 +14,8 @@ get:
     period of time (e.g. 5 mins). With the information in response body,
     client will be able to dowload the file directly from the Google Bucket.
 
-  requestBody:
-    required: true
-    content:
-      application/json:
-        schema:
-          type: object
-          required:
-            - questionStableId
-            - fileName
-            - fileSize
-            - resumable
-          properties:
-            questionStableId:
-              type: string
-              description: The question identifier
   responses:
-    201:
+    200:
       description: Successfully authorized file dowload
       content:
         application/json:
