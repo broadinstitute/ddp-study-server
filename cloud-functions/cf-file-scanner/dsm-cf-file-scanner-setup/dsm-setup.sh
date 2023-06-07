@@ -23,10 +23,28 @@ fi
 echo "project name is $project_name"
 echo "study name is $study_name"
 
-# Call the create_bucket.sh script to create the bucket
+## Call the create_bucket.sh script to create the bucket
 echo "setting the initial bucket for uploaded files"
-$study_name/create-bucket.sh "$project_name" "$study_name-uploaded-files"
+./create-bucket.sh "$project_name" "$study_name-uploaded-files"
 
-# Call the create_bucket.sh script to create the bucket
+## Call the create_bucket.sh script to create the bucket
 echo "setting the final bucket for scanned files"
-$study_name/create-bucket.sh "$project_name" "$study_name-files"
+./create-bucket.sh "$project_name" "$study_name-files"
+
+trigger_topic_name="$study_name"-file-scanner-trigger
+subscription_name="$study_name"-file-scanner-trigger-sub
+
+# Call the create_trigger_topic.sh script to create the pubsub topic that triggers the FileScanner
+echo "creating the $trigger_topic_name pubsub topic that triggers the FileScanner"
+./create_trigger_topic.sh $project_name $trigger_topic_name $subscription_name
+
+#set the event for the OBJECT_FINALIZE event in the bucket
+echo "creating the event from bucket $study_name-uploaded-files to this topic for OBJECT_FINALIZE"
+../init-bucket-event.sh $project_name $study_name-uploaded-files $trigger_topic_name
+
+trigger_topic_name="dsm-file-scanner-results"
+subscription_name="$trigger_topic_name"-sub
+
+#create the results topic and subscription if they don't exist
+echo "creating the results topic and subscription if they don't exist"
+./create_results_topic.sh $project_name $trigger_topic_name $subscription_name
