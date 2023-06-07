@@ -33,8 +33,6 @@ public class FileDownloadService {
     public static final String FILE_DOWNLOAD_PROJECT_ID = "fileDownload.signerServiceAccount.project_id";
     public static final String MAX_SIGN_URL_MIN = "fileDownload.maxSignedUrlMins";
     public static final String DEFAULT_DOWNLOAD_BUCKET = "fileDownload.defaultDownloadBucket";
-    public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
-
 
     public static FileDownloadService fromConfig(Config cfg) {
 
@@ -74,8 +72,8 @@ public class FileDownloadService {
     /**
      * Generating a signed URL for file download
      *
-     * @param fileName   the name of the file sent from frontend request
-     * @param bucketName the name of the bucket sent from frontend request
+     * @param fileName   the name of the file
+     * @param bucketName the name of the bucket
      * @return URL
      */
     public URL getSignedURL(String fileName, String bucketName) {
