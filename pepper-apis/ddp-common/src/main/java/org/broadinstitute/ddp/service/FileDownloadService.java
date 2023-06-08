@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.service;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -76,10 +78,15 @@ public class FileDownloadService {
      * @param bucketName the name of the bucket
      * @return URL
      */
-    public URL getSignedURL(String fileName, String bucketName) {
+    public URL getSignedURL(String fileName, String bucketName) throws FileNotFoundException {
+        String bucket = StringUtils.isEmpty(bucketName) ? defaultDownloadBucket : bucketName;
         HttpMethod method = HttpMethod.GET;
+        Blob blob = storageClient.getBlob(bucket, fileName);
+        if (blob == null || !blob.exists()) {
+            throw new FileNotFoundException();
+        }
         return storageClient.generateSignedUrl(
-                signer, StringUtils.isEmpty(bucketName) ? defaultDownloadBucket : bucketName, fileName,
+                signer, bucket, fileName,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, new HashMap<>());
     }

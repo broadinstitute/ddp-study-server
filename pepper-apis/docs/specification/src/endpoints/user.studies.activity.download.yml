@@ -35,6 +35,9 @@ get:
         application/json:
           schema:
             $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    401:
+      description: |
+        Not Authorized.
     404:
       description: Either user, study, instance or question is not found
       content:
@@ -58,6 +61,7 @@ get:
                       - ACTIVITY_NOT_FOUND
                       - QUESTION_NOT_FOUND
                       - ANSWER_NOT_FOUND
+                      - AUTH_CANNOT_BE_DETERMINED
                       - NOT_SUPPORTED
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
