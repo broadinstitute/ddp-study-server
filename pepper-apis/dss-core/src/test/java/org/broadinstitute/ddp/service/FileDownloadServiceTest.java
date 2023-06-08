@@ -37,7 +37,7 @@ public class FileDownloadServiceTest {
         var service = FileDownloadService.fromConfig(ConfigManager.getInstance().getConfig());
         try {
             URL signedUrl = service.getSignedURL("test_file_invalid.txt", "ddp-dev-file-scanned");
-        assertNotNull(signedUrl);
+            assertNotNull(signedUrl);
         } catch (FileNotFoundException e) {
             //all good
         }
