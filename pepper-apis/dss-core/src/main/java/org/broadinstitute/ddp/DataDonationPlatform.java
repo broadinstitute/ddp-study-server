@@ -505,7 +505,7 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
-        get(API.USER_ACTIVITY_DOWNLOADS, new GetParticipantFileDownloadRoute(fileDownloadService), responseSerializer);
+        get(API.USER_ACTIVITY_DOWNLOAD, new GetParticipantFileDownloadRoute(fileDownloadService), responseSerializer);
         get(API.USER_QUESTION_OPTIONS, new GetOptionsForActivityInstanceQuestionRoute(i18nContentRenderer), responseSerializer);
 
         // User study invitations
