@@ -5,9 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
-import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.FileDownloadResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -18,7 +19,6 @@ import spark.Response;
 import spark.Route;
 
 import java.net.URL;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Slf4j
@@ -47,9 +47,8 @@ public class GetParticipantFileDownloadRoute implements Route {
 
         return TransactionWrapper.withTxn(handle -> {
             ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
-            try {
-                instanceDao.getActivityInstanceIdByGuid(handle, instanceGuid);
-            } catch (NoSuchElementException e) {
+            Optional<ActivityInstanceDto> instanceDtoOpt = instanceDao.findByActivityInstanceGuid(instanceGuid);
+            if (!instanceDtoOpt.isPresent()) {
                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, "Instance not found"));
             }
 
