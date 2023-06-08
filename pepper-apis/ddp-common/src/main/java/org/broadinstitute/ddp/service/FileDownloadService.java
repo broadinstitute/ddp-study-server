@@ -78,11 +78,9 @@ public class FileDownloadService {
      */
     public URL getSignedURL(String fileName, String bucketName) {
         HttpMethod method = HttpMethod.GET;
-        URL signedURL = storageClient.generateSignedUrl(
+        return storageClient.generateSignedUrl(
                 signer, StringUtils.isEmpty(bucketName) ? defaultDownloadBucket : bucketName, fileName,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, new HashMap<>());
-
-        return signedURL;
     }
 }
