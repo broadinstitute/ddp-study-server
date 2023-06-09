@@ -130,7 +130,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
         log.info("Populating answer for {} {}", studyGuid, activityCode);
         String resultsFilePath = payload.getResultsFilePath();
         if (StringUtils.isBlank(resultsFilePath)) {
-            ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file");
+            ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file path");
             ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
         }
         ActivityDefStore activityStore = ActivityDefStore.getInstance();
