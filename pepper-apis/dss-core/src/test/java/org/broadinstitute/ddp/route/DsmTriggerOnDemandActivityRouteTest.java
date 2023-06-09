@@ -259,7 +259,7 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
     }
 
     @Test
-    public void test_invalidFileName_failTriggering() {
+    public void test_invalidFilePath_failTriggering() {
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("activityCode", DsmTriggerOnDemandActivityRoute.RESULT_FILE_ACTIVITY_ID)
                 .body(new TriggerActivityPayload(userGuid, 9876L), ObjectMapperType.GSON) //no results file name passed
