@@ -38,12 +38,30 @@ get:
     401:
       description: |
         Not Authorized.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - AUTH_CANNOT_BE_DETERMINED
     404:
       description: Either user, study, instance or question is not found
       content:
         application/json:
           schema:
-            $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityQuestionNotFound'
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityQuestionNotFound'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - NO_SUCH_ELEMENT
     422:
       description: |
         Authorizing file download is not allowed if question that is not answered.
@@ -58,10 +76,6 @@ get:
                   code:
                     type: string
                     enum:
-                      - ACTIVITY_NOT_FOUND
-                      - QUESTION_NOT_FOUND
                       - ANSWER_NOT_FOUND
-                      - AUTH_CANNOT_BE_DETERMINED
-                      - NOT_SUPPORTED
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
