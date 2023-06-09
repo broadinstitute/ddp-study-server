@@ -510,6 +510,20 @@ public class DBConstants {
     public static final String SM_ID_VALUE = "sm_id_value";
     public static final String SM_ID_TISSUE_ID = "tissue_id";
 
+    //sonomic_documents
+    public static final String SOMATIC_DOCUMENTS_TABLE = "somatic_documents";
+    public static final String SOMATIC_DOCUMENTS_TABLE_ALIAS = "sD";
+    public static final String SOMATIC_DOCUMENTS_PK = "id";
+
+    public static final String BUCKET = "bucket";
+    public static final String DELETED_AT = "deleted_at";
+    public static final String DELETED_BY_USER_ID = "deleted_by_user_id";
+    public static final String CREATED_AT = "created_at";
+    public static final String CREATED_BY_USER_ID = "created_by_user_id";
+    public static final String BLOB_PATH = "blob_path";
+    public static final String MIME_TYPE = "mime_type";
+    public static final String IS_VIRUS_FREE = "is_virus_free";
+
     //sm_id_type table
     public static final String SM_ID_TYPE_TABLE = "sm_id_type";
     public static final String SM_ID_TYPE_TABLE_ALIAS = "smt";

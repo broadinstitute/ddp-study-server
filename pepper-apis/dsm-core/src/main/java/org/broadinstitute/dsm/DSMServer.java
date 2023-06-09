@@ -63,6 +63,7 @@ import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
+import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
@@ -92,16 +93,14 @@ import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
 import org.broadinstitute.dsm.route.FrontendAnalyticsRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
+import org.broadinstitute.dsm.route.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
 import org.broadinstitute.dsm.route.KitExpressRoute;
-import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.KitLabelRoute;
 import org.broadinstitute.dsm.route.KitRequestRoute;
 import org.broadinstitute.dsm.route.KitSearchRoute;
-import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
-import org.broadinstitute.dsm.route.kit.KitTrackingScanRoute;
 import org.broadinstitute.dsm.route.KitTypeRoute;
 import org.broadinstitute.dsm.route.KitUploadRoute;
 import org.broadinstitute.dsm.route.LabelSettingRoute;
@@ -114,15 +113,17 @@ import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
-import org.broadinstitute.dsm.route.kit.RGPKitFinalScanRoute;
-import org.broadinstitute.dsm.route.kit.ReceivedKitsRoute;
-import org.broadinstitute.dsm.route.kit.SentKitRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
-import org.broadinstitute.dsm.route.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
+import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
+import org.broadinstitute.dsm.route.kit.KitTrackingScanRoute;
+import org.broadinstitute.dsm.route.kit.RGPKitFinalScanRoute;
+import org.broadinstitute.dsm.route.kit.ReceivedKitsRoute;
+import org.broadinstitute.dsm.route.kit.SentKitRoute;
 import org.broadinstitute.dsm.route.mercury.GetMercuryEligibleSamplesRoute;
 import org.broadinstitute.dsm.route.mercury.GetMercuryOrdersRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
@@ -130,10 +131,15 @@ import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.participantfiles.DownloadParticipantFileRoute;
+import org.broadinstitute.dsm.route.somaticresults.DeleteSomaticResultRoute;
+import org.broadinstitute.dsm.route.somaticresults.GetSomaticResultsRoute;
+import org.broadinstitute.dsm.route.somaticresults.PostSomaticResultUploadRoute;
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.dsm.service.FileDownloadService;
+import org.broadinstitute.dsm.service.SomaticResultUploadService;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -153,7 +159,6 @@ import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTrigger
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
-import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.lddp.util.JsonTransformer;
 import org.broadinstitute.lddp.util.Utility;
@@ -197,6 +202,7 @@ public class DSMServer {
     private static final String gcpPathToDsmTasksSub = "pubsub.dsm_tasks_subscription";
     public static final String gcpPathToDsmToMercuryTopic = "pubsub.dsm_to_mercury_topic";
     public static final String gcpPathToMercuryToDsmSub = "pubsub.mercury_to_dsm_subscription";
+    public static final String gcpPathToAntiVirusSub = "pubsub.antivirus_to_dsm_subscription";
     private static final String apiRoot = "/ddp/";
     private static final String uiRoot = "/ui/";
     private static final String infoRoot = "/info/";
@@ -660,6 +666,8 @@ public class DSMServer {
 
         setupMiscellaneousRoutes();
 
+        setupSomaticUploadRoutes(cfg);
+
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
 
         setupCohortTagRoutes();
@@ -697,6 +705,7 @@ public class DSMServer {
         String dsmToDssSubscriptionId = cfg.getString(gcpPathToDssToDsmSub);
         String dsmTasksSubscriptionId = cfg.getString(gcpPathToDsmTasksSub);
         String mercuryDsmSubscriptionId = cfg.getString(gcpPathToMercuryToDsmSub);
+        String antivirusDsmSubscriptionId = cfg.getString(gcpPathToAntiVirusSub);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -750,6 +759,13 @@ public class DSMServer {
 
         try {
             MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            logger.info("Setting up pupsub for somatic antivirus scanning {}/{}", projectId, antivirusDsmSubscriptionId);
+            AntivirusScanningStatusListener.subscribeToAntiVirusStatus(projectId, antivirusDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -897,6 +913,15 @@ public class DSMServer {
 
         FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
         patch(uiRoot + RoutePath.GoogleAnalytics, frontendAnalyticsRoute, new JsonTransformer());
+    }
+
+    private void setupSomaticUploadRoutes(@NonNull Config cfg) {
+        SomaticResultUploadService somaticResultUploadService = SomaticResultUploadService.fromConfig(cfg);
+        post(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE,
+                new PostSomaticResultUploadRoute(somaticResultUploadService), new JsonTransformer());
+        delete(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService), new JsonTransformer());
+        get(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE,
+                new GetSomaticResultsRoute(somaticResultUploadService), new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {

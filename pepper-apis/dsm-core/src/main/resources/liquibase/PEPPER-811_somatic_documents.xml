@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="PEPPER-811_somatic_documents" author="otchet">
+        <createTable tableName="somatic_documents">
+            <column name="id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false" foreignKeyName="somatic_documents_ddp_instance_id_fk"
+                             referencedTableName="ddp_instance" referencedColumnNames="ddp_instance_id"/>
+            </column>
+            <column name="participant_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_name" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mime_type" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bucket" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="blob_path" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_user_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_by_user_id" type="INT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="deleted_at" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_virus_free" type="BOOLEAN">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+                columnNames="bucket, blob_path"
+                constraintName="bucket-blob_path_UNIQUE"
+                tableName="somatic_documents"
+        />
+        <createIndex indexName="bucket-blob_path-idx" tableName="somatic_documents">
+            <column name="bucket"/>
+            <column name="blob_path"/>
+        </createIndex>
+        <createIndex indexName="bucket-blob_path-idx" tableName="somatic_documents">
+        <column name="bucket"/>
+        <column name="blob_path"/>
+        </createIndex>
+        <createIndex indexName="ptpt_id-ddp_instance_id-idx" tableName="somatic_documents">
+            <column name="participant_id"/>
+            <column name="ddp_instance_id"/>
+        </createIndex>
+        <createIndex indexName="ddp_instance_id-idx" tableName="somatic_documents">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
