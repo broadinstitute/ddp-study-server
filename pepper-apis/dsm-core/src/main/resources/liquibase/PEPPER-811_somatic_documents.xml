@@ -17,16 +17,16 @@
             <column name="participant_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="file_name" type="VARCHAR(2000)">
+            <column name="file_name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="mime_type" type="VARCHAR(2000)">
+            <column name="mime_type" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="bucket" type="VARCHAR(2000)">
+            <column name="bucket" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
-            <column name="blob_path" type="VARCHAR(2000)">
+            <column name="blob_path" type="VARCHAR(500)">
                 <constraints nullable="false"/>
             </column>
             <column name="created_by_user_id" type="INT">
@@ -53,10 +53,6 @@
         <createIndex indexName="bucket-blob_path-idx" tableName="somatic_documents">
             <column name="bucket"/>
             <column name="blob_path"/>
-        </createIndex>
-        <createIndex indexName="bucket-blob_path-idx" tableName="somatic_documents">
-        <column name="bucket"/>
-        <column name="blob_path"/>
         </createIndex>
         <createIndex indexName="ptpt_id-ddp_instance_id-idx" tableName="somatic_documents">
             <column name="participant_id"/>
