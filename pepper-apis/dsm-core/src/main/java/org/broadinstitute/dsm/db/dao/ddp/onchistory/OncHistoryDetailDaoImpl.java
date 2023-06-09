@@ -12,6 +12,8 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -22,6 +24,8 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
             "SELECT tissue_received FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
     public static final String SQL_SELECT_TISSUES_FOR_ONC_HISTORY = "SELECT * from ddp_tissue where onc_history_detail_id = ?";
 
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
+
     @Override
     public int create(OncHistoryDetailDto oncHistoryDetailDto) {
         return 0;
@@ -29,7 +33,11 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
 
     @Override
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
+        if (simpleResult.resultException != null) {
+            throw new DsmInternalError("Error deleting ddp_onc_history_detail with id: " + id, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override
