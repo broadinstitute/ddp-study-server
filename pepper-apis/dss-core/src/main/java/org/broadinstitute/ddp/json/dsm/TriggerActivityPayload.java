@@ -15,18 +15,28 @@ public class TriggerActivityPayload {
     @SerializedName("triggerId")
     private Long triggerId;
 
-    @SerializedName("resultsFileName")
-    private String resultsFileName;
+    @SerializedName("resultsFilePath")
+    private String resultsFilePath;
+
+    @SerializedName("bucketName")
+    private String bucketName;
 
     public TriggerActivityPayload(String participantGuid, Long triggerId) {
         this.participantGuid = participantGuid;
         this.triggerId = triggerId;
     }
 
-    public TriggerActivityPayload(String participantGuid, Long triggerId, String resultsFileName) {
+    public TriggerActivityPayload(String participantGuid, Long triggerId, String resultsFilePath) {
         this.participantGuid = participantGuid;
         this.triggerId = triggerId;
-        this.resultsFileName = resultsFileName;
+        this.resultsFilePath = resultsFilePath;
+    }
+
+    public TriggerActivityPayload(String participantGuid, Long triggerId, String resultsFilePath, String bucketName) {
+        this.participantGuid = participantGuid;
+        this.triggerId = triggerId;
+        this.resultsFilePath = resultsFilePath;
+        this.bucketName = bucketName;
     }
 
     public String getParticipantGuid() {
@@ -37,7 +47,12 @@ public class TriggerActivityPayload {
         return triggerId;
     }
 
-    public String getResultsFileName() {
-        return resultsFileName;
+    public String getResultsFilePath() {
+        return resultsFilePath;
     }
+
+    public String getBucketName() {
+        return bucketName;
+    }
+
 }
