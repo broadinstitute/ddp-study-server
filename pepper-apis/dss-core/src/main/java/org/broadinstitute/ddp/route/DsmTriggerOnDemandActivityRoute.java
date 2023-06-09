@@ -113,9 +113,11 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 log.info("Created on-demand activity instance {} for study guid {}, activity code {}, participant guid {}",
                         instanceDto.getGuid(), studyGuid, activityCode, participantGuid);
 
-                //create answer for this instance if SOMATIC_RESULTS actiivty
+                //create answer for this instance if SOMATIC_RESULTS activity
                 if (activityCode.equalsIgnoreCase(RESULT_FILE_ACTIVITY_ID)) {
-                    populateResultsFileNameAnswer(response, payload, studyGuid, activityCode, handle, user, instanceDto);
+                    populateResultsFilePathAnswer(response, payload, studyGuid, activityCode, handle, user, instanceDto);
+                    //when needed (sometime in future), take the bucketName from payload and save in DB
+                    // (maybe a new column in activity_instance or a different table)
                 }
             }
         });
@@ -123,19 +125,19 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
         return null;
     }
 
-    private void populateResultsFileNameAnswer(Response response, TriggerActivityPayload payload, String studyGuid,
+    private void populateResultsFilePathAnswer(Response response, TriggerActivityPayload payload, String studyGuid,
                                                String activityCode, Handle handle, User user, ActivityInstanceDto instanceDto) {
         log.info("Populating answer for {} {}", studyGuid, activityCode);
-        String resultsFileName = payload.getResultsFileName();
-        if (StringUtils.isBlank(resultsFileName)) {
-            ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file");
+        String resultsFilePath = payload.getResultsFilePath();
+        if (StringUtils.isBlank(resultsFilePath)) {
+            ApiError err = new ApiError(ErrorCodes.ANSWER_NOT_FOUND, "Invalid results file path");
             ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
         }
         ActivityDefStore activityStore = ActivityDefStore.getInstance();
         FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
         QuestionDef questionDef = activityDef.getQuestionByStableId(RESULT_FILE_STABLE_ID);
         var answerDao = new AnswerCachedDao(handle);
-        TextAnswer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFileName, instanceDto.getGuid());
+        TextAnswer answer = new TextAnswer(null, RESULT_FILE_STABLE_ID, null, resultsFilePath, instanceDto.getGuid());
         String answerGuid = answerDao.createAnswer(user.getId(), instanceDto.getId(), answer, questionDef)
                 .getAnswerGuid();
         log.info("Created answer with guid {} for {} question stable id {}", answerGuid, studyGuid, RESULT_FILE_STABLE_ID);
