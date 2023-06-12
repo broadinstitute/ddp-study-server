@@ -43,7 +43,7 @@ public class SomaticResultUploadService {
     private final SomaticResultUploadSettings somaticUploadSettings;
 
     public static SomaticResultUploadService fromConfig(Config cfg) {
-        String signerJson = ConfigUtil.toJson(cfg.getConfig(ConfigFile.FileUploads.SIGNER_SERVICE_ACCOUNT));
+        String signerJson = ConfigUtil.toJson(cfg.getConfig(ApplicationConfigConstants.FILE_DOWNLOAD_CREDENTIALS));
         InputStream signerStream = new ByteArrayInputStream(signerJson.getBytes(StandardCharsets.UTF_8));
         ServiceAccountCredentials signerCredentials;
         try {
@@ -53,14 +53,14 @@ public class SomaticResultUploadService {
         }
 
         GoogleCredentials bucketCredentials;
-        boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
+        boolean ensureDefault = false;
         bucketCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
         if (bucketCredentials == null) {
             log.error("Could not get bucket credentials, defaulting to signer credentials");
             bucketCredentials = signerCredentials;
         }
 
-        String projectId = cfg.getString(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String projectId = cfg.getString(ApplicationConfigConstants.FILE_DOWNLOAD_PROJECT_ID);
         Map<String, String> realmToUploadBucketMap = new HashMap<>();
         for (Config mappingCfg : cfg.getConfigList(ConfigFile.SomaticUploads.REALM_TO_BUCKET_MAPPINGS)) {
             String realm = ConfigUtil.getStrIfPresent(mappingCfg, "realm");
@@ -77,7 +77,7 @@ public class SomaticResultUploadService {
                 signerCredentials,
                 new GoogleBucketClient(projectId, bucketCredentials),
                 realmToUploadBucketMap,
-                cfg.getInt(ConfigFile.FileUploads.MAX_SIGNED_URL_MINS),
+                cfg.getInt(ApplicationConfigConstants.MAX_SIGN_URL_MIN),
                 new SomaticResultUploadSettings(cfg));
     }
 
