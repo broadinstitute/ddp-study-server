@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.pubsub;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -13,17 +11,14 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AntivirusScanningStatusListener {
     private static final Logger logger = LoggerFactory.getLogger(AntivirusScanningStatusListener.class);
-    private static final String ATTR_BUCKET_ID = "bucketId";
-    private static final String ATTR_OBJECT_ID = "objectId";
-    private static final String ATTR_NEW_BUCKET_ID = "newBucketId";
-    private static final String ATTR_NEW_OBJECT_ID = "newObjectId";
-    private static final String ATTR_SCAN_RESULT = "scanResult";
 
     public static void subscribeToAntiVirusStatus(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
@@ -57,19 +52,15 @@ public class AntivirusScanningStatusListener {
 
     private static void processAntiVirusStatus(PubsubMessage message) {
         String data = message.getData().toStringUtf8();
-        Message fileScannerMessage = new Gson().fromJson(data, Message.class);
-        String originalBucketName = fileScannerMessage.getAttributes().get(ATTR_BUCKET_ID);
-        String originalFileName = fileScannerMessage.getAttributes().get(ATTR_OBJECT_ID);
-        String newBucketName = fileScannerMessage.getAttributes().get(ATTR_NEW_BUCKET_ID);
-        String newFileName = fileScannerMessage.getAttributes().get(ATTR_NEW_OBJECT_ID);
-        String scanResult = fileScannerMessage.getAttributes().get(ATTR_SCAN_RESULT);
-        if (originalBucketName != null && originalFileName != null && scanResult != null) {
-            switch (ScanResult.valueOf(scanResult)) {
+        AntivirusMessage antivirusMessage = new Gson().fromJson(data, AntivirusMessage.class);
+        if (antivirusMessage.bucketId != null && antivirusMessage.objectId != null && antivirusMessage.scanResult != null) {
+            switch (antivirusMessage.scanResult) {
                 case CLEAN:
-                    SomaticResultUpload.updateSuccessfulVirusScanningResult(originalBucketName, originalFileName, newBucketName, newFileName);
+                    SomaticResultUpload.updateSuccessfulVirusScanningResult(antivirusMessage.bucketId,
+                            antivirusMessage.objectId, antivirusMessage.newBucketId, antivirusMessage.newObjectId);
                     break;
                 case DELETED:
-                    SomaticResultUpload.updateUnsuccessfulVirusScanningResult(originalBucketName, originalFileName);
+                    SomaticResultUpload.updateUnsuccessfulVirusScanningResult(antivirusMessage.bucketId, antivirusMessage.objectId);
                     break;
                 default:
                     break;
@@ -82,22 +73,14 @@ public class AntivirusScanningStatusListener {
         DELETED
     }
 
-    public static class Message {
-
-        private String data;
-        private final Map<String, String> attributes = new HashMap<>();
-
-        public String getData() {
-            return data;
-        }
-
-        public void setData(String data) {
-            this.data = data;
-        }
-
-        public Map<String, String> getAttributes() {
-            return attributes;
-        }
+    @Value
+    @AllArgsConstructor
+    public static class AntivirusMessage {
+        String bucketId;
+        String objectId;
+        String newBucketId;
+        String newObjectId;
+        ScanResult scanResult;
 
     }
 }

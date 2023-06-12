@@ -72,7 +72,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
     private final long deletedAt;
 
     @ColumnName(DBConstants.IS_VIRUS_FREE)
-    private boolean isVirusFree;
+    private Boolean isVirusFree;
 
     private static final String SQL_SELECT_DOCUMENTS_BASE = "SELECT sD.id, p.ddp_instance_id, "
             + "p.ddp_participant_id, p.participant_id, sD.file_name, sD.mime_type, sD.bucket, sD.blob_path, "
@@ -331,7 +331,8 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID, somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
+        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID,
+                somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
         return true;
     }
 
@@ -356,7 +357,8 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID, somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
+        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID,
+                somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
         return true;
     }
 
@@ -381,7 +383,8 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID, somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
+        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID,
+                somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
         return somaticResultUpload;
     }
 
@@ -392,7 +395,8 @@ public class SomaticResultUpload implements HasDdpInstanceId {
                     ESObjectConstants.SOMATIC_DOCUMENT_ID, key, resultValue,
                     new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
-            log.error(String.format("Error updating somatic document id {} in ElasticSearch: %s", somaticResultUpload.getSomaticDocumentId()));
+            log.error(String.format("Error updating somatic document id {} in ElasticSearch: %s",
+                    somaticResultUpload.getSomaticDocumentId()));
             e.printStackTrace();
         }
     }
