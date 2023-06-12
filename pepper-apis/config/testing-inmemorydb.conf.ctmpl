@@ -9,7 +9,6 @@
 {{with $testingAuth := index $testingConf.Data "auth0"}}
 {{with $conf := secret (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 {{with $fileUploads := index $conf.Data "fileUploads"}}
-{{with $fileDownloads := index $conf.Data "fileDownloads"}}
 
 {
     {{if eq $gae "true"}}
@@ -108,8 +107,8 @@
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
     "fileDownload": {
-        "maxSignedUrlMins": {{$fileDownloads.maxSignedUrlMins }},
-        "credentials": {{$fileDownloads.signerServiceAccount | toJSONPretty }}
+        "maxSignedUrlMins": {{$conf.Data.fileDownload.maxSignedUrlMins}},
+        "credentials": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
     }
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
