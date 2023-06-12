@@ -67,6 +67,12 @@
         "scanResultSubscription": "{{$conf.Data.fileUploads.scanResultSubscription}}",
         "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}
     },
+    "fileDownload":{
+        "signerServiceAccount": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
+        "maxSignedUrlMins": 5,
+        "defaultDownloadBucket": "{{$conf.Data.fileDownload.defaultDownloadBucket}}"
+    },
+
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
