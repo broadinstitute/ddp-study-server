@@ -55,12 +55,6 @@ public class GetParticipantFileDownloadRoute implements Route {
         if (StringUtils.isBlank(operatorGuid)) {
             throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Not Authorized"));
         }
-        if (!participantGuid.equalsIgnoreCase(operatorGuid)) {
-            //check if governed User
-            if (ddpAuth.canAccessGovernedUsers(participantGuid)) {
-                throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Not Authorized"));
-            }
-        }
 
         return TransactionWrapper.withTxn(handle -> {
             //validate user
