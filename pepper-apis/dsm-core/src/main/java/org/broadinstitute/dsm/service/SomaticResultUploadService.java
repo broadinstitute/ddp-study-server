@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.model.somatic.result.SomaticResultMetaData;
 import org.broadinstitute.dsm.model.somatic.result.SomaticResultUploadSettings;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.owasp.fileio.FileValidator;
 
 @Slf4j
@@ -59,7 +60,7 @@ public class SomaticResultUploadService {
             bucketCredentials = signerCredentials;
         }
 
-        String projectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
+        String projectId = cfg.getString(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         Map<String, String> realmToUploadBucketMap = new HashMap<>();
         for (Config mappingCfg : cfg.getConfigList(ConfigFile.SomaticUploads.REALM_TO_BUCKET_MAPPINGS)) {
             String realm = ConfigUtil.getStrIfPresent(mappingCfg, "realm");
@@ -94,14 +95,14 @@ public class SomaticResultUploadService {
                                            SomaticResultMetaData somaticResultMetaData) {
         FileValidator fileValidator = new FileValidator();
         if (somaticResultMetaData.getFileSize() > somaticUploadSettings.getMaxFileSize()) {
-            return new AuthorizeResult(AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM, null,  somaticUploadSettings);
+            return new AuthorizeResult(AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM, null, null, somaticUploadSettings);
         }
         if (!somaticUploadSettings.getMimeTypes().contains(somaticResultMetaData.getMimeType())) {
-            return new AuthorizeResult(AuthorizeResultType.MIME_TYPE_NOT_ALLOWED, null, somaticUploadSettings);
+            return new AuthorizeResult(AuthorizeResultType.MIME_TYPE_NOT_ALLOWED, null, null, somaticUploadSettings);
         }
         if (!fileValidator.isValidFileName("Validating file name",
                 somaticResultMetaData.getFileName(), somaticUploadSettings.getAllowedFileExtensions(), false)) {
-            return new AuthorizeResult(AuthorizeResultType.INVALID_FILE_NAME, null, somaticUploadSettings);
+            return new AuthorizeResult(AuthorizeResultType.INVALID_FILE_NAME, null, null, somaticUploadSettings);
         }
 
         String fileUUID = UUID.randomUUID().toString();
@@ -110,8 +111,8 @@ public class SomaticResultUploadService {
         String uploadBucket = getUploadsBucket(realm);
 
 
-        SomaticResultUpload.createFileUpload(realm, ddpParticipantId, somaticResultMetaData.getFileName(),
-                somaticResultMetaData.getMimeType(), uploadBucket, blobPath, userIdLong);
+        SomaticResultUpload createdUpload = SomaticResultUpload.createFileUpload(realm, ddpParticipantId,
+                somaticResultMetaData.getFileName(), somaticResultMetaData.getMimeType(), uploadBucket, blobPath, userIdLong);
 
         Map<String, String> headers = Map.of("Content-Type", somaticResultMetaData.getMimeType());
 
@@ -120,18 +121,27 @@ public class SomaticResultUploadService {
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 HttpMethod.PUT, headers);
 
-        return new AuthorizeResult(AuthorizeResultType.OK, signedURL, somaticUploadSettings);
+        return new AuthorizeResult(AuthorizeResultType.OK, signedURL, createdUpload, somaticUploadSettings);
     }
 
     public SomaticResultUpload deleteUpload(long userId, int documentId) {
         SomaticResultUpload deletedSomaticResultUpload = SomaticResultUpload.deleteDocumentByDocumentId(userId, documentId);
         Blob blobToDelete = storageClient.getBlob(deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
-        boolean deleted = blobToDelete.delete();
-        if (deleted) {
-            log.warn("User {} deleted somatic document {}", userId, documentId);
+        if (blobToDelete != null) {
+            boolean deleted = blobToDelete.delete();
+            if (deleted) {
+                log.info("User {} deleted somatic document {}", userId, documentId);
+            } else {
+                log.error("Somatic document failed to delete from GCS. Manual intervention required.  "
+                                + "Last recorded bucket: {}, blobPath: {} ",
+                        deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
+                throw(new RuntimeException("Deletion failed, contact DSM developer."));
+            }
         } else {
-            log.error("Somatic document failed to delete from GCS. Manual intervention required.  Last recorded bucket: {}, blobPath: {} ",
+            log.error("Somatic document blob not found in bucket when attempting to delete from GCS. Manual intervention required.  "
+                            + "Last recorded bucket: {}, blobPath: {} ",
                     deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
+            throw(new RuntimeException("Deletion failed, contact DSM developer."));
         }
         return deletedSomaticResultUpload;
     }
@@ -169,6 +179,7 @@ public class SomaticResultUploadService {
     public static class AuthorizeResult {
         AuthorizeResultType authorizeResultType;
         URL signedUrl;
+        SomaticResultUpload somaticResultUpload;
         SomaticResultUploadSettings fileUploadSettings;
     }
 
