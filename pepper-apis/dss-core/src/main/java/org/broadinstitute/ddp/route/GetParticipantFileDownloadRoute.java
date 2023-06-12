@@ -14,8 +14,10 @@ import org.broadinstitute.ddp.json.FileDownloadResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.FileDownloadService;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -48,10 +50,23 @@ public class GetParticipantFileDownloadRoute implements Route {
             throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Required parameter(s) missing"));
         }
 
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String operatorGuid = ddpAuth.getOperator();
+        if (StringUtils.isBlank(operatorGuid)) {
+            throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Not Authorized"));
+        }
+        if (!participantGuid.equalsIgnoreCase(operatorGuid)) {
+            //check if governed User
+            if (ddpAuth.canAccessGovernedUsers(participantGuid)) {
+                throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Not Authorized"));
+            }
+        }
+
         return TransactionWrapper.withTxn(handle -> {
             //validate user
             UserDao userDao = handle.attach(UserDao.class);
-            Optional<User> userOpt = userDao.findUserByGuid(participantGuid);
+            Optional<User> userOpt = userDao.findUserByGuid(
+                    participantGuid.equalsIgnoreCase(operatorGuid) ? operatorGuid : participantGuid);
             if (!userOpt.isPresent()) {
                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.USER_NOT_FOUND, "User not found"));
             }
@@ -65,7 +80,7 @@ public class GetParticipantFileDownloadRoute implements Route {
             //make sure the instanceGuid passed belong to the participant guid passed
             ActivityInstanceDto activityInstanceDto = instanceDtoOpt.get();
             if (activityInstanceDto.getParticipantId() != userId) {
-                log.warn("Authorization issue. User {} not authorized to invoke instance {} ", participantGuid, instanceGuid);
+                log.warn("Authorization issue. User {} not authorized to invoke instance {} ", operatorGuid, instanceGuid);
                 //activity Instance does not belong to the user passed. authentication issue
                 throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Not Authorized"));
             }
