@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 public class SomaticResultMigrator extends BaseCollectionMigrator {
 
     public SomaticResultMigrator(String index, String realm) {
-        super(index, realm, ESObjectConstants.SOMATIC_DOCUMENT_RECORDS);
+        super(index, realm, ESObjectConstants.SOMATIC_RESULT_UPLOAD);
     }
 
     @Override

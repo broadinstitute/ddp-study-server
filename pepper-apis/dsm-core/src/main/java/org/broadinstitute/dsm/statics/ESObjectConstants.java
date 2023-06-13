@@ -85,7 +85,7 @@ public class ESObjectConstants {
     public static final String ONC_HISTORY_DETAIL = "oncHistoryDetail";
     public static final String ONC_HISTORY = "oncHistory";
     public static final String PARTICIPANT_DATA = "participantData";
-    public static final String SOMATIC_DOCUMENT_RECORDS = "somaticDocuments";
+    public static final String SOMATIC_RESULT_UPLOAD = "somaticResultUpload";
     public static final String SOMATIC_DOCUMENT_ID = "somaticDocumentId";
     public static final String DSM_PARTICIPANT_DATA = "dsm.participantData";
     public static final String PARTICIPANT_RECORD = "participantRecord";

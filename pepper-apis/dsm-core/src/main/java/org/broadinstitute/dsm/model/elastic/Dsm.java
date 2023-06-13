@@ -61,8 +61,8 @@ public class Dsm {
     @SerializedName(ESObjectConstants.ONC_HISTORY_DETAIL_RECORDS)
     List<OncHistoryDetail> oncHistoryDetail;
 
-    @SerializedName(ESObjectConstants.SOMATIC_DOCUMENT_RECORDS)
-    List<SomaticResultUpload> somaticDocuments;
+    @SerializedName(ESObjectConstants.SOMATIC_RESULT_UPLOAD)
+    List<SomaticResultUpload> somaticResultUpload;
 
     @SerializedName(ESObjectConstants.PARTICIPANT_DATA)
     List<ParticipantData> participantData;
@@ -115,11 +115,11 @@ public class Dsm {
         return oncHistoryDetail;
     }
 
-    public List<SomaticResultUpload> getSomaticFileUploads() {
-        if (somaticDocuments == null) {
-            somaticDocuments = Collections.emptyList();
+    public List<SomaticResultUpload> getSomaticResultUploads() {
+        if (somaticResultUpload == null) {
+            somaticResultUpload = Collections.emptyList();
         }
-        return somaticDocuments;
+        return somaticResultUpload;
     }
 
     public List<ParticipantData> getParticipantData() {
