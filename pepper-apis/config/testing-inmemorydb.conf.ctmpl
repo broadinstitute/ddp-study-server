@@ -107,6 +107,7 @@
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
     "fileDownload":{
+        "credentials": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}},
         "signerServiceAccount": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
         "maxSignedUrlMins": 5,
         "defaultDownloadBucket": "{{$conf.Data.fileDownload.defaultDownloadBucket}}"
