@@ -3,6 +3,12 @@ package org.broadinstitute.dsm.service.onchistory;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.statics.DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS;
 import static org.broadinstitute.dsm.statics.DBConstants.FIELD_SETTINGS_ALIAS;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.DYNAMIC_FIELDS;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_CREATED;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_ID;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.PARTICIPANT_ID;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,27 +16,34 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
-import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
-import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
+import org.broadinstitute.dsm.model.elastic.export.ElasticDataExportAdapter;
+import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -42,6 +55,8 @@ public class OncHistoryUploadService {
     private Map<String, OncHistoryUploadColumn> studyColumns;
     private ColumnValidator columnValidator;
     private String participantIndex;
+    private int ddpInstanceId;
+    private BaseExporter esExporter;
     private boolean initialized;
     private static final String ID_COLUMN = "RECORD_ID";
 
@@ -58,29 +73,28 @@ public class OncHistoryUploadService {
             return;
         }
 
-        int ddpInstanceId;
         try {
-            Optional<DDPInstanceDto> ddpInstance = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm);
-            ddpInstanceId = ddpInstance.orElseThrow().getDdpInstanceId();
-            participantIndex = ddpInstance.orElseThrow().getEsParticipantIndex();
+            DDPInstanceDto ddpInstance = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm).orElseThrow();
+            ddpInstanceId = ddpInstance.getDdpInstanceId();
+            participantIndex = ddpInstance.getEsParticipantIndex();
         } catch (Exception e) {
             throw new DSMBadRequestException("Invalid realm: " + realm);
         }
 
-        setColumnsForStudy();
+        initColumnsForStudy();
 
         // get picklists for study
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         List<FieldSettingsDto> pickLists = fieldSettingsDao.getOptionAndRadioFieldSettingsByInstanceId(ddpInstanceId);
 
         columnValidator = new ColumnValidator(pickLists);
+
+        setEsExporter(new ElasticDataExportAdapter());
         initialized = true;
     }
 
-    protected List<String> getOrderedDbColumnNames() {
-        return studyColumns.values().stream().filter(col -> col.tableAlias.equals(DDP_ONC_HISTORY_DETAIL_ALIAS))
-                .map(OncHistoryUploadColumn::getColumnName)
-                .collect(Collectors.toList());
+    protected void setEsExporter(BaseExporter esExporter) {
+        this.esExporter = esExporter;
     }
 
     public void upload(String fileContent) {
@@ -102,6 +116,9 @@ public class OncHistoryUploadService {
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows,
                 new ESParticipantIdProvider(realm, participantIndex), true);
+
+        // ensure oncHistory record for each participant
+        createOncHistoryRecords(rows);
 
         // write OncHistoryDetails to DB
         writeToDb(rows, participantMedIds);
@@ -147,39 +164,109 @@ public class OncHistoryUploadService {
     }
 
     /**
-     *  validate row contents and convert certain columns to json additionalValues
+     * validate row contents and convert certain columns to json additionalValues
      */
     protected void validateRows(List<OncHistoryRecord> rows) {
-        for (OncHistoryRecord row: rows) {
-            for (Map.Entry<String, String> entry: row.getColumns().entrySet()) {
-                validateColumn(entry.getKey(), entry.getValue(), row);
-                // TODO perhaps gather N errors into a buffer or on OncHistoryRecord and report multiple problems?
+        for (OncHistoryRecord row : rows) {
+            for (Map.Entry<String, String> entry : row.getColumns().entrySet()) {
+                if (!entry.getValue().isEmpty()) {
+                    // TODO perhaps gather N errors into a buffer or on OncHistoryRecord and report multiple problems?
+                    ColumnValidatorResponse res = validateColumn(entry.getKey(), entry.getValue(), row);
+                    if (res.newValue != null && !res.newValue.isEmpty()) {
+                        entry.setValue(res.newValue);
+                    }
+                }
             }
             // remove the columns that were moved to additionalValues (here to avoid problems with iterator)
             row.getColumns().entrySet().removeIf(entry ->
-                    studyColumns.get(entry.getKey()).tableAlias.equals(FIELD_SETTINGS_ALIAS));
+                    studyColumns.get(entry.getKey()).getTableAlias().equals(FIELD_SETTINGS_ALIAS));
         }
     }
 
-    protected void validateColumn(String columnName, String value, OncHistoryRecord row) {
+    protected ColumnValidatorResponse validateColumn(String columnName, String value, OncHistoryRecord row) {
         if (value.isEmpty()) {
-            return;
+            return new ColumnValidatorResponse();
         }
         OncHistoryUploadColumn col = studyColumns.get(columnName);
         // assertion
         if (col == null) {
             throw new DsmInternalError("Invalid column name: " + columnName);
         }
-        StringBuilder sb = new StringBuilder();
-        boolean valid = columnValidator.validate(value, columnName, col.getParseType(), sb);
-        if (!valid) {
-            throw new OncHistoryValidationException(sb.toString());
+        ColumnValidatorResponse res = columnValidator.validate(value, columnName, col.getParseType());
+        if (!res.valid) {
+            throw new OncHistoryValidationException(res.errorMessage);
         }
 
         // move certain row values to additionalValues
-        if (col.tableAlias.equals(FIELD_SETTINGS_ALIAS)) {
+        if (col.getTableAlias().equals(FIELD_SETTINGS_ALIAS)) {
             JsonObject json = row.getAdditionalValues();
-            json.addProperty(col.columnName, value);
+            json.addProperty(col.getColumnName(), value);
+        }
+        return res;
+    }
+
+    /**
+     * Create or update OncHistory record for each participant, and update ES as needed
+     */
+    protected void createOncHistoryRecords(List<OncHistoryRecord> rows) {
+        Set<Integer> participantIds = new HashSet<>();
+
+        for (OncHistoryRecord row: rows) {
+            if (!participantIds.contains(row.getParticipantId())) {
+                createOncHistory(row);
+                participantIds.add(row.getParticipantId());
+            }
+        }
+    }
+
+    /**
+     * Create or update OncHistory record, and update ES if needed
+     */
+    protected void createOncHistory(OncHistoryRecord row) {
+        OncHistoryDto oncHistoryDto;
+        boolean updateEs = true;
+        int participantId = row.getParticipantId();
+        try {
+            Optional<OncHistoryDto> res = OncHistoryDao.getByParticipantId(participantId);
+            if (res.isEmpty()) {
+                oncHistoryDto = new OncHistoryDto.Builder()
+                        .withParticipantId(participantId)
+                        .withChangedBy(userId)
+                        .withLastChangedNow()
+                        .withCreatedNow().build();
+                OncHistoryDao oncHistoryDao = new OncHistoryDao();
+                oncHistoryDto.setOncHistoryId(oncHistoryDao.create(oncHistoryDto));
+            } else {
+                oncHistoryDto = res.get();
+                String createdDate = oncHistoryDto.getCreated();
+                if (createdDate == null || createdDate.isEmpty()) {
+                    NameValue created = OncHistory.setOncHistoryCreated(Integer.toString(participantId), userId);
+                    oncHistoryDto.setCreated(created.getValue().toString());
+                } else {
+                    updateEs = false;
+                }
+            }
+        } catch (Exception e) {
+            throw new DsmInternalError("Error updating onc history record for participant " + participantId, e);
+        }
+
+        if (updateEs) {
+            Map<String, Object> oncHistory = new HashMap<>();
+            oncHistory.put(PARTICIPANT_ID, participantId);
+            oncHistory.put(ONC_HISTORY_ID, oncHistoryDto.getOncHistoryId());
+            oncHistory.put(ONC_HISTORY_CREATED, oncHistoryDto.getCreated());
+
+            Map<String, Object> parent = new HashMap<>();
+            parent.put(ONC_HISTORY, oncHistory);
+            Map<String, Object> update = Map.of(ESObjectConstants.DSM, parent);
+
+            try {
+                exportToES(update, row.getDdpParticipantId(), esExporter);
+            } catch (Exception e) {
+                String msg = String.format("Error writing oncHistory to ES for participant ID: %d, record ID %d",
+                        participantId, oncHistoryDto.getOncHistoryId());
+                throw new DsmInternalError(msg, e);
+            }
         }
     }
 
@@ -192,17 +279,24 @@ public class OncHistoryUploadService {
         // get ordered list of columns to update
         List<String> dbColNames = getOrderedDbColumnNames();
         String insertQuery = constructInsertQuery(dbColNames);
+        Map<String, String> uploadColByDbCol = getUploadColByDbCol();
 
         // TODO see about doing all rows in one transaction
-        for (OncHistoryRecord row: rows) {
+        for (OncHistoryRecord row : rows) {
             Integer medId = participantMedIds.get(row.getParticipantId());
             // assertion
             if (medId == null) {
                 throw new DsmInternalError("No medical record ID for participant " + row.getParticipantId());
             }
-            int recordId = createOncHistoryDetail(row, userId, medId, insertQuery, dbColNames);
+            int recordId = createOncHistoryDetail(row, userId, medId, insertQuery, dbColNames, uploadColByDbCol);
             row.setRecordId(recordId);
         }
+    }
+
+    protected List<String> getOrderedDbColumnNames() {
+        return studyColumns.values().stream().filter(col -> col.getTableAlias().equals(DDP_ONC_HISTORY_DETAIL_ALIAS))
+                .map(OncHistoryUploadColumn::getColumnName)
+                .collect(Collectors.toList());
     }
 
     protected static String constructInsertQuery(List<String> orderedColumns) {
@@ -211,14 +305,15 @@ public class OncHistoryUploadService {
                 + ", last_changed = ?"
                 + ", changed_by = ?"
                 + ", additional_values_json = ?");
-        for (String colName: orderedColumns) {
+        for (String colName : orderedColumns) {
             sb.append(String.format(", %s = ?", colName));
         }
         return sb.toString();
     }
 
     protected static int createOncHistoryDetail(OncHistoryRecord row, String changedBy, int medicalRecordId,
-                                                String insertQuery, List<String> orderedColNames) {
+                                                String insertQuery, List<String> orderedColNames,
+                                                Map<String, String> uploadColByDbCol) {
         String additionalValues = row.getAdditionalValuesString();
         Map<String, String> recordCols = row.getColumns();
 
@@ -232,8 +327,8 @@ public class OncHistoryUploadService {
 
                 // the insert query positions are ordered the same as ordered column names
                 int index = 5;
-                for (String colName: orderedColNames) {
-                    String value = recordCols.get(colName);
+                for (String colName : orderedColNames) {
+                    String value = recordCols.get(uploadColByDbCol.get(colName));
                     stmt.setString(index++, value);
                 }
                 int result = stmt.executeUpdate();
@@ -265,34 +360,51 @@ public class OncHistoryUploadService {
      * For each row, write column values to ES participant index
      */
     protected void writeToES(List<OncHistoryRecord> rows) {
-        for (OncHistoryRecord row: rows) {
-            List<NameValue> nameValues = new ArrayList<>();
-            String additionalValues = row.getAdditionalValuesString();
-            if (additionalValues != null) {
-                nameValues.add(new NameValue("additionalValuesJson", additionalValues));
-            }
+        for (OncHistoryRecord row : rows) {
+            Map<String, Object> oncHistory = new HashMap<>();
 
             Map<String, String> colValues = row.getColumns();
-            for (var entry: colValues.entrySet()) {
+            for (var entry : colValues.entrySet()) {
                 String value = entry.getValue();
-                if (value != null) {
-                    nameValues.add(new NameValue(entry.getKey(), value));
+                if (value != null && !value.isEmpty()) {
+                    oncHistory.put(CamelCaseConverter.of(entry.getKey()).convert(), value);
                 }
             }
+
+            JsonObject additionalValues = row.getAdditionalValues();
+            if (!additionalValues.entrySet().isEmpty()) {
+                Map<String, Object> dynamicFields = new HashMap<>();
+                for (var prop : additionalValues.entrySet()) {
+                    dynamicFields.put(CamelCaseConverter.of(prop.getKey()).convert(), prop.getValue().getAsString());
+                }
+                oncHistory.put(DYNAMIC_FIELDS, dynamicFields);
+            }
+
+            // ES document also includes DPP instance ID and oncHistoryDetail record ID
+            oncHistory.put("ddpInstanceId", ddpInstanceId);
+            oncHistory.put("oncHistoryDetailId", row.getRecordId());
+
+            Map<String, Object> parent = new HashMap<>();
+            List<Object> oncHistoryList = new ArrayList<>();
+
+            oncHistoryList.add(oncHistory);
+            parent.put(ONC_HISTORY_DETAIL, oncHistoryList);
+            Map<String, Object> update = Map.of(ESObjectConstants.DSM, parent);
+
             try {
-                exportToES(nameValues, Integer.toString(row.getParticipantId()), row.getRecordId());
+                exportToES(update, row.getDdpParticipantId(), esExporter);
             } catch (Exception e) {
-                throw new DsmInternalError("Error writing OncHistoryDetail to ES for record ID " + row.getRecordId(), e);
+                String msg = String.format("Error writing oncHistoryDetail to ES for participant ID: %d, record ID %d",
+                        row.getParticipantId(), row.getRecordId());
+                throw new DsmInternalError(msg, e);
             }
         }
     }
 
-    private void exportToES(List<NameValue> nameValues, String participantId, int recordId) {
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValues, realm, recordId);
-        ExportFacadePayload exportFacadePayload =
-                new ExportFacadePayload(participantIndex, participantId, generatorPayload, realm);
-        ExportFacade exportFacade = new ExportFacade(exportFacadePayload);
-        exportFacade.export();
+    private void exportToES(Map<String, Object> source, String ddpParticipantId, BaseExporter exporter) {
+        exporter.setRequestPayload(new RequestPayload(participantIndex, ddpParticipantId));
+        exporter.setSource(source);
+        exporter.export();
     }
 
     /**
@@ -321,16 +433,25 @@ public class OncHistoryUploadService {
         return cols;
     }
 
+    protected Map<String, String> getUploadColByDbCol() {
+        return studyColumns.values().stream()
+                .collect(Collectors.toMap(OncHistoryUploadColumn::getColumnName, OncHistoryUploadColumn::getColumnAlias));
+    }
+
     /**
      * For the instance study, set the study columns for this instance
      * (Provided mostly as a testing convenience)
      */
-    public Map<String, OncHistoryUploadColumn> setColumnsForStudy() {
+    public Map<String, OncHistoryUploadColumn> initColumnsForStudy() {
         if (studyColumns != null) {
             return studyColumns;
         }
 
         studyColumns = studyColumnsProvider.getColumnsForStudy(realm);
+        return studyColumns;
+    }
+
+    protected Map<String, OncHistoryUploadColumn> getStudyColumns() {
         return studyColumns;
     }
 }

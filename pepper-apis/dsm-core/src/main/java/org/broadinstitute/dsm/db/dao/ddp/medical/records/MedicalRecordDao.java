@@ -122,7 +122,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
             throw new RuntimeException("Error getting medical record with id: " + id,
                     res.resultException);
         }
-        return Optional.of((MedicalRecord) res.resultValue);
+        return (Optional<MedicalRecord>) res.resultValue;
     }
 
     private static class BuildMedicalRecord implements ResultsBuilder {

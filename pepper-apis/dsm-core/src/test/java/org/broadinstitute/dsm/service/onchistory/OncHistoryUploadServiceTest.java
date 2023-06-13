@@ -1,12 +1,16 @@
 package org.broadinstitute.dsm.service.onchistory;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static org.broadinstitute.dsm.statics.DBConstants.ADDITIONAL_VALUES_JSON;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +20,14 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParserTest;
@@ -35,8 +42,8 @@ import org.junit.Test;
 public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
     private static final String REALM = "osteo2";
-    private static final String TEST_USER = "testUser";
-    private static Map<Integer, Integer> participants;
+    private static final String TEST_USER = "testUser@broad.org";
+    private static Map<String, ParticipantInfo> participants;
     private static DDPInstanceDto instanceDto;
     private static ParticipantDao participantDao;
 
@@ -86,6 +93,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         OncHistoryUploadService uploadService =
                 new OncHistoryUploadService(REALM, TEST_USER, new CodeStudyColumnsProvider());
         uploadService.initialize();
+        uploadService.setEsExporter(new MockElasticExporter());
 
         RowReader rowReader = new RowReader();
         rowReader.read("onchistory/oncHistoryDetail.txt", uploadService);
@@ -106,14 +114,22 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows, shortIdToId);
         Assert.assertEquals(2, participantMedIds.size());
 
+        Map<String, OncHistoryUploadColumn> studyColumns = uploadService.getStudyColumns();
+        OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
         try {
             uploadService.writeToDb(rows, participantMedIds);
+            for (OncHistoryRecord row: rows) {
+                Assert.assertTrue(row.getRecordId() > 0);
+                OncHistoryDetailDto record = oncHistoryDetailDao.get(row.getRecordId()).orElseThrow();
+                compareRecord(row, record, studyColumns);
+            }
         } catch (Exception e) {
             Assert.fail("Exception from OncHistoryUploadService.writeToDb: " +  getStackTrace(e));
         } finally {
-            OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
             for (OncHistoryRecord row : rows) {
-                if (row.getRecordId() > 0) {
+                int recordId = row.getRecordId();
+                if (recordId > 0) {
+                    Optional<OncHistoryDetailDto> record = oncHistoryDetailDao.get(recordId);
                     oncHistoryDetailDao.delete(row.getRecordId());
                 }
             }
@@ -121,6 +137,37 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
         for (OncHistoryRecord row: rows) {
             Assert.assertTrue(row.getRecordId() > 0);
+        }
+    }
+
+    @Test
+    public void testCreateOncHistoryRecords() {
+        OncHistoryUploadService uploadService =
+                new OncHistoryUploadService(REALM, TEST_USER, new CodeStudyColumnsProvider());
+        uploadService.initialize();
+        uploadService.setEsExporter(new MockElasticExporter());
+
+        RowReader rowReader = new RowReader();
+        rowReader.read("onchistory/oncHistoryDetail.txt", uploadService);
+        List<OncHistoryRecord> rows = rowReader.getRows();
+        Assert.assertEquals(3, rows.size());
+
+        Map<String, Integer> shortIdToId = createParticipantsFromRows(rows);
+        // expecting two participants across three rows
+        Assert.assertEquals(2, shortIdToId.size());
+
+        OncHistoryDao oncHistoryDao = new OncHistoryDao();
+        try {
+            uploadService.createOncHistoryRecords(rows);
+            verifyOncHistoryRecords(rows);
+        } catch (Exception e) {
+            Assert.fail("Exception from OncHistoryUploadService.createOncHistoryRecords: " +  getStackTrace(e));
+        } finally {
+            for (OncHistoryRecord row : rows) {
+                int participantId = row.getParticipantId();
+                Optional<OncHistoryDto> record = OncHistoryDao.getByParticipantId(participantId);
+                record.ifPresent(oncHistoryDto -> oncHistoryDao.delete(oncHistoryDto.getOncHistoryId()));
+            }
         }
     }
 
@@ -149,16 +196,19 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         MedicalRecordDao medicalRecordDao = MedicalRecordDao.of();
         DDPInstitutionDao institutionDao = DDPInstitutionDao.of();
         for (var entry: participants.entrySet()) {
-            int mrId = entry.getValue();
-            MedicalRecord mr = medicalRecordDao.get(mrId).orElseThrow();
+            ParticipantInfo info = entry.getValue();
+            MedicalRecord mr = medicalRecordDao.get(info.mrId).orElseThrow();
             int institutionId = (int) mr.getInstitutionId();
-            medicalRecordDao.delete(mrId);
+            medicalRecordDao.delete(info.mrId);
             institutionDao.delete(institutionId);
-            participantDao.delete(entry.getKey());
+            participantDao.delete(info.participantId);
         }
     }
 
-    private static int createParticipant(String ddpParticipantId) {
+    private static synchronized int createParticipant(String ddpParticipantId) {
+        if (participants.containsKey(ddpParticipantId)) {
+            return participants.get(ddpParticipantId).participantId;
+        }
         ParticipantDto.Builder builder = new ParticipantDto.Builder(instanceDto.getDdpInstanceId(), System.currentTimeMillis());
         ParticipantDto participantDto = builder.withDdpParticipantId(ddpParticipantId)
                 .withLastVersionDate("")
@@ -167,7 +217,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
         try {
             int mrId = OncHistoryDetail.verifyOrCreateMedicalRecord(participantId, ddpParticipantId, REALM, false);
-            participants.put(participantId, mrId);
+            participants.put(ddpParticipantId, new ParticipantInfo(participantId, mrId));
         } catch (Exception e) {
             Assert.fail(getStackTrace(e));
         }
@@ -175,15 +225,22 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         return participantId;
     }
 
+    /**
+     * Create participants from a list of rows
+     *
+     * @return map of short ID to participant ID
+     */
     private static Map<String, Integer> createParticipantsFromRows(List<OncHistoryRecord> rows) {
         Map<String, Integer> idMap = new HashMap<>();
         for (OncHistoryRecord row: rows) {
             String shortId = row.getParticipantTextId();
-            if (idMap.get(shortId) == null) {
+            Integer participantId = idMap.get(shortId);
+            if (participantId == null) {
                 String ddpParticipantId = genDdpParticipantId(shortId);
-                int participantId = createParticipant(ddpParticipantId);
+                participantId = createParticipant(ddpParticipantId);
                 idMap.put(shortId, participantId);
             }
+            row.setParticipantId(participantId);
         }
 
         return idMap;
@@ -212,6 +269,29 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         }
     }
 
+    private static void compareRecord(OncHistoryRecord row, OncHistoryDetailDto record,
+                                      Map<String, OncHistoryUploadColumn> studyColumns) {
+        Map<String, Object> recordMap = record.getColumnValues();
+
+        Map<String, String> colValues = row.getColumns();
+        for (var entry: colValues.entrySet()) {
+            String value = entry.getValue();
+            if (value != null) {
+                Object val = recordMap.get(studyColumns.get(entry.getKey()).getColumnName());
+                Assert.assertNotNull("Missing DB value for column " + entry.getKey(), val);
+                Assert.assertEquals("Different value for column " + entry.getKey(), value, val.toString());
+            }
+        }
+
+        String additionalValues = row.getAdditionalValuesString();
+        if (additionalValues != null) {
+            Object values = recordMap.get(ADDITIONAL_VALUES_JSON);
+            Assert.assertNotNull("Missing DB value for column " + ADDITIONAL_VALUES_JSON, values);
+            Assert.assertEquals("Different value for column " + ADDITIONAL_VALUES_JSON, additionalValues,
+                    values.toString());
+        }
+    }
+
     /**
      * Verify the participant short ID, and get and record associated participant IDs and medical record IDs
      *
@@ -231,6 +311,23 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
             return null;
+        }
+    }
+
+    private static void verifyOncHistoryRecords(List<OncHistoryRecord> rows) {
+        long checkTime = (Instant.now().getEpochSecond() - 120) * 1000;
+        Set<Integer> participantIds = new HashSet<>();
+        for (OncHistoryRecord row: rows) {
+            int participantId = row.getParticipantId();
+            if (participantIds.contains(participantId)) {
+                continue;
+            }
+            Optional<OncHistoryDto> res = OncHistoryDao.getByParticipantId(participantId);
+            Assert.assertTrue(res.isPresent());
+            OncHistoryDto record = res.get();
+            Assert.assertTrue(record.getCreated() != null && !record.getCreated().isEmpty());
+            Assert.assertTrue(record.getLastChanged() > checkTime);
+            Assert.assertEquals(record.getChangedBy(), TEST_USER);
         }
     }
 
@@ -272,8 +369,8 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         fieldSettings = builder.withFieldType("oD")
                 .withColumnName("DECALCIFICATION")
                 .withDisplayType("OPTIONS")
-                .withPossibleValues("[{\"value\":\"Nitric Acid (includes Perenyi\\u0027s fluid)\"},"
-                        + "{\"value\":\"Hydrochloric Acid (includes Von Ebner\\u0027s solution)\"},"
+                .withPossibleValues("[{\"value\":\"Nitric Acid (includes Perenyi's fluid)\"},"
+                        + "{\"value\":\"Hydrochloric Acid (includes Von Ebner's solution)\"},"
                         + "{\"value\":\"Formic Acid (includes Evans/Kajian, Kristensen/Gooding/Stewart)\"},"
                         + "{\"value\":\"Acid NOS\"},{\"value\":\"EDTA\"},{\"value\":\"Sample not decalcified\"},"
                         + "{\"value\":\"Other\"},{\"value\":\"Unknown\"},{\"value\":\"Immunocal/ Soft Decal\"}]").build();
@@ -306,6 +403,16 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         @Override
         public int getParticipantIdForShortId(String shortId) {
             return shortIdToId.get(shortId);
+        }
+    }
+
+    private static class ParticipantInfo {
+        public final int participantId;
+        public final int mrId;
+
+        public ParticipantInfo(int participantId, int mrId) {
+            this.participantId = participantId;
+            this.mrId = mrId;
         }
     }
 }

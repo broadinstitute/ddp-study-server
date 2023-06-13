@@ -9,9 +9,7 @@ import java.sql.Statement;
 import java.util.Optional;
 
 import lombok.NonNull;
-import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -102,7 +100,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
             throw new RuntimeException("Error getting participant with id: " + id,
                     res.resultException);
         }
-        return Optional.of((ParticipantDto) res.resultValue);
+        return (Optional<ParticipantDto>) res.resultValue;
     }
 
     public Optional<String> getParticipantFromCollaboratorParticipantId(String collaboratorParticipantId, String ddpInstanceId) {

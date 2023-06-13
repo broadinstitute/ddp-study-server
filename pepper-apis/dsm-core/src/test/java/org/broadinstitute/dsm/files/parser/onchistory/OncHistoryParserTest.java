@@ -104,9 +104,9 @@ public class OncHistoryParserTest {
     }
 
     private static OncHistoryUploadService initUploadService() {
-        OncHistoryUploadService uploadService = new OncHistoryUploadService("testRealm", "testUser",
+        OncHistoryUploadService uploadService = new OncHistoryUploadService("osteo2", "testUser",
                 new CodeStudyColumnsProvider());
-        uploadService.setColumnsForStudy();
+        uploadService.initColumnsForStudy();
         return uploadService;
     }
 

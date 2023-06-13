@@ -46,16 +46,15 @@ public class ColumnValidatorTest {
 
     @Test
     public void testPickLists() {
-        StringBuilder sb = new StringBuilder();
-        boolean valid = validator.validate("attr1", "pick1", "o", sb);
-        Assert.assertTrue(valid);
-        valid = validator.validate("attr3", "pick2", "o", sb);
-        Assert.assertTrue(valid);
-        valid = validator.validate("attr3", "pick1", "o", sb);
-        Assert.assertFalse(valid);
-        Assert.assertTrue(sb.toString().contains("Invalid value for column"));
+        ColumnValidatorResponse res = validator.validate("attr1", "pick1", "o");
+        Assert.assertTrue(res.valid);
+        res = validator.validate("attr3", "pick2", "o");
+        Assert.assertTrue(res.valid);
+        res = validator.validate("attr3", "pick1", "o");
+        Assert.assertFalse(res.valid);
+        Assert.assertTrue(res.errorMessage.contains("Invalid value for column"));
         try {
-            validator.validate("attr1", "pick3", "o", sb);
+            validator.validate("attr1", "pick3", "o");
             Assert.fail("Column does not have picklist should throw");
         } catch (DsmInternalError e) {
             Assert.assertTrue(e.getMessage().contains("Possible values not found for column"));
@@ -64,34 +63,38 @@ public class ColumnValidatorTest {
 
     @Test
     public void testDates() {
-        StringBuilder sb = new StringBuilder();
-        boolean valid = validator.validate("12/5/2022", "date_col", "d", sb);
-        Assert.assertTrue(valid);
-        valid = validator.validate("2022/12/15", "date_col", "d", sb);
-        Assert.assertTrue(valid);
-        valid = validator.validate("12/2022", "date_col", "d", sb);
-        Assert.assertFalse(valid);
-        Assert.assertTrue(sb.toString().contains("Invalid date"));
-        sb.setLength(0);
-        valid = validator.validate("abc", "date_col", "d", sb);
-        Assert.assertFalse(valid);
-        Assert.assertTrue(sb.toString().contains("Invalid date"));
+        ColumnValidatorResponse res = validator.validate("12/5/2022", "date_col", "d");
+        Assert.assertTrue(res.valid);
+        Assert.assertEquals("2022-12-05", res.newValue);
+        res = validator.validate("12-15-2022", "date_col", "d");
+        Assert.assertTrue(res.valid);
+        Assert.assertEquals("2022-12-15", res.newValue);
+        res = validator.validate("2022/3/11", "date_col", "d");
+        Assert.assertTrue(res.valid);
+        Assert.assertEquals("2022-03-11", res.newValue);
+        res = validator.validate("2022-11-20", "date_col", "d");
+        Assert.assertTrue(res.valid);
+        res = validator.validate("12/2022", "date_col", "d");
+        Assert.assertFalse(res.valid);
+        Assert.assertTrue(res.errorMessage.contains("Invalid date"));
+        res = validator.validate("abc", "date_col", "d");
+        Assert.assertFalse(res.valid);
+        Assert.assertTrue(res.errorMessage.contains("Invalid date"));
     }
 
     @Test
     public void testNumbers() {
-        StringBuilder sb = new StringBuilder();
         try {
             // bad validation type
-            validator.validate("2", "int_col", "x", sb);
+            validator.validate("2", "int_col", "x");
             Assert.fail("Bad validation type should throw");
         } catch (DsmInternalError e) {
             Assert.assertTrue(e.getMessage().contains("Invalid column validation type"));
         }
-        boolean valid = validator.validate("2", "int_col", "i", sb);
-        Assert.assertTrue(valid);
-        valid = validator.validate("abc", "int_col", "i", sb);
-        Assert.assertFalse(valid);
-        Assert.assertTrue(sb.toString().contains("Invalid number"));
+        ColumnValidatorResponse res = validator.validate("2", "int_col", "i");
+        Assert.assertTrue(res.valid);
+        res = validator.validate("abc", "int_col", "i");
+        Assert.assertFalse(res.valid);
+        Assert.assertTrue(res.errorMessage.contains("Invalid number"));
     }
 }

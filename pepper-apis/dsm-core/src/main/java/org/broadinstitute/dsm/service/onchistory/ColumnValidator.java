@@ -1,10 +1,13 @@
 package org.broadinstitute.dsm.service.onchistory;
 
+import static org.broadinstitute.dsm.util.SystemUtil.DATE_FORMAT;
+import static org.broadinstitute.dsm.util.SystemUtil.DDP_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.INTL_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.US_DATE_FORMAT;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,7 +22,10 @@ public class ColumnValidator {
 
     private final Map<String, List<String>> columnToPickList;
 
+    private static List<String> dateFormats = List.of(US_DATE_FORMAT, DDP_DATE_FORMAT, INTL_DATE_FORMAT);
+
     /**
+     * Constructor
      * @param pickLists DTO of field_settings rows that have multiple possible values
      */
     ColumnValidator(List<FieldSettingsDto> pickLists) {
@@ -32,44 +38,54 @@ public class ColumnValidator {
      * Validate a column value
      *
      * @param validationType validation type code (s:string, d:date, i:integer, o:options)
-     * @param errorMessage buffer for error message on failed validation
-     * @return true if column value is valid
+     * @return ColumnValidatorResponse
      */
-    public boolean validate(String value, String columnName, String validationType, StringBuilder errorMessage) {
+    public ColumnValidatorResponse validate(String value, String columnName, String validationType) {
+        ColumnValidatorResponse res = new ColumnValidatorResponse();
         switch (validationType) {
             case "s":
-                return true;
+                return res;
             case "d":
                 try {
-                    SimpleDateFormat parser = new SimpleDateFormat(US_DATE_FORMAT);
-                    parser.parse(value);
+                    getDateString(value, DATE_FORMAT);
                 } catch (ParseException e) {
-                    try {
-                        SimpleDateFormat parser = new SimpleDateFormat(INTL_DATE_FORMAT);
-                        parser.parse(value);
-                    } catch (ParseException pe) {
-                        errorMessage.append(String.format("Invalid date format for column %s: %s", columnName, value));
-                        return false;
+                    for (String dateFormat: dateFormats) {
+                        try {
+                            res.newValue = getDateString(value, dateFormat);
+                            return res;
+                        } catch (ParseException pe) {
+                            continue;
+                        }
                     }
+                    res.errorMessage = String.format("Invalid date format for column %s: %s", columnName, value);
+                    res.valid = false;
                 }
-                return true;
+                return res;
             case "i":
                 try {
                     Integer.parseInt(value);
                 } catch (NumberFormatException e) {
-                    errorMessage.append(String.format("Invalid number for column %s: %s", columnName, value));
-                    return false;
+                    res.errorMessage = String.format("Invalid number for column %s: %s", columnName, value);
+                    res.valid = false;
                 }
-                return true;
+                return res;
             case "o":
-                return validatePickListValue(value, columnName, errorMessage);
+                return validatePickListValue(value, columnName, res);
             default:
                 // assertion
                 throw new DsmInternalError("Invalid column validation type: " + validationType);
         }
     }
 
-    private boolean validatePickListValue(String value, String columnName, StringBuilder errorMessage) {
+    private String getDateString(String value, String pattern) throws ParseException {
+        SimpleDateFormat parser = new SimpleDateFormat(pattern);
+        parser.setLenient(false);
+        Date date = parser.parse(value);
+        parser.applyPattern(DATE_FORMAT);
+        return parser.format(date);
+    }
+
+    private ColumnValidatorResponse validatePickListValue(String value, String columnName, ColumnValidatorResponse res) {
         List<String> values = columnToPickList.get(columnName);
         if (values == null) {
             // assertion
@@ -77,10 +93,10 @@ public class ColumnValidator {
         }
 
         if (!values.contains(value)) {
-            errorMessage.append(String.format("Invalid value for column %s: %s. Valid values are: %s",
-                    columnName, value, values));
-            return false;
+            res.errorMessage = String.format("Invalid value for column %s: %s. Valid values are: %s",
+                    columnName, value, values);
+            res.valid = false;
         }
-        return true;
+        return res;
     }
 }

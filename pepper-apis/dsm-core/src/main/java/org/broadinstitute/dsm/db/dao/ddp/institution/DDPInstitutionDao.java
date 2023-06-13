@@ -82,7 +82,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
                     res.resultException);
         }
         logger.info("Got institution from DB with institution_id = {}", institutionId);
-        return Optional.of((DDPInstitutionDto) res.resultValue);
+        return (Optional<DDPInstitutionDto>) res.resultValue;
     }
 
 

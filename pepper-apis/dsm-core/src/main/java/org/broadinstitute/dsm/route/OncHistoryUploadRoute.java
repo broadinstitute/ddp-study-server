@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.route;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -17,7 +19,7 @@ import spark.Response;
 @Slf4j
 public class OncHistoryUploadRoute extends RequestHandler {
 
-    public static final String ONC_HISTORY_UPLOAD = "kit_upload"; // TOOO temp:
+    public static final String ONC_HISTORY_UPLOAD = "kit_upload"; // TOOO temp until testers are part of role -DC
     //public static final String ONC_HISTORY_UPLOAD = "onc_history_upload";
 
     @Override
@@ -35,9 +37,21 @@ public class OncHistoryUploadRoute extends RequestHandler {
             return (UserErrorMessages.NO_RIGHTS);
         }
 
+        String oncHistoryUserId;
+        try {
+            UserDto user = new UserDao().get(Integer.parseInt(userId)).orElseThrow();
+            oncHistoryUserId = user.getEmail().orElseThrow();
+            if (oncHistoryUserId.isEmpty()) {
+                throw new DsmInternalError("Empty email address");
+            }
+        } catch (Exception e) {
+            response.status(500);
+            return "No email address for user " + userId;
+        }
+
         try {
             OncHistoryUploadService service =
-                    new OncHistoryUploadService(realm, userId, new CodeStudyColumnsProvider());
+                    new OncHistoryUploadService(realm, oncHistoryUserId, new CodeStudyColumnsProvider());
             service.upload(request.body());
             response.status(200);
             // TODO: needed?
@@ -56,7 +70,6 @@ public class OncHistoryUploadRoute extends RequestHandler {
     }
 
     private static boolean canUploadOncHistory(String realm, String userId) {
-        // TODO: fix role
         return UserUtil.checkUserAccess(realm, userId, ONC_HISTORY_UPLOAD);
     }
 }

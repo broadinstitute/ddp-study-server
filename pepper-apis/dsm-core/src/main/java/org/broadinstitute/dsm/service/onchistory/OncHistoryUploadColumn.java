@@ -7,10 +7,10 @@ import lombok.Data;
 @Data
 public class OncHistoryUploadColumn {
 
-    public String columnName;
-    public String columnAlias;
-    public String tableAlias;
-    public String parseType;
+    private final String columnName;
+    private final String columnAlias;
+    private final String tableAlias;
+    private final String parseType;
 
     public OncHistoryUploadColumn(String columnName, String columnAlias, String tableAlias, String parseType) {
         this.columnName = columnName;
@@ -20,8 +20,8 @@ public class OncHistoryUploadColumn {
     }
 
     public static OncHistoryUploadColumn fromJson(String jsonString) {
-            JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
-            return new OncHistoryUploadColumn(json.get("columnName").getAsString(),
+        JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
+        return new OncHistoryUploadColumn(json.get("columnName").getAsString(),
                     json.get("columnAlias").getAsString(),
                     json.get("columnName").getAsString(),
                     json.get("parseType").getAsString());
