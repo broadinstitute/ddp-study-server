@@ -212,8 +212,8 @@
     }
     "somatic": {
         "realmToBucketMappings": [
-            {"realm": "osteo2", "uploadBucket":"cmi-osteo2-incoming"},
-            {"realm": "lms", "uploadBucket":"cmi-lms-incoming"}
+            {"realm": "osteo2", "uploadBucket":"cmi-osteo2-uploaded-files"},
+            {"realm": "lms", "uploadBucket":"cmi-lms-uploaded-files"}
         ]
     }
 }
