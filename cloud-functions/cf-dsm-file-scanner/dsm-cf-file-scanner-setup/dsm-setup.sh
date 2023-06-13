@@ -34,17 +34,17 @@ echo "setting the final bucket for scanned files"
 trigger_topic_name="$study_name"-file-scanner-trigger
 subscription_name="$study_name"-file-scanner-trigger-sub
 
-# Call the create_trigger_topic.sh script to create the pubsub topic that triggers the FileScanner
+# Call the create_topic_and_sub.sh script to create the pubsub topic that triggers the FileScanner
 echo "creating the $trigger_topic_name pubsub topic that triggers the FileScanner"
-./create_trigger_topic.sh $project_name $trigger_topic_name $subscription_name
+./create_topic_and_sub.sh $project_name $trigger_topic_name $subscription_name
 
 #set the event for the OBJECT_FINALIZE event in the bucket
 echo "creating the event from bucket $study_name-uploaded-files to this topic for OBJECT_FINALIZE"
-../init-bucket-event.sh $project_name $study_name-uploaded-files $trigger_topic_name
+./init-bucket-event.sh $project_name $study_name-uploaded-files $trigger_topic_name
 
-trigger_topic_name="dsm-file-scanner-results"
-subscription_name="$trigger_topic_name"-sub
+results_topic_name="dsm-file-scanner-results"
+subscription_name="$results_topic_name"-sub
 
 #create the results topic and subscription if they don't exist
 echo "creating the results topic and subscription if they don't exist"
-./create_results_topic.sh $project_name $trigger_topic_name $subscription_name
+./create_topic_and_sub.sh $project_name $results_topic_name $subscription_name
