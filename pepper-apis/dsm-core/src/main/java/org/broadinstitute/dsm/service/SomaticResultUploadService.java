@@ -52,9 +52,7 @@ public class SomaticResultUploadService {
             throw new DDPException("Could not get signer credentials", e);
         }
 
-        GoogleCredentials bucketCredentials;
-        boolean ensureDefault = false;
-        bucketCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
+        GoogleCredentials bucketCredentials = GoogleCredentialUtil.initCredentials(false);
         if (bucketCredentials == null) {
             log.error("Could not get bucket credentials, defaulting to signer credentials");
             bucketCredentials = signerCredentials;
@@ -125,6 +123,18 @@ public class SomaticResultUploadService {
     }
 
     public SomaticResultUpload deleteUpload(long userId, int documentId) {
+        SomaticResultUpload existingDocument;
+
+        try {
+            existingDocument = SomaticResultUpload.getSomaticFileUploadById(documentId);
+        } catch (RuntimeException rte) {
+            throw new IllegalArgumentException("No document found for entry");
+        }
+
+        if (isDeletedSomaticResult(existingDocument)) {
+            return existingDocument;
+        }
+
         SomaticResultUpload deletedSomaticResultUpload = SomaticResultUpload.deleteDocumentByDocumentId(userId, documentId);
         Blob blobToDelete = storageClient.getBlob(deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
         if (blobToDelete != null) {
@@ -135,19 +145,23 @@ public class SomaticResultUploadService {
                 log.error("Somatic document failed to delete from GCS. Manual intervention required.  "
                                 + "Last recorded bucket: {}, blobPath: {} ",
                         deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
-                throw(new RuntimeException("Deletion failed, contact DSM developer."));
+                throw new RuntimeException("Deletion failed, contact DSM developer.");
             }
         } else {
             log.error("Somatic document blob not found in bucket when attempting to delete from GCS. Manual intervention required.  "
                             + "Last recorded bucket: {}, blobPath: {} ",
                     deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
-            throw(new RuntimeException("Deletion failed, contact DSM developer."));
+            throw new RuntimeException("Deletion failed, contact DSM developer.");
         }
         return deletedSomaticResultUpload;
     }
 
     public List<SomaticResultUpload> getSomaticResultsForParticipant(String realm, String ddpParticipantId) {
         return SomaticResultUpload.getSomaticFileUploadDocuments(realm, ddpParticipantId);
+    }
+
+    private static boolean isDeletedSomaticResult(SomaticResultUpload somaticResultUpload) {
+        return somaticResultUpload.getDeletedAt() > 0;
     }
 
     private static String makeBlobPath(SomaticResultMetaData payload, String userGuid, String studyGuid,
