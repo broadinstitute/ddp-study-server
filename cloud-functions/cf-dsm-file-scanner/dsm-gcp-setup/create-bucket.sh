@@ -14,6 +14,16 @@ bucket_name="$2"
 # Set the project
 gcloud config set project "$project_name"
 
+# Check if the bucket exists
+echo "Checking if the bucket $bucket_name exists"
+bucket_exists=$(gsutil ls -p "$project_name" | grep -c "gs://$bucket_name")
+
+
+if [[ $bucket_exists -ne 0 ]]; then
+  echo "Bucket $bucket_name already exists"
+  exit 0
+fi
+
 # Create the bucket
 echo "creating the bucket $bucket_name"
 gsutil mb -p "$project_name" -c regional -l us-central1 gs://"$bucket_name"
