@@ -106,10 +106,11 @@
         "scanResultSubscription": "cf-file-scan-result-local-hkeep-sub",
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
-    "fileDownload": {
-        "maxSignedUrlMins": {{$conf.Data.fileDownload.maxSignedUrlMins}},
-        "credentials": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
-    }
+    "fileDownload":{
+        "signerServiceAccount": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
+        "maxSignedUrlMins": 5,
+        "defaultDownloadBucket": "{{$conf.Data.fileDownload.defaultDownloadBucket}}"
+    },
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {

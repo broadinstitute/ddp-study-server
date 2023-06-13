@@ -19,3 +19,10 @@ instanceGuid:
   description: the activity instance guid
   schema:
     type: string
+questionStableId:
+  in: path
+  name: question
+  required: true
+  description: the question stableId
+  schema:
+    type: string
