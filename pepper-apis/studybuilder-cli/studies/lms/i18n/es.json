@@ -61,7 +61,7 @@
     },
     "questions": {
       "show_result": {
-        "prompt": "We have information about what we've learned from the sequencing of $ddp.isGovernedParticipant(\"your child's\",\"your\") tumor sample(s). Would you like to have access to this document? </br></br> <i>If you select No, you will not be able to download this document from your dashboard in the future without reaching out to the study team.</i>",
+        "prompt": "We have information about what we've learned from the sequencing of $ddp.isGovernedParticipant(\"your child's\",\"your\") tumor sample(s). Would you like to have access to this document? </br> <i>If you select No, you will not be able to download this document from your dashboard in the future without reaching out to the study team.</i>",
       }
     },
     "info": "<p>What we've learned from sequencing $ddp.isGovernedParticipant(\"your child's\",\"your\") tumor DNA</p>",
