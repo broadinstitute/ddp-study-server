@@ -11,6 +11,8 @@ import org.broadinstitute.dsm.model.patch.Patch;
 public class GeneratorPayload {
 
     private Patch patch;
+    private String recordId;
+    private String realm;
     List<NameValue> nameValues;
 
     public GeneratorPayload() {
@@ -30,10 +32,20 @@ public class GeneratorPayload {
     private GeneratorPayload(Patch patch) {
         this();
         this.patch = patch;
+        if (patch != null) {
+            this.recordId = patch.getId();
+            this.realm = patch.getRealm();
+        }
     }
 
     public GeneratorPayload(List<NameValue> nameValue) {
         this.nameValues = nameValue;
+    }
+
+    public GeneratorPayload(List<NameValue> nameValues, String realm, int recordId) {
+        this.nameValues = nameValues;
+        this.realm = realm;
+        this.recordId = Integer.toString(recordId);
     }
 
     public GeneratorPayload(NameValue nameValue) {
@@ -58,7 +70,7 @@ public class GeneratorPayload {
     }
 
     public Integer getRecordId() {
-        return Integer.valueOf(patch.getId());
+        return Integer.valueOf(recordId);
     }
 
     public String getParent() {
@@ -78,6 +90,6 @@ public class GeneratorPayload {
     }
 
     public String getInstanceName() {
-        return patch.getRealm();
+        return realm;
     }
 }

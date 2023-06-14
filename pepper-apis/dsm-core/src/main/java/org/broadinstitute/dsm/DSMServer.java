@@ -109,6 +109,7 @@ import org.broadinstitute.dsm.route.LookupRoute;
 import org.broadinstitute.dsm.route.MailingListRoute;
 import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
 import org.broadinstitute.dsm.route.NDIRoute;
+import org.broadinstitute.dsm.route.OncHistoryUploadRoute;
 import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
@@ -865,7 +866,7 @@ public class DSMServer {
 
         post(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
-
+        post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute());
     }
 
     private void setupMRAbstractionRoutes() {

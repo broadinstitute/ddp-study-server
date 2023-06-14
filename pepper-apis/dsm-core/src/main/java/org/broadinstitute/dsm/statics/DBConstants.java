@@ -34,6 +34,8 @@ public class DBConstants {
     public static final String DDP_KIT_REQUEST_ALIAS = "k";
     public static final String DDP_ABSTRACTION_ALIAS = "a";
     public static final String DRUG_ALIAS = "d";
+    public static final String FIELD_SETTINGS_ALIAS = "fs";
+
     public static final String ALIAS_DELIMITER = ".";
 
     //ddp instance

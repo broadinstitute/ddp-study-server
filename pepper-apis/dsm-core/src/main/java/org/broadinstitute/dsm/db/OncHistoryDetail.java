@@ -19,14 +19,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
+import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -462,5 +465,30 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     @Override
     public Optional<Long> extractDdpInstanceId() {
         return Optional.ofNullable(getDdpInstanceId());
+    }
+
+    /**
+     * Verify that a participant is associated with an institution of type NOT_SPECIFIED, and create that
+     * institution and related medical record if the verification fails.
+     *
+     * @param updateElastic true if ElasticSearch index should be updated with new institution data
+     *
+     * @return medical record ID associated with the institution
+     */
+    public static int verifyOrCreateMedicalRecord(int participantId, String ddpParticipantId, String realm,
+                                                  boolean updateElastic) {
+        Number mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
+        if (mrId == null) {
+            MedicalRecordUtil.writeInstitutionIntoDb(ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm, updateElastic);
+            String id = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
+            if (StringUtils.isBlank(id)) {
+                throw new RuntimeException("Error adding new institution for oncHistory. Participant ID: " + participantId);
+            }
+            mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
+            if (mrId == null) {
+                throw new DsmInternalError("Medical record ID not found for new record");
+            }
+        }
+        return mrId.intValue();
     }
 }
