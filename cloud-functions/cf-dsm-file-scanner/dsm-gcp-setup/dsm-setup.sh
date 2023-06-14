@@ -3,12 +3,12 @@
 # Check if project name and study name is provided
 if [ -z "$1" ] || [ -z "$2" ]; then
   echo "Please provide the project name and study name as an argument."
-  echo "Usage: ./dsm-setup.sh <project_name> <study_name>"
+  echo "Usage: ./dsm-setup.sh <env> <study_name>"
   exit 1
 fi
 
 # Set project name
-project_name="$1"
+project_name="broad-ddp-$1"
 study_name="$2"
 
 
@@ -48,3 +48,6 @@ subscription_name="$results_topic_name"-sub
 #create the results topic and subscription if they don't exist
 echo "creating the results topic and subscription if they don't exist"
 ./create_topic_and_sub.sh $project_name $results_topic_name $subscription_name
+
+echo "setting up the service account if it doesn't exist"
+./create-service-account.sh $project_name $study_name

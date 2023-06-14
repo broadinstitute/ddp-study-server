@@ -14,10 +14,22 @@ PROJECT_ID="$1"
 BUCKET="$2"
 TOPIC="$3"
 
-gsutil notification create \
-  -f json \
-  -e OBJECT_FINALIZE \
-  -t "projects/$PROJECT_ID/topics/$TOPIC" \
-  "gs://$BUCKET"
+# Check if the notification already exists
+existing_notification=$(gsutil notification list gs://$BUCKET | grep "$TOPIC")
+
+if [[ "$existing_notification" = "" ]]; then
+  # Notification doesn't exist, add it
+  gsutil notification create \
+    -f json \
+    -e OBJECT_FINALIZE \
+    -t "projects/$PROJECT_ID/topics/$TOPIC" \
+    "gs://$BUCKET"
+
+  echo "Notification added successfully."
+else
+  echo "Notification already exists."
+fi
+
+
 
 gsutil notification list "gs://$BUCKET"
