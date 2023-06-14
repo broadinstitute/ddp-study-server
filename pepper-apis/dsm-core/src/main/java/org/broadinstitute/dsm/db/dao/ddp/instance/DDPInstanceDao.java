@@ -86,6 +86,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "research_project, query_items, mercury_order_creator "
                     + "FROM ddp_instance realm LEFT JOIN view_filters filter ON (filter.filter_id = study_pre_filter) ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
+    private static final String SQL_SELECT_DDP_INSTANCE_BY_STUDY_GUID= SQL_BASE_SELECT + " WHERE study_guid = ?";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
 
     public static DDPInstanceDao of() {
@@ -260,6 +261,30 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
 
         if (results.resultException != null) {
             throw new RuntimeException("Couldn't get ddp instance for " + instanceName, results.resultException);
+        }
+        return Optional.ofNullable((DDPInstanceDto) results.resultValue);
+    }
+
+    public Optional<DDPInstanceDto> getDDPInstanceByStudyGuid(@NonNull String studyGuid) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_DDP_INSTANCE_BY_STUDY_GUID)) {
+                stmt.setString(1, studyGuid);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = getDdpInstanceDtoFromResultSet(rs);
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error getting ddp instance for study-guid " + studyGuid, e);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get ddp instance for study-guid " + studyGuid, results.resultException);
         }
         return Optional.ofNullable((DDPInstanceDto) results.resultValue);
     }
