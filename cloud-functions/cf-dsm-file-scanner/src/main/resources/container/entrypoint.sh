@@ -6,11 +6,11 @@ IFS=$(printf '\n\t')
 
 export TINI_SUBREAPER=
 
-echo "Starting cf-file-scanner..."
+echo "Starting cf-dsm-file-scanner..."
 java \
     -jar java-function-invoker-1.1.0.jar \
-    --classpath cf-file-scanner-1.0-SNAPSHOT.jar \
-    --target org.broadinstitute.ddp.cf.FileScanner \
+    --classpath cf-dsm-file-scanner-1.0-SNAPSHOT.jar \
+    --target org.broadinstitute.ddp.cf.DSMSomaticFileScanner \
     --port "$PORT" &
 
 if [ -x "/init" ]; then

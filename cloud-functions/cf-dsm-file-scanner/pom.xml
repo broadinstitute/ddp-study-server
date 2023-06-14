@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.broadinstitute.ddp.cf</groupId>
-  <artifactId>dsm-cf-file-scanner</artifactId>
+  <artifactId>cf-dsm-file-scanner</artifactId>
   <version>1.0-SNAPSHOT</version>
 
   <properties>
