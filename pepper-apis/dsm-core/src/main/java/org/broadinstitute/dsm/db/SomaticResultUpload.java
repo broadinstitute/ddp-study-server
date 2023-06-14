@@ -100,7 +100,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             + "deleted_at = ? WHERE bucket = ? AND blob_path = ?";
 
     private static final String SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID_AND_REALM = "UPDATE somatic_documents "
-            + " LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = ddp_instance_id) SET deleted_by_user_id = ?, "
+            + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = ddp_instance_id) SET deleted_by_user_id = ?, "
             + "deleted_at = ? WHERE id = ? AND ddp.instance_name = ?";
 
     private static final String SQL_INSERT_SOMATIC_DOCUMENT = "INSERT INTO somatic_documents SET ddp_instance_id = "
