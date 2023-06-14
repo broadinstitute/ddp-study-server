@@ -96,6 +96,7 @@ import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
 import org.broadinstitute.dsm.route.KitExpressRoute;
+import org.broadinstitute.dsm.route.OncHistoryUploadRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.KitLabelRoute;
 import org.broadinstitute.dsm.route.KitRequestRoute;
@@ -849,7 +850,7 @@ public class DSMServer {
 
         post(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
-
+        post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute());
     }
 
     private void setupMRAbstractionRoutes() {

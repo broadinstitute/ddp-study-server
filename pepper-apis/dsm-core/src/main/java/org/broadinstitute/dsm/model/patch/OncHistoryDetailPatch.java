@@ -44,13 +44,16 @@ public class OncHistoryDetailPatch extends BasePatch {
     }
 
     private void prepare() {
+        // TODO this code should be replaced by a call to OncHistoryDetail.verifyOrCreateInstitution, but that's
+        // a bit scary to do without some testing code in place -DC
         if (StringUtils.isNotBlank(patch.getParentId())) {
             mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         }
         if (mrID == null) {
             if (StringUtils.isNotBlank(patch.getDdpParticipantId())) {
                 // mr of that type doesn't exist yet, so create an institution and mr
-                MedicalRecordUtil.writeInstitutionIntoDb(patch.getDdpParticipantId(), MedicalRecordUtil.NOT_SPECIFIED, patch.getRealm());
+                MedicalRecordUtil.writeInstitutionIntoDb(patch.getDdpParticipantId(), MedicalRecordUtil.NOT_SPECIFIED,
+                        patch.getRealm(), true);
                 String participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(patch.getDdpParticipantId(), patch.getRealm());
                 if (StringUtils.isBlank(participantId)) {
                     throw new RuntimeException("Error adding new institution for oncHistory for pt w/ id " + patch.getParentId());
@@ -64,6 +67,7 @@ public class OncHistoryDetailPatch extends BasePatch {
         if (mrID != null) {
             oncHistoryDetailId = OncHistoryDetail.createNewOncHistoryDetail(mrID.toString(), patch.getUser());
         }
+        // TOOD this seems wrong because if oncHistoryDetailId is null at this point things will blow up later -DC
         resultMap.put(ONC_HISTORY_DETAIL_ID, oncHistoryDetailId);
     }
 

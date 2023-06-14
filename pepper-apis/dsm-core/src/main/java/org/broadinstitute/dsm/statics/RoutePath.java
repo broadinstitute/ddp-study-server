@@ -112,6 +112,7 @@ public class RoutePath {
     public static final String SUBMIT_MERCURY_ORDER = "submitMercuryOrder";
     public static final String MERCURY_SAMPLES_ROUTE = "mercurySamples";
     public static final String GET_MERCURY_ORDERS_ROUTE = "getMercuryOrders";
+    public static final String ONC_HISTORY_ROUTE = "oncHistory";
 
     public static final String DASHBOARD = "dashboard";
 
