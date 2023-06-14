@@ -37,6 +37,7 @@ import org.broadinstitute.dsm.model.elastic.migration.OncHistoryMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.ParticipantDataMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.ParticipantMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.SMIDMigrator;
+import org.broadinstitute.dsm.model.elastic.migration.SomaticResultMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.TissueMigrator;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
@@ -125,7 +126,8 @@ public class DSMtasksSubscription {
                     new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
                     new TissueMigrator(index, study), new SMIDMigrator(index, study),
                     new CohortTagMigrator(index, study, new CohortTagDaoImpl()),
-                    new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()));
+                    new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()),
+                    new SomaticResultMigrator(index, study));
             exportables.forEach(Exportable::export);
             logger.info("Successfully finished migration of all DSM data to ES for study: " + study + " with index: " + index);
         });

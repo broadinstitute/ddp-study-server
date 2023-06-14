@@ -17,6 +17,7 @@ import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
@@ -59,6 +60,9 @@ public class Dsm {
 
     @SerializedName(ESObjectConstants.ONC_HISTORY_DETAIL_RECORDS)
     List<OncHistoryDetail> oncHistoryDetail;
+
+    @SerializedName(ESObjectConstants.SOMATIC_RESULT_UPLOAD)
+    List<SomaticResultUpload> somaticResultUpload;
 
     @SerializedName(ESObjectConstants.PARTICIPANT_DATA)
     List<ParticipantData> participantData;
@@ -109,6 +113,13 @@ public class Dsm {
             oncHistoryDetail = Collections.emptyList();
         }
         return oncHistoryDetail;
+    }
+
+    public List<SomaticResultUpload> getSomaticResultUploads() {
+        if (somaticResultUpload == null) {
+            somaticResultUpload = Collections.emptyList();
+        }
+        return somaticResultUpload;
     }
 
     public List<ParticipantData> getParticipantData() {

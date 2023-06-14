@@ -215,4 +215,13 @@ public class ConfigFile {
         public static final String SCAN_RESULT_SUBSCRIPTION = prefix + "scanResultSubscription";
         public static final String SIGNER_SERVICE_ACCOUNT = prefix + "signerServiceAccount";
     }
+
+    public static class SomaticUploads {
+        private static final String prefix = "somatic.";
+        public static final String REALM_TO_BUCKET_MAPPINGS = prefix + "realmToBucketMappings";
+        public static final String MAX_FILES_CONFIG_PATH = prefix + "maxFileSize";
+        public static final String MEDIA_TYPES_CONFIG_PATH = prefix + "mediaTypes";
+        public static final String ALLOWED_FILE_EXTENSIONS = prefix + "allowedFileExtensions";
+        public static final String UPLOAD_BUCKET = "uploadBucket";
+    }
 }
