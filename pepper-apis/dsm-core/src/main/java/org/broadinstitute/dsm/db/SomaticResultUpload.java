@@ -85,10 +85,10 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             + "WHERE ddp.instance_name = ?";
 
     private static final String SQL_SELECT_DOCUMENTS_BY_REALM_AND_PTPT = SQL_SELECT_DOCUMENTS_BASE
-            + "WHERE ddp.instance_name = ? AND ddp_participant_id = ?";
+            + "WHERE ddp.instance_name = ? AND p.ddp_participant_id = ?";
 
-    private static final String SQL_SELECT_DOCUMENT_BY_ID = SQL_SELECT_DOCUMENTS_BASE
-            + "WHERE sD.id = ?";
+    private static final String SQL_SELECT_DOCUMENT_BY_ID_AND_REALM = SQL_SELECT_DOCUMENTS_BASE
+            + "WHERE sD.id = ? AND ddp.instance_name = ?";
 
     private static final String SQL_SELECT_DOCUMENT_BY_BUCKET_AND_PATH = SQL_SELECT_DOCUMENTS_BASE
             + "WHERE sD.bucket = ? AND sD.blob_path = ?";
@@ -99,8 +99,9 @@ public class SomaticResultUpload implements HasDdpInstanceId {
     private static final String SQL_UPDATE_VIRUS_STATUS_FAILED = "UPDATE somatic_documents SET is_virus_free = ?, "
             + "deleted_at = ? WHERE bucket = ? AND blob_path = ?";
 
-    private static final String SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID = "UPDATE somatic_documents SET deleted_by_user_id = ?, "
-            + "deleted_at = ? WHERE id = ?";
+    private static final String SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID_AND_REALM = "UPDATE somatic_documents "
+            + " LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = ddp_instance_id) SET deleted_by_user_id = ?, "
+            + "deleted_at = ? WHERE id = ? AND ddp.instance_name = ?";
 
     private static final String SQL_INSERT_SOMATIC_DOCUMENT = "INSERT INTO somatic_documents SET ddp_instance_id = "
             + "(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?), file_name = ?, "
@@ -189,12 +190,13 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         return documents;
     }
 
-    public static SomaticResultUpload getSomaticFileUploadById(int documentId) {
+    public static SomaticResultUpload getSomaticFileUploadByIdAndRealm(int documentId, String realm) {
         List<SomaticResultUpload> documents = new ArrayList<>();
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_DOCUMENT_BY_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_DOCUMENT_BY_ID_AND_REALM)) {
                 stmt.setInt(1, documentId);
+                stmt.setString(2, realm);
                 runSelect(documents, stmt);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -208,7 +210,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             throw new RuntimeException("Error getting somatic file!  More than one document found for id " + documentId);
         }
         if (documents.size() < 1) {
-            throw new RuntimeException("Bad request for document with id " + documentId);
+            throw new IllegalArgumentException("Bad request for document with id " + documentId);
         }
         return documents.get(0);
     }
@@ -299,7 +301,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             throw new RuntimeException("Error adding new file for participantId w/ id " + ddpParticipantId,
                     results.resultException);
         }
-        SomaticResultUpload somaticResultUpload = getSomaticFileUploadById((int)results.resultValue);
+        SomaticResultUpload somaticResultUpload = getSomaticFileUploadByIdAndRealm((int)results.resultValue, realm);
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
@@ -362,13 +364,14 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         return true;
     }
 
-    public static SomaticResultUpload deleteDocumentByDocumentId(long deletingUserId, int documentId) {
+    public static SomaticResultUpload deleteDocumentByDocumentIdAndRealm(long deletingUserId, int documentId, String realm) {
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID_AND_REALM)) {
                 stmt.setLong(1, deletingUserId);
                 stmt.setLong(2, Instant.now().getEpochSecond());
                 stmt.setInt(3, documentId);
+                stmt.setString(4, realm);
                 dbVals.resultValue = stmt.executeUpdate();
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -379,7 +382,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             throw new RuntimeException("Error updating deleted file status", results.resultException);
         }
 
-        SomaticResultUpload somaticResultUpload = getSomaticFileUploadById(documentId);
+        SomaticResultUpload somaticResultUpload = getSomaticFileUploadByIdAndRealm(documentId, realm);
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();

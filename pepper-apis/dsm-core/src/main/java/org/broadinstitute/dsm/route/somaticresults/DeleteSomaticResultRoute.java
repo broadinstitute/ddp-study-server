@@ -38,7 +38,7 @@ public class DeleteSomaticResultRoute extends RequestHandler {
             } catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException("Invalid user or document id.  Contact a DSM developer.", nfe);
             }
-            return service.deleteUpload(userIdLong, documentIdInt);
+            return service.deleteUpload(userIdLong, documentIdInt, realm);
         }
         halt(500, UserErrorMessages.CONTACT_DEVELOPER);
         return null;

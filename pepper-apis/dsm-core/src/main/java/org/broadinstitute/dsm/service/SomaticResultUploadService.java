@@ -122,11 +122,11 @@ public class SomaticResultUploadService {
         return new AuthorizeResult(AuthorizeResultType.OK, signedURL, createdUpload, somaticUploadSettings);
     }
 
-    public SomaticResultUpload deleteUpload(long userId, int documentId) {
+    public SomaticResultUpload deleteUpload(long userId, int documentId, String realm) {
         SomaticResultUpload existingDocument;
 
         try {
-            existingDocument = SomaticResultUpload.getSomaticFileUploadById(documentId);
+            existingDocument = SomaticResultUpload.getSomaticFileUploadByIdAndRealm(documentId, realm);
         } catch (RuntimeException rte) {
             throw new IllegalArgumentException("No document found for entry");
         }
@@ -135,7 +135,7 @@ public class SomaticResultUploadService {
             return existingDocument;
         }
 
-        SomaticResultUpload deletedSomaticResultUpload = SomaticResultUpload.deleteDocumentByDocumentId(userId, documentId);
+        SomaticResultUpload deletedSomaticResultUpload = SomaticResultUpload.deleteDocumentByDocumentIdAndRealm(userId, documentId, realm);
         Blob blobToDelete = storageClient.getBlob(deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
         if (blobToDelete != null) {
             boolean deleted = blobToDelete.delete();
