@@ -12,6 +12,8 @@ STUDY="$2"
 SERVICE_ACCOUNT_NAME="cf-dsm-somatic-file-scanner"
 SECRET_NAME="$SERVICE_ACCOUNT_NAME-key"
 
+gcloud config set project "$PROJECT_ID" &>/dev/null
+
 # Check if the service account already exists
 EXISTING_ACCOUNT=$(gcloud iam service-accounts list \
     --project="$PROJECT_ID" \
@@ -26,10 +28,26 @@ else
       --project="$PROJECT_ID" \
       --display-name="DSM Somatic File Scanner"
 
-  # Assign necessary roles to the service account
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-      --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
-      --role="roles/cloudfunctions.admin"
+      echo "updating the service account's IAM policy"
+      # Assign necessary roles to the service account
+      # This outputs a list of all the users/members and their roles as auditconfigs
+      gcloud projects add-iam-policy-binding --quiet "$PROJECT_ID" \
+          --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+          --role="roles/cloudfunctions.admin"
+
+      gcloud projects add-iam-policy-binding  "$PROJECT_ID" \
+          --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+          --role="roles/secretmanager.secretAccessor"
+
+      gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+          --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+          --role="roles/pubsub.publisher"
+
+      gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+          --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+          --role="roles/pubsub.subscriber"
+
+      echo "Roles assigned to the service account: $SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com"
 
   # Generate the service account key
   KEY=$(gcloud iam service-accounts keys create "$SECRET_NAME.json" \

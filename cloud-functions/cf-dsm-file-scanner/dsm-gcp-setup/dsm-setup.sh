@@ -38,6 +38,13 @@ subscription_name="$study_name"-file-scanner-trigger-sub
 echo "creating the $trigger_topic_name pubsub topic that triggers the FileScanner"
 ./create_topic_and_sub.sh $project_name $trigger_topic_name $subscription_name
 
+scan_result_topic_name="dsm-file-antivirus-result"
+scan_result_subscription_name="dsm-file-antivirus-result-sub"
+
+# Call the create_topic_and_sub.sh script to create the pubsub topic that has the scanning result
+echo "creating the $scan_result_topic_name pubsub topic that triggers the FileScanner"
+./create_topic_and_sub.sh $project_name $scan_result_topic_name $scan_result_subscription_name
+
 #set the event for the OBJECT_FINALIZE event in the bucket
 echo "creating the event from bucket $study_name-uploaded-files to this topic for OBJECT_FINALIZE"
 ./init-bucket-event.sh $project_name $study_name-uploaded-files $trigger_topic_name

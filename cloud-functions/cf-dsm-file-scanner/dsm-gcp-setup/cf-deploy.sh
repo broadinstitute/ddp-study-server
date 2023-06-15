@@ -52,7 +52,7 @@ LISTEN_SUBSCRIPTION_NAME="$STUDY-file-scanner-trigger-sub"
 ##
 # Topic name the service will publish scan results to
 ##
-RESULT_TOPIC_NAME="dsm-file-scanner-results"
+RESULT_TOPIC_NAME="dsm-file-antivirus-result"
 
 ##
 # The service account the service should run as
@@ -92,6 +92,7 @@ function gcloudw {
 }
 
 function check-for-image {
+  echo $CONTAINER_FQ_NAME
   gcloudw container images describe "$CONTAINER_FQ_NAME" &> /dev/null
 }
 
