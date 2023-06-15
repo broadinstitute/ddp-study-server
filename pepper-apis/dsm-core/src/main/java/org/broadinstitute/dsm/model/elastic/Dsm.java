@@ -115,7 +115,7 @@ public class Dsm {
         return oncHistoryDetail;
     }
 
-    public List<SomaticResultUpload> getSomaticResultUploads() {
+    public List<SomaticResultUpload> getSomaticResultUpload() {
         if (somaticResultUpload == null) {
             somaticResultUpload = Collections.emptyList();
         }

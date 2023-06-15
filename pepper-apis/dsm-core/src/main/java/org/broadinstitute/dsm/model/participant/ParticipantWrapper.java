@@ -248,7 +248,7 @@ public class ParticipantWrapper {
 
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
-            List<SomaticResultUpload> somaticResultUploads = esDsm.getSomaticResultUploads();
+            List<SomaticResultUpload> somaticResultUpload = esDsm.getSomaticResultUpload();
             List<Tissue> tissues = esDsm.getTissue();
             List<SmId> smIds = esDsm.getSmId();
             List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
@@ -257,7 +257,7 @@ public class ParticipantWrapper {
 
             participantWrapperDto.setMedicalRecords(medicalRecord);
             participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
-            participantWrapperDto.setSomaticResultUploads(somaticResultUploads);
+            participantWrapperDto.setSomaticResultUpload(somaticResultUpload);
             participantWrapperDto.setAbstractionActivities(Collections.emptyList());
             participantWrapperDto.setAbstractionSummary(Collections.emptyList());
 
