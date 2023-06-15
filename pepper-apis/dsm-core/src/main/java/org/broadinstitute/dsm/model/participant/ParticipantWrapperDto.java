@@ -39,14 +39,14 @@ public class ParticipantWrapperDto {
     private List<ElasticSearchParticipantDto> proxyData;
     private List<ParticipantData> participantData;
     private List<ClinicalOrder> clinicalOrder;
-    private List<SomaticResultUpload> somaticResultUploads;
+    private List<SomaticResultUpload> somaticResultUpload;
 
     public ParticipantWrapperDto(ElasticSearchParticipantDto esData, Participant participant, List<MedicalRecord> medicalRecords,
                                  List<OncHistoryDetail> oncHistoryDetails, List<KitRequestShipping> kits,
                                  List<AbstractionActivity> abstractionActivities,
                                  List<AbstractionGroup> abstractionSummary, List<ElasticSearchParticipantDto> proxyData,
                                  List<ParticipantData> participantData, List<ClinicalOrder> clinicalOrder,
-                                 List<SomaticResultUpload> somaticResultUploads) {
+                                 List<SomaticResultUpload> somaticResultUpload) {
         this.esData = esData;
         this.participant = participant;
         this.medicalRecords = medicalRecords;
@@ -57,7 +57,7 @@ public class ParticipantWrapperDto {
         this.proxyData = proxyData;
         this.participantData = participantData;
         this.clinicalOrder = clinicalOrder;
-        this.somaticResultUploads = somaticResultUploads;
+        this.somaticResultUpload = somaticResultUpload;
     }
 
     public ParticipantWrapperDto() {
