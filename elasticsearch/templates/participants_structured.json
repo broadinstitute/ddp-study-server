@@ -829,6 +829,15 @@
                 }
               }
             },
+            "somaticResultUpload":{
+              "type": "nested",
+              "properties": {
+                "somaticDocumentId": {
+                  "type": "keyword"
+                }
+              }
+            },
+
             "oncHistoryDetail": {
               "type": "nested",
               "properties": {

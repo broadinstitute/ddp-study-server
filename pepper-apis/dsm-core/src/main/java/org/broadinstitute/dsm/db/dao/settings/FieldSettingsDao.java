@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -117,19 +118,9 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
 
     @Override
     public int delete(int id) {
-        SimpleResult simpleResult = inTransaction(conn -> {
-            SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_FIELD_SETTING_BY_ID)) {
-                stmt.setInt(1, id);
-                execResult.resultValue = stmt.executeUpdate();
-            } catch (SQLException sqle) {
-                execResult.resultException = sqle;
-            }
-            return execResult;
-        });
-
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_FIELD_SETTING_BY_ID);
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error deleting field setting with id: " + id, simpleResult.resultException);
+            throw new RuntimeException("Error deleting field_settings record with id: " + id, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }

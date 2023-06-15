@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -38,12 +39,14 @@ public class ParticipantWrapperDto {
     private List<ElasticSearchParticipantDto> proxyData;
     private List<ParticipantData> participantData;
     private List<ClinicalOrder> clinicalOrder;
+    private List<SomaticResultUpload> somaticResultUpload;
 
     public ParticipantWrapperDto(ElasticSearchParticipantDto esData, Participant participant, List<MedicalRecord> medicalRecords,
                                  List<OncHistoryDetail> oncHistoryDetails, List<KitRequestShipping> kits,
                                  List<AbstractionActivity> abstractionActivities,
                                  List<AbstractionGroup> abstractionSummary, List<ElasticSearchParticipantDto> proxyData,
-                                 List<ParticipantData> participantData, List<ClinicalOrder> clinicalOrder) {
+                                 List<ParticipantData> participantData, List<ClinicalOrder> clinicalOrder,
+                                 List<SomaticResultUpload> somaticResultUpload) {
         this.esData = esData;
         this.participant = participant;
         this.medicalRecords = medicalRecords;
@@ -54,6 +57,7 @@ public class ParticipantWrapperDto {
         this.proxyData = proxyData;
         this.participantData = participantData;
         this.clinicalOrder = clinicalOrder;
+        this.somaticResultUpload = somaticResultUpload;
     }
 
     public ParticipantWrapperDto() {
