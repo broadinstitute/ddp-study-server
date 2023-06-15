@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.workflow.WorkflowActivityResponse;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -214,6 +215,14 @@ public class PutFormAnswersRoute implements Route {
                     WorkflowResponse workflowResp = workflowService
                             .suggestNextState(handle, operatorGuid, userGuid, studyGuid, fromState)
                             .map(nextState -> {
+                                //special case for SOMATIC_RESULTS ... need to pass same instance in next state and NOT latest
+                                if (instanceDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")
+                                        && fromState.matches(nextState)) {
+                                    return new WorkflowActivityResponse(
+                                            instanceDto.getActivityCode(),
+                                            instanceDto.getGuid(),
+                                            instanceDto.isAllowUnauthenticated());
+                                }
                                 log.info("Suggesting user {} to next state {}", userGuid, nextState);
                                 return workflowService.buildStateResponse(handle, userGuid, nextState);
                             })
