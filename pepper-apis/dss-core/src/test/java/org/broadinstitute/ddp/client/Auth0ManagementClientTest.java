@@ -9,9 +9,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import com.auth0.exception.RateLimitException;
 import com.auth0.json.mgmt.Connection;
 import com.auth0.json.mgmt.users.User;
 import com.typesafe.config.Config;
@@ -116,5 +118,37 @@ public class Auth0ManagementClientTest extends TxnAwareBaseTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testAuth0RateLimitBackoffTimeNotFound() {
+        long rateLimit = 2L;
+        long rateRemaining = 1L;
+        long rateReset = -1L;
+        RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+
+        long wait = client.auth0BackoffTime(rateLimitException);
+        assertEquals(-1, wait);
+    }
+
+    @Test
+    public void testAuth0RateLimitBackoffTime() {
+        long rateLimit = 2L;
+        long rateRemaining = 1L;
+
+        // auth0BackoffTime should return a value between 0 and 10,000 milliseconds if a positive rateReset
+        // is provided
+        long rateReset = Instant.now().getEpochSecond() - 1;
+        RateLimitException rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+        assertEquals(0, client.auth0BackoffTime(rateLimitException));
+
+        rateReset = Instant.now().getEpochSecond() + 50;
+        rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+        assertEquals(10000, client.auth0BackoffTime(rateLimitException));
+
+        rateReset = Instant.now().getEpochSecond() + 5;
+        rateLimitException = new RateLimitException(rateLimit, rateRemaining, rateReset);
+        long wait = client.auth0BackoffTime(rateLimitException);
+        assertTrue(wait >= 0 && wait <= 10000);
     }
 }

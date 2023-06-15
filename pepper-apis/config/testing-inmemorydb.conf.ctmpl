@@ -106,6 +106,12 @@
         "scanResultSubscription": "cf-file-scan-result-local-hkeep-sub",
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
+    "fileDownload":{
+        "credentials": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}},
+        "signerServiceAccount": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
+        "maxSignedUrlMins": 5,
+        "defaultDownloadBucket": "{{$conf.Data.fileDownload.defaultDownloadBucket}}"
+    },
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
@@ -114,6 +120,7 @@
         "pubSubTasksSubscription": "local-dsm-to-dss-tasks-sub",
         "pubSubTasksResultTopic": "local-dss-to-dsm-results",
         "pubSubDsmTasksTopic": " local-dsm-tasks",
+        "antivirus_to_dsm_subscription":"local-antivirus-to-dsm-sub",
         "pubSubTaskSubscriberAwaitRunningTimeout": 30
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
@@ -202,6 +209,12 @@
               "template": "bfb0d8c1-f127-4ebf-a2fd-faef23b36a1f"
           }
       {{end}}
+    }
+    "somatic": {
+        "realmToBucketMappings": [
+            {"realm": "osteo2", "uploadBucket":"cmi-osteo2-uploaded-files"},
+            {"realm": "lms", "uploadBucket":"cmi-lms-uploaded-files"}
+        ]
     }
 }
 

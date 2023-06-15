@@ -92,6 +92,130 @@ pdfs, are also understood to be relative to the `study.conf` file.*
 [consul-tmpl]: https://github.com/hashicorp/consul-template
 [tscfg-lib]: https://github.com/lightbend/config
 
+## Revision Task
+
+Updates to study activities that require a revision and/or IRB approval that are 
+only simple text changes or content block updates can be done utilizing
+`SimpleActivityRevisionTask` and a configuration of all of the activities to be
+updated and their specific updates. These include updates to the template variables,
+content blocks and question template variables. 
+
+### How to Run it
+
+#### Java
+
+```java
+SimpleActivityRevisionTask simpleRevisionTask = new SimpleActivityRevisionTask();
+simpleRevisionTask.init(cfgPath, studyCfg, varsCfg);
+simpleRevisionTask.consumeArguments(Arrays.of("path/to/task/configuration"));
+simpleRevisionTask.run(handle);
+```
+
+#### Command Line
+```shell
+java -Dconfig.file=output-config/application.conf -jar target/StudyBuilder.jar \
+  --vars path/to/vars/configuration path/to/study/configuration \
+  --substitutions path/to/study/substitions \
+  --run-task SimpleActivityRevisionTask \
+  -- path/to/configuration
+```
+
+#### Task Configuration
+
+```json
+{
+  "study": {
+    "guid": "STUDY_GUID_HERE"
+  },
+  "activity-updates": ActivityUpdate[] | undefined
+}
+```
+
+##### ActivityUpdate
+```json
+{
+  "versionTag": "New version tag. Ex: v3",
+  "activityCode": "Activity Code. Ex: CONSENT, CONSENT_ASSENT",
+  "variable-updates": VariableUpdate[] | undefined,
+  "block-updates": BlockUpdate[] | undefined,
+  "question-variable-updates": QuestionVariableUpdate[] | undefined
+}
+```
+
+##### VariableUpdate
+```json
+{
+  "name": """Name of template variable. Should match a variable
+  that is currently being used.""",
+  "translations": [
+    {
+      "language": "Language Code",
+      "text": "Text to associate with the variable."
+    }
+  ]
+}
+```
+
+##### QuestionVariableUpdate
+```json
+{
+  "name": "Name of template variable. Should match a variable
+  that is currently being used.",
+  "questionStableId": "Stable Id of the question",
+  "translations": [
+    {
+      "language": "Language Code",
+      "text": "Text to associate with the variable."
+    }
+  ]
+}
+```
+
+##### BlockUpdate
+```json
+{
+  "blockNew":
+  {
+    "titleTemplate": {
+      "templateType": "HTML" | "TEXT",
+      "templateText": """Text to associate with the template. Can
+      contain variables using $ and the variable_name: $variable_name""",
+      "variables": [
+        {
+          "name": "Name of variable",
+          "translations": [
+            {
+              "language": "Language Code",
+              "text": "Text to associate with the variable."
+            }
+          ]
+        }
+      ]
+    },
+    "bodyTemplate": {
+      "templateType": "HTML" | "TEXT",
+      "templateText": """
+      Text to associate with the template. Can
+      contain variables using $ and the variable_name: $variable_name""",
+      "variables": [
+        {
+          "name": "Name of variable",
+          "translations": [
+            {
+              "language": "Language Code",
+              "text": "Text to associate with the variable."
+            }
+          ]
+        }
+      ]
+    },
+    "blockType": "CONTENT",
+    "shownExpr": null
+  }
+  "old_template_search_text": "Fuzzy search to match block by old text"
+}
+```
+
 ## Syncing Auth0 Tenant Configurations
 
 To make it easier to sync various bits of tenant configuration across

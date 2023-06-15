@@ -53,6 +53,7 @@
     <include file="liquibase/049-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/050-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-6141_rgp_family_id_counter.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-802-ddp_instance.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-4702_AT-form.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-5782_RGP-form.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-6426_at-status-possible-values.xml" relativeToChangelogFile="true"/>
@@ -123,4 +124,6 @@
     <include file="liquibase/CMI/PEPPER-642_MR_NoActionNeeded.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/PEPPER-139_view_seq_order_status.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/rgp/PEPPER-575_REF_SOURCE.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/PEPPER-837_pecgs_phase4_permissions.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-811_somatic_documents.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

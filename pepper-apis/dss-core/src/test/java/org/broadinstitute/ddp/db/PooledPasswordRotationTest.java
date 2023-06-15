@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
+import org.broadinstitute.ddp.util.DatabaseTestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.After;
 import org.junit.Assert;
@@ -31,7 +31,7 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         originalConfigPlusTestDbValues = originalConfigManager.getConfig();
         originalConfigOverrides = originalConfigManager.getOverrides();
         originalConfigFileContents = ConfigManager.readConfigFile();
-        configWithUpdatedPassword = MySqlTestContainerUtil.overrideConfigFileDbPasswords(BOGUS_TEST_PASSWORD);
+        configWithUpdatedPassword = DatabaseTestUtil.overrideConfigFileDbPasswords(BOGUS_TEST_PASSWORD);
     }
 
     /**
@@ -89,7 +89,7 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
     @After
     public void restoreConfiguration() throws IOException {
         try {
-            String originalPassword = MySqlTestContainerUtil
+            String originalPassword = DatabaseTestUtil
                     .parseDbUrlPassword(originalConfigPlusTestDbValues.getString(ConfigFile.DB_URL))
                     .orElseThrow(() -> new DDPException("no original password in original config!"));
             TransactionWrapper.useTxn(h -> changePassword(h, originalPassword));
