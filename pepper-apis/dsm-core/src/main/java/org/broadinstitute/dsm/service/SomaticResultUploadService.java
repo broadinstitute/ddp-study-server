@@ -160,6 +160,10 @@ public class SomaticResultUploadService {
         return SomaticResultUpload.getSomaticFileUploadDocuments(realm, ddpParticipantId);
     }
 
+    public SomaticResultUpload getSomaticResultByIdPtptAndRealm(int id, String ddpParticipantId, String realm) {
+        return SomaticResultUpload.getSomaticFileUploadByIdRealmPTPT(id, realm, ddpParticipantId);
+    }
+
     private static boolean isDeletedSomaticResult(SomaticResultUpload somaticResultUpload) {
         return somaticResultUpload.getDeletedAt() > 0;
     }

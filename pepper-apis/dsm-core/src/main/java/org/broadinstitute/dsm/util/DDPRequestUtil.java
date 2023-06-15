@@ -26,6 +26,7 @@ import org.broadinstitute.dsm.exception.SurveyNotCreated;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
 import org.broadinstitute.dsm.model.pdf.MiscPDFDownload;
+import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -209,6 +210,25 @@ public class DDPRequestUtil {
         if (ddpResponse == HttpStatusCodes.STATUS_CODE_OK) {
             logger.info(
                     "Triggered DDP to create " + surveyName + " survey for participant w/ ddpParticipantId " + survey.getParticipantId());
+            return new Result(200);
+        }
+        return new Result(500, UserErrorMessages.SURVEY_NOT_CREATED);
+    }
+
+    public static Result triggerFollowupSurvey(@NonNull DDPInstance instance,
+                                               @NonNull TriggerSomaticResultSurveyRoute.SomaticResultTriggerActivityPayload survey,
+                                               @NonNull String surveyName) {
+        String sendRequest = instance.getBaseUrl() + RoutePath.DDP_FOLLOW_UP_SURVEY_PATH + "/" + surveyName;
+        Integer ddpResponse = null;
+        try {
+            ddpResponse = DDPRequestUtil.postRequest(sendRequest, survey, instance.getName(), instance.isHasAuth0Token());
+        } catch (Exception e) {
+            logger.error("Couldn't trigger survey for participant {} {}", sendRequest, e.getMessage());
+            throw new SurveyNotCreated("Couldn't trigger survey for participant " + sendRequest);
+        }
+        if (ddpResponse == HttpStatusCodes.STATUS_CODE_OK) {
+            logger.info(
+                    "Triggered DDP to create {} survey for participant w/ ddpParticipantId {}", surveyName, survey.getParticipantId());
             return new Result(200);
         }
         return new Result(500, UserErrorMessages.SURVEY_NOT_CREATED);

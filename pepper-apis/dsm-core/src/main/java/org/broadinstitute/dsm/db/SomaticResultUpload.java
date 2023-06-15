@@ -21,6 +21,8 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
@@ -86,6 +88,9 @@ public class SomaticResultUpload implements HasDdpInstanceId {
 
     private static final String SQL_SELECT_DOCUMENTS_BY_REALM_AND_PTPT = SQL_SELECT_DOCUMENTS_BASE
             + "WHERE ddp.instance_name = ? AND p.ddp_participant_id = ?";
+
+    private static final String SQL_SELECT_DOCUMENT_BY_REALM_PTPT_DOCID = SQL_SELECT_DOCUMENTS_BY_REALM_AND_PTPT
+            + " AND sD.id = ?";
 
     private static final String SQL_SELECT_DOCUMENT_BY_ID_AND_REALM = SQL_SELECT_DOCUMENTS_BASE
             + "WHERE sD.id = ? AND ddp.instance_name = ?";
@@ -164,7 +169,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of Somatic File Uploads");
+            throw new DsmInternalError("Couldn't get list of Somatic File Uploads");
         }
 
         return resultsMap;
@@ -185,7 +190,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting somatic document list entries ", results.resultException);
+            throw new DsmInternalError("Error getting somatic document list entries ", results.resultException);
         }
         return documents;
     }
@@ -203,14 +208,36 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             }
             return dbVals;
         });
+        return getSingleSomaticResultUpload(documentId, documents, results);
+    }
+
+    public static SomaticResultUpload getSomaticFileUploadByIdRealmPTPT(int documentId, String realm, String ddpParticipantId) {
+        List<SomaticResultUpload> documents = new ArrayList<>();
+        SimpleResult results = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_DOCUMENT_BY_REALM_PTPT_DOCID)) {
+                stmt.setString(1, realm);
+                stmt.setString(2, ddpParticipantId);
+                stmt.setInt(3, documentId);
+                runSelect(documents, stmt);
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        return getSingleSomaticResultUpload(documentId, documents, results);
+    }
+
+    private static SomaticResultUpload getSingleSomaticResultUpload(int documentId, List<SomaticResultUpload> documents,
+                                                                    SimpleResult results) {
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting somatic document entry ", results.resultException);
+            throw new DsmInternalError("Error getting somatic document entry ", results.resultException);
         }
         if (documents.size() > 1) {
-            throw new RuntimeException("Error getting somatic file!  More than one document found for id " + documentId);
+            throw new DsmInternalError("Error getting somatic file!  More than one document found for id " + documentId);
         }
-        if (documents.size() < 1) {
-            throw new IllegalArgumentException("Bad request for document with id " + documentId);
+        if (documents.isEmpty()) {
+            throw new DSMBadRequestException("Bad request for document with id " + documentId);
         }
         return documents.get(0);
     }
@@ -229,15 +256,15 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting somatic document entry ", results.resultException);
+            throw new DsmInternalError("Error getting somatic document entry ", results.resultException);
         }
         if (documents.size() > 1) {
-            throw new RuntimeException(
+            throw new DsmInternalError(
                     String.format("Error getting somatic file!  More than one document found for bucket %s and blobPath %s",
                             bucket, blobPath));
         }
         if (documents.isEmpty()) {
-            throw new RuntimeException(String.format("Bad request for document with %s %s", bucket, blobPath));
+            throw new DsmInternalError(String.format("Bad request for document with %s %s", bucket, blobPath));
         }
         return documents.get(0);
     }
@@ -288,7 +315,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
                             dbVals.resultValue = rs.getInt(1);
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Error inserting somatic file", e);
+                        throw new DsmInternalError("Error inserting somatic file", e);
                     }
                 }
             } catch (SQLException ex) {
@@ -298,7 +325,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error adding new file for participantId w/ id " + ddpParticipantId,
+            throw new DsmInternalError("Error adding new file for participantId w/ id " + ddpParticipantId,
                     results.resultException);
         }
         SomaticResultUpload somaticResultUpload = getSomaticFileUploadByIdAndRealm((int)results.resultValue, realm);
@@ -311,12 +338,12 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         return somaticResultUpload;
     }
 
-    public static boolean updateSuccessfulVirusScanningResult(String bucket, String blobPath, String newbucket, String newBlobPath) {
+    public static boolean updateSuccessfulVirusScanningResult(String bucket, String blobPath, String newBucket, String newBlobPath) {
         SimpleResult results = inTransaction(conn -> {
             SimpleResult  dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_VIRUS_STATUS_SUCCESS)) {
                 stmt.setBoolean(1, true);
-                stmt.setString(2, newbucket);
+                stmt.setString(2, newBucket);
                 stmt.setString(3, newBlobPath);
                 stmt.setString(4, bucket);
                 stmt.setString(5, blobPath);
@@ -327,9 +354,13 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error updating file status when file was clean", results.resultException);
+            throw new DsmInternalError("Error updating file status when file was clean", results.resultException);
         }
-        SomaticResultUpload somaticResultUpload = getSomaticFileUploadByBucketAndBlobPath(newbucket, newBlobPath);
+        return getResultAndUpdateElastic(newBucket, newBlobPath);
+    }
+
+    private static boolean getResultAndUpdateElastic(String newBucket, String newBlobPath) {
+        SomaticResultUpload somaticResultUpload = getSomaticFileUploadByBucketAndBlobPath(newBucket, newBlobPath);
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
@@ -353,15 +384,9 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error updating file status when virus was found", results.resultException);
+            throw new DsmInternalError("Error updating file status when virus was found", results.resultException);
         }
-        SomaticResultUpload somaticResultUpload = getSomaticFileUploadByBucketAndBlobPath(bucket, blobPath);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(Math.toIntExact(somaticResultUpload.ddpInstanceId));
-        DDPInstanceDto ddpInstanceDto =
-                new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-        writeToElastic(somaticResultUpload, ESObjectConstants.SOMATIC_DOCUMENT_ID,
-                somaticResultUpload.getSomaticDocumentId(), ddpInstanceDto);
-        return true;
+        return getResultAndUpdateElastic(bucket, blobPath);
     }
 
     public static SomaticResultUpload deleteDocumentByDocumentIdAndRealm(long deletingUserId, int documentId, String realm) {
@@ -379,7 +404,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error updating deleted file status", results.resultException);
+            throw new DsmInternalError("Error updating deleted file status", results.resultException);
         }
 
         SomaticResultUpload somaticResultUpload = getSomaticFileUploadByIdAndRealm(documentId, realm);
