@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.painless;
 
 import java.io.IOException;
 
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -14,6 +15,7 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class UpsertPainless implements Exportable {
 
@@ -41,22 +43,33 @@ public class UpsertPainless implements Exportable {
         updateByQueryRequest.setMaxRetries(5);
         updateByQueryRequest.setRefresh(true);
         updateByQueryRequest.setAbortOnVersionConflict(false);
+
+        Throwable ioException = null;
         for (int tryNum = 1; tryNum < 3; tryNum++) {
-            if (executeExport(clientInstance, updateByQueryRequest, tryNum)) {
+            ioException = executeExport(clientInstance, updateByQueryRequest, tryNum);
+            if (ioException == null) {
                 break;
             }
         }
+        if (ioException != null) {
+            throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
+        }
     }
 
-    private boolean executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest, int i) {
+    private Throwable executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest, int i) {
         try {
             BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
-            logger.info(String.format("created/updated %s records in ES data for %s", getNumberOfUpserted(bulkByScrollResponse),
-                    generator.getPropertyName()));
-            return true;
+            logger.info("created/updated {} ES records for {}", getNumberOfUpserted(bulkByScrollResponse),
+                    generator.getPropertyName());
+            return null;
         } catch (IOException e) {
             logger.info("Error occurred while exporting data to ES, on try number " + i, e);
-            return false;
+            return e;
+        } catch (Exception e) {
+            // TODO adding this since callers seem to be ignoring exceptions from this method
+            // once that is cleaned up we can get rid of this - DC
+            logger.error("Error updating ES index {}: {}", index, e.toString());
+            throw e;
         }
     }
 

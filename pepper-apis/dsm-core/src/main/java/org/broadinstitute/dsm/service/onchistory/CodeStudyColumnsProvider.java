@@ -22,15 +22,15 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 public class CodeStudyColumnsProvider implements StudyColumnsProvider {
     public Map<String, OncHistoryUploadColumn> getColumnsForStudy(String realm) {
         if (realm.equals("osteo2")) {
-            return getOsteoColumns();
+            return getOsteo2Columns();
         } else if (realm.equals("cmi-lms")) {
             return getLmsColumns();
         }
 
-        throw new DSMBadRequestException("Invalid realm " + realm);
+        throw new DSMBadRequestException("Unsupported realm " + realm);
     }
 
-    private Map<String, OncHistoryUploadColumn> getOsteoColumns() {
+    private Map<String, OncHistoryUploadColumn> getOsteo2Columns() {
         Map<String, OncHistoryUploadColumn> columns = new LinkedHashMap<>();
         columns.put("DATE_PX", new OncHistoryUploadColumn(DATE_PX, "DATE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "d"));
         columns.put("TYPE_PX", new OncHistoryUploadColumn(TYPE_PX, "TYPE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
