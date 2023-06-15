@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.SurveyTrigger;
@@ -38,6 +39,9 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
+        if (StringUtils.isBlank(realm)) {
+            throw new DSMBadRequestException("realm is a required query parameter.");
+        }
         if (isAuthorized(userId, realm)) {
             SomaticResultTriggerRequestPayload requestPayload = getRequestPayload(queryParams, request);
             SomaticResultUpload resultUpload = service.getSomaticResultByIdPtptAndRealm(requestPayload.getSomaticDocumentId(),
