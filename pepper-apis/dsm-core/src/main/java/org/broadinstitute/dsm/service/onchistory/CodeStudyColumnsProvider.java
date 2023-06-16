@@ -49,7 +49,7 @@ public class CodeStudyColumnsProvider implements StudyColumnsProvider {
         columns.put("FFPE", new OncHistoryUploadColumn("FFPE", "FFPE", FIELD_SETTINGS_ALIAS, "o"));
         columns.put("DECALCIFICATION", new OncHistoryUploadColumn("DECALCIFICATION", "DECALCIFICATION", FIELD_SETTINGS_ALIAS, "o"));
         columns.put("BLOCK_TO_REQUEST", new OncHistoryUploadColumn("BLOCK_TO_REQUEST", "BLOCK_TO_REQUEST", FIELD_SETTINGS_ALIAS, "s"));
-        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
+        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "o"));
         return columns;
     }
 
@@ -70,7 +70,7 @@ public class CodeStudyColumnsProvider implements StudyColumnsProvider {
         columns.put("SLIDES_TOTAL", new OncHistoryUploadColumn("SLIDES_TOTAL", "SLIDES_TOTAL", FIELD_SETTINGS_ALIAS, "s"));
         columns.put("FACILITY_PATH_REVIEW", new OncHistoryUploadColumn("FACILITY_PATH_REVIEW", "FACILITY_PATH_REVIEW",
                 FIELD_SETTINGS_ALIAS, "s"));
-        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
+        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "o"));
         return columns;
     }
 }

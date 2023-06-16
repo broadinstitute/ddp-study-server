@@ -381,8 +381,6 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     }
 
     private static void createFieldSettings() {
-        createRequestStatusFieldSettings();
-
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         FieldSettingsDto.Builder builder = new FieldSettingsDto.Builder(instanceDto.getDdpInstanceId());
         FieldSettingsDto fieldSettings = builder.withFieldType("oD")
@@ -405,24 +403,6 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
                         + "{\"value\":\"Formic Acid (includes Evans/Kajian, Kristensen/Gooding/Stewart)\"},"
                         + "{\"value\":\"Acid NOS\"},{\"value\":\"EDTA\"},{\"value\":\"Sample not decalcified\"},"
                         + "{\"value\":\"Other\"},{\"value\":\"Unknown\"},{\"value\":\"Immunocal/ Soft Decal\"}]").build();
-        fieldSettingsDao.create(fieldSettings);
-    }
-
-    // TODO: temporary until these are added via Liquibase
-    private static void createRequestStatusFieldSettings() {
-        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        FieldSettingsDto.Builder builder = new FieldSettingsDto.Builder(instanceDto.getDdpInstanceId());
-        FieldSettingsDto fieldSettings = builder.withFieldType("VOCABULARY")
-                .withColumnName("REQUEST_STATUS")
-                .withDisplayType("OPTIONS")
-                .withPossibleValues("[{\"value\": \"Needs Review\"},"
-                        + "{\"value\": \"Don't Request\"},"
-                        + "{\"value\": \"On Hold\"},"
-                        + "{\"value\": \"Request\"},"
-                        + "{\"value\": \"Sent\"},"
-                        + "{\"value\": \"Received\"},"
-                        + "{\"value\": \"Returned\"},"
-                        + "{\"value\": \"Unable to Obtain\"}]").build();
         fieldSettingsDao.create(fieldSettings);
     }
 
