@@ -28,6 +28,7 @@ import spark.Response;
 public class TriggerSomaticResultSurveyRoute extends RequestHandler {
     private final SomaticResultUploadService service;
     private static final Logger logger = LoggerFactory.getLogger(TriggerSomaticResultSurveyRoute.class);
+    private static final String DEFAULT_TRIGGER_COMMENT = "Somatic results shared with participant.";
     protected static final String REQUIRED_SURVEY_CREATION_ROLE = "survey_creation";
     protected static final String REQUIRED_UPLOAD_ROR_ROLE = "upload_ror_file";
 
@@ -50,7 +51,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
                 requestPayload.getParticipantId(), realm);
         if (resultUpload != null) {
             DDPInstance instance = DDPInstance.getDDPInstance(realm);
-            long triggerId = buildTriggerComment(userId, requestPayload.getComment());
+            long triggerId = buildTriggerComment(userId, DEFAULT_TRIGGER_COMMENT);
             SomaticResultTriggerActivityPayload payloadToSend = new SomaticResultTriggerActivityPayload(
                     requestPayload.getParticipantId(), triggerId, resultUpload.getBucket(), resultUpload.getBlobPath());
             return DDPRequestUtil.triggerFollowupSurvey(instance, payloadToSend, requestPayload.getSurveyName());
@@ -89,11 +90,6 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         if (!result.getSurveyType().equalsIgnoreCase("REPEATING")) {
             throw new DSMBadRequestException("This route only supports REPEATING types");
         }
-        if (queryParams.value("comment") != null) {
-            result.setComment(queryParams.get("comment").value());
-        } else {
-            throw new DSMBadRequestException("No comment query param was sent");
-        }
         try {
             JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
             String ddpParticipantId = jsonObject.getAsJsonObject().get("participantId").getAsString();
@@ -131,7 +127,6 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         private String surveyType;
         private boolean triggerAgain;
         private String participantId;
-        private String comment;
         private int somaticDocumentId;
     }
 }
