@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.route;
+package org.broadinstitute.dsm.route.admin;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Study;
