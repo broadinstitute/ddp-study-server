@@ -29,11 +29,10 @@ public class GetSomaticResultsRoute extends RequestHandler  {
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
         String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        if (isValidRequest(userId, realm, ddpParticipantId)) {
-            return this.service.getSomaticResultsForParticipant(realm, ddpParticipantId);
-        } else {
+        if (!isValidRequest(userId, realm, ddpParticipantId)) {
             throw new AuthorizationException();
         }
+        return this.service.getSomaticResultsForParticipant(realm, ddpParticipantId);
     }
 
     private boolean isValidRequest(String userId, String realm, String ddpParticipantId) {

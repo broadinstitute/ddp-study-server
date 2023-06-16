@@ -42,21 +42,20 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         if (StringUtils.isBlank(realm)) {
             throw new DSMBadRequestException("realm is a required query parameter.");
         }
-        if (isAuthorized(userId, realm)) {
-            SomaticResultTriggerRequestPayload requestPayload = getRequestPayload(queryParams, request);
-            SomaticResultUpload resultUpload = service.getSomaticResultByIdPtptAndRealm(requestPayload.getSomaticDocumentId(),
-                    requestPayload.getParticipantId(), realm);
-            if (resultUpload != null) {
-                DDPInstance instance = DDPInstance.getDDPInstance(realm);
-                long triggerId = buildTriggerComment(userId, requestPayload.getComment());
-                SomaticResultTriggerActivityPayload payloadToSend = new SomaticResultTriggerActivityPayload(
-                        requestPayload.getParticipantId(), triggerId, resultUpload.getBucket(), resultUpload.getBlobPath());
-                return DDPRequestUtil.triggerFollowupSurvey(instance, payloadToSend, requestPayload.getSurveyName());
-            } else {
-                throw new DSMBadRequestException("Bad somatic document id.  Not triggering followup");
-            }
-        } else {
+        if (!isAuthorized(userId, realm)) {
             throw new AuthorizationException(UserErrorMessages.NO_RIGHTS);
+        }
+        SomaticResultTriggerRequestPayload requestPayload = getRequestPayload(queryParams, request);
+        SomaticResultUpload resultUpload = service.getSomaticResultByIdPtptAndRealm(requestPayload.getSomaticDocumentId(),
+                requestPayload.getParticipantId(), realm);
+        if (resultUpload != null) {
+            DDPInstance instance = DDPInstance.getDDPInstance(realm);
+            long triggerId = buildTriggerComment(userId, requestPayload.getComment());
+            SomaticResultTriggerActivityPayload payloadToSend = new SomaticResultTriggerActivityPayload(
+                    requestPayload.getParticipantId(), triggerId, resultUpload.getBucket(), resultUpload.getBlobPath());
+            return DDPRequestUtil.triggerFollowupSurvey(instance, payloadToSend, requestPayload.getSurveyName());
+        } else {
+            throw new DSMBadRequestException("Bad somatic document id.  Not triggering followup");
         }
     }
 
@@ -65,7 +64,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         try {
             return addTriggerCommentIntoDB(userIdRequest, comment, currentTime);
         } catch (Exception ex) {
-            throw new DsmInternalError("Internal error processing valid request, please contact a DSM developer.");
+            throw new DsmInternalError("Error encountered adding trigger and comment, please contact a DSM developer.");
         }
     }
 

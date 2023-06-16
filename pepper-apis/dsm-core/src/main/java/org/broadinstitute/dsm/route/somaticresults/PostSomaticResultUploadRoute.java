@@ -38,11 +38,10 @@ public class PostSomaticResultUploadRoute extends RequestHandler {
         } catch (Exception ex) {
             throw new DSMBadRequestException("Bad request.  Are you passing the fileName, mimeType, and fileSize?");
         }
-        if (isValidRequest(realm, ddpParticipantId, userId, somaticResultMetaData)) {
-            return service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
-        } else {
+        if (!isValidRequest(realm, ddpParticipantId, userId, somaticResultMetaData)) {
             throw new AuthorizationException();
         }
+        return service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
     }
 
     private boolean isValidRequest(String realm, String ddpParticipantId, String userId, SomaticResultMetaData somaticResultMetaData) {

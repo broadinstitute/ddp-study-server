@@ -426,6 +426,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             log.error(String.format("Error updating somatic document id {} in ElasticSearch: %s",
                     somaticResultUpload.getSomaticDocumentId()));
             e.printStackTrace();
+            throw new DsmInternalError("Error updating the information in the document database, contact a DSM Developer.");
         }
     }
 
