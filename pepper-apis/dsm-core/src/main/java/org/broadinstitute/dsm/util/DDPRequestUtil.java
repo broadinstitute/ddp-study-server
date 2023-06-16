@@ -20,13 +20,15 @@ import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
+import org.broadinstitute.dsm.model.SomaticResultTriggerActivityPayload;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
 import org.broadinstitute.dsm.model.pdf.MiscPDFDownload;
-import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -36,12 +38,9 @@ import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
 import org.broadinstitute.lddp.handlers.util.SurveyInfo;
-import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.http.client.fluent.Response;
 
 public class DDPRequestUtil {
 
@@ -216,7 +215,7 @@ public class DDPRequestUtil {
     }
 
     public static Result triggerFollowupSurvey(@NonNull DDPInstance instance,
-                                               @NonNull TriggerSomaticResultSurveyRoute.SomaticResultTriggerActivityPayload survey,
+                                               @NonNull SomaticResultTriggerActivityPayload survey,
                                                @NonNull String surveyName) {
         String sendRequest = instance.getBaseUrl() + RoutePath.DDP_FOLLOW_UP_SURVEY_PATH + "/" + surveyName;
         Integer ddpResponse = null;

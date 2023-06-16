@@ -39,7 +39,7 @@ public class DeleteSomaticResultRoute extends RequestHandler {
             }
             return service.deleteUpload(userIdLong, documentIdInt, realm);
         } else {
-            throw new AuthorizationException("Unauthorized to perform this action");
+            throw new AuthorizationException();
         }
     }
 

@@ -41,7 +41,7 @@ public class PostSomaticResultUploadRoute extends RequestHandler {
         if (isValidRequest(realm, ddpParticipantId, userId, somaticResultMetaData)) {
             return service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
         } else {
-            throw new AuthorizationException("Unauthorized to perform this action");
+            throw new AuthorizationException();
         }
     }
 

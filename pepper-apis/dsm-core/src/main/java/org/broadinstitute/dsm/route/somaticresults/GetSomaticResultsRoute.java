@@ -32,7 +32,7 @@ public class GetSomaticResultsRoute extends RequestHandler  {
         if (isValidRequest(userId, realm, ddpParticipantId)) {
             return this.service.getSomaticResultsForParticipant(realm, ddpParticipantId);
         } else {
-            throw new AuthorizationException("Unauthorized to perform the requested action.");
+            throw new AuthorizationException();
         }
     }
 

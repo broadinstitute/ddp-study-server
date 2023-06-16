@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -12,10 +11,12 @@ import org.broadinstitute.dsm.db.SurveyTrigger;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.SomaticResultTriggerActivityPayload;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.SomaticResultUploadService;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.slf4j.Logger;
@@ -28,8 +29,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
     private final SomaticResultUploadService service;
     private static final Logger logger = LoggerFactory.getLogger(TriggerSomaticResultSurveyRoute.class);
     protected static final String REQUIRED_SURVEY_CREATION_ROLE = "survey_creation";
-    protected static final String REQUIRED_VIEW_ROLE = "view_shared_learnings";
-    protected static final String REQUIRED_MANIPULATE_ROLE = "upload_ror_file";
+    protected static final String REQUIRED_UPLOAD_ROR_ROLE = "upload_ror_file";
 
     public TriggerSomaticResultSurveyRoute(SomaticResultUploadService service) {
         this.service = service;
@@ -56,7 +56,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
                 throw new DSMBadRequestException("Bad somatic document id.  Not triggering followup");
             }
         } else {
-            throw new AuthorizationException("Not authorized to perform this action");
+            throw new AuthorizationException(UserErrorMessages.NO_RIGHTS);
         }
     }
 
@@ -83,7 +83,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
             throw new DSMBadRequestException("This route only works with SOMATIC_RESULTS surveys.");
         }
         if (queryParams.value("surveyType") != null) {
-            result.surveyType = queryParams.get("surveyType").value();
+            result.setSurveyType(queryParams.get("surveyType").value());
         } else {
             throw new DSMBadRequestException("No surveyType query param was sent");
         }
@@ -123,8 +123,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
 
     private boolean isAuthorized(String userId, String realm) {
         return (UserUtil.checkUserAccess(userId, realm, REQUIRED_SURVEY_CREATION_ROLE)
-                && (UserUtil.checkUserAccess(userId, realm, REQUIRED_VIEW_ROLE)
-                        || UserUtil.checkUserAccess(userId, realm, REQUIRED_MANIPULATE_ROLE)));
+                &&  UserUtil.checkUserAccess(userId, realm, REQUIRED_UPLOAD_ROR_ROLE));
     }
 
     @Data
@@ -135,15 +134,5 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         private String participantId;
         private String comment;
         private int somaticDocumentId;
-    }
-
-    @AllArgsConstructor
-    @Data
-    public static class SomaticResultTriggerActivityPayload {
-        private String participantId;
-        private Long triggerId;
-        private String bucketName;
-        private String resultsFilePath;
-
     }
 }
