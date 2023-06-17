@@ -7,7 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class SomaticResultTriggerActivityPayload {
     private String participantId;
-    private Long triggerId;
+    private long triggerId;
     private String bucketName;
     private String resultsFilePath;
 }

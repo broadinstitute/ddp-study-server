@@ -49,21 +49,37 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         SomaticResultTriggerRequestPayload requestPayload = getRequestPayload(queryParams, request);
         SomaticResultUpload resultUpload = service.getSomaticResultByIdPtptAndRealm(requestPayload.getSomaticDocumentId(),
                 requestPayload.getParticipantId(), realm);
-        if (resultUpload != null) {
+        if (resultUpload != null && isEligibleToBeSent(resultUpload)) {
             DDPInstance instance = DDPInstance.getDDPInstance(realm);
-            long triggerId = buildTriggerComment(userId, DEFAULT_TRIGGER_COMMENT);
+            long triggerId = buildTriggerComment(userId);
+            SomaticResultUpload triggerUpdatedSomaticUpload =
+                    service.updateSomaticResultTrigger(resultUpload.getSomaticDocumentId(), triggerId, realm);
             SomaticResultTriggerActivityPayload payloadToSend = new SomaticResultTriggerActivityPayload(
-                    requestPayload.getParticipantId(), triggerId, resultUpload.getBucket(), resultUpload.getBlobPath());
+                    requestPayload.getParticipantId(),
+                    triggerId,
+                    triggerUpdatedSomaticUpload.getBucket(),
+                    triggerUpdatedSomaticUpload.getBlobPath());
             return DDPRequestUtil.triggerFollowupSurvey(instance, payloadToSend, requestPayload.getSurveyName());
         } else {
             throw new DSMBadRequestException("Bad somatic document id.  Not triggering followup");
         }
     }
 
-    private long buildTriggerComment(String userIdRequest, String comment) {
+    private boolean isEligibleToBeSent(SomaticResultUpload resultUpload) {
+        if (Boolean.TRUE.equals(resultUpload.getIsVirusFree())) {
+            throw new DSMBadRequestException(
+                    "The file selected is either not finished being scanned for viruses or was removed because one was found.");
+        }
+        if (resultUpload.getDeletedAt() > 0) {
+            throw new DSMBadRequestException("The file selected was already deleted and cannot be sent.");
+        }
+        return true;
+    }
+
+    private long buildTriggerComment(String userIdRequest) {
         long currentTime = System.currentTimeMillis();
         try {
-            return addTriggerCommentIntoDB(userIdRequest, comment, currentTime);
+            return addTriggerCommentIntoDB(userIdRequest, currentTime);
         } catch (Exception ex) {
             throw new DsmInternalError("Error encountered adding trigger and comment, please contact a DSM developer.");
         }
@@ -103,12 +119,13 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         return result;
     }
 
-    private long addTriggerCommentIntoDB(@NonNull String userId, @NonNull String reason, long currentTime) {
+    private long addTriggerCommentIntoDB(@NonNull String userId, long currentTime) {
         long surveyTriggerId;
         try {
-            surveyTriggerId = SurveyTrigger.insertTrigger(userId, reason, currentTime);
+            surveyTriggerId = SurveyTrigger.insertTrigger(userId, TriggerSomaticResultSurveyRoute.DEFAULT_TRIGGER_COMMENT, currentTime);
         } catch (Exception e) {
-            logger.error("Error inserting trigger for user {} with reason {}", userId, reason);
+            logger.error("Error inserting trigger for user {} with reason {}",
+                    userId, TriggerSomaticResultSurveyRoute.DEFAULT_TRIGGER_COMMENT);
             throw new DsmInternalError(e.getMessage());
         }
 

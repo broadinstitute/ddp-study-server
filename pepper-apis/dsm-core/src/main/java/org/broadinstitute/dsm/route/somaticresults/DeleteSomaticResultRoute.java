@@ -32,14 +32,14 @@ public class DeleteSomaticResultRoute extends RequestHandler {
             throw new AuthorizationException();
         }
         long userIdLong;
-        int documentIdInt;
+        long documentIdLong;
         try {
             userIdLong = Long.parseLong(userId);
-            documentIdInt = Integer.parseInt(documentId);
+            documentIdLong = Long.parseLong(documentId);
         } catch (NumberFormatException nfe) {
             throw new DSMBadRequestException("Invalid user or document id.");
         }
-        return service.deleteUpload(userIdLong, documentIdInt, realm);
+        return service.deleteUpload(userIdLong, documentIdLong, realm);
     }
 
     private boolean isValidRequest(String realm, String documentId, String userId) {

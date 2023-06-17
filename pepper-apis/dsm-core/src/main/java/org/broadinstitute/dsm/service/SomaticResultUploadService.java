@@ -122,7 +122,7 @@ public class SomaticResultUploadService {
         return new AuthorizeResult(AuthorizeResultType.OK, signedURL, createdUpload, somaticUploadSettings);
     }
 
-    public SomaticResultUpload deleteUpload(long userId, int documentId, String realm) {
+    public SomaticResultUpload deleteUpload(long userId, long documentId, String realm) {
         SomaticResultUpload existingDocument;
 
         try {
@@ -162,6 +162,10 @@ public class SomaticResultUploadService {
 
     public SomaticResultUpload getSomaticResultByIdPtptAndRealm(int id, String ddpParticipantId, String realm) {
         return SomaticResultUpload.getSomaticFileUploadByIdRealmPTPT(id, realm, ddpParticipantId);
+    }
+
+    public SomaticResultUpload updateSomaticResultTrigger(long documentId, long triggerId, String realm) {
+        return SomaticResultUpload.updateTriggerId(documentId, triggerId, realm);
     }
 
     private static boolean isDeletedSomaticResult(SomaticResultUpload somaticResultUpload) {
