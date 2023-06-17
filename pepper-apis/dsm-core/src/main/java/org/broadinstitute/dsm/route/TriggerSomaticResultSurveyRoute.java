@@ -66,7 +66,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
     }
 
     private boolean isEligibleToBeSent(SomaticResultUpload resultUpload) {
-        if (Boolean.TRUE.equals(resultUpload.getIsVirusFree())) {
+        if (Boolean.FALSE.equals(resultUpload.getIsVirusFree())) {
             throw new DSMBadRequestException(
                     "The file selected is either not finished being scanned for viruses or was removed because one was found.");
         }
@@ -109,7 +109,7 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         try {
             JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
             String ddpParticipantId = jsonObject.getAsJsonObject().get("participantId").getAsString();
-            int somaticDocumentId = jsonObject.getAsJsonObject().get(ESObjectConstants.SOMATIC_DOCUMENT_ID).getAsInt();
+            long somaticDocumentId = jsonObject.getAsJsonObject().get(ESObjectConstants.SOMATIC_DOCUMENT_ID).getAsInt();
             result.setParticipantId(ddpParticipantId);
             result.setSomaticDocumentId(somaticDocumentId);
         } catch (Exception ex) {
@@ -134,8 +134,8 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
     }
 
     private boolean isAuthorized(String userId, String realm) {
-        return (UserUtil.checkUserAccess(userId, realm, REQUIRED_SURVEY_CREATION_ROLE)
-                &&  UserUtil.checkUserAccess(userId, realm, REQUIRED_UPLOAD_ROR_ROLE));
+        return (UserUtil.checkUserAccess(realm, userId, REQUIRED_SURVEY_CREATION_ROLE)
+                &&  UserUtil.checkUserAccess(realm, userId, REQUIRED_UPLOAD_ROR_ROLE));
     }
 
     @Data
@@ -144,6 +144,6 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         private String surveyType;
         private boolean triggerAgain;
         private String participantId;
-        private int somaticDocumentId;
+        private long somaticDocumentId;
     }
 }

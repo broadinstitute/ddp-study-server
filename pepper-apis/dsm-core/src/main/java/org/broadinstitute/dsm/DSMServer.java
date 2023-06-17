@@ -672,8 +672,6 @@ public class DSMServer {
 
         setupMiscellaneousRoutes();
 
-        setupSomaticUploadRoutes(cfg);
-
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
 
         setupCohortTagRoutes();
@@ -681,6 +679,8 @@ public class DSMServer {
         setupPubSubPublisherRoutes(cfg);
 
         setupRouteGenericErrorHandlers();
+
+        setupSomaticUploadRoutes(cfg);
 
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
         patch(uiRoot + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new JsonTransformer());

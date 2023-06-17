@@ -41,43 +41,43 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SomaticResultUpload implements HasDdpInstanceId {
     @ColumnName(ESObjectConstants.SOMATIC_DOCUMENT_ID)
-    private final Long somaticDocumentId;
+    private Long somaticDocumentId;
 
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
-    private final Long ddpInstanceId;
+    private Long ddpInstanceId;
 
-    private final String ddpParticipantId;
+    private String ddpParticipantId;
 
     @ColumnName(DBConstants.PARTICIPANT_ID)
-    private final Long participantId;
+    private Long participantId;
 
     @ColumnName(DBConstants.FILE_NAME)
-    private final String fileName;
+    private String fileName;
 
     @ColumnName(DBConstants.MIME_TYPE)
-    private final String mimeType;
+    private String mimeType;
 
-    private final String bucket;
+    private String bucket;
 
-    private final String blobPath;
+    private String blobPath;
 
     @ColumnName(DBConstants.CREATED_BY_USER_ID)
-    private final Long createdByUserId;
+    private Long createdByUserId;
 
     @ColumnName(DBConstants.CREATED_AT)
-    private final long createdAt;
+    private Long createdAt;
 
     @ColumnName(DBConstants.DELETED_BY_USER_ID)
-    private final Long deletedByUserId;
+    private Long deletedByUserId;
 
     @ColumnName(DBConstants.DELETED_AT)
-    private final long deletedAt;
+    private Long deletedAt;
 
     @ColumnName(DBConstants.IS_VIRUS_FREE)
     private Boolean isVirusFree;
 
     @ColumnName(DBConstants.SENT_AT)
-    private final long sentAt;
+    private Long sentAt;
 
     private static final String SQL_SELECT_DOCUMENTS_BASE = "SELECT sD.id, p.ddp_instance_id, "
             + "p.ddp_participant_id, p.participant_id, sD.file_name, sD.mime_type, sD.bucket, sD.blob_path, "
@@ -85,7 +85,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             + "FROM  somatic_documents sD "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = sD.ddp_instance_id) "
             + "LEFT JOIN ddp_participant p on (p.participant_id = sD.participant_id) "
-            + "LEFT JOIN ddp_survey_trigger t on (t.trigger_id = sD.trigger_id) "
+            + "LEFT JOIN ddp_survey_trigger t on (t.survey_trigger_id = sD.trigger_id) "
     ;
 
     private static final String SQL_SELECT_DOCUMENTS_BY_REALM = SQL_SELECT_DOCUMENTS_BASE
@@ -103,9 +103,9 @@ public class SomaticResultUpload implements HasDdpInstanceId {
     private static final String SQL_SELECT_DOCUMENT_BY_BUCKET_AND_PATH = SQL_SELECT_DOCUMENTS_BASE
             + "WHERE sD.bucket = ? AND sD.blob_path = ?";
 
-    private static final String SQL_UPDATE_SENT_AT_TIME = "UPDATE somatic_documents "
-            + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = ddp_instance_id) SET trigger_id = ? "
-            + "WHERE id = ? AND ddp.instance_name = ?";
+    private static final String SQL_UPDATE_SENT_AT_TIME = "UPDATE somatic_documents AS sD "
+            + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = sD.ddp_instance_id) SET sD.trigger_id = ? "
+            + "WHERE sD.id = ? AND ddp.instance_name = ?";
 
     private static final String SQL_UPDATE_VIRUS_STATUS_SUCCESS = "UPDATE somatic_documents SET is_virus_free = ?, "
             + "bucket = ?, blob_path = ? WHERE bucket = ? AND blob_path = ?";
@@ -113,9 +113,9 @@ public class SomaticResultUpload implements HasDdpInstanceId {
     private static final String SQL_UPDATE_VIRUS_STATUS_FAILED = "UPDATE somatic_documents SET is_virus_free = ?, "
             + "deleted_at = ? WHERE bucket = ? AND blob_path = ?";
 
-    private static final String SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID_AND_REALM = "UPDATE somatic_documents "
-            + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = ddp_instance_id) SET deleted_by_user_id = ?, "
-            + "deleted_at = ? WHERE id = ? AND ddp.instance_name = ?";
+    private static final String SQL_DELETE_DOCUMENT_BY_DOCUMENT_ID_AND_REALM = "UPDATE somatic_documents AS sD "
+            + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = sD.ddp_instance_id) SET sD.deleted_by_user_id = ?, "
+            + "sD.deleted_at = ? WHERE sD.id = ? AND ddp.instance_name = ?";
 
     private static final String SQL_INSERT_SOMATIC_DOCUMENT = "INSERT INTO somatic_documents SET ddp_instance_id = "
             + "(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?), file_name = ?, "
@@ -123,6 +123,8 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             + "participant_id = (SELECT p.participant_id from ddp_participant p "
             + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "WHERE p.ddp_participant_id = ? AND ddp.instance_name= ?)";
+
+    public SomaticResultUpload() {}
 
     /**
      * Builds A Somatic Document for storage
@@ -222,14 +224,14 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         return getSingleSomaticResultUpload(documentId, documents, results);
     }
 
-    public static SomaticResultUpload getSomaticFileUploadByIdRealmPTPT(int documentId, String realm, String ddpParticipantId) {
+    public static SomaticResultUpload getSomaticFileUploadByIdRealmPTPT(long documentId, String realm, String ddpParticipantId) {
         List<SomaticResultUpload> documents = new ArrayList<>();
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_DOCUMENT_BY_REALM_PTPT_DOCID)) {
                 stmt.setString(1, realm);
                 stmt.setString(2, ddpParticipantId);
-                stmt.setInt(3, documentId);
+                stmt.setLong(3, documentId);
                 runSelect(documents, stmt);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -324,7 +326,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            dbVals.resultValue = rs.getInt(1);
+                            dbVals.resultValue = rs.getLong(1);
                         }
                     } catch (Exception e) {
                         throw new DsmInternalError("Error inserting somatic file", e);

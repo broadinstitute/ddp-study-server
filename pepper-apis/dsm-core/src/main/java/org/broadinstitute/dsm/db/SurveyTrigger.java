@@ -96,6 +96,6 @@ public class SurveyTrigger {
         if (results.resultException != null) {
             throw new RuntimeException("Couldn't enter survey trigger reason into db ", results.resultException);
         }
-        return (int) results.resultValue;
+        return (long) results.resultValue;
     }
 }
