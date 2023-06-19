@@ -4,11 +4,16 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.NonNull;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,5 +64,39 @@ public class SurveyTrigger {
         }
         logger.info("Found " + surveyTriggers.size() + " survey triggers ");
         return surveyTriggers;
+    }
+
+    public static long insertTrigger(@NonNull String userId, @NonNull String reason, long currentTime) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER),
+                    Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, reason);
+                stmt.setLong(2, currentTime);
+                stmt.setString(3, userId);
+                int result = stmt.executeUpdate();
+                if (result == 1) {
+                    try (ResultSet rs = stmt.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            long surveyTriggerId = rs.getLong(1);
+                            dbVals.resultValue = surveyTriggerId;
+                        }
+                    } catch (Exception e) {
+                        throw new DsmInternalError("Error getting id of new survey trigger reason ", e);
+                    }
+                } else {
+                    throw new DsmInternalError("Something went wrong entering survey trigger reason into db");
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't enter survey trigger reason into db ", results.resultException);
+        }
+        return (long) results.resultValue;
     }
 }

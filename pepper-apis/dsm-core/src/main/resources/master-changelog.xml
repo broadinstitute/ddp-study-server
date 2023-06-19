@@ -128,4 +128,5 @@
     <include file="liquibase/PEPPER-811_somatic_documents.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-68_location_px.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-900_field_settings.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/PEPPER-903_sent_date.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
