@@ -70,7 +70,8 @@ public class SurveyTrigger {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER),
+                    Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, reason);
                 stmt.setLong(2, currentTime);
                 stmt.setString(3, userId);

@@ -49,20 +49,19 @@ public class TriggerSomaticResultSurveyRoute extends RequestHandler {
         SomaticResultTriggerRequestPayload requestPayload = getRequestPayload(queryParams, request);
         SomaticResultUpload resultUpload = service.getSomaticResultByIdPtptAndRealm(requestPayload.getSomaticDocumentId(),
                 requestPayload.getParticipantId(), realm);
-        if (resultUpload != null && isEligibleToBeSent(resultUpload)) {
-            DDPInstance instance = DDPInstance.getDDPInstance(realm);
-            long triggerId = buildTriggerComment(userId);
-            SomaticResultUpload triggerUpdatedSomaticUpload =
-                    service.updateSomaticResultTrigger(resultUpload.getSomaticDocumentId(), triggerId, realm);
-            SomaticResultTriggerActivityPayload payloadToSend = new SomaticResultTriggerActivityPayload(
-                    requestPayload.getParticipantId(),
-                    triggerId,
-                    triggerUpdatedSomaticUpload.getBucket(),
-                    triggerUpdatedSomaticUpload.getBlobPath());
-            return DDPRequestUtil.triggerFollowupSurvey(instance, payloadToSend, requestPayload.getSurveyName());
-        } else {
-            throw new DSMBadRequestException("Bad somatic document id.  Not triggering followup");
+        if (resultUpload == null || !isEligibleToBeSent(resultUpload)) {
+            throw new DSMBadRequestException("Invalid request parameters.  Not triggering followup");
         }
+        DDPInstance instance = DDPInstance.getDDPInstance(realm);
+        long triggerId = buildTriggerComment(userId);
+        SomaticResultUpload triggerUpdatedSomaticUpload =
+                service.updateSomaticResultTrigger(resultUpload.getSomaticDocumentId(), triggerId, realm);
+        SomaticResultTriggerActivityPayload payloadToSend = new SomaticResultTriggerActivityPayload(
+                requestPayload.getParticipantId(),
+                triggerId,
+                triggerUpdatedSomaticUpload.getBucket(),
+                triggerUpdatedSomaticUpload.getBlobPath());
+        return DDPRequestUtil.triggerFollowupSurvey(instance, payloadToSend, requestPayload.getSurveyName());
     }
 
     private boolean isEligibleToBeSent(SomaticResultUpload resultUpload) {
