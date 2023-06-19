@@ -52,6 +52,7 @@ public class UpsertPainless implements Exportable {
             }
         }
         if (ioException != null) {
+            logger.error("Unable to connect to ElasticSearch: {}", ioException.getMessage());
             throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
         }
     }

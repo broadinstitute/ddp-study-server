@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.service.onchistory;
 
+import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
+
 import java.util.Map;
 
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -46,9 +48,9 @@ public class OncHistoryElasticUpdater {
 
         OncHistoryGenerator generator = new OncHistoryGenerator(source);
 
-        String scriptText = "if (ctx._source.dsm.oncHistoryDetail == null) {"
-                + "ctx._source.dsm.oncHistoryDetail = new ArrayList(); }"
-                + "ctx._source.dsm.oncHistoryDetail.add(params.oncHistoryDetail);";
+        String scriptText = String.format("if (ctx._source.dsm.%s == null) {"
+                + "ctx._source.dsm.%s = new ArrayList(); }"
+                + "ctx._source.dsm.%s.add(params.%s);", ONC_HISTORY_DETAIL);
         OncHistoryScriptBuilder scriptBuilder = new OncHistoryScriptBuilder(scriptText);
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder.must(QueryBuilders.termsQuery("profile.hruid", participantShortId));
@@ -86,7 +88,7 @@ public class OncHistoryElasticUpdater {
 
         @Override
         public String getPropertyName() {
-            return "oncHistoryDetail";
+            return ONC_HISTORY_DETAIL;
         }
 
         public Map<String, Object> generate() {
