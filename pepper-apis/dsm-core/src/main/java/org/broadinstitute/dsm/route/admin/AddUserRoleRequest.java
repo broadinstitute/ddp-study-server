@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.route.admin;
 
+import lombok.Data;
+
+@Data
 public class AddUserRoleRequest {
 
     private final String email;
