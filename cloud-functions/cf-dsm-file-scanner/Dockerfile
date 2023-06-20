@@ -17,10 +17,11 @@ RUN mvn -f pom.xml --batch-mode dependency:copy \
     -DoutputDirectory="/app" \
     -Dartifact='com.google.cloud.functions.invoker:java-function-invoker:1.1.0'
 
-FROM clamav/clamav:0.104 AS runtime
+FROM clamav/clamav:1.1.0 AS runtime
 
-ENV GCP_PROJECT=""
-ENV RESULT_TOPIC=""
+ENV GCP_PROJECT="broad-ddp-dev"
+ENV RESULT_TOPIC="dsm-file-antivirus-result"
+ENV STUDY_CLEAN_BUCKET="cmi-lms-files"
 ENV DDP_CLAMAV_SERVER="127.0.0.1:3310"
 ENV PORT="8080"
 
