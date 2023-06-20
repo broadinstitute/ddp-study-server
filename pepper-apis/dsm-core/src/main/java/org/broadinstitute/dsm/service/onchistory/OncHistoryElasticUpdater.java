@@ -50,7 +50,8 @@ public class OncHistoryElasticUpdater {
 
         String scriptText = String.format("if (ctx._source.dsm.%s == null) {"
                 + "ctx._source.dsm.%s = new ArrayList(); }"
-                + "ctx._source.dsm.%s.add(params.%s);", ONC_HISTORY_DETAIL);
+                + "ctx._source.dsm.%s.add(params.%s);",
+                ONC_HISTORY_DETAIL, ONC_HISTORY_DETAIL, ONC_HISTORY_DETAIL, ONC_HISTORY_DETAIL);
         OncHistoryScriptBuilder scriptBuilder = new OncHistoryScriptBuilder(scriptText);
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder.must(QueryBuilders.termsQuery("profile.hruid", participantShortId));
