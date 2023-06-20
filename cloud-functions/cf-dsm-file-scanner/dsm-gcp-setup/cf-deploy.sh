@@ -164,6 +164,7 @@ function deploy-service {
     --update-secrets=ENV="$SECRET_ID:$SECRET_VERSION" \
     --ingress="internal-and-cloud-load-balancing" \
     --allow-unauthenticated \
+    --no-cpu-throttling \
     --port="80"
 }
 
