@@ -525,6 +525,7 @@ public class DBConstants {
     public static final String BLOB_PATH = "blob_path";
     public static final String MIME_TYPE = "mime_type";
     public static final String IS_VIRUS_FREE = "is_virus_free";
+    public static final String SENT_AT = "sent_at";
 
     //sm_id_type table
     public static final String SM_ID_TYPE_TABLE = "sm_id_type";

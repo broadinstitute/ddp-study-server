@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.route.somaticresults;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.AuthorizationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.SomaticResultUploadService;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -27,21 +29,21 @@ public class GetSomaticResultsRoute extends RequestHandler  {
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
         String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        if (isValidRequest(userId, realm, ddpParticipantId)) {
-            return this.service.getSomaticResultsForParticipant(realm, ddpParticipantId);
+        if (!isValidRequest(userId, realm, ddpParticipantId)) {
+            throw new AuthorizationException();
         }
-        return null;
+        return this.service.getSomaticResultsForParticipant(realm, ddpParticipantId);
     }
 
     private boolean isValidRequest(String userId, String realm, String ddpParticipantId) {
         logger.info("Requesting somatic documents for participant {} in realm {} by {}", ddpParticipantId, realm, userId);
         if (StringUtils.isBlank(realm)) {
             logger.warn("No query parameter realm provided in request for somatic documents by {} for {}", userId, ddpParticipantId);
-            throw new IllegalArgumentException(RoutePath.REALM + " cannot be empty");
+            throw new DSMBadRequestException(RoutePath.REALM + " cannot be empty");
         }
         if (StringUtils.isBlank(ddpParticipantId)) {
             logger.warn("No query parameter ddpParticipantId provided in request for somatic documents by {} in realm {}", userId, realm);
-            throw new IllegalArgumentException(RoutePath.DDP_PARTICIPANT_ID + " cannot be empty");
+            throw new DSMBadRequestException(RoutePath.DDP_PARTICIPANT_ID + " cannot be empty");
         }
         return isAuthorized(userId, realm);
     }
