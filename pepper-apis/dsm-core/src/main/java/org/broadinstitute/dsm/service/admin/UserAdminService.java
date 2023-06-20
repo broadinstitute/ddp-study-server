@@ -5,7 +5,8 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.route.admin.AddUserRoleRequest;
+import org.broadinstitute.dsm.util.UserUtil;
+import spark.utils.StringUtils;
 
 public class UserAdminService {
 
@@ -35,20 +36,50 @@ public class UserAdminService {
         this.operatorId = operatorId;
     }
 
-    public void addUserToRole(AddUserRoleRequest req) {
+    public void addUserToRole(AddUserRoleRequest req, String operatorId) {
 
-        UserDao userDao = new UserDao();
-        Optional<UserDto> res = userDao.getUserByEmail(req.getEmail());
-        if (res.isEmpty()) {
-            throw new DSMBadRequestException("Invalid user: " + req.getEmail());
+        // TODO: determine if operator can admin this study group user
+
+        String email = req.getEmail();
+        if (StringUtils.isBlank(email)) {
+            throw new DSMBadRequestException("Invalid user email: blank");
+        }
+        String group = req.getStudyGroup();
+        if (StringUtils.isBlank(group)) {
+            throw new DSMBadRequestException("Invalid study group: blank");
+        }
+        String role = req.getRole();
+        if (StringUtils.isBlank(role)) {
+            throw new DSMBadRequestException("Invalid role: blank");
         }
 
-        UserDto userDto = res.get();
-        // TODO: determine if operator can admin this user
+        UserDao userDao = new UserDao();
+        Optional<UserDto> res = userDao.getUserByEmail(email);
+        if (res.isEmpty()) {
+            throw new DSMBadRequestException("Invalid user: " + email);
+        }
 
+        int studyGroupId = getStudyGroup(studyGroup, role);
+
+
+        UserDto userDto = res.get();
 
         // assure role is for this study group
 
-        userDto.
+        int userId = userDto.getId();
+        // insert
+    }
+
+    private boolean operatorIsAdmin(String operatorId, int studyGroupId) {
+        return true;
+    }
+
+    /**
+     * Validate study group and assure role is valid for study group
+     * @return study group ID
+     * @throws DSMBadRequestException if study group is invalid or role is not valid for group
+     */
+    private int getStudyGroup(String studyGroup, int roleId) {
+        return 1;
     }
 }
