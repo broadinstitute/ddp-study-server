@@ -22,7 +22,8 @@ public class AddUserRoleRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
 
-        QueryParamsMap queryParams = request.queryMap();
+        return 1;
+/*        QueryParamsMap queryParams = request.queryMap();
 
         String realm = null;
         if (queryParams.value(RoutePath.REALM) != null) {
@@ -33,7 +34,7 @@ public class AddUserRoleRoute extends RequestHandler {
             String messageData = request.body();
 
             if (StringUtils.isBlank(messageData)) {
-                logger.error("Message data is blank");
+                log.error("Message data is blank");
             }
 
             JsonObject messageJsonObject = new Gson().fromJson(messageData, JsonObject.class);
@@ -54,7 +55,7 @@ public class AddUserRoleRoute extends RequestHandler {
         } else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
-        }
+        }*/
 
     }
     /*

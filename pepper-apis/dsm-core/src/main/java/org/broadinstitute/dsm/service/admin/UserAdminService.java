@@ -59,7 +59,7 @@ public class UserAdminService {
             throw new DSMBadRequestException("Invalid user: " + email);
         }
 
-        int studyGroupId = getStudyGroup(studyGroup, role);
+        //int studyGroupId = getStudyGroup(studyGroup, role);
 
 
         UserDto userDto = res.get();
