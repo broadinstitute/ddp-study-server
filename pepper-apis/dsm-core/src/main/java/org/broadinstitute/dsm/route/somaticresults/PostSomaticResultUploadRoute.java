@@ -1,11 +1,10 @@
 package org.broadinstitute.dsm.route.somaticresults;
 
-import static spark.Spark.halt;
-
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
+import org.broadinstitute.dsm.exception.AuthorizationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.somatic.result.SomaticResultMetaData;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.SomaticResultUploadService;
@@ -33,31 +32,34 @@ public class PostSomaticResultUploadRoute extends RequestHandler {
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
         String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        SomaticResultMetaData somaticResultMetaData = gson.fromJson(request.body(), SomaticResultMetaData.class);
-        if (isValidRequest(realm, ddpParticipantId, userId, somaticResultMetaData)) {
-            return service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
+        SomaticResultMetaData somaticResultMetaData;
+        try {
+            somaticResultMetaData = gson.fromJson(request.body(), SomaticResultMetaData.class);
+        } catch (Exception ex) {
+            throw new DSMBadRequestException("Bad request.  Are you passing the fileName, mimeType, and fileSize?");
         }
-        halt(HttpStatus.SC_BAD_REQUEST, "Bad request.  Are you passing the fileName, mimeType, and fileSize?");
-        return null;
+        if (!isValidRequest(realm, ddpParticipantId, userId, somaticResultMetaData)) {
+            throw new AuthorizationException();
+        }
+        return service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
     }
 
     private boolean isValidRequest(String realm, String ddpParticipantId, String userId, SomaticResultMetaData somaticResultMetaData) {
         logger.info("Requesting somatic documents for participant {} in realm {} by {}", ddpParticipantId, realm, userId);
         if (StringUtils.isBlank(realm)) {
             logger.warn("No realm provided in request for somatic documents by {} for {}", userId, ddpParticipantId);
-            throw new IllegalArgumentException(RoutePath.REALM + " cannot be empty");
+            throw new DSMBadRequestException(RoutePath.REALM + " cannot be empty");
         }
         if (StringUtils.isBlank(ddpParticipantId)) {
             logger.warn("No participant id provided in request for somatic documents by {} in realm {}", userId, realm);
-            throw new IllegalArgumentException(RoutePath.DDP_PARTICIPANT_ID + " cannot be empty");
+            throw new DSMBadRequestException(RoutePath.DDP_PARTICIPANT_ID + " cannot be empty");
         }
         if (StringUtils.isBlank(somaticResultMetaData.getFileName())) {
             logger.warn("File Name must be specified in request when uploading document by {} for {}", userId, realm);
-            throw new IllegalArgumentException("fileName cannot be empty");
+            throw new DSMBadRequestException("fileName cannot be empty");
         }
         if (!isAuthorized(userId, realm)) {
             logger.warn("User {} is not authorized to access somatic documents in realm {}", userId, realm);
-            halt(403, "Unauthorized to perform this action, contact a study official for authorization.");
             return false;
         }
         return true;

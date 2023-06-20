@@ -79,7 +79,7 @@ public abstract class AbstractRecordsParser<T> {
 
     Map<String, String> transformRecordToMap(String record) {
         // split but keep trailing delimiters
-        List<String> records = Arrays.asList(record.split(regexSeparator, -1));
+        List<String> records = Arrays.asList(record.replaceAll("[\n\r]$", "").split(regexSeparator, -1));
         int colDiff = actualHeaders.size() - records.size();
         if (colDiff > 0) {
             String row = String.join(", ", records);
