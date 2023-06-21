@@ -114,12 +114,11 @@ public class SomaticResultUploadService {
         SomaticResultUpload createdUpload = SomaticResultUpload.createFileUpload(realm, ddpParticipantId,
                 somaticResultMetaData.getFileName(), somaticResultMetaData.getMimeType(), uploadBucket, blobPath, userIdLong);
 
-        Map<String, String> headers = Map.of("Content-Type", somaticResultMetaData.getMimeType());
 
         URL signedURL = storageClient.generateSignedUrl(
                 signer, uploadBucket, blobPath,
                 maxSignedUrlMins, TimeUnit.MINUTES,
-                HttpMethod.PUT, headers);
+                HttpMethod.PUT, new HashMap<>());
 
         return new AuthorizeResult(AuthorizeResultType.OK, signedURL, createdUpload, somaticUploadSettings);
     }
@@ -191,7 +190,7 @@ public class SomaticResultUploadService {
         return this.realmToUploadBucketMap.get(realm.toLowerCase());
     }
 
-    private enum AuthorizeResultType {
+    public enum AuthorizeResultType {
         FILE_SIZE_EXCEEDS_MAXIMUM,
         MIME_TYPE_NOT_ALLOWED,
         INVALID_FILE_NAME,
