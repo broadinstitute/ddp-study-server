@@ -18,8 +18,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
@@ -232,11 +230,6 @@ public class PutFormAnswersRoute implements Route {
 
                     String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
                             instanceDto.getActivityId()).getActivityCode();
-
-                    GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
-                            studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PUT_ANSWERS,
-                            GoogleAnalyticsMetrics.EVENT_ACTION_PUT_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS,
-                            studyActivityCode, 1);
 
                     return new PutAnswersResponse(workflowResp);
                 }

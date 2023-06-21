@@ -48,8 +48,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
-import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
-import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
+
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
@@ -95,7 +94,6 @@ import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
 import org.broadinstitute.dsm.route.EventTypeRoute;
 import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
-import org.broadinstitute.dsm.route.FrontendAnalyticsRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
 import org.broadinstitute.dsm.route.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
@@ -435,7 +433,6 @@ public class DSMServer {
     }
 
     private static void registerAppEngineStartupCallback(long bootTimeoutSeconds, Config cfg) {
-        GoogleAnalyticsMetricsTracker.setConfig(cfg);
         // Block until isReady is available, with an optional timeout to prevent
         // instance for sitting around too long in a nonresponsive state.  There is a
         // judgement call to be made here to allow for lengthy liquibase migrations during boot.
@@ -445,8 +442,6 @@ public class DSMServer {
         get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
             logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
             //flush out any pending GA events
-            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
-
             response.status(HttpStatus.SC_OK);
             return "";
         });
@@ -505,9 +500,6 @@ public class DSMServer {
 
         // don't run superclass routing--it won't work with JettyConfig changes for capturing proper IP address in GAE
         setupCustomRouting(config);
-
-        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics("", GoogleAnalyticsMetrics.EVENT_SERVER_START,
-                GoogleAnalyticsMetrics.EVENT_SERVER_START, GoogleAnalyticsMetrics.EVENT_SERVER_START, 1);
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", corsHttpMethods), String.join(",", corsHttpHeaders));
@@ -919,8 +911,6 @@ public class DSMServer {
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
         get(uiRoot + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
 
-        FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
-        patch(uiRoot + RoutePath.GoogleAnalytics, frontendAnalyticsRoute, new JsonTransformer());
     }
 
     private void setupSomaticUploadRoutes(@NonNull Config cfg) {
