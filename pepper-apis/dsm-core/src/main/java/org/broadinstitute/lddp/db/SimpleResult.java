@@ -13,4 +13,8 @@ public class SimpleResult {
     public SimpleResult(int resultValue) {
         this.resultValue = resultValue;
     }
+
+    public SimpleResult(Object resultValue) {
+        this.resultValue = resultValue;
+    }
 }

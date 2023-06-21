@@ -17,6 +17,7 @@ import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
@@ -183,6 +184,7 @@ public class ParticipantWrapper {
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.KIT_REQUEST_SHIPPING, ddpInstanceId);
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.MEDICAL_RECORD, ddpInstanceId);
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.ONC_HISTORY_DETAIL, ddpInstanceId);
+            filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.SOMATIC_RESULT_UPLOAD, ddpInstanceId);
         }
         dataAsMap.size();
     }
@@ -246,6 +248,7 @@ public class ParticipantWrapper {
 
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+            List<SomaticResultUpload> somaticResultUpload = esDsm.getSomaticResultUpload();
             List<Tissue> tissues = esDsm.getTissue();
             List<SmId> smIds = esDsm.getSmId();
             List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
@@ -254,6 +257,7 @@ public class ParticipantWrapper {
 
             participantWrapperDto.setMedicalRecords(medicalRecord);
             participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
+            participantWrapperDto.setSomaticResultUpload(somaticResultUpload);
             participantWrapperDto.setAbstractionActivities(Collections.emptyList());
             participantWrapperDto.setAbstractionSummary(Collections.emptyList());
 
