@@ -15,15 +15,14 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-if [ -z "$1" ] || [ -z "$2" ]; then
-  echo "Please provide the project name and study name as an argument."
-  echo "Usage: ./deploy.sh <env> <study_name>"
+if [ -z "$1" ]; then
+  echo "Please provide the project name as an argument."
+  echo "Usage: ./cf-deploy.sh <env>"
   exit 1
 fi
 
 # Set the input parameters
 PROJECT_ID="broad-ddp-$1"
-STUDY="$2"
 
 if ! command -v jq &> /dev/null; then
   echo "jq could not be found in PATH"
@@ -36,18 +35,18 @@ if ! command -v gcloud &> /dev/null; then
 fi
 
 
-SERVICE_NAME="$STUDY-dsm-somatic-file-scanner"
+SERVICE_NAME="dsm-somatic-file-scanner"
 CLOUDSDK_RUN_REGION="${CLOUDSDK_RUN_REGION:-"us-central1"}"
 
-SECRET_ID="$STUDY-somatic-file-scanner"
+SECRET_ID="somatic-file-scanner"
 SECRET_VERSION="latest"
 
 ##
 # Topic name the service subscribes to listen for google.storage.object.finalize events
 ##
-LISTEN_TOPIC_NAME="$STUDY-file-scanner-trigger"
+LISTEN_TOPIC_NAME="file-scanner-trigger"
 LISTEN_DEAD_LETTER_TOPIC_NAME="${LISTEN_DEAD_LETTER_TOPIC_NAME:-"$LISTEN_TOPIC_NAME-dead-letter"}"
-LISTEN_SUBSCRIPTION_NAME="$STUDY-file-scanner-trigger-sub"
+LISTEN_SUBSCRIPTION_NAME="file-scanner-trigger-sub"
 
 ##
 # Topic name the service will publish scan results to
@@ -222,7 +221,7 @@ function main {
   # which don't result in modifications to the project.
   ##
 
-  ./dsm-setup.sh $1 $2
+  ./dsm-setup.sh $1
 
   if ! check-for-image; then
     echo "Failed to locate a valid image for $CONTAINER_FQ_NAME. Ensure the repository exists and the name is correct."
@@ -324,7 +323,8 @@ function main {
   # a delete-then-create flow.
   ##
   if ! check-for-listen-subscription; then
-    local service_url="$(gcloud run services describe $SERVICE_NAME --format=json | jq -r '.status.address.url')"
+    local service_url="$(gcloud run services describe $SERVICE_NAME --format=json --region=$CLOUDSDK_RUN_REGION | jq -r '.status.address.url')"
+    echo "Service URL: $service_url"
     if ! setup-listen-subscription "$service_url"; then
       echo "failed to create a subscriber to topic $LISTEN_TOPIC_NAME"
       exit -1
