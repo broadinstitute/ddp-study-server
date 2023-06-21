@@ -5,6 +5,7 @@ import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.SomaticResultUploadService;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.slf4j.Logger;
@@ -31,6 +32,10 @@ public class GetSomaticResultsRoute extends RequestHandler  {
         String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
         if (!isValidRequest(userId, realm, ddpParticipantId)) {
             throw new AuthorizationException();
+        }
+        if (queryParams.hasKey(ESObjectConstants.SOMATIC_DOCUMENT_ID)) {
+            long documentId = queryParams.get(ESObjectConstants.SOMATIC_DOCUMENT_ID).longValue();
+            return this.service.getSomaticResultByIdPtptAndRealm(documentId, ddpParticipantId, realm);
         }
         return this.service.getSomaticResultsForParticipant(realm, ddpParticipantId);
     }

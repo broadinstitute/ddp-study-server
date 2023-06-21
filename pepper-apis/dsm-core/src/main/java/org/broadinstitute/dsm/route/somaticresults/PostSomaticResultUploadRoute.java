@@ -41,7 +41,11 @@ public class PostSomaticResultUploadRoute extends RequestHandler {
         if (!isValidRequest(realm, ddpParticipantId, userId, somaticResultMetaData)) {
             throw new AuthorizationException();
         }
-        return service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
+        SomaticResultUploadService.AuthorizeResult authorizeUploadResponse = service.authorizeUpload(realm, userId, ddpParticipantId, somaticResultMetaData);
+        if (!authorizeUploadResponse.getAuthorizeResultType().equals(SomaticResultUploadService.AuthorizeResultType.OK)) {
+            response.status(400);
+        }
+        return authorizeUploadResponse;
     }
 
     private boolean isValidRequest(String realm, String ddpParticipantId, String userId, SomaticResultMetaData somaticResultMetaData) {
