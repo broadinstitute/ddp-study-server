@@ -211,7 +211,7 @@ public class DSMSomaticFileScanner implements BackgroundFunction<DSMSomaticFileS
         if (publisher.isPresent()) {
             ByteString data = ByteString.copyFrom(antivirusMessage.toString(), StandardCharsets.UTF_8);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
-
+            log.atInfo().log("Published message " + antivirusMessage.toString());
             try {
                 var msgId = publisher.get().publish(pubsubMessage).get();
                 log.atFine().log("Published scan result with messageId %s", msgId);

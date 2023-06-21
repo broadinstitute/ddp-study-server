@@ -47,6 +47,10 @@ else
           --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
           --role="roles/pubsub.subscriber"
 
+      gcloud projects add-iam-policy-binding $PROJECT_ID\
+        --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+        --role=roles/storage.objectAdmin
+
       echo "Roles assigned to the service account: $SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com"
 
   # Generate the service account key

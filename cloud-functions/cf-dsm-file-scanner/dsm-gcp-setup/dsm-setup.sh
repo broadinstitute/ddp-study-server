@@ -36,7 +36,7 @@ subscription_name="$study_name"-file-scanner-trigger-sub
 
 # Call the create_topic_and_sub.sh script to create the pubsub topic that triggers the FileScanner
 echo "creating the $trigger_topic_name pubsub topic that triggers the FileScanner"
-./create_topic_and_sub.sh $project_name $trigger_topic_name $subscription_name
+./create_topic_and_sub.sh $project_name $trigger_topic_name ""
 
 scan_result_topic_name="dsm-file-antivirus-result"
 scan_result_subscription_name="dsm-file-antivirus-result-sub"
