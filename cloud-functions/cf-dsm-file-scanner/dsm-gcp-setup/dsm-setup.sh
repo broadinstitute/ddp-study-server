@@ -29,7 +29,7 @@ echo "setting the initial bucket for uploaded files"
 
 ## Call the create_bucket.sh script to create the bucket
 echo "setting the final bucket for scanned files"
-./create-bucket.sh "$project_name" "$study_name-files"
+./create-bucket.sh "$project_name" "somatic-result-files"
 
 trigger_topic_name="$study_name"-file-scanner-trigger
 subscription_name="$study_name"-file-scanner-trigger-sub

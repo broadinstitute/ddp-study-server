@@ -21,7 +21,7 @@ FROM clamav/clamav:1.1.0 AS runtime
 
 ENV GCP_PROJECT="broad-ddp-dev"
 ENV RESULT_TOPIC="dsm-file-antivirus-result"
-ENV STUDY_CLEAN_BUCKET="cmi-lms-files"
+ENV STUDY_CLEAN_BUCKET="somatic-result-files"
 ENV DDP_CLAMAV_SERVER="127.0.0.1:3310"
 ENV CLAMD_STARTUP_TIMEOUT="7200"
 ENV PORT="8080"
