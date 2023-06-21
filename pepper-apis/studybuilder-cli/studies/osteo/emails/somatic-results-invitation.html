@@ -73,18 +73,19 @@
        border="0" cellpadding="0" cellspacing="0" width="100%">
     <tr style="width: 540px;">
         <td align="left" style="margin: 0; padding: 50px 0 0 0; font-family: 'Source Sans Pro', sans-serif;">
-            <a href="{{baseWebUrl}}" target="_blank" style="cursor: pointer; text-decoration: none;">
-                <img src="https://storage.googleapis.com/${assetsBucketName}/lms/project-logo.png"
-                     alt="Leiomyosarcoma Project logo" style="-ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none;"
+            <a href="-ddp.baseWebUrl-" target="_blank" style="cursor: pointer; text-decoration: none;">
+                <img src="https://storage.googleapis.com/${assetsBucketName}/osteo/project-logo.png"
+                     alt="Osteosarcoma Project logo" style="-ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none;"
                      width="230px" height="63px" border="0">
             </a>
         </td>
     </tr>
+
     <tr style="width: 540px;">
         <td style="padding: 50px 0 0 0;">
             <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Dear {{participant_firstName}},</p>
 
-            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Thank you for being a part of the Leiomyosarcoma Project. When you were first enrolling in this study, you indicated to our team that you would like to receive information from the sequencing of the DNA found in your tumor samples (also known as “somatic” DNA). This information is now available if you would still like to see it.</p>
+            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Thank you for being a part of the Osteosarcoma Project. When you were first enrolling in this study, you indicated to our team that you would like to receive information from the sequencing of the DNA found in your tumor samples (also known as “somatic” DNA). This information is now available if you would still like to see it.</p>
 
             <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">You can view this information by logging into your participant dashboard:</p>
         </td>
@@ -99,15 +100,10 @@
 
     <tr style="width: 540px;">
         <td style="padding: 20px 0 80px 0;">
-            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">If for any reason you no longer wish to have access to this information, please contact the study team at  <a href="mailto:${contact.email}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.email}</a>
-                or call <a href="tel:${contact.phone}" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.phone}</a>, and we will remove this from your dashboard.</p>
-
-            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Please keep in mind that this information about your tumor DNA is intended to highlight how your participation is contributing to research, and will not have implications for your treatment or prognosis..</p>
-            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">If you have any questions about these shared learnings at any point or would like to talk to a member of our study staff, please reach out to us at <a href="mailto:${contact.email}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.email}</a>
+            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">To learn more about this additional aspect of participation in the Osteosarcoma Project, please feel free to visit the FAQ and Participation pages of our website. If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at <a href="mailto:${contact.email}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.email}</a>
                 or call <a href="tel:${contact.phone}" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.phone}</a>.</p>
-
             <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Sincerely,</p>
-            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">The LMSproject team</p>
+            <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">The OSproject team</p>
             <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">
                 For additional updates, follow us on
                 <a href='${social.facebook}'    target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>,
@@ -118,4 +114,5 @@
     </tr>
 </table>
 </body>
+
 </html>
