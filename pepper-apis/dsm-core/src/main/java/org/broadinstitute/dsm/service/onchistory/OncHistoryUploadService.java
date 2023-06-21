@@ -40,9 +40,6 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
-import org.broadinstitute.dsm.model.elastic.export.ElasticDataExportAdapter;
-import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -56,7 +53,7 @@ public class OncHistoryUploadService {
     private ColumnValidator columnValidator;
     private String participantIndex;
     private int ddpInstanceId;
-    private BaseExporter esExporter;
+    private OncHistoryElasticUpdater elasticUpdater;
     private boolean initialized;
     private static final String ID_COLUMN = "RECORD_ID";
 
@@ -89,12 +86,12 @@ public class OncHistoryUploadService {
 
         columnValidator = new ColumnValidator(pickLists);
 
-        setEsExporter(new ElasticDataExportAdapter());
+        setElasticUpdater(new OncHistoryElasticUpdater(participantIndex));
         initialized = true;
     }
 
-    protected void setEsExporter(BaseExporter esExporter) {
-        this.esExporter = esExporter;
+    protected void setElasticUpdater(OncHistoryElasticUpdater elasticUpdater) {
+        this.elasticUpdater = elasticUpdater;
     }
 
     public void upload(String fileContent) {
@@ -141,9 +138,6 @@ public class OncHistoryUploadService {
 
         for (OncHistoryRecord rec : oncHistoryRecords) {
             int participantId = participantIdProvider.getParticipantIdForShortId(rec.getParticipantTextId());
-            if (participantId == -1) {
-                throw new DSMBadRequestException("Invalid participant short ID: " + rec.getParticipantTextId());
-            }
 
             try {
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
@@ -260,13 +254,7 @@ public class OncHistoryUploadService {
             parent.put(ONC_HISTORY, oncHistory);
             Map<String, Object> update = Map.of(ESObjectConstants.DSM, parent);
 
-            try {
-                exportToES(update, row.getDdpParticipantId(), esExporter);
-            } catch (Exception e) {
-                String msg = String.format("Error writing oncHistory to ES for participant ID: %d, record ID %d",
-                        participantId, oncHistoryDto.getOncHistoryId());
-                throw new DsmInternalError(msg, e);
-            }
+            elasticUpdater.update(update, row.getDdpParticipantId());
         }
     }
 
@@ -360,6 +348,7 @@ public class OncHistoryUploadService {
      * For each row, write column values to ES participant index
      */
     protected void writeToES(List<OncHistoryRecord> rows) {
+        // TODO can be optimized by collecting oncHistoryDetail by participant
         for (OncHistoryRecord row : rows) {
             Map<String, Object> oncHistory = new HashMap<>();
 
@@ -385,26 +374,10 @@ public class OncHistoryUploadService {
             oncHistory.put("oncHistoryDetailId", row.getRecordId());
 
             Map<String, Object> parent = new HashMap<>();
-            List<Object> oncHistoryList = new ArrayList<>();
+            parent.put(ONC_HISTORY_DETAIL, oncHistory);
 
-            oncHistoryList.add(oncHistory);
-            parent.put(ONC_HISTORY_DETAIL, oncHistoryList);
-            Map<String, Object> update = Map.of(ESObjectConstants.DSM, parent);
-
-            try {
-                exportToES(update, row.getDdpParticipantId(), esExporter);
-            } catch (Exception e) {
-                String msg = String.format("Error writing oncHistoryDetail to ES for participant ID: %d, record ID %d",
-                        row.getParticipantId(), row.getRecordId());
-                throw new DsmInternalError(msg, e);
-            }
+            elasticUpdater.updateAppend(parent, row.getParticipantTextId());
         }
-    }
-
-    private void exportToES(Map<String, Object> source, String ddpParticipantId, BaseExporter exporter) {
-        exporter.setRequestPayload(new RequestPayload(participantIndex, ddpParticipantId));
-        exporter.setSource(source);
-        exporter.export();
     }
 
     /**

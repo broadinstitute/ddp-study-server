@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="PEPPER-903_sent_date" author="otchet">
+        <addColumn tableName="somatic_documents">
+            <column name="trigger_id" type="INT" defaultValue="NULL" afterColumn="is_virus_free">
+                <constraints nullable="true" foreignKeyName="somatic_documents_ddp_trigger_id_fk"
+                             referencedTableName="ddp_survey_trigger" referencedColumnNames="survey_trigger_id"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

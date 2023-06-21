@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.dsm.db.dao.Dao;
 
 import org.broadinstitute.dsm.db.dao.util.DaoUtil;
@@ -65,6 +66,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
     }
 
     @Override
+    @VisibleForTesting
     public int delete(int id) {
         SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
         if (simpleResult.resultException != null) {

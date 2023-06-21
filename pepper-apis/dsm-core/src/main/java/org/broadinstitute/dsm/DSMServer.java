@@ -5,6 +5,7 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static spark.Spark.afterAfter;
 import static spark.Spark.before;
 import static spark.Spark.delete;
+import static spark.Spark.exception;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.patch;
@@ -53,6 +54,9 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
+import org.broadinstitute.dsm.exception.AuthorizationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -114,6 +118,7 @@ import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
+import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
@@ -667,13 +672,15 @@ public class DSMServer {
 
         setupMiscellaneousRoutes();
 
-        setupSomaticUploadRoutes(cfg);
-
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
 
         setupCohortTagRoutes();
 
         setupPubSubPublisherRoutes(cfg);
+
+        setupRouteGenericErrorHandlers();
+
+        setupSomaticUploadRoutes(cfg);
 
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
         patch(uiRoot + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new JsonTransformer());
@@ -923,6 +930,8 @@ public class DSMServer {
         delete(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService), new JsonTransformer());
         get(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE,
                 new GetSomaticResultsRoute(somaticResultUploadService), new JsonTransformer());
+        post(uiRoot + RoutePath.TRIGGER_SOMATIC_SURVEY,
+                new TriggerSomaticResultSurveyRoute(somaticResultUploadService), new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
@@ -1028,6 +1037,21 @@ public class DSMServer {
             }
         }
         setupErrorNotifications(cfg, schedulerName);
+    }
+
+    private void setupRouteGenericErrorHandlers() {
+        exception(DSMBadRequestException.class, (exception, request, response) -> {
+            response.status(400);
+            response.body(exception.getMessage());
+        });
+        exception(DsmInternalError.class, (exception, request, response) -> {
+            response.status(500);
+            response.body(exception.getMessage());
+        });
+        exception(AuthorizationException.class, (exception, request, response) -> {
+            response.status(403);
+            response.body(exception.getMessage());
+        });
     }
 
     protected void setupErrorNotifications(Config config, String schedulerName) {

@@ -1,4 +1,4 @@
 RECORD_ID	DATE_PX	TYPE_PX	LOCATION_PX	HISTOLOGY	ACCESSION	FACILITY	PHONE	FAX	DESTRUCTION	BLOCKS_WITH_TUMOR	TUMOR_SIZE	LOCAL_CONTROL	NECROSIS	VIABLE_TUMOR	FFPE	DECALCIFICATION	BLOCK_TO_REQUEST	REQUEST_STATUS
-abc	12/5/2022		here		5		555-555-1212		Never		5cm x 6cm x 1cm	No				Hydrochloric Acid (includes Von Ebner's solution)		Sent
+abc	12/5/2022		here		5		555-555-1212		Never		5cm x 6cm x 1cm	No				Hydrochloric Acid (includes Von Ebner's solution)		Returned
 def	5/6/2021							555-555-1212	3			Unknown			No			
-def	3/10/2022		there		3		555-555-1212		5		5cm x 6cm x 1cm	Yes			Unknown			
+def	3/10/2022		there		3		555-555-1212		5		5cm x 6cm x 1cm	Yes			Unknown			On Hold

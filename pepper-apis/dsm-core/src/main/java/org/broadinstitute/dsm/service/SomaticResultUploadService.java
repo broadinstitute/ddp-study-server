@@ -28,6 +28,8 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.broadinstitute.dsm.db.SomaticResultUpload;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.somatic.result.SomaticResultMetaData;
 import org.broadinstitute.dsm.model.somatic.result.SomaticResultUploadSettings;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -112,23 +114,22 @@ public class SomaticResultUploadService {
         SomaticResultUpload createdUpload = SomaticResultUpload.createFileUpload(realm, ddpParticipantId,
                 somaticResultMetaData.getFileName(), somaticResultMetaData.getMimeType(), uploadBucket, blobPath, userIdLong);
 
-        Map<String, String> headers = Map.of("Content-Type", somaticResultMetaData.getMimeType());
 
         URL signedURL = storageClient.generateSignedUrl(
                 signer, uploadBucket, blobPath,
                 maxSignedUrlMins, TimeUnit.MINUTES,
-                HttpMethod.PUT, headers);
+                HttpMethod.PUT, new HashMap<>());
 
         return new AuthorizeResult(AuthorizeResultType.OK, signedURL, createdUpload, somaticUploadSettings);
     }
 
-    public SomaticResultUpload deleteUpload(long userId, int documentId, String realm) {
+    public SomaticResultUpload deleteUpload(long userId, long documentId, String realm) {
         SomaticResultUpload existingDocument;
 
         try {
             existingDocument = SomaticResultUpload.getSomaticFileUploadByIdAndRealm(documentId, realm);
         } catch (RuntimeException rte) {
-            throw new IllegalArgumentException("No document found for entry");
+            throw new DSMBadRequestException("No document found for entry");
         }
 
         if (isDeletedSomaticResult(existingDocument)) {
@@ -145,19 +146,27 @@ public class SomaticResultUploadService {
                 log.error("Somatic document failed to delete from GCS. Manual intervention required.  "
                                 + "Last recorded bucket: {}, blobPath: {} ",
                         deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
-                throw new RuntimeException("Deletion failed, contact DSM developer.");
+                throw new DsmInternalError("Deletion failed, contact DSM developer.");
             }
         } else {
             log.error("Somatic document blob not found in bucket when attempting to delete from GCS. Manual intervention required.  "
                             + "Last recorded bucket: {}, blobPath: {} ",
                     deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
-            throw new RuntimeException("Deletion failed, contact DSM developer.");
+            throw new DsmInternalError("Deletion failed, contact DSM developer.");
         }
         return deletedSomaticResultUpload;
     }
 
     public List<SomaticResultUpload> getSomaticResultsForParticipant(String realm, String ddpParticipantId) {
         return SomaticResultUpload.getSomaticFileUploadDocuments(realm, ddpParticipantId);
+    }
+
+    public SomaticResultUpload getSomaticResultByIdPtptAndRealm(long id, String ddpParticipantId, String realm) {
+        return SomaticResultUpload.getSomaticFileUploadByIdRealmPTPT(id, realm, ddpParticipantId);
+    }
+
+    public SomaticResultUpload updateSomaticResultTrigger(long documentId, long triggerId, String realm) {
+        return SomaticResultUpload.updateTriggerId(documentId, triggerId, realm);
     }
 
     private static boolean isDeletedSomaticResult(SomaticResultUpload somaticResultUpload) {

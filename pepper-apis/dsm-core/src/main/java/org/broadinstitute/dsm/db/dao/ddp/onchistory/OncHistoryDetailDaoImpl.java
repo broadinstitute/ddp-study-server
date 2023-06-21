@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -38,6 +39,7 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
     }
 
     @Override
+    @VisibleForTesting
     public int delete(int id) {
         SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
         if (simpleResult.resultException != null) {

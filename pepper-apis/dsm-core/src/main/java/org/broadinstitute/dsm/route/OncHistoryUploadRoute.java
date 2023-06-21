@@ -33,7 +33,7 @@ public class OncHistoryUploadRoute extends RequestHandler {
         realm = queryParams.value(RoutePath.REALM);
 
         if (!canUploadOncHistory(realm, userId)) {
-            response.status(401);
+            response.status(403);
             return (UserErrorMessages.NO_RIGHTS);
         }
 
