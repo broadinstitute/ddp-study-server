@@ -21,6 +21,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -207,16 +208,16 @@ public class DSMSomaticFileScanner implements BackgroundFunction<DSMSomaticFileS
         }
     }
 
-    private void publishAntivirusResultMessageToDSM(AntivirusMessage antivirusMessage) {
+    private void publishAntivirusResultMessageToDSM(String json) {
         if (publisher.isPresent()) {
-            ByteString data = ByteString.copyFrom(antivirusMessage.toString(), StandardCharsets.UTF_8);
+            ByteString data = ByteString.copyFrom(json, StandardCharsets.UTF_8);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
-            log.atInfo().log("Published message " + antivirusMessage.toString());
+            log.atInfo().log("Published message " + json);
             try {
                 var msgId = publisher.get().publish(pubsubMessage).get();
                 log.atFine().log("Published scan result with messageId %s", msgId);
             } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException("Error publishing scan result for file: " + antivirusMessage.objectId, e);
+                throw new RuntimeException("Error publishing scan result for message: " + json, e);
             }
         } else {
             log.atInfo().log("PubSub topic not configured, not sending a scan result message");
@@ -224,60 +225,71 @@ public class DSMSomaticFileScanner implements BackgroundFunction<DSMSomaticFileS
     }
 
     private void moveFileIntoFinalBucket(String uploadBucketName, String objectName, String projectId, String finalBucketName) {
+        try {
+            Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
+            BlobId source = BlobId.of(uploadBucketName, objectName);
+            BlobId target = BlobId.of(finalBucketName, objectName);
 
-        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
-        BlobId source = BlobId.of(uploadBucketName, objectName);
-        BlobId target = BlobId.of(finalBucketName, objectName);
+            // Optional: set a generation-match precondition to avoid potential race
+            // conditions and data corruptions. The request returns a 412 error if the
+            // preconditions are not met.
+            Storage.BlobTargetOption precondition;
+            if (storage.get(finalBucketName, objectName) == null) {
+                // For a target object that does not yet exist, set the DoesNotExist precondition.
+                // This will cause the request to fail if the object is created before the request runs.
+                precondition = Storage.BlobTargetOption.doesNotExist();
+            } else {
+                // If the destination already exists in your bucket, instead set a generation-match
+                // precondition. This will cause the request to fail if the existing object's generation
+                // changes before the request runs.
+                precondition = Storage.BlobTargetOption.generationMatch();
+            }
 
-        // Optional: set a generation-match precondition to avoid potential race
-        // conditions and data corruptions. The request returns a 412 error if the
-        // preconditions are not met.
-        Storage.BlobTargetOption precondition;
-        if (storage.get(finalBucketName, objectName) == null) {
-            // For a target object that does not yet exist, set the DoesNotExist precondition.
-            // This will cause the request to fail if the object is created before the request runs.
-            precondition = Storage.BlobTargetOption.doesNotExist();
-        } else {
-            // If the destination already exists in your bucket, instead set a generation-match
-            // precondition. This will cause the request to fail if the existing object's generation
-            // changes before the request runs.
-            precondition = Storage.BlobTargetOption.generationMatch();
+            // Copy source object to target object
+            storage.copy(
+                    Storage.CopyRequest.newBuilder().setSource(source).setTarget(target, precondition).build());
+            Blob copiedObject = storage.get(target);
+            // Delete the original blob now that we've copied to where we want it, finishing the "move"
+            // operation
+            storage.get(source).delete();
+
+            log.atInfo().log(String.format("Moved object %s from bucket %s to %s", objectName, uploadBucketName, finalBucketName));
+            AntivirusMessage message = new AntivirusMessage(uploadBucketName, objectName, finalBucketName, objectName,
+                    FileScanResult.CLEAN);
+            String json = new Gson().toJson(message);
+            publishAntivirusResultMessageToDSM(json);
+        } catch (Exception e) {
+            log.atWarning().log(String.format("Unable to move the file %s from bucket %s to %s ", objectName, uploadBucketName,
+                    finalBucketName), e);
         }
-
-        // Copy source object to target object
-        storage.copy(
-                Storage.CopyRequest.newBuilder().setSource(source).setTarget(target, precondition).build());
-        Blob copiedObject = storage.get(target);
-        // Delete the original blob now that we've copied to where we want it, finishing the "move"
-        // operation
-        storage.get(source).delete();
-
-        log.atInfo().log(String.format("Moved object %s from bucket %s to %s", objectName, uploadBucketName, finalBucketName));
-        AntivirusMessage message = new AntivirusMessage(uploadBucketName, objectName, finalBucketName, objectName, FileScanResult.CLEAN);
-        publishAntivirusResultMessageToDSM(message);
 
     }
 
     private void deleteFileFromBucket(String bucketName, String objectName, String projectId) {
 
-        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
-        Blob blob = storage.get(bucketName, objectName);
-        if (blob == null) {
-            System.out.println("The object " + objectName + " wasn't found in " + bucketName);
-            return;
+        try {
+            Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
+            Blob blob = storage.get(bucketName, objectName);
+            if (blob == null) {
+                log.atWarning().log("The object " + objectName + " wasn't found in " + bucketName);
+                return;
+            }
+
+            // Optional: set a generation-match precondition to avoid potential race
+            // conditions and data corruptions. The request to upload returns a 412 error if
+            // the object's generation number does not match your precondition.
+            Storage.BlobSourceOption precondition =
+                    Storage.BlobSourceOption.generationMatch(blob.getGeneration());
+
+            storage.delete(bucketName, objectName, precondition);
+
+            log.atInfo().log("Object " + objectName + " was deleted from " + bucketName);
+            AntivirusMessage message = new AntivirusMessage(bucketName, objectName, null, null, FileScanResult.DELETED);
+            String json = new Gson().toJson(message);
+            publishAntivirusResultMessageToDSM(json);
+        } catch (Exception e) {
+            log.atWarning().log(String.format("Unable to delete the file %s from bucket %s", objectName, bucketName), e);
         }
-
-        // Optional: set a generation-match precondition to avoid potential race
-        // conditions and data corruptions. The request to upload returns a 412 error if
-        // the object's generation number does not match your precondition.
-        Storage.BlobSourceOption precondition =
-                Storage.BlobSourceOption.generationMatch(blob.getGeneration());
-
-        storage.delete(bucketName, objectName, precondition);
-
-        log.atInfo().log("Object " + objectName + " was deleted from " + bucketName);
-        AntivirusMessage message = new AntivirusMessage(bucketName, objectName, null, null, FileScanResult.DELETED);
-        publishAntivirusResultMessageToDSM(message);
     }
 
     /**
