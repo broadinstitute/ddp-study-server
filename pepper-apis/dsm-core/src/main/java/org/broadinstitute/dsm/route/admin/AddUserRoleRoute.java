@@ -1,18 +1,14 @@
 package org.broadinstitute.dsm.route.admin;
 
-import java.util.Map;
-
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.pubsub.EditParticipantMessagePublisher;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.dsm.service.admin.AddUserRoleRequest;
+import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.lddp.handlers.util.Result;
-import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
@@ -20,43 +16,42 @@ import spark.Response;
 public class AddUserRoleRoute extends RequestHandler {
 
     @Override
-    public Object processRequest(Request request, Response response, String userId) throws Exception {
+    public Object processRequest(Request request, Response response, String userId) {
 
-        return 1;
-/*        QueryParamsMap queryParams = request.queryMap();
-
-        String realm = null;
-        if (queryParams.value(RoutePath.REALM) != null) {
-            realm = queryParams.get(RoutePath.REALM).value();
+        String body = request.body();
+        if (StringUtils.isBlank(body)) {
+            response.status(400);
+            return "Request body is blank";
         }
-        String userIdRequest = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(realm, userId, "participant_edit", userIdRequest)) {
-            String messageData = request.body();
 
-            if (StringUtils.isBlank(messageData)) {
-                log.error("Message data is blank");
-            }
+        AddUserRoleRequest req;
+        try {
+            req = new Gson().fromJson(body, AddUserRoleRequest.class);
+            log.info("TEMP: AddUserRoleRequest {}", req);
+        } catch (Exception e) {
+            log.info("Invalid request format for {}", body);
+            response.status(400);
+            return "Invalid request format";
+        }
 
-            JsonObject messageJsonObject = new Gson().fromJson(messageData, JsonObject.class);
+        UserAdminService adminService = new UserAdminService(userId);
 
-            JsonObject dataFromJson = messageJsonObject.get("data").getAsJsonObject();
-
-            String data = dataFromJson.toString();
-
-            Map<String, String> attributeMap = getStringStringMap(userId, messageJsonObject);
-
-            try {
-                EditParticipantMessagePublisher.publishMessage(data, attributeMap, projectId, topicId);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return new Result(200);
-        } else {
+        try {
+            adminService.addUserToRole(req);
+        } catch (DSMBadRequestException e) {
+            response.status(400);
+            return e.getMessage();
+        } catch (DsmInternalError e) {
+            log.error("Error adding user to role: {}", e.getMessage());
             response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
-        }*/
+            return "Internal error. Contact development team";
+        } catch (Exception e) {
+            log.error("Error adding user to role: {}", e.getMessage());
+            response.status(500);
+            return e.getMessage();
+        }
 
+        return new Result(200);
     }
     /*
     SELECT @uemail := "<someone's email>";
