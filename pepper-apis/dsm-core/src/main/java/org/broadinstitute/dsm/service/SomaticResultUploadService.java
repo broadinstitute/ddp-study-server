@@ -190,7 +190,7 @@ public class SomaticResultUploadService {
         return this.realmToUploadBucketMap.get(realm.toLowerCase());
     }
 
-    private enum AuthorizeResultType {
+    public enum AuthorizeResultType {
         FILE_SIZE_EXCEEDS_MAXIMUM,
         MIME_TYPE_NOT_ALLOWED,
         INVALID_FILE_NAME,
