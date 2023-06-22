@@ -276,21 +276,26 @@ public class UserAdminService {
         return (int) res.resultValue;
     }
 
-    protected static boolean addUserRole(int userId, int roleId, int groupId) throws Exception {
+    protected static int addUserRole(int userId, int roleId, int groupId) throws Exception {
         // since we do not have a key constraint for duplicate entries we need to check first
         int userRoleId = getUserRole(userId, roleId, groupId);
         if (userRoleId != -1) {
-            return false;
+            return userRoleId;
         }
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER_ROLE)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER_ROLE, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setInt(1, userId);
                 stmt.setInt(2, roleId);
                 stmt.setInt(3, groupId);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     dbVals.resultException = new DsmInternalError("Error adding user to role. Result count was " + result);
+                }
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getInt(1);
+                    }
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -301,7 +306,7 @@ public class UserAdminService {
         if (res.resultException != null) {
             throw res.resultException;
         }
-        return true;
+        return (int) res.resultValue;
     }
 
     protected static int addRole(String role, int groupId) throws Exception {

@@ -57,12 +57,13 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         return userId;
     }
 
-    private void addUserRole(int userId, int roleId, int groupId) throws Exception {
-        UserAdminService.addUserRole(userId, roleId, groupId);
+    private int addUserRole(int userId, int roleId, int groupId) throws Exception {
+        int userRoleId = UserAdminService.addUserRole(userId, roleId, groupId);
         List<Integer> roleIds = createdUserRoles.get(userId);
         List<Integer> newRoleIds = new ArrayList<>(roleIds);
         newRoleIds.add(roleId);
         createdUserRoles.put(userId, newRoleIds);
+        return userRoleId;
     }
 
     @Test
@@ -75,7 +76,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     public void testVerifyOperatorForGroup() {
         int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
         Assert.assertTrue(roleId > 0);
-        int userId = createUser("test.admin@study.org", roleId);
+        int userId = createUser("test_admin1@study.org", roleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
             UserAdminService.verifyOperatorForGroup(Integer.toString(userId), TEST_GROUP);
@@ -114,7 +115,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
         Assert.assertTrue(roleId > 0);
         String email = "testUser@study.org";
-        int userId = createUser("testUser@study.org", -1);
+        int userId = createUser(email, -1);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
             int id = UserAdminService.getUserByEmail(email, groupId);
@@ -122,5 +123,38 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.getUserByEmail: " +  getStackTrace(e));
         }
+    }
+
+    @Test
+    public void testAddUserToRole() {
+        int operatorId = createAdminUser("test_admin2@study.org");
+        String role = "upload_onc_history";
+        int roleId = UserAdminService.verifyRole(role, -1);
+        Assert.assertTrue(roleId > 0);
+        String email = "testUser2@study.org";
+        int userId = createUser(email, roleId);
+        int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
+        AddUserRoleRequest req = new AddUserRoleRequest(email, role, TEST_GROUP);
+
+        UserAdminService service = new UserAdminService(Integer.toString(operatorId));
+        try {
+            service.addUserToRole(req);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.addUserToRole: " +  getStackTrace(e));
+        }
+        int userRoleId = UserAdminService.getUserRole(userId, roleId, groupId);
+        Assert.assertNotEquals(-1, userRoleId);
+    }
+
+    private int createAdminUser(String email) {
+        int adminRoleId = UserAdminService.verifyRole("study_admin", -1);
+        int userId = createUser(email, adminRoleId);
+        int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
+        try {
+            return addUserRole(userId, adminRoleId, groupId);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
+        }
+        return -1;
     }
 }
