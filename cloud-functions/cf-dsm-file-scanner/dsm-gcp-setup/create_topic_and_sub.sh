@@ -14,8 +14,6 @@ subscription_name=$3
 # Check if the results topic is already created
 topic_exists=$(gcloud pubsub topics describe "$topic_name" --project "$project_name" 2>/dev/null)
 
-# Check if the subscription exists
-subscription_exists=$(gcloud pubsub subscriptions describe "$subscription_name" --project "$project_name" 2>/dev/null)
 
 # Create the topic if it doesn't exist
 if [ -z "$topic_exists" ]; then
@@ -23,6 +21,15 @@ if [ -z "$topic_exists" ]; then
 else
   echo "Topic '$topic_name' already exists."
 fi
+
+
+if [[ "$subscription_name" = "" ]]; then
+  echo "No need to create a subscription, need to be created after service deployment"
+  exit 1
+fi
+
+# Check if the subscription exists
+subscription_exists=$(gcloud pubsub subscriptions describe "$subscription_name" --project "$project_name" 2>/dev/null)
 
 # Create the subscription if it doesn't exist
 if [ -z "$subscription_exists" ]; then
