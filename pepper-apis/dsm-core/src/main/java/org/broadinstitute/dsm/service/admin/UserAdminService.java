@@ -42,7 +42,7 @@ public class UserAdminService {
                     + "JOIN access_role ar on ar.role_id = aurg.role_id "
                     + "JOIN ddp_group dg on dg.group_id = aurg.group_id "
                     + "JOIN access_user au on au.user_id = aurg.user_id "
-                    + "WHERE au.user_id = ? AND dg.name = ? AND ar.name = ?";
+                    + "WHERE au.user_id = ? AND ar.role_id = ? AND dg.group_id = ?";
 
     private static final String SQL_SELECT_ROLE =
             "SELECT ar.role_id FROM access_role ar WHERE ar.name = ?";
