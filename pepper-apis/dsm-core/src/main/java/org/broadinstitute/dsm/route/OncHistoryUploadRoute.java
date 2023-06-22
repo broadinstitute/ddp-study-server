@@ -58,12 +58,15 @@ public class OncHistoryUploadRoute extends RequestHandler {
             return "Onc history upload succeeded";
         } catch (DSMBadRequestException | OncHistoryValidationException e) {
             response.status(400);
+            log.info("Bad request for onc history upload: {}", e.toString());
             return e.getMessage();
         } catch (DsmInternalError e) {
             response.status(500);
+            log.info("Internal error processing onc history upload: {}", e.toString());
             return e.getMessage();
         } catch (Exception e) {
             // TODO in some future day we are not throwing exceptions that we do not have a mapped status code
+            log.warn("Unhandled exception processing onc history upload: {}", e.toString());
             response.status(500);
             return e.getMessage();
         }
