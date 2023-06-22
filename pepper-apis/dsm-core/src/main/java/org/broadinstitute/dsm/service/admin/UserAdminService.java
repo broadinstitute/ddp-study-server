@@ -127,7 +127,8 @@ public class UserAdminService {
 
         List<RoleAndGroup> roles = getRolesForUser(operatorId, studyGroup);
         if (roles.isEmpty()) {
-            throw new DSMBadRequestException("No roles found for operator: " + operatorId);
+            String msg = String.format("No roles found for operator %s and group %s", operatorId, studyGroup);
+            throw new DSMBadRequestException(msg);
         }
         List<String> roleNames = roles.stream().map(r -> r.roleName).collect(Collectors.toList());
         if (!roleNames.contains(STUDY_ADMIN_ROLE)) {

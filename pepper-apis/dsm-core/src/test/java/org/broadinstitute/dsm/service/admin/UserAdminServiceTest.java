@@ -128,13 +128,18 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     @Test
     public void testAddUserToRole() {
         int operatorId = createAdminUser("test_admin2@study.org");
+        try {
+            UserAdminService.verifyOperatorForGroup(Integer.toString(operatorId), TEST_GROUP);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.verifyOperatorForGroup: " +  getStackTrace(e));
+        }
         String role = "upload_onc_history";
         int roleId = UserAdminService.verifyRole(role, -1);
         Assert.assertTrue(roleId > 0);
         String email = "testUser2@study.org";
         int userId = createUser(email, roleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
-        AddUserRoleRequest req = new AddUserRoleRequest(email, role, TEST_GROUP);
+        AddUserRoleRequest req = new AddUserRoleRequest(email, TEST_GROUP, role);
 
         UserAdminService service = new UserAdminService(Integer.toString(operatorId));
         try {
@@ -151,10 +156,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int userId = createUser(email, adminRoleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
-            return addUserRole(userId, adminRoleId, groupId);
+            addUserRole(userId, adminRoleId, groupId);
+            log.info("Created admin user wih id {}", userId);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
         }
-        return -1;
+        return userId;
     }
 }
