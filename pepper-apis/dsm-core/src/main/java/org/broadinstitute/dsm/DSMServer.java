@@ -873,7 +873,7 @@ public class DSMServer {
 
         post(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
-        post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute());
+        post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
     }
 
     private void setupMRAbstractionRoutes() {

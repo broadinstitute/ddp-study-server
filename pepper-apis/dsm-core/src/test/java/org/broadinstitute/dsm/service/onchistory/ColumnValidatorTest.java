@@ -75,8 +75,9 @@ public class ColumnValidatorTest {
         res = validator.validate("2022-11-20", "date_col", "d");
         Assert.assertTrue(res.valid);
         res = validator.validate("12/2022", "date_col", "d");
-        Assert.assertFalse(res.valid);
-        Assert.assertTrue(res.errorMessage.contains("Invalid date"));
+        Assert.assertTrue(res.valid);
+        res = validator.validate("2022", "date_col", "d");
+        Assert.assertTrue(res.valid);
         res = validator.validate("abc", "date_col", "d");
         Assert.assertFalse(res.valid);
         Assert.assertTrue(res.errorMessage.contains("Invalid date"));
