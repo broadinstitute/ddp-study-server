@@ -65,4 +65,4 @@ echo "Setting the cors config"
 ./cors-config.sh $1
 
 echo "Setting permissions for the ddp-downloader Service Account"
-./update-download-service-account $project_name
+./update-download-service-account.sh $project_name
