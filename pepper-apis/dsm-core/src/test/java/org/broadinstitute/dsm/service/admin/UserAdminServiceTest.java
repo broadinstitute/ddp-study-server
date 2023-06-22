@@ -49,7 +49,10 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         userDto.setEmail(email);
         UserDao userDao = new UserDao();
         int userId = userDao.create(userDto);
-        List<Integer> roleIds = List.of(roleId);
+        List<Integer> roleIds = new ArrayList<>();
+        if (roleId != -1) {
+            roleIds.add(roleId);
+        }
         createdUserRoles.put(userId, roleIds);
         return userId;
     }
@@ -111,8 +114,13 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
         Assert.assertTrue(roleId > 0);
         String email = "testUser@study.org";
-        int userId = createUser("testUser@study.org", roleId);
+        int userId = createUser("testUser@study.org", -1);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
-        UserAdminService.getUserByEmailAndGroup(email, groupId);
+        try {
+            int id = UserAdminService.getUserByEmail(email, groupId);
+            Assert.assertEquals(userId, id);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.getUserByEmail: " +  getStackTrace(e));
+        }
     }
 }

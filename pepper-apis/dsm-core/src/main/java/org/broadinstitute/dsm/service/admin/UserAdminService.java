@@ -50,11 +50,8 @@ public class UserAdminService {
     private static final String SQL_SELECT_GROUP =
             "SELECT dg.group_id FROM ddp_group dg WHERE dg.name = ?";
 
-    private static final String SQL_SELECT_USER_BY_EMAIL_AND_GROUP_ID =
-            "select distinct(au.user_id), au.name FROM access_user au "
-                    + "JOIN access_user_role_group aurg on aurg.user_id = au.user_id "
-                    + "JOIN ddp_group dg on aurg.group_id = ? "
-                    + "WHERE au.email = ?";
+    private static final String SQL_SELECT_USER_BY_EMAIL =
+            "SELECT au.user_id, au.name FROM access_user au WHERE au.email = ?";
 
     private static final String SQL_INSERT_USER_ROLE =
             "INSERT INTO access_user_role_group SET user_id = ?, role_id = ?, group_id = ?";
@@ -96,7 +93,7 @@ public class UserAdminService {
 
         int roleId = verifyRole(role, groupId);
 
-        int userId = getUserByEmailAndGroup(email, groupId);
+        int userId = getUserByEmail(email, groupId);
 
         try {
             addUserRole(userId, roleId, groupId);
@@ -219,12 +216,13 @@ public class UserAdminService {
         return (int) res.resultValue;
     }
 
-    protected static int getUserByEmailAndGroup(String email, int groupId) {
+    protected static int getUserByEmail(String email, int groupId) {
+        // TODO: Currently we do not track the valid roles for a group, but get by
+        // groupId once we do -DC
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_BY_EMAIL_AND_GROUP_ID)) {
-                stmt.setInt(1, groupId);
-                stmt.setString(2, email);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_BY_EMAIL)) {
+                stmt.setString(1, email);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getInt(1);
