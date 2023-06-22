@@ -109,19 +109,23 @@ public class OncHistoryUploadService {
 
         // validate row contents as a first pass to avoid confusing errors
         validateRows(rows);
+        log.info("Validated {} rows for onc history upload", rows.size());
 
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows,
                 new ESParticipantIdProvider(realm, participantIndex), true);
+        log.info("Processing {} participants for onc history upload", participantMedIds.size());
 
         // ensure oncHistory record for each participant
         createOncHistoryRecords(rows);
 
         // write OncHistoryDetails to DB
         writeToDb(rows, participantMedIds);
+        log.info("Wrote {} rows of onc history to DB", rows.size());
 
         // update ES
         writeToES(rows);
+        log.info("Updated {} rows of onc history in ES", rows.size());
     }
 
     /**
@@ -356,7 +360,8 @@ public class OncHistoryUploadService {
             for (var entry : colValues.entrySet()) {
                 String value = entry.getValue();
                 if (value != null && !value.isEmpty()) {
-                    oncHistory.put(CamelCaseConverter.of(entry.getKey()).convert(), value);
+                    String name = studyColumns.get(entry.getKey()).getColumnName();
+                    oncHistory.put(CamelCaseConverter.of(name).convert(), value);
                 }
             }
 
