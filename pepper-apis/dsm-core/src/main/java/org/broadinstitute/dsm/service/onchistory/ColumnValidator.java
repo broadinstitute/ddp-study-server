@@ -3,7 +3,9 @@ package org.broadinstitute.dsm.service.onchistory;
 import static org.broadinstitute.dsm.util.SystemUtil.DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.DDP_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.INTL_DATE_FORMAT;
+import static org.broadinstitute.dsm.util.SystemUtil.PARTIAL_US_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.US_DATE_FORMAT;
+import static org.broadinstitute.dsm.util.SystemUtil.YEAR_DATE_FORMAT;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -22,7 +24,8 @@ public class ColumnValidator {
 
     private final Map<String, List<String>> columnToPickList;
 
-    private static List<String> dateFormats = List.of(US_DATE_FORMAT, DDP_DATE_FORMAT, INTL_DATE_FORMAT);
+    private static List<String> dateFormats =
+            List.of(US_DATE_FORMAT, DDP_DATE_FORMAT, INTL_DATE_FORMAT, PARTIAL_US_DATE_FORMAT, YEAR_DATE_FORMAT);
 
     /**
      * Constructor
