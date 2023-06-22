@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.service.onchistory.OncHistoryValidationException;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -24,7 +25,6 @@ public class OncHistoryUploadRoute extends RequestHandler {
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
-        response.type("text/plain");
 
         QueryParamsMap queryParams = request.queryMap();
         String realm;
@@ -55,9 +55,7 @@ public class OncHistoryUploadRoute extends RequestHandler {
             OncHistoryUploadService service =
                     new OncHistoryUploadService(realm, oncHistoryUserId, new CodeStudyColumnsProvider());
             service.upload(request.body());
-            response.status(200);
-            // TODO: needed?
-            return "Onc history upload succeeded";
+            return new Result(200, "Onc history upload succeeded");
         } catch (DSMBadRequestException | OncHistoryValidationException e) {
             response.status(400);
             log.info("Bad request for onc history upload: {}", e.toString());
