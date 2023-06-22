@@ -360,7 +360,8 @@ public class OncHistoryUploadService {
             for (var entry : colValues.entrySet()) {
                 String value = entry.getValue();
                 if (value != null && !value.isEmpty()) {
-                    oncHistory.put(CamelCaseConverter.of(entry.getKey()).convert(), value);
+                    String name = studyColumns.get(entry.getKey()).getColumnName();
+                    oncHistory.put(CamelCaseConverter.of(name).convert(), value);
                 }
             }
 

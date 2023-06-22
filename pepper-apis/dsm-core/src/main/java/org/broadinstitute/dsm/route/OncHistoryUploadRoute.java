@@ -24,6 +24,8 @@ public class OncHistoryUploadRoute extends RequestHandler {
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
+        response.type("text/plain");
+
         QueryParamsMap queryParams = request.queryMap();
         String realm;
         if (!queryParams.hasKey(RoutePath.REALM)) {
