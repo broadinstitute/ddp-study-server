@@ -9,8 +9,12 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -29,6 +33,11 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
             + "duplicate, international, cr_required, pathology_present, notes, follow_ups, additional_values_json, "
             + "last_changed, changed_by, mr_document_file_names, deleted) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+
+    public static final String SQL_SELECT_BY_ID = "SELECT * FROM ddp_medical_record WHERE medical_record_id = ?;";
+
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_medical_record WHERE medical_record_id = ?";
 
     public static MedicalRecordDao of() {
         return new MedicalRecordDao();
@@ -98,12 +107,31 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
     }
 
     @Override
+    @VisibleForTesting
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error deleting medical record with id: " + id, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override
     public Optional<MedicalRecord> get(long id) {
-        return Optional.empty();
+        MedicalRecordDao.BuildMedicalRecord builder = new MedicalRecordDao.BuildMedicalRecord();
+        SimpleResult res = DaoUtil.getById(id, SQL_SELECT_BY_ID, builder);
+        if (res.resultException != null) {
+            throw new RuntimeException("Error getting medical record with id: " + id,
+                    res.resultException);
+        }
+        return (Optional<MedicalRecord>) res.resultValue;
+    }
+
+    private static class BuildMedicalRecord implements ResultsBuilder {
+
+        public Object build(ResultSet rs) throws SQLException {
+            return new MedicalRecord(rs.getInt(DBConstants.MEDICAL_RECORD_ID),
+                    rs.getInt(DBConstants.INSTITUTION_ID));
+        }
     }
 }

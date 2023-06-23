@@ -1,0 +1,21 @@
+
+
+[{
+          "origin": ["https://dsm-dev.datadonationplatform.org/*"],
+          "method": ["GET", "POST","PUT"],
+          "responseHeader": ["access-control-allow-credentials","access-control-allow-origin","content-type","withcredentials"],
+          "maxAgeSeconds": 3600
+        },
+  {
+    "origin": ["http://localhost:4200/*"],
+    "method": ["GET", "POST","PUT"],
+    "responseHeader": ["access-control-allow-credentials","access-control-allow-origin","content-type","withcredentials"],
+    "maxAgeSeconds": 3600
+  },
+  {
+    "origin": ["http://localhost:4200"],
+    "method": ["GET", "POST","PUT"],
+    "responseHeader": ["access-control-allow-credentials","access-control-allow-origin","content-type","withcredentials"],
+    "maxAgeSeconds": 3600
+  }
+]

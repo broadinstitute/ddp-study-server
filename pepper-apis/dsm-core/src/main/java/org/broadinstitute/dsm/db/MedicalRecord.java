@@ -157,11 +157,9 @@ public class MedicalRecord implements HasDdpInstanceId {
     private Boolean deleted;
 
 
-    public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type) {
+    public MedicalRecord(long medicalRecordId, long institutionId) {
         this.medicalRecordId = medicalRecordId;
         this.institutionId = institutionId;
-        this.ddpInstitutionId = ddpInstitutionId;
-        this.type = type;
     }
 
     public MedicalRecord() {

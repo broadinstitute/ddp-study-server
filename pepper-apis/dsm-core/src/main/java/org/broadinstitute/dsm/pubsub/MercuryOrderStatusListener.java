@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MercuryOrderStatusListener {
-    private static final Logger logger = LoggerFactory.getLogger(DSMtasksSubscription.class);
+    private static final Logger logger = LoggerFactory.getLogger(MercuryOrderStatusListener.class);
 
     public static void subscribeToOrderStatus(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.

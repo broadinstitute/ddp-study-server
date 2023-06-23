@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -47,6 +48,7 @@ public class PropertyInfo {
                         DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
                         DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)
                 ));
+        TABLE_ALIAS_MAPPINGS.put(DBConstants.SOMATIC_DOCUMENTS_TABLE_ALIAS, new PropertyInfo(SomaticResultUpload.class, true));
         TABLE_ALIAS_MAPPINGS.put(DBConstants.DDP_KIT_ALIAS, new PropertyInfo(KitRequestShipping.class, true));
         TABLE_ALIAS_MAPPINGS.put(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, new PropertyInfo(ClinicalOrder.class, true));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PROFILE, new PropertyInfo(Profile.class, false));
