@@ -4,9 +4,11 @@ package org.broadinstitute.dsm.model.filter.postfilter.osteo;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.postfilter.BaseStudyPostFilter;
@@ -43,9 +45,17 @@ public class DsmDdpInstanceIdPostFilter extends BaseStudyPostFilter {
             List<KitRequestShipping> filteredKitRequestShippings = esDsm.getKitRequestShipping().stream()
                     .filter(ddpInstanceIdFilter)
                     .collect(Collectors.toList());
+            List<SomaticResultUpload> filteredSomaticDocuments = esDsm.getSomaticResultUpload().stream()
+                        .filter(ddpInstanceIdFilter)
+                        .collect(Collectors.toList());
+            List<ClinicalOrder> filteredClinicalOrders = esDsm.getClinicalOrder().stream()
+                    .filter(ddpInstanceIdFilter)
+                    .collect(Collectors.toList());
             esDsm.setMedicalRecord(filteredMedicalRecords);
             esDsm.setOncHistoryDetail(filteredOncHistoryDetails);
             esDsm.setKitRequestShipping(filteredKitRequestShippings);
+            esDsm.setSomaticResultUpload(filteredSomaticDocuments);
+            esDsm.setClinicalOrder(filteredClinicalOrders);
         });
 
     }

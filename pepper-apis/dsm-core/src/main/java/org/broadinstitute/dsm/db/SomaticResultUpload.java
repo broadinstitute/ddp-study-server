@@ -126,6 +126,10 @@ public class SomaticResultUpload implements HasDdpInstanceId {
 
     public SomaticResultUpload() {}
 
+    public SomaticResultUpload(long ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
     /**
      * Builds A Somatic Document for storage
      *
