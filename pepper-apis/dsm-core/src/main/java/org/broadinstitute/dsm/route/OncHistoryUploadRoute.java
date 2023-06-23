@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.service.onchistory.OncHistoryValidationException;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -19,8 +20,7 @@ import spark.Response;
 @Slf4j
 public class OncHistoryUploadRoute extends RequestHandler {
 
-    public static final String ONC_HISTORY_UPLOAD = "kit_upload"; // TOOO temp until testers are part of role -DC
-    //public static final String ONC_HISTORY_UPLOAD = "onc_history_upload";
+    public static final String ONC_HISTORY_UPLOAD = "upload_onc_history";
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -53,17 +53,18 @@ public class OncHistoryUploadRoute extends RequestHandler {
             OncHistoryUploadService service =
                     new OncHistoryUploadService(realm, oncHistoryUserId, new CodeStudyColumnsProvider());
             service.upload(request.body());
-            response.status(200);
-            // TODO: needed?
-            return "Onc history upload succeeded";
+            return new Result(200);
         } catch (DSMBadRequestException | OncHistoryValidationException e) {
             response.status(400);
+            log.info("Bad request for onc history upload: {}", e.toString());
             return e.getMessage();
         } catch (DsmInternalError e) {
             response.status(500);
+            log.info("Internal error processing onc history upload: {}", e.toString());
             return e.getMessage();
         } catch (Exception e) {
             // TODO in some future day we are not throwing exceptions that we do not have a mapped status code
+            log.warn("Unhandled exception processing onc history upload: {}", e.toString());
             response.status(500);
             return e.getMessage();
         }
