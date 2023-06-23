@@ -59,4 +59,10 @@ echo "creating the results topic and subscription if they don't exist"
 ./create_topic_and_sub.sh $project_name $results_topic_name $subscription_name
 
 echo "setting up the service account if it doesn't exist"
-./create-service-account.sh $project_name $study_name
+./create-service-account.sh $project_name
+
+echo "Setting the cors config"
+./cors-config.sh $1
+
+echo "Setting permissions for the ddp-downloader Service Account"
+./update-download-service-account $project_name
