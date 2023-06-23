@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.service.onchistory;
 import static org.broadinstitute.dsm.util.SystemUtil.DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.DDP_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.INTL_DATE_FORMAT;
+import static org.broadinstitute.dsm.util.SystemUtil.PARTIAL_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.PARTIAL_US_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.US_DATE_FORMAT;
 import static org.broadinstitute.dsm.util.SystemUtil.YEAR_DATE_FORMAT;
@@ -24,8 +25,9 @@ public class ColumnValidator {
 
     private final Map<String, List<String>> columnToPickList;
 
-    private static List<String> dateFormats =
-            List.of(US_DATE_FORMAT, DDP_DATE_FORMAT, INTL_DATE_FORMAT, PARTIAL_US_DATE_FORMAT, YEAR_DATE_FORMAT);
+    private static final List<String> dateFormats = List.of(DATE_FORMAT, US_DATE_FORMAT, DDP_DATE_FORMAT, INTL_DATE_FORMAT);
+
+    private static final List<String> partialDateFormats = List.of(PARTIAL_US_DATE_FORMAT, PARTIAL_DATE_FORMAT);
 
     /**
      * Constructor
@@ -49,19 +51,18 @@ public class ColumnValidator {
             case "s":
                 return res;
             case "d":
-                try {
-                    getDateString(value, DATE_FORMAT);
-                } catch (ParseException e) {
-                    for (String dateFormat: dateFormats) {
-                        try {
-                            res.newValue = getDateString(value, dateFormat);
-                            return res;
-                        } catch (ParseException pe) {
-                            continue;
-                        }
+                String formattedValue = parseDate(value, dateFormats, DATE_FORMAT);
+                if (formattedValue == null) {
+                    formattedValue = parseDate(value, partialDateFormats, PARTIAL_DATE_FORMAT);
+                    if (formattedValue == null) {
+                        formattedValue = getDateString(value, YEAR_DATE_FORMAT, YEAR_DATE_FORMAT);
                     }
+                }
+                if (formattedValue == null) {
                     res.errorMessage = String.format("Invalid date format for column %s: %s", columnName, value);
                     res.valid = false;
+                } else {
+                    res.newValue = formattedValue;
                 }
                 return res;
             case "i":
@@ -80,12 +81,26 @@ public class ColumnValidator {
         }
     }
 
-    private String getDateString(String value, String pattern) throws ParseException {
+    private String parseDate(String dateValue, List<String> dateFormats, String applyFormat) {
+        for (String dateFormat: dateFormats) {
+            String formattedValue = getDateString(dateValue, dateFormat, applyFormat);
+            if (formattedValue != null) {
+                return formattedValue;
+            }
+        }
+        return null;
+    }
+
+    private String getDateString(String value, String pattern, String applyFormat) {
         SimpleDateFormat parser = new SimpleDateFormat(pattern);
         parser.setLenient(false);
-        Date date = parser.parse(value);
-        parser.applyPattern(DATE_FORMAT);
-        return parser.format(date);
+        try {
+            Date date = parser.parse(value);
+            parser.applyPattern(applyFormat);
+            return parser.format(date);
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
     private ColumnValidatorResponse validatePickListValue(String value, String columnName, ColumnValidatorResponse res) {
