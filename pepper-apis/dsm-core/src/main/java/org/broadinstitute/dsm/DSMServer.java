@@ -581,8 +581,8 @@ public class DSMServer {
         if (!cfg.getBoolean("ui.production")) {
             get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
                     new JsonTransformer());
-            get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
-                    new JsonTransformer());
+            get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT, new CreateClinicalDummyKitRoute(
+                    new OncHistoryDetailDaoImpl()), new JsonTransformer());
             get(apiRoot + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
         }
 
