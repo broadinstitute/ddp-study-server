@@ -64,6 +64,7 @@ public class DataExporterCli {
     public static void main(String[] args) throws Exception {
         DataExporterCli app = new DataExporterCli();
         app.run(args);
+        System.exit(0);
     }
 
     private void run(String[] args) throws Exception {

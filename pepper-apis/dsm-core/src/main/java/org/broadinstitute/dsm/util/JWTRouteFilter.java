@@ -54,15 +54,18 @@ public class JWTRouteFilter {
                 if (parsedAuthHeader != null) {
                     if (parsedAuthHeader.length == 2) {
                         String jwtToken = parsedAuthHeader[1].trim();
-                        if (!isRSA) {
-                            logger.info(jwtToken);
-                        }
+                        //                        if (!isRSA) {
+                        //                            logger.info(jwtToken);
+                        //                        }
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
                                 Map<String, Claim> verifiedClaims;
                                 if (isRSA) {
                                     Optional<DecodedJWT> maybeValidToken = Auth0Util.verifyAuth0Token(jwtToken, auth0Domain);
-                                    maybeValidToken.orElseThrow();
+                                    if (maybeValidToken.isEmpty()) {
+                                        logger.warn("The token could not be verified!");
+                                        return false;
+                                    }
                                     DecodedJWT validToken = maybeValidToken.get();
                                     verifiedClaims = validToken.getClaims();
                                 } else {
@@ -78,7 +81,7 @@ public class JWTRouteFilter {
                                     logger.error("Claims were null, token deosn't have valid signature and access is not allowed");
                                 }
                             } catch (Exception e) {
-                                logger.error("Invalid token: " + jwtToken, e);
+                                logger.warn("Invalid token: " + jwtToken, e);
                             }
                         }
                     } else {

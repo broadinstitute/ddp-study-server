@@ -77,21 +77,21 @@ import org.broadinstitute.ddp.housekeeping.handler.PdfGenerationHandler;
 import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessage;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
-import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
-import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
-import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
-import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
-import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
-import org.broadinstitute.ddp.housekeeping.schedule.FileUploadNotificationJob;
-import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
 import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
 import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadNotificationJob;
+import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
+import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
+import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
+import org.broadinstitute.ddp.model.event.CreateKitEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.EventSignal;
-import org.broadinstitute.ddp.model.event.CreateKitEventAction;
 import org.broadinstitute.ddp.model.event.UpdateUserStatusEventAction;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
@@ -235,7 +235,14 @@ public class Housekeeping {
         setupFileScanResultReceiver(cfg, pubSubProject);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
-
+        if (usePubSubEmulator) {
+            ProjectTopicName projectTopicName = ProjectTopicName.of(pubSubProject,
+                    cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC));
+            pubsubConnectionManager.createTopicIfNotExists(projectTopicName);
+            ProjectSubscriptionName projectSubscriptionName = ProjectSubscriptionName.of(pubSubProject,
+                    cfg.getString(ConfigFile.PUBSUB_TASKS_SUB));
+            pubsubConnectionManager.createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
+        }
         PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
                 pubsubConnectionManager,
                 pubSubProject,

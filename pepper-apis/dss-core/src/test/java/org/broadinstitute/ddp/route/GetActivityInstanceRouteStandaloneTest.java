@@ -17,10 +17,11 @@ import static org.junit.Assert.assertNotNull;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,8 +62,8 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
+import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -70,21 +71,21 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -95,15 +96,15 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
-import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
-import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
@@ -485,7 +486,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 studyId, userId, userId, "blob", "application/pdf", "file.pdf", 123L);
         fileDao.markVerified(upload.getId());
         var fileAnswer = new FileAnswer(null, file1.getStableId(), null,
-                Collections.singletonList(fileDao.findFileInfoByGuid(upload.getGuid()).get()));
+                Collections.singletonList(fileDao.findFileInfoByGuid(upload.getGuid()).orElse(null)));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), fileAnswer);
     }
 
@@ -888,7 +889,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         ActivityDefStore.getInstance().clearCachedActivityData();
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
-                1L, activity.getActivityCode(), optStudyId.get())
+                1L, activity.getActivityCode(), optStudyId.orElse(null))
         );
 
         TransactionWrapper.useTxn(
@@ -902,7 +903,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("readonly", equalTo(true));
 
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
-                null, activity.getActivityCode(), optStudyId.get())
+                null, activity.getActivityCode(), optStudyId.orElse(null))
         );
     }
 
@@ -1115,12 +1116,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void testSpecialVarsSubstitutions() {
         UserProfile profile = testData.getProfile();
         Response resp = testFor200AndExtractResponse();
-
         String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
-
-        String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now()));
+        String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>",
+                profile.getFirstName(),
+                profile.getLastName(),
+                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDateTime.ofInstant(Instant.now(), profile.getTimeZone())));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 

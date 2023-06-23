@@ -62,8 +62,10 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     kitRequestShipping.setDdpLabel(ddpLabel);
                     kitRequestShipping.setScanDate(System.currentTimeMillis());
                     result = updateKitRequest(kitRequestShipping);
-                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, kitRequestShipping);
-                    this.writeSampleSentToES(kitRequestShipping);
+                    if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
+                        trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, kitRequestShipping);
+                        this.writeSampleSentToES(kitRequestShipping);
+                    }
                 } else {
                     result = Optional.of(
                             new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));

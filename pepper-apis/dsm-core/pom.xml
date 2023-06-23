@@ -62,6 +62,11 @@
             <artifactId>commons-dbcp2</artifactId>
             <!-- <version>2.1.1</version> -->
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
 
         <!-- job scheduler -->
         <dependency>
@@ -123,6 +128,11 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <!-- <version>6.8.2</version> -->
+        </dependency>
+        <dependency>
+            <groupId>org.owasp</groupId>
+            <artifactId>java-file-io</artifactId>
+            <version>1.0.0</version>
         </dependency>
 
         <!-- test dependencies -->
@@ -300,5 +310,10 @@
             org.broadinstitute.dsm.route.familymember.AddFamilyMemberRouteTest,
             org.broadinstitute.dsm.route.KitUploadRouteTest
         </dsm.test.ci.excludes>
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.java.binaries>target/classes</sonar.java.binaries>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 </project>

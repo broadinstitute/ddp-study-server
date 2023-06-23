@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -21,17 +22,17 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
 
     private static final String SQL_OPTIONS_AND_RADIOS_BY_INSTANCE_ID =
             "SELECT  field_settings_id, ddp_instance_id, field_type, column_name, column_display, display_type,"
-                    + "possible_values, actions, readonly, order_number, deleted, last_changed, changed_by"
+                    + "possible_values, actions, details, readonly, order_number, deleted, last_changed, changed_by"
                     + " FROM field_settings WHERE ddp_instance_id = ? and (display_type = 'OPTIONS' or display_type = 'RADIO') ";
 
     private static final String GET_FIELD_SETTINGS =
             "SELECT  field_settings_id, ddp_instance_id, field_type, column_name, column_display, display_type,"
-                    + "possible_values, actions, readonly, order_number, deleted, last_changed, changed_by" + " FROM field_settings";
+                    + "possible_values, actions, details, readonly, order_number, deleted, last_changed, changed_by" + " FROM field_settings";
 
     private static final String SQL_INSERT_FIELD_SETTING =
             "INSERT INTO field_settings SET  ddp_instance_id = ?,  field_type = ?,  column_name = ?,  column_display = ?, "
                     + "display_type = ?,  possible_values = ?,  actions = ?,  order_number = ?,  deleted = ?, "
-                    + "last_changed = ?,  changed_by = ?,  readonly = ?,  max_length = ?";
+                    + "last_changed = ?,  changed_by = ?,  readonly = ?,  max_length = ?, details = ?";
 
     private static final String SQL_DELETE_FIELD_SETTING_BY_ID = "DELETE FROM field_settings  WHERE field_settings_id = ?";
 
@@ -57,6 +58,7 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
     private static final String DISPLAY_TYPE = "display_type";
     private static final String POSSIBLE_VALUES = "possible_values";
     private static final String ACTIONS = "actions";
+    private static final String DETAILS = "details";
     private static final String READONLY = "readonly";
     private static final String ORDER_NUMBER = "order_number";
     private static final String DELETED = "deleted";
@@ -96,6 +98,7 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
                 stmt.setString(11, fieldSettingsDto.getChangedBy());
                 stmt.setBoolean(12, fieldSettingsDto.isReadonly());
                 stmt.setInt(13, fieldSettingsDto.getMaxLength());
+                stmt.setString(14, fieldSettingsDto.getDetails());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -115,19 +118,9 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
 
     @Override
     public int delete(int id) {
-        SimpleResult simpleResult = inTransaction(conn -> {
-            SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_FIELD_SETTING_BY_ID)) {
-                stmt.setInt(1, id);
-                execResult.resultValue = stmt.executeUpdate();
-            } catch (SQLException sqle) {
-                execResult.resultException = sqle;
-            }
-            return execResult;
-        });
-
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_FIELD_SETTING_BY_ID);
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error deleting field setting with id: " + id, simpleResult.resultException);
+            throw new RuntimeException("Error deleting field_settings record with id: " + id, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
@@ -188,7 +181,8 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
         return new FieldSettingsDto.Builder(rs.getInt(DDP_INSTANCE_ID)).withFieldSettingsId(rs.getInt(FIELD_SETTINGS_ID))
                 .withFieldType(rs.getString(FIELD_TYPE)).withColumnName(rs.getString(COLUMN_NAME))
                 .withColumnDisplay(rs.getString(COLUMN_DISPLAY)).withDisplayType(rs.getString(DISPLAY_TYPE))
-                .withPossibleValues(rs.getString(POSSIBLE_VALUES)).withActions(rs.getString(ACTIONS)).withReadOnly(rs.getBoolean(READONLY))
+                .withPossibleValues(rs.getString(POSSIBLE_VALUES)).withActions(rs.getString(ACTIONS))
+                .withDetails(rs.getString(DETAILS)).withReadOnly(rs.getBoolean(READONLY))
                 .withOrderNumber(rs.getInt(ORDER_NUMBER)).withDeleted(rs.getBoolean(DELETED)).withLastChanged(rs.getLong(LAST_CHANGED))
                 .withChangedBy(rs.getString(CHANGED_BY)).build();
     }

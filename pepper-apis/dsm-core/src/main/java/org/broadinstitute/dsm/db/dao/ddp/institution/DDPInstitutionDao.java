@@ -8,9 +8,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.dsm.db.dao.Dao;
 
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
 import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -24,6 +28,8 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
             + "(ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, ?, ?)";
 
     public static final String SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID = "SELECT * FROM ddp_institution WHERE institution_id = ?;";
+
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_institution WHERE institution_id = ?";
 
     public static DDPInstitutionDao of() {
         return new DDPInstitutionDao();
@@ -60,44 +66,37 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
     }
 
     @Override
+    @VisibleForTesting
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
+        if (simpleResult.resultException != null) {
+            throw new DsmInternalError("Error deleting ddp_institution record with id: " + id, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override
     public Optional<DDPInstitutionDto> get(long institutionId) {
-        logger.info(String.format("Attempting to find the institution in DB with institution_id = %s", institutionId));
-        SimpleResult result = new SimpleResult();
-        SimpleResult simpleResult = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult(-1);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID)) {
-                stmt.setLong(1, institutionId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        result.resultValue = buildInstitutionFromResultSet(rs);
-                    }
-                }
-            } catch (SQLException sqle) {
-                dbVals.resultException = sqle;
-            }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error while fetching institutions with institution id: " + institutionId,
-                    simpleResult.resultException);
+        BuildInstitution builder = new BuildInstitution();
+        SimpleResult res = DaoUtil.getById(institutionId, SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID, builder);
+        if (res.resultException != null) {
+            throw new RuntimeException("Error fetching institution with institution id: " + institutionId,
+                    res.resultException);
         }
-        logger.info(String.format("Got the institution from DB with institution_id = %s", institutionId));
-        return Optional.of((DDPInstitutionDto) result.resultValue);
+        logger.info("Got institution from DB with institution_id = {}", institutionId);
+        return (Optional<DDPInstitutionDto>) res.resultValue;
     }
 
 
-    private DDPInstitutionDto buildInstitutionFromResultSet(ResultSet rs) throws SQLException {
-        return new DDPInstitutionDto.Builder()
-                .withInstitutionId(rs.getInt(DBConstants.INSTITUTION_ID))
-                .withDdpInstitutionId(rs.getString(DBConstants.DDP_INSTITUTION_ID))
-                .withType(rs.getString(DBConstants.TYPE))
-                .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
-                .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
-                .build();
+    private static class BuildInstitution implements ResultsBuilder {
+        public Object build(ResultSet rs) throws SQLException {
+            return new DDPInstitutionDto.Builder()
+                    .withInstitutionId(rs.getInt(DBConstants.INSTITUTION_ID))
+                    .withDdpInstitutionId(rs.getString(DBConstants.DDP_INSTITUTION_ID))
+                    .withType(rs.getString(DBConstants.TYPE))
+                    .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
+                    .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
+                    .build();
+        }
     }
 }
