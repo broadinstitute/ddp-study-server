@@ -11,6 +11,7 @@ public class UserDto {
     private String name;
     private String email;
     private String phoneNumber;
+    private Integer isActive;
 
     public UserDto(int id, String name, String email, String phoneNumber) {
         this.id = id;
@@ -37,5 +38,8 @@ public class UserDto {
 
     public Optional<String> getPhoneNumber() {
         return Optional.ofNullable(phoneNumber);
+    }
+    public Optional<Integer> getIsActive() {
+        return Optional.ofNullable(isActive);
     }
 }

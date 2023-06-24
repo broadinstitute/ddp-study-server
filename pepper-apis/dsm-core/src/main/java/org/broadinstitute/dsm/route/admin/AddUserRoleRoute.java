@@ -37,7 +37,7 @@ public class AddUserRoleRoute extends RequestHandler {
         UserAdminService adminService = new UserAdminService(userId);
 
         try {
-            adminService.addUserToRole(req);
+            adminService.addUserToRoles(req);
         } catch (DSMBadRequestException e) {
             response.status(400);
             return e.getMessage();

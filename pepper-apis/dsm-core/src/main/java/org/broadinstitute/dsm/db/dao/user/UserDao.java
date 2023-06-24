@@ -18,7 +18,7 @@ public class UserDao implements Dao<UserDto> {
     public static final String NAME = "name";
     public static final String EMAIL = "email";
     public static final String PHONE_NUMBER = "phone_number";
-    private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email) VALUES (?,?)";
+    private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email, is_active) VALUES (?,?,?)";
     private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
     private static final String SQL_SELECT_USER_BY_EMAIL =
             "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.email = ?";
@@ -83,6 +83,7 @@ public class UserDao implements Dao<UserDto> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, userDto.getName().orElse(""));
                 stmt.setString(2, userDto.getEmail().orElse(""));
+                stmt.setInt(3, userDto.getIsActive().orElse(0));
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {

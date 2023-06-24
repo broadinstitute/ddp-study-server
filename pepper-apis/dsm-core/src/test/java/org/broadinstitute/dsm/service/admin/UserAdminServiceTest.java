@@ -42,13 +42,8 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         UserAdminService.deleteStudyGroup(studyGroupId);
     }
 
-    private int createUser(String email, int roleId) {
-        String name = email.split("@")[0];
-        UserDto userDto = new UserDto();
-        userDto.setName(name);
-        userDto.setEmail(email);
-        UserDao userDao = new UserDao();
-        int userId = userDao.create(userDto);
+    private int createTestUser(String email, int roleId) {
+        int userId = createUser(email);
         List<Integer> roleIds = new ArrayList<>();
         if (roleId != -1) {
             roleIds.add(roleId);
@@ -57,13 +52,27 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         return userId;
     }
 
+    private int createUser(String email) {
+        String name = email.split("@")[0];
+        UserDto userDto = new UserDto();
+        userDto.setName(name);
+        userDto.setEmail(email);
+        userDto.setIsActive(1);
+        UserDao userDao = new UserDao();
+        return userDao.create(userDto);
+    }
+
     private int addUserRole(int userId, int roleId, int groupId) throws Exception {
         int userRoleId = UserAdminService.addUserRole(userId, roleId, groupId);
+        addRoleForUser(roleId, userId);
+        return userRoleId;
+    }
+
+    private void addRoleForUser(int roleId, int userId) {
         List<Integer> roleIds = createdUserRoles.get(userId);
         List<Integer> newRoleIds = new ArrayList<>(roleIds);
         newRoleIds.add(roleId);
         createdUserRoles.put(userId, newRoleIds);
-        return userRoleId;
     }
 
     @Test
@@ -76,10 +85,10 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     public void testVerifyOperatorForGroup() {
         int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
         Assert.assertTrue(roleId > 0);
-        int userId = createUser("test_admin1@study.org", roleId);
+        int userId = createTestUser("test_admin1@study.org", roleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
-            UserAdminService.verifyOperatorForGroup(Integer.toString(userId), TEST_GROUP);
+            UserAdminService.verifyOperatorForGroup(userId, TEST_GROUP);
             Assert.fail("Expecting exception from UserAdminService.verifyOperatorForGroup");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("No roles found"));
@@ -91,7 +100,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
         }
         try {
-            UserAdminService.verifyOperatorForGroup(Integer.toString(userId), TEST_GROUP);
+            UserAdminService.verifyOperatorForGroup(userId, TEST_GROUP);
             Assert.fail("Expecting exception from UserAdminService.verifyOperatorForGroup");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("does not have administrator privileges"));
@@ -104,7 +113,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
         }
         try {
-            UserAdminService.verifyOperatorForGroup(Integer.toString(userId), TEST_GROUP);
+            UserAdminService.verifyOperatorForGroup(userId, TEST_GROUP);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.verifyOperatorForGroup: " +  getStackTrace(e));
         }
@@ -115,7 +124,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
         Assert.assertTrue(roleId > 0);
         String email = "testUser@study.org";
-        int userId = createUser(email, -1);
+        int userId = createTestUser(email, -1);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
             int id = UserAdminService.getUserByEmail(email, groupId);
@@ -126,34 +135,41 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testAddUserToRole() {
+    public void testAddUserToRoles() {
         int operatorId = createAdminUser("test_admin2@study.org");
         try {
-            UserAdminService.verifyOperatorForGroup(Integer.toString(operatorId), TEST_GROUP);
+            UserAdminService.verifyOperatorForGroup(operatorId, TEST_GROUP);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.verifyOperatorForGroup: " +  getStackTrace(e));
         }
         String role = "upload_onc_history";
         int roleId = UserAdminService.verifyRole(role, -1);
         Assert.assertTrue(roleId > 0);
+        String role2 = "upload_ror_file";
+        int roleId2 = UserAdminService.verifyRole(role2, -1);
+        Assert.assertTrue(roleId2 > 0);
         String email = "testUser2@study.org";
-        int userId = createUser(email, roleId);
+        int userId = createTestUser(email, roleId);
+        addRoleForUser(roleId2, userId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
-        AddUserRoleRequest req = new AddUserRoleRequest(email, TEST_GROUP, role);
+        List<String> roles = List.of(role, role2);
+        AddUserRoleRequest req = new AddUserRoleRequest(email, TEST_GROUP, roles);
 
         UserAdminService service = new UserAdminService(Integer.toString(operatorId));
         try {
-            service.addUserToRole(req);
+            service.addUserToRoles(req);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserToRole: " +  getStackTrace(e));
         }
         int userRoleId = UserAdminService.getUserRole(userId, roleId, groupId);
         Assert.assertNotEquals(-1, userRoleId);
+        int userRoleId2 = UserAdminService.getUserRole(userId, roleId2, groupId);
+        Assert.assertNotEquals(-1, userRoleId2);
     }
 
     private int createAdminUser(String email) {
         int adminRoleId = UserAdminService.verifyRole("study_admin", -1);
-        int userId = createUser(email, adminRoleId);
+        int userId = createTestUser(email, adminRoleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
             addUserRole(userId, adminRoleId, groupId);
@@ -162,5 +178,22 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
         }
         return userId;
+    }
+    
+    private void setUserRoles(String email, List<String> roles, String studyGroup) throws Exception {
+        try {
+            int userId = UserAdminService.getUserByEmail(email, -1);
+            int groupId = UserAdminService.verifyStudyGroup(studyGroup);
+
+            for (String role : roles) {
+                int roleId = UserAdminService.verifyRole(role, -1);
+                UserAdminService.addUserRole(userId, roleId, groupId);
+                String msg = String.format("Set up role %s for user %s in study group %s", role, email, studyGroup);
+                log.info(msg);
+            }
+        } catch (Exception e) {
+            log.error("Exception in setUserRoles: " +  getStackTrace(e));
+            throw e;
+        }
     }
 }

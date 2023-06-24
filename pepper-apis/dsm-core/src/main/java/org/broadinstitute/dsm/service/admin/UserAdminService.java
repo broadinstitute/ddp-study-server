@@ -72,7 +72,7 @@ public class UserAdminService {
         this.operatorId = operatorId;
     }
 
-    public void addUserToRole(AddUserRoleRequest req) {
+    public void addUserToRoles(AddUserRoleRequest req) {
 
         // TODO: determine if operator can admin this study group user
 
@@ -84,22 +84,34 @@ public class UserAdminService {
         if (StringUtils.isBlank(email)) {
             throw new DSMBadRequestException("Invalid user email: blank");
         }
-        String role = req.getRole();
-        if (StringUtils.isBlank(role)) {
-            throw new DSMBadRequestException("Invalid role: blank");
+        List<String> roles = req.getRoles();
+        if (roles.isEmpty()) {
+            throw new DSMBadRequestException("Invalid roles: empty");
         }
 
-        int groupId = verifyOperatorForGroup(operatorId, group);
-
-        int roleId = verifyRole(role, groupId);
+        int adminId;
+        try {
+            adminId = Integer.parseInt(operatorId);
+        } catch (NumberFormatException e) {
+            throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
+        }
+        int groupId = verifyOperatorForGroup(adminId, group);
 
         int userId = getUserByEmail(email, groupId);
 
-        try {
-            addUserRole(userId, roleId, groupId);
-        } catch (Exception e) {
-            String msg = String.format("Error adding user %s to role %s", email, role);
-            throw new DsmInternalError(msg, e);
+        for (String role : roles) {
+            if (StringUtils.isBlank(role)) {
+                throw new DsmInternalError("Invalid role: blank");
+            }
+            int roleId = verifyRole(role, groupId);
+            try {
+                addUserRole(userId, roleId, groupId);
+                String msg = String.format("Set up role %s for user %s in study group %s", role, email, group);
+                log.info(msg);
+            } catch (Exception e) {
+                String msg = String.format("Error adding user %s to role %s", email, role);
+                throw new DsmInternalError(msg, e);
+            }
         }
     }
 
@@ -113,7 +125,13 @@ public class UserAdminService {
             throw new DSMBadRequestException("Invalid role: blank");
         }
 
-        int groupId = verifyOperatorForGroup(operatorId, group);
+        int adminId;
+        try {
+            adminId = Integer.parseInt(operatorId);
+        } catch (NumberFormatException e) {
+            throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
+        }
+        int groupId = verifyOperatorForGroup(adminId, group);
 
         try {
             addRole(role, groupId);
@@ -123,7 +141,7 @@ public class UserAdminService {
         }
     }
 
-    protected static int verifyOperatorForGroup(String operatorId, String studyGroup) {
+    protected static int verifyOperatorForGroup(int operatorId, String studyGroup) {
 
         List<RoleAndGroup> roles = getRolesForUser(operatorId, studyGroup);
         if (roles.isEmpty()) {
@@ -137,12 +155,12 @@ public class UserAdminService {
         return roles.get(0).groupId;
     }
 
-    protected static List<RoleAndGroup> getRolesForUser(String userId, String studyGroup) {
+    protected static List<RoleAndGroup> getRolesForUser(int userId, String studyGroup) {
         SimpleResult res = inTransaction(conn -> {
             List<RoleAndGroup> roles = new ArrayList<>();
             SimpleResult dbVals = new SimpleResult(roles);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLES_FOR_GROUP_AND_USER_ID)) {
-                stmt.setString(1, userId);
+                stmt.setInt(1, userId);
                 stmt.setString(2, studyGroup);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -401,7 +419,7 @@ public class UserAdminService {
         return (int) results.resultValue;
     }
 
-    private static class RoleAndGroup {
+    protected static class RoleAndGroup {
         public final int roleId;
         public final String roleName;
         public final int groupId;
