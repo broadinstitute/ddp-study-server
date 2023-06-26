@@ -3,11 +3,11 @@
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ -z "$6" ] || [ -z "$7" ] || [ -z "$8" ]; then
   echo "Please provide the project name and bucket name as arguments."
-  echo "Usage: ./pecgs-phase4-participant.sh <dsm-url> <participant-guid> <participant-shortId> <study> <env> <userId> <Auth0 Token file path> <BSP Token file path>"
+  echo "Usage: ./pecgs-phase4-participant.sh <dsm-url> <study> <env> <userId> <Auth0 Token file path> <BSP Token file path> <participant-guid> <participant-shortId> "
   exit 1
 fi
 
-if [ $5 = "prod" ] || [ $1 = "dsm.datadonationplatform.org"]; then
+if [ $3 = "prod" ] || [ $1 = "dsm.datadonationplatform.org"]; then
   echo "You can't use this script in production!"
   exit
 fi
@@ -16,13 +16,13 @@ echo "The participant should already be enrolled, and have consented yes to tiss
 The script will not change that"
 
 dsm_url=$1
-guid=$2
-shortId=$3
-study=$4
-env=$5
-userId=$6
-auth0TokenFile=$7
-bspTokenFile=$8
+study=$2
+env=$3
+userId=$4
+auth0TokenFile=$5
+bspTokenFile=$6
+guid=$7
+shortId=$8
 
 
 auth0Token=$(cat "$auth0TokenFile")
