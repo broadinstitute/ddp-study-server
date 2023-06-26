@@ -13,13 +13,14 @@ import org.slf4j.LoggerFactory;
 public class ElasticDataExportAdapter extends BaseExporter {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticDataExportAdapter.class);
+    private WriteRequest.RefreshPolicy refreshPolicy = WriteRequest.RefreshPolicy.NONE;
 
     @Override
     public void export() {
         logger.info("initialize exporting data to ES");
         UpdateRequest updateRequest = new UpdateRequest(requestPayload.getIndex(), Util.DOC, requestPayload.getDocId())
                 .doc(source)
-                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
+                .setRefreshPolicy(refreshPolicy)
                 .retryOnConflict(5);
         try {
             ElasticSearchUtil.getClientInstance().update(updateRequest, RequestOptions.DEFAULT);
@@ -28,5 +29,13 @@ public class ElasticDataExportAdapter extends BaseExporter {
             throw new RuntimeException("Error occurred while exporting data to ES", e);
         }
         logger.info("successfully exported data to ES");
+    }
+
+    /**
+     * Set refresh policy for all the updates handled by this instance
+     * Default refresh policy is WriteRequest.RefreshPolicy.NONE
+     */
+    public void setRefreshPolicy(WriteRequest.RefreshPolicy policy) {
+        refreshPolicy = policy;
     }
 }
