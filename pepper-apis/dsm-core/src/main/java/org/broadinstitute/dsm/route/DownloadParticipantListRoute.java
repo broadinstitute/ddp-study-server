@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.common.net.MediaType;
-import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
-import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
@@ -87,12 +85,6 @@ public class DownloadParticipantListRoute extends RequestHandler {
         dictionaryExporter.export(zos);
         zos.closeEntry();
         zos.finish();
-        Instant endInstant = Instant.now();
-        long perfTime = Duration.between(startInstant, endInstant).toMillis();
-        GoogleAnalyticsMetricsTracker.getInstance()
-                .sendAnalyticsMetrics(realm, GoogleAnalyticsMetrics.EVENT_CATEGORY_PARTICIPANT_LIST_EXPORT,
-                        GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_EXPORT_LOAD_TIME,
-                        GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_EXPORT_LOAD_TIME, (int) perfTime);
         return response.raw();
     }
 

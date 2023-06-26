@@ -6,11 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -97,13 +98,11 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
         }
         ArrayList<ClinicalOrderDto> array = new ArrayList(map.values());
         log.info(String.format("Found %d clinical orders for realm %s", array.size(), realm));
-        Collections.sort(array, new Comparator<ClinicalOrderDto>() {
-            @Override
-            public int compare(ClinicalOrderDto c1, ClinicalOrderDto c2) {
-                return (int) (c2.orderDate - c1.orderDate);
-            }
-        });
-        return array;
+
+        List<ClinicalOrderDto> clinicalOrderDtoList = array.stream()
+                .sorted(Comparator.comparingLong(ClinicalOrderDto::getOrderDate).reversed()).collect(Collectors.toList());
+
+        return new ArrayList<>(clinicalOrderDtoList);
     }
 
     public Map<String, ArrayList<ClinicalOrder>> getOrdersForRealmMap(String realm) {
