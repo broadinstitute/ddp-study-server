@@ -65,4 +65,12 @@ echo "Setting the cors config"
 ./cors-config.sh $1
 
 echo "Setting permissions for the ddp-downloader Service Account"
-./update-download-service-account $project_name
+./update-download-service-account.sh $project_name
+
+docker build --platform linux/amd64 --tag cf-dsm-file-scanner ..
+
+docker tag cf-dsm-file-scanner:latest us-central1-docker.pkg.dev/broad-ddp-dev/dss/dsm-somatic-file-scanner:latest
+
+gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+
+docker push us-central1-docker.pkg.dev/broad-ddp-dev/dss/dsm-somatic-file-scanner:latest

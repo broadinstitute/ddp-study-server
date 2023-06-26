@@ -52,7 +52,7 @@ public class MercuryOrderStatusListener {
     private static void processOrderStatus(PubsubMessage message) throws Exception {
         String data = message.getData().toStringUtf8();
         BaseMercuryStatusMessage baseMercuryStatusMessage = new Gson().fromJson(data, BaseMercuryStatusMessage.class);
-        MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage);
+        MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage, data);
 
     }
 }

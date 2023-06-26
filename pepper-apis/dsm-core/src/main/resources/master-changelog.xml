@@ -129,4 +129,6 @@
     <include file="liquibase/PEPPER-68_location_px.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-900_field_settings.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/PEPPER-903_sent_date.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-915_field_settings.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-873_mercury_order_fields.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

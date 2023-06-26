@@ -20,8 +20,7 @@ import spark.Response;
 @Slf4j
 public class OncHistoryUploadRoute extends RequestHandler {
 
-    public static final String ONC_HISTORY_UPLOAD = "kit_upload"; // TOOO temp until testers are part of role -DC
-    //public static final String ONC_HISTORY_UPLOAD = "onc_history_upload";
+    public static final String ONC_HISTORY_UPLOAD = "upload_onc_history";
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
