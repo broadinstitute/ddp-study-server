@@ -546,13 +546,16 @@ function check-if-mercury-sample-exists {
   if [[ $existing_order != "" ]]; then
     echo "The existing order is: $existing_order"
 
-    pdoOrderId=$(echo $existing_order | jq -r '.pdoOrderId')
+    pdoOrderId=$(echo $existing_order | jq -r '.pdoOrderId != null and .lastStatus!="Failed"')
 
-    if [[ pdoOrderId != "" ]];then
-      echo "PDO already exists"
+    if [[ ! $pdoOrderId ]];then
+      echo "PDO already exists $pdoOrderId"
       exit
     fi
-    lastOrderNumber=$(echo $existing_order | jq -r '.lastOrderNumber')
+
+    lastOrderNumber=$(echo $existing_order | jq -r 'select(.lastOrderNumber!=null) | .lastOrderNumber' | head -1)
+
+
 
     echo "order number is $lastOrderNumber"
 
