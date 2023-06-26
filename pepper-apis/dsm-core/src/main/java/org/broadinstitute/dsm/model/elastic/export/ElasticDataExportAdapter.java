@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ public class ElasticDataExportAdapter extends BaseExporter {
         logger.info("initialize exporting data to ES");
         UpdateRequest updateRequest = new UpdateRequest(requestPayload.getIndex(), Util.DOC, requestPayload.getDocId())
                 .doc(source)
+                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .retryOnConflict(5);
         try {
             ElasticSearchUtil.getClientInstance().update(updateRequest, RequestOptions.DEFAULT);
