@@ -7,6 +7,11 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ 
   exit 1
 fi
 
+if [ $5 = "prod" ] || [ $1 = "dsm.datadonationplatform.org"]; then
+  echo "You can't use this script in production!"
+  exit
+fi
+
 echo "The participant should already be enrolled, and have consented yes to tissue collection, and yes to shared learning.
 The script will not change that"
 
