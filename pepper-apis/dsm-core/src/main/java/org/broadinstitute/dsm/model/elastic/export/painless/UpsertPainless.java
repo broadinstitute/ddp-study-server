@@ -62,6 +62,7 @@ public class UpsertPainless implements Exportable {
             BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
             logger.info("created/updated {} ES records for {}", getNumberOfUpserted(bulkByScrollResponse),
                     generator.getPropertyName());
+            logger.info(bulkByScrollResponse.toString());
             return null;
         } catch (IOException e) {
             logger.info("Error occurred while exporting data to ES, on try number " + i, e);
