@@ -5,23 +5,24 @@ import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAI
 import java.util.Map;
 
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
 import org.broadinstitute.dsm.model.elastic.export.ElasticDataExportAdapter;
 import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.model.elastic.export.painless.ScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 public class OncHistoryElasticUpdater {
 
-    private final BaseExporter exporter;
+    private final ElasticDataExportAdapter exporter;
     private final String index;
 
     public OncHistoryElasticUpdater(String index) {
         this.index = index;
         this.exporter = new ElasticDataExportAdapter();
+        this.exporter.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
     }
 
     /**

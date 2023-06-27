@@ -11,8 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -111,10 +109,6 @@ public class GetActivityInstanceRoute implements Route {
             Long languageCodeId = preferredUserLanguage.getId();
             return validateActivityInstance(handle, activityInstance, userGuid, operatorGuid, languageCodeId);
         });
-
-        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
-                GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
-                null, 1);
 
         watch.stop();
         log.debug("ActivityInstance reading TOTAL time: " + watch.getTime());

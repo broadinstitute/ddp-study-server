@@ -29,8 +29,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -347,10 +345,6 @@ public class PatchFormAnswersRoute implements Route {
                         Instant.now().toEpochMilli(), operatorUser, instanceSummary.getParticipantUser());
             }
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
-
-            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
-                    GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
-                    instanceDto.getActivityCode(), 1);
 
             return res;
         });
