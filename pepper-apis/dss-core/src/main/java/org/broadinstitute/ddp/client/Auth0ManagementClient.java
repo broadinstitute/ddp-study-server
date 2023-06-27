@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
+import com.auth0.exception.RateLimitException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -527,29 +529,60 @@ public class Auth0ManagementClient {
         });
     }
 
-    private <B, E> ApiResult<B, E> withRetries(String retryMessage, Supplier<ApiResult<B, E>> callback) {
+    public <B, E> ApiResult<B, E> withRetries(String retryMessage, Supplier<ApiResult<B, E>> callback) {
         ApiResult<B, E> res = null;
         int numTries = 0;
         int maxTries = maxRetries + 1;
+        long waitTotal = 0L;
         while (numTries < maxTries) {
             res = callback.get();
             numTries++;
             if (numTries >= maxTries) {
                 break;
             }
-            if (res.getStatusCode() == 429) {
-                log.error(retryMessage, res.getError());
-                long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
-                try {
-                    TimeUnit.MILLISECONDS.sleep(wait);
-                } catch (InterruptedException e) {
-                    log.warn("Interrupted while waiting after rate limit", e);
+            long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
+            if (res.getError() instanceof RateLimitException && res.getStatusCode() == 429) {
+                log.warn(retryMessage, res.getError());
+                // Get information from auth0 about how long to wait
+                RateLimitException rateLimit = (RateLimitException) res.getError();
+                long retryAfter = auth0BackoffTime(rateLimit);
+                wait = retryAfter != -1 ? retryAfter : wait;
+                waitTotal += wait;
+                log.warn("Hit Auth0 rate limit: Pausing for {} milliseconds. Total wait time is now {} milliseconds",
+                        wait, waitTotal);
+                if (wait > 0) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(wait);
+                    } catch (InterruptedException e) {
+                        log.warn("Interrupted while waiting after rate limit", e);
+                    }
                 }
             } else {
                 break;
             }
         }
         return res;
+    }
+
+    /**
+     * A function returns the number of milliseconds to wait for Auth0 rate limit to reset
+     *   or -1 if no time information from Auth0.
+     * @param rateLimitException {@link RateLimitException}
+     */
+    public long auth0BackoffTime(RateLimitException rateLimitException) {
+        long wait = -1;
+        long timeWhenReset = rateLimitException.getReset();
+        if (timeWhenReset != -1) {
+            long interval = timeWhenReset - Instant.now().getEpochSecond();
+            if (interval < 0) {
+                interval = 0;
+            } else if (interval > 10) {
+                // maximum interval between retries
+                interval = 10;
+            }
+            wait = interval * 1000;
+        }
+        return wait;
     }
 
     private static class ClientCredsPayload {

@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -273,6 +274,15 @@ public class FieldSettings {
             values = Arrays.asList(new Gson().fromJson(json, Value[].class));
         }
         return values;
+    }
+
+    public static List<String> getStringListFromJson(String json) {
+        List<String> vals = null;
+        if (StringUtils.isNotBlank(json)) {
+            List<Value> values = Arrays.asList(new Gson().fromJson(json, Value[].class));
+            vals = values.stream().map(Value::getValue).collect(Collectors.toList());
+        }
+        return vals;
     }
 
 }

@@ -29,22 +29,13 @@ import org.broadinstitute.dsm.util.NanoIdUtil;
 
 @Slf4j
 public class MercuryOrderPublisher {
-    private MercuryOrderDao mercuryOrderDao;
-    private ParticipantDao participantDao;
+    private final MercuryOrderDao mercuryOrderDao;
+    private final ParticipantDao participantDao;
 
     public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao,
                                  ParticipantDao participantDao) {
         this.mercuryOrderDao = mercuryOrderDao;
         this.participantDao = participantDao;
-    }
-
-    private String createMercuryUniqueOrderId() {
-        String orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
-        while (this.mercuryOrderDao.orderNumberExists(orderNumber)) {
-            orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
-        }
-        return orderNumber;
-
     }
 
     public static void publishWithErrorHandler(String projectId, String topicId, String messageData)
@@ -81,7 +72,8 @@ public class MercuryOrderPublisher {
                         @Override
                         public void onSuccess(String messageId) {
                             // Once published, returns server-assigned message ids (unique within the topic)
-                            log.info("Published message ID: " + messageId);
+                            log.info("Published to mercury message ID: " + messageId);
+                            log.info("Message published to Mercury:" + messageData);
                         }
                     },
                     MoreExecutors.directExecutor()
@@ -97,6 +89,15 @@ public class MercuryOrderPublisher {
                 }
             }
         }
+    }
+
+    private String createMercuryUniqueOrderId() {
+        String orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
+        while (this.mercuryOrderDao.orderNumberExists(orderNumber)) {
+            orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
+        }
+        return orderNumber;
+
     }
 
     public String createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
@@ -120,8 +121,8 @@ public class MercuryOrderPublisher {
         if (StringUtils.isNotBlank(json)) {
             try {
                 List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId, userId);
-                this.publishWithErrorHandler(projectId, topicId, json);
-                this.mercuryOrderDao.insertMercuryOrders(newOrders);
+                publishWithErrorHandler(projectId, topicId, json);
+                this.mercuryOrderDao.insertMercuryOrders(newOrders, json);
                 MercuryOrderUseCase.exportToES(newOrders);
                 return mercuryOrderId;
             } catch (Exception e) {

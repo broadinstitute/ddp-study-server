@@ -129,4 +129,8 @@ public class KitType {
         logger.info("Found " + kitTypes.size() + " kitTypes");
         return kitTypes;
     }
+
+    public static String createKitTypeKey(String kitTypeName, String ddpInstanceId) {
+        return kitTypeName + "_" + ddpInstanceId;
+    }
 }

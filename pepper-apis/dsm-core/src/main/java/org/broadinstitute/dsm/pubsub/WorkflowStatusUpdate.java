@@ -46,6 +46,12 @@ public class WorkflowStatusUpdate {
     private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     private static final FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
 
+    /**
+     * Process UPDATE_CUSTOM_WORKFLOW message/task type
+     *
+     * @param attributesMap message attributes that include study GUID and participant GUID
+     * @param data WorkflowPayload
+     */
     public static void updateCustomWorkflow(Map<String, String> attributesMap, String data) {
         WorkflowPayload workflowPayload = gson.fromJson(data, WorkflowPayload.class);
         String workflow = workflowPayload.getWorkflow();
@@ -53,6 +59,9 @@ public class WorkflowStatusUpdate {
 
         String studyGuid = attributesMap.get(STUDY_GUID);
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
+
+        logger.info("Updating workflow for workflow {}, status {}, studyGuid {}, participant {}",
+                workflow, status, studyGuid, ddpParticipantId);
 
         if (isOsteoRelatedStatusUpdate(workflow, status)) {
             Optional<DDPInstanceDto> maybeDDPInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
@@ -79,10 +88,11 @@ public class WorkflowStatusUpdate {
                             || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
             if (isOldParticipant) {
                 participantDatas.forEach(participantDataDto -> {
-                    updateProbandStatusInDB(workflow, status, participantDataDto, setting);
+                    updateProbandStatusInDB(workflow, status, participantDataDto, setting.getFieldType());
                 });
             } else {
-                addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
+                addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, instance.getDdpInstanceIdAsInt(),
+                        setting.getFieldType());
             }
             exportWorkflowToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
 
@@ -152,27 +162,30 @@ public class WorkflowStatusUpdate {
         return Optional.empty();
     }
 
-    public static int addNewParticipantDataWithStatus(String workflow, String status, String ddpParticipantId, FieldSettingsDto setting) {
+    public static int addNewParticipantDataWithStatus(String workflow, String status, String ddpParticipantId,
+                                                      int ddpInstanceId, String fieldType) {
         JsonObject dataJsonObject = new JsonObject();
         dataJsonObject.addProperty(workflow, status);
         ParticipantData participantData = new ParticipantData.Builder().withDdpParticipantId(ddpParticipantId)
-                .withDdpInstanceId(setting.getDdpInstanceId())
-                .withFieldTypeId(setting.getFieldType()).withData(dataJsonObject.toString())
+                .withDdpInstanceId(ddpInstanceId)
+                .withFieldTypeId(fieldType).withData(dataJsonObject.toString())
                 .withLastChanged(System.currentTimeMillis()).withChangedBy(WorkflowStatusUpdate.DSS).build();
         int participantDataId = participantDataDao.create(participantData);
         participantData.setParticipantDataId(participantDataId);
         return participantDataId;
     }
 
-    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, FieldSettingsDto setting) {
+    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, String fieldSettingsFieldType) {
         String oldData = participantData.getData().orElse(null);
         if (oldData == null) {
             return;
         }
         JsonObject dataJsonObject = gson.fromJson(oldData, JsonObject.class);
-        if ((participantData.getFieldTypeId().orElse("").equals(setting.getFieldType())
+        // TODO DC the requirements are not clear but from the method name should the following conditional
+        // be an &&?
+        if ((participantData.getFieldTypeId().orElse("").equals(fieldSettingsFieldType)
                 || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
-            logger.info("Updating setting.getFieldType() " + setting.getFieldType() + " with workflow " + workflow);
+            logger.info("Updating setting.getFieldType() " + fieldSettingsFieldType + " with workflow " + workflow);
             dataJsonObject.addProperty(workflow, status);
             participantDataDao.updateParticipantDataColumn(
                     new ParticipantData.Builder().withParticipantDataId(participantData.getParticipantDataId())

@@ -23,6 +23,7 @@ import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.sort.MockFieldSettingsDao;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,6 +48,11 @@ public class RgpAutomaticProbandDataCreatorTest {
         refSourceDetails = TestUtil.readFile("RefSourceFieldSettingsDetails.json");
         mockDao = new MockFieldSettingsDao();
         FieldSettingsDao.setInstance(mockDao);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        FieldSettingsDao.setInstance(null);
     }
 
     @Before

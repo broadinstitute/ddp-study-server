@@ -29,6 +29,7 @@ public class RoutePath {
     public static final String CREATE_CLINICAL_KIT_ENDPOINT = "/createClinicalDummy/:label/:type";
     public static final String CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT = "/createClinicalDummy/:label/:type/:participantId";
     public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
+    public static final String SHIP_KIT_ENDPOINT = "/shipKit";
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
     public static final String CANCER_LIST_REQUEST = "/cancers";
@@ -73,6 +74,7 @@ public class RoutePath {
     public static final String USER_SETTINGS_REQUEST = "userSettings";
     public static final String EXPRESS_KIT_REQUEST = "expressKit/" + RequestParameter.KITREQUESTID;
     public static final String TRIGGER_SURVEY = "triggerSurvey";
+    public static final String TRIGGER_SOMATIC_SURVEY = "triggerSomaticResultsSurvey";
     public static final String LABEL_SETTING_REQUEST = "labelSettings";
     public static final String FULL_DRUG_LIST_REQUEST = "drugList";
     public static final String EVENT_TYPES = "eventTypes";
@@ -101,7 +103,6 @@ public class RoutePath {
     public static final String EDIT_PARTICIPANT_MESSAGE = "editParticipantMessageStatus";
     public static final String ADD_FAMILY_MEMBER = "familyMember";
     public static final String GET_PARTICIPANTS_SIZE = "getParticipantsSize";
-    public static final String GoogleAnalytics = "googleAnalytics";
     public static final String DOWNLOAD_PARTICIPANT_LIST_ROUTE = "participantList";
     public static final String CREATE_COHORT_TAG = "createCohortTag";
     public static final String DOWNLOAD_PARTICIPANT_FILE = "downloadFile";
@@ -111,6 +112,11 @@ public class RoutePath {
     public static final String SUBMIT_MERCURY_ORDER = "submitMercuryOrder";
     public static final String MERCURY_SAMPLES_ROUTE = "mercurySamples";
     public static final String GET_MERCURY_ORDERS_ROUTE = "getMercuryOrders";
+    public static final String ONC_HISTORY_ROUTE = "oncHistory";
+
+    public static final String SOMATIC_DOCUMENT_ROUTE = "somaticResults";
+
+    public static final String SOMATIC_DOCUMENT_ID = "somaticDocumentId";
 
     public static final String DASHBOARD = "dashboard";
 

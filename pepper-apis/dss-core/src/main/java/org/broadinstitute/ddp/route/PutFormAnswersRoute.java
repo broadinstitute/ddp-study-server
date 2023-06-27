@@ -18,8 +18,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
@@ -43,6 +41,7 @@ import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.workflow.WorkflowActivityResponse;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -214,6 +213,14 @@ public class PutFormAnswersRoute implements Route {
                     WorkflowResponse workflowResp = workflowService
                             .suggestNextState(handle, operatorGuid, userGuid, studyGuid, fromState)
                             .map(nextState -> {
+                                //special case for SOMATIC_RESULTS ... need to pass same instance in next state and NOT latest
+                                if (instanceDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")
+                                        && fromState.matches(nextState)) {
+                                    return new WorkflowActivityResponse(
+                                            instanceDto.getActivityCode(),
+                                            instanceDto.getGuid(),
+                                            instanceDto.isAllowUnauthenticated());
+                                }
                                 log.info("Suggesting user {} to next state {}", userGuid, nextState);
                                 return workflowService.buildStateResponse(handle, userGuid, nextState);
                             })
@@ -223,11 +230,6 @@ public class PutFormAnswersRoute implements Route {
 
                     String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
                             instanceDto.getActivityId()).getActivityCode();
-
-                    GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
-                            studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PUT_ANSWERS,
-                            GoogleAnalyticsMetrics.EVENT_ACTION_PUT_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS,
-                            studyActivityCode, 1);
 
                     return new PutAnswersResponse(workflowResp);
                 }

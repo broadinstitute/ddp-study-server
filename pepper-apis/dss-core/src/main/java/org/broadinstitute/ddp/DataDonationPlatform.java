@@ -30,7 +30,6 @@ import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -116,6 +115,7 @@ import org.broadinstitute.ddp.route.GetMailingListRoute;
 import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
 import org.broadinstitute.ddp.route.GetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.GetOptionsForActivityInstanceQuestionRoute;
+import org.broadinstitute.ddp.route.GetParticipantFileDownloadRoute;
 import org.broadinstitute.ddp.route.GetParticipantInfoRoute;
 import org.broadinstitute.ddp.route.GetParticipantMailAddressRoute;
 import org.broadinstitute.ddp.route.GetPdfRoute;
@@ -166,6 +166,7 @@ import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
+import org.broadinstitute.ddp.service.FileDownloadService;
 import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
@@ -492,6 +493,7 @@ public class DataDonationPlatform {
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
         var fileUploadService = FileUploadService.fromConfig(cfg);
+        var fileDownloadService = FileDownloadService.fromConfig(cfg);
 
         patch(API.USER_ACTIVITY_ANSWERS,
                 new PatchFormAnswersRoute(formService, activityValidationService, fileUploadService, interpreter),
@@ -502,6 +504,7 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
+        get(API.USER_ACTIVITY_DOWNLOAD, new GetParticipantFileDownloadRoute(fileDownloadService), responseSerializer);
         get(API.USER_QUESTION_OPTIONS, new GetOptionsForActivityInstanceQuestionRoute(i18nContentRenderer), responseSerializer);
 
         // User study invitations
@@ -620,8 +623,6 @@ public class DataDonationPlatform {
 
         get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             log.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
-            //flush out any pending GA events
-            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
 
             response.status(HttpStatus.SC_OK);
             return "";

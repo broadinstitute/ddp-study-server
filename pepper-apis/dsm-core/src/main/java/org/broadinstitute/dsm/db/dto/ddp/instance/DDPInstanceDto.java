@@ -70,6 +70,10 @@ public class DDPInstanceDto {
         return Optional.ofNullable(this.researchProject);
     }
 
+    public boolean isESUpdatePossible() {
+        return StringUtils.isNotBlank(this.esParticipantIndex);
+    }
+
     public static class Builder {
         Integer ddpInstanceId;
         String instanceName;
