@@ -148,12 +148,19 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         String role2 = "upload_ror_file";
         int roleId2 = UserAdminService.verifyRole(role2, -1);
         Assert.assertTrue(roleId2 > 0);
-        String email = "testUser2@study.org";
-        int userId = createTestUser(email, roleId);
-        addRoleForUser(roleId2, userId);
-        int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         List<String> roles = List.of(role, role2);
-        AddUserRoleRequest req = new AddUserRoleRequest(email, TEST_GROUP, roles);
+
+        String user1 = "testUser2@study.org";
+        int userId1 = createTestUser(user1, roleId);
+        addRoleForUser(roleId2, userId1);
+        String user2 = "testUser3@study.org";
+        int userId2 = createTestUser(user2, roleId);
+        addRoleForUser(roleId2, userId2);
+
+        List<String> users = List.of(user1, user2);
+
+        int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
+        AddUserRoleRequest req = new AddUserRoleRequest(users, TEST_GROUP, roles);
 
         UserAdminService service = new UserAdminService(Integer.toString(operatorId));
         try {
@@ -161,10 +168,15 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserToRole: " +  getStackTrace(e));
         }
-        int userRoleId = UserAdminService.getUserRole(userId, roleId, groupId);
+        int userRoleId = UserAdminService.getUserRole(userId1, roleId, groupId);
         Assert.assertNotEquals(-1, userRoleId);
-        int userRoleId2 = UserAdminService.getUserRole(userId, roleId2, groupId);
+        int userRoleId2 = UserAdminService.getUserRole(userId1, roleId2, groupId);
         Assert.assertNotEquals(-1, userRoleId2);
+
+        int user2RoleId = UserAdminService.getUserRole(userId2, roleId, groupId);
+        Assert.assertNotEquals(-1, user2RoleId);
+        int user2RoleId2 = UserAdminService.getUserRole(userId2, roleId2, groupId);
+        Assert.assertNotEquals(-1, user2RoleId2);
     }
 
     private int createAdminUser(String email) {

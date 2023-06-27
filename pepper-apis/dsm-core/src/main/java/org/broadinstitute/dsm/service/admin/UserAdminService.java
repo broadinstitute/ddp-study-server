@@ -73,16 +73,13 @@ public class UserAdminService {
     }
 
     public void addUserToRoles(AddUserRoleRequest req) {
-
-        // TODO: determine if operator can admin this study group user
-
-        String group = req.getStudyGroup();
-        if (StringUtils.isBlank(group)) {
+        String studyGroup = req.getStudyGroup();
+        if (StringUtils.isBlank(studyGroup)) {
             throw new DSMBadRequestException("Invalid study group: blank");
         }
-        String email = req.getEmail();
-        if (StringUtils.isBlank(email)) {
-            throw new DSMBadRequestException("Invalid user email: blank");
+        List<String> users = req.getUsers();
+        if (users.isEmpty()) {
+            throw new DSMBadRequestException("Invalid users: empty");
         }
         List<String> roles = req.getRoles();
         if (roles.isEmpty()) {
@@ -95,8 +92,17 @@ public class UserAdminService {
         } catch (NumberFormatException e) {
             throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
         }
-        int groupId = verifyOperatorForGroup(adminId, group);
+        int groupId = verifyOperatorForGroup(adminId, studyGroup);
 
+        for (String userEmail: users) {
+            if (StringUtils.isBlank(userEmail)) {
+                throw new DSMBadRequestException("Invalid user email: blank");
+            }
+            addUserRoles(userEmail, roles, groupId, studyGroup);
+        }
+    }
+
+    protected void addUserRoles(String email, List<String> roles, int groupId, String studyGroup) {
         int userId = getUserByEmail(email, groupId);
 
         for (String role : roles) {
@@ -106,10 +112,10 @@ public class UserAdminService {
             int roleId = verifyRole(role, groupId);
             try {
                 addUserRole(userId, roleId, groupId);
-                String msg = String.format("Set up role %s for user %s in study group %s", role, email, group);
+                String msg = String.format("Set up role %s for user %s in study group %s", role, email, studyGroup);
                 log.info(msg);
             } catch (Exception e) {
-                String msg = String.format("Error adding user %s to role %s", email, role);
+                String msg = String.format("Error adding user %s to role %s for study group %s", email, role, studyGroup);
                 throw new DsmInternalError(msg, e);
             }
         }
