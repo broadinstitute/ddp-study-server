@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -x
-
+# This script is a utility to perform all of the actions needed on a participant so that the "Shared Learnings" tab becomes enabled in DSM.
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ -z "$6" ] || [ -z "$7" ] || [ -z "$8" ]; then
   echo "Please provide the project name and bucket name as arguments."
