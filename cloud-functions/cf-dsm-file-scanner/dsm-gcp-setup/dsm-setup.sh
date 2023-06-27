@@ -48,12 +48,11 @@ echo "creating the event from bucket $lms_study_name-uploaded-files-$deployment_
 echo "creating the event from bucket $os2_study_name-uploaded-files-$deployment_environment to this topic for OBJECT_FINALIZE"
 ./init-bucket-event.sh $project_name $os2_study_name-uploaded-files-$deployment_environment $trigger_topic_name
 
-results_topic_name="$RESULT_TOPIC_NAME"
-subscription_name="$results_topic_name"-sub
+subscription_name="$RESULT_TOPIC_NAME"-sub
 
 #create the results topic and subscription if they don't exist
 echo "creating the results topic and subscription if they don't exist"
-./create_topic_and_sub.sh $project_name $results_topic_name $subscription_name
+./create_topic_and_sub.sh $project_name $RESULT_TOPIC_NAME $subscription_name
 
 echo "setting up the service account if it doesn't exist"
 ./create-service-account.sh $project_name
