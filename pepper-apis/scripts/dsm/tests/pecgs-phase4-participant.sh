@@ -1,13 +1,15 @@
 #!/bin/bash
 
+set -x
+# This script is a utility to perform all of the actions needed on a participant so that the "Shared Learnings" tab becomes enabled in DSM.
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ -z "$6" ] || [ -z "$7" ] || [ -z "$8" ]; then
   echo "Please provide the project name and bucket name as arguments."
-  echo "Usage: ./pecgs-phase4-participant.sh <dsm-url> <participant-guid> <participant-shortId> <study> <env> <userId> <Auth0 Token file path> <BSP Token file path>"
+  echo "Usage: ./pecgs-phase4-participant.sh <dsm-url> <study> <env> <userId> <Auth0 Token file path> <BSP Token file path> <participant-guid> <participant-shortId> "
   exit 1
 fi
 
-if [ $5 = "prod" ] || [ $1 = "dsm.datadonationplatform.org"]; then
+if [[ $3 = "prod"  ||  $1 = "dsm.datadonationplatform.org" ]]; then
   echo "You can't use this script in production!"
   exit
 fi
@@ -16,13 +18,13 @@ echo "The participant should already be enrolled, and have consented yes to tiss
 The script will not change that"
 
 dsm_url=$1
-guid=$2
-shortId=$3
-study=$4
-env=$5
-userId=$6
-auth0TokenFile=$7
-bspTokenFile=$8
+study=$2
+env=$3
+userId=$4
+auth0TokenFile=$5
+bspTokenFile=$6
+guid=$7
+shortId=$8
 
 
 auth0Token=$(cat "$auth0TokenFile")
@@ -192,7 +194,7 @@ function set-onc-history-values {
 
   accessionNumber=$(openssl rand -base64 32 | tr -dc "a-zA-Z0-9" | head -c10)
 
-  echo "Accession number generated is $accessionNumber for ons history with id $oncHistoryDetailId"
+  echo "Accession number generated is $accessionNumber for onc history with id $oncHistoryDetailId"
 
 
   response=$(curl "$dsm_url/ui/patch" \
@@ -216,7 +218,7 @@ function set-onc-history-values {
     --compressed)
 
   echo $response
-    
+
   response=$(curl "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
@@ -278,7 +280,7 @@ function set-onc-history-values {
     -H "sec-fetch-mode: cors" \
     -H "sec-fetch-site: same-origin" \
     -H "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" \
-    --data-raw "{\"id\":$oncHistoryDetailId,\"user\":\"$userId\",\"nameValue\":{\"name\":\"oD.tissueReceived\",\"value\":\"2023-06-24\"},\"ddpParticipantId\":\"$guid\",\"parent\":\"participantId\",\"tableAlias\":\"oD\",\"isUnique\":true,\"realm\":\"$study\"}" \
+    --data-raw "{\"id\":$oncHistoryDetailId,\"user\":\"$userId\",\"nameValue\":{\"name\":\"oD.tissueReceived\",\"value\":\"2023-06-24\"},\"ddpParticipantId\":\"$guid\",\"parent\":\"participantId\",\"parentId\":\"$guid\",\"tableAlias\":\"oD\",\"isUnique\":true,\"realm\":\"$study\"}" \
     --compressed)
 
   echo "setting gender"
@@ -619,8 +621,6 @@ function search-received-kits {
       exit -1
   fi
   
-  set-onc-history-values
-
 }
 
 main
