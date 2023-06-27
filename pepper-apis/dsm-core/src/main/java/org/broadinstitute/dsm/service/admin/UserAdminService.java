@@ -72,7 +72,7 @@ public class UserAdminService {
         this.operatorId = operatorId;
     }
 
-    public void addUserToRoles(AddUserRoleRequest req) {
+    public void addUserToRoles(UserRoleRequest req) {
         String studyGroup = req.getStudyGroup();
         if (StringUtils.isBlank(studyGroup)) {
             throw new DSMBadRequestException("Invalid study group: blank");
@@ -86,13 +86,7 @@ public class UserAdminService {
             throw new DSMBadRequestException("Invalid roles: empty");
         }
 
-        int adminId;
-        try {
-            adminId = Integer.parseInt(operatorId);
-        } catch (NumberFormatException e) {
-            throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
-        }
-        int groupId = verifyOperatorForGroup(adminId, studyGroup);
+        int groupId = verifyOperatorAndGroup(studyGroup);
 
         for (String userEmail: users) {
             if (StringUtils.isBlank(userEmail)) {
@@ -119,6 +113,40 @@ public class UserAdminService {
                 throw new DsmInternalError(msg, e);
             }
         }
+    }
+
+    public void removeUserFromRoles(UserRoleRequest req) {
+        String studyGroup = req.getStudyGroup();
+        if (StringUtils.isBlank(studyGroup)) {
+            throw new DSMBadRequestException("Invalid study group: blank");
+        }
+        List<String> users = req.getUsers();
+        if (users.isEmpty()) {
+            throw new DSMBadRequestException("Invalid users: empty");
+        }
+        List<String> roles = req.getRoles();
+        if (roles.isEmpty()) {
+            throw new DSMBadRequestException("Invalid roles: empty");
+        }
+
+        int groupId = verifyOperatorAndGroup(studyGroup);
+
+        for (String userEmail: users) {
+            if (StringUtils.isBlank(userEmail)) {
+                throw new DSMBadRequestException("Invalid user email: blank");
+            }
+            addUserRoles(userEmail, roles, groupId, studyGroup);
+        }
+    }
+
+    protected int verifyOperatorAndGroup(String studyGroup) {
+        int adminId;
+        try {
+            adminId = Integer.parseInt(operatorId);
+        } catch (NumberFormatException e) {
+            throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
+        }
+        return verifyOperatorForGroup(adminId, studyGroup);
     }
 
     public void addStudyRole(AddStudyRoleRequest req) {

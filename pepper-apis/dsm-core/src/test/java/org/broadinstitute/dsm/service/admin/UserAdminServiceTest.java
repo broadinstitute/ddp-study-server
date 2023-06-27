@@ -160,7 +160,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         List<String> users = List.of(user1, user2);
 
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
-        AddUserRoleRequest req = new AddUserRoleRequest(users, TEST_GROUP, roles);
+        UserRoleRequest req = new UserRoleRequest(users, TEST_GROUP, roles);
 
         UserAdminService service = new UserAdminService(Integer.toString(operatorId));
         try {

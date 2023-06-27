@@ -136,7 +136,7 @@ public class RoutePath {
     }
 
     public enum RequestMethod {
-        GET, PATCH, POST, PUT
+        GET, PATCH, POST, PUT, DELETE
     }
 
     public static final class GAE {
