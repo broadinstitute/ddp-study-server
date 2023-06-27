@@ -3,7 +3,7 @@
 # Check if project name and study name is provided
 if [ -z "$1" ] ; then
   echo "Please provide the project name and study name as an argument."
-  echo "Usage: ./dsm-setup.sh <env> <study_name>"
+  echo "Usage: ./dsm-setup.sh <env>"
   exit 1
 fi
 
