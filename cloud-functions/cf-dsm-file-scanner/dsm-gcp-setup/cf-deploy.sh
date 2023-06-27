@@ -51,7 +51,7 @@ LISTEN_SUBSCRIPTION_NAME="file-scanner-trigger-sub"
 ##
 # Topic name the service will publish scan results to
 ##
-RESULT_TOPIC_NAME="dsm-file-antivirus-result"
+RESULT_TOPIC_NAME="dsm-file-scanner-results"
 
 ##
 # The service account the service should run as

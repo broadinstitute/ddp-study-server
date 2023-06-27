@@ -9,8 +9,8 @@ fi
 
 # Set project and bucket names
 env="$1"
-lms_upload_bucket="cmi-lms-uploaded-files"
-osteo2_upload_bucket="cmi-osteo2-uploaded-files"
+lms_upload_bucket="cmi-lms-uploaded-files-$env"
+osteo2_upload_bucket="cmi-osteo2-uploaded-files-$env"
 
 dsm_url="https://dsm-$env.datadonationplatform.org/*"
 
@@ -32,7 +32,7 @@ fi
 gsutil cors set upload_json_$env.json gs://"$lms_upload_bucket"
 gsutil cors set upload_json_$env.json gs://"$osteo2_upload_bucket"
 
-download_bucket="somatic-result-files"
+download_bucket="somatic-result-files-$env"
 
 download_json="[{\"origin\": [\"$dsm_url\"],\"method\": [\"GET\"],\"responseHeader\": [\"access-control-allow-credentials\",
 \"access-control-allow-origin\",\"content-type\",\"withcredentials\"],\"maxAgeSeconds\": 3600}]"
