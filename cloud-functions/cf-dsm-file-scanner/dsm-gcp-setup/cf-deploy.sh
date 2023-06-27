@@ -221,7 +221,7 @@ function main {
   # which don't result in modifications to the project.
   ##
 
-  ./dsm-setup.sh $1
+  ./dsm-setup.sh $1 $RESULT_TOPIC_NAME
 
   if ! check-for-image; then
     echo "Failed to locate a valid image for $CONTAINER_FQ_NAME. Ensure the repository exists and the name is correct."

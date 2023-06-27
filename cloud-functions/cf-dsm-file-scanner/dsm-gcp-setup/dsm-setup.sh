@@ -2,8 +2,8 @@
 
 # Check if project name and study name is provided
 if [ -z "$1" ] ; then
-  echo "Please provide the environment as an argument."
-  echo "Usage: ./dsm-setup.sh <env>"
+  echo "Please provide the environment and RESULT_TOPIC_NAME as an argument."
+  echo "Usage: ./dsm-setup.sh <env> <RESULT_TOPIC_NAME>"
   exit 1
 fi
 
@@ -12,6 +12,7 @@ deployment_environment=$1
 project_name="broad-ddp-$deployment_environment"
 lms_study_name="cmi-lms"
 os2_study_name="cmi-osteo2"
+RESULT_TOPIC_NAME=$2
 
 
 
@@ -47,7 +48,7 @@ echo "creating the event from bucket $lms_study_name-uploaded-files-$deployment_
 echo "creating the event from bucket $os2_study_name-uploaded-files-$deployment_environment to this topic for OBJECT_FINALIZE"
 ./init-bucket-event.sh $project_name $os2_study_name-uploaded-files-$deployment_environment $trigger_topic_name
 
-results_topic_name="dsm-file-scanner-results"
+results_topic_name="$RESULT_TOPIC_NAME"
 subscription_name="$results_topic_name"-sub
 
 #create the results topic and subscription if they don't exist
