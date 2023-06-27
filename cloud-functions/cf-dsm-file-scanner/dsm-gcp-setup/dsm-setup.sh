@@ -2,16 +2,17 @@
 
 # Check if project name and study name is provided
 if [ -z "$1" ] ; then
-  echo "Please provide the project name and study name as an argument."
+  echo "Please provide the environment as an argument."
   echo "Usage: ./dsm-setup.sh <env>"
   exit 1
 fi
 
 # Set project name
-project_name="broad-ddp-$1"
+deployment_environment=$1
+project_name="broad-ddp-$deployment_environment"
 lms_study_name="cmi-lms"
 os2_study_name="cmi-osteo2"
-env=$1
+
 
 
 
@@ -20,16 +21,16 @@ echo "project name is $project_name"
 
 ## Call the create_bucket.sh script to create the bucket
 echo "setting the initial bucket for uploaded files for $lms_study_name"
-./create-bucket.sh "$project_name" "$lms_study_name-uploaded-files-$env"
+./create-bucket.sh "$project_name" "$lms_study_name-uploaded-files-$deployment_environment"
 
 ## Call the create_bucket.sh script to create the bucket
 echo "setting the initial bucket for uploaded files for $os2_study_name"
-./create-bucket.sh "$project_name" "$os2_study_name-uploaded-files-$env"
+./create-bucket.sh "$project_name" "$os2_study_name-uploaded-files-$deployment_environment"
 
 ## Call the create_bucket.sh script to create the bucket
 echo "setting the final bucket for scanned files"
 
-./create-bucket.sh "$project_name" "somatic-result-files-$env"
+./create-bucket.sh "$project_name" "somatic-result-files-$deployment_environment"
 
 trigger_topic_name="file-scanner-trigger"
 
@@ -39,12 +40,12 @@ echo "creating the $trigger_topic_name pubsub topic that triggers the FileScanne
 
 
 #set the event for the OBJECT_FINALIZE event in the bucket
-echo "creating the event from bucket $lms_study_name-uploaded-files-$env to this topic for OBJECT_FINALIZE"
-./init-bucket-event.sh $project_name $lms_study_name-uploaded-files-$env $trigger_topic_name
+echo "creating the event from bucket $lms_study_name-uploaded-files-$deployment_environment to this topic for OBJECT_FINALIZE"
+./init-bucket-event.sh $project_name $lms_study_name-uploaded-files-$deployment_environment $trigger_topic_name
 
 #set the event for the OBJECT_FINALIZE event in the bucket
-echo "creating the event from bucket $os2_study_name-uploaded-files-$env to this topic for OBJECT_FINALIZE"
-./init-bucket-event.sh $project_name $os2_study_name-uploaded-files-$env $trigger_topic_name
+echo "creating the event from bucket $os2_study_name-uploaded-files-$deployment_environment to this topic for OBJECT_FINALIZE"
+./init-bucket-event.sh $project_name $os2_study_name-uploaded-files-$deployment_environment $trigger_topic_name
 
 results_topic_name="dsm-file-scanner-results"
 subscription_name="$results_topic_name"-sub
