@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if project name and study name is provided
-if [ -z "$1" ] ; then
+if [ -z "$1" ] || [ -z "$2" ] ; then
   echo "Please provide the environment and RESULT_TOPIC_NAME as an argument."
   echo "Usage: ./dsm-setup.sh <env> <RESULT_TOPIC_NAME>"
   exit 1
