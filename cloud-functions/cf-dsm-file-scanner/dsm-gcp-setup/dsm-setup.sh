@@ -15,7 +15,7 @@ os2_study_name="cmi-osteo2"
 RESULT_TOPIC_NAME=$2
 
 
-
+gcloud config set project $project_name
 
 echo "project name is $project_name"
 
@@ -63,10 +63,10 @@ echo "Setting the cors config"
 echo "Setting permissions for the ddp-downloader Service Account"
 ./update-download-service-account.sh $project_name
 
-docker build --platform linux/amd64 --tag cf-dsm-file-scanner ..
+docker build --platform linux/amd64 --tag "dsm-somatic-file-scanner-$deployment_environment" ..
 
-docker tag cf-dsm-file-scanner:latest us-central1-docker.pkg.dev/broad-ddp-dev/dss/dsm-somatic-file-scanner:latest
+docker tag "dsm-somatic-file-scanner-$deployment_environment:latest" "us-central1-docker.pkg.dev/broad-ddp-$deployment_environment/dss/dsm-somatic-file-scanner-$deployment_environment:latest"
 
 gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
 
-docker push us-central1-docker.pkg.dev/broad-ddp-dev/dss/dsm-somatic-file-scanner:latest
+docker push "us-central1-docker.pkg.dev/broad-ddp-$deployment_environment/dss/dsm-somatic-file-scanner-$deployment_environment:latest"
