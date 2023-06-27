@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ -z "$6" ] || [ -z "$7" ] || [ -z "$8" ]; then
   echo "Please provide the project name and bucket name as arguments."
@@ -7,7 +9,7 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ 
   exit 1
 fi
 
-if [ $3 = "prod" ] || [ $1 = "dsm.datadonationplatform.org"]; then
+if [[ $3 = "prod"  ||  $1 = "dsm.datadonationplatform.org" ]]; then
   echo "You can't use this script in production!"
   exit
 fi
@@ -192,7 +194,7 @@ function set-onc-history-values {
 
   accessionNumber=$(openssl rand -base64 32 | tr -dc "a-zA-Z0-9" | head -c10)
 
-  echo "Accession number generated is $accessionNumber for ons history with id $oncHistoryDetailId"
+  echo "Accession number generated is $accessionNumber for onc history with id $oncHistoryDetailId"
 
 
   response=$(curl "$dsm_url/ui/patch" \
@@ -216,7 +218,7 @@ function set-onc-history-values {
     --compressed)
 
   echo $response
-    
+
   response=$(curl "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
@@ -278,7 +280,7 @@ function set-onc-history-values {
     -H "sec-fetch-mode: cors" \
     -H "sec-fetch-site: same-origin" \
     -H "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" \
-    --data-raw "{\"id\":$oncHistoryDetailId,\"user\":\"$userId\",\"nameValue\":{\"name\":\"oD.tissueReceived\",\"value\":\"2023-06-24\"},\"ddpParticipantId\":\"$guid\",\"parent\":\"participantId\",\"tableAlias\":\"oD\",\"isUnique\":true,\"realm\":\"$study\"}" \
+    --data-raw "{\"id\":$oncHistoryDetailId,\"user\":\"$userId\",\"nameValue\":{\"name\":\"oD.tissueReceived\",\"value\":\"2023-06-24\"},\"ddpParticipantId\":\"$guid\",\"parent\":\"participantId\",\"parentId\":\"$guid\",\"tableAlias\":\"oD\",\"isUnique\":true,\"realm\":\"$study\"}" \
     --compressed)
 
   echo "setting gender"
@@ -619,8 +621,6 @@ function search-received-kits {
       exit -1
   fi
   
-  set-onc-history-values
-
 }
 
 main
