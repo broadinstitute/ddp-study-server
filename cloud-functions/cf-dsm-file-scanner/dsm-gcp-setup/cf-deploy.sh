@@ -158,7 +158,7 @@ function deploy-service {
     --memory="4Gi" \
     --image="$CONTAINER_FQ_NAME" \
     --min-instances="1" \
-    --max-instances="3" \
+    --max-instances="1" \
     --env-vars-file="env.yaml" \
     --update-secrets=ENV="$SECRET_ID:$SECRET_VERSION" \
     --ingress="internal-and-cloud-load-balancing" \

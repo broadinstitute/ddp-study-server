@@ -259,8 +259,8 @@ public class DSMSomaticFileScanner implements BackgroundFunction<DSMSomaticFileS
             String json = new Gson().toJson(message);
             publishAntivirusResultMessageToDSM(json);
         } catch (Exception e) {
-            log.atWarning().log(String.format("Unable to move the file %s from bucket %s to %s ", objectName, uploadBucketName,
-                    finalBucketName), e);
+            log.atSevere().withCause(e).log(String.format("Unable to move the file %s from bucket %s to %s ", objectName, uploadBucketName,
+                    finalBucketName));
         }
 
     }
@@ -288,7 +288,7 @@ public class DSMSomaticFileScanner implements BackgroundFunction<DSMSomaticFileS
             String json = new Gson().toJson(message);
             publishAntivirusResultMessageToDSM(json);
         } catch (Exception e) {
-            log.atWarning().log(String.format("Unable to delete the file %s from bucket %s", objectName, bucketName), e);
+            log.atSevere().withCause(e).log(String.format("Unable to delete the file %s from bucket %s", objectName, bucketName));
         }
     }
 
