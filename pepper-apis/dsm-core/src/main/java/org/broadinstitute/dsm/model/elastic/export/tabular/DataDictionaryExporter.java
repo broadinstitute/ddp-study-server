@@ -200,6 +200,7 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         if (StringUtils.isBlank(descriptionText)) {
             descriptionText = "no description provided";
         }
+
         if (descriptionText.contains("_")) {
             descriptionText = Arrays.stream(descriptionText.split("_")).map(word -> StringUtils.toRootLowerCase(word))
                     .collect(Collectors.joining(" "));
