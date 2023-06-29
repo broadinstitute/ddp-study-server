@@ -197,6 +197,9 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
             String questionText = (String) filterConfig.getQuestionDef().get(ESObjectConstants.QUESTION_TEXT);
             descriptionText = StringUtils.isNotBlank(questionText) ? questionText : descriptionText;
         }
+        if (StringUtils.isBlank(descriptionText)) {
+            descriptionText = "no description provided";
+        }
         if (descriptionText.contains("_")) {
             descriptionText = Arrays.stream(descriptionText.split("_")).map(word -> StringUtils.toRootLowerCase(word))
                     .collect(Collectors.joining(" "));
