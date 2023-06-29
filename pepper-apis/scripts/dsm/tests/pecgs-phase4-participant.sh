@@ -48,9 +48,15 @@ function main() {
 
 }
 
+
+function curlw() {
+  curl "$1" "${@:2}"
+  sleep 3
+}
+
 function send-and-receive-saliva {
 
-kits_without_label_response=$(curl "$dsm_url/ui/kitRequests?realm=$study&target=uploaded&kitType=SALIVA" \
+kits_without_label_response=$(curlw "$dsm_url/ui/kitRequests?realm=$study&target=uploaded&kitType=SALIVA" \
   -H "Authorization Bearer $auth0Token" \
   -H "authority: $dsm_url" \
   -H "accept: application/json" \
@@ -76,7 +82,7 @@ matching_object=$(echo "$kits_without_label_response" | jq -c --arg id "$search_
 if [[ $matching_object = "" ]]; then
     echo "The selected object is null, there is no kit in kits without label"
     echo "Going to search in the Queue kits "
-    response=$(curl "$dsm_url/ui/kitRequests?realm=$study&target=queue&kitType=SALIVA" \
+    response=$(curlw "$dsm_url/ui/kitRequests?realm=$study&target=queue&kitType=SALIVA" \
         -H "authority: $dsm_url" \
         -H "accept: application/json" \
         -H "accept-language: en-US,en;q=0.9" \
@@ -117,7 +123,7 @@ kitLabel=$(openssl rand -base64 32 | tr -dc "a-zA-Z0-9" | head -c14)
 
 echo "SALIVA kit label generated is $kitLabel"
 
-response=$(curl "$dsm_url/ui/initialScan?realm=$study&userId=$userId" \
+response=$(curlw "$dsm_url/ui/initialScan?realm=$study&userId=$userId" \
   -H "Authorization: Bearer $auth0Token" \
   -H "authority: $dsm_url" \
   -H "accept: application/json" \
@@ -139,7 +145,7 @@ response=$(curl "$dsm_url/ui/initialScan?realm=$study&userId=$userId" \
 echo $response
 
 
-response=$(curl "$dsm_url/ui/finalScan?realm=$study&userId=$userId" \
+response=$(curlw "$dsm_url/ui/finalScan?realm=$study&userId=$userId" \
   -H "authority: $dsm_url" \
   -H "accept: application/json" \
   -H "accept-language: en-US,en;q=0.9" \
@@ -160,7 +166,7 @@ response=$(curl "$dsm_url/ui/finalScan?realm=$study&userId=$userId" \
 
 echo $response
 
- response=$(curl "$dsm_url/ddp/ClinicalKits/$kitLabel"  -H "Authorization: Bearer $bspToken")
+ response=$(curlw "$dsm_url/ddp/ClinicalKits/$kitLabel"  -H "Authorization: Bearer $bspToken")
 
   echo $response
 
@@ -168,7 +174,7 @@ echo $response
 
 function set-onc-history-values {
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -197,7 +203,7 @@ function set-onc-history-values {
   echo "Accession number generated is $accessionNumber for onc history with id $oncHistoryDetailId"
 
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -219,7 +225,7 @@ function set-onc-history-values {
 
   echo $response
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -241,7 +247,7 @@ function set-onc-history-values {
 
   echo $response
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -263,7 +269,7 @@ function set-onc-history-values {
 
   echo "setting tissue received date"
   
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -285,7 +291,7 @@ function set-onc-history-values {
 
   echo "setting gender"
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -309,7 +315,7 @@ function set-onc-history-values {
 
   echo "looking up project's sample id prefix"
 
-  response=$(curl "$dsm_url/ui/lookup?field=tCollab&value=undefined&realm=$study&shortId=$shortId" \
+  response=$(curlw "$dsm_url/ui/lookup?field=tCollab&value=undefined&realm=$study&shortId=$shortId" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
     -H "accept-language: en-US,en;q=0.9" \
@@ -332,7 +338,7 @@ function set-onc-history-values {
 
   bspSampleId="$value$(openssl rand -base64 32 | tr -dc "a-zA-Z0-9" | head -c4)"
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -360,7 +366,7 @@ function set-onc-history-values {
 
   echo "bsp sample id for tissue is $bspSampleId"
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -382,7 +388,7 @@ function set-onc-history-values {
 
   echo $response
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -406,7 +412,7 @@ function set-onc-history-values {
 
   smId="$value$(openssl rand -base64 32 | tr -dc "a-zA-Z0-9" | head -c8)"
 
-  response=$(curl "$dsm_url/ui/patch" \
+  response=$(curlw "$dsm_url/ui/patch" \
     -X "PATCH" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
@@ -428,11 +434,11 @@ function set-onc-history-values {
 
   echo $response
 
-  response=$(curl "$dsm_url/ddp/ClinicalKits/$smId"  -H "Authorization: Bearer $bspToken")
+  response=$(curlw "$dsm_url/ddp/ClinicalKits/$smId"  -H "Authorization: Bearer $bspToken")
 
   echo $response
 
- response=$(curl "$dsm_url/ui/mercurySamples?realm=$study&ddpParticipantId=$guid" \
+ response=$(curlw "$dsm_url/ui/mercurySamples?realm=$study&ddpParticipantId=$guid" \
    -H "authority: $dsm_url" \
    -H "accept: application/json" \
    -H "accept-language: en-US,en;q=0.9" \
@@ -455,7 +461,7 @@ function set-onc-history-values {
 
  echo $selected_object
  
- response=$(curl "$dsm_url/ui/submitMercuryOrder?realm=$study&ddpParticipantId=$guid&userId=$userId" \
+ response=$(curlw "$dsm_url/ui/submitMercuryOrder?realm=$study&ddpParticipantId=$guid&userId=$userId" \
    -H "authority: $dsm_url" \
    -H "accept: application/json" \
    -H "accept-language: en-US,en;q=0.9" \
@@ -476,7 +482,7 @@ function set-onc-history-values {
 
  echo $response
 
- response=$(curl "$dsm_url/ui/mercurySamples?realm=$study&ddpParticipantId=$guid" \
+ response=$(curlw "$dsm_url/ui/mercurySamples?realm=$study&ddpParticipantId=$guid" \
     -H "authority: $dsm_url" \
     -H "accept: application/json" \
     -H "accept-language: en-US,en;q=0.9" \
@@ -523,7 +529,7 @@ function check-if-mercury-sample-exists {
 
   echo "checking if a mercury order already exists"
 
-  response=$(curl "$dsm_url/ui/mercurySamples?realm=$study&ddpParticipantId=$guid" \
+  response=$(curlw "$dsm_url/ui/mercurySamples?realm=$study&ddpParticipantId=$guid" \
      -H "authority: $dsm_url" \
      -H "accept: application/json" \
      -H "accept-language: en-US,en;q=0.9" \
@@ -591,7 +597,7 @@ function search-received-kits {
 
   echo "Searching received SALIVA kits for $guid"
   
-  response=$(curl "$dsm_url/ui/kitRequests?realm=$study&target=received&kitType=SALIVA" \
+  response=$(curlw "$dsm_url/ui/kitRequests?realm=$study&target=received&kitType=SALIVA" \
                -H "authority: $dsm_url" \
                -H "accept: application/json" \
                -H "accept-language: en-US,en;q=0.9" \
