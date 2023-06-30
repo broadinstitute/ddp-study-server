@@ -30,6 +30,7 @@ public class SystemUtil {
     public static final String PARTIAL_DATE_FORMAT = "yyyy-MM";
     public static final String YEAR_DATE_FORMAT = "yyyy";
     public static final String DDP_DATE_FORMAT = "MM-dd-yyyy";
+    public static final String INTL_DATE_FORMAT = "yyyy/MM/dd";
     public static final String US_DATE_FORMAT = "MM/dd/yyyy";
     public static final String PARTIAL_US_DATE_FORMAT = "MM/yyyy";
     public static final String END_DATE_FORMAT = DATE_FORMAT + " HH:mm:ss";

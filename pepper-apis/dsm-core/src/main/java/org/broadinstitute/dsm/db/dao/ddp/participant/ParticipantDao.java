@@ -10,6 +10,8 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -33,6 +35,10 @@ public class ParticipantDao implements Dao<ParticipantDto> {
     private static final String SQL_FILTER_BY_DDP_INSTANCE_ID = "ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID = "SELECT * FROM ddp_participant WHERE "
             + SQL_FILTER_BY_DDP_PARTICIPANT_ID + " AND " + SQL_FILTER_BY_DDP_INSTANCE_ID + ";";
+
+    public static final String SQL_SELECT_BY_ID = "SELECT * FROM ddp_participant WHERE participant_id = ?;";
+
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_participant WHERE participant_id = ?";
 
     public static ParticipantDao of() {
         return new ParticipantDao();
@@ -79,12 +85,22 @@ public class ParticipantDao implements Dao<ParticipantDto> {
 
     @Override
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error deleting participant with id: " + id, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override
     public Optional<ParticipantDto> get(long id) {
-        return Optional.empty();
+        ParticipantDao.BuildParticipant builder = new ParticipantDao.BuildParticipant();
+        SimpleResult res = DaoUtil.getById(id, SQL_SELECT_BY_ID, builder);
+        if (res.resultException != null) {
+            throw new RuntimeException("Error getting participant with id: " + id,
+                    res.resultException);
+        }
+        return (Optional<ParticipantDto>) res.resultValue;
     }
 
     public Optional<String> getParticipantFromCollaboratorParticipantId(String collaboratorParticipantId, String ddpInstanceId) {
@@ -120,7 +136,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                 stmt.setInt(2, ddpInstanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        executionResult.resultValue = buildParticipantFromResultSet(rs);
+                        executionResult.resultValue = new ParticipantDao.BuildParticipant().build(rs);
                     }
                 }
             } catch (SQLException ex) {
@@ -136,19 +152,23 @@ public class ParticipantDao implements Dao<ParticipantDto> {
         return Optional.ofNullable((ParticipantDto) results.resultValue);
     }
 
-    private ParticipantDto buildParticipantFromResultSet(ResultSet rs) throws SQLException {
-        return new ParticipantDto.Builder()
-                .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
-                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
-                .withLastVersion(rs.getLong(DBConstants.LAST_VERSION))
-                .withLastVersionDate(rs.getString(DBConstants.LAST_VERSION_DATE))
-                .withDdpInstanceId(rs.getInt(DBConstants.DDP_INSTANCE_ID))
-                .withReleaseCompleted(rs.getBoolean(DBConstants.RELEASE_COMPLETED))
-                .withAssigneeIdMr(rs.getInt(DBConstants.ASSIGNEE_ID_MR))
-                .withAssigneeIdTissue(rs.getInt(DBConstants.ASSIGNEE_ID_TISSUE))
-                .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
-                .withChangedBy(rs.getString(DBConstants.CHANGED_BY))
-                .build();
+    private static class BuildParticipant implements ResultsBuilder {
+
+        public Object build(ResultSet rs) throws SQLException {
+            return new ParticipantDto.Builder()
+                    .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
+                    .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
+                    .withLastVersion(rs.getLong(DBConstants.LAST_VERSION))
+                    .withLastVersionDate(rs.getString(DBConstants.LAST_VERSION_DATE))
+                    .withDdpInstanceId(rs.getInt(DBConstants.DDP_INSTANCE_ID))
+                    .withReleaseCompleted(rs.getBoolean(DBConstants.RELEASE_COMPLETED))
+                    .withAssigneeIdMr(rs.getInt(DBConstants.ASSIGNEE_ID_MR))
+                    .withAssigneeIdTissue(rs.getInt(DBConstants.ASSIGNEE_ID_TISSUE))
+                    .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
+                    .withChangedBy(rs.getString(DBConstants.CHANGED_BY))
+                    .build();
+        }
     }
+
 
 }

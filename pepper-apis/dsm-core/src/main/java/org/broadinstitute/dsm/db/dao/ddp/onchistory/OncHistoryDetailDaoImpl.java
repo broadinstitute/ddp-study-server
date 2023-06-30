@@ -4,14 +4,21 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -22,19 +29,46 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
             "SELECT tissue_received FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
     public static final String SQL_SELECT_TISSUES_FOR_ONC_HISTORY = "SELECT * from ddp_tissue where onc_history_detail_id = ?";
 
+    public static final String SQL_SELECT_BY_ID = "SELECT * FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?;";
+
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
+
     @Override
     public int create(OncHistoryDetailDto oncHistoryDetailDto) {
         return 0;
     }
 
     @Override
+    @VisibleForTesting
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
+        if (simpleResult.resultException != null) {
+            throw new DsmInternalError("Error deleting ddp_onc_history_detail with id: " + id, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override
     public Optional<OncHistoryDetailDto> get(long id) {
-        return Optional.empty();
+        OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto builder = new OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto();
+        SimpleResult res = DaoUtil.getById(id, SQL_SELECT_BY_ID, builder);
+        if (res.resultException != null) {
+            throw new RuntimeException("Error getting onc history detail with id: " + id,
+                    res.resultException);
+        }
+        return (Optional<OncHistoryDetailDto>) res.resultValue;
+    }
+
+    private static class BuildOncHistoryDetailDto implements ResultsBuilder {
+        public Object build(ResultSet rs) throws SQLException {
+            ResultSetMetaData md = rs.getMetaData();
+            int colCount = md.getColumnCount();
+            Map<String, Object> row = new HashMap<>(colCount);
+            for (int i = 1; i <= colCount; i++) {
+                row.put(md.getColumnName(i), rs.getObject(i));
+            }
+            return new OncHistoryDetailDto(row);
+        }
     }
 
     @Override

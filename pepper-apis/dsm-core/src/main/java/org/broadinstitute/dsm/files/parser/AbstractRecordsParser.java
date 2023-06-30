@@ -7,10 +7,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.FileWrongSeparator;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.Filter;
 
+@Slf4j
 public abstract class AbstractRecordsParser<T> {
 
     private static final int HEADER_INDEX = 0;
@@ -35,7 +38,7 @@ public abstract class AbstractRecordsParser<T> {
     public List<T> parseToObjects() {
         String[] rows = fileContent.split(System.lineSeparator());
         if (rows.length < 2) {
-            throw new RuntimeException("File does not contain any records");
+            throw new DSMBadRequestException("File does not contain any records");
         }
         String headerRow = rows[HEADER_INDEX];
         actualHeaders = Arrays.asList(headerRow.trim().split(regexSeparator));
@@ -43,6 +46,8 @@ public abstract class AbstractRecordsParser<T> {
             throw new FileWrongSeparator(String.format("File headers are not separated by %s",
                     RegexSeparatorDictionary.describe(regexSeparator)));
         }
+        log.info("expectedHeaders {}", expectedHeaders);
+        log.info("actualheaders {}", actualHeaders);
         Optional<String> maybeMissingHeader = findMissingHeaderIfAny(actualHeaders);
         if (maybeMissingHeader.isPresent()) {
             throw new FileColumnMissing("File is missing the column: " + maybeMissingHeader.get());
@@ -57,6 +62,7 @@ public abstract class AbstractRecordsParser<T> {
     }
 
     public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
+
         return expectedHeaders.equals(extractedHeaders)
                 ? Optional.empty()
                 : expectedHeaders.stream()
@@ -72,7 +78,13 @@ public abstract class AbstractRecordsParser<T> {
     }
 
     Map<String, String> transformRecordToMap(String record) {
-        List<String> records = Arrays.asList(record.trim().split(regexSeparator));
+        // split but keep trailing delimiters
+        List<String> records = Arrays.asList(record.replaceAll("[\n\r]$", "").split(regexSeparator, -1));
+        int colDiff = actualHeaders.size() - records.size();
+        if (colDiff > 0) {
+            String row = String.join(", ", records);
+            throw new FileColumnMissing(String.format("Row is missing %d columns: %s", colDiff, row));
+        }
         return IntStream.range(0, actualHeaders.size())
                 .boxed()
                 .collect(Collectors.toMap(actualHeaders::get, records::get));

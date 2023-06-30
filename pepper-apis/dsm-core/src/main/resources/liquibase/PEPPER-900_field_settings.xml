@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="cunningh" id="PEPPER-900_field_settings">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='cmi-lms')"></column>
+            <column name="field_type" value="VOCABULARY"/>
+            <column name="column_name" value="REQUEST_STATUS"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value='[{"value": "Needs Review"},{"value": "Don&apos;t Request"},{"value": "On Hold"},{"value": "Request"},{"value": "Sent"},{"value": "Received"},{"value": "Returned"},{"value": "Unable to Obtain"}]'/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="field_type" value="VOCABULARY"/>
+            <column name="column_name" value="REQUEST_STATUS"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value='[{"value": "Needs Review"},{"value": "Don&apos;t Request"},{"value": "On Hold"},{"value": "Request"},{"value": "Sent"},{"value": "Received"},{"value": "Returned"},{"value": "Unable to Obtain"}]'/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
