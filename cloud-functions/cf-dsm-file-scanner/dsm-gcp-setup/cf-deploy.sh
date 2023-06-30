@@ -51,7 +51,7 @@ LISTEN_SUBSCRIPTION_NAME="file-scanner-trigger-sub"
 ##
 # Topic name the service will publish scan results to
 ##
-RESULT_TOPIC_NAME="dsm-file-antivirus-result"
+RESULT_TOPIC_NAME="dsm-file-scanner-results"
 
 ##
 # The service account the service should run as
@@ -81,7 +81,7 @@ OTHER_GCLOUD_FLAGS="--quiet"
 #
 # CONTAINER_FQ_NAME -> Container Fully-Qualified Name
 ##
-CONTAINER_NAME="${CONTAINER_NAME:-$SERVICE_NAME}"
+CONTAINER_NAME="${CONTAINER_NAME:-$SERVICE_NAME}-$1"
 CONTAINER_VERSION="${CONTAINER_VERSION:-latest}"
 CONTAINER_REGISTRY="$CLOUDSDK_RUN_REGION-docker.pkg.dev/$PROJECT_ID/dss"
 CONTAINER_FQ_NAME="$CONTAINER_REGISTRY/$CONTAINER_NAME:$CONTAINER_VERSION"
@@ -221,7 +221,7 @@ function main {
   # which don't result in modifications to the project.
   ##
 
-  ./dsm-setup.sh $1
+  ./dsm-setup.sh $1 $RESULT_TOPIC_NAME
 
   if ! check-for-image; then
     echo "Failed to locate a valid image for $CONTAINER_FQ_NAME. Ensure the repository exists and the name is correct."
