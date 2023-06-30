@@ -35,7 +35,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             int userId = entry.getKey();
             List<Integer> userRoles = entry.getValue();
             for (int userRole: userRoles) {
-                UserAdminService.deleteUserRole(userId, userRole);
+                UserAdminService.deleteUserRole(userId, userRole, studyGroupId);
             }
             userDao.delete(userId);
         }
@@ -177,6 +177,56 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         Assert.assertNotEquals(-1, user2RoleId);
         int user2RoleId2 = UserAdminService.getUserRole(userId2, roleId2, groupId);
         Assert.assertNotEquals(-1, user2RoleId2);
+    }
+
+    @Test
+    public void testAddAndRemoveUser() {
+        int operatorId = createAdminUser("test_admin3@study.org");
+        int groupId = -1;
+        try {
+            groupId = UserAdminService.verifyOperatorForGroup(operatorId, TEST_GROUP);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.verifyOperatorForGroup: " +  getStackTrace(e));
+        }
+
+        String email = "testUser4@study.org";
+        UserRequest req = new UserRequest("testUser4", email, null, TEST_GROUP);
+
+        UserAdminService service = new UserAdminService(Integer.toString(operatorId));
+        try {
+            service.createUser(req);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.createUser: " +  getStackTrace(e));
+        }
+
+        int userId = -1;
+        try {
+            userId = UserAdminService.getUserByEmail(email, -1);
+        } catch (Exception e) {
+            Assert.fail("Exception verifying UserAdminService.createUser: " +  getStackTrace(e));
+        }
+
+        int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
+        Assert.assertTrue(roleId > 0);
+
+        try {
+            UserAdminService.addUserRole(userId, roleId, groupId);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
+        }
+
+        try {
+            service.removeUser(req);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.removeUser: " +  getStackTrace(e));
+        }
+
+        try {
+            UserAdminService.getUserByEmail(email, -1);
+            Assert.fail("UserAdminService.removeUser failed to remove user");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid user"));
+        }
     }
 
     private int createAdminUser(String email) {

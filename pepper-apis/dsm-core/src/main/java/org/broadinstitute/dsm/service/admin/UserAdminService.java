@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -21,7 +22,7 @@ public class UserAdminService {
 
     private final String operatorId;
 
-    private static final String STUDY_ADMIN_ROLE = "study_admin";
+    private static final String USER_ADMIN_ROLE = "study_admin";
 
     private static final String SQL_SELECT_ASSIGNEE =
             "SELECT user.user_id, user.name, user.email FROM access_user_role_group roleGroup, access_user user, access_role role, "
@@ -30,12 +31,16 @@ public class UserAdminService {
                     + " AND realmGroup.ddp_group_id = ddp_group.group_id AND ddp_group.group_id = roleGroup.group_id "
                     + "AND role.name = \"mr_request\" AND realm.instance_name = ?";
 
+    private static final String SQL_SELECT_ROLES_FOR_USER =
+            "SELECT ar.role_id, ar.name FROM access_role ar "
+                    + "JOIN access_user_role_group aurg on aurg.role_id = ar.role_id "
+                    + "WHERE aurg.user_id = ? AND aurg.group_id = ?";
+
     private static final String SQL_SELECT_ROLES_FOR_GROUP_AND_USER_ID =
             "SELECT ar.role_id, ar.name, dg.group_id FROM access_role ar "
                     + "JOIN access_user_role_group aurg on aurg.role_id = ar.role_id "
                     + "JOIN ddp_group dg on dg.group_id = aurg.group_id "
-                    + "JOIN access_user au on au.user_id = aurg.user_id "
-                    + "WHERE au.user_id = ? AND dg.name = ?";
+                    + "WHERE aurg.user_id = ? AND dg.name = ?";
 
     private static final String SQL_SELECT_USER_ROLE =
             "SELECT aurg.user_role_group_id FROM access_user_role_group aurg "
@@ -56,8 +61,11 @@ public class UserAdminService {
     private static final String SQL_INSERT_USER_ROLE =
             "INSERT INTO access_user_role_group SET user_id = ?, role_id = ?, group_id = ?";
 
+    private static final String SQL_DELETE_USER_ROLES =
+            "DELETE FROM access_user_role_group WHERE user_id = ?";
+
     private static final String SQL_DELETE_USER_ROLE =
-            "DELETE FROM access_user_role_group WHERE user_id = ? AND role_id = ?";
+            "DELETE FROM access_user_role_group WHERE user_id = ? AND role_id = ? AND group_id = ?";
 
     private static final String SQL_INSERT_ROLE =
             "INSERT INTO access_role SET name = ?";
@@ -68,31 +76,24 @@ public class UserAdminService {
     private static final String SQL_DELETE_GROUP =
             "DELETE FROM ddp_group WHERE group_id = ?";
 
+    private static final String SQL_INSERT_USER =
+            "INSERT INTO ddp_group SET name = ?";
+
+
     public UserAdminService(String operatorId) {
         this.operatorId = operatorId;
     }
 
     public void addUserToRoles(UserRoleRequest req) {
-        String studyGroup = req.getStudyGroup();
-        if (StringUtils.isBlank(studyGroup)) {
-            throw new DSMBadRequestException("Invalid study group: blank");
-        }
-        List<String> users = req.getUsers();
-        if (users.isEmpty()) {
-            throw new DSMBadRequestException("Invalid users: empty");
-        }
-        List<String> roles = req.getRoles();
-        if (roles.isEmpty()) {
-            throw new DSMBadRequestException("Invalid roles: empty");
-        }
+        validateRoleRequest(req, true);
 
-        int groupId = verifyOperatorAndGroup(studyGroup);
+        int groupId = verifyOperatorAndGroup(req.getStudyGroup());
 
-        for (String userEmail: users) {
+        for (String userEmail: req.getUsers()) {
             if (StringUtils.isBlank(userEmail)) {
                 throw new DSMBadRequestException("Invalid user email: blank");
             }
-            addUserRoles(userEmail, roles, groupId, studyGroup);
+            addUserRoles(userEmail, req.getRoles(), groupId, req.getStudyGroup());
         }
     }
 
@@ -116,27 +117,92 @@ public class UserAdminService {
     }
 
     public void removeUserFromRoles(UserRoleRequest req) {
-        String studyGroup = req.getStudyGroup();
-        if (StringUtils.isBlank(studyGroup)) {
-            throw new DSMBadRequestException("Invalid study group: blank");
-        }
-        List<String> users = req.getUsers();
-        if (users.isEmpty()) {
-            throw new DSMBadRequestException("Invalid users: empty");
-        }
-        List<String> roles = req.getRoles();
-        if (roles.isEmpty()) {
-            throw new DSMBadRequestException("Invalid roles: empty");
-        }
+        validateRoleRequest(req, true);
 
-        int groupId = verifyOperatorAndGroup(studyGroup);
+        int groupId = verifyOperatorAndGroup(req.getStudyGroup());
 
-        for (String userEmail: users) {
+        for (String userEmail: req.getUsers()) {
             if (StringUtils.isBlank(userEmail)) {
                 throw new DSMBadRequestException("Invalid user email: blank");
             }
-            addUserRoles(userEmail, roles, groupId, studyGroup);
+            removeUserRoles(userEmail, req.getRoles(), groupId, req.getStudyGroup());
         }
+    }
+
+    protected void removeUserRoles(String email, List<String> roles, int groupId, String studyGroup) {
+        // TODO loop is similar to above
+        int userId = getUserByEmail(email, groupId);
+
+        for (String role : roles) {
+            if (StringUtils.isBlank(role)) {
+                throw new DsmInternalError("Invalid role: blank");
+            }
+            int roleId = verifyRole(role, groupId);
+            try {
+                deleteUserRole(userId, roleId, groupId);
+                String msg = String.format("Removed role %s for user %s in study group %s", role, email, studyGroup);
+                log.info(msg);
+            } catch (Exception e) {
+                String msg = String.format("Error removing user %s from role %s for study group %s", email, role, studyGroup);
+                throw new DsmInternalError(msg, e);
+            }
+        }
+    }
+    public UserRoleResponse getUserRoles(UserRoleRequest req) {
+        validateRoleRequest(req, false);
+
+        int groupId = verifyOperatorAndGroup(req.getStudyGroup());
+
+        UserRoleResponse userRoleResponse = new UserRoleResponse();
+        for (String userEmail: req.getUsers()) {
+            if (StringUtils.isBlank(userEmail)) {
+                throw new DSMBadRequestException("Invalid user email: blank");
+            }
+            int userId = getUserByEmail(userEmail, groupId);
+
+            userRoleResponse.addUserRoles(userEmail, getRolesForUser(userId, groupId));
+        }
+        return userRoleResponse;
+    }
+
+    protected void validateRoleRequest(UserRoleRequest req, boolean includesRoles) {
+        if (StringUtils.isBlank(req.getStudyGroup())) {
+            throw new DSMBadRequestException("Invalid study group: blank");
+        }
+        if (req.getUsers().isEmpty()) {
+            throw new DSMBadRequestException("Invalid users: empty");
+        }
+        if (req.getRoles().isEmpty()) {
+            if (includesRoles) {
+                throw new DSMBadRequestException("Invalid roles: empty");
+            }
+        } else if (!includesRoles) {
+            throw new DSMBadRequestException("Invalid roles: should be empty");
+        }
+    }
+
+    public void createUser(UserRequest req) {
+        if (StringUtils.isBlank(req.getName())) {
+            throw new DSMBadRequestException("Invalid user name: blank");
+        }
+        if (StringUtils.isBlank(req.getEmail())) {
+            throw new DSMBadRequestException("Invalid user email: blank");
+        }
+        // TODO: Currently we do not assign users to study groups, but when we do validate UserRequest.studyGroup -DC
+
+        UserDao userDao = new UserDao();
+        userDao.create(req.asUserDto());
+    }
+
+    public void removeUser(UserRequest req) {
+        if (StringUtils.isBlank(req.getEmail())) {
+            throw new DSMBadRequestException("Invalid user email: blank");
+        }
+
+        int userId = getUserByEmail(req.getEmail(), -1);
+        deleteUserRoles(userId);
+        UserDao userDao = new UserDao();
+        userDao.delete(userId);
     }
 
     protected int verifyOperatorAndGroup(String studyGroup) {
@@ -149,7 +215,7 @@ public class UserAdminService {
         return verifyOperatorForGroup(adminId, studyGroup);
     }
 
-    public void addStudyRole(AddStudyRoleRequest req) {
+    public void addStudyRole(StudyRoleRequest req) {
         String group = req.getStudyGroup();
         if (StringUtils.isBlank(group)) {
             throw new DSMBadRequestException("Invalid study group: blank");
@@ -177,19 +243,43 @@ public class UserAdminService {
 
     protected static int verifyOperatorForGroup(int operatorId, String studyGroup) {
 
-        List<RoleAndGroup> roles = getRolesForUser(operatorId, studyGroup);
+        List<RoleAndGroup> roles = getRolesAndGroupForUser(operatorId, studyGroup);
         if (roles.isEmpty()) {
             String msg = String.format("No roles found for operator %s and group %s", operatorId, studyGroup);
             throw new DSMBadRequestException(msg);
         }
         List<String> roleNames = roles.stream().map(r -> r.roleName).collect(Collectors.toList());
-        if (!roleNames.contains(STUDY_ADMIN_ROLE)) {
+        if (!roleNames.contains(USER_ADMIN_ROLE)) {
             throw new DSMBadRequestException("Operator does not have administrator privileges: " + operatorId);
         }
         return roles.get(0).groupId;
     }
 
-    protected static List<RoleAndGroup> getRolesForUser(int userId, String studyGroup) {
+    protected static List<String> getRolesForUser(int userId, int groupId) {
+        SimpleResult res = inTransaction(conn -> {
+            List<String> roles = new ArrayList<>();
+            SimpleResult dbVals = new SimpleResult(roles);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLES_FOR_USER)) {
+                stmt.setInt(1, userId);
+                stmt.setInt(2, groupId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        roles.add(rs.getString(2));
+                    }
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+
+        if (res.resultException != null) {
+            throw new DsmInternalError("Error getting roles groups for user", res.resultException);
+        }
+        return (List<String>) res.resultValue;
+    }
+
+    protected static List<RoleAndGroup> getRolesAndGroupForUser(int userId, String studyGroup) {
         SimpleResult res = inTransaction(conn -> {
             List<RoleAndGroup> roles = new ArrayList<>();
             SimpleResult dbVals = new SimpleResult(roles);
@@ -416,12 +506,13 @@ public class UserAdminService {
         return (int) res.resultValue;
     }
 
-    protected static int deleteUserRole(int userId, int roleId) {
+    protected static int deleteUserRole(int userId, int roleId, int groupId) {
         SimpleResult results = inTransaction(conn -> {
             SimpleResult res = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_ROLE)) {
                 stmt.setInt(1, userId);
                 stmt.setInt(2, roleId);
+                stmt.setInt(3, groupId);
                 res.resultValue = stmt.executeUpdate();
             } catch (SQLException ex) {
                 res.resultException = ex;
@@ -429,7 +520,26 @@ public class UserAdminService {
             return res;
         });
         if (results.resultException != null) {
-            String msg = String.format("Error deleting user role: userId=%d, roleId=%d", userId, roleId);
+            String msg = String.format("Error deleting user role: userId=%d, roleId=%d, groupId=%d",
+                    userId, roleId, groupId);
+            throw new DsmInternalError(msg, results.resultException);
+        }
+        return (int) results.resultValue;
+    }
+
+    protected static int deleteUserRoles(int userId) {
+        SimpleResult results = inTransaction(conn -> {
+            SimpleResult res = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_ROLES)) {
+                stmt.setInt(1, userId);
+                res.resultValue = stmt.executeUpdate();
+            } catch (SQLException ex) {
+                res.resultException = ex;
+            }
+            return res;
+        });
+        if (results.resultException != null) {
+            String msg = String.format("Error deleting user roles: userId=%d", userId);
             throw new DsmInternalError(msg, results.resultException);
         }
         return (int) results.resultValue;

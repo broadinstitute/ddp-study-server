@@ -919,6 +919,10 @@ public class DSMServer {
 
         UserRoleRoute userRoleRoute = new UserRoleRoute();
         post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+
+        UserRoleRoute userRoute = new UserRoleRoute();
+        post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
+        delete(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
     }
 
     private void setupSomaticUploadRoutes(@NonNull Config cfg) {

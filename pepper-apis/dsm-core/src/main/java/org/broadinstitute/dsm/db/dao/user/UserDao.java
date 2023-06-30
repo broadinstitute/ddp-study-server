@@ -10,6 +10,7 @@ import java.util.Optional;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class UserDao implements Dao<UserDto> {
@@ -18,7 +19,7 @@ public class UserDao implements Dao<UserDto> {
     public static final String NAME = "name";
     public static final String EMAIL = "email";
     public static final String PHONE_NUMBER = "phone_number";
-    private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email, is_active) VALUES (?,?,?)";
+    private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email, phone_number, is_active) VALUES (?,?,?,?)";
     private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
     private static final String SQL_SELECT_USER_BY_EMAIL =
             "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.email = ?";
@@ -83,7 +84,8 @@ public class UserDao implements Dao<UserDto> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, userDto.getName().orElse(""));
                 stmt.setString(2, userDto.getEmail().orElse(""));
-                stmt.setInt(3, userDto.getIsActive().orElse(0));
+                stmt.setString(3, userDto.getPhoneNumber().orElse(""));
+                stmt.setInt(4, userDto.getIsActive().orElse(0));
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -96,8 +98,7 @@ public class UserDao implements Dao<UserDto> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error inserting user with "
-                    + userDto.getEmail(), results.resultException);
+            throw new DsmInternalError("Error inserting user " + userDto.getEmail(), results.resultException);
         }
         return (int) results.resultValue;
     }
@@ -115,8 +116,7 @@ public class UserDao implements Dao<UserDto> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error deleting user with "
-                    + id, results.resultException);
+            throw new DsmInternalError("Error deleting user with ID " + id, results.resultException);
         }
         return (int) results.resultValue;
     }
