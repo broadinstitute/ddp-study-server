@@ -198,6 +198,7 @@ public class KitDaoImpl implements KitDao {
                     }
                 }
             } catch (Exception ex) {
+                logger.error("Not able to update the kit for ddpLabel "+ kitRequestShipping.getDdpLabel(), ex);
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
                         "Kit Label \"" + kitRequestShipping.getDdpLabel() + "\" was already scanned.\n"
                                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
