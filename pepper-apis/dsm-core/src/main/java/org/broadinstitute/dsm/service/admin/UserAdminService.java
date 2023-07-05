@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -128,7 +129,7 @@ public class UserAdminService {
     }
 
     protected void removeUserRoles(String email, List<String> roles, int groupId, String studyGroup) {
-        // TODO loop is similar to above
+        // TODO loop is similar to addUserRoles -DC
         int userId = getUserByEmail(email, groupId);
 
         for (String role : roles) {
@@ -137,6 +138,7 @@ public class UserAdminService {
             }
             int roleId = verifyRole(role, groupId);
             try {
+                // ignore failure to remove
                 deleteUserRole(userId, roleId, groupId);
                 String msg = String.format("Removed role %s for user %s in study group %s", role, email, studyGroup);
                 log.info(msg);
@@ -190,10 +192,10 @@ public class UserAdminService {
         if (StringUtils.isBlank(req.getStudyGroup())) {
             throw new DSMBadRequestException("Invalid study group: blank");
         }
-        if (req.getUsers().isEmpty()) {
+        if (CollectionUtils.isEmpty(req.getUsers())) {
             throw new DSMBadRequestException("Invalid users: empty");
         }
-        if (req.getRoles().isEmpty()) {
+        if (CollectionUtils.isEmpty(req.getRoles())) {
             if (includesRoles) {
                 throw new DSMBadRequestException("Invalid roles: empty");
             }

@@ -75,6 +75,13 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         createdUserRoles.put(userId, newRoleIds);
     }
 
+    private void removeRoleForUser(int roleId, int userId) {
+        List<Integer> roleIds = createdUserRoles.get(userId);
+        List<Integer> newRoleIds = new ArrayList<>(roleIds);
+        newRoleIds.removeAll(List.of(roleId));
+        createdUserRoles.put(userId, newRoleIds);
+    }
+
     @Test
     public void testVerifyRole() {
         int roleId = UserAdminService.verifyRole("upload_onc_history", -1);
@@ -142,19 +149,19 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.verifyOperatorForGroup: " +  getStackTrace(e));
         }
-        String role = "upload_onc_history";
-        int roleId = UserAdminService.verifyRole(role, -1);
-        Assert.assertTrue(roleId > 0);
+        String role1 = "upload_onc_history";
+        int roleId1 = UserAdminService.verifyRole(role1, -1);
+        Assert.assertTrue(roleId1 > 0);
         String role2 = "upload_ror_file";
         int roleId2 = UserAdminService.verifyRole(role2, -1);
         Assert.assertTrue(roleId2 > 0);
-        List<String> roles = List.of(role, role2);
+        List<String> roles = List.of(role1, role2);
 
         String user1 = "testUser2@study.org";
-        int userId1 = createTestUser(user1, roleId);
+        int userId1 = createTestUser(user1, roleId1);
         addRoleForUser(roleId2, userId1);
         String user2 = "testUser3@study.org";
-        int userId2 = createTestUser(user2, roleId);
+        int userId2 = createTestUser(user2, roleId1);
         addRoleForUser(roleId2, userId2);
 
         List<String> users = List.of(user1, user2);
@@ -168,15 +175,66 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserToRole: " +  getStackTrace(e));
         }
-        int userRoleId = UserAdminService.getUserRole(userId1, roleId, groupId);
+        int userRoleId = UserAdminService.getUserRole(userId1, roleId1, groupId);
         Assert.assertNotEquals(-1, userRoleId);
         int userRoleId2 = UserAdminService.getUserRole(userId1, roleId2, groupId);
         Assert.assertNotEquals(-1, userRoleId2);
 
-        int user2RoleId = UserAdminService.getUserRole(userId2, roleId, groupId);
+        int user2RoleId = UserAdminService.getUserRole(userId2, roleId1, groupId);
         Assert.assertNotEquals(-1, user2RoleId);
         int user2RoleId2 = UserAdminService.getUserRole(userId2, roleId2, groupId);
         Assert.assertNotEquals(-1, user2RoleId2);
+
+        UserRoleRequest req2 = new UserRoleRequest(users, TEST_GROUP, List.of(role1));
+        try {
+            service.removeUserFromRoles(req2);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.removeUserFromRoles: " +  getStackTrace(e));
+        }
+
+        UserRoleRequest getReq = new UserRoleRequest(users, TEST_GROUP, null);
+        UserRoleResponse res = null;
+        try {
+            res = service.getUserRoles(getReq);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.getUserRoles: " +  getStackTrace(e));
+        }
+
+        List<UserRoleResponse.UserRoles> userRoles = res.getUserRoles();
+        for (UserRoleResponse.UserRoles resRoles: userRoles) {
+            Assert.assertTrue("RemoveUserFromRole removed wrong role", resRoles.roles.contains(role2));
+            Assert.assertFalse("RemoveUserFromRole did not remove role", resRoles.roles.contains(role1));
+        }
+
+        // adjust cleanup
+        removeRoleForUser(roleId1, userId1);
+        removeRoleForUser(roleId1, userId2);
+
+        UserRoleRequest req3 = new UserRoleRequest(List.of(user2), TEST_GROUP, List.of(role2));
+        try {
+            service.removeUserFromRoles(req3);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.removeUserFromRoles: " +  getStackTrace(e));
+        }
+
+        UserRoleRequest getReq2 = new UserRoleRequest(users, TEST_GROUP, null);
+        try {
+            res = service.getUserRoles(getReq2);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.getUserRoles: " +  getStackTrace(e));
+        }
+
+        userRoles = res.getUserRoles();
+        for (UserRoleResponse.UserRoles resRoles: userRoles) {
+            if (resRoles.user.equals(user1)) {
+                Assert.assertTrue(resRoles.roles.contains(role2));
+            } else {
+                Assert.assertTrue("RemoveUserFromRole did not remove role", resRoles.roles.isEmpty());
+            }
+        }
+
+        // adjust cleanup
+        removeRoleForUser(roleId2, userId2);
     }
 
     @Test

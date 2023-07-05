@@ -15,6 +15,10 @@ public class UserRoleResponse {
         this.userRolesList.add(new UserRoles(userEmail, roles));
     }
 
+    public List<UserRoles> getUserRoles() {
+        return userRolesList;
+    }
+
     public static class UserRoles {
         public final String user;
         public final List<String> roles;
