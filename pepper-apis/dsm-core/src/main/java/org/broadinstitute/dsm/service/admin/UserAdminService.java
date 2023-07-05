@@ -24,13 +24,6 @@ public class UserAdminService {
 
     private static final String USER_ADMIN_ROLE = "study_admin";
 
-    private static final String SQL_SELECT_ASSIGNEE =
-            "SELECT user.user_id, user.name, user.email FROM access_user_role_group roleGroup, access_user user, access_role role, "
-                    + "ddp_group, ddp_instance_group realmGroup, ddp_instance realm WHERE roleGroup.user_id = user.user_id AND roleGroup"
-                    + ".role_id = role.role_id AND realm.ddp_instance_id = realmGroup.ddp_instance_id"
-                    + " AND realmGroup.ddp_group_id = ddp_group.group_id AND ddp_group.group_id = roleGroup.group_id "
-                    + "AND role.name = \"mr_request\" AND realm.instance_name = ?";
-
     private static final String SQL_SELECT_ROLES_FOR_USER =
             "SELECT ar.role_id, ar.name FROM access_role ar "
                     + "JOIN access_user_role_group aurg on aurg.role_id = ar.role_id "
@@ -79,6 +72,11 @@ public class UserAdminService {
     private static final String SQL_INSERT_USER =
             "INSERT INTO ddp_group SET name = ?";
 
+    public static final String SQL_SELECT_GROUP_FOR_REALM =
+            "SELECT dg.group_id, dg.name from ddp_group dg "
+                    + "JOIN ddp_instance_group dig on dig.ddp_group_id = dg.group_id "
+                    + "JOIN ddp_instance di on di.ddp_instance_id = dig.ddp_instance_id "
+                    + "WHERE di.instance_name = ?";
 
     public UserAdminService(String operatorId) {
         this.operatorId = operatorId;
@@ -148,6 +146,7 @@ public class UserAdminService {
             }
         }
     }
+
     public UserRoleResponse getUserRoles(UserRoleRequest req) {
         validateRoleRequest(req, false);
 
@@ -163,6 +162,28 @@ public class UserAdminService {
             userRoleResponse.addUserRoles(userEmail, getRolesForUser(userId, groupId));
         }
         return userRoleResponse;
+    }
+
+    public NameAndId getStudyGroupForRealm(String realm) {
+        SimpleResult res = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_GROUP_FOR_REALM)) {
+                stmt.setString(1, realm);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = new NameAndId(rs.getString(2), rs.getInt(1));
+                    }
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+
+        if (res.resultException != null) {
+            throw new DsmInternalError("Error getting roles groups for user", res.resultException);
+        }
+        return (NameAndId) res.resultValue;
     }
 
     protected void validateRoleRequest(UserRoleRequest req, boolean includesRoles) {
@@ -243,16 +264,16 @@ public class UserAdminService {
 
     protected static int verifyOperatorForGroup(int operatorId, String studyGroup) {
 
-        List<RoleAndGroup> roles = getRolesAndGroupForUser(operatorId, studyGroup);
+        List<NameAndId> roles = getRolesAndGroupForUser(operatorId, studyGroup);
         if (roles.isEmpty()) {
             String msg = String.format("No roles found for operator %s and group %s", operatorId, studyGroup);
             throw new DSMBadRequestException(msg);
         }
-        List<String> roleNames = roles.stream().map(r -> r.roleName).collect(Collectors.toList());
+        List<String> roleNames = roles.stream().map(r -> r.name).collect(Collectors.toList());
         if (!roleNames.contains(USER_ADMIN_ROLE)) {
             throw new DSMBadRequestException("Operator does not have administrator privileges: " + operatorId);
         }
-        return roles.get(0).groupId;
+        return roles.get(0).id;
     }
 
     protected static List<String> getRolesForUser(int userId, int groupId) {
@@ -279,16 +300,16 @@ public class UserAdminService {
         return (List<String>) res.resultValue;
     }
 
-    protected static List<RoleAndGroup> getRolesAndGroupForUser(int userId, String studyGroup) {
+    protected static List<NameAndId> getRolesAndGroupForUser(int userId, String studyGroup) {
         SimpleResult res = inTransaction(conn -> {
-            List<RoleAndGroup> roles = new ArrayList<>();
+            List<NameAndId> roles = new ArrayList<>();
             SimpleResult dbVals = new SimpleResult(roles);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLES_FOR_GROUP_AND_USER_ID)) {
                 stmt.setInt(1, userId);
                 stmt.setString(2, studyGroup);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        roles.add(new RoleAndGroup(rs.getInt(1), rs.getString(2), rs.getInt(3)));
+                        roles.add(new NameAndId(rs.getString(2), rs.getInt(3)));
                     }
                 }
             } catch (SQLException e) {
@@ -300,7 +321,7 @@ public class UserAdminService {
         if (res.resultException != null) {
             throw new DsmInternalError("Error getting study groups for user", res.resultException);
         }
-        return (List<RoleAndGroup>) res.resultValue;
+        return (List<NameAndId>) res.resultValue;
     }
 
     protected static int verifyRole(String role, int groupId) {
@@ -563,15 +584,13 @@ public class UserAdminService {
         return (int) results.resultValue;
     }
 
-    protected static class RoleAndGroup {
-        public final int roleId;
-        public final String roleName;
-        public final int groupId;
+    protected static class NameAndId {
+        public final String name;
+        public final int id;
 
-        public RoleAndGroup(int roleId, String roleName, int groupId) {
-            this.roleId = roleId;
-            this.roleName = roleName;
-            this.groupId = groupId;
+        public NameAndId(String name, int id) {
+            this.name = name;
+            this.id = id;
         }
     }
 }
