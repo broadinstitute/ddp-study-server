@@ -203,7 +203,7 @@ public class Auth0Util {
      * @throws TokenExpiredException – if the token has expired.
      */
     public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain, String secret, String signer,
-                                                        boolean secretEncoded) throws TokenExpiredException {
+                                                        boolean secretEncoded) {
         if (StringUtils.isBlank(secret)) {
             return verifyAuth0Token(jwt, auth0Domain);
         }
