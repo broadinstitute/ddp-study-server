@@ -28,11 +28,9 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
-import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
-import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParserTest;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -215,7 +213,6 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         // using built-in DDP instances
         instanceDto = instanceDao.getDDPInstanceByInstanceName(realm).orElseThrow();
         instances.put(realm, instanceDto);
-        createFieldSettings();
     }
 
     private static void deleteParticipants() {
@@ -378,32 +375,6 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         Map<String, Map<String, Object>> top = new HashMap<>();
         top.put("top", dsm);
         return top;
-    }
-
-    private static void createFieldSettings() {
-        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        FieldSettingsDto.Builder builder = new FieldSettingsDto.Builder(instanceDto.getDdpInstanceId());
-        FieldSettingsDto fieldSettings = builder.withFieldType("oD")
-                .withColumnName("LOCAL_CONTROL")
-                .withDisplayType("OPTIONS")
-                .withPossibleValues("[{\"value\":\"Yes\"},{\"value\":\"No\"},{\"value\":\"Unknown\"}]").build();
-        fieldSettingsDao.create(fieldSettings);
-
-        fieldSettings = builder.withFieldType("oD")
-                .withColumnName("FFPE")
-                .withDisplayType("OPTIONS")
-                .withPossibleValues("[{\"value\":\"Yes\"},{\"value\":\"No\"},{\"value\":\"Unknown\"}]").build();
-        fieldSettingsDao.create(fieldSettings);
-
-        fieldSettings = builder.withFieldType("oD")
-                .withColumnName("DECALCIFICATION")
-                .withDisplayType("OPTIONS")
-                .withPossibleValues("[{\"value\":\"Nitric Acid (includes Perenyi's fluid)\"},"
-                        + "{\"value\":\"Hydrochloric Acid (includes Von Ebner's solution)\"},"
-                        + "{\"value\":\"Formic Acid (includes Evans/Kajian, Kristensen/Gooding/Stewart)\"},"
-                        + "{\"value\":\"Acid NOS\"},{\"value\":\"EDTA\"},{\"value\":\"Sample not decalcified\"},"
-                        + "{\"value\":\"Other\"},{\"value\":\"Unknown\"},{\"value\":\"Immunocal/ Soft Decal\"}]").build();
-        fieldSettingsDao.create(fieldSettings);
     }
 
     private static OncHistoryElasticUpdater mockElasticUpdater() {
