@@ -32,15 +32,19 @@ public class CodeStudyColumnsProvider implements StudyColumnsProvider {
 
     private Map<String, OncHistoryUploadColumn> getOsteo2Columns() {
         Map<String, OncHistoryUploadColumn> columns = new LinkedHashMap<>();
-        columns.put("DATE_PX", new OncHistoryUploadColumn(DATE_PX, "DATE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "d"));
-        columns.put("TYPE_PX", new OncHistoryUploadColumn(TYPE_PX, "TYPE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("LOCATION_PX", new OncHistoryUploadColumn(LOCATION_PX, "LOCATION_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("HISTOLOGY", new OncHistoryUploadColumn(HISTOLOGY, "HISTOLOGY", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("ACCESSION", new OncHistoryUploadColumn(ACCESSION_NUMBER, "ACCESSION", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("FACILITY", new OncHistoryUploadColumn(FACILITY, "FACILITY", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("PHONE", new OncHistoryUploadColumn(PHONE, "PHONE", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("FAX", new OncHistoryUploadColumn(FAX, "FAX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("DESTRUCTION", new OncHistoryUploadColumn(DESTRUCTION_POLICY, "DESTRUCTION", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
+        columns.put("DATE_PX", new OncHistoryUploadColumn(DATE_PX, "DATE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "d", "Date of PX"));
+        columns.put("TYPE_PX", new OncHistoryUploadColumn(TYPE_PX, "TYPE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s", "Type of PX"));
+        columns.put("LOCATION_PX", new OncHistoryUploadColumn(LOCATION_PX, "LOCATION_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Location of PX"));
+        columns.put("HISTOLOGY", new OncHistoryUploadColumn(HISTOLOGY, "HISTOLOGY", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Histology"));
+        columns.put("ACCESSION", new OncHistoryUploadColumn(ACCESSION_NUMBER, "ACCESSION", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Accession Number"));
+        columns.put("FACILITY", new OncHistoryUploadColumn(FACILITY, "FACILITY", DDP_ONC_HISTORY_DETAIL_ALIAS, "s", "Facility"));
+        columns.put("PHONE", new OncHistoryUploadColumn(PHONE, "PHONE", DDP_ONC_HISTORY_DETAIL_ALIAS, "s", "Phone"));
+        columns.put("FAX", new OncHistoryUploadColumn(FAX, "FAX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s", "Fax"));
+        columns.put("DESTRUCTION", new OncHistoryUploadColumn(DESTRUCTION_POLICY, "DESTRUCTION", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Destruction Policy (years)"));
         columns.put("BLOCKS_WITH_TUMOR", new OncHistoryUploadColumn("BLOCKS_WITH_TUMOR", "BLOCKS_WITH_TUMOR", FIELD_SETTINGS_ALIAS, "s"));
         columns.put("TUMOR_SIZE", new OncHistoryUploadColumn("TUMOR_SIZE", "TUMOR_SIZE", FIELD_SETTINGS_ALIAS, "s"));
         columns.put("LOCAL_CONTROL", new OncHistoryUploadColumn("LOCAL_CONTROL", "LOCAL_CONTROL", FIELD_SETTINGS_ALIAS, "o"));
@@ -49,18 +53,23 @@ public class CodeStudyColumnsProvider implements StudyColumnsProvider {
         columns.put("FFPE", new OncHistoryUploadColumn("FFPE", "FFPE", FIELD_SETTINGS_ALIAS, "o"));
         columns.put("DECALCIFICATION", new OncHistoryUploadColumn("DECALCIFICATION", "DECALCIFICATION", FIELD_SETTINGS_ALIAS, "o"));
         columns.put("BLOCK_TO_REQUEST", new OncHistoryUploadColumn("BLOCK_TO_REQUEST", "BLOCK_TO_REQUEST", FIELD_SETTINGS_ALIAS, "s"));
-        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "o"));
+        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "o",
+                "Request Status"));
         return columns;
     }
 
     private Map<String, OncHistoryUploadColumn> getLmsColumns() {
         Map<String, OncHistoryUploadColumn> columns = new LinkedHashMap<>();
-        columns.put("DATE_PX", new OncHistoryUploadColumn(DATE_PX, "DATE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "d"));
-        columns.put("TYPE_PX", new OncHistoryUploadColumn(TYPE_PX, "TYPE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("LOCATION_PX", new OncHistoryUploadColumn(LOCATION_PX, "LOCATION_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("HISTOLOGY", new OncHistoryUploadColumn(HISTOLOGY, "HISTOLOGY", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("ACCESSION", new OncHistoryUploadColumn(ACCESSION_NUMBER, "ACCESSION", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
-        columns.put("FACILITY_PX", new OncHistoryUploadColumn(FACILITY, "FACILITY_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s"));
+        columns.put("DATE_PX", new OncHistoryUploadColumn(DATE_PX, "DATE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "d", "Date of PX"));
+        columns.put("TYPE_PX", new OncHistoryUploadColumn(TYPE_PX, "TYPE_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s", "Type of PX"));
+        columns.put("LOCATION_PX", new OncHistoryUploadColumn(LOCATION_PX, "LOCATION_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Location of PX"));
+        columns.put("HISTOLOGY", new OncHistoryUploadColumn(HISTOLOGY, "HISTOLOGY", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Histology"));
+        columns.put("ACCESSION", new OncHistoryUploadColumn(ACCESSION_NUMBER, "ACCESSION", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Accession Number"));
+        columns.put("FACILITY_PX", new OncHistoryUploadColumn(FACILITY, "FACILITY_PX", DDP_ONC_HISTORY_DETAIL_ALIAS, "s",
+                "Facility"));
         columns.put("TUMOR_SIZE", new OncHistoryUploadColumn("TUMOR_SIZE", "TUMOR_SIZE", FIELD_SETTINGS_ALIAS, "s"));
         columns.put("NECROSIS", new OncHistoryUploadColumn("NECROSIS", "NECROSIS", FIELD_SETTINGS_ALIAS, "s"));
         columns.put("VIABLE_TUMOR", new OncHistoryUploadColumn("VIABLE_TUMOR", "VIABLE_TUMOR", FIELD_SETTINGS_ALIAS, "s"));
@@ -70,7 +79,8 @@ public class CodeStudyColumnsProvider implements StudyColumnsProvider {
         columns.put("SLIDES_TOTAL", new OncHistoryUploadColumn("SLIDES_TOTAL", "SLIDES_TOTAL", FIELD_SETTINGS_ALIAS, "s"));
         columns.put("FACILITY_PATH_REVIEW", new OncHistoryUploadColumn("FACILITY_PATH_REVIEW", "FACILITY_PATH_REVIEW",
                 FIELD_SETTINGS_ALIAS, "s"));
-        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "o"));
+        columns.put("REQUEST_STATUS", new OncHistoryUploadColumn(REQUEST, "REQUEST_STATUS", DDP_ONC_HISTORY_DETAIL_ALIAS, "o",
+                "Request Status"));
         return columns;
     }
 }

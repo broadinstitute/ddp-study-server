@@ -70,7 +70,7 @@ public class OncHistoryUploadRoute extends RequestHandler {
         }
     }
 
-    private static boolean canUploadOncHistory(String realm, String userId) {
+    protected static boolean canUploadOncHistory(String realm, String userId) {
         return UserUtil.checkUserAccess(realm, userId, ONC_HISTORY_UPLOAD);
     }
 }
