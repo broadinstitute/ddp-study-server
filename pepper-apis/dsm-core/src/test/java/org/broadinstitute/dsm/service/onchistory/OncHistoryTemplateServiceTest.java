@@ -124,6 +124,7 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
 
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(10)) {
             service.initialize();
+            log.info("TEMP: creating sheet with {} uploadColumns", uploadColumns.size());
             service.createSheet(workbook, uploadColumns);
             SXSSFSheet sheet = workbook.getSheetAt(0);
             Assert.assertEquals(3, sheet.getLastRowNum());
@@ -143,6 +144,11 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
             validateNotes(getRowValues(row), headerValues, service.getColumnOptions());
             workbook.dispose();
         } catch (Exception e) {
+            log.info("Exception: {}", e.toString());
+            if (e.getCause() != null) {
+                log.info("Exception cause {}", e.getCause().toString());
+            }
+            log.info("Stack trace: {}", getStackTrace(e));
             Assert.fail(getStackTrace(e));
         }
     }
