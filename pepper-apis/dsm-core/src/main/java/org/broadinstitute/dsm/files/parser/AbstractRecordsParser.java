@@ -72,14 +72,27 @@ public abstract class AbstractRecordsParser<T> {
 
     List<T> transformRecordsToList(String[] records) {
         return Arrays.stream(records)
+                .filter(this::filterRecord)
                 .map(this::transformRecordToMap)
                 .map(this::transformMapToObject)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Return false if the record has no content (but may have delimiters)
+     */
+    boolean filterRecord(String record) {
+        String regex = String.format("[%s]", regexSeparator);
+        return !cleanRecord(record).replaceAll(regex, "").isEmpty();
+    }
+
+    String cleanRecord(String record) {
+        return record.replaceAll("[\n\r]$", "");
+    }
+
     Map<String, String> transformRecordToMap(String record) {
         // split but keep trailing delimiters
-        List<String> records = Arrays.asList(record.replaceAll("[\n\r]$", "").split(regexSeparator, -1));
+        List<String> records = Arrays.asList(cleanRecord(record).split(regexSeparator, -1));
         int colDiff = actualHeaders.size() - records.size();
         if (colDiff > 0) {
             String row = String.join(", ", records);
