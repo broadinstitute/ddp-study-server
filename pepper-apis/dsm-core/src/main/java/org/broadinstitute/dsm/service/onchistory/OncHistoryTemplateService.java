@@ -15,7 +15,11 @@ import java.util.stream.IntStream;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -33,6 +37,11 @@ public class OncHistoryTemplateService {
     private final StudyColumnsProvider studyColumnsProvider;
     protected static final String FULL_DATE_DESC = "Full: 2022-12-5, 12-5-2022, 12/5/2022, 2022/12/5.";
     protected static final String PARTIAL_DATE_DESC = "Partial: 2021-10, 10/2021, 2021.";
+    // width is expressed as 1/256 of a character
+    private static final int DEFAULT_COL_WIDTH = 256 * 15;
+    private static final int HEADER_COL_WIDTH = 256 * 15;
+    private static final int WIDE_COL_WIDTH = 256 * 30;
+    private static final short LARGE_FONT = 20 * 13;
     private final String dateDescription;
     private final Map<String, String> recordIdColumn;
     private boolean initialized;
@@ -40,6 +49,9 @@ public class OncHistoryTemplateService {
     private Map<String, String> columnDescriptions;
     private Map<String, OncHistoryUploadColumn> studyColumns;
     private String realmDisplayName;
+    private CellStyle wrapStyle;
+    private CellStyle boldStyle;
+    private CellStyle largeBoldStyle;
 
 
     public OncHistoryTemplateService(String realm, StudyColumnsProvider studyColumnsProvider) {
@@ -85,9 +97,15 @@ public class OncHistoryTemplateService {
     public void writeDictionary(OutputStream os) {
         initialize();
 
+        log.info("Creating onc history upload data dictionary");
         List<OncHistoryUploadColumn> uploadColumns = new ArrayList<>(studyColumns.values());
 
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(10)) {
+            wrapStyle = workbook.createCellStyle();
+            wrapStyle.setWrapText(true);
+            boldStyle = createBoldStyle(workbook);
+            largeBoldStyle = createLargeBoldStyle(workbook);
+
             createSheet(workbook, uploadColumns);
             workbook.write(os);
             workbook.dispose();
@@ -102,34 +120,68 @@ public class OncHistoryTemplateService {
     public void writeTemplate(OutputStream os) {
         initialize();
 
+        log.info("Creating onc history upload template");
         PrintWriter printWriter = new PrintWriter(os);
         printWriter.println(String.join(SystemUtil.TAB_SEPARATOR, studyColumns.keySet()));
         printWriter.flush();
     }
 
     public String getDictionaryFileName() {
-        if (realmDisplayName == null) {
-            throw new DsmInternalError("OncHistoryTemplateService is not initialized");
-        }
+        initialize();
         return String.format("OncHistoryUploadDictionary - %s.xlsx", realmDisplayName);
     }
 
     public String getTemplateFileName() {
-        if (realmDisplayName == null) {
-            throw new DsmInternalError("OncHistoryTemplateService is not initialized");
-        }
+        initialize();
         return String.format("OncHistoryUploadTemplate - %s.txt", realmDisplayName);
     }
 
     protected void createSheet(SXSSFWorkbook workbook, List<OncHistoryUploadColumn> uploadColumns) {
         SXSSFSheet sheet = workbook.createSheet("Onc History Upload Template");
-        sheet.trackAllColumnsForAutoSizing();
 
-        int rowNum = 1;
-        writeRow(createHeaderRow(uploadColumns, "Column header"), sheet.createRow(rowNum++));
-        writeRow(createDescRow(uploadColumns, "Description"), sheet.createRow(rowNum++));
-        writeRow(createTypeRow(uploadColumns, "Column type"), sheet.createRow(rowNum++));
-        writeRow(createNotesRow(uploadColumns, "Notes"), sheet.createRow(rowNum));
+        sheet.setColumnWidth(0, HEADER_COL_WIDTH);
+        sheet.setColumnWidth(1, DEFAULT_COL_WIDTH);
+        int ind = 2;
+        for (var col: uploadColumns) {
+            switch (col.getParseType()) {
+                case "o":
+                case "d":
+                    sheet.setColumnWidth(ind, WIDE_COL_WIDTH);
+                    break;
+                default:
+                    sheet.setColumnWidth(ind, DEFAULT_COL_WIDTH);
+                    break;
+            }
+            ind++;
+        }
+
+        int rowNum = 0;
+        SXSSFRow row = sheet.createRow(rowNum++);
+        writeRow(createHeaderRow(uploadColumns, "Column header"), row, true);
+
+        writeRow(createDescRow(uploadColumns, "Description"), sheet.createRow(rowNum++), false);
+        writeRow(createTypeRow(uploadColumns, "Column type"), sheet.createRow(rowNum++), false);
+        writeRow(createNotesRow(uploadColumns, "Notes"), sheet.createRow(rowNum), false);
+
+        sheet.createFreezePane(1, 0);
+    }
+
+    private CellStyle createBoldStyle(SXSSFWorkbook workbook) {
+        CellStyle cs = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        log.info("Font height: {}", font.getFontHeight());
+        cs.setFont(font);
+        return cs;
+    }
+
+    private CellStyle createLargeBoldStyle(SXSSFWorkbook workbook) {
+        CellStyle cs = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeight(LARGE_FONT);
+        cs.setFont(font);
+        return cs;
     }
 
     protected List<String> createHeaderRow(List<OncHistoryUploadColumn> uploadColumns, String rowHeader) {
@@ -225,8 +277,17 @@ public class OncHistoryTemplateService {
         return sb.toString();
     }
 
-    protected void writeRow(List<String> values, Row row) {
-        IntStream.range(0, values.size()).forEach(i -> row.createCell(i).setCellValue(values.get(i)));
+    protected void writeRow(List<String> values, Row row, boolean boldRow) {
+        IntStream.range(0, values.size()).forEachOrdered(i -> {
+            Cell c = row.createCell(i);
+            c.setCellValue(values.get(i));
+            c.setCellStyle(wrapStyle);
+            if (i == 0) {
+                c.setCellStyle(largeBoldStyle);
+            } else if (boldRow) {
+                c.setCellStyle(boldStyle);
+            }
+        });
     }
 
     protected static Map<String, String> getColumnDescriptions(int ddpInstanceId) {

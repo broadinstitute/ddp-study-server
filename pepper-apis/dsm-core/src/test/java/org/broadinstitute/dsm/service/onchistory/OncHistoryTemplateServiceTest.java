@@ -4,6 +4,8 @@ import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.broadinstitute.dsm.service.onchistory.OncHistoryTemplateService.FULL_DATE_DESC;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,13 +16,14 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.util.SystemUtil;
+import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,10 +33,12 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
 
     private static final String DEFAULT_REALM = "osteo2";
     private static Map<String, String> recordIdColumn;
+    private static String outputFileDir;
 
     @BeforeClass
     public static void setup() {
         recordIdColumn = OncHistoryTemplateService.createRecordIdColumn();
+        setupOutputDir();
     }
 
     @Test
@@ -58,6 +63,22 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
             Assert.assertEquals(headerRow.length() - 1, headerRow.indexOf("\n"));
             headerRow = headerRow.trim();
             Assert.assertEquals(expectedValues, Arrays.asList((headerRow.split(SystemUtil.TAB_SEPARATOR))));
+        } catch (Exception e) {
+            Assert.fail(getStackTrace(e));
+        }
+    }
+
+    @Test
+    public void testWriteDictionary() {
+        StudyColumnsProvider columnsProvider = new CodeStudyColumnsProvider();
+        // use the DB values for a real realm
+        OncHistoryTemplateService service = new OncHistoryTemplateService(DEFAULT_REALM, new CodeStudyColumnsProvider());
+
+        FileOutputStream os;
+        try {
+            File outFile = createOutputFile("oncHistoryDict_output.xlsx");
+            os = new FileOutputStream(outFile);
+            service.writeDictionary(os);
         } catch (Exception e) {
             Assert.fail(getStackTrace(e));
         }
@@ -104,9 +125,9 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
             service.initialize();
             service.createSheet(workbook, uploadColumns);
             SXSSFSheet sheet = workbook.getSheetAt(0);
-            Assert.assertEquals(4, sheet.getLastRowNum());
+            Assert.assertEquals(3, sheet.getLastRowNum());
 
-            int rowNum = 1;
+            int rowNum = 0;
             SXSSFRow row = sheet.getRow(rowNum);
             List<String> headerValues = getRowValues(row);
             validateHeader(getRowValues(row), uploadColumns);
@@ -119,6 +140,7 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
 
             row = sheet.getRow(++rowNum);
             validateNotes(getRowValues(row), headerValues, service.getColumnOptions());
+            workbook.dispose();
         } catch (Exception e) {
             Assert.fail(getStackTrace(e));
         }
@@ -168,5 +190,38 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
         for (var option: requestOptions) {
             Assert.assertTrue(content.contains(option));
         }
+    }
+
+    private static void setupOutputDir() {
+        try {
+            ClassLoader classLoader = TestUtil.class.getClassLoader();
+            outputFileDir = String.format("%s/output", classLoader.getResource("oncHistory").getFile());
+            log.info("OncHistoryTemplateServiceTest output directory: {}", outputFileDir);
+            removeOutputFiles();
+        } catch (Exception e) {
+            Assert.fail(getStackTrace(e));
+        }
+    }
+
+    private static File createOutputFile(String filename) {
+        try {
+            File destFile = new File(outputFileDir, filename);
+            if (!destFile.getParentFile().exists()) {
+                if (!destFile.getParentFile().mkdirs()) {
+                    Assert.fail("Could not create directory: {}" + outputFileDir);
+                }
+            }
+            if (!destFile.createNewFile()) {
+                Assert.fail("Output file already exists: {}" + filename);
+            }
+            return destFile;
+        } catch (Exception e) {
+            Assert.fail(getStackTrace(e));
+        }
+        return null;
+    }
+
+    private static void removeOutputFiles() {
+        FileUtils.deleteQuietly(new File(outputFileDir));
     }
 }

@@ -870,7 +870,7 @@ public class DSMServer {
 
         post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
 
-        get(uiRoot + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute(), new JsonTransformer());
+        get(uiRoot + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute());
     }
 
     private void setupMRAbstractionRoutes() {
