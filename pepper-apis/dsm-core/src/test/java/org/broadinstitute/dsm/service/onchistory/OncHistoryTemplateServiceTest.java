@@ -38,7 +38,6 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
     @BeforeClass
     public static void setup() {
         recordIdColumn = OncHistoryTemplateService.createRecordIdColumn();
-        setupOutputDir();
     }
 
     @Test
@@ -68,12 +67,14 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
         }
     }
 
-    @Test
+    // Useful for local testing
+    // @Test
     public void testWriteDictionary() {
         StudyColumnsProvider columnsProvider = new CodeStudyColumnsProvider();
         // use the DB values for a real realm
         OncHistoryTemplateService service = new OncHistoryTemplateService(DEFAULT_REALM, new CodeStudyColumnsProvider());
 
+        setupOutputDir();
         FileOutputStream os;
         try {
             File outFile = createOutputFile("oncHistoryDict_output.xlsx");
