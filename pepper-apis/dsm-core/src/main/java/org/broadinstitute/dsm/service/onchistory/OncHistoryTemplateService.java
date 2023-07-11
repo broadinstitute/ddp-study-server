@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.service.onchistory;
 
-import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.broadinstitute.dsm.statics.DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS;
 import static org.broadinstitute.dsm.statics.DBConstants.FIELD_SETTINGS_ALIAS;
 
@@ -131,29 +130,14 @@ public class OncHistoryTemplateService {
         return String.format("OncHistoryUploadTemplate - %s.txt", realmDisplayName);
     }
 
-    protected synchronized void createSheet(SXSSFWorkbook workbook, List<OncHistoryUploadColumn> uploadColumns) {
+    protected void createSheet(SXSSFWorkbook workbook, List<OncHistoryUploadColumn> uploadColumns) {
         wrapStyle = workbook.createCellStyle();
         wrapStyle.setWrapText(true);
         boldStyle = createBoldStyle(workbook);
         largeBoldStyle = createLargeBoldStyle(workbook);
 
-        SXSSFSheet sheet;
-        try {
-            log.info("TEMP: before workbook.createSheet");
-            System.out.println("TEMP: before workbook.createSheet");
-            sheet = workbook.createSheet("Onc History Upload Template");
-            log.info("TEMP: after workbook.createSheet");
-        } catch (Exception e) {
-            log.info("Exception: {}", e.toString());
-            System.out.println("Exception: " + e.toString());
-            if (e.getCause() != null) {
-                log.info("Exception cause {}", e.getCause().toString());
-                System.out.println("Exception cause: " + e.getCause().toString());
-            }
-            log.info("Stack trace: {}", getStackTrace(e));
-            System.out.println("Stack trace: " + getStackTrace(e));
-            throw e;
-        }
+        log.info("TEMP: before workbook.createSheet");
+        SXSSFSheet sheet = workbook.createSheet("Onc History Upload Template");
 
         sheet.setColumnWidth(0, HEADER_COL_WIDTH);
         sheet.setColumnWidth(1, DEFAULT_COL_WIDTH);
@@ -170,7 +154,6 @@ public class OncHistoryTemplateService {
             }
             ind++;
         }
-        log.info("TEMP: set column widths");
 
         int rowNum = 0;
         SXSSFRow row = sheet.createRow(rowNum++);
@@ -179,7 +162,6 @@ public class OncHistoryTemplateService {
         writeRow(createDescRow(uploadColumns, "Description"), sheet.createRow(rowNum++), false);
         writeRow(createTypeRow(uploadColumns, "Column type"), sheet.createRow(rowNum++), false);
         writeRow(createNotesRow(uploadColumns, "Notes"), sheet.createRow(rowNum), false);
-        log.info("TEMP: wrote rows");
 
         sheet.createFreezePane(1, 0);
     }
