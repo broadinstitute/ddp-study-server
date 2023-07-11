@@ -13,12 +13,14 @@
 
     <properties>
         <sonar.skip>true</sonar.skip>
+        <liquibase.version>4.8.0</liquibase.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.version}</version>
         </dependency>
     </dependencies>
 
