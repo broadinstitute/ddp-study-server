@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.dsm.service.admin.UserRequest;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.lddp.handlers.util.Result;
+import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
@@ -18,6 +19,8 @@ public class UserRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) {
+
+        String studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
 
         String body = request.body();
         if (StringUtils.isBlank(body)) {
@@ -34,7 +37,7 @@ public class UserRoute extends RequestHandler {
             return "Invalid request format";
         }
 
-        UserAdminService adminService = new UserAdminService(userId);
+        UserAdminService adminService = new UserAdminService(userId, studyGroup);
 
         if (request.requestMethod().equals(RoutePath.RequestMethod.POST.toString())) {
             try {

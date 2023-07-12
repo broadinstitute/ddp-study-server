@@ -9,15 +9,13 @@ public class UserRequest {
     private final String name;
     private final String email;
     private final String phone;
-    private final String studyGroup;
 
-    // TODO extend to include optional roles for user -DC
+    // TODO extend to include roles for user -DC
 
-    public UserRequest(String name, String email, String phone, String studyGroup) {
+    public UserRequest(String name, String email, String phone) {
         this.name = name;
         this.email = email;
         this.phone = phone;
-        this.studyGroup = studyGroup;
     }
 
     public UserDto asUserDto() {

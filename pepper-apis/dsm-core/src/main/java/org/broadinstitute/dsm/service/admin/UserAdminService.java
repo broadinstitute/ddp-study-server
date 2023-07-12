@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.lddp.db.SimpleResult;
 import spark.utils.StringUtils;
 
@@ -22,6 +24,7 @@ import spark.utils.StringUtils;
 public class UserAdminService {
 
     private final String operatorId;
+    private final String studyGroup;
 
     private static final String USER_ADMIN_ROLE = "study_admin";
 
@@ -79,20 +82,27 @@ public class UserAdminService {
                     + "JOIN ddp_instance di on di.ddp_instance_id = dig.ddp_instance_id "
                     + "WHERE di.instance_name = ?";
 
-    public UserAdminService(String operatorId) {
+    public UserAdminService(String operatorId, String studyGroup) {
         this.operatorId = operatorId;
+        this.studyGroup = studyGroup;
+    }
+
+    public void getStudyRoles() {
+
+        int groupId = verifyOperatorAndGroup(studyGroup);
+        throw new DsmInternalError("Not implemented");
     }
 
     public void addUserToRoles(UserRoleRequest req) {
         validateRoleRequest(req, true);
 
-        int groupId = verifyOperatorAndGroup(req.getStudyGroup());
+        int groupId = verifyOperatorAndGroup(studyGroup);
 
         for (String userEmail: req.getUsers()) {
             if (StringUtils.isBlank(userEmail)) {
                 throw new DSMBadRequestException("Invalid user email: blank");
             }
-            addUserRoles(userEmail, req.getRoles(), groupId, req.getStudyGroup());
+            addUserRoles(userEmail, req.getRoles(), groupId, studyGroup);
         }
     }
 
@@ -118,13 +128,13 @@ public class UserAdminService {
     public void removeUserFromRoles(UserRoleRequest req) {
         validateRoleRequest(req, true);
 
-        int groupId = verifyOperatorAndGroup(req.getStudyGroup());
+        int groupId = verifyOperatorAndGroup(studyGroup);
 
         for (String userEmail: req.getUsers()) {
             if (StringUtils.isBlank(userEmail)) {
                 throw new DSMBadRequestException("Invalid user email: blank");
             }
-            removeUserRoles(userEmail, req.getRoles(), groupId, req.getStudyGroup());
+            removeUserRoles(userEmail, req.getRoles(), groupId, studyGroup);
         }
     }
 
@@ -152,7 +162,7 @@ public class UserAdminService {
     public UserRoleResponse getUserRoles(UserRoleRequest req) {
         validateRoleRequest(req, false);
 
-        int groupId = verifyOperatorAndGroup(req.getStudyGroup());
+        int groupId = verifyOperatorAndGroup(studyGroup);
 
         UserRoleResponse userRoleResponse = new UserRoleResponse();
         for (String userEmail: req.getUsers()) {
@@ -166,7 +176,39 @@ public class UserAdminService {
         return userRoleResponse;
     }
 
-    public NameAndId getStudyGroupForRealm(String realm) {
+    public static String getStudyGroup(Map<String, String[]> queryParams) {
+        String studyGroup = null;
+        String realmGroup = null;
+        if (queryParams.containsKey(RoutePath.STUDY_GROUP)) {
+            studyGroup = queryParams.get(RoutePath.STUDY_GROUP)[0];
+        }
+        if (queryParams.containsKey(RoutePath.REALM)) {
+            realmGroup = UserAdminService.getStudyGroupForRealm(queryParams.get(RoutePath.REALM)[0]);
+        }
+        if (realmGroup == null) {
+            if (studyGroup == null) {
+                throw new DSMBadRequestException("Invalid realm or study group");
+            }
+            return studyGroup;
+        } else {
+            if (studyGroup != null && !studyGroup.equals(realmGroup)) {
+                String msg = String.format("Provided study group %s does not match provided realm %s", studyGroup,
+                        queryParams.get(RoutePath.REALM)[0]);
+                throw new DSMBadRequestException(msg);
+            }
+        }
+        return realmGroup;
+    }
+
+    protected static String getStudyGroupForRealm(String realm) {
+        NameAndId res = _getStudyGroupForRealm(realm);
+        if (res == null) {
+            throw new DSMBadRequestException("Invalid realm: " + realm);
+        }
+        return res.name;
+    }
+
+    private static NameAndId _getStudyGroupForRealm(String realm) {
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_GROUP_FOR_REALM)) {
@@ -189,7 +231,7 @@ public class UserAdminService {
     }
 
     protected void validateRoleRequest(UserRoleRequest req, boolean includesRoles) {
-        if (StringUtils.isBlank(req.getStudyGroup())) {
+        if (StringUtils.isBlank(studyGroup)) {
             throw new DSMBadRequestException("Invalid study group: blank");
         }
         if (CollectionUtils.isEmpty(req.getUsers())) {
@@ -239,7 +281,7 @@ public class UserAdminService {
     }
 
     public void addStudyRole(StudyRoleRequest req) {
-        String group = req.getStudyGroup();
+        String group = studyGroup;
         if (StringUtils.isBlank(group)) {
             throw new DSMBadRequestException("Invalid study group: blank");
         }
@@ -530,60 +572,42 @@ public class UserAdminService {
     }
 
     protected static int deleteUserRole(int userId, int roleId, int groupId) {
-        SimpleResult results = inTransaction(conn -> {
-            SimpleResult res = new SimpleResult();
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_ROLE)) {
                 stmt.setInt(1, userId);
                 stmt.setInt(2, roleId);
                 stmt.setInt(3, groupId);
-                res.resultValue = stmt.executeUpdate();
+                return stmt.executeUpdate();
             } catch (SQLException ex) {
-                res.resultException = ex;
+                String msg = String.format("Error deleting user role: userId=%d, roleId=%d, groupId=%d",
+                        userId, roleId, groupId);
+                throw new DsmInternalError(msg, ex);
             }
-            return res;
         });
-        if (results.resultException != null) {
-            String msg = String.format("Error deleting user role: userId=%d, roleId=%d, groupId=%d",
-                    userId, roleId, groupId);
-            throw new DsmInternalError(msg, results.resultException);
-        }
-        return (int) results.resultValue;
     }
 
     protected static int deleteUserRoles(int userId) {
-        SimpleResult results = inTransaction(conn -> {
-            SimpleResult res = new SimpleResult();
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_ROLES)) {
                 stmt.setInt(1, userId);
-                res.resultValue = stmt.executeUpdate();
+                return stmt.executeUpdate();
             } catch (SQLException ex) {
-                res.resultException = ex;
+                String msg = String.format("Error deleting user roles: userId=%d", userId);
+                throw new DsmInternalError(msg, ex);
             }
-            return res;
         });
-        if (results.resultException != null) {
-            String msg = String.format("Error deleting user roles: userId=%d", userId);
-            throw new DsmInternalError(msg, results.resultException);
-        }
-        return (int) results.resultValue;
     }
 
     protected static int deleteStudyGroup(int groupId) {
-        SimpleResult results = inTransaction(conn -> {
-            SimpleResult res = new SimpleResult();
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_GROUP)) {
                 stmt.setInt(1, groupId);
-                res.resultValue = stmt.executeUpdate();
+                return stmt.executeUpdate();
             } catch (SQLException ex) {
-                res.resultException = ex;
+                String msg = String.format("Error deleting study group: groupId=%d", groupId);
+                throw new DsmInternalError(msg, ex);
             }
-            return res;
         });
-        if (results.resultException != null) {
-            String msg = String.format("Error deleting study group: groupId=%d", groupId);
-            throw new DsmInternalError(msg, results.resultException);
-        }
-        return (int) results.resultValue;
     }
 
     protected static class NameAndId {

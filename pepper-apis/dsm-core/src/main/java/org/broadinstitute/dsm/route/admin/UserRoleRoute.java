@@ -19,6 +19,8 @@ public class UserRoleRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) {
 
+        String studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
+
         String body = request.body();
         if (StringUtils.isBlank(body)) {
             response.status(400);
@@ -35,7 +37,7 @@ public class UserRoleRoute extends RequestHandler {
             return "Invalid request format";
         }
 
-        UserAdminService adminService = new UserAdminService(userId);
+        UserAdminService adminService = new UserAdminService(userId, studyGroup);
 
         if (request.requestMethod().equals(RoutePath.RequestMethod.POST.toString())) {
             try {
