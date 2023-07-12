@@ -18,6 +18,10 @@
                 <constraints nullable="false" foreignKeyName="ddp_group_role_role_id_fk"
                              referencedTableName="access_role" referencedColumnNames="role_id"/>
             </column>
+            <column name="admin_role_id" type="int">
+                <constraints nullable="true" foreignKeyName="ddp_group_role_admin_role_id_fk"
+                             referencedTableName="access_role" referencedColumnNames="role_id"/>
+            </column>
         </createTable>
         <addUniqueConstraint
                 columnNames="group_id, role_id"
