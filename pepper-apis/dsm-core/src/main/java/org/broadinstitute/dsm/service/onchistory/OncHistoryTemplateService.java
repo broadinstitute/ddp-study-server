@@ -63,7 +63,7 @@ public class OncHistoryTemplateService {
 
     protected static Map<String, String> createRecordIdColumn() {
         Map<String, String> col = new HashMap<>();
-        col.put("header", "RECORD_ID");
+        col.put("header", OncHistoryUploadService.ID_COLUMN);
         col.put("description", "Short ID");
         col.put("type", "Text");
         col.put("notes", "Participant short ID");
@@ -115,8 +115,13 @@ public class OncHistoryTemplateService {
         initialize();
 
         log.info("Creating onc history upload template");
+        List<String> headers = new ArrayList<>();
+        // RECORD_ID is not part of studyColumns
+        headers.add(OncHistoryUploadService.ID_COLUMN);
+        headers.addAll(studyColumns.keySet());
+
         PrintWriter printWriter = new PrintWriter(os);
-        printWriter.println(String.join(SystemUtil.TAB_SEPARATOR, studyColumns.keySet()));
+        printWriter.println(String.join(SystemUtil.TAB_SEPARATOR, headers));
         printWriter.flush();
     }
 
