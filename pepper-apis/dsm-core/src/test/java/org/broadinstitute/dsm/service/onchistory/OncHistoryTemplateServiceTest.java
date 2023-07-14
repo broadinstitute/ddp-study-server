@@ -55,8 +55,12 @@ public class OncHistoryTemplateServiceTest extends DbTxnBaseTest {
 
         Map<String, OncHistoryUploadColumn> studyColumns = columnsProvider.getColumnsForStudy(DEFAULT_REALM);
         List<OncHistoryUploadColumn> uploadColumns = new ArrayList<>(studyColumns.values());
-        List<String> expectedValues = uploadColumns.stream().map(OncHistoryUploadColumn::getColumnAlias)
+        List<String> uploadColNames = uploadColumns.stream().map(OncHistoryUploadColumn::getColumnAlias)
                 .collect(Collectors.toList());
+        List<String> expectedValues = new ArrayList<>();
+        expectedValues.add("RECORD_ID");
+        expectedValues.addAll(uploadColNames);
+
         try {
             String headerRow = os.toString(StandardCharsets.UTF_8);
             Assert.assertEquals(headerRow.length() - 1, headerRow.indexOf("\n"));
