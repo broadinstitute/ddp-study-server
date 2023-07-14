@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="cunningh" id="PEPPER-964_group_role">
+        <createTable tableName="ddp_group_role">
+            <column autoIncrement="true" name="group_role_id" type="int">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="group_id" type="int">
+                <constraints nullable="false" foreignKeyName="ddp_group_role_group_id_fk"
+                             referencedTableName="ddp_group" referencedColumnNames="group_id"/>
+            </column>
+            <column name="role_id" type="int">
+                <constraints nullable="false" foreignKeyName="ddp_group_role_role_id_fk"
+                             referencedTableName="access_role" referencedColumnNames="role_id"/>
+            </column>
+            <column name="admin_role_id" type="int">
+                <constraints nullable="true" foreignKeyName="ddp_group_role_admin_role_id_fk"
+                             referencedTableName="access_role" referencedColumnNames="role_id"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+                columnNames="group_id, role_id"
+                constraintName="ddp_group_role_unique"
+                tableName="ddp_group_role"/>
+   </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-964_new_roles">
+        <insert tableName="access_role">
+            <column name="name" value="pepper_admin"/>
+        </insert>
+        <insert tableName="access_role">
+            <column name="name" value="study_user_admin"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

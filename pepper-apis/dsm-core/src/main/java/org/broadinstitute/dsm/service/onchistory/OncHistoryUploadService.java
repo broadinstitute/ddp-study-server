@@ -56,7 +56,7 @@ public class OncHistoryUploadService {
     private int ddpInstanceId;
     private OncHistoryElasticUpdater elasticUpdater;
     private boolean initialized;
-    private static final String ID_COLUMN = "RECORD_ID";
+    protected static final String ID_COLUMN = "RECORD_ID";
 
 
     public OncHistoryUploadService(String realm, String userId, StudyColumnsProvider studyColumnsProvider) {
