@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.service.admin;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.service.admin.UserAdminService.PEPPER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 
 import java.sql.PreparedStatement;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
@@ -29,10 +31,13 @@ import org.junit.Test;
 public class UserAdminServiceTest extends DbTxnBaseTest {
 
     private static final Map<Integer, List<Integer>> createdUserRoles = new HashMap<>();
+    private static List<Integer> createdGroupRoles = new ArrayList<>();
     private static final String TEST_GROUP = "test_group";
     private static final String TEST_INSTANCE = "test_instance";
     private static int studyGroupId;
     private static int ddpInstanceId;
+    private static int pepperAdminRoleId;
+    private static int userAdminRoleId;
 
     private static final String SQL_INSERT_DDP_INSTANCE =
             "INSERT INTO ddp_instance SET instance_name = ?, is_active = 1, auth0_token = 1, migrated_ddp = 0";
@@ -50,10 +55,18 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     public static void setup() {
         studyGroupId = UserAdminService.addStudyGroup(TEST_GROUP);
         ddpInstanceId = createTestInstance(TEST_INSTANCE, studyGroupId);
+        pepperAdminRoleId = UserAdminService.getRoleId(PEPPER_ADMIN_ROLE);
+        Assert.assertTrue(pepperAdminRoleId != -1);
+        userAdminRoleId = UserAdminService.getRoleId(USER_ADMIN_ROLE);
+        Assert.assertTrue(userAdminRoleId != -1);
     }
 
     @AfterClass
     public static void tearDown() {
+        for (int groupRoleId: createdGroupRoles) {
+            UserAdminService.deleteGroupRole(groupRoleId);
+        }
+
         UserDao userDao = new UserDao();
         for (var entry: createdUserRoles.entrySet()) {
             int userId = entry.getKey();
@@ -105,6 +118,17 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         List<Integer> newRoleIds = new ArrayList<>(roleIds);
         newRoleIds.removeAll(List.of(roleId));
         createdUserRoles.put(userId, newRoleIds);
+    }
+
+    private int addGroupRole(int roleId, int adminRoleId) {
+        int groupRoleId = UserAdminService.addGroupRole(studyGroupId, roleId, adminRoleId);
+        createdGroupRoles.add(groupRoleId);
+        return groupRoleId;
+    }
+
+    private void removeGroupRole(int groupRoleId) {
+        UserAdminService.deleteGroupRole(groupRoleId);
+        createdGroupRoles.remove(groupRoleId);
     }
 
     @Test
@@ -175,8 +199,8 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testAddUserToRoles() {
-        int operatorId = createAdminUser("test_admin2@study.org");
+    public void testUserRoles() {
+        int operatorId = createAdminUser("test_admin2@study.org", userAdminRoleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
             UserAdminService.verifyOperatorGroup(operatorId, groupId);
@@ -205,6 +229,15 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         UserAdminService service = new UserAdminService(Integer.toString(operatorId), TEST_GROUP);
         try {
             service.addUserToRoles(req);
+            Assert.fail("UserAdminService.addUserToRoles should fail with roles not in study");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid user"));
+        }
+
+        int groupRoleId1 = addGroupRole(roleId1, userAdminRoleId);
+        int groupRoleId2 = addGroupRole(roleId2, userAdminRoleId);
+        try {
+            service.addUserToRoles(req);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserToRole: " +  getStackTrace(e));
         }
@@ -225,7 +258,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.removeUserFromRoles: " +  getStackTrace(e));
         }
 
-        UserRoleRequest getReq = new UserRoleRequest(users, null);
+        UserRequest getReq = new UserRequest(users);
         UserRoleResponse res = null;
         try {
             res = service.getUserRoles(getReq);
@@ -233,11 +266,14 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.getUserRoles: " +  getStackTrace(e));
         }
 
-        List<UserRoleResponse.UserRoles> userRoles = res.getUserRoles();
-        for (UserRoleResponse.UserRoles resRoles: userRoles) {
-            Assert.assertTrue("RemoveUserFromRole removed wrong role", resRoles.roles.contains(role2));
-            Assert.assertFalse("RemoveUserFromRole did not remove role", resRoles.roles.contains(role1));
+        List<UserInfo> userInfoList = res.getUsers();
+        Map<String, List<String>> userRoles = getUserRoles(userInfoList);
+        for (var resRoles: userRoles.entrySet()) {
+            Assert.assertTrue("RemoveUserFromRole removed wrong role", resRoles.getValue().contains(role2));
+            Assert.assertFalse("RemoveUserFromRole did not remove role", resRoles.getValue().contains(role1));
         }
+
+        // TODO: assert that result also has unassigned roles
 
         // adjust cleanup
         removeRoleForUser(roleId1, userId1);
@@ -250,19 +286,30 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.removeUserFromRoles: " +  getStackTrace(e));
         }
 
-        UserRoleRequest getReq2 = new UserRoleRequest(users, null);
+        UserRequest getReq2 = new UserRequest(users);
         try {
             res = service.getUserRoles(getReq2);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.getUserRoles: " +  getStackTrace(e));
         }
 
-        userRoles = res.getUserRoles();
-        for (UserRoleResponse.UserRoles resRoles: userRoles) {
-            if (resRoles.user.equals(user1)) {
-                Assert.assertTrue(resRoles.roles.contains(role2));
+        userInfoList = res.getUsers();
+        for (var userInfo: userInfoList) {
+            List<UserRole> resRoles = userInfo.getRoles();
+            if (userInfo.getEmail().equals(user1)) {
+                Assert.assertEquals(2, resRoles.size());
+
+                List<UserRole> hasRole = resRoles.stream().filter(UserRole::isHasRole).collect(Collectors.toList());
+                Assert.assertEquals(1, hasRole.size());
+
+                List<UserRole> filteredRoles = resRoles.stream().filter(r -> r.getName().equals(role2)).collect(Collectors.toList());
+                Assert.assertEquals(1, filteredRoles.size());
+                Assert.assertTrue(filteredRoles.get(0).isHasRole());
             } else {
-                Assert.assertTrue("RemoveUserFromRole did not remove role", resRoles.roles.isEmpty());
+                Assert.assertEquals(2, resRoles.size());
+
+                List<UserRole> hasRole = resRoles.stream().filter(UserRole::isHasRole).collect(Collectors.toList());
+                Assert.assertTrue("RemoveUserFromRole did not remove role", hasRole.isEmpty());
             }
         }
 
@@ -272,7 +319,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
     @Test
     public void testAddAndRemoveUser() {
-        int operatorId = createAdminUser("test_admin3@study.org");
+        int operatorId = createAdminUser("test_admin3@study.org", userAdminRoleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
             UserAdminService.verifyOperatorGroup(operatorId, groupId);
@@ -347,11 +394,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         }
     }
 
-    private int createAdminUser(String email) {
-        int adminRoleId = UserAdminService.getRoleId(USER_ADMIN_ROLE);
+    private int createAdminUser(String email, int adminRoleId) {
         int userId = createTestUser(email, adminRoleId);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
+            log.info("TEMP: createAdminUser: userId={}, adminRoleId={}", userId, adminRoleId);
             addUserRole(userId, adminRoleId, groupId);
             log.info("Created admin user wih id {}", userId);
         } catch (Exception e) {
@@ -385,6 +432,16 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));
         }
+    }
+
+    private Map<String, List<String>> getUserRoles(List<UserInfo> userInfoList) {
+        Map<String, List<String>> userRoles = new HashMap<>();
+        for (UserInfo userInfo: userInfoList) {
+            List<String> roles = userInfo.getRoles().stream().filter(UserRole::isHasRole)
+                    .map(UserRole::getName).collect(Collectors.toList());
+            userRoles.put(userInfo.getEmail(), roles);
+        }
+        return userRoles;
     }
 
     private static int createTestInstance(String instanceName, int studyGroupId) {

@@ -91,6 +91,9 @@ public class UserAdminService {
     private static final String SQL_DELETE_USER_ROLES =
             "DELETE FROM access_user_role_group WHERE user_id = ?";
 
+    private static final String SQL_DELETE_GROUP_ROLE =
+            "DELETE FROM ddp_group_role WHERE group_role_id = ?";
+
     private static final String SQL_DELETE_USER_ROLE =
             "DELETE FROM access_user_role_group WHERE user_id = ? AND role_id = ? AND group_id = ?";
 
@@ -265,7 +268,7 @@ public class UserAdminService {
             return allStudyUsers;
         }
 
-        Map<String, Integer> emailToId = allStudyUsers.entrySet().stream().collect(Collectors.toMap(e -> e.getValue().email,
+        Map<String, Integer> emailToId = allStudyUsers.entrySet().stream().collect(Collectors.toMap(e -> e.getValue().getEmail(),
                 Map.Entry::getKey));
 
         Map<Integer, UserInfo> users = new HashMap<>();
@@ -491,6 +494,9 @@ public class UserAdminService {
         });
     }
 
+    protected static void setAdminForRole(int roleId, int adminRoleId, int groupId) {
+
+    }
 
     protected int verifyRoleForAdmin(String role, Map<String, String> adminRoles) {
         int roleId = getRoleId(role);
@@ -735,6 +741,18 @@ public class UserAdminService {
                 return stmt.executeUpdate();
             } catch (SQLException ex) {
                 String msg = String.format("Error deleting user roles: userId=%d", userId);
+                throw new DsmInternalError(msg, ex);
+            }
+        });
+    }
+
+    protected static int deleteGroupRole(int groupRoleId) {
+        return inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_GROUP_ROLE)) {
+                stmt.setInt(1, groupRoleId);
+                return stmt.executeUpdate();
+            } catch (SQLException ex) {
+                String msg = String.format("Error deleting group role: groupRoleId=%d", groupRoleId);
                 throw new DsmInternalError(msg, ex);
             }
         });
