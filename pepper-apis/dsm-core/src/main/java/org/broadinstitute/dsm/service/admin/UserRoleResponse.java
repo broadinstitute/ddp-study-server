@@ -3,29 +3,17 @@ package org.broadinstitute.dsm.service.admin;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserRoleResponse {
+import lombok.Data;
 
-    private List<UserRoles> userRolesList;
+@Data
+public class UserRoleResponse {
+    private List<UserInfo> users;
 
     public UserRoleResponse() {
-        this.userRolesList = new ArrayList<>();
+        this.users = new ArrayList<>();
     }
 
-    public void addUserRoles(String userEmail, List<String> roles) {
-        this.userRolesList.add(new UserRoles(userEmail, roles));
-    }
-
-    public List<UserRoles> getUserRoles() {
-        return userRolesList;
-    }
-
-    public static class UserRoles {
-        public final String user;
-        public final List<String> roles;
-
-        public UserRoles(String user, List<String> roles) {
-            this.user = user;
-            this.roles = roles;
-        }
+    public void addUser(UserInfo userInfo) {
+        this.users.add(userInfo);
     }
 }

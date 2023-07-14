@@ -7,10 +7,9 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.admin.UserAdminService;
-import org.broadinstitute.dsm.service.admin.UserRequest;
+import org.broadinstitute.dsm.service.admin.AddUserRequest;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.lddp.handlers.util.Result;
-import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
@@ -28,9 +27,9 @@ public class UserRoute extends RequestHandler {
             return "Request body is blank";
         }
 
-        UserRequest req;
+        AddUserRequest req;
         try {
-            req = new Gson().fromJson(body, UserRequest.class);
+            req = new Gson().fromJson(body, AddUserRequest.class);
         } catch (Exception e) {
             log.info("Invalid request format for {}", body);
             response.status(400);
