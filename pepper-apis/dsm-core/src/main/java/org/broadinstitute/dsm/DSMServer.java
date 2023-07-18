@@ -123,7 +123,6 @@ import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.admin.StudyRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoleRoute;
-import org.broadinstitute.dsm.route.admin.RegisterParticipantRoute;
 import org.broadinstitute.dsm.route.admin.UserRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
@@ -925,9 +924,6 @@ public class DSMServer {
     }
 
     private void setupAdminRoutes() {
-        RegisterParticipantRoute registerParticipantRoute = new RegisterParticipantRoute();
-        post(uiRoot + RoutePath.REGISTER_PARTICIPANT, registerParticipantRoute, new JsonTransformer());
-
         StudyRoleRoute studyRoleRoute = new StudyRoleRoute();
         get(uiRoot + RoutePath.STUDY_ROLE, studyRoleRoute, new JsonTransformer());
 
