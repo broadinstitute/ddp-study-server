@@ -80,7 +80,7 @@ public class UserDao implements Dao<UserDto> {
     @Override
     public int create(UserDto userDto) {
         SimpleResult results = inTransaction((conn) -> {
-            SimpleResult execResult = new SimpleResult();
+            SimpleResult execResult = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, userDto.getName().orElse(""));
                 stmt.setString(2, userDto.getEmail().orElse(""));

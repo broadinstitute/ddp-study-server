@@ -97,8 +97,9 @@ public class RoutePath {
     public static final String GET_PARTICIPANT = "getParticipant";
     public static final String GET_PARTICIPANT_DATA = "getParticipantData";
     public static final String REGISTER_PARTICIPANT = "registerParticipant";
-    public static final String USER = "user";
-    public static final String USER_ROLE = "userRole";
+    public static final String USER = "admin/user";
+    public static final String USER_ROLE = "admin/userRole";
+    public static final String STUDY_ROLE = "admin/studyRole";
     public static final String TISSUE_LIST = "tissueList";
     public static final String NDI_REQUEST = "ndiRequest";
     public static final String ABSTRACTION_FORM_CONTROLS = "abstractionformcontrols";

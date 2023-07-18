@@ -121,8 +121,10 @@ import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.admin.StudyRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoleRoute;
 import org.broadinstitute.dsm.route.admin.RegisterParticipantRoute;
+import org.broadinstitute.dsm.route.admin.UserRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
@@ -670,6 +672,8 @@ public class DSMServer {
 
         setupMiscellaneousRoutes();
 
+        setupAdminRoutes();
+
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
 
         setupCohortTagRoutes();
@@ -918,17 +922,25 @@ public class DSMServer {
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
         get(uiRoot + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
+    }
 
+    private void setupAdminRoutes() {
         RegisterParticipantRoute registerParticipantRoute = new RegisterParticipantRoute();
         post(uiRoot + RoutePath.REGISTER_PARTICIPANT, registerParticipantRoute, new JsonTransformer());
 
-        UserRoleRoute userRoleRoute = new UserRoleRoute();
-        post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        StudyRoleRoute studyRoleRoute = new StudyRoleRoute();
+        get(uiRoot + RoutePath.STUDY_ROLE, studyRoleRoute, new JsonTransformer());
 
-        UserRoleRoute userRoute = new UserRoleRoute();
+        UserRoleRoute userRoleRoute = new UserRoleRoute();
+        get(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        delete(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+
+        UserRoute userRoute = new UserRoute();
         post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
         delete(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
     }
+
 
     private void setupSomaticUploadRoutes(@NonNull Config cfg) {
         SomaticResultUploadService somaticResultUploadService = SomaticResultUploadService.fromConfig(cfg);

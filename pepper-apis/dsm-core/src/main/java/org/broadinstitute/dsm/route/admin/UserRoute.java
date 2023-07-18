@@ -3,11 +3,10 @@ package org.broadinstitute.dsm.route.admin;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.dsm.service.admin.AddUserRequest;
+import org.broadinstitute.dsm.service.admin.UserAdminService;
+import org.broadinstitute.dsm.service.admin.UserRequest;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.lddp.handlers.util.Result;
 import spark.Request;
@@ -18,8 +17,12 @@ public class UserRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) {
-
-        String studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
+        String studyGroup;
+        try {
+            studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
+        } catch (Exception e) {
+            return UserRoleRoute.handleError(e, "getting study group", response);
+        }
 
         String body = request.body();
         if (StringUtils.isBlank(body)) {
@@ -27,49 +30,39 @@ public class UserRoute extends RequestHandler {
             return "Request body is blank";
         }
 
-        AddUserRequest req;
-        try {
-            req = new Gson().fromJson(body, AddUserRequest.class);
-        } catch (Exception e) {
-            log.info("Invalid request format for {}", body);
-            response.status(400);
-            return "Invalid request format";
-        }
-
         UserAdminService adminService = new UserAdminService(userId, studyGroup);
+        String requestMethod = request.requestMethod();
 
-        if (request.requestMethod().equals(RoutePath.RequestMethod.POST.toString())) {
+        if (requestMethod.equals(RoutePath.RequestMethod.POST.toString())) {
+            AddUserRequest req;
             try {
-                adminService.createUser(req);
-            } catch (DSMBadRequestException e) {
-                response.status(400);
-                return e.getMessage();
-            } catch (DsmInternalError e) {
-                log.error("Error adding user: {}", e.getMessage());
-                response.status(500);
-                return "Internal error. Contact development team";
+                req = new Gson().fromJson(body, AddUserRequest.class);
             } catch (Exception e) {
-                log.error("Error adding user: {}", e.getMessage());
-                response.status(500);
-                return e.getMessage();
+                log.info("Invalid request format for {}", body);
+                response.status(400);
+                return "Invalid request format";
             }
-        } else if (request.requestMethod().equals(RoutePath.RequestMethod.DELETE.toString())) {
+            try {
+                adminService.addUser(req);
+            } catch (Exception e) {
+                return UserRoleRoute.handleError(e, "adding user", response);
+            }
+        } else if (requestMethod.equals(RoutePath.RequestMethod.DELETE.toString())) {
+            UserRequest req;
+            try {
+                req = new Gson().fromJson(body, UserRequest.class);
+            } catch (Exception e) {
+                log.info("Invalid request format for {}", body);
+                response.status(400);
+                return "Invalid request format";
+            }
             try {
                 adminService.removeUser(req);
-            } catch (DSMBadRequestException e) {
-                response.status(400);
-                return e.getMessage();
-            } catch (DsmInternalError e) {
-                log.error("Error removing user: {}", e.getMessage());
-                response.status(500);
-                return "Internal error. Contact development team";
             } catch (Exception e) {
-                log.error("Error removing user: {}", e.getMessage());
-                response.status(500);
-                return e.getMessage();
+                return UserRoleRoute.handleError(e, "removing user", response);
             }
         } else {
-            String msg = "Invalid HTTP method for UserRoute";
+            String msg = "Invalid HTTP method for UserRoute: " + requestMethod;
             log.error(msg);
             response.status(500);
             return msg;

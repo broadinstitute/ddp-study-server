@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.service.admin.UserRequest;
 import org.broadinstitute.dsm.service.admin.UserRoleRequest;
 import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -18,11 +19,38 @@ public class UserRoleRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) {
+        String studyGroup;
+        try {
+            studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
+        } catch (Exception e) {
+            return handleError(e, "getting study group", response);
+        }
 
-        String studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
+        UserAdminService service = new UserAdminService(userId, studyGroup);
 
+        String requestMethod = request.requestMethod();
         String body = request.body();
-        if (StringUtils.isBlank(body)) {
+        boolean hasBody = !StringUtils.isBlank(body);
+
+        if (requestMethod.equals(RoutePath.RequestMethod.GET.toString())) {
+            UserRequest req = null;
+            if (hasBody) {
+                try {
+                    req = new Gson().fromJson(body, UserRequest.class);
+                } catch (Exception e) {
+                    log.info("Invalid request format for {}", body);
+                    response.status(400);
+                    return "Invalid request format";
+                }
+            }
+            try {
+                return service.getUserRoles(req);
+            } catch (Exception e) {
+                return handleError(e, "getting user roles", response);
+            }
+        }
+
+        if (!hasBody) {
             response.status(400);
             return "Request body is blank";
         }
@@ -30,38 +58,48 @@ public class UserRoleRoute extends RequestHandler {
         UserRoleRequest req;
         try {
             req = new Gson().fromJson(body, UserRoleRequest.class);
-            log.info("TEMP: UserRoleRequest {}", req);
         } catch (Exception e) {
             log.info("Invalid request format for {}", body);
             response.status(400);
             return "Invalid request format";
         }
 
-        UserAdminService adminService = new UserAdminService(userId, studyGroup);
-
-        if (request.requestMethod().equals(RoutePath.RequestMethod.POST.toString())) {
+        if (requestMethod.equals(RoutePath.RequestMethod.POST.toString())) {
             try {
-                adminService.addUserToRoles(req);
-            } catch (DSMBadRequestException e) {
-                response.status(400);
-                return e.getMessage();
-            } catch (DsmInternalError e) {
-                log.error("Error adding users to roles: {}", e.getMessage());
-                response.status(500);
-                return "Internal error. Contact development team";
+                service.addUserRoles(req);
             } catch (Exception e) {
-                log.error("Error adding users to roles: {}", e.getMessage());
-                response.status(500);
-                return e.getMessage();
+                return handleError(e, "adding user roles", response);
             }
-        //else if (request.requestMethod().equals(RoutePath.RequestMethod.DELETE.toString())) {
+        } else if (requestMethod.equals(RoutePath.RequestMethod.DELETE.toString())) {
+            try {
+                service.removeUserRoles(req);
+            } catch (Exception e) {
+                return handleError(e, "removing user roles", response);
+            }
         } else {
-            String msg = "Invalid HTTP method for UserRoleRoute";
+            String msg = "Invalid HTTP method for UserRoleRoute: " + requestMethod;
             log.error(msg);
             response.status(500);
             return msg;
         }
 
         return new Result(200);
+    }
+
+    protected static String handleError(Throwable e, String operation, Response response) {
+        if (e instanceof DSMBadRequestException) {
+            response.status(400);
+            log.info("DSMBadRequestException {}: {}", operation, e.getMessage());
+            return e.getMessage();
+        } else if (e instanceof DsmInternalError) {
+            log.error("Error {}: {}", operation, e.getMessage());
+            response.status(500);
+            return "Internal error. Contact development team";
+        }
+
+        // any other exception
+        log.error("Error {}: {}", operation, e.getMessage());
+        response.status(500);
+        return e.getMessage();
     }
 }
