@@ -5,7 +5,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-
     <changeSet author="cunningh" id="PEPPER-971_study_roles_circadia">
         <insert tableName="ddp_group_role">
             <column name="group_id"
@@ -26,4 +25,560 @@
                     valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
         </insert>
     </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_atcp">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='atcp')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='atcp')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='atcp')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mailingList_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='atcp')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_edit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='atcp')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_prion">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='prion')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_edit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='prion')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_exit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='prion')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='prion')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='survey_creation')"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_brugada">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mailingList_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_exit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pdf_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='survey_creation')"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_darwin">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_express')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_malab">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='discard_sample')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_express')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mailingList_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_edit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_exit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pdf_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_cmi">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='discard_sample')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='field_settings')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='file_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_express')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_sequencing_order')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mailingList_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_abstracter')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_abstraction_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_qc')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_request')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='ndi_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_edit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_event')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_exit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pdf_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='survey_creation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='view_only_dss_data')"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_pecgs">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='discard_sample')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='field_settings')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='file_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_express')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_sequencing_order')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mailingList_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_abstracter')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_abstraction_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_qc')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_request')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='ndi_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_edit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_event')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_exit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pdf_download')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='survey_creation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='upload_onc_history')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='upload_ror_file')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='view_only_dss_data')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='view_seq_order_status')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='view_shared_learnings')"/>
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
