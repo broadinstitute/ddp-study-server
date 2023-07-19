@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+
+    <changeSet author="cunningh" id="PEPPER-971_study_roles_circadia">
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='Circadia')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mailingList_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='Circadia')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='participant_edit')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='Circadia')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
