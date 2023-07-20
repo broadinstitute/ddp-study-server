@@ -237,6 +237,7 @@ public class UserAdminService {
      * Add user to study group. User request must include at least one role
      */
     public void addUser(AddUserRequest req) {
+        int groupId = validateOperatorAdmin();
         List<AddUserRequest.User> users = req.getUsers();
         if (CollectionUtils.isEmpty(users)) {
             throw new DSMBadRequestException("Invalid user list: blank");
@@ -250,8 +251,38 @@ public class UserAdminService {
             if (StringUtils.isBlank(user.getName())) {
                 throw new DSMBadRequestException("Invalid user name: blank");
             }
-            if (getUserByEmail(email, -1) != null) {
+            if (getUserByEmail(email, groupId) != null) {
                 throw new DsmInternalError("User already exists: " + email);
+            }
+        }
+
+        UserDao userDao = new UserDao();
+        for (var user: users) {
+            int userId = userDao.create(user.asUserDto());
+            if (userId == -1) {
+                throw new DsmInternalError("Error creating user: " + user.getEmail());
+            }
+        }
+    }
+
+    public void updateUser(UpdateUserRequest req) {
+        int groupId = validateOperatorAdmin();
+
+        List<UpdateUserRequest.User> users = req.getUsers();
+        if (CollectionUtils.isEmpty(users)) {
+            throw new DSMBadRequestException("Invalid user list: blank");
+        }
+
+        // pre-check to lessen likelihood of partial operation
+        for (var user: users) {
+            String email = validateEmailRequest(user.getEmail());
+
+            // not a strict requirement in DB, but now enforcing
+            if (StringUtils.isBlank(user.getName())) {
+                throw new DSMBadRequestException("Invalid user name: blank");
+            }
+            if (getUserByEmail(email, groupId) == null) {
+                throw new DsmInternalError("User does not exist: " + email);
             }
         }
 
@@ -268,6 +299,7 @@ public class UserAdminService {
      * Remove one or more users and their associated roles
      */
     public void removeUser(UserRequest req) {
+        int groupId = validateOperatorAdmin();
         if (CollectionUtils.isEmpty(req.getUsers())) {
             throw new DSMBadRequestException("Invalid user list: blank");
         }
@@ -276,7 +308,7 @@ public class UserAdminService {
         List<Integer> userIds = new ArrayList<>();
         for (String email: req.getUsers()) {
             validateEmailRequest(email);
-            userIds.add(verifyUserByEmail(email, -1));
+            userIds.add(verifyUserByEmail(email, groupId));
         }
 
         UserDao userDao = new UserDao();
@@ -284,6 +316,12 @@ public class UserAdminService {
             deleteUserRoles(userId);
             userDao.delete(userId);
         }
+    }
+
+    protected int validateOperatorAdmin() {
+        int groupId = verifyStudyGroup(studyGroup);
+        getAdminRoles(groupId);
+        return groupId;
     }
 
     /**
