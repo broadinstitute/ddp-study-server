@@ -267,7 +267,6 @@ public class UserAdminService {
 
     public void updateUser(UpdateUserRequest req) {
         int groupId = validateOperatorAdmin();
-
         List<UpdateUserRequest.User> users = req.getUsers();
         if (CollectionUtils.isEmpty(users)) {
             throw new DSMBadRequestException("Invalid user list: blank");
@@ -320,6 +319,7 @@ public class UserAdminService {
 
     protected int validateOperatorAdmin() {
         int groupId = verifyStudyGroup(studyGroup);
+        // will throw if operator is not user admin
         getAdminRoles(groupId);
         return groupId;
     }
