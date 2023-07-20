@@ -24,6 +24,12 @@
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
         </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='Circadia')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
     </changeSet>
 
     <changeSet author="cunningh" id="PEPPER-971_study_roles_atcp">
@@ -57,6 +63,12 @@
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
         </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='atcp')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
     </changeSet>
 
     <changeSet author="cunningh" id="PEPPER-971_study_roles_prion">
@@ -83,6 +95,12 @@
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='prion')"/>
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='survey_creation')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='prion')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
 
@@ -147,6 +165,12 @@
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='survey_creation')"/>
         </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='brugada')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
     </changeSet>
 
     <changeSet author="cunningh" id="PEPPER-971_study_roles_darwin">
@@ -179,6 +203,12 @@
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='darwin')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
 
@@ -260,6 +290,12 @@
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='pt_list_view')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='malab')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
 
@@ -407,6 +443,12 @@
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='view_only_dss_data')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
 
@@ -578,6 +620,12 @@
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
             <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='view_shared_learnings')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
 
