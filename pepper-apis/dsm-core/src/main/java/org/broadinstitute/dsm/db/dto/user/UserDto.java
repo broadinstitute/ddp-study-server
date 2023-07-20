@@ -2,9 +2,11 @@ package org.broadinstitute.dsm.db.dto.user;
 
 import java.util.Optional;
 
+import lombok.AllArgsConstructor;
 import lombok.Setter;
 
 @Setter
+@AllArgsConstructor
 public class UserDto {
 
     private int id;
@@ -13,15 +15,13 @@ public class UserDto {
     private String phoneNumber;
     private Integer isActive;
 
-    public UserDto(int id, String name, String email, String phoneNumber) {
-        this.id = id;
+    public UserDto(String name, String email, String phoneNumber) {
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
     }
 
     public UserDto() {
-
     }
 
     public int getId() {
