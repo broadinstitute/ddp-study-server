@@ -24,6 +24,8 @@ public class UserDao implements Dao<UserDto> {
     public static final String PHONE_NUMBER = "phone_number";
     public static final String IS_ACTIVE = "is_active";
     private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email, phone_number, is_active) VALUES (?,?,?,?)";
+    private static final String SQL_UPDATE_USER =
+            "UPDATE access_user SET name = ?, phone_number = ?, is_active = ? WHERE user_id = ?";
     private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
     private static final String SQL_SELECT_USER_BY_EMAIL =
             "SELECT user.user_id, user.name, user.email, user.phone_number, user.is_active FROM access_user user "
@@ -106,6 +108,26 @@ public class UserDao implements Dao<UserDto> {
                 }
             } catch (SQLException ex) {
                 throw new DsmInternalError("Error inserting user " + email, ex);
+            }
+        });
+    }
+
+    public static void update(int userId, UserDto userDto) {
+        String email = userDto.getEmail().orElseThrow(() -> new DsmInternalError("Error updating user: missing email"));
+        String errorMsg = "Error updating user " + email;
+        int res = inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_USER)) {
+                stmt.setString(1, userDto.getName().orElse(null));
+                stmt.setString(2, userDto.getPhoneNumber().orElse(null));
+                stmt.setInt(3, userDto.getIsActive().orElse(1));
+                stmt.setInt(4, userId);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    throw new DsmInternalError(errorMsg + " Result count was " + result);
+                }
+                return result;
+            } catch (SQLException ex) {
+                throw new DsmInternalError(errorMsg, ex);
             }
         });
     }

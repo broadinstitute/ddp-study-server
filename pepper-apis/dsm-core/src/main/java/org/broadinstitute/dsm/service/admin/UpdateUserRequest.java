@@ -27,7 +27,7 @@ public class UpdateUserRequest {
         }
 
         public UserDto asUserDto() {
-            return new UserDto(-1, name, email, phone);
+            return new UserDto(name, email, phone);
         }
     }
 }

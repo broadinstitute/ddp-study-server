@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -93,9 +92,6 @@ public class UserAdminService {
     private static final String SQL_DELETE_USER_ROLE =
             "DELETE FROM access_user_role_group WHERE user_id = ? AND role_id = ? AND group_id = ?";
 
-    private static final String SQL_UPDATE_USER =
-            "INSERT INTO access_user_role_group SET user_id = ?, role_id = ?, group_id = ?";
-
     private static final String SQL_INSERT_GROUP =
             "INSERT INTO ddp_group SET name = ?";
 
@@ -142,6 +138,7 @@ public class UserAdminService {
         List<String> roleNames = req.getRoles();
         validateRoles(roleNames, studyRoles.keySet());
 
+        // TODO: validate all user emails first
         for (String userEmail: req.getUsers()) {
             if (StringUtils.isBlank(userEmail)) {
                 throw new DSMBadRequestException("Invalid user email: blank");
@@ -150,6 +147,11 @@ public class UserAdminService {
         }
     }
 
+    /**
+     * Add roles for user
+     *
+     * @param roles list of proposed roles, already validated
+     */
     protected void addRoles(String email, List<String> roles, int groupId, Map<String, RoleInfo> studyRoles) {
         int userId = verifyUserByEmail(email, groupId);
 
@@ -189,11 +191,20 @@ public class UserAdminService {
         }
     }
 
+    /**
+     * Remove roles for user
+     *
+     * @param roles list of proposed roles, already validated
+     */
     protected void removeUserRoles(String email, List<String> roles, int groupId, Map<String, RoleInfo> studyRoles) {
-        // TODO loop is similar to addUserRoles -DC
+        // TODO: move this to caller in a separate loop
         int userId = verifyUserByEmail(email, groupId);
+        List<String> existingRoles = getRolesForUser(userId, groupId);
+        if (CollectionUtils.subtract(existingRoles, roles).isEmpty()) {
+            throw new DSMBadRequestException("Cannot remove all roles for user " + email);
+        }
 
-        for (String role : roles) {
+;        for (String role : roles) {
             if (StringUtils.isBlank(role)) {
                 throw new DsmInternalError("Invalid role: blank");
             }
@@ -221,12 +232,16 @@ public class UserAdminService {
     }
 
     protected void validateRoles(List<String> roleNames, Set<String> validRoleNames) {
+        String msg = String.format("Invalid roles for study group %s: ", studyGroup);
+        if (CollectionUtils.isEmpty(roleNames)) {
+            throw new DSMBadRequestException(msg + "None provided");
+        }
         if (validRoleNames.containsAll(roleNames)) {
             return;
         }
-        Collection<String> badRoles = CollectionUtils.subtract(roleNames, validRoleNames);
-        String msg = String.format("Invalid roles for study group %s: %s", studyGroup, String.join(",", badRoles));
-        throw new DSMBadRequestException(msg);
+        Collection<String> badRoles = CollectionUtils.subtract(roleNames, validRoleNames).stream()
+                .map(r -> r.isEmpty() ? "<blank>" : r).collect(Collectors.toSet());
+        throw new DSMBadRequestException(msg + String.join(",", badRoles));
     }
 
     protected String validateEmailRequest(String email) {
@@ -240,7 +255,9 @@ public class UserAdminService {
      * Add user to study group. User request must include at least one role
      */
     public void addUser(AddUserRequest req) {
-        int groupId = validateOperatorAdmin();
+        int groupId = verifyStudyGroup(studyGroup);
+        Map<String, RoleInfo> studyRoles = getAdminRoles(groupId);
+
         List<AddUserRequest.User> users = req.getUsers();
         if (CollectionUtils.isEmpty(users)) {
             throw new DSMBadRequestException("Invalid user list: blank");
@@ -257,11 +274,14 @@ public class UserAdminService {
             if (getUserByEmail(email, groupId) != null) {
                 throw new DsmInternalError("User already exists: " + email);
             }
+
+            validateRoles(user.getRoles(), studyRoles.keySet());
         }
 
         UserDao userDao = new UserDao();
         for (var user: users) {
             userDao.create(user.asUserDto());
+            addRoles(user.getEmail(), user.getRoles(), groupId, studyRoles);
         }
     }
 
@@ -272,6 +292,7 @@ public class UserAdminService {
             throw new DSMBadRequestException("Invalid user list: blank");
         }
 
+        Map<Integer, UpdateUserRequest.User> usersById = new HashMap<>();
         // pre-check to lessen likelihood of partial operation
         for (var user: users) {
             String email = validateEmailRequest(user.getEmail());
@@ -280,17 +301,15 @@ public class UserAdminService {
             if (StringUtils.isBlank(user.getName())) {
                 throw new DSMBadRequestException("Invalid user name: blank");
             }
-            if (getUserByEmail(email, groupId) == null) {
+            StudyUser studyUser = getUserByEmail(email, groupId);
+            if (studyUser == null) {
                 throw new DsmInternalError("User does not exist: " + email);
             }
+            usersById.put(studyUser.getId(), user);
         }
 
-        UserDao userDao = new UserDao();
-        for (var user: users) {
-            int userId = userDao.create(user.asUserDto());
-            if (userId == -1) {
-                throw new DsmInternalError("Error creating user: " + user.getEmail());
-            }
+        for (var entry: usersById.entrySet()) {
+            UserDao.update(entry.getKey(), entry.getValue().asUserDto());
         }
     }
 
@@ -694,29 +713,6 @@ public class UserAdminService {
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     throw new DsmInternalError("Error adding user to role. Result count was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        id = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                throw new DsmInternalError("Error adding user to role", ex);
-            }
-            return id;
-        });
-    }
-
-    public static int updateUser(int userId, String  name, String phone) {
-        return inTransaction(conn -> {
-            int id = -1;
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_USER)) {
-                stmt.setString(1, name);
-                stmt.setString(2, phone);
-                stmt.setInt(3, userId);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    throw new DsmInternalError("Error updating user. Result count was " + result);
                 }
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
