@@ -20,6 +20,7 @@ import liquibase.pro.packaged.S;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -92,6 +93,9 @@ public class UserAdminService {
 
     private static final String SQL_DELETE_USER_ROLE =
             "DELETE FROM access_user_role_group WHERE user_id = ? AND role_id = ? AND group_id = ?";
+
+    private static final String SQL_UPDATE_USER =
+            "INSERT INTO access_user_role_group SET user_id = ?, role_id = ?, group_id = ?";
 
     private static final String SQL_INSERT_GROUP =
             "INSERT INTO ddp_group SET name = ?";
@@ -698,6 +702,29 @@ public class UserAdminService {
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     throw new DsmInternalError("Error adding user to role. Result count was " + result);
+                }
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        id = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                throw new DsmInternalError("Error adding user to role", ex);
+            }
+            return id;
+        });
+    }
+
+    public static int updateUser(int userId, String  name, String phone) {
+        return inTransaction(conn -> {
+            int id = -1;
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_USER)) {
+                stmt.setString(1, name);
+                stmt.setString(2, phone);
+                stmt.setInt(3, userId);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    throw new DsmInternalError("Error updating user. Result count was " + result);
                 }
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
