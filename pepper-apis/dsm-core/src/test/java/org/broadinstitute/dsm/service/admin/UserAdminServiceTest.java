@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -202,6 +203,23 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.assertEquals(userId, id);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.getUserByEmail: " +  getStackTrace(e));
+        }
+
+        // we don't have coverage for this elsewhere
+        UserDao userDao = new UserDao();
+        try {
+            Optional<UserDto> res = userDao.getUserByEmail(email);
+            Assert.assertTrue(res.isPresent());
+            Assert.assertEquals(userId, res.get().getId());
+        } catch (Exception e) {
+            Assert.fail("Exception from UserDao.getUserByEmail: " +  getStackTrace(e));
+        }
+        try {
+            Optional<UserDto> res = userDao.get(userId);
+            Assert.assertTrue(res.isPresent());
+            Assert.assertEquals(userId, res.get().getId());
+        } catch (Exception e) {
+            Assert.fail("Exception from UserDao.get: " +  getStackTrace(e));
         }
     }
 

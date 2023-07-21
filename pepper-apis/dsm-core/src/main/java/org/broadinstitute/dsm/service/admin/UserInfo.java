@@ -25,8 +25,4 @@ public class UserInfo {
         this.phone = phone;
         this.roles = new ArrayList<>();
     }
-
-    public void addRoles(List<UserRole> roles) {
-        this.roles = roles;
-    }
 }

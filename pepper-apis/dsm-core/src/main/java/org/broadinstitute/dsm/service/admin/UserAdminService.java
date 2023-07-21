@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import liquibase.pro.packaged.S;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -262,10 +261,7 @@ public class UserAdminService {
 
         UserDao userDao = new UserDao();
         for (var user: users) {
-            int userId = userDao.create(user.asUserDto());
-            if (userId == -1) {
-                throw new DsmInternalError("Error creating user: " + user.getEmail());
-            }
+            userDao.create(user.asUserDto());
         }
     }
 
@@ -352,7 +348,7 @@ public class UserAdminService {
             }
             List<UserRole> userRoles = convertToUserRoles(roles, studyRoles);
             UserInfo userInfo = entry.getValue();
-            userInfo.addRoles(userRoles);
+            userInfo.setRoles(userRoles);
             res.addUser(userInfo);
         }
 
@@ -566,10 +562,6 @@ public class UserAdminService {
             }
             return roles;
         });
-    }
-
-    protected static void setAdminForRole(int roleId, int adminRoleId, int groupId) {
-
     }
 
     protected static Map<Integer, Set<String>> getRolesForStudyUsers(int groupId) {
