@@ -104,15 +104,17 @@ public class AtcpAssentV2 implements CustomTask {
         long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(templateVariable.getName());
         JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+        log.info("Trans count: {} ", transList.size());
         List<Long> revisionIdList = transList.stream().map(Translation::getRevisionId).map(Optional::get).collect(Collectors.toList());
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         long newSubRevId = jdbiRevision.copyAndTerminate(revisionIdList.get(0), meta.getTimestamp(), meta.getUserId(), meta.getReason());
         long[] retiringId = {newSubRevId};
         transList.forEach(transListEntry -> {
+            String newTxt = templateVariable.getTranslation(transListEntry.getLanguageCode()).get().getText();
             jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(transListEntry.getId().get()), retiringId);
-            jdbiVarSubst.insert(transListEntry.getLanguageCode(), transListEntry.getText(), version2.getRevId(), tmplVarId);
+            jdbiVarSubst.insert(transListEntry.getLanguageCode(), newTxt, version2.getRevId(), tmplVarId);
             log.info("terminated: language: {} revId: {} new Text: {} currText: {}", transListEntry.getLanguageCode(),
-                    transListEntry.getRevisionId(), transListEntry.getText(), transListEntry.getText());
+                    transListEntry.getRevisionId(), newTxt, transListEntry.getText());
         });
     }
 
