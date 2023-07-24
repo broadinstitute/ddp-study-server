@@ -382,6 +382,12 @@
             <column name="group_id"
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
             <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_no_request_tissue')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"/>
+            <column name="role_id"
                     valueComputed="(SELECT role_id FROM access_role WHERE name='mr_qc')"/>
         </insert>
         <insert tableName="ddp_group_role">
@@ -532,6 +538,11 @@
                     valueComputed="(SELECT role_id FROM access_role WHERE name='mr_abstraction_admin')"/>
         </insert>
         <insert tableName="ddp_group_role">
+            <column name="group_id"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
+            <column name="role_id"
+                    valueComputed="(SELECT role_id FROM access_role WHERE name='mr_no_request_tissue')"/>
+        </insert>        <insert tableName="ddp_group_role">
             <column name="group_id"
                     valueComputed="(SELECT group_id FROM ddp_group WHERE name='pecgs')"/>
             <column name="role_id"
