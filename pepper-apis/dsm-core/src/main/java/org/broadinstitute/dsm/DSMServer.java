@@ -111,6 +111,7 @@ import org.broadinstitute.dsm.route.LookupRoute;
 import org.broadinstitute.dsm.route.MailingListRoute;
 import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
 import org.broadinstitute.dsm.route.NDIRoute;
+import org.broadinstitute.dsm.route.OncHistoryTemplateRoute;
 import org.broadinstitute.dsm.route.OncHistoryUploadRoute;
 import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
@@ -575,8 +576,10 @@ public class DSMServer {
         get(apiRoot + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(apiRoot + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
-        NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-        post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+        if (!cfg.getBoolean("ui.production")) {
+            NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
+            post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+        }
 
         if (!cfg.getBoolean("ui.production")) {
             get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
@@ -866,6 +869,8 @@ public class DSMServer {
         post(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
         post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
+
+        get(uiRoot + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute());
     }
 
     private void setupMRAbstractionRoutes() {

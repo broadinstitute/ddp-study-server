@@ -17,8 +17,10 @@
         <jdbi.version>3.1.1</jdbi.version>
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
-        <liquibase.version>3.6.3</liquibase.version>
+        <liquibase.version>4.8.0</liquibase.version>
         <elasticsearch.version>6.8.15</elasticsearch.version>
+        <logback.version>1.4.5</logback.version>
+        <jackson.version>2.12.1</jackson.version>
     </properties>
 
     <profiles>
@@ -61,7 +63,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>27.0-jre</version>
+            <version>32.0.0-jre</version>
         </dependency>
 
         <dependency>
@@ -86,12 +88,12 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.2.3</version>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
+            <version>${logback.version}</version>
         </dependency>
 
         <dependency>
@@ -546,37 +548,37 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-csv</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jdk8</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-parameter-names</artifactId>
-                <version>2.12.1</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>

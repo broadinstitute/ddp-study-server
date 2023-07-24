@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -55,7 +56,7 @@ public class OncHistoryUploadService {
     private int ddpInstanceId;
     private OncHistoryElasticUpdater elasticUpdater;
     private boolean initialized;
-    private static final String ID_COLUMN = "RECORD_ID";
+    protected static final String ID_COLUMN = "RECORD_ID";
 
 
     public OncHistoryUploadService(String realm, String userId, StudyColumnsProvider studyColumnsProvider) {
@@ -79,12 +80,7 @@ public class OncHistoryUploadService {
         }
 
         initColumnsForStudy();
-
-        // get picklists for study
-        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        List<FieldSettingsDto> pickLists = fieldSettingsDao.getOptionAndRadioFieldSettingsByInstanceId(ddpInstanceId);
-
-        columnValidator = new ColumnValidator(pickLists);
+        columnValidator = new ColumnValidator(getPicklists(ddpInstanceId));
 
         setElasticUpdater(new OncHistoryElasticUpdater(participantIndex));
         initialized = true;
@@ -92,6 +88,14 @@ public class OncHistoryUploadService {
 
     protected void setElasticUpdater(OncHistoryElasticUpdater elasticUpdater) {
         this.elasticUpdater = elasticUpdater;
+    }
+
+    public static Map<String, List<String>> getPicklists(int ddpInstanceId) {
+        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
+        List<FieldSettingsDto> pickLists = fieldSettingsDao.getOptionAndRadioFieldSettingsByInstanceId(ddpInstanceId);
+        return pickLists.stream().collect(
+                Collectors.toMap(FieldSettingsDto::getColumnName,
+                        fs -> FieldSettings.getStringListFromJson(fs.getPossibleValues())));
     }
 
     public void upload(String fileContent) {

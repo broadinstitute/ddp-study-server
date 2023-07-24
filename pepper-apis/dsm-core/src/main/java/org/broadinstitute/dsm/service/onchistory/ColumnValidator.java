@@ -31,12 +31,10 @@ public class ColumnValidator {
 
     /**
      * Constructor
-     * @param pickLists DTO of field_settings rows that have multiple possible values
+     * @param columnToValues map of column name to vocabulary possible values
      */
-    ColumnValidator(List<FieldSettingsDto> pickLists) {
-        columnToPickList = pickLists.stream().collect(
-                Collectors.toMap(FieldSettingsDto::getColumnName,
-                        fs -> FieldSettings.getStringListFromJson(fs.getPossibleValues())));
+    ColumnValidator(Map<String, List<String>> columnToValues) {
+        columnToPickList = columnToValues;
     }
 
     /**
