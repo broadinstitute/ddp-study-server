@@ -136,7 +136,7 @@
   "consent_risks_detail_p2": "如果填写调查表让您感到不舒服或不安，请告知研究人员。您有权拒绝回答任何问题。",
   "consent_risks_title": "5.参与这项研究的风险有哪些？",
   "consent_sharing_detail_p1": "删除您的姓名和其他易于识别的信息后（此识别信息将仅适用于全球A-T成员数据平台签名保密协议并接受特殊培训的员工），您的基因组数据和健康信息将通过由麻省理工学院和哈佛大学研究所开发和运营的安全的访问控制数据存储库提供给全球研究人员。您的数据只能由被A-T成员以及科学和医疗顾问组成的全球A-T成员数据平台选定的数据访问委员会授权的合格研究者访问。我们将跟踪使用您的信息的每项研究。",
-  "consent_sharing_detail_p2": "请注意，研究记录（包括您的医疗记录、您签署的同意书和其他信息）将根据需要与需要提供研究和监管监督的团体共享。例如，Western Institutional Review Board® (WIRB®)可能会查看您的研究和医疗记录。WIRB是一群审查研究以保护研究参与者的权利和福利的人。",
+  "consent_sharing_detail_p2": "请注意，研究记录（包括您的医疗记录、您签署的同意书和其他信息）将根据需要与需要提供研究和监管监督的团体共享。例如，North Star Review Board可能会查看您的研究和医疗记录。North Star Review Board是一群审查研究以保护研究参与者的权利和福利的人。",
   "consent_sharing_title": "7.谁将使用我的样本并查看我的信息？",
   "consent_signature": "参与者签名",
   "consent_guardian_signature": "家长或法定监护人签名",
