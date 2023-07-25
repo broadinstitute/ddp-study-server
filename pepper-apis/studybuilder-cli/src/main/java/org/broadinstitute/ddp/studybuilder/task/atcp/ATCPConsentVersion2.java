@@ -171,13 +171,8 @@ public class ATCPConsentVersion2 implements CustomTask {
                         newTxt, currentText);
 
                 substitutionIds.add(currTranslation.getId().get());
-                if ("en".equalsIgnoreCase(currTranslation.getLanguageCode())) {
-                    jdbiVarSubst.insert(currTranslation.getLanguageCode(), templateVariable.getTranslation(language).get().getText(),
-                            version2.getRevId(), tmplVarId);
-                } else {
-                    //use the value in DB
-                    jdbiVarSubst.insert(currTranslation.getLanguageCode(), currTranslation.getText(), version2.getRevId(), tmplVarId);
-                }
+                jdbiVarSubst.insert(currTranslation.getLanguageCode(), templateVariable.getTranslation(language).get().getText(),
+                        version2.getRevId(), tmplVarId);
             }
             int[] ids = jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(substitutionIds, revIds);
             if (ids.length != revIds.length) {
