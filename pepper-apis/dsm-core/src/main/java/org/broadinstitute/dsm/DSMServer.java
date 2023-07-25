@@ -225,33 +225,38 @@ public class DSMServer {
     public static void main(String[] args) {
         // immediately lock isReady so that ah/start route will wait
         synchronized (isReady) {
-            logger.info("Starting up DSM");
-            //config without secrets
-            Config cfg = ConfigFactory.load();
-            //secrets from vault in a config file
-            File vaultConfigInCwd = new File(vaultConf);
-            File vaultConfigInDeployDir = new File(gaeDeployDir, vaultConf);
-            File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
-            logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
-            cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
+            try {
+                logger.info("Starting up DSM");
+                //config without secrets
+                Config cfg = ConfigFactory.load();
+                //secrets from vault in a config file
+                File vaultConfigInCwd = new File(vaultConf);
+                File vaultConfigInDeployDir = new File(gaeDeployDir, vaultConf);
+                File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
+                logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
+                cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
 
-            if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
-                if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
-                    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
+                if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
+                    if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
+                        System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
+                    }
                 }
-            }
 
-            new DSMConfig(cfg);
+                new DSMConfig(cfg);
 
-            String preferredSourceIPHeader = null;
-            if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
-                preferredSourceIPHeader = cfg.getString(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER);
+                String preferredSourceIPHeader = null;
+                if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
+                    preferredSourceIPHeader = cfg.getString(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER);
+                }
+                JettyConfig.setupJetty(preferredSourceIPHeader);
+                DSMServer server = new DSMServer();
+                server.configureServer(cfg);
+                isReady.set(true);
+                logger.info("DSM Startup Complete");
+            } catch (Exception e) {
+                logger.error("Error starting DSM server {}", e.toString());
+                e.printStackTrace();
             }
-            JettyConfig.setupJetty(preferredSourceIPHeader);
-            DSMServer server = new DSMServer();
-            server.configureServer(cfg);
-            isReady.set(true);
-            logger.info("DSM Startup Complete");
         }
     }
 
