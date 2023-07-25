@@ -13,13 +13,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -70,9 +73,6 @@ public class UserAdminService {
 
     private static final String SQL_SELECT_GROUP_ROLE =
             "SELECT dgr.group_role_id FROM ddp_group_role dgr WHERE dgr.group_id = ? AND dgr.role_id = ?";
-
-    private static final String SQL_SELECT_USER_BY_EMAIL =
-            "SELECT au.user_id, au.name, au.phone_number, au.is_active FROM access_user au WHERE au.email = ?";
 
     private static final String SQL_SELECT_USERS_FOR_GROUP =
             "SELECT au.user_id, au.email, au.name, au.phone_number FROM access_user au "
@@ -141,8 +141,7 @@ public class UserAdminService {
         // pre-check to lessen likelihood of partial operation
         Map<String, Integer> userIds = new HashMap<>();
         for (String email: req.getUsers()) {
-            int userId = verifyUserByEmail(email, groupId);
-            userIds.put(email, userId);
+            userIds.put(email, verifyUserByEmail(email, groupId).getId());
         }
 
         for (var entry: userIds.entrySet()) {
@@ -187,7 +186,7 @@ public class UserAdminService {
         // pre-check to lessen likelihood of partial operation
         Map<String, Integer> userIds = new HashMap<>();
         for (String email: req.getUsers()) {
-            int userId = verifyUserByEmail(email, groupId);
+            int userId = verifyUserByEmail(email, groupId).getId();
             List<String> existingRoles = getRolesForUser(userId, groupId);
             if (CollectionUtils.subtract(existingRoles, roleNames).isEmpty()) {
                 throw new DSMBadRequestException("Cannot remove all roles for user " + email);
@@ -266,6 +265,7 @@ public class UserAdminService {
         }
 
         // pre-check to lessen likelihood of partial operation
+        Map<String, Integer> emailToId = new HashMap<>();
         for (var user: users) {
             String email = validateEmailRequest(user.getEmail());
 
@@ -273,8 +273,14 @@ public class UserAdminService {
             if (StringUtils.isBlank(user.getName())) {
                 throw new DSMBadRequestException("Invalid user name: blank");
             }
-            if (getUserByEmail(email, groupId) != null) {
-                throw new DsmInternalError("User already exists: " + email);
+            UserDto userDto = getUserByEmail(email, groupId);
+            if (userDto != null) {
+                if (userDto.isActive()) {
+                    throw new DsmInternalError("User already exists: " + email);
+                }
+                log.info("addUser: user {} already exists but is inactive. Activating and updating with new user information",
+                        email);
+                emailToId.put(userDto.getEmailOrThrow(), userDto.getId());
             }
 
             validateRoles(user.getRoles(), studyRoles.keySet());
@@ -282,7 +288,13 @@ public class UserAdminService {
 
         UserDao userDao = new UserDao();
         for (var user: users) {
-            int userId = userDao.create(user.asUserDto());
+            Integer userId = emailToId.get(user.getEmail());
+            if (userId != null) {
+                UserDao.update(userId, user.asUserDto());
+            } else {
+                userId = userDao.create(user.asUserDto());
+            }
+            UserSettings.createUserSettings(userId);
             addRoles(userId, user.getRoles(), groupId, studyRoles);
         }
     }
@@ -301,7 +313,7 @@ public class UserAdminService {
             if (StringUtils.isBlank(user.getName())) {
                 throw new DSMBadRequestException("Invalid user name: blank");
             }
-            usersById.put(verifyUserByEmail(user.getEmail(), groupId), user);
+            usersById.put(verifyUserByEmail(user.getEmail(), groupId).getId(), user);
         }
 
         for (var entry: usersById.entrySet()) {
@@ -319,15 +331,16 @@ public class UserAdminService {
         }
 
         // pre-check all users to decrease likelihood of incomplete operation
-        List<Integer> userIds = new ArrayList<>();
+        List<UserDto> users = new ArrayList<>();
         for (String email: req.getUsers()) {
-            userIds.add(verifyUserByEmail(email, groupId));
+            users.add(verifyUserByEmail(email, groupId));
         }
 
-        UserDao userDao = new UserDao();
-        for (int userId: userIds) {
-            deleteUserRoles(userId);
-            userDao.delete(userId);
+        for (UserDto user: users) {
+            deleteUserRoles(user.getId());
+            user.setIsActive(0);
+            UserDao.update(user.getId(), user);
+            UserSettings.deleteUserSettings(user.getId());
         }
     }
 
@@ -386,11 +399,8 @@ public class UserAdminService {
                 // theoretically there should be no users without roles for a given study
                 // but there are ways that might occur.
                 log.warn("Found user with no study roles: {}", email);
-                StudyUser user = getUserByEmail(email, groupId);
-                if (user == null) {
-                    throw new DSMBadRequestException("Invalid user email " + email);
-                }
-                users.put(user.getId(), user.toUserInfo());
+                UserDto user = verifyUserByEmail(email, groupId);
+                users.put(user.getId(), new UserInfo(user));
             }
         }
         return users;
@@ -616,35 +626,25 @@ public class UserAdminService {
         });
     }
 
-    protected static int verifyUserByEmail(String email, int groupId) {
+    protected static UserDto verifyUserByEmail(String email, int groupId) {
         if (StringUtils.isBlank(email)) {
             throw new DSMBadRequestException("Invalid user email: blank");
         }
-        StudyUser user = getUserByEmail(email, groupId);
-        // TODO: see if access_user.is_active is used -DC
+        UserDto user = getUserByEmail(email, groupId);
         if (user == null) {
             throw new DSMBadRequestException("Invalid user for study group: " + email);
         }
-        return user.getId();
+        if (!user.isActive()) {
+            throw new DSMBadRequestException("Invalid user for study group (inactive): " + email);
+        }
+        return user;
     }
 
-    protected static UserAdminService.StudyUser getUserByEmail(String email, int groupId) {
+    protected static UserDto getUserByEmail(String email, int groupId) {
         // TODO: Currently we do not track users for a group, but get by groupId once we do -DC
-        return inTransaction(conn -> {
-            UserAdminService.StudyUser user = null;
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_BY_EMAIL)) {
-                stmt.setString(1, email);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        user = new StudyUser(rs.getInt(1), email, rs.getString(2), rs.getString(3));
-                    }
-                }
-            } catch (SQLException e) {
-                String msg = String.format("Error getting user %s for study group, ID: %d", email, groupId);
-                throw new DsmInternalError(msg, e);
-            }
-            return user;
-        });
+        UserDao userDao = new UserDao();
+        Optional<UserDto> userDto = userDao.getUserByEmail(email);
+        return userDto.orElse(null);
     }
 
     protected static int getUserRole(int userId, int roleId, int groupId) {

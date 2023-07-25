@@ -89,7 +89,7 @@ public class UserDao implements Dao<UserDto> {
 
     @Override
     public int create(UserDto userDto) {
-        String email = userDto.getEmail().orElse(null);
+        String email = userDto.getEmailOrThrow();
         if (StringUtils.isBlank(email)) {
             throw new DsmInternalError("Error inserting user: email is blank");
         }
@@ -113,7 +113,7 @@ public class UserDao implements Dao<UserDto> {
     }
 
     public static void update(int userId, UserDto userDto) {
-        String email = userDto.getEmail().orElseThrow(() -> new DsmInternalError("Error updating user: missing email"));
+        String email = userDto.getEmailOrThrow();
         String errorMsg = "Error updating user " + email;
         int res = inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_USER)) {

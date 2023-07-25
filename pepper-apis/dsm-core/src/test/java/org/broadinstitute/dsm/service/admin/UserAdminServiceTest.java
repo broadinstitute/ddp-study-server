@@ -19,8 +19,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DbTxnBaseTest;
+import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -205,8 +205,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int userId = createTestUser(email, -1);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
-            int id = UserAdminService.verifyUserByEmail(email, groupId);
-            Assert.assertEquals(userId, id);
+            Assert.assertEquals(userId, UserAdminService.verifyUserByEmail(email, groupId).getId());
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.getUserByEmail: " +  getStackTrace(e));
         }
@@ -395,14 +394,14 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
         String user = "testUser4@study.org";
         String userName = "testUser4";
-        AddUserRequest req = new AddUserRequest(List.of(new AddUserRequest.User(user, userName, null,
+        AddUserRequest addUserRequest = new AddUserRequest(List.of(new AddUserRequest.User(user, userName, null,
                 List.of(role1))));
 
         UserAdminService service = new UserAdminService(Integer.toString(operatorId), TEST_GROUP);
         try {
-            service.addUser(req);
+            service.addUser(addUserRequest);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.createUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
         }
 
         // add a role
@@ -445,6 +444,10 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from UserAdminService.getUserRoles: " +  getStackTrace(e));
         }
 
+        // user should have user settings
+        UserSettings settings = UserSettings.getUserSettings(user);
+        Assert.assertNotNull(settings);
+
         userInfoList = res.getUsers();
         verifyUserInfo(userInfoList, user, newUserName, phone);
 
@@ -459,10 +462,34 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         }
 
         try {
-            UserAdminService.verifyUserByEmail(user, -1);
+            UserAdminService.verifyUserByEmail(user, groupId);
             Assert.fail("UserAdminService.removeUser failed to remove user");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Invalid user"));
+        }
+
+        try {
+            service.updateUser(updateReq);
+            Assert.fail("UserAdminService.updateUser should fail to update a removed user");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid user for study group (inactive)"));
+        }
+
+        settings = UserSettings.getUserSettings(user);
+        Assert.assertNull(settings);
+
+        // add user back to test the inactive to active transition
+        try {
+            service.addUser(addUserRequest);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
+        }
+
+        // cleanup
+        try {
+            service.removeUser(removeReq);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.removeUser: " +  getStackTrace(e));
         }
     }
 
@@ -575,8 +602,8 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
     private void setUserRoles(String email, List<String> roles, String studyGroup) {
         try {
-            int userId = UserAdminService.verifyUserByEmail(email, -1);
             int groupId = UserAdminService.verifyStudyGroup(studyGroup);
+            int userId = UserAdminService.verifyUserByEmail(email, groupId).getId();
 
             for (String role : roles) {
                 int roleId = UserAdminService.getRoleId(role);
