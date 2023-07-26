@@ -5,4 +5,7 @@ public class DSMBadRequestException extends RuntimeException {
         super(message);
     }
 
+    public DSMBadRequestException(Exception e) {
+        super(e);
+    }
 }

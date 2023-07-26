@@ -1,8 +1,10 @@
 package org.broadinstitute.dsm.model.kit;
 
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 
@@ -95,5 +97,10 @@ public class KitDaoMock implements KitDao {
     @Override
     public Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping) {
         return Optional.empty();
+    }
+
+    @Override
+    public ResultSet getKitsInDatabaseByInstanceId(DDPInstance ddpInstance) {
+        return null;
     }
 }

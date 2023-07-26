@@ -14,7 +14,9 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -25,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KitDaoImpl implements KitDao {
-
-    private static final Logger logger = LoggerFactory.getLogger(KitDaoImpl.class);
 
     public static final String SQL_SELECT_KIT_REQUEST =
             "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
@@ -56,7 +56,7 @@ public class KitDaoImpl implements KitDao {
     public static final String KIT_BY_KIT_ID = " and kit.dsm_kit_id = ?";
     public static final String KIT_BY_HRUID = " and bsp_collaborator_participant_id like ? AND not kit_complete <=> 1 "
             + "AND deactivated_date is null";
-
+    private static final Logger logger = LoggerFactory.getLogger(KitDaoImpl.class);
     private static final String SQL_IS_BLOOD_KIT_QUERY = "SELECT kt.requires_insert_in_kit_tracking AS found "
             + "FROM ddp_kit_request request "
             + "LEFT JOIN kit_type kt on (kt.kit_type_id = request.kit_type_id) "
@@ -96,18 +96,20 @@ public class KitDaoImpl implements KitDao {
             + "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id AND ks.ddp_instance_id = req.ddp_instance_id "
             + "WHERE req.ddp_label = ?";
 
-    private static final String SQL_GET_SUB_KIT_BY_DDP_LABEL = "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
-            + "req.kit_type_id, req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
-            + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
-            + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
-            + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, kit.dsm_kit_id,"
-            + "kt.requires_insert_in_kit_tracking, kt.kit_type_name, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
-            + "FROM ddp_kit as kit "
-            + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
-            + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
-            + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
-            + "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id AND ks.ddp_instance_id = req.ddp_instance_id "
-            + "WHERE ( req.ddp_label = ? or ddp_label like ? )";
+    private static final String SQL_GET_SUB_KIT_BY_DDP_LABEL =
+            "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
+                    + "req.kit_type_id, req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
+                    + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
+                    + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
+                    + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, kit.dsm_kit_id,"
+                    + "kt.requires_insert_in_kit_tracking, kt.kit_type_name, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
+                    + "FROM ddp_kit as kit "
+                    + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
+                    + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
+                    + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
+                    +
+                    "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id AND ks.ddp_instance_id = req.ddp_instance_id "
+                    + "WHERE ( req.ddp_label = ? or ddp_label like ? )";
 
     private static final String INSERT_KIT = "INSERT INTO "
             + "ddp_kit "
@@ -140,6 +142,16 @@ public class KitDaoImpl implements KitDao {
             + "external_order_number, "
             + "upload_reason) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+
+    private static final String SELECT_KIT_STATUS =
+            " SELECT req.*, k.*, discard.*, tracking.tracking_id as return_tracking_number, tracking.scan_by as tracking_scan_by, "
+                    + " tracking.scan_date as tracking_scan_date "
+                    + " FROM ddp_kit_request req LEFT JOIN ddp_kit k on (k.dsm_kit_request_id = req.dsm_kit_request_id) "
+                    + " LEFT JOIN ddp_kit_discard discard on  (discard.dsm_kit_request_id = req.dsm_kit_request_id) "
+                    + " LEFT JOIN ddp_kit_tracking tracking on  (tracking.kit_label = k.kit_label) ";
+
+    private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ? ";
+
 
     private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
             + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND receive_date IS NOT NULL ";
@@ -568,7 +580,7 @@ public class KitDaoImpl implements KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = Optional.ofNullable((ScanError)results.resultValue);
+            result = Optional.ofNullable((ScanError) results.resultValue);
         }
         return result;
     }
@@ -664,5 +676,25 @@ public class KitDaoImpl implements KitDao {
             throw new RuntimeException(String.format("Error getting kits for %s", ddpParticipantId));
         }
         return false;
+    }
+
+    public ResultSet getKitsInDatabaseByInstanceId(DDPInstance ddpInstance) {
+        SimpleResult simpleResult = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_INSTANCE_ID))) {
+                stmt.setString(1, ddpInstance.getDdpInstanceId());
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    dbVals.resultValue = rs;
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()));
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new DSMBadRequestException(simpleResult.resultException);
+        }
+        return (ResultSet) simpleResult.resultValue;
     }
 }

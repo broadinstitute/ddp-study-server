@@ -1,10 +1,10 @@
-package org.broadinstitute.dsm.route;
+package org.broadinstitute.dsm.route.juniper;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
-import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitStatus;
+import org.broadinstitute.dsm.model.nonpepperkit.KitResponseError;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.ShipKitRequest;
 import spark.Request;
@@ -24,19 +24,19 @@ public class JuniperShipKitRoute implements Route {
         JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
         if (juniperKitRequest == null) {
             response.status(400);
-            return new KitResponse("EMPTY_REQUEST", null, juniperKitRequest);
+            return new KitResponseError("EMPTY_REQUEST", null, juniperKitRequest);
         }
         if (StringUtils.isBlank(shipKitRequest.getJuniperStudyGUID())) {
             response.status(400);
-            return new KitResponse("EMPTY_STUDY_NAME", null, null);
+            return new KitResponseError("EMPTY_STUDY_NAME", null, null);
         }
         if (StringUtils.isBlank(shipKitRequest.getKitType())) {
             response.status(400);
-            return new KitResponse("EMPTY_KIT_TYPE", null, shipKitRequest.getKitType());
+            return new KitResponseError("EMPTY_KIT_TYPE", null, shipKitRequest.getKitType());
         }
         KitResponse kitResponse = this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getJuniperStudyGUID(),
                 shipKitRequest.getKitType());
-        if (kitResponse instanceof JuniperKitStatus) {
+        if (kitResponse instanceof KitResponseError) {
             response.status(200);
         } else {
             response.status(400);

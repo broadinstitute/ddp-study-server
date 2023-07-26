@@ -66,6 +66,7 @@ import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
+import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
@@ -95,7 +96,7 @@ import org.broadinstitute.dsm.route.EventTypeRoute;
 import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
-import org.broadinstitute.dsm.route.JuniperShipKitRoute;
+import org.broadinstitute.dsm.route.juniper.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
@@ -123,6 +124,7 @@ import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.juniper.StatusKitRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
 import org.broadinstitute.dsm.route.kit.KitTrackingScanRoute;
@@ -579,6 +581,9 @@ public class DSMServer {
         if (!cfg.getBoolean("ui.production")) {
             NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
             post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+
+            NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
+            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_STUDY, new StatusKitRoute(nonPepperStatusKitService), new JsonTransformer());
         }
 
         if (!cfg.getBoolean("ui.production")) {

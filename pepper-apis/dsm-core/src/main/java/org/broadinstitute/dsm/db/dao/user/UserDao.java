@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -24,6 +25,9 @@ public class UserDao implements Dao<UserDto> {
             "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.email = ?";
     private static final String SQL_SELECT_USER_BY_ID =
             "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.user_id = ?";
+
+    private static final String SQL_SELECT_ALL_USERS =
+            "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user";
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = inTransaction((conn) -> {
@@ -118,5 +122,31 @@ public class UserDao implements Dao<UserDto> {
                     + id, results.resultException);
         }
         return (int) results.resultValue;
+    }
+
+    public static HashMap<Integer, UserDto> selectAllUsers() {
+        HashMap<Integer, UserDto> users = new HashMap<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ALL_USERS)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        UserDto user = new UserDto(rs.getInt(USER_ID),
+                                rs.getString(NAME),
+                                rs.getString(EMAIL),
+                                rs.getString(PHONE_NUMBER));
+                        users.put(user.getId(), user);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of all users ", results.resultException);
+        }
+        return users;
     }
 }
