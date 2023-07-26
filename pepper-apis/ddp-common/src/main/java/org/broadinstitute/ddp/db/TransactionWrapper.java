@@ -343,9 +343,8 @@ public class TransactionWrapper {
                         log.error("Sleep before dbpool credential reload has been interrupted.", interrupted);
                     }
                     reloadDbPoolConfiguration(false);
-                } else {
-                    log.info("Open jdbi connection retried {} time.", tryCount + 1);
                 }
+                log.info("Open jdbi connection retried {} time.", tryCount + 1);
             } catch (InvalidConfigurationException e) {
                 lastThrownException = e;
                 log.error("Database connection configuration is invalid. Proceeding with original configuration values.");
