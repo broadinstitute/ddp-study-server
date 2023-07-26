@@ -132,4 +132,7 @@
     <include file="liquibase/PEPPER-915_field_settings.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-873_mercury_order_fields.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-964_group_role.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-971_fix_access_role.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-971_fix_ddp_group.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-971_study_roles.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
