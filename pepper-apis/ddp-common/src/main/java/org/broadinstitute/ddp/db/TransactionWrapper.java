@@ -329,27 +329,30 @@ public class TransactionWrapper {
      * values so that we can rotate the password without rebooting the app.
      */
     private static Handle openJdbiWithAuthRetry(DB db) {
+        Exception lastThrownException = null;
         for (int tryCount = 0; tryCount < PASSWORD_ROTATION_MAX_RETRIES; tryCount++) {
             try {
                 return getInstance(db).jdbi.open();
             } catch (ConnectionException e) {
+                lastThrownException = e;
                 if (isAuthException(e)) {
-                    log.info("Database pool credentials have been rejected; pausing and reloading creds from config file.", e);
+                    log.info("Database pool credentials have been rejected; pausing and reloading credentials from config file.", e);
                     try {
                         TimeUnit.SECONDS.sleep(PASSWORD_ROTATION_SLEEP);
                     } catch (InterruptedException interrupted) {
-                        log.error("Sleep before dbpool credential reload has been interrupted", interrupted);
+                        log.error("Sleep before dbpool credential reload has been interrupted.", interrupted);
                     }
                     reloadDbPoolConfiguration(false);
                 } else {
-                    throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+                    log.info("Open jdbi connection retried {} time.", tryCount + 1);
                 }
             } catch (InvalidConfigurationException e) {
-                log.error("Database connection configuration is invalid.  Proceeding with original configuration values.");
+                lastThrownException = e;
+                log.error("Database connection configuration is invalid. Proceeding with original configuration values.");
             }
         }
         // if here, we've tried a few times, but are still unable to get a connection.
-        throw new DDPException(COULD_NOT_GET_CONNECTION);
+        throw new DDPException(COULD_NOT_GET_CONNECTION, lastThrownException);
     }
 
     /**
