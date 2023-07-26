@@ -97,6 +97,22 @@ public class OncHistoryParserTest {
     }
 
     @Test
+    public void testFileWithExtraRows() {
+        try {
+            String content = TestUtil.readFile("onchistory/oncHistoryExtraRows.txt");
+            OncHistoryParser parser = new OncHistoryParser(content, uploadService);
+
+            try {
+                parser.parseToObjects();
+            } catch (Exception e) {
+                Assert.fail("Exception from OncHistoryParser.parseToObjects: " + e.toString());
+            }
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.toString());
+        }
+    }
+
+    @Test
     public void parseTabs() {
         String str = "\t\tabc\t123\tdef\t\t\t";
         String[] cols = str.split("\t", -1);
