@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -329,7 +330,7 @@ public class UserUtil {
                 && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias());
     }
 
-    public ArrayList<String> getUserAccessRoles(@NonNull String email) {
+    public List<String> getUserAccessRoles(@NonNull String email) {
         ArrayList<String> roles = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -347,7 +348,7 @@ public class UserUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of roles ", results.resultException);
+            throw new DsmInternalError("Error getting roles for " + email, results.resultException);
         }
         return roles;
     }

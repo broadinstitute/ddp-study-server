@@ -29,6 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;
@@ -104,7 +106,7 @@ public class Auth0Util {
         }
 
         if (connection == null) {
-            throw new RuntimeException("User does not have an approved connection.");
+            throw new DSMBadRequestException("User does not have an approved connection.");
         }
         return connection;
     }
@@ -116,7 +118,7 @@ public class Auth0Util {
             User user = userRequest.execute();
             findUserConnection(user.getIdentities());
         } catch (Exception ex) {
-            throw new RuntimeException("User connection verification failed for user " + email, ex);
+            throw new DsmInternalError("User connection verification failed for user " + email, ex);
         }
     }
 
