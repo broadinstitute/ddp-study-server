@@ -1060,6 +1060,8 @@ public class DSMServer {
             response.body(exception.getMessage());
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
+            logger.error("Internal error {}", exception.toString());
+            exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });

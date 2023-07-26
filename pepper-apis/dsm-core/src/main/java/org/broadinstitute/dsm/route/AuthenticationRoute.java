@@ -61,51 +61,38 @@ public class AuthenticationRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) {
-        logger.info("Check user...");
         try {
             JsonObject jsonObject = JsonParser.parseString(request.body()).getAsJsonObject();
             String auth0Token = jsonObject.get(payloadToken).getAsString();
             if (StringUtils.isBlank(auth0Token)) {
-                haltWithErrorMsg(400, response, "There was no token in the payload");
+                haltWithErrorMsg(400, response, "There was no Auth0 token in the payload");
             }
-
-            // checking if Auth0 knows that token
-            try {
-
-                String dsmToken = updateToken(auth0Token);
-                return new DSMToken(dsmToken);
-            } catch (AuthenticationException e) {
-                haltWithErrorMsg(401, response, "DSMToken was null! Not authorized user", e);
-            }
+            return new DSMToken(updateToken(auth0Token));
         } catch (AuthenticationException e) {
-            haltWithErrorMsg(400, response, "Problem getting user info from Auth0 token", e);
+            haltWithErrorMsg(400, response, "Unable to get user information from Auth0 token", e);
+        } catch (JsonParseException e) {
+            haltWithErrorMsg(400, response, "Unable to get Auth0 token from request", e);
         }
-
-       return response;
+        // DSMInternalError and DSMBadRequestException are handled via Spark
+        return response;
     }
 
     private String updateToken(String auth0Token) {
-        try {
-            Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(auth0Token, auth0Domain);
-            String email = auth0UserInfo.getEmail();
-            UserDao userDao = new UserDao();
-            UserDto userDto = userDao.getUserByEmail(email).orElseThrow(() ->
-                    new DSMBadRequestException("User not found: " + email));
+        Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(auth0Token, auth0Domain);
+        String email = auth0UserInfo.getEmail();
 
-            Map<String, String> claims = updateClaims(userDto);
+        logger.info("Authenticating user {}", email);
+        UserDao userDao = new UserDao();
+        UserDto userDto = userDao.getUserByEmail(email).orElseThrow(() ->
+                new DSMBadRequestException("User not found: " + email));
 
-                String dsmToken = auth0Util.getNewAuth0TokenWithCustomClaims(claims, clientSecret, auth0ClientId, auth0Domain,
-                        auth0MgmntAudience, audienceNameSpace);
-                if (dsmToken == null) {
-                    throw new DsmInternalError("Assert: Auth token should not be null");
-                }
-                return dsmToken;
-            } catch (AuthenticationException e) {
-                haltWithErrorMsg(401, response, "DSMToken was null! Not authorized user", e);
-            }
-        } catch (AuthenticationException e) {
-            haltWithErrorMsg(400, response, "Problem getting user info from Auth0 token", e);
+        Map<String, String> claims = updateClaims(userDto);
+        String dsmToken = auth0Util.getNewAuth0TokenWithCustomClaims(claims, clientSecret, auth0ClientId, auth0Domain,
+                auth0MgmntAudience, audienceNameSpace);
+        if (dsmToken == null) {
+            throw new DsmInternalError("Assert: Auth token should not be null");
         }
+        return dsmToken;
     }
 
     private Map<String, String> updateClaims(UserDto userDto) {
@@ -126,7 +113,7 @@ public class AuthenticationRoute implements Route {
     }
 
     private static class DSMToken {
-        private String dsmToken;
+        private final String dsmToken;
 
         public DSMToken(String token) {
             this.dsmToken = token;
@@ -138,6 +125,8 @@ public class AuthenticationRoute implements Route {
      */
     public static void haltWithErrorMsg(int responseStatus, Response response, String message) {
         response.type(ContentType.APPLICATION_JSON.getMimeType());
+        // TODO: this is currently called for bad request status. Do we want to log that at error level?
+        //  Or perhaps we could user the return status to determine the log level? -DC
         logger.error(message);
         String errorMsgJson = new Gson().toJson(new Error(message));
         halt(responseStatus, errorMsgJson);
@@ -145,6 +134,8 @@ public class AuthenticationRoute implements Route {
 
     public static void haltWithErrorMsg(int responseStatus, Response response, String message, Throwable t) {
         if (t != null) {
+            // TODO: this is currently called for bad request status. Do we want to log that at error level?
+            //  Or perhaps we could user the return status to determine the log level? -DC
             logger.error("Authentication Error", t);
         }
         haltWithErrorMsg(responseStatus, response, message);

@@ -72,8 +72,8 @@ public class Auth0Util {
             verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
             return userInfo;
-        } catch (AuthenticationException e) {
-            throw new AuthenticationException("couldn't get Auth0 user info", e);
+        } catch (Exception e) {
+            throw new AuthenticationException("Could not get Auth0 user info", e);
         }
     }
 
@@ -123,15 +123,12 @@ public class Auth0Util {
     }
 
     public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
-        Map<String, Claim> auth0Claims = new HashMap<>();
         try {
             Optional<DecodedJWT> maybeToken = verifyAuth0Token(auth0Token, auth0Domain);
-            maybeToken.orElseThrow();
-            auth0Claims = maybeToken.get().getClaims();
+            return maybeToken.orElseThrow().getClaims();
         } catch (Exception e) {
             throw new AuthenticationException("Could not verify auth0 token.", e);
         }
-        return auth0Claims;
     }
 
     /**
