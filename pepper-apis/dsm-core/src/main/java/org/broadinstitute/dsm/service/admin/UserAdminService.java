@@ -872,25 +872,6 @@ public class UserAdminService {
         }
     }
 
-    @Data
-    protected static class StudyUser {
-        private final int id;
-        private final String email;
-        private final String name;
-        private final String phone;
-
-        public StudyUser(int id, String email, String name, String phone) {
-            this.id = id;
-            this.email = email;
-            this.name = name;
-            this.phone = phone;
-        }
-
-        public UserInfo toUserInfo() {
-            return new UserInfo(email, name, phone);
-        }
-    }
-
     protected static class NameAndId {
         public final String name;
         public final int id;
