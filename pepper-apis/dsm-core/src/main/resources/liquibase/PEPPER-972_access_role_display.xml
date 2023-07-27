@@ -12,4 +12,130 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="cunningh" id="PEPPER-972_access_role_update_display">
+        <update tableName="access_role">
+            <column name="display_text" value="Kit: Discard samples"/>
+            <where>name = 'discard_sample'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value="Field Settings: Add, remove, modify"/>
+            <where>name = 'field_settings'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value="Participant Files: View, download"/>
+            <where>name = 'file_download'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value="Kit: View, de/reactivation"/>
+            <where>name = 'kit_deactivation'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value="Kit: Create overnight shipping labels"/>
+            <where>name = 'kit_express'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'kit_receiving'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'kit_sequencing_order'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'kit_shipping'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'kit_shipping_view'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'kit_upload'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'kit_upload_invalid_address'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mailingList_view'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mr_abstracter'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mr_abstraction_admin'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mr_no_request_tissue'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mr_qc'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mr_request'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'mr_view'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'ndi_download'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'participant_edit'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'participant_event'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'participant_exit'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'pdf_download'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'pt_list_view'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'study_user_admin'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'survey_creation'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'upload_onc_history'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'upload_ror_file'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'view_only_dss_data'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'view_seq_order_status'</where>
+        </update>
+        <update tableName="access_role">
+            <column name="display_text" value=""/>
+            <where>name = 'view_shared_learnings'</where>
+        </update>
+    </changeSet>
 </databaseChangeLog>
