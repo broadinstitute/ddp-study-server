@@ -146,7 +146,7 @@ public class UserAdminService {
 
         for (var entry: userIds.entrySet()) {
             addRoles(entry.getValue(), roleNames, groupId, studyRoles);
-            log.info("Removed roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
+            log.info("Added roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
                     String.join(",", roleNames));
         }
     }
