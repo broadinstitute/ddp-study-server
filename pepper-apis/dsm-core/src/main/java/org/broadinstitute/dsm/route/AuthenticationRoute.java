@@ -10,7 +10,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
@@ -20,8 +19,8 @@ import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.security.Auth0Util;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -40,18 +39,16 @@ public class AuthenticationRoute implements Route {
 
     private final Auth0Util auth0Util;
 
-    private final UserUtil userUtil;
     private final String auth0Domain;
     private final String clientSecret;
     private final String auth0ClientId;
     private final String auth0MgmntAudience;
     private final String audienceNameSpace;
 
-    public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain,
+    public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull String auth0Domain,
                                @NonNull String clientSecret, @NonNull String auth0ClientId, @NonNull String auth0MgmntAudience,
                                @NonNull String audienceNameSpace) {
         this.auth0Util = auth0Util;
-        this.userUtil = userUtil;
         this.auth0Domain = auth0Domain;
         this.clientSecret = clientSecret;
         this.auth0ClientId = auth0ClientId;
@@ -100,8 +97,8 @@ public class AuthenticationRoute implements Route {
         try {
             Gson gson = new Gson();
             String email = userDto.getEmail().orElseThrow(() -> new DsmInternalError("User email cannot be null"));
-            String userSetting = gson.toJson(userUtil.getUserAccessRoles(email), ArrayList.class);
-            claims.put(userAccessRoles, userSetting);
+            String roles = gson.toJson(UserUtil.getUserAccessRoles(email), ArrayList.class);
+            claims.put(userAccessRoles, roles);
             claims.put(userSettings, gson.toJson(UserSettings.getUserSettings(email), UserSettings.class));
             claims.put(authUserId, String.valueOf(userDto.getId()));
             claims.put(authUserName, userDto.getName().orElse(""));
@@ -126,7 +123,7 @@ public class AuthenticationRoute implements Route {
     public static void haltWithErrorMsg(int responseStatus, Response response, String message) {
         response.type(ContentType.APPLICATION_JSON.getMimeType());
         // TODO: this is currently called for bad request status. Do we want to log that at error level?
-        //  Or perhaps we could user the return status to determine the log level? -DC
+        //  Or perhaps we could use the return status to determine the log level? -DC
         logger.error(message);
         String errorMsgJson = new Gson().toJson(new Error(message));
         halt(responseStatus, errorMsgJson);
@@ -135,7 +132,7 @@ public class AuthenticationRoute implements Route {
     public static void haltWithErrorMsg(int responseStatus, Response response, String message, Throwable t) {
         if (t != null) {
             // TODO: this is currently called for bad request status. Do we want to log that at error level?
-            //  Or perhaps we could user the return status to determine the log level? -DC
+            //  Or perhaps we could use the return status to determine the log level? -DC
             logger.error("Authentication Error", t);
         }
         haltWithErrorMsg(responseStatus, response, message);

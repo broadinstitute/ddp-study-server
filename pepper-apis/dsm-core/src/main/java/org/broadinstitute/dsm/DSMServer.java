@@ -647,7 +647,6 @@ public class DSMServer {
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
-                userUtil,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),

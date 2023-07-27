@@ -330,7 +330,7 @@ public class UserUtil {
                 && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias());
     }
 
-    public List<String> getUserAccessRoles(@NonNull String email) {
+    public static List<String> getUserAccessRoles(@NonNull String email) {
         ArrayList<String> roles = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
