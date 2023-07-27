@@ -72,8 +72,8 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         for (var entry: createdUserRoles.entrySet()) {
             int userId = entry.getKey();
             List<Integer> userRoles = entry.getValue();
-            for (int userRole: userRoles) {
-                UserAdminService.deleteUserRole(userId, userRole, studyGroupId);
+            for (int roleId: userRoles) {
+                UserAdminService.deleteUserRole(userId, roleId, studyGroupId);
             }
             userDao.delete(userId);
         }
@@ -201,7 +201,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     public void testGetUserByEmailAndGroup() {
         int roleId = UserAdminService.getRoleId("upload_onc_history");
         Assert.assertTrue(roleId > 0);
-        String email = "testUser@study.org";
+        String email = "testUser1@study.org";
         int userId = createTestUser(email, -1);
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {
@@ -388,9 +388,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         List<String> roles = List.of(role1, role2);
         Map<String, Integer> rolesToId = getRoleIds(roles);
 
-        // include a role for the user, but let the admin service manage it via removeUser
-        int operatorId = setupAdmin("test_admin3@study.org", List.of(rolesToId.get(role1)), groupId);
-        addGroupRole(rolesToId.get(role2), userAdminRoleId);
+        int operatorId = setupAdmin("test_admin3@study.org", new ArrayList<>(rolesToId.values()), groupId);
 
         String user = "testUser4@study.org";
         String userName = "testUser4";
@@ -477,8 +475,60 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
         settings = UserSettings.getUserSettings(user);
         Assert.assertNull(settings);
+    }
+
+
+    @Test
+    public void testAddExistingUser() {
+        int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
+
+        String role1 = "upload_onc_history";
+        String role2 = "upload_ror_file";
+        List<String> roles = List.of(role1, role2);
+        Map<String, Integer> rolesToId = getRoleIds(roles);
+
+        int operatorId = setupAdmin("test_admin4@study.org", new ArrayList<>(rolesToId.values()), groupId);
+
+        String user = "testUser5@study.org";
+        String userName = "testUser5";
+        AddUserRequest addUserRequest = new AddUserRequest(List.of(new AddUserRequest.User(user, userName, null,
+                roles)));
+
+        UserAdminService service = new UserAdminService(Integer.toString(operatorId), TEST_GROUP);
+        try {
+            service.addUser(addUserRequest);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
+        }
+
+        UserRequest removeReq = new UserRequest(List.of(user));
+        try {
+            service.removeUser(removeReq);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.removeUser: " +  getStackTrace(e));
+        }
 
         // add user back to test the inactive to active transition
+        try {
+            service.addUser(addUserRequest);
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
+        }
+
+        // try to add again
+        try {
+            service.addUser(addUserRequest);
+            Assert.fail("UserAdminService.addUser should fail to add an existing study user");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Already has roles in study"));
+        }
+
+        // user with no roles in this study can be added
+        int userId = UserAdminService.verifyUserByEmail(user, groupId).getId();
+        for (int roleId: rolesToId.values()) {
+            UserAdminService.deleteUserRole(userId, roleId, studyGroupId);
+        }
+
         try {
             service.addUser(addUserRequest);
         } catch (Exception e) {

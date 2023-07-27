@@ -147,7 +147,7 @@ public class UserAdminService {
         for (var entry: userIds.entrySet()) {
             addRoles(entry.getValue(), roleNames, groupId, studyRoles);
             log.info("Added roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
-                    String.join(",", roleNames));
+                    String.join(", ", roleNames));
         }
     }
 
@@ -197,7 +197,7 @@ public class UserAdminService {
         for (var entry: userIds.entrySet()) {
             removeUserRoles(entry.getValue(), roleNames, groupId, studyRoles);
             log.info("Removed roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
-                    String.join(",", roleNames));
+                    String.join(", ", roleNames));
         }
     }
 
@@ -242,7 +242,7 @@ public class UserAdminService {
         }
         Collection<String> badRoles = CollectionUtils.subtract(roleNames, validRoleNames).stream()
                 .map(r -> r.isEmpty() ? "<blank>" : r).collect(Collectors.toSet());
-        throw new DSMBadRequestException(msg + String.join(",", badRoles));
+        throw new DSMBadRequestException(msg + String.join(", ", badRoles));
     }
 
     protected String validateEmailRequest(String email) {
@@ -265,22 +265,22 @@ public class UserAdminService {
         }
 
         // pre-check to lessen likelihood of partial operation
-        Map<String, Integer> emailToId = new HashMap<>();
+        Map<String, UserDto> emailToUser = new HashMap<>();
         for (var user: users) {
             String email = validateEmailRequest(user.getEmail());
 
-            // not a strict requirement in DB, but now enforcing
-            if (StringUtils.isBlank(user.getName())) {
-                throw new DSMBadRequestException("Invalid user name: blank");
-            }
             UserDto userDto = getUserByEmail(email, groupId);
             if (userDto != null) {
-                if (userDto.isActive()) {
-                    throw new DsmInternalError("User already exists: " + email);
-                }
-                log.info("addUser: user {} already exists but is inactive. Activating and updating with new user information",
-                        email);
-                emailToId.put(userDto.getEmailOrThrow(), userDto.getId());
+                // update any new info provided
+                emailToUser.put(email, user.asUpdatedUserDto(verifyExistingUser(userDto, groupId)));
+            } else {
+                userDto = user.asUserDto();
+                emailToUser.put(email, userDto);
+            }
+
+            // not a strict requirement in DB, but now enforcing
+            if (StringUtils.isBlank(userDto.getName().orElse(null))) {
+                throw new DSMBadRequestException("Invalid user name: blank");
             }
 
             validateRoles(user.getRoles(), studyRoles.keySet());
@@ -288,15 +288,42 @@ public class UserAdminService {
 
         UserDao userDao = new UserDao();
         for (var user: users) {
-            Integer userId = emailToId.get(user.getEmail());
-            if (userId != null) {
-                UserDao.update(userId, user.asUserDto());
+            UserDto userDto = emailToUser.get(user.getEmail());
+            int userId = userDto.getId();
+            boolean hasUserSettings = false;
+            if (userId != 0) {
+                UserDao.update(userId, userDto);
+                hasUserSettings = UserSettings.getUserSettings(user.getEmail()) != null;
             } else {
-                userId = userDao.create(user.asUserDto());
+                userId = userDao.create(userDto);
             }
-            UserSettings.createUserSettings(userId);
+            if (!hasUserSettings) {
+                UserSettings.createUserSettings(userId);
+            }
             addRoles(userId, user.getRoles(), groupId, studyRoles);
         }
+    }
+
+    protected UserDto verifyExistingUser(UserDto userDto, int groupId) {
+        String email = userDto.getEmailOrThrow();
+
+        // if user has no roles in this study then it is okay to add them
+        List<String> existingRoles = getRolesForUser(userDto.getId(), groupId);
+        if (!existingRoles.isEmpty()) {
+            throw new DsmInternalError(String.format("Cannot add user %s: Already has roles in study %s",
+                    email, studyGroup));
+        }
+
+        if (userDto.isActive()) {
+            log.info("addUser: user {} already exists, is active, but has no roles in study {}. "
+                            + "Updating with new user information",
+                    email, studyGroup);
+        } else {
+            log.info("addUser: user {} already exists but is inactive. Activating and updating with new user information",
+                    email);
+            userDto.setIsActive(1);
+        }
+        return userDto;
     }
 
     public void updateUser(UpdateUserRequest req) {
