@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="PEPPER-971_fix_ddp_group-1" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "cmi";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="cmi"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-2" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "malab";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="malab"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-3" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "testBoston";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="testBoston"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-4" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "prion";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="prion"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-5" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "atcp";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="atcp"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-6" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "Circadia";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="Circadia"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-7" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "brugada";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="brugada"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-8" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "pecgs";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="pecgs"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_ddp_group-9" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM ddp_group WHERE name = "darwin";</sqlCheck>
+        </preConditions>
+        <insert tableName="ddp_group">
+            <column name="name" value="darwin"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

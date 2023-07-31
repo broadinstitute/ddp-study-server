@@ -16,6 +16,7 @@ import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
@@ -177,13 +178,13 @@ public class Auth0Util {
             JwkProvider jwkProvider = new JwkProviderBuilder(auth0Domain).build();
             keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
         } catch (Exception e) {
-            logger.warn("Could not verify token {} due to jwk error", jwt);
+            logger.info("WARNING: Could not verify token {} due to jwk error", jwt);
         }
         if (keyProvider != null) {
             try {
                 validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
             } catch (Exception e) {
-                logger.warn("Could not verify token {}", jwt, e);
+                logger.info("WARNING: Could not verify token {}", jwt, e);
             }
         }
         return Optional.ofNullable(validToken);
@@ -199,6 +200,7 @@ public class Auth0Util {
      * @param signer        the valid issuer of token
      * @param secretEncoded boolean, true if the secret is base64 encoded
      * @return a verified, decoded JWT
+     * @throws TokenExpiredException – if the token has expired.
      */
     public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain, String secret, String signer,
                                                         boolean secretEncoded) {
@@ -218,9 +220,10 @@ public class Auth0Util {
             }
             JWTVerifier verifier = verification.build();
             validToken = verifier.verify(jwt);
-
-        } catch (Exception e) {
-            logger.warn("Could not verify token {}", jwt, e);
+        } catch (TokenExpiredException expiredError) {
+            logger.info("WARNING: Token has expired {}", jwt, expiredError);
+        } catch (Exception error) {
+            logger.info("WARNING: Could not verify token {}", jwt, error);
         }
 
         return Optional.ofNullable(validToken);

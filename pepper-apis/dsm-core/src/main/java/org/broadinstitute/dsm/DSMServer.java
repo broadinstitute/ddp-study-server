@@ -111,6 +111,7 @@ import org.broadinstitute.dsm.route.LookupRoute;
 import org.broadinstitute.dsm.route.MailingListRoute;
 import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
 import org.broadinstitute.dsm.route.NDIRoute;
+import org.broadinstitute.dsm.route.OncHistoryTemplateRoute;
 import org.broadinstitute.dsm.route.OncHistoryUploadRoute;
 import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
@@ -120,6 +121,9 @@ import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.admin.StudyRoleRoute;
+import org.broadinstitute.dsm.route.admin.UserRoleRoute;
+import org.broadinstitute.dsm.route.admin.UserRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
@@ -583,6 +587,7 @@ public class DSMServer {
         if (!cfg.getBoolean("ui.production")) {
             get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
                     new JsonTransformer());
+
             get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT, new CreateClinicalDummyKitRoute(
                     new OncHistoryDetailDaoImpl()), new JsonTransformer());
             get(apiRoot + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
@@ -665,6 +670,8 @@ public class DSMServer {
         setupMRAbstractionRoutes();
 
         setupMiscellaneousRoutes();
+
+        setupAdminRoutes();
 
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
 
@@ -868,6 +875,8 @@ public class DSMServer {
         post(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
         post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
+
+        get(uiRoot + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute());
     }
 
     private void setupMRAbstractionRoutes() {
@@ -912,8 +921,22 @@ public class DSMServer {
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
         get(uiRoot + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
-
     }
+
+    private void setupAdminRoutes() {
+        StudyRoleRoute studyRoleRoute = new StudyRoleRoute();
+        get(uiRoot + RoutePath.STUDY_ROLE, studyRoleRoute, new JsonTransformer());
+
+        UserRoleRoute userRoleRoute = new UserRoleRoute();
+        get(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        delete(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+
+        UserRoute userRoute = new UserRoute();
+        post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
+        delete(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
+    }
+
 
     private void setupSomaticUploadRoutes(@NonNull Config cfg) {
         SomaticResultUploadService somaticResultUploadService = SomaticResultUploadService.fromConfig(cfg);

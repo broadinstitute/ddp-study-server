@@ -7,6 +7,7 @@ import spark.Request;
 public class RoutePath {
 
     public static final String REALM = "realm";
+    public static final String STUDY_GROUP = "studyGroup";
     public static final String KIT_TYPE = "kitType";
     public static final String UPLOAD_REASONS = "uploadReasons";
     public static final String CARRIERS = "carriers";
@@ -95,6 +96,9 @@ public class RoutePath {
     public static final String GET_DEFAULT_FILTERS = "getFiltersDefault";
     public static final String GET_PARTICIPANT = "getParticipant";
     public static final String GET_PARTICIPANT_DATA = "getParticipantData";
+    public static final String USER = "admin/user";
+    public static final String USER_ROLE = "admin/userRole";
+    public static final String STUDY_ROLE = "admin/studyRole";
     public static final String TISSUE_LIST = "tissueList";
     public static final String NDI_REQUEST = "ndiRequest";
     public static final String ABSTRACTION_FORM_CONTROLS = "abstractionformcontrols";
@@ -113,7 +117,7 @@ public class RoutePath {
     public static final String MERCURY_SAMPLES_ROUTE = "mercurySamples";
     public static final String GET_MERCURY_ORDERS_ROUTE = "getMercuryOrders";
     public static final String ONC_HISTORY_ROUTE = "oncHistory";
-
+    public static final String ONC_HISTORY_TEMPLATE_ROUTE = "oncHistory/template";
     public static final String SOMATIC_DOCUMENT_ROUTE = "somaticResults";
 
     public static final String SOMATIC_DOCUMENT_ID = "somaticDocumentId";
@@ -134,7 +138,7 @@ public class RoutePath {
     }
 
     public enum RequestMethod {
-        GET, PATCH, POST, PUT
+        GET, PATCH, POST, PUT, DELETE
     }
 
     public static final class GAE {
