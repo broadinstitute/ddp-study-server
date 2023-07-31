@@ -283,27 +283,15 @@ public class TransactionWrapper {
     public static <R, X extends Exception> R withTxn(DB db, HandleCallback<R, X> callback) throws X {
         // hopefully temporary code to detect long-running connections
         long startTime = System.currentTimeMillis();
-        try {
-            try (Handle h = openJdbiWithAuthRetry(db)) {
-                R res =  h.inTransaction(callback);
-                long endTime = System.currentTimeMillis();
-                // 30s threshold
-                if (endTime - startTime > 30000) {
-                    logger.warn("DB transaction open for > 30s\n {}",
-                            stackTraceToString(Thread.currentThread().getStackTrace()));
-                }
-                return res;
-            }
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
-        } catch (Exception e) {
+        try (Handle h = openJdbiWithAuthRetry(db)) {
+            return  h.inTransaction(callback);
+        } finally {
             long endTime = System.currentTimeMillis();
             // 30s threshold
             if (endTime - startTime > 30000) {
-                logger.warn("DB transaction open for > 30s. Exception: {}\n {}", e.getMessage(),
+                logger.warn("DB transaction open for > 30s\n {}",
                         stackTraceToString(Thread.currentThread().getStackTrace()));
             }
-            throw e;
         }
     }
 
@@ -343,8 +331,6 @@ public class TransactionWrapper {
                 } else {
                     throw new DDPInternalError(COULD_NOT_GET_CONNECTION, e);
                 }
-            } catch (InvalidConfigurationException e) {
-                log.error("Database connection configuration is invalid.  Proceeding with original configuration values.");
             }
         }
         // if here, we've tried a few times, but are still unable to get a connection.
@@ -365,22 +351,13 @@ public class TransactionWrapper {
         long startTime = System.currentTimeMillis();
         try (Handle h = openJdbiWithAuthRetry(db)) {
             h.useTransaction(callback);
+        } finally {
             long endTime = System.currentTimeMillis();
             // 30s threshold
             if (endTime - startTime > 30000) {
                 logger.warn("DB transaction open for > 30s\n {}",
                         stackTraceToString(Thread.currentThread().getStackTrace()));
             }
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
-        } catch (Exception e) {
-            long endTime = System.currentTimeMillis();
-            // 30s threshold
-            if (endTime - startTime > 30000) {
-                logger.warn("DB transaction open for > 30s. Exception: {}\n {}", e.getMessage(),
-                        stackTraceToString(Thread.currentThread().getStackTrace()));
-            }
-            throw e;
         }
     }
 
@@ -420,14 +397,21 @@ public class TransactionWrapper {
      */
     @Deprecated
     public static <R, X extends Exception> R inTransaction(ConnectionConsumer<R, X> callback) throws X {
+        // temporary code to detect long-running connections
+        long startTime = System.currentTimeMillis();
         try (Handle handle = openJdbiWithAuthRetry(getDB())) {
             try (Connection conn = handle.getConnection()) {
                 return callback.withConnection(conn);
             } catch (SQLException e) {
-                throw new DDPException("Error handling connection", e);
+                throw new DDPInternalError("Error handling connection", e);
             }
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+        } finally {
+            long endTime = System.currentTimeMillis();
+            // 30s threshold
+            if (endTime - startTime > 30000) {
+                logger.warn("DB transaction open for > 30s\n {}",
+                        stackTraceToString(Thread.currentThread().getStackTrace()));
+            }
         }
     }
 

@@ -47,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
@@ -222,7 +223,7 @@ public class DSMServer {
     private static final String gaeDeployDir = "appengine/deploy";
     private static final Duration defaultBootWait = Duration.ofMinutes(10);
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
-    private static AtomicBoolean isReady = new AtomicBoolean(false);
+    private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
@@ -1065,6 +1066,12 @@ public class DSMServer {
             response.body(exception.getMessage());
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
+            exception.printStackTrace();
+            response.status(500);
+            response.body(exception.getMessage());
+        });
+        exception(DDPInternalError.class, (exception, request, response) -> {
+            exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });
