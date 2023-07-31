@@ -371,7 +371,6 @@ public class DataExporter {
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 log.error("[export] failed to export participants for study {}, continuing... ", studyDto.getGuid(), e);
             }
         }
