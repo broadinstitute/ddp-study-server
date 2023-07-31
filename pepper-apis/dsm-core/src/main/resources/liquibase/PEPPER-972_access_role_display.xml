@@ -34,39 +34,39 @@
             <where>name = 'kit_express'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Kit: Receive and scan"/>
             <where>name = 'kit_receiving'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Kit: Clinical order"/>
             <where>name = 'kit_sequencing_order'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Kit: Shipping"/>
             <where>name = 'kit_shipping'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Kit: View kit pages"/>
             <where>name = 'kit_shipping_view'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Kit: Upload"/>
             <where>name = 'kit_upload'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Kit: Upload invalid address"/>
             <where>name = 'kit_upload_invalid_address'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Mailing List: View, download"/>
             <where>name = 'mailingList_view'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Medical Records: Add to abstractor assignee list"/>
             <where>name = 'mr_abstracter'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Medical Records: Abstraction"/>
             <where>name = 'mr_abstraction_admin'</where>
         </update>
         <update tableName="access_role">
@@ -74,67 +74,67 @@
             <where>name = 'mr_no_request_tissue'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Medical Records: Quality assurance"/>
             <where>name = 'mr_qc'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Medical Records: Add to requester assignee list"/>
             <where>name = 'mr_request'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Medical Records: View, request records and tissue"/>
             <where>name = 'mr_view'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Death index download"/>
             <where>name = 'ndi_download'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Participant: Edit"/>
             <where>name = 'participant_edit'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Participant: Stop automated emails"/>
             <where>name = 'participant_event'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Participant: Withdrawal"/>
             <where>name = 'participant_exit'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Download PDFs"/>
             <where>name = 'pdf_download'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Participant: View list"/>
             <where>name = 'pt_list_view'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Manage study permissions"/>
             <where>name = 'study_user_admin'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Follow-up surveys"/>
             <where>name = 'survey_creation'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Onc history: Upload"/>
             <where>name = 'upload_onc_history'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Shared learnings: Upload file"/>
             <where>name = 'upload_ror_file'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="View survey data only"/>
             <where>name = 'view_only_dss_data'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Sequencing order: View status"/>
             <where>name = 'view_seq_order_status'</where>
         </update>
         <update tableName="access_role">
-            <column name="display_text" value=""/>
+            <column name="display_text" value="Shared learnings: View"/>
             <where>name = 'view_shared_learnings'</where>
         </update>
     </changeSet>
