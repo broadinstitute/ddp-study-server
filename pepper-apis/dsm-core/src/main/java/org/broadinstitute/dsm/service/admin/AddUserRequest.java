@@ -3,7 +3,9 @@ package org.broadinstitute.dsm.service.admin;
 import java.util.List;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 
 @Data
 public class AddUserRequest {
@@ -30,6 +32,19 @@ public class AddUserRequest {
 
         public UserDto asUserDto() {
             return new UserDto(name, email, phone);
+        }
+
+        public UserDto asUpdatedUserDto(UserDto userDto) {
+            if (!email.equalsIgnoreCase(userDto.getEmailOrThrow())) {
+                throw new DsmInternalError("Assert: email addresses do not match");
+            }
+            if (!StringUtils.isBlank(name)) {
+                userDto.setName(name);
+            }
+            if (!StringUtils.isBlank(phone)) {
+                userDto.setPhoneNumber(phone);
+            }
+            return userDto;
         }
     }
 }
