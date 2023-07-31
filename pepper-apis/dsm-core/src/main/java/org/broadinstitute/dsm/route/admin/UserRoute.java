@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.admin.AddUserRequest;
+import org.broadinstitute.dsm.service.admin.UpdateUserRequest;
 import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.dsm.service.admin.UserRequest;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -46,6 +47,20 @@ public class UserRoute extends RequestHandler {
                 adminService.addUser(req);
             } catch (Exception e) {
                 return UserRoleRoute.handleError(e, "adding user", response);
+            }
+        } else if (requestMethod.equals(RoutePath.RequestMethod.PUT.toString())) {
+            UpdateUserRequest req;
+            try {
+                req = new Gson().fromJson(body, UpdateUserRequest.class);
+            } catch (Exception e) {
+                log.info("Invalid request format for {}", body);
+                response.status(400);
+                return "Invalid request format";
+            }
+            try {
+                adminService.updateUser(req);
+            } catch (Exception e) {
+                return UserRoleRoute.handleError(e, "updating user", response);
             }
         } else if (requestMethod.equals(RoutePath.RequestMethod.DELETE.toString())) {
             UserRequest req;
