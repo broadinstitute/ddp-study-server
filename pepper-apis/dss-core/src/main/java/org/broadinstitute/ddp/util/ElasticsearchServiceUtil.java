@@ -93,7 +93,6 @@ public final class ElasticsearchServiceUtil {
                     }
                     return httpClientBuilder;
                 });
-        //.setMaxRetryTimeoutMillis(100000);
         esClient = new RestHighLevelClient(builder);
 
         ES_CLIENTS.put(key, esClient);
