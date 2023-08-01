@@ -930,11 +930,11 @@ public class DSMServer {
         UserRoleRoute userRoleRoute = new UserRoleRoute();
         get(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
         post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
-        delete(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        put(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
 
         UserRoute userRoute = new UserRoute();
         post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
-        delete(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
+        put(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
     }
 
 

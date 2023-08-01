@@ -267,6 +267,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     @Test
     public void testSetUserRoles() {
         String role1 = "upload_onc_history";
+        String role1Display = "Onc history: Upload";
         String role2 = "upload_ror_file";
         List<String> roles = List.of(role1, role2);
         Map<String, Integer> rolesToId = getRoleIds(roles);
@@ -323,6 +324,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
         List<UserInfo> userInfoList = res.getUsers();
         Map<String, Map<String, Boolean>> userRoles = getUserRoles(userInfoList);
+        for (var userInfo: userInfoList) {
+            UserRole userRole = userInfo.getRoles().stream().filter(r ->
+                    r.getName().equals(role1)).collect(Collectors.toList()).get(0);
+            Assert.assertEquals(role1Display, userRole.getDisplayText());
+        }
         verifyResponseRoles(userRoles.get(user1), List.of(role1, role2), List.of(role1, role2));
         verifyResponseRoles(userRoles.get(user2), List.of(role1, role2), List.of(role1, role2));
 
