@@ -183,7 +183,7 @@ public class UserAdminService {
         if (hasAddRoles) {
             // ensure no union of add and remove roles
             if (hasRemoveRoles && CollectionUtils.containsAny(addRoles, removeRoles)) {
-                throw new DsmInternalError("Invalid user request: Cannot add and remove the same user");
+                throw new DSMBadRequestException("Invalid user roles request: Cannot add and remove the same roles");
             }
         } else if (!hasRemoveRoles) {
             throw new DSMBadRequestException("No update roles provided");
@@ -301,7 +301,7 @@ public class UserAdminService {
             // ensure no union of add and remove users
             if (hasAddUsers && CollectionUtils.containsAny(removeUsers,
                     addUsers.stream().map(UserRequest.User::getEmail).collect(Collectors.toList()))) {
-                throw new DsmInternalError("Invalid user request: Cannot add and remove the same user");
+                throw new DSMBadRequestException("Invalid user request: Cannot add and remove the same user");
             }
         } else if (!hasAddUsers) {
             throw new DSMBadRequestException("Invalid user request: no users");
@@ -374,7 +374,7 @@ public class UserAdminService {
         // if user has no roles in this study then it is okay to add them
         List<String> existingRoles = getRolesForUser(userDto.getId(), groupId);
         if (!existingRoles.isEmpty()) {
-            throw new DsmInternalError(String.format("Cannot add user %s: Already has roles in study %s",
+            throw new DSMBadRequestException(String.format("Cannot add user %s: Already has roles in study %s",
                     email, studyGroup));
         }
 
