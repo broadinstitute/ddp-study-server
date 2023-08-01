@@ -6,9 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.service.admin.UserRequest;
-import org.broadinstitute.dsm.service.admin.UserRoleRequest;
+import org.broadinstitute.dsm.service.admin.SetUserRoleRequest;
+import org.broadinstitute.dsm.service.admin.UpdateUserRoleRequest;
 import org.broadinstitute.dsm.service.admin.UserAdminService;
+import org.broadinstitute.dsm.service.admin.UserRoleRequest;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.lddp.handlers.util.Result;
 import spark.Request;
@@ -33,21 +34,7 @@ public class UserRoleRoute extends RequestHandler {
         boolean hasBody = !StringUtils.isBlank(body);
 
         if (requestMethod.equals(RoutePath.RequestMethod.GET.toString())) {
-            UserRequest req = null;
-            if (hasBody) {
-                try {
-                    req = new Gson().fromJson(body, UserRequest.class);
-                } catch (Exception e) {
-                    log.info("Invalid request format for {}", body);
-                    response.status(400);
-                    return "Invalid request format";
-                }
-            }
-            try {
-                return service.getUserRoles(req);
-            } catch (Exception e) {
-                return handleError(e, "getting user roles", response);
-            }
+            return getUserRoles(request.body(), response, service);
         }
 
         if (!hasBody) {
@@ -55,26 +42,33 @@ public class UserRoleRoute extends RequestHandler {
             return "Request body is blank";
         }
 
-        UserRoleRequest req;
-        try {
-            req = new Gson().fromJson(body, UserRoleRequest.class);
-        } catch (Exception e) {
-            log.info("Invalid request format for {}", body);
-            response.status(400);
-            return "Invalid request format";
-        }
-
-        if (requestMethod.equals(RoutePath.RequestMethod.POST.toString())) {
+        if (requestMethod.equals(RoutePath.RequestMethod.PUT.toString())) {
+            SetUserRoleRequest req;
             try {
-                service.addUserRoles(req);
+                req = new Gson().fromJson(body, SetUserRoleRequest.class);
             } catch (Exception e) {
-                return handleError(e, "adding user roles", response);
+                log.info("Invalid request format for {}", body);
+                response.status(400);
+                return "Invalid request format";
             }
-        } else if (requestMethod.equals(RoutePath.RequestMethod.DELETE.toString())) {
             try {
-                service.removeUserRoles(req);
+                service.setUserRoles(req);
             } catch (Exception e) {
-                return handleError(e, "removing user roles", response);
+                return handleError(e, "setting user roles", response);
+            }
+        } else if (requestMethod.equals(RoutePath.RequestMethod.POST.toString())) {
+            UpdateUserRoleRequest req;
+            try {
+                req = new Gson().fromJson(body, UpdateUserRoleRequest.class);
+            } catch (Exception e) {
+                log.info("Invalid request format for {}", body);
+                response.status(400);
+                return "Invalid request format";
+            }
+            try {
+                service.updateUserRoles(req);
+            } catch (Exception e) {
+                return handleError(e, "updating user roles", response);
             }
         } else {
             String msg = "Invalid HTTP method for UserRoleRoute: " + requestMethod;
@@ -84,6 +78,24 @@ public class UserRoleRoute extends RequestHandler {
         }
 
         return new Result(200);
+    }
+
+    protected static Object getUserRoles(String body, Response response, UserAdminService service) {
+        UserRoleRequest req = null;
+        if (!StringUtils.isBlank(body)) {
+            try {
+                req = new Gson().fromJson(body, UserRoleRequest.class);
+            } catch (Exception e) {
+                log.info("Invalid request format for {}", body);
+                response.status(400);
+                return "Invalid request format";
+            }
+        }
+        try {
+            return service.getUserRoles(req);
+        } catch (Exception e) {
+            return handleError(e, "getting user roles", response);
+        }
     }
 
     protected static String handleError(Throwable e, String operation, Response response) {

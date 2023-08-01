@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.service.admin.AddUserRequest;
 import org.broadinstitute.dsm.service.admin.UpdateUserRequest;
 import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.dsm.service.admin.UserRequest;
@@ -35,16 +34,16 @@ public class UserRoute extends RequestHandler {
         String requestMethod = request.requestMethod();
 
         if (requestMethod.equals(RoutePath.RequestMethod.POST.toString())) {
-            AddUserRequest req;
+            UserRequest req;
             try {
-                req = new Gson().fromJson(body, AddUserRequest.class);
+                req = new Gson().fromJson(body, UserRequest.class);
             } catch (Exception e) {
                 log.info("Invalid request format for {}", body);
                 response.status(400);
                 return "Invalid request format";
             }
             try {
-                adminService.addUser(req);
+                adminService.addAndRemoveUsers(req);
             } catch (Exception e) {
                 return UserRoleRoute.handleError(e, "adding user", response);
             }
@@ -61,20 +60,6 @@ public class UserRoute extends RequestHandler {
                 adminService.updateUser(req);
             } catch (Exception e) {
                 return UserRoleRoute.handleError(e, "updating user", response);
-            }
-        } else if (requestMethod.equals(RoutePath.RequestMethod.DELETE.toString())) {
-            UserRequest req;
-            try {
-                req = new Gson().fromJson(body, UserRequest.class);
-            } catch (Exception e) {
-                log.info("Invalid request format for {}", body);
-                response.status(400);
-                return "Invalid request format";
-            }
-            try {
-                adminService.removeUser(req);
-            } catch (Exception e) {
-                return UserRoleRoute.handleError(e, "removing user", response);
             }
         } else {
             String msg = "Invalid HTTP method for UserRoute: " + requestMethod;
