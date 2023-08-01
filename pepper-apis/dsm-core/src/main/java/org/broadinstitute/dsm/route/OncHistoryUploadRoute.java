@@ -40,7 +40,7 @@ public class OncHistoryUploadRoute extends RequestHandler {
         String oncHistoryUserId;
         try {
             UserDto user = new UserDao().get(Integer.parseInt(userId)).orElseThrow();
-            oncHistoryUserId = user.getEmail().orElseThrow();
+            oncHistoryUserId = user.getEmailOrThrow();
             if (oncHistoryUserId.isEmpty()) {
                 throw new DsmInternalError("Empty email address");
             }
