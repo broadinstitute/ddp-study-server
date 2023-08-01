@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_circadia">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='Circadia')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_edit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='Circadia')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='Circadia')</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_atcp">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_shipping_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='atcp')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='atcp')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_edit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='atcp')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='atcp')</where>
+        </update>
+   </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_prion">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='prion')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_edit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='prion')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='prion')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='survey_creation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='prion')</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_brugada">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_deactivation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_shipping_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_exit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pdf_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='survey_creation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='brugada')</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_darwin">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_deactivation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='darwin')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_express') AND group_id = (SELECT group_id FROM ddp_group WHERE name='darwin')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_shipping_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='darwin')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload') AND group_id = (SELECT group_id FROM ddp_group WHERE name='darwin')</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_malab">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='discard_sample') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_deactivation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_express') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_shipping_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_edit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_exit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pdf_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='malab')</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_cmi">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='discard_sample') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='field_settings') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='file_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_deactivation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_express') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_sequencing_order') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_shipping_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_abstracter') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_abstraction_admin') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_no_request_tissue') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_qc') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_request') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='ndi_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_edit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_event') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_exit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pdf_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='survey_creation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='view_only_dss_data') AND group_id = (SELECT group_id FROM ddp_group WHERE name='cmi')</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="cunningh" id="PEPPER-1004_study_roles_admin_pecgs">
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='discard_sample') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='field_settings') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='file_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_deactivation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_express') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_sequencing_order') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_shipping_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='kit_upload_invalid_address') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mailingList_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_abstracter') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_abstraction_admin') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_no_request_tissue') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_qc') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_request') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='mr_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='ndi_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_edit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_event') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='participant_exit') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pdf_download') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='pt_list_view') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='survey_creation') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='upload_onc_history') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='upload_ror_file') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='view_only_dss_data') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='view_seq_order_status') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+        <update tableName="ddp_group_role">
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+            <where>role_id = (SELECT role_id FROM access_role WHERE name='view_shared_learnings') AND group_id = (SELECT group_id FROM ddp_group WHERE name='pecgs')</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>
