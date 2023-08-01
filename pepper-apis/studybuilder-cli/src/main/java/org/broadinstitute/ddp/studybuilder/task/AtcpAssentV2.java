@@ -1,13 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -21,14 +13,24 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class AtcpAssentV2 implements CustomTask {
@@ -91,27 +93,28 @@ public class AtcpAssentV2 implements CustomTask {
     private void updateVariables(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
-            revisionVariableTranslation(config.getString(TRANSLATION_KEY), config.getString(TRANSLATION_NEW),
-                    config.getString(LANGUAGE_CODE), handle, meta, version2);
+            TemplateVariable templateVariable = gson.fromJson(ConfigUtil.toJson(config), TemplateVariable.class);
+            revisionVariableTranslation(handle, templateVariable, meta, version2);
         }
     }
 
-    private void revisionVariableTranslation(String varName, String newTemplateText, String isoLanguageCode, Handle handle,
+    private void revisionVariableTranslation(Handle handle, TemplateVariable templateVariable,
                                              RevisionMetadata meta, ActivityVersionDto version2) {
-        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
+        log.info("revisioning and updating template variable: {}", templateVariable.getName());
+        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(templateVariable.getName());
         JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+        log.info("Trans count: {} ", transList.size());
         List<Long> revisionIdList = transList.stream().map(Translation::getRevisionId).map(Optional::get).collect(Collectors.toList());
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         long newSubRevId = jdbiRevision.copyAndTerminate(revisionIdList.get(0), meta.getTimestamp(), meta.getUserId(), meta.getReason());
         long[] retiringId = {newSubRevId};
         transList.forEach(transListEntry -> {
+            String newTxt = templateVariable.getTranslation(transListEntry.getLanguageCode()).get().getText();
             jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(transListEntry.getId().get()), retiringId);
-            if (isoLanguageCode.equalsIgnoreCase(transListEntry.getLanguageCode())) {
-                jdbiVarSubst.insert(transListEntry.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
-            } else {
-                jdbiVarSubst.insert(transListEntry.getLanguageCode(), transListEntry.getText(), version2.getRevId(), tmplVarId);
-            }
+            jdbiVarSubst.insert(transListEntry.getLanguageCode(), newTxt, version2.getRevId(), tmplVarId);
+            log.info("terminated: language: {} revId: {} new Text: {} currText: {}", transListEntry.getLanguageCode(),
+                    transListEntry.getRevisionId(), newTxt, transListEntry.getText());
         });
     }
 
