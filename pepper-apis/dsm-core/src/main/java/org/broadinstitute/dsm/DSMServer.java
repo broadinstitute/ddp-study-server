@@ -647,7 +647,6 @@ public class DSMServer {
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
-                userUtil,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
@@ -1060,6 +1059,8 @@ public class DSMServer {
             response.body(exception.getMessage());
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
+            logger.error("Internal error {}", exception.toString());
+            exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });
