@@ -482,11 +482,11 @@ public class UserAdminService {
             return allStudyUsers;
         }
 
-        Map<String, Integer> emailToId = allStudyUsers.entrySet().stream().collect(Collectors.toMap(e -> e.getValue().getEmail(),
-                Map.Entry::getKey));
+        Map<String, Integer> emailToId = allStudyUsers.entrySet().stream().collect(Collectors.toMap(e ->
+                        e.getValue().getEmail().toUpperCase(), Map.Entry::getKey));
         Map<Integer, UserInfo> users = new HashMap<>();
-        for (String email: req.getUsers()) { //!!DC
-            Integer id = emailToId.get(email);
+        for (String email: req.getUsers()) {
+            Integer id = emailToId.get(email.trim().toUpperCase());
             if (id != null) {
                 users.put(id, allStudyUsers.get(id));
             } else {
