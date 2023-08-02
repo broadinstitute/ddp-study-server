@@ -34,6 +34,7 @@ public interface KitDao extends Dao<KitRequestShipping> {
     Integer deleteKit(Long kitId);
 
     Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel);
+
     Optional<List<KitRequestShipping>> getSubkitsByDdpLabel(String ddpLabel, String kitLabel);
 
     List<KitRequestShipping> getKitsByHruid(String hruid);
@@ -42,4 +43,7 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     ResultSet getKitsInDatabaseByInstanceId(DDPInstance ddpInstance);
 
+    ResultSet getKitsByJuniperKitId(String juniperKitId);
+
+    ResultSet getKitsByParticipantId(String participantId);
 }

@@ -151,6 +151,8 @@ public class KitDaoImpl implements KitDao {
                     + " LEFT JOIN ddp_kit_tracking tracking on  (tracking.kit_label = k.kit_label) ";
 
     private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ? ";
+    private static final String BY_JUNIPER_KIT_ID = " WHERE ddp_kit_request_id = ? ";
+    private static final String BY_PARTICIPANT_ID = " WHERE ddp_participant_id = ? ";
 
 
     private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
@@ -689,6 +691,49 @@ public class KitDaoImpl implements KitDao {
                 }
             } catch (Exception ex) {
                 dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()));
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new DSMBadRequestException(simpleResult.resultException);
+        }
+        return (ResultSet) simpleResult.resultValue;
+
+    }
+
+    @Override
+    public ResultSet getKitsByJuniperKitId(String juniperKitId) {
+        SimpleResult simpleResult = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_JUNIPER_KIT_ID))) {
+                stmt.setString(1, juniperKitId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    dbVals.resultValue = rs;
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = new Exception(String.format("Error getting kits with juniper kit id %s", juniperKitId));
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new DSMBadRequestException(simpleResult.resultException);
+        }
+        return (ResultSet) simpleResult.resultValue;
+    }
+
+    @Override
+    public ResultSet getKitsByParticipantId(String participantId) {
+        SimpleResult simpleResult = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_PARTICIPANT_ID))) {
+                stmt.setString(1, participantId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    dbVals.resultValue = rs;
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = new Exception(String.format("Error getting kits with participant id %s", participantId));
             }
             return dbVals;
         });

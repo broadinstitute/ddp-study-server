@@ -1,11 +1,7 @@
 package org.broadinstitute.dsm.model.nonpepperkit;
 
-import static org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService.UNKNOWN_STUDY;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,16 +27,38 @@ public class NonPepperStatusKitService {
     }
 
     public KitResponse getKitsBasedOnStudyName(String studyGuid) {
+        if (StringUtils.isBlank(studyGuid)) {
+            return new KitResponseError(KitResponse.MISSING_STUDY_GUID);
+        }
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
         if (ddpInstance == null || !ddpInstance.isHasRole()) {
             log.error(studyGuid + " is not a Juniper study!");
-            return new KitResponseError(UNKNOWN_STUDY);
+            return new KitResponseError(KitResponse.UNKNOWN_STUDY);
         }
         BookmarkDto kitPagingThreshold = new BookmarkDao().getBookmarkByInstance(STATUS_KIT_THRESHOLD)
                 .orElse(new BookmarkDto.Builder(20, STATUS_KIT_THRESHOLD).build()); // use a threshold of 20 if none provided
 
         // get all the kits
         ResultSet foundKitResults = kitDao.getKitsInDatabaseByInstanceId(ddpInstance);
+        return processNonPepperKitStatusFromResultSet(foundKitResults);
+    }
+
+    public KitResponse getKitsBasedOnJuniperKitId(String juniperKitId) {
+        if (StringUtils.isBlank(juniperKitId)) {
+            return new KitResponseError(KitResponse.MISSING_JUNIPER_KIT_ID);
+        }
+        // get the kit with that juniperKitId
+        ResultSet foundKitResults = kitDao.getKitsByJuniperKitId(juniperKitId);
+        return processNonPepperKitStatusFromResultSet(foundKitResults);
+
+    }
+
+    public KitResponse getKitsBasedOnParticipantId(String participantId) {
+        if (StringUtils.isBlank(participantId)) {
+            return new KitResponseError(KitResponse.MISSING_JUNIPER_PARTICIPANT_ID);
+        }
+        // get the kit with that participantId
+        ResultSet foundKitResults = kitDao.getKitsByParticipantId(participantId);
         return processNonPepperKitStatusFromResultSet(foundKitResults);
     }
 

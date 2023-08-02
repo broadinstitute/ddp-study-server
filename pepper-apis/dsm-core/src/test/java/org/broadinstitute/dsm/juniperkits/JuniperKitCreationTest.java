@@ -9,6 +9,7 @@ import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
+import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponseError;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -98,7 +99,7 @@ public class JuniperKitCreationTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
         KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
-        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.MISSING_JUNIPER_KIT_ID);
+        Assert.assertEquals(kitResponse.errorMessage, KitResponse.MISSING_JUNIPER_KIT_ID);
         Assert.assertEquals(kitResponse.value, null);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
@@ -136,7 +137,7 @@ public class JuniperKitCreationTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
         KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
-        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.MISSING_JUNIPER_PARTICIPANT_ID);
+        Assert.assertEquals(kitResponse.errorMessage, KitResponse.MISSING_JUNIPER_PARTICIPANT_ID);
         Assert.assertEquals(kitResponse.value, "");
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
@@ -174,7 +175,7 @@ public class JuniperKitCreationTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
         KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, kitType);
-        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.UNKNOWN_KIT_TYPE);
+        Assert.assertEquals(kitResponse.errorMessage, KitResponse.UNKNOWN_KIT_TYPE);
         Assert.assertEquals(kitResponse.value, kitType);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
@@ -212,7 +213,7 @@ public class JuniperKitCreationTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
 
         KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, fakeInstanceGuid, kitType);
-        Assert.assertEquals(kitResponse.errorMessage, NonPepperKitCreationService.UNKNOWN_STUDY);
+        Assert.assertEquals(kitResponse.errorMessage, KitResponse.UNKNOWN_STUDY);
         Assert.assertEquals(kitResponse.value, fakeInstanceGuid);
 
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);

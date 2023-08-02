@@ -586,7 +586,11 @@ public class DSMServer {
             post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
 
             NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
-            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_STUDY, new StatusKitRoute(nonPepperStatusKitService), new JsonTransformer());
+            StatusKitRoute statusKitRoute = new StatusKitRoute(nonPepperStatusKitService);
+            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_PARTICIPANT_KIT_ID, statusKitRoute, new JsonTransformer());
+            post(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
         }
 
         if (!cfg.getBoolean("ui.production")) {

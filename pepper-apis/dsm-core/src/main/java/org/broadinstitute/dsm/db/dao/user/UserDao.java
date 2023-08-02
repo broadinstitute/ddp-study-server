@@ -156,7 +156,8 @@ public class UserDao implements Dao<UserDto> {
                         UserDto user = new UserDto(rs.getInt(USER_ID),
                                 rs.getString(NAME),
                                 rs.getString(EMAIL),
-                                rs.getString(PHONE_NUMBER));
+                                rs.getString(PHONE_NUMBER),
+                                rs.getInt(IS_ACTIVE));
                         users.put(user.getId(), user);
                     }
                 }

@@ -27,36 +27,31 @@ public class NonPepperKitCreationService {
     public static final String JUNIPER_UNDERSCORE = "JUNIPER_";
 
     //These are the Error Strings that are expected by Juniper
-    public static final String ADDRESS_VALIDATION_ERROR = "UNABLE_TO_VERIFY_ADDRESS";
-    public static final String UNKNOWN_KIT_TYPE = "UNKNOWN_KIT_TYPE";
-    public static final String UNKNOWN_STUDY = "UNKNOWN_STUDY";
-    public static final String MISSING_JUNIPER_KIT_ID = "MISSING_JUNIPER_KIT_ID";
-    public static final String MISSING_JUNIPER_PARTICIPANT_ID = "MISSING_JUNIPER_PARTICIPANT_ID";
-    public static final String DSM_ERROR = "DSM_ERROR_SOMETHING_WENT_WRONG";
+
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
-            return new KitResponseError(MISSING_JUNIPER_PARTICIPANT_ID, juniperKitRequest.getJuniperKitId(),
+            return new KitResponseError(KitResponse.MISSING_JUNIPER_PARTICIPANT_ID, juniperKitRequest.getJuniperKitId(),
                     juniperKitRequest.getJuniperParticipantID());
         }
         if (StringUtils.isBlank(juniperKitRequest.getJuniperKitId())) {
-            return new KitResponseError(MISSING_JUNIPER_KIT_ID, null, juniperKitRequest.getJuniperKitId());
+            return new KitResponseError(KitResponse.MISSING_JUNIPER_KIT_ID, null, juniperKitRequest.getJuniperKitId());
         }
         //getting the instance with isHasRole being set to true if the instance has role juniper_study
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
         if (ddpInstance == null) {
             log.error(studyGuid + " is not a study!");
-            return new KitResponseError(UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(), studyGuid);
+            return new KitResponseError(KitResponse.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(), studyGuid);
         }
         if (!ddpInstance.isHasRole()) {
             log.error(studyGuid + " is not a Juniper study!");
-            return new KitResponseError(UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(), studyGuid);
+            return new KitResponseError(KitResponse.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(), studyGuid);
         }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = KitType.createKitTypeKey(kitTypeName, ddpInstance.getDdpInstanceId());
         KitType kitType = kitTypes.get(key);
         if (kitType == null) {
-            return new KitResponseError(UNKNOWN_KIT_TYPE, juniperKitRequest.getJuniperKitId(), kitTypeName);
+            return new KitResponseError(KitResponse.UNKNOWN_KIT_TYPE, juniperKitRequest.getJuniperKitId(), kitTypeName);
         }
 
         Map<Integer, KitRequestSettings> kitRequestSettingsMap =
@@ -70,7 +65,7 @@ public class NonPepperKitCreationService {
         EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
 
         if (!checkAddress(juniperKitRequest, kitRequestSettings.getPhone(), easyPostUtil)) {
-            return new KitResponseError(ADDRESS_VALIDATION_ERROR, juniperKitRequest.getJuniperKitId(), null);
+            return new KitResponseError(KitResponse.ADDRESS_VALIDATION_ERROR, juniperKitRequest.getJuniperKitId(), null);
         }
 
         ArrayList<KitRequest> orderKits = new ArrayList<>();
@@ -89,7 +84,7 @@ public class NonPepperKitCreationService {
 
         if (result.resultException != null) {
             log.error(String.format("Unable to create Juniper kit for %s", juniperKitRequest), result.resultException);
-            return new KitResponseError(DSM_ERROR, juniperKitRequest.getJuniperKitId());
+            return new KitResponseError(KitResponse.DSM_ERROR, juniperKitRequest.getJuniperKitId());
 
         }
 

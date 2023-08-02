@@ -23,6 +23,16 @@ public class StatusKitRoute implements Route {
             log.info(String.format("Got a request to return information of kits in non-pepper study %s", study));
             return this.nonPepperStatusKitService.getKitsBasedOnStudyName(study);
         }
+        if (request.url().contains(RoutePath.STATUS_KIT_ENDPOINT_JUNIPER_KIT_ID)) {
+            String juniperKitId = request.params(RequestParameter.JUNIPER_KIT_ID);
+            log.info(String.format("Got a request to return information of kit with Juniper Kit Id %s", juniperKitId));
+            return this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitId);
+        }
+        if (request.url().contains(RoutePath.STATUS_KIT_ENDPOINT_PARTICIPANT_KIT_ID)) {
+            String participantId = request.params(RequestParameter.JUNIPER_PARTICIPANT_ID);
+            log.info(String.format("Got a request to return information of kit with Juniper Kit Id %s", participantId));
+            return this.nonPepperStatusKitService.getKitsBasedOnParticipantId(participantId);
+        }
 
         return null;
     }
