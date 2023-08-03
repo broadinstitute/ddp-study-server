@@ -175,7 +175,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     @Override
@@ -199,7 +199,7 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
 
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     @Override
@@ -247,7 +247,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     private AbstractQueryBuilder addOsteo2Filter(AbstractQueryBuilder queryBuilder) {
@@ -287,7 +287,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + participantIndexES);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     @Override
@@ -331,7 +331,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> elasticSearchParticipantDtos = parseSourceMaps(searchResponse.getHits().getHits());
         logger.info("Got " + elasticSearchParticipantDtos.size() + " participants from ES for instance " + esParticipantsIndex);
-        return new ElasticSearch(elasticSearchParticipantDtos, searchResponse.getHits().getTotalHits());
+        return new ElasticSearch(elasticSearchParticipantDtos, searchResponse.getHits().getTotalHits().value);
     }
 
     private BoolQueryBuilder getBoolQueryOfParticipantsId(List<String> participantIds) {

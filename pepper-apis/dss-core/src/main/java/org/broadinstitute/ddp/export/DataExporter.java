@@ -145,7 +145,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.xcontent.XContentType;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -153,8 +153,6 @@ public class DataExporter {
     public static final String TIMESTAMP_PATTERN = "MM/dd/yyyy HH:mm:ss";
     public static final DateTimeFormatter TIMESTAMP_FMT = DateTimeFormatter
             .ofPattern(TIMESTAMP_PATTERN).withZone(ZoneOffset.UTC);
-
-    private static final String REQUEST_TYPE = "_doc";
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static final Map<String, String> emailStore = new HashMap<>();
@@ -433,7 +431,6 @@ public class DataExporter {
             String esDoc = gson.toJson(value);
             UpdateRequest updateRequest = new UpdateRequest()
                     .index(index)
-                    .type(REQUEST_TYPE)
                     .id(key)
                     .doc(esDoc, XContentType.JSON)
                     .docAsUpsert(true);
@@ -637,7 +634,6 @@ public class DataExporter {
         participantRecords.forEach((key, value) -> {
             UpdateRequest updateRequest = new UpdateRequest()
                     .index(index)
-                    .type(REQUEST_TYPE)
                     .id(key)
                     .doc(value, XContentType.JSON)
                     .docAsUpsert(true);

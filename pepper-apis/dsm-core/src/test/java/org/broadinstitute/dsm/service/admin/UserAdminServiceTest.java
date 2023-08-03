@@ -267,6 +267,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     @Test
     public void testSetUserRoles() {
         String role1 = "upload_onc_history";
+        String role1Display = "Onc history: Upload";
         String role2 = "upload_ror_file";
         List<String> roles = List.of(role1, role2);
         Map<String, Integer> rolesToId = getRoleIds(roles);
@@ -323,6 +324,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
         List<UserInfo> userInfoList = res.getUsers();
         Map<String, Map<String, Boolean>> userRoles = getUserRoles(userInfoList);
+        for (var userInfo: userInfoList) {
+            UserRole userRole = userInfo.getRoles().stream().filter(r ->
+                    r.getName().equals(role1)).collect(Collectors.toList()).get(0);
+            Assert.assertEquals(role1Display, userRole.getDisplayText());
+        }
         verifyResponseRoles(userRoles.get(user1), List.of(role1, role2), List.of(role1, role2));
         verifyResponseRoles(userRoles.get(user2), List.of(role1, role2), List.of(role1, role2));
 
@@ -494,10 +500,20 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
         String user = "test_user6@study.org";
         String userName = "test_user6";
+
+        UserAdminService service = new UserAdminService(Integer.toString(operatorId), TEST_GROUP);
+        UserRequest badUserRequest = new UserRequest(List.of(new UserRequest.User(user, userName, null,
+                List.of("bad_role"))), null);
+        try {
+            service.addAndRemoveUsers(badUserRequest);
+            Assert.fail("UserAdminService.addUser should fail with bad role names");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid roles for study group"));
+        }
+
         UserRequest userRequest = new UserRequest(List.of(new UserRequest.User(user, userName, null,
                 List.of(role1))), null);
 
-        UserAdminService service = new UserAdminService(Integer.toString(operatorId), TEST_GROUP);
         try {
             service.addAndRemoveUsers(userRequest);
         } catch (Exception e) {
@@ -558,12 +574,12 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         try {
             service.addAndRemoveUsers(removeReq);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.removeUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addAndRemoveUsers: " +  getStackTrace(e));
         }
 
         try {
             UserAdminService.verifyUserByEmail(user, groupId);
-            Assert.fail("UserAdminService.removeUser failed to remove user");
+            Assert.fail("UserAdminService.addAndRemoveUsers failed to remove user");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Invalid user"));
         }
@@ -592,6 +608,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int operatorId = setupAdmin("test_admin5@study.org", new ArrayList<>(rolesToId.values()), groupId);
 
         String user = "test_user7@study.org";
+        String userVariation = "Test_User7@study.org";
         String userName = "test_user7";
         UserRequest addUserRequest = new UserRequest(List.of(new UserRequest.User(user, userName, null,
                 roles)), null);
@@ -600,27 +617,27 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         try {
             service.addAndRemoveUsers(addUserRequest);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addAndRemoveUsers: " +  getStackTrace(e));
         }
 
         UserRequest removeReq = new UserRequest(null, List.of(user));
         try {
             service.addAndRemoveUsers(removeReq);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.removeUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addAndRemoveUsers: " +  getStackTrace(e));
         }
 
         // add user back to test the inactive to active transition
         try {
             service.addAndRemoveUsers(addUserRequest);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addAndRemoveUsers: " +  getStackTrace(e));
         }
 
         // try to add again
         try {
             service.addAndRemoveUsers(addUserRequest);
-            Assert.fail("UserAdminService.addUser should fail to add an existing study user");
+            Assert.fail("UserAdminService.addAndRemoveUsers should fail to add an existing study user");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Already has roles in study"));
         }
@@ -634,14 +651,22 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         try {
             service.addAndRemoveUsers(addUserRequest);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.addUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addAndRemoveUsers: " +  getStackTrace(e));
         }
 
-        // cleanup
+        // cleanup (with case variation on email address)
+        UserRequest removeReq2 = new UserRequest(null, List.of(userVariation));
         try {
-            service.addAndRemoveUsers(removeReq);
+            service.addAndRemoveUsers(removeReq2);
         } catch (Exception e) {
-            Assert.fail("Exception from UserAdminService.removeUser: " +  getStackTrace(e));
+            Assert.fail("Exception from UserAdminService.addAndRemoveUsers: " +  getStackTrace(e));
+        }
+
+        try {
+            service.addAndRemoveUsers(removeReq2);
+            Assert.fail("UserAdminService.addAndRemoveUsers should fail to a remove study user that does not exist");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid user for study group"));
         }
     }
 
@@ -684,6 +709,27 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("Expecting exception from UserAdminService.getStudyGroup");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("does not match"));
+        }
+    }
+
+    @Test
+    public void testValidateEmailFormat() {
+        try {
+            UserAdminService.validateEmailFormat("joe@gmail.com");
+        } catch (Exception e) {
+            Assert.fail("Exception from UserAdminService.validateEmailFormat: " +  e.toString());
+        }
+        try {
+            UserAdminService.validateEmailFormat("justjoe");
+            Assert.fail("UserAdminService.validateEmailFormat should fail with bad email address: justjoe");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid email address format"));
+        }
+        try {
+            UserAdminService.validateEmailFormat("joe@gmail");
+            Assert.fail("UserAdminService.validateEmailFormat should fail with bad email address: joe@gmail");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid email address format"));
         }
     }
 

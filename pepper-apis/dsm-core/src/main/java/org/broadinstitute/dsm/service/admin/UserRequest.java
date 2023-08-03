@@ -17,7 +17,7 @@ public class UserRequest {
 
     @Data
     public static class User {
-        private final String email;
+        private String email;
         private final String name;
         private final String phone;
         private final List<String> roles;
