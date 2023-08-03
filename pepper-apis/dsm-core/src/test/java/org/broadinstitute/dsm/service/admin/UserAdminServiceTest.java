@@ -499,6 +499,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         int operatorId = setupAdmin("test_admin4@study.org", new ArrayList<>(rolesToId.values()), groupId);
 
         String user = "test_user6@study.org";
+        String userVariation = "TESt_user6@study.org";
         String userName = "test_user6";
 
         UserAdminService service = new UserAdminService(Integer.toString(operatorId), TEST_GROUP);
@@ -545,7 +546,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         // update user
         String newUserName = "newName";
         String phone = "555-1212";
-        UpdateUserRequest.User updateUser = new UpdateUserRequest.User(user, newUserName, phone);
+        UpdateUserRequest.User updateUser = new UpdateUserRequest.User(userVariation, newUserName, phone);
         UpdateUserRequest updateReq = new UpdateUserRequest(List.of(updateUser));
         try {
             service.updateUser(updateReq);
