@@ -37,6 +37,9 @@ public class UserAdminService {
     private final String studyGroup;
     protected static final String USER_ADMIN_ROLE = "study_user_admin";
     protected static final String PEPPER_ADMIN_ROLE = "pepper_admin";
+    private int adminId;
+    private String adminEmail;
+    private boolean initialized;
 
     private static final String SQL_SELECT_STUDY_GROUP =
             "SELECT dg.group_id FROM ddp_group dg WHERE dg.name = ?";
@@ -111,12 +114,30 @@ public class UserAdminService {
     public UserAdminService(String operatorId, String studyGroup) {
         this.operatorId = operatorId;
         this.studyGroup = studyGroup;
+        initialized = false;
+    }
+
+    protected void initialize() {
+        if (initialized) {
+            return;
+        }
+        try {
+            adminId = Integer.parseInt(operatorId);
+        } catch (NumberFormatException e) {
+            throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
+        }
+        UserDao userDao = new UserDao();
+        UserDto userDto = userDao.get(adminId).orElseThrow(() -> new DSMBadRequestException("Invalid operator ID " + operatorId));
+        adminEmail = userDto.getEmailOrThrow();
+
+        initialized = true;
     }
 
     /**
      * Get study roles that operator can administer
      */
     public StudyRoleResponse getStudyRoles() {
+        initialize();
         int groupId = verifyStudyGroup(studyGroup);
         Map<String, RoleInfo> studyRoles = getAdminRoles(groupId);
 
@@ -132,6 +153,7 @@ public class UserAdminService {
      * Set the roles for list of users
      */
     public void setUserRoles(SetUserRoleRequest req) {
+        initialize();
         int groupId = verifyStudyGroup(studyGroup);
 
         Map<String, Integer> userIds = validateUsers(req.getUsers(), groupId);
@@ -154,14 +176,14 @@ public class UserAdminService {
 
             if (!rolesToAdd.isEmpty()) {
                 addRoles(userId, rolesToAdd, groupId, studyRoles);
-                log.info("Added roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
-                        String.join(", ", rolesToAdd));
+                log.info("[User admin] Operator {} added roles for user {} in study group {}: {}", adminEmail,
+                        entry.getKey(), studyGroup, String.join(", ", rolesToAdd));
             }
 
             if (!rolesToRemove.isEmpty()) {
                 removeUserRoles(userId, rolesToRemove, groupId, studyRoles);
-                log.info("Removed roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
-                        String.join(", ", rolesToRemove));
+                log.info("[User admin] Operator {} removed roles for user {} in study group {}: {}", adminEmail,
+                        entry.getKey(), studyGroup, String.join(", ", rolesToRemove));
             }
         }
     }
@@ -170,6 +192,7 @@ public class UserAdminService {
      * Add and remove roles for list of users
      */
     public void updateUserRoles(UpdateUserRoleRequest req) {
+        initialize();
         int groupId = verifyStudyGroup(studyGroup);
 
         if (CollectionUtils.isEmpty(req.getUsers())) {
@@ -210,16 +233,16 @@ public class UserAdminService {
         if (hasAddRoles) {
             for (var entry: userIds.entrySet()) {
                 addRoles(entry.getValue(), addRoles, groupId, studyRoles);
-                log.info("Added roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
-                        String.join(", ", addRoles));
+                log.info("[User admin] Operator {} added roles for user {} in study group {}: {}", adminEmail,
+                        entry.getKey(), studyGroup, String.join(", ", addRoles));
             }
         }
 
         if (hasRemoveRoles) {
             for (var entry: userIds.entrySet()) {
                 removeUserRoles(entry.getValue(), removeRoles, groupId, studyRoles);
-                log.info("Removed roles for user {} in study group {}: {}", entry.getKey(), studyGroup,
-                        String.join(", ", removeRoles));
+                log.info("[User admin] Operator {} removed roles for user {} in study group {}: {}", adminEmail,
+                        entry.getKey(), studyGroup, String.join(", ", removeRoles));
             }
         }
     }
@@ -294,6 +317,7 @@ public class UserAdminService {
     }
 
     public void addAndRemoveUsers(UserRequest req) {
+        initialize();
         int groupId = verifyStudyGroup(studyGroup);
         Map<String, RoleInfo> studyRoles = getAdminRoles(groupId);
 
@@ -339,12 +363,14 @@ public class UserAdminService {
                            Map<String, RoleInfo> studyRoles) {
         UserDao userDao = new UserDao();
         for (var user: users) {
-            UserDto userDto = emailToUser.get(user.getEmail());
+            // email already verified
+            String email = user.getEmail();
+            UserDto userDto = emailToUser.get(email);
             int userId = userDto.getId();
             boolean hasUserSettings = false;
             if (userId != 0) {
                 UserDao.update(userId, userDto);
-                hasUserSettings = UserSettings.getUserSettings(userDto.getEmailOrThrow()) != null;
+                hasUserSettings = UserSettings.getUserSettings(email) != null;
             } else {
                 userId = userDao.create(userDto);
             }
@@ -352,6 +378,8 @@ public class UserAdminService {
                 UserSettings.createUserSettings(userId);
             }
             addRoles(userId, user.getRoles(), groupId, studyRoles);
+            log.info("[User admin] Operator {} added user {} to study group {} with roles {}", adminEmail, email,
+                    studyGroup, String.join(", ", user.getRoles()));
         }
     }
 
@@ -405,6 +433,7 @@ public class UserAdminService {
     }
 
     public void updateUser(UpdateUserRequest req) {
+        initialize();
         int groupId = validateOperatorAdmin();
         List<UpdateUserRequest.User> users = req.getUsers();
         if (CollectionUtils.isEmpty(users)) {
@@ -413,16 +442,21 @@ public class UserAdminService {
 
         Map<Integer, UpdateUserRequest.User> usersById = new HashMap<>();
         // pre-check to lessen likelihood of partial operation
-        for (var user: users) {
+        for (UpdateUserRequest.User user: users) {
             // not a strict requirement in DB, but now enforcing
             if (StringUtils.isBlank(user.getName())) {
                 throw new DSMBadRequestException("Invalid user name: blank");
             }
-            usersById.put(verifyUserByEmail(user.getEmail(), groupId).getId(), user);
+            UserDto userDto = verifyUserByEmail(user.getEmail(), groupId);
+            user.setEmail(userDto.getEmailOrThrow());
+            usersById.put(userDto.getId(), user);
         }
 
         for (var entry: usersById.entrySet()) {
-            UserDao.update(entry.getKey(), entry.getValue().asUserDto());
+            UserDto userDto = entry.getValue().asUserDto();
+            UserDao.update(entry.getKey(), userDto);
+            log.info("[User admin] Operator {} updated information for user {} in study group {}",
+                    adminEmail, userDto.getEmailOrThrow(), studyGroup);
         }
     }
 
@@ -435,6 +469,8 @@ public class UserAdminService {
             user.setIsActive(0);
             UserDao.update(user.getId(), user);
             UserSettings.deleteUserSettings(user.getId());
+            log.info("[User admin] Operator {} removed user {} from study group {}", adminEmail, user.getEmailOrThrow(),
+                    studyGroup);
         }
     }
 
@@ -451,6 +487,7 @@ public class UserAdminService {
      * @param req list of users, or all study users if NULL
      */
     public UserRoleResponse getUserRoles(UserRoleRequest req) {
+        initialize();
         int groupId = verifyStudyGroup(studyGroup);
         Map<String, RoleInfo> studyRoles = getAdminRoles(groupId);
 
@@ -511,12 +548,6 @@ public class UserAdminService {
     }
 
     protected Map<String, RoleInfo> getAdminRoles(int studyGroupId) {
-        int adminId;
-        try {
-            adminId = Integer.parseInt(operatorId);
-        } catch (NumberFormatException e) {
-            throw new DSMBadRequestException("Invalid operator ID format: " + operatorId);
-        }
         return verifyOperatorAdminRoles(adminId, studyGroupId);
     }
 
