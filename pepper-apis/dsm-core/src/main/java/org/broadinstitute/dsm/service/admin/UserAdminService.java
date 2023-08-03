@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -265,8 +266,9 @@ public class UserAdminService {
             throw new DSMBadRequestException("Invalid users: empty");
         }
         Map<String, Integer> userIds = new HashMap<>();
-        for (String email: users) {
-            userIds.put(email, verifyUserByEmail(email, groupId).getId());
+        for (String user: users) {
+            UserDto userDto = verifyUserByEmail(user, groupId);
+            userIds.put(userDto.getEmailOrThrow(), userDto.getId());
         }
         return userIds;
     }
@@ -288,19 +290,33 @@ public class UserAdminService {
         if (StringUtils.isBlank(email)) {
             throw new DSMBadRequestException("Invalid user email: blank");
         }
-        return email;
+        return email.trim();
     }
 
     public void addAndRemoveUsers(UserRequest req) {
+        int groupId = verifyStudyGroup(studyGroup);
+        Map<String, RoleInfo> studyRoles = getAdminRoles(groupId);
+
         List<String> removeUsers = req.getRemoveUsers();
         List<UserRequest.User> addUsers = req.getAddUsers();
         boolean hasAddUsers = !CollectionUtils.isEmpty(addUsers);
         boolean hasRemoveUsers = !CollectionUtils.isEmpty(removeUsers);
 
+        // verify request data
+        Map<String, UserDto> emailToAddUser = null;
+        if (hasAddUsers) {
+            emailToAddUser = verifyAddUser(addUsers, groupId, studyRoles.keySet());
+        }
+
+        List<UserDto> removeUserDto = new ArrayList<>();
         if (hasRemoveUsers) {
+            for (String user: removeUsers) {
+                removeUserDto.add(verifyUserByEmail(user, groupId));
+            }
+
             // ensure no union of add and remove users
-            if (hasAddUsers && CollectionUtils.containsAny(removeUsers,
-                    addUsers.stream().map(UserRequest.User::getEmail).collect(Collectors.toList()))) {
+            if (hasAddUsers && CollectionUtils.containsAny(emailToAddUser.keySet(),
+                    removeUserDto.stream().map(UserDto::getEmailOrThrow).collect(Collectors.toList()))) {
                 throw new DSMBadRequestException("Invalid user request: Cannot add and remove the same user");
             }
         } else if (!hasAddUsers) {
@@ -308,24 +324,19 @@ public class UserAdminService {
         }
 
         if (hasRemoveUsers) {
-            removeUser(removeUsers);
+            removeUser(removeUserDto);
         }
 
         if (hasAddUsers) {
-            addUser(addUsers);
+            addUser(addUsers, emailToAddUser, groupId, studyRoles);
         }
     }
 
     /**
      * Add user to study group. User request must include at least one role
      */
-    protected void addUser(List<UserRequest.User> users) {
-        int groupId = verifyStudyGroup(studyGroup);
-        Map<String, RoleInfo> studyRoles = getAdminRoles(groupId);
-
-        // pre-check to lessen likelihood of partial operation
-        Map<String, UserDto> emailToUser = verifyAddUser(users, groupId, studyRoles.keySet());
-
+    protected void addUser(List<UserRequest.User> users, Map<String, UserDto> emailToUser, int groupId,
+                           Map<String, RoleInfo> studyRoles) {
         UserDao userDao = new UserDao();
         for (var user: users) {
             UserDto userDto = emailToUser.get(user.getEmail());
@@ -333,7 +344,7 @@ public class UserAdminService {
             boolean hasUserSettings = false;
             if (userId != 0) {
                 UserDao.update(userId, userDto);
-                hasUserSettings = UserSettings.getUserSettings(user.getEmail()) != null;
+                hasUserSettings = UserSettings.getUserSettings(userDto.getEmailOrThrow()) != null;
             } else {
                 userId = userDao.create(userDto);
             }
@@ -348,6 +359,9 @@ public class UserAdminService {
         Map<String, UserDto> emailToUser = new HashMap<>();
         for (var user: users) {
             String email = validateEmailRequest(user.getEmail());
+            validateEmailFormat(email);
+            // update email in request since we use it as a key
+            user.setEmail(email);
 
             UserDto userDto = getUserByEmail(email, groupId);
             if (userDto != null) {
@@ -415,15 +429,7 @@ public class UserAdminService {
     /**
      * Remove one or more users and their associated roles
      */
-    protected void removeUser(List<String> users) {
-        int groupId = validateOperatorAdmin();
-
-        // pre-check all users to decrease likelihood of incomplete operation
-        List<UserDto> userDto = new ArrayList<>();
-        for (String email: users) {
-            userDto.add(verifyUserByEmail(email, groupId));
-        }
-
+    protected void removeUser(List<UserDto> userDto) {
         for (UserDto user: userDto) {
             deleteUserRoles(user.getId());
             user.setIsActive(0);
@@ -476,11 +482,11 @@ public class UserAdminService {
             return allStudyUsers;
         }
 
-        Map<String, Integer> emailToId = allStudyUsers.entrySet().stream().collect(Collectors.toMap(e -> e.getValue().getEmail(),
-                Map.Entry::getKey));
+        Map<String, Integer> emailToId = allStudyUsers.entrySet().stream().collect(Collectors.toMap(e ->
+                        e.getValue().getEmail().toUpperCase(), Map.Entry::getKey));
         Map<Integer, UserInfo> users = new HashMap<>();
         for (String email: req.getUsers()) {
-            Integer id = emailToId.get(email);
+            Integer id = emailToId.get(email.trim().toUpperCase());
             if (id != null) {
                 users.put(id, allStudyUsers.get(id));
             } else {
@@ -726,6 +732,12 @@ public class UserAdminService {
             throw new DSMBadRequestException("Invalid user for study group (inactive): " + email);
         }
         return user;
+    }
+
+    protected static void validateEmailFormat(String email) {
+        if (!EmailValidator.getInstance().isValid(email)) {
+            throw new DSMBadRequestException("Invalid email address format: " + email);
+        }
     }
 
     protected static UserDto getUserByEmail(String email, int groupId) {
