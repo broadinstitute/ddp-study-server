@@ -153,6 +153,7 @@ public class KitDaoImpl implements KitDao {
     private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ? ";
     private static final String BY_JUNIPER_KIT_ID = " WHERE ddp_kit_request_id = ? ";
     private static final String BY_PARTICIPANT_ID = " WHERE ddp_participant_id = ? ";
+    private static final String BY_ARRAY_KIT_IDS = " WHERE ddp_kit_request_id in (?) ";
 
 
     private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
@@ -742,4 +743,28 @@ public class KitDaoImpl implements KitDao {
         }
         return (ResultSet) simpleResult.resultValue;
     }
+
+    @Override
+    public ResultSet getKitsByKitId(String kitIdsStringForInStatement) {
+
+        SimpleResult simpleResult = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_ARRAY_KIT_IDS))) {
+                stmt.setString(1, kitIdsStringForInStatement);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    dbVals.resultValue = rs;
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = new Exception(String.format("Error getting kits for the list of ", BY_ARRAY_KIT_IDS));
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new DSMBadRequestException(simpleResult.resultException);
+        }
+        return (ResultSet) simpleResult.resultValue;
+    }
+
+
 }

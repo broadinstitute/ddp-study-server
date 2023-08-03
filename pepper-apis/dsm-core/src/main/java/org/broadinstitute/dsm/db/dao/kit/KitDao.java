@@ -46,4 +46,6 @@ public interface KitDao extends Dao<KitRequestShipping> {
     ResultSet getKitsByJuniperKitId(String juniperKitId);
 
     ResultSet getKitsByParticipantId(String participantId);
+
+    ResultSet getKitsByKitId(String kitId);
 }

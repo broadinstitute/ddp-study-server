@@ -7,6 +7,7 @@ import spark.Request;
 public class RoutePath {
 
     public static final String REALM = "realm";
+    public static final String JUNIPER_KIT_IDS = "kitIds";
     public static final String STUDY_GROUP = "studyGroup";
     public static final String KIT_TYPE = "kitType";
     public static final String UPLOAD_REASONS = "uploadReasons";

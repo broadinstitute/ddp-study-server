@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.route.juniper;
 
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -32,6 +33,11 @@ public class StatusKitRoute implements Route {
             String participantId = request.params(RequestParameter.JUNIPER_PARTICIPANT_ID);
             log.info(String.format("Got a request to return information of kit with Juniper Kit Id %s", participantId));
             return this.nonPepperStatusKitService.getKitsBasedOnParticipantId(participantId);
+        }
+        if (request.url().contains(RoutePath.STATUS_KIT_ENDPOINT_KIT_IDS)) {
+            String[] kitIds = new Gson().fromJson(String.valueOf(request.queryMap().get(RoutePath.JUNIPER_KIT_IDS)), String[].class);
+            String kitIdsStringForInStatement = nonPepperStatusKitService.getKitIdsStringFromArray(kitIds);
+            return this.nonPepperStatusKitService.getKitsFromKitIds(kitIdsStringForInStatement);
         }
 
         return null;

@@ -62,6 +62,12 @@ public class NonPepperStatusKitService {
         return processNonPepperKitStatusFromResultSet(foundKitResults);
     }
 
+    public KitResponse getKitsFromKitIds(String kitIdsStringForInStatement) {
+        // get the kit with that participantId
+        ResultSet foundKitResults = kitDao.getKitsByKitId(kitIdsStringForInStatement);
+        return processNonPepperKitStatusFromResultSet(foundKitResults);
+    }
+
     private KitResponse processNonPepperKitStatusFromResultSet(ResultSet foundKitResults) {
         ArrayList<NonPepperKitStatus> list = selectAllNonPepperKitStatus(foundKitResults);
         StatusKitResponse statusKitResponse = new StatusKitResponse(list);
@@ -128,5 +134,14 @@ public class NonPepperStatusKitService {
     public String convertTimeStringIntoTimeStamp(Long dateMillis) {
         Instant instant = Instant.ofEpochMilli(dateMillis);
         return instant.toString();
+    }
+
+    public String getKitIdsStringFromArray(String[] kitIds) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String kitId : kitIds) {
+            stringBuilder.append("'" + kitId + "',");
+        }
+        String finalStringOfKitIds = stringBuilder.substring(0, stringBuilder.length() - 1);
+        return finalStringOfKitIds;
     }
 }

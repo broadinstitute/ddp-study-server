@@ -24,7 +24,6 @@ import org.broadinstitute.lddp.util.DeliveryAddress;
 @Slf4j
 public class NonPepperKitCreationService {
     public static final String JUNIPER = "JUNIPER";
-    public static final String JUNIPER_UNDERSCORE = "JUNIPER_";
 
     //These are the Error Strings that are expected by Juniper
 
@@ -89,7 +88,7 @@ public class NonPepperKitCreationService {
         }
 
         log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        //TODO in PEPPER-841 change this to status
+        //TODO in PEPPER- change this to status
         return new KitResponseError(null, juniperKitRequest.getJuniperKitId(), null);
     }
 
@@ -154,7 +153,7 @@ public class NonPepperKitCreationService {
         String userId;
         //checking ddpInstance.isHasRole() to know this is a Juniper Kit
         if (ddpInstance.isHasRole()) {
-            juniperKitRequestId = JUNIPER_UNDERSCORE + kit.getJuniperKitId();
+            juniperKitRequestId = kit.getJuniperKitId();
             userId = JUNIPER;
         } else {
             log.warn("Seems like {} is not configured as a JUNIPER study! ", ddpInstance.getName());

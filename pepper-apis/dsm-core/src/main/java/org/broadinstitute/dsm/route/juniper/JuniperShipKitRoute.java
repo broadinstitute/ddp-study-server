@@ -36,7 +36,7 @@ public class JuniperShipKitRoute implements Route {
         }
         KitResponse kitResponse = this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getJuniperStudyGUID(),
                 shipKitRequest.getKitType());
-        if (kitResponse instanceof KitResponseError) {
+        if (!(kitResponse instanceof KitResponseError)) {
             response.status(200);
         } else {
             response.status(400);
