@@ -29,6 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;
@@ -70,8 +72,8 @@ public class Auth0Util {
             verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
             return userInfo;
-        } catch (AuthenticationException e) {
-            throw new AuthenticationException("couldn't get Auth0 user info", e);
+        } catch (Exception e) {
+            throw new AuthenticationException("Could not get Auth0 user info", e);
         }
     }
 
@@ -104,7 +106,7 @@ public class Auth0Util {
         }
 
         if (connection == null) {
-            throw new RuntimeException("User does not have an approved connection.");
+            throw new DSMBadRequestException("User does not have an approved connection.");
         }
         return connection;
     }
@@ -116,20 +118,17 @@ public class Auth0Util {
             User user = userRequest.execute();
             findUserConnection(user.getIdentities());
         } catch (Exception ex) {
-            throw new RuntimeException("User connection verification failed for user " + email, ex);
+            throw new DsmInternalError("User connection verification failed for user " + email, ex);
         }
     }
 
     public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
-        Map<String, Claim> auth0Claims = new HashMap<>();
         try {
             Optional<DecodedJWT> maybeToken = verifyAuth0Token(auth0Token, auth0Domain);
-            maybeToken.orElseThrow();
-            auth0Claims = maybeToken.get().getClaims();
+            return maybeToken.orElseThrow().getClaims();
         } catch (Exception e) {
             throw new AuthenticationException("Could not verify auth0 token.", e);
         }
-        return auth0Claims;
     }
 
     /**

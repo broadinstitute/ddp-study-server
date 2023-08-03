@@ -84,7 +84,7 @@ public final class ElasticsearchServiceUtil {
         }
 
         RestClientBuilder builder = RestClient.builder(
-                new HttpHost(url.getHost(), url.getPort(), url.getProtocol()))
+                        new HttpHost(url.getHost(), url.getPort(), url.getProtocol()))
                 .setHttpClientConfigCallback(httpClientBuilder -> {
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                     if (proxyUrl != null) {
@@ -92,10 +92,9 @@ public final class ElasticsearchServiceUtil {
                         httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
                     }
                     return httpClientBuilder;
-                })
-                .setMaxRetryTimeoutMillis(100000);
-
+                });
         esClient = new RestHighLevelClient(builder);
+
         ES_CLIENTS.put(key, esClient);
         log.info("Created new Elasticsearch client for URL: {}", url);
 

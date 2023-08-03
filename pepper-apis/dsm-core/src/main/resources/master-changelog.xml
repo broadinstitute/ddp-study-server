@@ -136,4 +136,6 @@
     <include file="liquibase/PEPPER-971_fix_ddp_group.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-971_study_roles.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1004_study_roles_admin.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-972_access_role_display.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-972_access_role_display_update.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
