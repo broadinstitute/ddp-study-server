@@ -6,7 +6,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,9 +14,9 @@ import java.util.Map;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -40,7 +39,6 @@ public class UserUtil {
     public static final String SHIPPING_MENU = "shipping";
     private static final Logger logger = LoggerFactory.getLogger(UserUtil.class);
     private static final String SQL_SELECT_USER = "SELECT user_id, name FROM access_user";
-    private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email) VALUES (?,?)";
     private static final String SQL_SELECT_USER_ACCESS_ROLE =
             "SELECT role.name FROM access_user_role_group roleGroup, access_user user, access_role role "
                     + "WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND user.is_active = 1";
@@ -283,11 +281,13 @@ public class UserUtil {
         } else {
             // for now, let's do what DSM did previously and let them change the data.
             // Still we need to log this and fix the patch from frontend
-            logger.error("The id in patch is not a number and also not an email, id in patch is "+ userEmailOrIdInPatch + "and id in token is "+ userId);
+            logger.error("The id in patch is not a number and also not an email, id in patch is " + userEmailOrIdInPatch +
+                    "and id in token is " + userId);
             return checkUserAccess(realm, userId, role, userIdRequest);
         }
-        if (!userId.equals(userIdFromPatch)){
-            String msg = "User id in patch did not match the one in token, user Id in patch is " + userIdFromPatch + " user Id in token " + userIdRequest;
+        if (!userId.equals(userIdFromPatch)) {
+            String msg = "User id in patch did not match the one in token, user Id in patch is " + userIdFromPatch + " user Id in token " +
+                    userIdRequest;
             logger.warn(msg);
             throw new RuntimeException(msg);
         }
@@ -329,7 +329,7 @@ public class UserUtil {
                 && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias());
     }
 
-    public ArrayList<String> getUserAccessRoles(@NonNull String email) {
+    public static List<String> getUserAccessRoles(@NonNull String email) {
         ArrayList<String> roles = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -347,37 +347,8 @@ public class UserUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of roles ", results.resultException);
+            throw new DsmInternalError("Error getting roles for " + email, results.resultException);
         }
         return roles;
-    }
-
-    public int insertUser(@NonNull String name, @NonNull String email) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement insertStmt = conn.prepareStatement(SQL_INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
-                insertStmt.setString(1, name);
-                insertStmt.setString(2, email);
-                insertStmt.executeUpdate();
-                try (ResultSet rs = insertStmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        UserSettings.insertUserSetting(conn, rs.getInt(1));
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException("Error getting id of new kit request ", e);
-                }
-            } catch (SQLException ex) {
-                logger.error(
-                        "User " + name + ", " + email + " already exists but doesn't have any access roles or is set to is_active=0...");
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of realms ", results.resultException);
-        }
-
-        return (int) results.resultValue;
     }
 }

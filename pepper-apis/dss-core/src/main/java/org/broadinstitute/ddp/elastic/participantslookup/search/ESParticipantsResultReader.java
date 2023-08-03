@@ -68,7 +68,8 @@ public class ESParticipantsResultReader {
 
             results.put(participantResult.getGuid(), participantResult);
         }
-        participantsLookupResult.setTotalCount(Long.valueOf(response.getHits().getTotalHits()).intValue());
+        participantsLookupResult.setTotalCount((int) response.getHits().getTotalHits().value);
+
         return results;
     }
 }
