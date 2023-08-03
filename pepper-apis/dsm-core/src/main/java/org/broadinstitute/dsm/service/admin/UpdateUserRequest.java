@@ -18,7 +18,7 @@ public class UpdateUserRequest {
 
     @Data
     public static class User {
-        private final String email;
+        private String email;
         private final String name;
         private final String phone;
 
@@ -30,19 +30,6 @@ public class UpdateUserRequest {
 
         public UserDto asUserDto() {
             return new UserDto(name, email, phone);
-        }
-
-        public UserDto asUpdatedUserDto(UserDto userDto) {
-            if (!email.equalsIgnoreCase(userDto.getEmailOrThrow())) {
-                throw new DsmInternalError("Assert: email addresses do not match");
-            }
-            if (!StringUtils.isBlank(name)) {
-                userDto.setName(name);
-            }
-            if (!StringUtils.isBlank(phone)) {
-                userDto.setPhoneNumber(phone);
-            }
-            return userDto;
         }
     }
 }
