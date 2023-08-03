@@ -28,7 +28,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id AND NOT oD.deleted <=> 1) "
                     + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
                     + "WHERE oD.tissue_received IS NOT NULL AND p.ddp_participant_id = ? AND ddp.instance_name = ? "
-                    + "AND (t.uss_count <> 0 OR t.scrolls_count <> 0) "
+                    + "AND (IFNULL(t.uss_count, 0) <> 0 OR IFNULL(t.scrolls_count, 0) <> 0) "
                     + "AND  IFNULL(t.uss_count, 0) = (SELECT count(*) from sm_id sm "
                     + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
                     + "where smtype.sm_id_type = \"uss\" and sm.tissue_id = t.tissue_id and NOT sm.deleted <=> 1 "
