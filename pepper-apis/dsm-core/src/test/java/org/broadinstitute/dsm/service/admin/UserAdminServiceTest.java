@@ -334,10 +334,17 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
         // remove one role for both users
         SetUserRoleRequest req2 = new SetUserRoleRequest(users, List.of(role2));
+
+        // user has old role that is not in the study
+        String badRole = "study_admin";
+        setUserRoles(usersToId.get(user1), List.of(badRole), groupId);
+
         try {
             service.setUserRoles(req2);
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.setUserRoles: " +  getStackTrace(e));
+        } finally {
+            addRoleForUser(UserAdminService.getRoleId(badRole), usersToId.get(user1));
         }
 
         // get roles and verify
@@ -463,12 +470,19 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         removeRoleForUser(rolesToId.get(role1), usersToId.get(user2));
 
         // remove last role for one user, which should not be allowed
+
+        // user has old role that is not in the study
+        String badRole = "study_admin";
+        setUserRoles(usersToId.get(user2), List.of(badRole), groupId);
+
         UpdateUserRoleRequest req3 = new UpdateUserRoleRequest(List.of(user2), null, List.of(role2));
         try {
             service.updateUserRoles(req3);
             Assert.fail("UserAdminService.updateUserRoles should fail to remove all user roles");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Cannot remove all roles for user"));
+        } finally {
+            addRoleForUser(UserAdminService.getRoleId(badRole), usersToId.get(user2));
         }
     }
 
@@ -799,16 +813,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         }
     }
 
-    private void setUserRoles(String email, List<String> roles, String studyGroup) {
+    private void setUserRoles(int userId, List<String> roles, int groupId) {
         try {
-            int groupId = UserAdminService.verifyStudyGroup(studyGroup);
-            int userId = UserAdminService.verifyUserByEmail(email, groupId).getId();
-
             for (String role : roles) {
                 int roleId = UserAdminService.getRoleId(role);
                 UserAdminService.addUserRole(userId, roleId, groupId);
-                String msg = String.format("Set up role %s for user %s in study group %s", role, email, studyGroup);
-                log.info(msg);
             }
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.addUserRole: " +  getStackTrace(e));

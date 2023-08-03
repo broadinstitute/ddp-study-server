@@ -169,7 +169,8 @@ public class UserAdminService {
         }
 
         for (var entry: userIds.entrySet()) {
-            List<String> existingRoles = userRoles.get(entry.getKey());
+            // filter existing user roles that are not actually study roles
+            Collection<String> existingRoles = cleanRoles(userRoles.get(entry.getKey()), studyRoles.keySet());
             Collection<String> rolesToAdd = CollectionUtils.subtract(roleNames, existingRoles);
             Collection<String> rolesToRemove = CollectionUtils.subtract(existingRoles, roleNames);
             int userId = entry.getValue();
@@ -223,7 +224,8 @@ public class UserAdminService {
         if (hasRemoveRoles) {
             validateRoles(removeRoles, studyRoles.keySet());
             for (var entry: userIds.entrySet()) {
-                List<String> existingRoles = getRolesForUser(entry.getValue(), groupId);
+                // filter existing user roles that are not actually study roles
+                Collection<String> existingRoles = cleanRoles(getRolesForUser(entry.getValue(), groupId), studyRoles.keySet());
                 if (CollectionUtils.subtract(existingRoles, removeRoles).isEmpty()) {
                     throw new DSMBadRequestException("Cannot remove all roles for user " + entry.getKey());
                 }
@@ -307,6 +309,10 @@ public class UserAdminService {
         Collection<String> badRoles = CollectionUtils.subtract(roleNames, validRoleNames).stream()
                 .map(r -> r.isEmpty() ? "<blank>" : r).collect(Collectors.toSet());
         throw new DSMBadRequestException(msg + String.join(", ", badRoles));
+    }
+
+    protected Collection<String> cleanRoles(List<String> roleNames, Set<String> validRoleNames) {
+        return CollectionUtils.retainAll(roleNames, validRoleNames);
     }
 
     protected static String validateEmailRequest(String email) {
