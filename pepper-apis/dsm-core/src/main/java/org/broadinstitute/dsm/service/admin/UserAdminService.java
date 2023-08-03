@@ -42,12 +42,12 @@ public class UserAdminService {
             "SELECT dg.group_id FROM ddp_group dg WHERE dg.name = ?";
 
     private static final String SQL_SELECT_STUDY_ROLES =
-            "SELECT ar.role_id, ar.name FROM access_role ar "
+            "SELECT ar.role_id, ar.name, ar.display_text FROM access_role ar "
                     + "JOIN ddp_group_role dgr on ar.role_id = dgr.role_id "
                     + "WHERE dgr.group_id = ?";
 
     private static final String SQL_SELECT_STUDY_ROLES_FOR_ADMIN =
-            "SELECT ar.role_id, ar.name FROM access_role ar "
+            "SELECT ar.role_id, ar.name, ar.display_text FROM access_role ar "
                     + "JOIN ddp_group_role dgr on ar.role_id = dgr.role_id "
                     + "WHERE dgr.group_id = ? "
                     + "AND dgr.admin_role_id = (select role_id from access_role ar where ar.name = ?)";
@@ -647,9 +647,10 @@ public class UserAdminService {
                 stmt.setInt(1, groupId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // TODO: temp until we have display text
                         String name = rs.getString(2);
-                        RoleInfo info = new RoleInfo(rs.getInt(1), name, name);
+                        String displayText = rs.getString(3);
+                        RoleInfo info = new RoleInfo(rs.getInt(1), name,
+                                StringUtils.isBlank(displayText) ? name : displayText);
                         roles.put(name, info);
                     }
                 }
@@ -669,9 +670,10 @@ public class UserAdminService {
                 stmt.setString(2, adminRole);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // TODO: temp until we have display text
                         String name = rs.getString(2);
-                        RoleInfo info = new RoleInfo(rs.getInt(1), name, name);
+                        String displayText = rs.getString(3);
+                        RoleInfo info = new RoleInfo(rs.getInt(1), name,
+                                StringUtils.isBlank(displayText) ? name : displayText);
                         roles.put(name, info);
                     }
                 }
