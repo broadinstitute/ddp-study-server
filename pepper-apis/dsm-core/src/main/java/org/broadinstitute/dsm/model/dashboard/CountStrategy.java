@@ -21,7 +21,7 @@ public class CountStrategy implements Supplier<DashboardData> {
         if (response != null && response.getResponse() != null) {
             return new CountData(dashboardDto.getDisplayType(), Collections.emptyList(),
                     dashboardDto.getSize(), dashboardDto.getDisplayText(), dashboardDto.getOrder(),
-                    response.getResponse().getHits().getTotalHits().value
+                    response.getResponse().getHits().getTotalHits()
             );
         }
         return null;

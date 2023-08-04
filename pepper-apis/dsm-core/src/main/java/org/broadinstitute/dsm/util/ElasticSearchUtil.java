@@ -53,7 +53,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetMappingsRequest;
-import org.elasticsearch.cluster.metadata.MappingMetadata;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -130,7 +130,7 @@ public class ElasticSearchUtil {
     // These clients are expensive. They internally have thread pools and other resources. Let's
     // create one instance and reuse it as much as possible. Client is thread-safe per the docs.
     private static RestHighLevelClient client;
-    private static Map<String, MappingMetadata> fieldMappings;
+    private static Map<String, MappingMetaData> fieldMappings;
 
     static {
         initClient();
@@ -196,7 +196,7 @@ public class ElasticSearchUtil {
                         httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build());
                     }
                     return httpClientBuilder;
-                });
+                }).setMaxRetryTimeoutMillis(100000);
 
         return new RestHighLevelClient(builder);
     }
@@ -350,7 +350,7 @@ public class ElasticSearchUtil {
         response = client.search(searchRequest, RequestOptions.DEFAULT);
         response.getHits();
         ElasticSearch elasticSearch = new ElasticSearch();
-        return elasticSearch.parseSourceMap(response.getHits().getTotalHits().value > 0 ? response.getHits().getAt(0).getSourceAsMap() : null)
+        return elasticSearch.parseSourceMap(response.getHits().getTotalHits() > 0 ? response.getHits().getAt(0).getSourceAsMap() : null)
                 .get();
     }
 
@@ -425,7 +425,7 @@ public class ElasticSearchUtil {
 
             try {
                 response = client.search(searchRequest, RequestOptions.DEFAULT);
-                totalHits = response.getHits().getTotalHits().value;
+                totalHits = response.getHits().getTotalHits();
                 pageNumber++;
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -757,7 +757,7 @@ public class ElasticSearchUtil {
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
             Profile profile = null;
-            if (response.getHits().getTotalHits().value > 0) {
+            if (response.getHits().getTotalHits() > 0) {
                 Map<String, Object> source = response.getHits().getAt(0).getSourceAsMap();
                 profile = new ElasticSearch().parseSourceMap(source).flatMap(ElasticSearchParticipantDto::getProfile).orElse(null);
                 if (profile != null) {

@@ -22,7 +22,7 @@
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
         <liquibase.version>4.8.0</liquibase.version>
-        <elasticsearch.version>7.17.10</elasticsearch.version>
+        <elasticsearch.version>6.8.2</elasticsearch.version>
         <velocity.version>2.3</velocity.version>
         <jackson.version>2.12.1</jackson.version>
     </properties>
