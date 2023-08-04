@@ -238,7 +238,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             Assert.fail("UserAdminService.validateRoles should fail with no roles");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Invalid roles for study group"));
-            Assert.assertTrue(e.getMessage().contains("None provided"));
+            Assert.assertTrue(e.getMessage().contains("must have at least one role"));
         }
 
         try {
