@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.DBTestContainer;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
@@ -272,7 +272,7 @@ public class TransactionWrapperTest {
                 });
                 return null;
             });
-        } catch (DDPException e) {
+        } catch (DDPInternalError e) {
             assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
         }
     }
@@ -381,7 +381,7 @@ public class TransactionWrapperTest {
                     fail("this callback should not have ran");
                 });
             });
-        } catch (DDPException e) {
+        } catch (DDPInternalError e) {
             assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
         }
     }
