@@ -14,7 +14,7 @@
         <sonar.tests>src/test/java/org/broadinstitute/ddp/</sonar.tests>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
         <sonar.jacoco.reportPaths>target/jacoco.exec</sonar.jacoco.reportPaths>
-        <jdbi.version>3.1.1</jdbi.version>
+        <jdbi.version>3.39.1</jdbi.version>
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
         <liquibase.version>4.8.0</liquibase.version>
@@ -167,7 +167,7 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>3.4.2</version>
+            <version>5.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.liquibase</groupId>
