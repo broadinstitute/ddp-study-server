@@ -102,7 +102,7 @@ public class UserRoleRoute extends RequestHandler {
         if (e instanceof DSMBadRequestException) {
             response.status(400);
             log.info("DSMBadRequestException {}: {}", operation, e.toString());
-            return e.toString();
+            return e.getMessage();
         } else if (e instanceof DsmInternalError) {
             log.error("Error {}: {}", operation, e.toString());
             response.status(500);
@@ -112,6 +112,6 @@ public class UserRoleRoute extends RequestHandler {
         // any other exception
         log.error("Error {}: {}", operation, e.toString());
         response.status(500);
-        return e.toString();
+        return e.getMessage();
     }
 }
