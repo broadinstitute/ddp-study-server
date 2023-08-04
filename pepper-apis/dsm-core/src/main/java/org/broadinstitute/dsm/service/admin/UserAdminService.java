@@ -301,7 +301,7 @@ public class UserAdminService {
     protected void validateRoles(List<String> roleNames, Set<String> validRoleNames) {
         String msg = String.format("Invalid roles for study group %s: ", studyGroup);
         if (CollectionUtils.isEmpty(roleNames)) {
-            throw new DSMBadRequestException(msg + "None provided");
+            throw new DSMBadRequestException(msg + "Users must have at least one role");
         }
         if (validRoleNames.containsAll(roleNames)) {
             return;
