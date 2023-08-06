@@ -101,16 +101,16 @@ public class UserRoleRoute extends RequestHandler {
     protected static String handleError(Throwable e, String operation, Response response) {
         if (e instanceof DSMBadRequestException) {
             response.status(400);
-            log.info("DSMBadRequestException {}: {}", operation, e.getMessage());
+            log.info("DSMBadRequestException {}: {}", operation, e.toString());
             return e.getMessage();
         } else if (e instanceof DsmInternalError) {
-            log.error("Error {}: {}", operation, e.getMessage());
+            log.error("Error {}: {}", operation, e.toString());
             response.status(500);
             return "Internal error. Contact development team";
         }
 
         // any other exception
-        log.error("Error {}: {}", operation, e.getMessage());
+        log.error("Error {}: {}", operation, e.toString());
         response.status(500);
         return e.getMessage();
     }

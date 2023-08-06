@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gson.Gson;
 import lombok.NonNull;
@@ -129,7 +130,7 @@ public class KitDiscardRoute extends RequestHandler {
                         String email = auth0UserInfo.getEmail();
                         UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();
                         if (userDto != null && userDto.getId() > 0) {
-                            ArrayList<String> userSetting = userUtil.getUserAccessRoles(email);
+                            List<String> userSetting = userUtil.getUserAccessRoles(email);
                             if (userSetting.contains(DBConstants.KIT_SHIPPING) || userSetting.contains(DBConstants.DISCARD_SAMPLE)) {
                                 KitDiscard kit = KitDiscard.getKitDiscard(kitAction.getKitDiscardId());
                                 if (kit.getChangedById() != userDto.getId()) {

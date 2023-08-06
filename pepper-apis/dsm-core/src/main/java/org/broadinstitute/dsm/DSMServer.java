@@ -47,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
@@ -224,39 +225,44 @@ public class DSMServer {
     private static final String gaeDeployDir = "appengine/deploy";
     private static final Duration defaultBootWait = Duration.ofMinutes(10);
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
-    private static AtomicBoolean isReady = new AtomicBoolean(false);
+    private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
         // immediately lock isReady so that ah/start route will wait
         synchronized (isReady) {
-            logger.info("Starting up DSM");
-            //config without secrets
-            Config cfg = ConfigFactory.load();
-            //secrets from vault in a config file
-            File vaultConfigInCwd = new File(vaultConf);
-            File vaultConfigInDeployDir = new File(gaeDeployDir, vaultConf);
-            File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
-            logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
-            cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
+            try {
+                logger.info("Starting up DSM");
+                //config without secrets
+                Config cfg = ConfigFactory.load();
+                //secrets from vault in a config file
+                File vaultConfigInCwd = new File(vaultConf);
+                File vaultConfigInDeployDir = new File(gaeDeployDir, vaultConf);
+                File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
+                logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
+                cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
 
-            if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
-                if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
-                    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
+                if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
+                    if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
+                        System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
+                    }
                 }
-            }
 
-            new DSMConfig(cfg);
+                new DSMConfig(cfg);
 
-            String preferredSourceIPHeader = null;
-            if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
-                preferredSourceIPHeader = cfg.getString(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER);
+                String preferredSourceIPHeader = null;
+                if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
+                    preferredSourceIPHeader = cfg.getString(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER);
+                }
+                JettyConfig.setupJetty(preferredSourceIPHeader);
+                DSMServer server = new DSMServer();
+                server.configureServer(cfg);
+                isReady.set(true);
+                logger.info("DSM Startup Complete");
+            } catch (Exception e) {
+                logger.error("Error starting DSM server {}", e.toString());
+                e.printStackTrace();
             }
-            JettyConfig.setupJetty(preferredSourceIPHeader);
-            DSMServer server = new DSMServer();
-            server.configureServer(cfg);
-            isReady.set(true);
-            logger.info("DSM Startup Complete");
         }
     }
 
@@ -656,7 +662,6 @@ public class DSMServer {
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
-                userUtil,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
@@ -939,11 +944,11 @@ public class DSMServer {
         UserRoleRoute userRoleRoute = new UserRoleRoute();
         get(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
         post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
-        delete(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        put(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
 
         UserRoute userRoute = new UserRoute();
         post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
-        delete(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
+        put(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
     }
 
 
@@ -1069,6 +1074,14 @@ public class DSMServer {
             response.body(exception.getMessage());
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
+            logger.error("Internal error {}", exception.toString());
+            exception.printStackTrace();
+            response.status(500);
+            response.body(exception.getMessage());
+        });
+        exception(DDPInternalError.class, (exception, request, response) -> {
+            logger.error("Internal error {}", exception.toString());
+            exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });

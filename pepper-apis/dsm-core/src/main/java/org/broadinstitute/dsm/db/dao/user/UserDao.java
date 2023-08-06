@@ -30,7 +30,7 @@ public class UserDao implements Dao<UserDto> {
     private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
     private static final String SQL_SELECT_USER_BY_EMAIL =
             "SELECT user.user_id, user.name, user.email, user.phone_number, user.is_active FROM access_user user "
-                    + "WHERE user.email = ?";
+                    + "WHERE UPPER(user.email) = ?";
     private static final String SQL_SELECT_USER_BY_ID =
             "SELECT user.user_id, user.name, user.email, user.phone_number, user.is_active FROM access_user user "
                     + "WHERE user.user_id = ?";
@@ -42,7 +42,7 @@ public class UserDao implements Dao<UserDto> {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_BY_EMAIL)) {
-                stmt.setString(1, email);
+                stmt.setString(1, email.toUpperCase());
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = new UserDto(rs.getInt(USER_ID),
