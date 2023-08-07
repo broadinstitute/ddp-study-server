@@ -65,7 +65,7 @@ public class NonPepperStatusKitService {
     public KitResponse getKitsFromKitIds(String[] kitIdsArray) {
         // get the kits with the given kit ids
         try {
-            ArrayList<NonPepperKitStatus> list =  kitDao.getKitsByKitId(kitIdsArray, this);
+            ArrayList<NonPepperKitStatus> list =  kitDao.getKitsByKitIdArray(kitIdsArray, this);
             StatusKitResponse statusKitResponse = new StatusKitResponse(list);
             return statusKitResponse;
 

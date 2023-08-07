@@ -50,5 +50,5 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     ResultSet getKitsByParticipantId(String participantId);
 
-    ArrayList<NonPepperKitStatus> getKitsByKitId(String[] kitIdsArray, NonPepperStatusKitService nonPepperStatusKitService);
+    ArrayList<NonPepperKitStatus> getKitsByKitIdArray(String[] kitIdsArray, NonPepperStatusKitService nonPepperStatusKitService);
 }

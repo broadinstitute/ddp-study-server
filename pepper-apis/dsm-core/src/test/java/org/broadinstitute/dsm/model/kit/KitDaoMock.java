@@ -118,7 +118,7 @@ public class KitDaoMock implements KitDao {
     }
 
     @Override
-    public ArrayList<NonPepperKitStatus> getKitsByKitId(String[] kitIdArray, NonPepperStatusKitService nonPepperStatusKitService) {
+    public ArrayList<NonPepperKitStatus> getKitsByKitIdArray(String[] kitIdArray, NonPepperStatusKitService nonPepperStatusKitService) {
         return null;
     }
 }

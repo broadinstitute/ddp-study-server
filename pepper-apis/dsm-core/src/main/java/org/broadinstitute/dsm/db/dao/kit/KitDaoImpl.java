@@ -155,8 +155,6 @@ public class KitDaoImpl implements KitDao {
     private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ?";
     private static final String BY_JUNIPER_KIT_ID = " WHERE ddp_kit_request_id = ?";
     private static final String BY_PARTICIPANT_ID = " WHERE ddp_participant_id = ?";
-    private static final String BY_ARRAY_KIT_IDS = " WHERE ddp_kit_request_id in ( ? )";
-
 
     private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
             + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND receive_date IS NOT NULL ";
@@ -742,7 +740,7 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public ArrayList<NonPepperKitStatus> getKitsByKitId(String[] kitIdsArray, NonPepperStatusKitService nonPepperStatusKitService) {
+    public ArrayList<NonPepperKitStatus> getKitsByKitIdArray(String[] kitIdsArray, NonPepperStatusKitService nonPepperStatusKitService) {
         ArrayList<NonPepperKitStatus> list = new ArrayList<>();
         for (String kitId : kitIdsArray) {
             ResultSet rs = this.getKitsByJuniperKitId(kitId);
