@@ -14,6 +14,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.exception.InvalidConfigurationException;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.ConnectionException;
@@ -168,21 +169,19 @@ public class TransactionWrapper {
         }
 
         for (DbConfiguration dbConfig : dbConfigs) {
-            if (gTxnWrapper.containsKey(dbConfig.getDb())) {
-                TransactionWrapper transactionWrapper = gTxnWrapper.get(dbConfig.getDb());
-                int maxConnections = dbConfig.getMaxConnections();
-                String dbUrl = dbConfig.getDbUrl();
+            TransactionWrapper.DB db = dbConfig.getDb();
+            int maxConnections = dbConfig.getMaxConnections();
+            String dbUrl = dbConfig.getDbUrl();
+
+            if (gTxnWrapper.containsKey(db)) {
+                TransactionWrapper transactionWrapper = gTxnWrapper.get(db);
                 if (transactionWrapper.maxConnections != maxConnections || !transactionWrapper.dbUrl.equals(dbUrl)) {
-                    throw new RuntimeException("init() has already been called with "
-                            + transactionWrapper.maxConnections + " and "
-                            + transactionWrapper.dbUrl + "; " + "you cannot re-initialize "
-                            + "it with different params " + maxConnections
-                            + " and " + dbUrl);
+                    throw new DDPInternalError("init() has already been called with different parameters: DB=" + db.name());
                 } else {
-                    log.warn("TransactionWrapper has already been initialized.");
+                    log.warn("TransactionWrapper has already been initialized for {}", db.name());
                 }
             }
-            gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl(), dbConfig.getDb()));
+            gTxnWrapper.put(db, new TransactionWrapper(maxConnections, dbUrl, db));
         }
         isInitialized = true;
     }
@@ -201,7 +200,7 @@ public class TransactionWrapper {
     }
 
     /**
-     * If there's only a single db initialized, return the {@link TransactionWrapper} for it.  Otherwise
+     * If there's only a single db initialized, return the {@link TransactionWrapper} for it, otherwise
      * an exception is thrown.
      */
     public static synchronized TransactionWrapper getInstance() {
@@ -236,10 +235,10 @@ public class TransactionWrapper {
         StringBuilder invalidConfigMessage = new StringBuilder();
         for (DB db : dbs) {
             if (!cfg.hasPath(db.getDbUrlConfigKey())) {
-                invalidConfigMessage.append("Config does not have " + db.getDbUrlConfigKey() + " for " + getDB());
+                invalidConfigMessage.append("Config does not have " + db.getDbUrlConfigKey() + " for " + db.name());
             }
             if (!cfg.hasPath(db.getDbPoolSizeConfigKey())) {
-                invalidConfigMessage.append("Config does not have " + db.getDbPoolSizeConfigKey() + " for " + getDB());
+                invalidConfigMessage.append("Config does not have " + db.getDbPoolSizeConfigKey() + " for " + db.name());
             }
         }
 
@@ -284,27 +283,15 @@ public class TransactionWrapper {
     public static <R, X extends Exception> R withTxn(DB db, HandleCallback<R, X> callback) throws X {
         // hopefully temporary code to detect long-running connections
         long startTime = System.currentTimeMillis();
-        try {
-            try (Handle h = openJdbiWithAuthRetry(db)) {
-                R res =  h.inTransaction(callback);
-                long endTime = System.currentTimeMillis();
-                // 30s threshold
-                if (endTime - startTime > 30000) {
-                    logger.warn("DB transaction open for > 30s\n {}",
-                            stackTraceToString(Thread.currentThread().getStackTrace()));
-                }
-                return res;
-            }
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
-        } catch (Exception e) {
+        try (Handle h = openJdbiWithAuthRetry(db)) {
+            return  h.inTransaction(callback);
+        } finally {
             long endTime = System.currentTimeMillis();
             // 30s threshold
             if (endTime - startTime > 30000) {
-                logger.warn("DB transaction open for > 30s. Exception: {}\n {}", e.getMessage(),
+                logger.warn("DB transaction open for > 30s\n {}",
                         stackTraceToString(Thread.currentThread().getStackTrace()));
             }
-            throw e;
         }
     }
 
@@ -342,14 +329,12 @@ public class TransactionWrapper {
                     }
                     reloadDbPoolConfiguration(false);
                 } else {
-                    throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+                    throw new DDPInternalError(COULD_NOT_GET_CONNECTION, e);
                 }
-            } catch (InvalidConfigurationException e) {
-                log.error("Database connection configuration is invalid.  Proceeding with original configuration values.");
             }
         }
         // if here, we've tried a few times, but are still unable to get a connection.
-        throw new DDPException(COULD_NOT_GET_CONNECTION);
+        throw new DDPInternalError(COULD_NOT_GET_CONNECTION);
     }
 
     /**
@@ -366,22 +351,13 @@ public class TransactionWrapper {
         long startTime = System.currentTimeMillis();
         try (Handle h = openJdbiWithAuthRetry(db)) {
             h.useTransaction(callback);
+        } finally {
             long endTime = System.currentTimeMillis();
             // 30s threshold
             if (endTime - startTime > 30000) {
                 logger.warn("DB transaction open for > 30s\n {}",
                         stackTraceToString(Thread.currentThread().getStackTrace()));
             }
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
-        } catch (Exception e) {
-            long endTime = System.currentTimeMillis();
-            // 30s threshold
-            if (endTime - startTime > 30000) {
-                logger.warn("DB transaction open for > 30s. Exception: {}\n {}", e.getMessage(),
-                        stackTraceToString(Thread.currentThread().getStackTrace()));
-            }
-            throw e;
         }
     }
 
@@ -421,12 +397,21 @@ public class TransactionWrapper {
      */
     @Deprecated
     public static <R, X extends Exception> R inTransaction(ConnectionConsumer<R, X> callback) throws X {
-        try (Connection conn = openJdbiWithAuthRetry(getDB()).getConnection()) {
-            return callback.withConnection(conn);
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
-        } catch (SQLException e) {
-            throw new DDPException("Error handling connection", e);
+        // temporary code to detect long-running connections
+        long startTime = System.currentTimeMillis();
+        try (Handle handle = openJdbiWithAuthRetry(getDB())) {
+            try (Connection conn = handle.getConnection()) {
+                return callback.withConnection(conn);
+            } catch (SQLException e) {
+                throw new DDPInternalError("Error handling connection", e);
+            }
+        } finally {
+            long endTime = System.currentTimeMillis();
+            // 30s threshold
+            if (endTime - startTime > 30000) {
+                logger.warn("DB transaction open for > 30s\n {}",
+                        stackTraceToString(Thread.currentThread().getStackTrace()));
+            }
         }
     }
 
@@ -445,6 +430,9 @@ public class TransactionWrapper {
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(5));
         config.setMaxLifetime(TimeUnit.SECONDS.toMillis(14400)); // 4 hours, which is half the default wait_timeout of mysql
         config.setPoolName(db.name());
+
+        log.info("Created data source for {} with maxConnections={}, connectionTimeout={}s, maxLifetime={}s",
+                db.name(), maxConnections, 5, 14400);
 
         // todo arz leverage allowPoolSuspension and mxbeans to fully  automate password rotation
 
