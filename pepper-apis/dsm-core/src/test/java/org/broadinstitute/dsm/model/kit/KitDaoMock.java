@@ -1,12 +1,15 @@
 package org.broadinstitute.dsm.model.kit;
 
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
+import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitStatus;
+import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 
 public class KitDaoMock implements KitDao {
     @Override
@@ -115,7 +118,7 @@ public class KitDaoMock implements KitDao {
     }
 
     @Override
-    public ResultSet getKitsByKitId(String kitId) {
+    public ArrayList<NonPepperKitStatus> getKitsByKitId(String[] kitIdArray, NonPepperStatusKitService nonPepperStatusKitService) {
         return null;
     }
 }

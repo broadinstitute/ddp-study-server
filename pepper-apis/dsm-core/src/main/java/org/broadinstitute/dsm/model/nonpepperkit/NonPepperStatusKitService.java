@@ -15,7 +15,6 @@ import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 @Slf4j
@@ -63,10 +62,17 @@ public class NonPepperStatusKitService {
         return processNonPepperKitStatusFromResultSet(foundKitResults);
     }
 
-    public KitResponse getKitsFromKitIds(String kitIdsStringForInStatement) {
-        // get the kit with that participantId
-        ResultSet foundKitResults = kitDao.getKitsByKitId(kitIdsStringForInStatement);
-        return processNonPepperKitStatusFromResultSet(foundKitResults);
+    public KitResponse getKitsFromKitIds(String[] kitIdsArray) {
+        // get the kits with the given kit ids
+        try {
+            ArrayList<NonPepperKitStatus> list =  kitDao.getKitsByKitId(kitIdsArray, this);
+            StatusKitResponse statusKitResponse = new StatusKitResponse(list);
+            return statusKitResponse;
+
+        } catch (Exception e) {
+            log.error("Error getting kits by an array of kit ids", e);
+            return new KitResponseError(KitResponse.DSM_ERROR);
+        }
     }
 
     private KitResponse processNonPepperKitStatusFromResultSet(ResultSet foundKitResults) {
@@ -75,7 +81,7 @@ public class NonPepperStatusKitService {
         return statusKitResponse;
     }
 
-    private ArrayList<NonPepperKitStatus> selectAllNonPepperKitStatus(ResultSet foundKitResults) {
+    public ArrayList<NonPepperKitStatus> selectAllNonPepperKitStatus(ResultSet foundKitResults) {
         HashMap<Integer, UserDto> users = UserDao.selectAllUsers();
         ArrayList<NonPepperKitStatus> kits = new ArrayList<>();
         try {
@@ -140,15 +146,4 @@ public class NonPepperStatusKitService {
         return instant.toString();
     }
 
-    public String getKitIdsStringFromArray(String[] kitIds) {
-        if (kitIds == null || kitIds.length == 0) {
-            throw new DSMBadRequestException("No Kit Ids were sent.");
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String kitId : kitIds) {
-            stringBuilder.append("'" + kitId + "',");
-        }
-        String finalStringOfKitIds = stringBuilder.substring(0, stringBuilder.length() - 1);
-        return finalStringOfKitIds;
-    }
 }

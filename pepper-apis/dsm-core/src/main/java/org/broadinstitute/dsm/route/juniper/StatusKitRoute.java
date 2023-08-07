@@ -38,10 +38,9 @@ public class StatusKitRoute implements Route {
             return this.nonPepperStatusKitService.getKitsBasedOnParticipantId(participantId);
         }
         if (request.url().contains(RoutePath.STATUS_KIT_ENDPOINT_KIT_IDS)) {
-            String[] kitIds = new Gson().fromJson(String.valueOf(request.queryMap().get(RoutePath.JUNIPER_KIT_IDS)), String[].class);
+            String[] kitIds = new Gson().fromJson(request.queryMap().get(RoutePath.JUNIPER_KIT_IDS).value(), String[].class);
             try {
-                String kitIdsStringForInStatement = nonPepperStatusKitService.getKitIdsStringFromArray(kitIds);
-                return this.nonPepperStatusKitService.getKitsFromKitIds(kitIdsStringForInStatement);
+                return this.nonPepperStatusKitService.getKitsFromKitIds(kitIds);
             } catch (DSMBadRequestException e) {
                 return new KitResponseError("No Kit ID was sent ", null, kitIds);
             }

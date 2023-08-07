@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import org.broadinstitute.dsm.db.dto.user.UserDto;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -74,22 +73,5 @@ public class NonPepperKitServiceTest {
         Long nullValue = null;
         timeStamp = nonPepperStatusKitService.convertTimeStringIntoTimeStamp(nullValue);
         Assert.assertNull(timeStamp);
-    }
-
-    @Test
-    public void getKitIdsStringFromArrayTest() {
-        String[] kitIds = new String[] {"KIT-1", "KIT-2", "KIT-3", "KIT-4"};
-        String kitIdsString = nonPepperStatusKitService.getKitIdsStringFromArray(kitIds);
-        Assert.assertEquals("'KIT-1','KIT-2','KIT-3','KIT-4'", kitIdsString);
-
-        kitIds = new String[] {};
-        try {
-            kitIdsString = nonPepperStatusKitService.getKitIdsStringFromArray(kitIds);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), DSMBadRequestException.class);
-            Assert.assertEquals(e.getMessage(), "No Kit Ids were sent.");
-        }
-
     }
 }
