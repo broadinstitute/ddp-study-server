@@ -36,7 +36,7 @@ public class UserDao implements Dao<UserDto> {
                     + "WHERE user.user_id = ?";
 
     private static final String SQL_SELECT_ALL_USERS =
-            "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user";
+            "SELECT user.user_id, user.name, user.email, user.phone_number, user.is_active FROM access_user user";
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = inTransaction((conn) -> {

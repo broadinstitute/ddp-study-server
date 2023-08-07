@@ -15,6 +15,7 @@ import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 @Slf4j
@@ -132,11 +133,17 @@ public class NonPepperStatusKitService {
     }
 
     public String convertTimeStringIntoTimeStamp(Long dateMillis) {
+        if (dateMillis == null || dateMillis == 0L) {
+            return null;
+        }
         Instant instant = Instant.ofEpochMilli(dateMillis);
         return instant.toString();
     }
 
     public String getKitIdsStringFromArray(String[] kitIds) {
+        if (kitIds == null || kitIds.length == 0) {
+            throw new DSMBadRequestException("No Kit Ids were sent.");
+        }
         StringBuilder stringBuilder = new StringBuilder();
         for (String kitId : kitIds) {
             stringBuilder.append("'" + kitId + "',");

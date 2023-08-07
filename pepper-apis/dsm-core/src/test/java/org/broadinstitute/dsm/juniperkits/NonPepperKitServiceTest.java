@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,11 +21,11 @@ public class NonPepperKitServiceTest {
 
     @Test
     public void getUserEmailForFieldsTest() {
-        UserDto userDto1 = new UserDto(1, "user1", "user1Email", null);
-        UserDto userDto2 = new UserDto(2, "user2", "user2Email", null);
-        UserDto userDto3 = new UserDto(3, "user3", "user3Email", null);
-        UserDto userDto4 = new UserDto(4, "user4", "user4Email", null);
-        UserDto userDto5 = new UserDto(5, "user5", "user5Email", null);
+        UserDto userDto1 = new UserDto(1, "user1", "user1Email", null, 1);
+        UserDto userDto2 = new UserDto(2, "user2", "user2Email", null, 1);
+        UserDto userDto3 = new UserDto(3, "user3", "user3Email", null, 1);
+        UserDto userDto4 = new UserDto(4, "user4", "user4Email", null, 1);
+        UserDto userDto5 = new UserDto(5, "user5", "user5Email", null, 1);
 
         HashMap<Integer, UserDto> map = new HashMap<>();
         map.put(1, userDto1);
@@ -69,5 +70,26 @@ public class NonPepperKitServiceTest {
         } catch (ParseException e) {
             Assert.fail();
         }
+
+        Long nullValue = null;
+        timeStamp = nonPepperStatusKitService.convertTimeStringIntoTimeStamp(nullValue);
+        Assert.assertNull(timeStamp);
+    }
+
+    @Test
+    public void getKitIdsStringFromArrayTest() {
+        String[] kitIds = new String[] {"KIT-1", "KIT-2", "KIT-3", "KIT-4"};
+        String kitIdsString = nonPepperStatusKitService.getKitIdsStringFromArray(kitIds);
+        Assert.assertEquals("'KIT-1','KIT-2','KIT-3','KIT-4'", kitIdsString);
+
+        kitIds = new String[] {};
+        try {
+            kitIdsString = nonPepperStatusKitService.getKitIdsStringFromArray(kitIds);
+            Assert.fail();
+        } catch (Exception e) {
+            Assert.assertEquals(e.getClass(), DSMBadRequestException.class);
+            Assert.assertEquals(e.getMessage(), "No Kit Ids were sent.");
+        }
+
     }
 }

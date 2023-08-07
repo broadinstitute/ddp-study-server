@@ -103,4 +103,19 @@ public class KitDaoMock implements KitDao {
     public ResultSet getKitsInDatabaseByInstanceId(DDPInstance ddpInstance) {
         return null;
     }
+
+    @Override
+    public ResultSet getKitsByJuniperKitId(String juniperKitId) {
+        return null;
+    }
+
+    @Override
+    public ResultSet getKitsByParticipantId(String participantId) {
+        return null;
+    }
+
+    @Override
+    public ResultSet getKitsByKitId(String kitId) {
+        return null;
+    }
 }

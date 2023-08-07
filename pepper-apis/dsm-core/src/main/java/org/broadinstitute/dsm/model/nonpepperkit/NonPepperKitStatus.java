@@ -17,7 +17,7 @@ public class NonPepperKitStatus {
     String receiveByEmail;
     String deactivationDate;
     String deactivationByEmail;
-    String deactivationReson;
+    String deactivationReason;
     String trackingNumber;
     String returnTrackingNumber;
     String trackingScanBy;
