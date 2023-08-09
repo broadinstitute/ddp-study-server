@@ -21,6 +21,8 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.ESMissingParticipantData;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.defaultvalues.Defaultable;
@@ -52,39 +54,44 @@ public class DSMtasksSubscription {
     public static final String ELASTIC_EXPORT = "ELASTIC_EXPORT";
     public static final String PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
     public static final int MAX_RETRY = 50;
-    private static Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
 
     public static void subscribeDSMtasks(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             // Handle incoming message, then ack the received message.
-            logger.info("Got message with Id: " + message.getMessageId());
+            logger.info("Got message with Id: {}", message.getMessageId());
             Map<String, String> attributesMap = message.getAttributesMap();
             String taskType = attributesMap.get(TASK_TYPE);
-            String data = message.getData() != null ? message.getData().toStringUtf8() : null;
+            String data = message.getData().toStringUtf8();
 
-            logger.info("Task type is: " + taskType);
+            logger.info("DSMtasksSubscription task type is: {}", taskType);
 
             if (StringUtils.isBlank(taskType)) {
-                logger.warn("task type from pubsub was missing");
+                logger.error("Task type from pubsub is missing");
                 consumer.ack();
             } else {
-                switch (taskType) {
-                    case UPDATE_CUSTOM_WORKFLOW:
-                        consumer.ack();
-                        WorkflowStatusUpdate.updateCustomWorkflow(attributesMap, data);
-                        break;
-                    case ELASTIC_EXPORT:
-                        consumer.ack();
-                        doESExport(attributesMap, data);
-                        break;
-                    case PARTICIPANT_REGISTERED:
-                        generateStudyDefaultValues(consumer, attributesMap);
-                        break;
-                    default:
-                        logger.warn("Wrong task type for a message from pubsub");
-                        consumer.ack();
-                        break;
+                try {
+                    switch (taskType) {
+                        case UPDATE_CUSTOM_WORKFLOW:
+                            consumer.ack();
+                            WorkflowStatusUpdate.updateCustomWorkflow(attributesMap, data);
+                            break;
+                        case ELASTIC_EXPORT:
+                            consumer.ack();
+                            doESExport(attributesMap, data);
+                            break;
+                        case PARTICIPANT_REGISTERED:
+                            generateStudyDefaultValues(consumer, attributesMap);
+                            break;
+                        default:
+                            logger.error("Invalid task type DSMtasksSubscription PubsubMessage: {}", taskType);
+                            consumer.ack();
+                            break;
+                    }
+                } catch (Exception e) {
+                    logger.error("Error handling PubsubMessage for {} with DSMtasksSubscription: {}", taskType, e.getMessage());
+                    e.printStackTrace();
                 }
             }
         };
@@ -97,7 +104,7 @@ public class DSMtasksSubscription {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
             logger.info("Started pubsub subscription receiver DSM tasks subscription");
         } catch (TimeoutException e) {
-            throw new RuntimeException("Timed out while starting pubsub subscription for DSM tasks", e);
+            throw new DsmInternalError("Timed out while starting pubsub subscription for DSM tasks", e);
         }
     }
 
@@ -138,29 +145,25 @@ public class DSMtasksSubscription {
         String participantGuid = attributesMap.get("participantGuid");
         if (!ParticipantUtil.isGuid(participantGuid)) {
             consumer.ack();
-            return;
+            throw new DsmInternalError("Invalid participant GUID: " + participantGuid);
         }
 
+        Study study = Study.of(studyGuid.toUpperCase());
+        Defaultable defaultable = DefaultableMaker.makeDefaultable(study);
         try {
-            Study study = Study.of(studyGuid.toUpperCase());
-            Defaultable defaultable = DefaultableMaker.makeDefaultable(study);
-            boolean result = defaultable.generateDefaults(studyGuid, participantGuid);
-            if (!result) {
-                retryPerParticipant.merge(participantGuid, 1, Integer::sum);
-                if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
-                    retryPerParticipant.remove(participantGuid);
-                    consumer.ack();
-                } else {
-                    consumer.nack();
-                }
-            } else {
+            defaultable.generateDefaults(studyGuid, participantGuid);
+            retryPerParticipant.remove(participantGuid);
+            consumer.ack();
+        } catch (ESMissingParticipantData e) {
+            // retry until ES data shows up, or we reach max wait
+            retryPerParticipant.merge(participantGuid, 1, Integer::sum);
+            if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
                 retryPerParticipant.remove(participantGuid);
                 consumer.ack();
+                throw e;
+            } else {
+                consumer.nack();
             }
-        } catch (Exception e) {
-            logger.warn(e.getMessage());
-            consumer.ack();
         }
-
     }
 }

@@ -2,9 +2,9 @@ package org.broadinstitute.dsm.model;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 
 public enum Study {
     ATCP("ATCP"),
@@ -36,13 +36,12 @@ public enum Study {
 
     }
 
-    public static Study of(String studyGuid) throws Exception {
+    public static Study of(String studyGuid) {
         for (Study study : Study.values()) {
             if (study.value.equals(studyGuid)) {
                 return study;
             }
         }
-        throw new NoSuchElementException("Study: ".concat(studyGuid).concat(" does not exist"));
+        throw new DsmInternalError("Study: ".concat(studyGuid).concat(" does not exist"));
     }
-
 }

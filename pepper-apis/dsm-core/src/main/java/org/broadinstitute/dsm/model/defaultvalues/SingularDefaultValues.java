@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.exception.ESMissingParticipantData;
 import org.broadinstitute.dsm.model.participant.data.ParticipantRecord;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.slf4j.Logger;
@@ -26,14 +27,14 @@ public class SingularDefaultValues extends BasicDefaultDataMaker {
 
     @Override
     protected boolean setDefaultData() {
+        // TODO: this seems wrong but Singular is at end of life so did not want to mess with things - DC
         if (isParticipantDataInES()) {
-            return false;
+            throw new ESMissingParticipantData("Participant does not yet have profile and activities in ES");
         }
         return insertDefaultEnrollmentStatusForParticipant();
     }
 
     private boolean isParticipantDataInES() {
-        logger.info("Participant does not have profile and activities in ES yet...");
         return elasticSearchParticipantDto.getProfile().isEmpty() && elasticSearchParticipantDto.getActivities().isEmpty();
     }
 
