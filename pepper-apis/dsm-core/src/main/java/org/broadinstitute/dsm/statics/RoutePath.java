@@ -32,13 +32,13 @@ public class RoutePath {
     public static final String CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT = "/createClinicalDummy/:label/:type/:participantId";
     public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
     public static final String SHIP_KIT_ENDPOINT = "/shipKit";
-    public static final String STATUS_KIT_ENDPOINT_STUDY = "/statusKit/study/:study";
-    public static final String STATUS_KIT_STUDY = "/statusKit/study/";
-    public static final String STATUS_KIT_ENDPOINT_JUNIPER_KIT_ID = "/statusKit/juniperKitId/:juniperKitId";
-    public static final String STATUS_KIT_JUNIPER_KIT_ID = "/statusKit/juniperKitId";
-    public static final String STATUS_KIT_ENDPOINT_KIT_IDS = "/statusKit/kitIds";
-    public static final String STATUS_KIT_ENDPOINT_PARTICIPANT_KIT_ID = "/statusKit/participantId/:participantId";
-    public static final String STATUS_KIT_PARTICIPANT_KIT_ID = "/statusKit/participantId";
+    public static final String KIT_STATUS_ENDPOINT_STUDY = "/kitstatus/study/:study";
+    public static final String KIT_STATUS_STUDY = "/kitstatus/study/";
+    public static final String KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID = "/kitstatus/juniperKit/:juniperKitId";
+    public static final String KIT_STATUS_JUNIPER_KIT_ID = "/kitstatus/juniperKit";
+    public static final String KIT_STATUS_ENDPOINT_KIT_IDS = "/kitstatus/kits";
+    public static final String KIT_STATUS_ENDPOINT_PARTICIPANT_ID = "/kitstatus/participant/:participantId";
+    public static final String KIT_STATUS_PARTICIPANT_ID = "/kitstatus/participantId";
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
     public static final String CANCER_LIST_REQUEST = "/cancers";

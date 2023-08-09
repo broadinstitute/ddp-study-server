@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -146,7 +147,12 @@ public class UserDao implements Dao<UserDto> {
         return (int) simpleResult.resultValue;
     }
 
-    public static HashMap<Integer, UserDto> selectAllUsers() {
+    /**
+     * generates a map of all of the users in the DSM,
+     * returns both active and deactivated users.
+     * @return Map instance, key is the user id and value is UserDto
+     * */
+    public static Map<Integer, UserDto> selectAllUsers() {
         HashMap<Integer, UserDto> users = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -168,7 +174,7 @@ public class UserDao implements Dao<UserDto> {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of all users ", results.resultException);
+            throw new DsmInternalError("Error getting list of all users ", results.resultException);
         }
         return users;
     }

@@ -593,10 +593,10 @@ public class DSMServer {
 
             NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
             StatusKitRoute statusKitRoute = new StatusKitRoute(nonPepperStatusKitService);
-            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
-            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
-            get(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_PARTICIPANT_KIT_ID, statusKitRoute, new JsonTransformer());
-            post(apiRoot + RoutePath.STATUS_KIT_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
+            post(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
         }
 
         if (!cfg.getBoolean("ui.production")) {

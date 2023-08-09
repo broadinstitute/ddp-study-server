@@ -1,16 +1,11 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.model.kit.ScanError;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitStatus;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 
 public interface KitDao extends Dao<KitRequestShipping> {
 
@@ -43,12 +38,4 @@ public interface KitDao extends Dao<KitRequestShipping> {
     List<KitRequestShipping> getKitsByHruid(String hruid);
 
     Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping);
-
-    ResultSet getKitsInDatabaseByInstanceId(DDPInstance ddpInstance);
-
-    ResultSet getKitsByJuniperKitId(String juniperKitId);
-
-    ResultSet getKitsByParticipantId(String participantId);
-
-    ArrayList<NonPepperKitStatus> getKitsByKitIdArray(String[] kitIdsArray, NonPepperStatusKitService nonPepperStatusKitService);
 }

@@ -565,6 +565,8 @@ public class DBConstants {
 
     //INDEXES
     public static final String OSTEO_INDEX = "participants_structured.cmi.cmi-osteo";
+
+    // ddp_kit table columns
     public static final String LABEL_BY = "label_by";
     public static final String LABEL_DATE = "label_date";
     public static final String SCAN_BY = "scan_by";
@@ -574,5 +576,4 @@ public class DBConstants {
     public static final String ERROR_MESSAGE = "message";
     public static final String RETURN_TRACKING_NUMBER = "return_tracking_number";
     public static final String TRACKING_SCAN_BY = "tracking_scan_by";
-    public static final String DISCARD_REASON = "discard_reason";
 }

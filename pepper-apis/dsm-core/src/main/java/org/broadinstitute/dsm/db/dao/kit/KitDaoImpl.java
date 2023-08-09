@@ -14,12 +14,8 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.kit.ScanError;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitStatus;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -144,17 +140,6 @@ public class KitDaoImpl implements KitDao {
             + "external_order_number, "
             + "upload_reason) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-
-    private static final String SELECT_KIT_STATUS =
-            " SELECT req.*, k.*, discard.*, tracking.tracking_id as return_tracking_number, tracking.scan_by as tracking_scan_by, "
-                    + " tracking.scan_date as tracking_scan_date "
-                    + " FROM ddp_kit_request req LEFT JOIN ddp_kit k on (k.dsm_kit_request_id = req.dsm_kit_request_id) "
-                    + " LEFT JOIN ddp_kit_discard discard on  (discard.dsm_kit_request_id = req.dsm_kit_request_id) "
-                    + " LEFT JOIN ddp_kit_tracking tracking on  (tracking.kit_label = k.kit_label) ";
-
-    private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ?";
-    private static final String BY_JUNIPER_KIT_ID = " WHERE ddp_kit_request_id = ?";
-    private static final String BY_PARTICIPANT_ID = " WHERE ddp_participant_id = ?";
 
     private static final String SQL_SELECT_RECEIVED_KITS = " SELECT receive_date FROM ddp_kit k LEFT JOIN ddp_kit_request r "
             + " ON (k.dsm_kit_request_id  = r.dsm_kit_request_id) WHERE ddp_participant_id = ? AND receive_date IS NOT NULL ";
@@ -681,73 +666,5 @@ public class KitDaoImpl implements KitDao {
         }
         return false;
     }
-
-    public ResultSet getKitsInDatabaseByInstanceId(DDPInstance ddpInstance) {
-        SimpleResult simpleResult = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_INSTANCE_ID))) {
-                stmt.setString(1, ddpInstance.getDdpInstanceId());
-                ResultSet rs = stmt.executeQuery();
-                dbVals.resultValue = rs;
-            } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()));
-            }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new DSMBadRequestException(simpleResult.resultException);
-        }
-        return (ResultSet) simpleResult.resultValue;
-
-    }
-
-    @Override
-    public ResultSet getKitsByJuniperKitId(String juniperKitId) {
-        SimpleResult simpleResult = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_JUNIPER_KIT_ID))) {
-                stmt.setString(1, juniperKitId);
-                ResultSet rs = stmt.executeQuery();
-                dbVals.resultValue = rs;
-            } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits with juniper kit id %s", juniperKitId));
-            }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new DSMBadRequestException(simpleResult.resultException);
-        }
-        return (ResultSet) simpleResult.resultValue;
-    }
-
-    @Override
-    public ResultSet getKitsByParticipantId(String participantId) {
-        SimpleResult simpleResult = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_PARTICIPANT_ID))) {
-                stmt.setString(1, participantId);
-                ResultSet rs = stmt.executeQuery();
-                dbVals.resultValue = rs;
-            } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits with participant id %s", participantId));
-            }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new DSMBadRequestException(simpleResult.resultException);
-        }
-        return (ResultSet) simpleResult.resultValue;
-    }
-
-    @Override
-    public ArrayList<NonPepperKitStatus> getKitsByKitIdArray(String[] kitIdsArray, NonPepperStatusKitService nonPepperStatusKitService) {
-        ArrayList<NonPepperKitStatus> list = new ArrayList<>();
-        for (String kitId : kitIdsArray) {
-            ResultSet rs = this.getKitsByJuniperKitId(kitId);
-            list.addAll(nonPepperStatusKitService.selectAllNonPepperKitStatus(rs));
-        }
-        return  list;
-    }
-
 
 }
