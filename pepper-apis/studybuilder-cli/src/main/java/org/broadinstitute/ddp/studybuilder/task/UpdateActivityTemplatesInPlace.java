@@ -40,8 +40,6 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
     private Config studyCfg;
     private Config varsCfg;
     private String activityCode;
-    private static final String FILE_OF_VARS_TO_SKIP = "sv";
-    private String variablesToSkipFile;
     private List<String> variableNamesToSkip = null;
 
     @Override
@@ -60,12 +58,9 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
             throw new ParseException("Positional argument ACTIVITY_CODE is required.");
         }
         this.activityCode = positional[0];
-        //if (cmd.hasOption(FILE_OF_VARS_TO_SKIP)) {
         if (positional.length == 2) {
             File fileOfSkipVariables = new File(positional[1]);
-            //cmd.getOptionValue(FILE_OF_VARS_TO_SKIP));
             log.info("using skip variables file: {}", fileOfSkipVariables.getName());
-
             try {
                 variableNamesToSkip = IOUtils.readLines(new FileReader(fileOfSkipVariables));
             } catch (IOException e) {
