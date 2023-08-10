@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +16,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -36,6 +40,9 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
     private Config studyCfg;
     private Config varsCfg;
     private String activityCode;
+    private static final String FILE_OF_VARS_TO_SKIP = "sv";
+    private String variablesToSkipFile;
+    private List<String> variableNamesToSkip = null;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -53,6 +60,19 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
             throw new ParseException("Positional argument ACTIVITY_CODE is required.");
         }
         this.activityCode = positional[0];
+        //if (cmd.hasOption(FILE_OF_VARS_TO_SKIP)) {
+        if (positional.length == 2) {
+            File fileOfSkipVariables = new File(positional[1]);
+            //cmd.getOptionValue(FILE_OF_VARS_TO_SKIP));
+            log.info("using skip variables file: {}", fileOfSkipVariables.getName());
+
+            try {
+                variableNamesToSkip = IOUtils.readLines(new FileReader(fileOfSkipVariables));
+            } catch (IOException e) {
+                log.error("Could not read " + fileOfSkipVariables.getAbsolutePath(), e);
+                System.exit(-1);
+            }
+        }
     }
 
     @Override
@@ -79,7 +99,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
 
             if (this.activityCode.equals(activityCode)) {
                 log.info("Found activity definition for {}", activityCode);
-                var updateTask = new UpdateTemplatesInPlace();
+                var updateTask = new UpdateTemplatesInPlace(variableNamesToSkip);
                 updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, versionTag,
                         definition, updateTask, activityCode);
 
