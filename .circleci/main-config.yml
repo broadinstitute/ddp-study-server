@@ -548,6 +548,9 @@ commands:
       config_file_path:
         type: string
         default: output-build-config/testing-inmemorydb.conf
+      app_config_file:
+        type: string
+        default: vault.conf
       skip_checkstyle:
         type: boolean
         default: true
@@ -604,6 +607,11 @@ commands:
               CONFIG_FILE_PATH=$(readlink -f << parameters.config_file_path >>)
               CONFIG_FILE_OPTION="-Dconfig.file=$CONFIG_FILE_PATH"
             fi
+            DSM_CONFIG_FILE_OPTION=''
+            if [[ ! -z '<< parameters.app_config_file >>' ]]; then
+              DSM_CONFIG_FILE_PATH=$(readlink -f << parameters.app_config_file >>)
+              DSM_CONFIG_FILE_OPTION="-DdsmConfig.file=DSM_CONFIG_FILE_PATH"
+            fi
 
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
@@ -616,6 +624,7 @@ commands:
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
                     $CONFIG_FILE_OPTION  \
+                    $DSM_CONFIG_FILE_OPTION \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>> \
                     $MODULES_OPTION
           background: <<parameters.background>>
@@ -848,6 +857,9 @@ jobs:
       pepper_apis_path:
         type: string
         default: *pepper_apis_path
+      app_config_file:
+        type: string
+        default: vault.conf
     steps:
       - run: echo 'Doing dsm-compile-and-run-tests-job << pipeline.parameters.dsm >>'
       - when:
@@ -860,6 +872,9 @@ jobs:
             - checkout:
                 path: *repo_path
             - setup-shared-env
+            - render-secrets:
+                secret_name: study-manager-config
+                output_file: << parameters.app_config_file >>
             - run-maven-with-pepper-options:
                 module: dsm-core
                 phase: install
@@ -869,6 +884,7 @@ jobs:
                 additional_options: -am
                 restore_m2_cache: true
                 save_m2_cache: false
+                app_config_file: << parameters.app_config_file >>
             - render-configs
             - create-test-dbs
             - restore-ddp-cache

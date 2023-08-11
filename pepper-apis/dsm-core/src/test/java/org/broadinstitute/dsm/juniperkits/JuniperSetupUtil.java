@@ -12,7 +12,6 @@ import java.sql.Statement;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
@@ -317,7 +316,7 @@ public class JuniperSetupUtil {
     }
 
     public static void loadDSMConfig() {
-        cfg = ConfigManager.getInstance().getConfig();
+        cfg = ConfigFactory.load().withFallback(ConfigFactory.parseFile(new File(System.getenv("dsmConfig.file"))));
         DSMServer.setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
         Config nonSecretConfig = cfg.withFallback(ConfigFactory.parseFile(new File("dsm-core/src/main/resources/application.conf")));
         new DSMConfig(nonSecretConfig);
