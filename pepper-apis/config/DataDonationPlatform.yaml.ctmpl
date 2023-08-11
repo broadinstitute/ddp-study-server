@@ -14,7 +14,7 @@ manual_scaling:
   instances: 2
 {{else}}
 basic_scaling:
-  max_instances: 4
+  max_instances: 2
   idle_timeout: 20m
 {{end}}
 
