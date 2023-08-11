@@ -872,7 +872,8 @@ jobs:
             - checkout:
                 path: *repo_path
             - setup-shared-env
-            - auth-gcp-service-account
+            - auth-gcp-service-account:
+                env: dev
             - render-secrets:
                 secret_name: dsm-test-config
                 output_file: << parameters.app_config_file >>
