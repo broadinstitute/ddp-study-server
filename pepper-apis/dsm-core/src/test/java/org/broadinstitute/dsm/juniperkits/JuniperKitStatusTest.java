@@ -4,42 +4,39 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.gson.Gson;
-import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitStatus;
+import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.model.nonpepperkit.StatusKitResponse;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-public class JuniperKitStatusTest {
+public class JuniperKitStatusTest extends DbTxnBaseTest {
 
+    final String instanceGuid = "Juniper-mock-guid";
+    final String instanceName = "Juniper-mock";
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-    private Config cfg;
 
     @Before
-    public void beforeClass() {
-        TestHelper.setupDB();
-        cfg = TestHelper.cfg;
+    public void setupJuniperBefore() {
+        JuniperSetupUtil.setupUpAJuniperInstance(instanceName, instanceGuid, "Juniper-Mock", "JuniperTestProject");
+        JuniperSetupUtil.loadDSMConfig();
+    }
 
-        DSMServer.setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
-
+    @After
+    public void deleteJuniperInstance() {
+        JuniperSetupUtil.deleteJuniperTestStudies();
     }
 
     @Test
-    @Ignore
     public void statusForJuniperStudy() {
-        String instanceGuid = "Juniper-mock-guid";
-        String instanceName = "Juniper-mock";
         String participantId = "TEST_PARTICIPANT";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         String kitType = "SALIVA";
@@ -73,13 +70,13 @@ public class JuniperKitStatusTest {
         Assert.assertNotNull(
                 kitResponse.getKits().stream().filter(kitStatus -> kitStatus.getJuniperKitId().equals("JuniperTestKitId_" + rand))
                         .findAny());
+        for (NonPepperKitStatusDto nonPepperKitStatusDto : kitResponse.getKits()) {
+            JuniperSetupUtil.deleteJuniperKit(nonPepperKitStatusDto.getJuniperKitId());
+        }
     }
 
     @Test
-    @Ignore
     public void statusByJuniperKitId() {
-        String instanceGuid = "Juniper-mock-guid";
-        String instanceName = "Juniper-mock";
         String participantId = "TEST_PARTICIPANT";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         String kitType = "SALIVA";
@@ -106,26 +103,25 @@ public class JuniperKitStatusTest {
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
 
-        StatusKitResponse kitResponse = (StatusKitResponse) nonPepperStatusKitService.getKitsBasedOnJuniperKitId(mockJuniperKit.getJuniperKitId());
+        StatusKitResponse kitResponse =
+                (StatusKitResponse) nonPepperStatusKitService.getKitsBasedOnJuniperKitId(mockJuniperKit.getJuniperKitId());
         Assert.assertNotNull(kitResponse);
         Assert.assertNotNull(kitResponse.getKits());
         Assert.assertEquals(1, kitResponse.getKits().size());
         Assert.assertNotNull(
                 kitResponse.getKits().stream().filter(kitStatus -> kitStatus.getJuniperKitId().equals("JuniperTestKitId_" + rand))
                         .findAny());
-        NonPepperKitStatus nonPepperKitStatus = kitResponse.getKits().get(0);
+        NonPepperKitStatusDto nonPepperKitStatus = kitResponse.getKits().get(0);
         Assert.assertEquals(nonPepperKitStatus.getJuniperKitId(), mockJuniperKit.getJuniperKitId());
         Assert.assertEquals(nonPepperKitStatus.getParticipantId(), mockJuniperKit.getJuniperParticipantID());
         Assert.assertEquals(nonPepperKitStatus.getErrorMessage(), "");
         Assert.assertEquals(nonPepperKitStatus.getError(), false);
         Assert.assertTrue(StringUtils.isNotBlank(nonPepperKitStatus.getDsmShippingLabel()));
+        JuniperSetupUtil.deleteJuniperKit(nonPepperKitStatus.getJuniperKitId());
     }
 
     @Test
-    @Ignore
     public void statusByKitIdTest() {
-        String instanceGuid = "Juniper-mock-guid";
-        String instanceName = "Juniper-mock";
         String participantId = "TEST_PARTICIPANT";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         String kitType = "SALIVA";
@@ -161,11 +157,12 @@ public class JuniperKitStatusTest {
         Assert.assertNotNull(
                 kitResponse.getKits().stream().filter(kitStatus -> kitStatus.getJuniperKitId().equals("JuniperTestKitId_" + rand))
                         .findAny());
-        NonPepperKitStatus nonPepperKitStatus = kitResponse.getKits().get(0);
+        NonPepperKitStatusDto nonPepperKitStatus = kitResponse.getKits().get(0);
         Assert.assertEquals(nonPepperKitStatus.getJuniperKitId(), mockJuniperKit.getJuniperKitId());
         Assert.assertEquals(nonPepperKitStatus.getParticipantId(), mockJuniperKit.getJuniperParticipantID());
         Assert.assertEquals(nonPepperKitStatus.getErrorMessage(), "");
         Assert.assertEquals(nonPepperKitStatus.getError(), false);
         Assert.assertTrue(StringUtils.isNotBlank(nonPepperKitStatus.getDsmShippingLabel()));
+        JuniperSetupUtil.deleteJuniperKit(nonPepperKitStatus.getJuniperKitId());
     }
 }
