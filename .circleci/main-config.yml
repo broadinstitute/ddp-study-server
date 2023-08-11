@@ -873,7 +873,7 @@ jobs:
                 path: *repo_path
             - setup-shared-env
             - render-secrets:
-                secret_name: study-manager-config
+                secret_name: dsm-test-config
                 output_file: << parameters.app_config_file >>
             - run-maven-with-pepper-options:
                 module: dsm-core
