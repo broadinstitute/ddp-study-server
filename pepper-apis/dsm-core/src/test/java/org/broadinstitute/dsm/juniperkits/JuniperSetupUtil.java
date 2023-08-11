@@ -290,7 +290,6 @@ public class JuniperSetupUtil {
 
     public static void deleteJuniperKit(String ddpKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
             String dsmKitRequestId;
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
                 stmt.setString(1, ddpKitRequestId);
@@ -298,7 +297,8 @@ public class JuniperSetupUtil {
                     if (rs.next()) {
                         dsmKitRequestId = rs.getString("dsm_kit_request_id");
                     } else {
-                        throw new RuntimeException("Kit Not Found " + ddpKitRequestId);
+                        log.warn("Kit Not Found " + ddpKitRequestId);
+                        return null;
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException("Error selecting dsm_kit_request_id", e);
