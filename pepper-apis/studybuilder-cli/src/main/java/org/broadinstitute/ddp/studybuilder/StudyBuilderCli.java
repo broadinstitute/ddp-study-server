@@ -30,7 +30,7 @@ import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 
 /**
- * Main entry point for command-line tool that helps stand up a study.
+ * Main entry point for command-line tool that helps stand up a study
  */
 public class StudyBuilderCli {
 
