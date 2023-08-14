@@ -48,7 +48,7 @@ references:
 executors:
   test-executor:
     docker:
-      - image: broadinstitute/study-server-build:java-q2023-03-28C
+      - image: broadinstitute/study-server-build:java-2023-03-28C
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
       - image: cimg/redis:5.0
