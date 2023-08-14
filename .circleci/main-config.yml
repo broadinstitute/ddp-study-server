@@ -878,7 +878,7 @@ jobs:
             - set-deployment-env
             - auth-gcp-service-account
             - render-secrets:
-                secret_name: dsm-test-config
+                secret_name: study-manager-config
                 output_file: << parameters.app_config_file >>
             - run-maven-with-pepper-options:
                 module: dsm-core
