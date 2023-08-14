@@ -128,6 +128,9 @@ commands:
             DDP-?(*))
               DEPLOY_ENV=dev
             ;;
+            PEPPER-?(*))
+              DEPLOY_ENV=dev
+            ;;
             ?(*_)test)
               DEPLOY_ENV=test
             ;;
