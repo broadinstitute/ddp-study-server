@@ -6,17 +6,20 @@ import java.util.Random;
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponseError;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
+import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
+import org.broadinstitute.dsm.model.nonpepperkit.StatusKitResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class JuniperKitCreationTest extends DbTxnBaseTest {
-    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
+    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService(new NonPepperStatusKitService());
     final String instanceGuid = "Juniper-mock-guid";
     final String instanceName = "Juniper-mock";
     final String bspPrefix = "JuniperTestProject";
@@ -55,7 +58,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
         try {
             List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
-            nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
+            KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
             Assert.assertEquals(newKits.size(), oldkits.size() + 1);
             KitRequestShipping newKit =
@@ -63,6 +66,15 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                             .findAny().get();
             Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + participantId + rand);
             Assert.assertEquals(newKit.getBspCollaboratorSampleId(), bspPrefix + "_" + participantId + rand + "_" + kitType);
+
+            Assert.assertTrue(!(kitResponse instanceof KitResponseError));
+            Assert.assertTrue(kitResponse instanceof StatusKitResponse);
+            StatusKitResponse statusKitResponse = (StatusKitResponse) kitResponse;
+            Assert.assertNotNull(statusKitResponse.getKits());
+            Assert.assertEquals(1, statusKitResponse.getKits().size());
+            NonPepperKitStatusDto nonPepperKitStatusDto = statusKitResponse.getKits().get(0);
+            Assert.assertEquals(mockJuniperKit.getJuniperKitId(), nonPepperKitStatusDto.getJuniperKitId());
+            Assert.assertEquals(newKit.getDdpLabel(), nonPepperKitStatusDto.getDsmShippingLabel());
         } finally {
             JuniperSetupUtil.deleteJuniperKit(mockJuniperKit.getJuniperKitId());
         }

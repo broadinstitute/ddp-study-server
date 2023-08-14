@@ -22,7 +22,7 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
     final String instanceGuid = "Juniper-mock-guid";
     final String instanceName = "Juniper-mock";
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
-    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
+    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService(nonPepperStatusKitService);
 
     @Before
     public void setupJuniperBefore() {

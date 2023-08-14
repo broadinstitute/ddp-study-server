@@ -24,9 +24,11 @@ import org.broadinstitute.lddp.util.DeliveryAddress;
 @Slf4j
 public class NonPepperKitCreationService {
     public static final String JUNIPER = "JUNIPER";
+    NonPepperStatusKitService nonPepperStatusKitService;
 
-    //These are the Error Strings that are expected by Juniper
-
+    public NonPepperKitCreationService(NonPepperStatusKitService nonPepperStatusKitService) {
+        this.nonPepperStatusKitService = nonPepperStatusKitService;
+    }
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
@@ -94,9 +96,12 @@ public class NonPepperKitCreationService {
 
         }
 
-        log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        //TODO in PEPPER- change this to status
-        return new KitResponseError(null, juniperKitRequest.getJuniperKitId(), null);
+        log.info(juniperKitRequest.getJuniperKitId() + " for ddpInstance " + ddpInstance.getName() + " with kit type " + kitTypeName
+                + " has been created");
+
+
+        KitResponse kitStatusResponse = this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitRequest.getJuniperKitId());
+        return kitStatusResponse;
     }
 
     /**
