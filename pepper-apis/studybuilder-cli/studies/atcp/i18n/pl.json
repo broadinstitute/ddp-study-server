@@ -65,6 +65,8 @@
   "assent_title": "Udzielenie zgody osoby małoletniej",
   "assent_voluntary_details": "Przed podjęciem decyzji możesz zadawać badaczom pytania. Możesz również porozmawiać o tym badaniu z mamą, tatą lub kimkolwiek chcesz. Możesz poprosić o przeczytanie informacji o tym badaniu, które lekarz przekaże twoim rodzicom.",
   "assent_voluntary_title": "Nie musisz brać udziału w badaniu, jeśli nie chcesz.",
+  "choose_a_date": "Wybierz datę",
+  "full_name_required": "Imię i nazwisko jest wymagane",
   "consent_agreement_indicates_li1": "Badacze mogą wykorzystywać moje informacje zdrowotne, informacje medyczne, wyniki sekwencjonowania DNA (wymienione w punktach na następnej stronie) oraz wszystkie inne dane, które udostępnię na tej platformie, do przyszłych badań, wliczając badania, które jeszcze nie zostały opracowane, badania nad A-T, badania nad chorobami innymi niż A-T i/lub badania w celach komercyjnych, które zostaną poddane przeglądowi i ocenie przez radę ds. dostępu do danych platformy A-T. Informacje te będą przechowywane bez danych umożliwiających identyfikację w systemie archiwizowania, opartym na przetwarzaniu w chmurze, zarządzanym przez Broad Institute.",
   "consent_agreement_indicates_li2": "Badacze mogą udostępniać te informacje innym wykwalifikowanym badaczom bez zamieszczania danych umożliwiających moją identyfikację, jak imię i nazwisko, numer ubezpieczenia czy inne, aby mogły być wykorzystywane przez innych badaczy w przyszłych badaniach, wliczając badania, które jeszcze nie zostały opracowane, badania nad A-T, badania nad chorobami innymi niż A-T i/lub badania w celach komercyjnych.",
   "consent_agreement_title": "Zgadzam się na to, aby:",
