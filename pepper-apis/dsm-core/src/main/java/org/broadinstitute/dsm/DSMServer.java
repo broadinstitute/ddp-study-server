@@ -213,6 +213,7 @@ public class DSMServer {
     public static final String gcpPathToMercuryToDsmSub = "pubsub.mercury_to_dsm_subscription";
     public static final String gcpPathToAntiVirusSub = "pubsub.antivirus_to_dsm_subscription";
     private static final String apiRoot = "/ddp/";
+    private static final String dsmRoot = "/dsm/";
     private static final String uiRoot = "/ui/";
     private static final String infoRoot = "/info/";
     private static final String signer = "org.broadinstitute.kdux";
@@ -539,6 +540,11 @@ public class DSMServer {
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
         boolean bspSecretEncoded =
                 cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED) : false;
+
+        String dsmSecretForJuniper = cfg.getString(ApplicationConfigConstants.JUNIPER_SECRET);
+        String juniperSigner = cfg.getString(ApplicationConfigConstants.JUNIPER_SIGNER);
+        boolean juniperSecretEncoded =
+                cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED) : false;
         String ddpSecret = cfg.getString(ApplicationConfigConstants.DDP_SECRET);
         boolean ddpSecretEncoded =
                 cfg.hasPath(ApplicationConfigConstants.DDP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.DDP_ENCODED) : false;
@@ -562,6 +568,8 @@ public class DSMServer {
         //  capture basic route info for logging
         //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
         before(apiRoot + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, null, bspSecretEncoded));
+        before(dsmRoot + "*",
+                new LoggingFilter(auth0Domain, auth0claimNameSpace, dsmSecretForJuniper, juniperSigner, juniperSecretEncoded));
         before(uiRoot + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(infoRoot + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, signer, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, signer, ddpSecretEncoded));
