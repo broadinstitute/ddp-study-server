@@ -613,7 +613,7 @@ commands:
             DSM_CONFIG_FILE_OPTION=''
             if [[ ! -z '<< parameters.app_config_file >>' ]]; then
               DSM_CONFIG_FILE_PATH=$(readlink -f << parameters.app_config_file >>)
-              DSM_CONFIG_FILE_OPTION="-DdsmConfig.file=DSM_CONFIG_FILE_PATH"
+              DSM_CONFIG_FILE_OPTION="-DdsmConfig.file=$DSM_CONFIG_FILE_PATH"
             fi
 
             MODULES_OPTION=''
