@@ -17,6 +17,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * Tests the NonPepperStatusKitService class
+ * To run this class use the following VM variables
+ * -ea -Dconfig.file=[path to /pepper-apis/output-build-config/testing-inmemorydb.conf]
+ * -DdsmConfig.file=[path to DSM secret]
+ *  */
 public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     final String instanceGuid = "Juniper-mock-guid";
