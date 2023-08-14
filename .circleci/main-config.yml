@@ -1238,7 +1238,8 @@ workflows:
     jobs:
       - alex-job
       - dsm-compile-and-run-tests-job:
-          requires: alex-job
+          requires:
+            - alex-job
 
 
   # Build and deploy API docs
