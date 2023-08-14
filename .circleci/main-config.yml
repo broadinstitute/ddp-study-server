@@ -89,6 +89,7 @@ commands:
             # untarring will create a "tcell" dir
             tar --no-same-owner -xvf $TAR_FILE_PATH
 
+
   build-jar:
     description: Build jar
     parameters:
@@ -104,6 +105,7 @@ commands:
           command: |
             mvn install -DskipTests -pl << parameters.module >> -am -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
 
+
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
@@ -113,6 +115,7 @@ commands:
             echo "export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID)" >> $BASH_ENV
             echo "export SHORT_GIT_SHA=$(echo $CIRCLE_SHA1 | cut -c 1-7)" >> $BASH_ENV
             source $BASH_ENV
+
 
   set-deployment-env:
     description: "Determine the deploy target and set the ENVIRONMENT var"
@@ -148,6 +151,7 @@ commands:
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
             source $BASH_ENV
+
 
   render-configs:
     description: Run api-build.sh for specified application and current development environment
@@ -202,6 +206,7 @@ commands:
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
 
+
   store-jar:
     description: Store jar generated for Java module in a Google bucket.
     parameters:
@@ -231,6 +236,7 @@ commands:
             JAR_BUCKET_URL="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_FILE_NAME}"
             gsutil cp "${LOCAL_JAR_FILE_PATH}" "${JAR_BUCKET_URL}"
             echo "${JAR_FILE_NAME} successfully uploaded to ${JAR_BUCKET_URL}"
+
 
   retrieve-jar:
     description: Get <<parameters.jar_base_name>> jar from bucket
@@ -272,6 +278,7 @@ commands:
             ls -l $JAR_FILE_PATH
             echo ""
 
+
   render-secrets:
     description: Get secret <<parameters.secret_name>> from GCP
     parameters:
@@ -287,6 +294,7 @@ commands:
                 --secret='<<parameters.secret_name>>' > '<<parameters.output_file>>'
             pwd
             ls -l
+
 
   deploy-dsm-jar:
     description: Deploy DSM jar to GCP runtime environment. Note that it assumes DSM jar is found in dsm-server module target directory
@@ -437,6 +445,7 @@ commands:
             done;
             exit 0
 
+
   update-deployment-sheet:
     description: Update our running Google sheet with this deployment
     parameters:
@@ -450,6 +459,7 @@ commands:
             set +x
             vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey |
             /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
+
 
   auth-gcp-service-account:
     description: Authenticate service account with credentials stored in vault for specified environment
@@ -473,6 +483,7 @@ commands:
             vault read --format=json secret/pepper/${TARGET_ENV}/v1/conf |
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
+
 
   compute-parallel-test-split:
     description: >
@@ -685,6 +696,7 @@ commands:
                     -Dmaven.repo.local=<< parameters.m2_repo >>
                   cd ..
 
+
   wait_for_server:
     description: Wait for a server to respond for specific period of time
     parameters:
@@ -707,6 +719,7 @@ commands:
               sleep 1
             done
             echo Failed waiting for << parameters.server_address >> << parameters.port >> to start && exit 1
+
 
   start-ddp-test-server:
     description: Run test server that applies liquibase and load test data
@@ -741,6 +754,7 @@ commands:
           name: Compile and run checkstyle on all jars
           command: |
             mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >> -pl dsm-core,dss-core,studybuilder-cli -am -T 1.5C
+
 
   restore-ddp-cache:
     description: Restore ddp cache
@@ -830,6 +844,8 @@ commands:
               echo "No file patterns matched, skipping job"
               circleci step halt
             fi
+
+
 
 jobs:
   build-api-docs-job:
@@ -1147,6 +1163,39 @@ jobs:
       - delete-old-service-versions:
           deploy_dir: deploy
 
+  alex-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    parameters:
+      pepper_apis_path:
+        type: string
+        default: *pepper_apis_path
+      app_config_file:
+        type: string
+        default: vault.conf
+    steps:
+      - run: echo 'Doing dsm-compile-and-run-tests-job << pipeline.parameters.dsm >>'
+      - when:
+          condition: << pipeline.parameters.dsm >>
+          steps:
+            - run:
+                name: Remove directory << parameters.pepper_apis_path >> for checkout of files
+                command: |
+                  rmdir << parameters.pepper_apis_path >>
+            - checkout:
+                path: *repo_path
+            - setup-shared-env
+            - set-deployment-env
+            - run:
+                command: ls ../
+            - run:
+                command: ls
+            - run:
+                command: env
+            - auth-gcp-service-account
+
+
 parameters:
   on_demand:
     type: boolean
@@ -1187,11 +1236,10 @@ workflows:
     when:
       equal: ["build-test", << pipeline.parameters.action >>]
     jobs:
-      - dss-compile-and-run-test-suite-job
-      - dss-parallel-compile-and-test-job:
-          parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
-      - dsm-compile-and-run-tests-job
-      - build-api-docs-job
+      - alex-job
+      - dsm-compile-and-run-tests-job:
+          requires: alex-job
+
 
   # Build and deploy API docs
   api-docs-build-test-deploy-workflow:
