@@ -595,7 +595,7 @@ public class DSMServer {
 
         if (!cfg.getBoolean("ui.production")) {
             NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-            post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+            post(dsmRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
         }
 
         if (!cfg.getBoolean("ui.production")) {
