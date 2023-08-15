@@ -37,6 +37,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
             throw new ESMissingParticipantData("Participant ES data is null for participant " + participantId);
         }
+        //TODO this method does not actually take a study GUID - DC
         instance = DDPInstance.getDDPInstance(studyGuid);
         elasticSearchParticipantDto = maybeParticipantESDataByParticipantId.get();
         logger.info("Calling setDefaultData for index: " + esParticipantIndex + " and participantId: " + participantId);

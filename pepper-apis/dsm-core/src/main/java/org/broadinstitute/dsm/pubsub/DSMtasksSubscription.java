@@ -148,7 +148,7 @@ public class DSMtasksSubscription {
             throw new DsmInternalError("Invalid participant GUID: " + participantGuid);
         }
 
-        Study study = Study.of(studyGuid.toUpperCase());
+        Study study = Study.of(studyGuid);
         Defaultable defaultable = DefaultableMaker.makeDefaultable(study);
         try {
             defaultable.generateDefaults(studyGuid, participantGuid);

@@ -117,6 +117,11 @@ public class DDPInstance {
         this.displayName = displayName;
     }
 
+    /**
+     * Get instance by instance_name
+     *
+     * @param realm instance_name
+     */
     public static DDPInstance getDDPInstance(@NonNull String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
