@@ -69,12 +69,12 @@ public class SecurityHelper {
         }
     }
 
-    public static String createGpToken(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims) {
+    public static String createTokenWithSigner(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims, String signer) {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
 
             JWTCreator.Builder builder = JWT.create();
-            builder.withIssuer(BSP_SIGNER);
+            builder.withIssuer(signer);
             builder.withExpiresAt(dateSoon);
             if (claims != null) {
                 claims.forEach((key, value) -> {
