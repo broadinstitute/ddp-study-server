@@ -134,7 +134,7 @@
   "consent_voluntary_title": "3. Do I have to participate in this initiative?",
   "consent_withdraw_detail": "Yes, you can withdraw from this research study at any time, and your data will no longer be shared with researchers in future research studies. However, any of your information that has already been shared with investigators cannot be withdrawn from their studies.",
   "consent_withdraw_title": "8. Can I stop taking part in this research initiative?",
-
+  "full_name_required": "Full Name is required",
   "assent_attest": "I attest that the participant named above had enough time to consider this information, had an opportunity to ask questions, and voluntarily agreed to be in this study.",
   "assent_benefits_details": "This research is not likely to help you. We do hope to learn something from this research though. And some day we hope it will help other kids who have issues like you do.",
   "assent_benefits_title": "Could this research help me?",
@@ -201,7 +201,7 @@
   "assent_title": "Assent for Kids",
   "assent_voluntary_details": "You can ask the researchers questions before you make up your mind. You can also talk to your mom or dad or anyone you want to about the study. You can ask to read the information the doctor gives your mom or dad about this study.",
   "assent_voluntary_title": "You do not have to be in the study if you don't want to.",
-
+  "choose_a_date": "Choose a date",
   "contacting_physician_name": "Contacting Physician",
   "contacting_physician_title": "Contacting Physician",
   "contacting_physician_summary_created": "Contacting Physician",
