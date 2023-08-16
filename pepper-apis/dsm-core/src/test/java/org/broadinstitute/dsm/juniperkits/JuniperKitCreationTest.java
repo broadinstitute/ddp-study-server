@@ -29,7 +29,6 @@ import org.mockito.runners.MockitoJUnitRunner;
  * Tests the NonPepperKitCreationService class
  * To run this class use the following VM variables
  * -ea -Dconfig.file=[path to /pepper-apis/output-build-config/testing-inmemorydb.conf]
- * -DdsmConfig.file=[path to DSM secret]
  *  */
 
 @RunWith(MockitoJUnitRunner.class)
