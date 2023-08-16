@@ -19,7 +19,6 @@ import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.util.DeliveryAddress;
 
 @Slf4j
 public class NonPepperKitCreationService {
@@ -27,8 +26,8 @@ public class NonPepperKitCreationService {
 
     //These are the Error Strings that are expected by Juniper
 
-
-    public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {
+    public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String kitTypeName, EasyPostUtil easyPostUtil,
+                                          DDPInstance ddpInstance) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
             return new KitResponseError(KitResponse.UsualErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID.getMessage(),
                     juniperKitRequest.getJuniperKitId(),
@@ -37,18 +36,6 @@ public class NonPepperKitCreationService {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperKitId())) {
             return new KitResponseError(KitResponse.UsualErrorMessage.MISSING_JUNIPER_KIT_ID.getMessage(), null,
                     juniperKitRequest.getJuniperKitId());
-        }
-        //getting the instance with isHasRole being set to true if the instance has role juniper_study
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
-        if (ddpInstance == null) {
-            log.error(studyGuid + " is not a study!");
-            return new KitResponseError(KitResponse.UsualErrorMessage.UNKNOWN_STUDY.getMessage(), juniperKitRequest.getJuniperKitId(),
-                    studyGuid);
-        }
-        if (!ddpInstance.isHasRole()) {
-            log.error(studyGuid + " is not a Juniper study!");
-            return new KitResponseError(KitResponse.UsualErrorMessage.UNKNOWN_STUDY.getMessage(), juniperKitRequest.getJuniperKitId(),
-                    studyGuid);
         }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = KitType.createKitTypeKey(kitTypeName, ddpInstance.getDdpInstanceId());
@@ -65,10 +52,7 @@ public class NonPepperKitCreationService {
         // if the kit type has sub kits > like for testBoston
         //        boolean kitHasSubKits = kitRequestSettings.getHasSubKits() != 0;
 
-        log.info("Setup EasyPost...");
-        EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
-
-        if (!checkAddress(juniperKitRequest, kitRequestSettings.getPhone(), easyPostUtil)) {
+        if (!easyPostUtil.checkAddress(juniperKitRequest, kitRequestSettings.getPhone())) {
             return new KitResponseError(KitResponse.UsualErrorMessage.ADDRESS_VALIDATION_ERROR.getMessage(),
                     juniperKitRequest.getJuniperKitId(), null);
         }
@@ -95,55 +79,7 @@ public class NonPepperKitCreationService {
         }
 
         log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        //TODO in PEPPER- change this to status
         return new KitResponseError(null, juniperKitRequest.getJuniperKitId(), null);
-    }
-
-    /**
-     * checkAddress tries creating an address in EasyPost. If it is successful,
-     * sets the kit's easypostAddressId and returns true, if not returns false
-     * An address is valid only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
-     *
-     * @param juniperKitRequest the JuniperKitRequest with address to check
-     */
-
-    public boolean checkAddress(JuniperKitRequest juniperKitRequest, String phone, EasyPostUtil easyPostUtil) {
-        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID()))
-                || StringUtils.isBlank(juniperKitRequest.getLastName())) {
-            return false;
-        }
-        //let's validate the participant's address
-        String name = "";
-        if (StringUtils.isNotBlank(juniperKitRequest.getFirstName())) {
-            name += juniperKitRequest.getFirstName() + " ";
-        }
-        name += juniperKitRequest.getLastName();
-        if (juniperKitRequest.isSkipAddressValidation()) {
-            try {
-                Address address = easyPostUtil.createBroadAddress(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
-                        juniperKitRequest.getCity(),
-                        juniperKitRequest.getPostalCode(), juniperKitRequest.getState(), juniperKitRequest.getCountry(), phone);
-                juniperKitRequest.setEasypostAddressId(address.getId());
-                return true;
-            } catch (EasyPostException e) {
-                // log the reason for address creation failure and return false. The method will then return the error code
-                log.warn("Easypost couldn't create an address for " + juniperKitRequest.getShortId(), e);
-                return false;
-            }
-        }
-        DeliveryAddress deliveryAddress =
-                new DeliveryAddress(juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(),
-                        juniperKitRequest.getState(),
-                        juniperKitRequest.getPostalCode(), juniperKitRequest.getCountry(), name, phone);
-        deliveryAddress.validate();
-        if (deliveryAddress.isValid()) {
-            //store the address back
-            juniperKitRequest.setEasypostAddressId(deliveryAddress.getId());
-            return true;
-        }
-        log.info("Address is not valid " + juniperKitRequest.getShortId());
-        return false;
-
     }
 
 

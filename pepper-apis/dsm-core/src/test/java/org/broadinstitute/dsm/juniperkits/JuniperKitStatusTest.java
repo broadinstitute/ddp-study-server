@@ -1,21 +1,30 @@
 package org.broadinstitute.dsm.juniperkits;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.List;
 import java.util.Random;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DbTxnBaseTest;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.model.nonpepperkit.StatusKitResponse;
+import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * Tests the NonPepperStatusKitService class
@@ -23,17 +32,23 @@ import org.junit.Test;
  * -ea -Dconfig.file=[path to /pepper-apis/output-build-config/testing-inmemorydb.conf]
  * -DdsmConfig.file=[path to DSM secret]
  *  */
+
+@RunWith(MockitoJUnitRunner.class)
 public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     final String instanceGuid = "Juniper-mock-guid";
     final String instanceName = "Juniper-mock";
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
+    DDPInstance ddpInstance;
+    EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
 
     @Before
     public void setupJuniperBefore() {
         JuniperSetupUtil.setupUpAJuniperInstance(instanceName, instanceGuid, "Juniper-Mock", "JuniperTestProject");
         JuniperSetupUtil.loadDSMConfig();
+        ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
+        when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
     }
 
     @After
@@ -65,7 +80,7 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
         List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
 
-        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
+        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, "SALIVA", mockEasyPostUtil, ddpInstance);
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
 
@@ -105,7 +120,7 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
         List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
 
-        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
+        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, kitType, mockEasyPostUtil, ddpInstance);
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
 
@@ -150,7 +165,7 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
         JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
         List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
 
-        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, instanceGuid, "SALIVA");
+        nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, kitType, mockEasyPostUtil, ddpInstance);
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", "SALIVA");
         Assert.assertEquals(newKits.size(), oldkits.size() + 1);
 

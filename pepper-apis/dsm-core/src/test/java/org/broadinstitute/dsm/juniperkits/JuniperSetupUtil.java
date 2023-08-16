@@ -318,19 +318,7 @@ public class JuniperSetupUtil {
     }
 
     public static void loadDSMConfig() {
-        String dsmConfigFilePath = System.getProperty("dsmConfig.file");
         cfg = ConfigFactory.load();
-        cfg = cfg.withFallback(ConfigFactory.parseFile(new File(dsmConfigFilePath)));
-        log.info("Reading config values from " + dsmConfigFilePath);
-        if (!cfg.hasPath(ApplicationConfigConstants.DDP) || cfg.isEmpty()) {
-            throw new RuntimeException("Config is empty and/or ddp is not specified ");
-        }
-        if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
-            if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
-                System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
-            }
-        }
-        DSMServer.setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
         Config nonSecretConfig = cfg.withFallback(ConfigFactory.parseFile(new File("dsm-core/src/main/resources/application.conf")));
         new DSMConfig(nonSecretConfig);
     }

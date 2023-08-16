@@ -23,6 +23,8 @@ import org.broadinstitute.dsm.exception.CarrierRejectionException;
 import org.broadinstitute.dsm.exception.RateNotAvailableException;
 import org.broadinstitute.dsm.model.EasypostLabelRate;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
+import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
+import org.broadinstitute.lddp.util.DeliveryAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -294,5 +296,52 @@ public class EasyPostUtil {
 
     public Shipment getShipment(String shipmentId) throws EasyPostException {
         return Shipment.retrieve(shipmentId);
+    }
+
+    /**
+     * checkAddress tries creating an address in EasyPost. If it is successful,
+     * sets the kit's easypostAddressId and returns true, if not returns false
+     * An address is valid only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
+     *
+     * @param juniperKitRequest the JuniperKitRequest with address to check
+     */
+
+    public boolean checkAddress(JuniperKitRequest juniperKitRequest, String phone) {
+        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID()))
+                || StringUtils.isBlank(juniperKitRequest.getLastName())) {
+            return false;
+        }
+        //let's validate the participant's address
+        String name = "";
+        if (StringUtils.isNotBlank(juniperKitRequest.getFirstName())) {
+            name += juniperKitRequest.getFirstName() + " ";
+        }
+        name += juniperKitRequest.getLastName();
+        if (juniperKitRequest.isSkipAddressValidation()) {
+            try {
+                Address address = createBroadAddress(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
+                        juniperKitRequest.getCity(),
+                        juniperKitRequest.getPostalCode(), juniperKitRequest.getState(), juniperKitRequest.getCountry(), phone);
+                juniperKitRequest.setEasypostAddressId(address.getId());
+                return true;
+            } catch (EasyPostException e) {
+                // log the reason for address creation failure and return false. The method will then return the error code
+                logger.warn("Easypost couldn't create an address for " + juniperKitRequest.getShortId(), e);
+                return false;
+            }
+        }
+        DeliveryAddress deliveryAddress =
+                new DeliveryAddress(juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(),
+                        juniperKitRequest.getState(),
+                        juniperKitRequest.getPostalCode(), juniperKitRequest.getCountry(), name, phone);
+        deliveryAddress.validate();
+        if (deliveryAddress.isValid()) {
+            //store the address back
+            juniperKitRequest.setEasypostAddressId(deliveryAddress.getId());
+            return true;
+        }
+        logger.info("Address is not valid " + juniperKitRequest.getShortId());
+        return false;
+
     }
 }
