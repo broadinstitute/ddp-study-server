@@ -9,7 +9,7 @@ references:
   tcell_config_file: &tcell_config_file
                        tcell_agent.config
   ci_support_image: &ci_support_image
-                      broadinstitute/study-server-build:2022-06-01A
+                      broadinstitute/study-server-build:2023-03-28C
   root_path: &root_path
                /home/circleci
   repo_path: &repo_path
@@ -48,7 +48,7 @@ references:
 executors:
   test-executor:
     docker:
-      - image: broadinstitute/study-server-build:java-2022-06-01A
+      - image: broadinstitute/study-server-build:2023-03-28C
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
       - image: cimg/redis:5.0
@@ -613,7 +613,7 @@ commands:
             DSM_CONFIG_FILE_OPTION=''
             if [[ ! -z '<< parameters.app_config_file >>' ]]; then
               DSM_CONFIG_FILE_PATH=$(readlink -f << parameters.app_config_file >>)
-              DSM_CONFIG_FILE_OPTION="-DdsmConfig.file=DSM_CONFIG_FILE_PATH"
+              DSM_CONFIG_FILE_OPTION="-DdsmConfig.file=$DSM_CONFIG_FILE_PATH"
             fi
 
             MODULES_OPTION=''
@@ -878,7 +878,7 @@ jobs:
             - set-deployment-env
             - auth-gcp-service-account
             - render-secrets:
-                secret_name: dsm-test-config
+                secret_name: study-manager-config
                 output_file: << parameters.app_config_file >>
             - run-maven-with-pepper-options:
                 module: dsm-core

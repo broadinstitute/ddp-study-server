@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.DSMServer.GCP_PATH_TO_SERVICE_ACCOUNT;
 
 import java.io.File;
 import java.sql.Connection;
@@ -12,6 +13,7 @@ import java.sql.Statement;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
@@ -316,7 +318,18 @@ public class JuniperSetupUtil {
     }
 
     public static void loadDSMConfig() {
-        cfg = ConfigFactory.load().withFallback(ConfigFactory.parseFile(new File(System.getProperty("dsmConfig.file"))));
+        String dsmConfigFilePath = System.getProperty("dsmConfig.file");
+        cfg = ConfigFactory.load();
+        cfg = cfg.withFallback(ConfigFactory.parseFile(new File(dsmConfigFilePath)));
+        log.info("Reading config values from " + dsmConfigFilePath);
+        if (!cfg.hasPath(ApplicationConfigConstants.DDP) || cfg.isEmpty()) {
+            throw new RuntimeException("Config is empty and/or ddp is not specified ");
+        }
+        if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
+            if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
+                System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
+            }
+        }
         DSMServer.setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
         Config nonSecretConfig = cfg.withFallback(ConfigFactory.parseFile(new File("dsm-core/src/main/resources/application.conf")));
         new DSMConfig(nonSecretConfig);
