@@ -69,8 +69,8 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
         var expected = new ParticipantStatus(1577404800L, 1577491200L,
                 1582848000L, 1583798400L, 1583798400L, List.of(
                 new ParticipantStatus.Sample("a", "BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
-        GetResponse getResponse = new GetResponse(new GetResult("index", "id", "id01", 0,
-                1, 1, true,
+        GetResponse getResponse = new GetResponse(new GetResult("index", "id", "id01", 0L,
+                1L, 1L, true,
                 new BytesArray("{\"workflows\":[{\"workflow\":\"ACCEPTANCE_STATUS\",\"status\":\"ACCEPTED\","
                         + "\"data\":{\"subjectId\":\"XYZ\",\"name\":\"foobar\"}}],"
                         + "\"samples\": [{\"trackingIn\": \"testtrackingIn\",\"kitType\": \"testType\",\"carrier\": "
@@ -81,7 +81,7 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
                         + ":[{\"requested\":\"2020-02-28\",\"histology\":\"testType\",\"datePx\":\"2020-02-28\","
                         + "\"received\":\"2020-03-10\",\"locationPx\":\"testLocation\",\"typePx\":\"testType\","
                         + "\"sent\":\"2020-02-29\",\"accessionNumber\":\"423423233232\",\"tissueRecordsId\":5729}]}}"),
-                null));
+                null, null));
 
         when(mockESClient.get(any(GetRequest.class), eq(RequestOptions.DEFAULT)))
                 .thenReturn(getResponse);

@@ -13,10 +13,10 @@ import org.testcontainers.containers.MySQLContainer;
 @Slf4j
 public class DSMDbTestContainer {
     private static MySQLContainer dsmDb;
-    private static boolean hasInitialized = false;
+    private static boolean initialized = false;
 
     public static synchronized void initializeTestDbs() {
-        if (hasInitialized) {
+        if (initialized) {
             log.info("Already initialized DSM test db");
             return;
         }
@@ -24,7 +24,7 @@ public class DSMDbTestContainer {
         Boolean useDisposableTestDbs = ConfigUtil.getBoolIfPresent(cfg, ConfigFile.USE_DISPOSABLE_TEST_DB);
         if (useDisposableTestDbs != null && !useDisposableTestDbs) {
             log.warn("Disposable test dbs will not be used. Real database connection urls should be provided in configuration file.");
-            hasInitialized = true;
+            initialized = true;
             return;
         }
 
@@ -57,6 +57,6 @@ public class DSMDbTestContainer {
         } catch (InterruptedException e) {
             log.info("Wait interrupted", e);
         }
-        hasInitialized = true;
+        initialized = true;
     }
 }

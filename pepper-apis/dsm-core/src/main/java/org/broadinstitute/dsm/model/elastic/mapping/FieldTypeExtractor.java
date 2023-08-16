@@ -24,9 +24,9 @@ public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
     @Override
     public Map<String, String> extract() {
         if (isFieldsNotCached()) {
-            Map<String, GetFieldMappingsResponse.FieldMappingMetaData> mapping = getMapping().get(index);
+            Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapping = getMapping().get(index);
             Map<String, String> fieldTypeMapping = new HashMap<>();
-            for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetaData> entry : mapping.entrySet()) {
+            for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetadata> entry : mapping.entrySet()) {
                 fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
             }
             cachedFieldTypes.putAll(fieldTypeMapping);
@@ -44,13 +44,13 @@ public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
                 .collect(Collectors.toList());
     }
 
-    private String extractType(String fullFieldName, GetFieldMappingsResponse.FieldMappingMetaData value) {
+    private String extractType(String fullFieldName, GetFieldMappingsResponse.FieldMappingMetadata value) {
         String key = getRightMostFieldName(fullFieldName);
         return (String) ((Map<String, Object>) value.sourceAsMap().get(key)).get(MappingGenerator.TYPE);
     }
 
-    private Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetaData>> getMapping() {
-        Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetaData>> result = new HashMap<>();
+    private Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> getMapping() {
+        Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> result = new HashMap<>();
         GetFieldMappingsRequest request = new GetFieldMappingsRequest();
         request.indices(index);
         String[] fields = this.notCachedFields().toArray(new String[] {});

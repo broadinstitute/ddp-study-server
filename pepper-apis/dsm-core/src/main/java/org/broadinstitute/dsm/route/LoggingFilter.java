@@ -57,7 +57,7 @@ public class LoggingFilter implements Filter {
                     }
                 }
             }, () -> {
-                    logger.warn("Unable to verify token");
+                    logger.info("WARNING: Unable to verify token");
                     halt(401);
                     return;
                 });

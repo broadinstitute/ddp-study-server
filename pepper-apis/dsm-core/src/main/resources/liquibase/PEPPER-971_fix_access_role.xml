@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="PEPPER-971_fix_access_role-1" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "kit_deactivation";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="kit_deactivation"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-2" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "kit_express";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="kit_express"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-3" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "kit_receiving";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="kit_receiving"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-4" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "kit_shipping";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="kit_shipping"/>
+        </insert>
+    </changeSet>
+    
+    <changeSet id="PEPPER-971_fix_access_role-5" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "kit_upload";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="kit_upload"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-6" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "mailingList_view";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="mailingList_view"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-7" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "mr_request";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="mr_request"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-8" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "mr_view";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="mr_view"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-9" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "participant_edit";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="participant_edit"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-10" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "participant_event";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="participant_event"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-11" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "participant_exit";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="participant_exit"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="PEPPER-971_fix_access_role-12" author="cunningh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0"> SELECT count(*) FROM access_role WHERE name = "survey_creation";</sqlCheck>
+        </preConditions>
+        <insert tableName="access_role">
+            <column name="name" value="survey_creation"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

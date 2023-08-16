@@ -16,6 +16,7 @@ import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
@@ -28,6 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;
@@ -69,8 +72,8 @@ public class Auth0Util {
             verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
             return userInfo;
-        } catch (AuthenticationException e) {
-            throw new AuthenticationException("couldn't get Auth0 user info", e);
+        } catch (Exception e) {
+            throw new AuthenticationException("Could not get Auth0 user info", e);
         }
     }
 
@@ -103,7 +106,7 @@ public class Auth0Util {
         }
 
         if (connection == null) {
-            throw new RuntimeException("User does not have an approved connection.");
+            throw new DSMBadRequestException("User does not have an approved connection.");
         }
         return connection;
     }
@@ -115,20 +118,17 @@ public class Auth0Util {
             User user = userRequest.execute();
             findUserConnection(user.getIdentities());
         } catch (Exception ex) {
-            throw new RuntimeException("User connection verification failed for user " + email, ex);
+            throw new DsmInternalError("User connection verification failed for user " + email, ex);
         }
     }
 
     public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
-        Map<String, Claim> auth0Claims = new HashMap<>();
         try {
             Optional<DecodedJWT> maybeToken = verifyAuth0Token(auth0Token, auth0Domain);
-            maybeToken.orElseThrow();
-            auth0Claims = maybeToken.get().getClaims();
+            return maybeToken.orElseThrow().getClaims();
         } catch (Exception e) {
             throw new AuthenticationException("Could not verify auth0 token.", e);
         }
-        return auth0Claims;
     }
 
     /**
@@ -177,13 +177,13 @@ public class Auth0Util {
             JwkProvider jwkProvider = new JwkProviderBuilder(auth0Domain).build();
             keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
         } catch (Exception e) {
-            logger.warn("Could not verify token {} due to jwk error", jwt);
+            logger.info("WARNING: Could not verify token {} due to jwk error", jwt);
         }
         if (keyProvider != null) {
             try {
                 validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
             } catch (Exception e) {
-                logger.warn("Could not verify token {}", jwt, e);
+                logger.info("WARNING: Could not verify token {}", jwt, e);
             }
         }
         return Optional.ofNullable(validToken);
@@ -199,6 +199,7 @@ public class Auth0Util {
      * @param signer        the valid issuer of token
      * @param secretEncoded boolean, true if the secret is base64 encoded
      * @return a verified, decoded JWT
+     * @throws TokenExpiredException – if the token has expired.
      */
     public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain, String secret, String signer,
                                                         boolean secretEncoded) {
@@ -218,9 +219,10 @@ public class Auth0Util {
             }
             JWTVerifier verifier = verification.build();
             validToken = verifier.verify(jwt);
-
-        } catch (Exception e) {
-            logger.warn("Could not verify token {}", jwt, e);
+        } catch (TokenExpiredException expiredError) {
+            logger.info("WARNING: Token has expired {}", jwt, expiredError);
+        } catch (Exception error) {
+            logger.info("WARNING: Could not verify token {}", jwt, error);
         }
 
         return Optional.ofNullable(validToken);
