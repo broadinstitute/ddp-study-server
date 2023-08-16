@@ -26,8 +26,8 @@ public class NonPepperKitCreationService {
     public static final String JUNIPER = "JUNIPER";
     NonPepperStatusKitService nonPepperStatusKitService;
 
-    public NonPepperKitCreationService(NonPepperStatusKitService nonPepperStatusKitService) {
-        this.nonPepperStatusKitService = nonPepperStatusKitService;
+    public NonPepperKitCreationService() {
+        this.nonPepperStatusKitService = new NonPepperStatusKitService();
     }
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String studyGuid, String kitTypeName) {

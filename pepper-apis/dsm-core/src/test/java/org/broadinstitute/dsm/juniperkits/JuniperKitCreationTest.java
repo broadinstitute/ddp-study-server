@@ -11,7 +11,6 @@ import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponseError;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.model.nonpepperkit.StatusKitResponse;
 import org.junit.After;
 import org.junit.Assert;
@@ -19,7 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class JuniperKitCreationTest extends DbTxnBaseTest {
-    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService(new NonPepperStatusKitService());
+    NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
     final String instanceGuid = "Juniper-mock-guid";
     final String instanceName = "Juniper-mock";
     final String bspPrefix = "JuniperTestProject";
