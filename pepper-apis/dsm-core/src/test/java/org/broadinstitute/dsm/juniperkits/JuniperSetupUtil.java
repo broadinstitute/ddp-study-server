@@ -319,7 +319,9 @@ public class JuniperSetupUtil {
 
     public static void loadDSMConfig() {
         cfg = ConfigFactory.load();
-        Config nonSecretConfig = cfg.withFallback(ConfigFactory.parseFile(new File("dsm-core/src/main/resources/application.conf")));
+        File f = new File("./dsm-core/src/main/resources/application.conf");
+        log.info(f.exists() + "");
+        Config nonSecretConfig = cfg.withFallback(ConfigFactory.parseFile(f));
         new DSMConfig(nonSecretConfig);
     }
 
