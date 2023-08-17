@@ -28,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -54,6 +55,7 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -168,6 +170,7 @@ import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTrigger
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
+import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.lddp.util.JsonTransformer;
 import org.broadinstitute.lddp.util.Utility;
@@ -623,13 +626,8 @@ public class DSMServer {
 
         before(infoRoot + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
-            Optional<DecodedJWT> validToken =
-                    Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, signer,
-                            ddpSecretEncoded);
-            if (validToken.isEmpty()) {
-                logger.error(req.pathInfo() + " was called without valid token");
-                halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
-            }
+            Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, signer,
+                    ddpSecretEncoded);
         });
 
         get(infoRoot + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
@@ -820,7 +818,7 @@ public class DSMServer {
 
         get(uiRoot + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, auth0Domain);
         get(uiRoot + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(uiRoot + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(uiRoot + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
@@ -1078,6 +1076,21 @@ public class DSMServer {
         });
         exception(AuthorizationException.class, (exception, request, response) -> {
             response.status(403);
+            response.body(exception.getMessage());
+        });
+        exception(TokenExpiredException.class, (exception, request, response) -> {
+            response.status(401);
+            response.body(exception.getMessage());
+        });
+        exception(InvalidTokenException.class, (exception, request, response) -> {
+            response.status(401);
+            response.body(exception.getMessage());
+        });
+        exception(AuthenticationException.class, (exception, request, response) -> {
+            // this is a fallback exception, log it to see why it is happening
+            logger.error("Authentication error {}", exception.toString());
+            exception.printStackTrace();
+            response.status(401);
             response.body(exception.getMessage());
         });
     }

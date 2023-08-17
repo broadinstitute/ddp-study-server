@@ -1,15 +1,18 @@
 package org.broadinstitute.dsm.util;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
-import java.util.Optional;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.security.Auth0Util;
+import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -42,8 +45,11 @@ public class JWTRouteFilter {
     }
 
     /**
-     * Returns true if the request has the appropriate
-     * jwt token, false o'wise
+     * Return true if the request has the appropriate jwt token, false otherwise
+     *
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
      */
     public boolean isAccessAllowed(Request request, boolean isRSA, String secret) {
         boolean isAccessAllowed = false;
@@ -51,44 +57,31 @@ public class JWTRouteFilter {
             String authHeader = request.headers(AUTHORIZATION);
             if (StringUtils.isNotBlank(authHeader)) {
                 String[] parsedAuthHeader = authHeader.split(BEARER);
-                if (parsedAuthHeader != null) {
-                    if (parsedAuthHeader.length == 2) {
-                        String jwtToken = parsedAuthHeader[1].trim();
-                        //                        if (!isRSA) {
-                        //                            logger.info(jwtToken);
-                        //                        }
-                        if (StringUtils.isNotBlank(jwtToken)) {
+                if (parsedAuthHeader.length == 2) {
+                    String jwtToken = parsedAuthHeader[1].trim();
+                    if (StringUtils.isNotBlank(jwtToken)) {
+                        Map<String, Claim> verifiedClaims;
+                        if (isRSA) {
+                            verifiedClaims = Auth0Util.verifyAuth0Token(jwtToken, auth0Domain).getClaims();
+                        } else {
                             try {
-                                Map<String, Claim> verifiedClaims;
-                                if (isRSA) {
-                                    Optional<DecodedJWT> maybeValidToken = Auth0Util.verifyAuth0Token(jwtToken, auth0Domain);
-                                    if (maybeValidToken.isEmpty()) {
-                                        logger.warn("The token could not be verified!");
-                                        return false;
-                                    }
-                                    DecodedJWT validToken = maybeValidToken.get();
-                                    verifiedClaims = validToken.getClaims();
-                                } else {
-                                    Algorithm algorithm = Algorithm.HMAC256(secret);
-                                    JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
-                                    DecodedJWT jwt = verifier.verify(jwtToken);
-                                    verifiedClaims = jwt.getClaims();
-                                }
-                                if (verifiedClaims != null) {
-                                    // no role restriction required, just a valid signature
-                                    isAccessAllowed = true;
-                                } else {
-                                    logger.error("Claims were null, token deosn't have valid signature and access is not allowed");
-                                }
-                            } catch (Exception e) {
-                                logger.warn("Invalid token: " + jwtToken, e);
+                                Algorithm algorithm = Algorithm.HMAC256(secret);
+                                JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
+                                DecodedJWT jwt = verifier.verify(jwtToken);
+                                verifiedClaims = jwt.getClaims();
+                            } catch (UnsupportedEncodingException e) {
+                                throw new AuthenticationException(e);
                             }
                         }
-                    } else {
-                        logger.warn("Header was missing Bearer information (not length 2)");
+                        if (verifiedClaims != null) {
+                            // no role restriction required, just a valid signature
+                            isAccessAllowed = true;
+                        } else {
+                            logger.error("Claims were null, token deosn't have valid signature and access is not allowed");
+                        }
                     }
                 } else {
-                    logger.warn("Header was missing Bearer information");
+                    logger.warn("Header was missing Bearer information (not length 2)");
                 }
             } else {
                 logger.warn("Header was missing Authorization information");
