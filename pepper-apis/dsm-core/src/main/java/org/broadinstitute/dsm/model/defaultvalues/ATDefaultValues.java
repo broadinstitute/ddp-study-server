@@ -16,7 +16,7 @@ import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.exception.ESMissingParticipantData;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
@@ -44,7 +44,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     @Override
     protected boolean setDefaultData() {
         if (isParticipantDataNotInES()) {
-            throw new ESMissingParticipantData("Participant does not yet have profile and activities in ES");
+            throw new ESMissingParticipantDataException("Participant does not yet have profile and activities in ES");
         }
 
         boolean inserted = insertExitStatusForParticipant() && insertGenomicIdForParticipant();

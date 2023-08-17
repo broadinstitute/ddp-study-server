@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
-import org.broadinstitute.dsm.exception.ESMissingParticipantData;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
@@ -35,7 +35,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
         Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, participantId);
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
-            throw new ESMissingParticipantData("Participant ES data is null for participant " + participantId);
+            throw new ESMissingParticipantDataException("Participant ES data is null for participant " + participantId);
         }
         //TODO this method does not actually take a study GUID - DC
         instance = DDPInstance.getDDPInstance(studyGuid);

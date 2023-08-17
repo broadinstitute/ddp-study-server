@@ -6,7 +6,7 @@ public enum Study {
     ATCP("ATCP"),
     RGP("RGP"),
     SINGULAR("SINGULAR"),
-    LMS("LMS"),
+    LMS("CMI-LMS"),
     CMI_OSTEO("CMI-OSTEO");
 
     private String value;

@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.exception.ESMissingParticipantData;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
@@ -48,7 +48,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
     protected boolean setDefaultData() {
         // expecting ptp has a profile and has completed the enrollment activity
         if (elasticSearchParticipantDto.getProfile().isEmpty() || elasticSearchParticipantDto.getActivities().isEmpty()) {
-            throw new ESMissingParticipantData("Participant does not yet have profile and activities in ES");
+            throw new ESMissingParticipantDataException("Participant does not yet have profile and activities in ES");
         }
         Profile esProfile = elasticSearchParticipantDto.getProfile().get();
         log.info("Got ES profile of participant: {}", esProfile.getGuid());

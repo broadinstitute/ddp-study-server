@@ -22,7 +22,7 @@ import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.exception.ESMissingParticipantData;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.defaultvalues.Defaultable;
@@ -154,7 +154,7 @@ public class DSMtasksSubscription {
             defaultable.generateDefaults(studyGuid, participantGuid);
             retryPerParticipant.remove(participantGuid);
             consumer.ack();
-        } catch (ESMissingParticipantData e) {
+        } catch (ESMissingParticipantDataException e) {
             // retry until ES data shows up, or we reach max wait
             retryPerParticipant.merge(participantGuid, 1, Integer::sum);
             if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
