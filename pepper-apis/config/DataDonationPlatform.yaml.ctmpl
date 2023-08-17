@@ -5,16 +5,16 @@ runtime: java11
 instance_class: B8
 {{if eq $environment "prod"}}
 manual_scaling:
-  instances: 3
+  instances: 2
 {{else if eq $environment "staging"}}
 manual_scaling:
   instances: 1
 {{else if eq $environment "dev"}}
 manual_scaling:
-  instances: 3
+  instances: 2
 {{else}}
 basic_scaling:
-  max_instances: 4
+  max_instances: 2
   idle_timeout: 20m
 {{end}}
 
