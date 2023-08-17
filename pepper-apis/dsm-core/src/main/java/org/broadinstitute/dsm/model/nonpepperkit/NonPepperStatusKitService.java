@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.nonpepperkit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,10 @@ import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 
+/**
+ * This service returns a Juniper kit's status
+ *
+ */
 @Slf4j
 public class NonPepperStatusKitService {
     private KitStatusDao kitStatusDao;
@@ -45,12 +50,12 @@ public class NonPepperStatusKitService {
 
     public KitResponse getKitsBasedOnStudyName(String studyGuid) {
         if (StringUtils.isBlank(studyGuid)) {
-            return new KitResponseError(KitResponse.UsualErrorMessage.MISSING_STUDY_GUID.getMessage());
+            return new KitResponseError(KitResponseError.ErrorMessage.MISSING_STUDY_GUID);
         }
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
         if (ddpInstance == null || !ddpInstance.isHasRole()) {
             log.error(studyGuid + " is not a Juniper study!");
-            return new KitResponseError(KitResponse.UsualErrorMessage.UNKNOWN_STUDY.getMessage());
+            return new KitResponseError(KitResponseError.ErrorMessage.UNKNOWN_STUDY);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get all the kits
@@ -62,7 +67,7 @@ public class NonPepperStatusKitService {
 
     public KitResponse getKitsBasedOnJuniperKitId(String juniperKitId) {
         if (StringUtils.isBlank(juniperKitId)) {
-            return new KitResponseError(KitResponse.UsualErrorMessage.MISSING_JUNIPER_KIT_ID.getMessage());
+            return new KitResponseError(KitResponseError.ErrorMessage.MISSING_JUNIPER_KIT_ID);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kit with that juniperKitId
@@ -74,7 +79,7 @@ public class NonPepperStatusKitService {
 
     public KitResponse getKitsBasedOnParticipantId(String participantId) {
         if (StringUtils.isBlank(participantId)) {
-            return new KitResponseError(KitResponse.UsualErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID.getMessage());
+            return new KitResponseError(KitResponseError.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kit with that participantId
@@ -88,13 +93,13 @@ public class NonPepperStatusKitService {
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kits with the given kit ids
         try {
-            ArrayList<NonPepperKitStatusDto> list = kitStatusDao.getKitsByKitIdArray(kitIdsArray,  users);
+            List<NonPepperKitStatusDto> list = kitStatusDao.getKitsByKitIdArray(kitIdsArray,  users);
             StatusKitResponse statusKitResponse = new StatusKitResponse(list);
             return statusKitResponse;
 
         } catch (Exception e) {
             log.error("Error getting kits by an array of kit ids", e);
-            return new KitResponseError(KitResponse.UsualErrorMessage.DSM_ERROR_SOMETHING_WENT_WRONG.getMessage());
+            return new KitResponseError(KitResponseError.ErrorMessage.DSM_ERROR_SOMETHING_WENT_WRONG);
         }
     }
 

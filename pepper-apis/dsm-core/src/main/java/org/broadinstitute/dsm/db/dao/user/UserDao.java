@@ -153,7 +153,7 @@ public class UserDao implements Dao<UserDto> {
      * @return Map instance, key is the user id and value is UserDto
      * */
     public static Map<Integer, UserDto> selectAllUsers() {
-        HashMap<Integer, UserDto> users = new HashMap<>();
+        Map<Integer, UserDto> users = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ALL_USERS)) {

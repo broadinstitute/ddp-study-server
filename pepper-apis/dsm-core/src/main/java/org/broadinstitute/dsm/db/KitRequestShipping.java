@@ -202,7 +202,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             " SELECT count(*) kitRequestCount from ddp_kit_request where bsp_collaborator_sample_id REGEXP \"^%1\" and kit_type_id = ?";
 
     private static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS =
-            " select 1 as found  from (select 1 from ddp_kit_request req  where req.ddp_label = ?) as existing_rows ";
+            " select 1 from ddp_kit_request req  where req.ddp_label = ? ";
 
     private static final String QUEUE = "queue";
     private static final String ERROR = "error";
@@ -998,7 +998,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-            // update ES only if it's a pepper study
+            // update ES only if it's a pepper study, not for Darwin's arc or Juniper studies
             if (ddpInstanceDto.isESUpdatePossible()) {
                 try {
                     UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
@@ -1006,8 +1006,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
-                    //This error will trigger on studies with no participants, this skips
-                    //the error log if that is the reason for the upsert failure.
                     logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
                                 + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
                     e.printStackTrace();

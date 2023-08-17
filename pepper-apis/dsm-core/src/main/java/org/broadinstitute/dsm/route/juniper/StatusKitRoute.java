@@ -43,11 +43,11 @@ public class StatusKitRoute implements Route {
             try {
                 kitResponse = this.nonPepperStatusKitService.getKitsFromKitIds(kitIds);
             } catch (DSMBadRequestException e) {
-                kitResponse = new KitResponseError("No Kit ID was sent ", null, kitIds);
+                kitResponse = new KitResponseError(KitResponseError.ErrorMessage.MISSING_JUNIPER_KIT_ID, null, kitIds);
             }
         } else {
             response.status(400);
-            return KitResponse.UsualErrorMessage.NOT_IMPLEMENTED.getMessage();
+            return KitResponseError.ErrorMessage.NOT_IMPLEMENTED;
         }
         if (!(kitResponse instanceof KitResponseError)) {
             response.status(200);

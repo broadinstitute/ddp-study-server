@@ -14,6 +14,10 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * This is the route that is called by Juniper to create a new kit in DSM
+ */
+
 @Slf4j
 public class JuniperShipKitRoute implements Route {
 
@@ -28,15 +32,15 @@ public class JuniperShipKitRoute implements Route {
         JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
         if (juniperKitRequest == null) {
             response.status(400);
-            return new KitResponseError("EMPTY_REQUEST", null, juniperKitRequest);
+            return new KitResponseError(KitResponseError.ErrorMessage.EMPTY_REQUEST, null, juniperKitRequest);
         }
         if (StringUtils.isBlank(shipKitRequest.getJuniperStudyGUID())) {
             response.status(400);
-            return new KitResponseError("EMPTY_STUDY_NAME", null, null);
+            return new KitResponseError(KitResponseError.ErrorMessage.EMPTY_STUDY_NAME, null, null);
         }
         if (StringUtils.isBlank(shipKitRequest.getKitType())) {
             response.status(400);
-            return new KitResponseError("EMPTY_KIT_TYPE", null, shipKitRequest.getKitType());
+            return new KitResponseError(KitResponseError.ErrorMessage.EMPTY_KIT_TYPE, null, shipKitRequest.getKitType());
         }
         //getting the instance with isHasRole being set to true if the instance has role juniper_study
         String studyGuid = shipKitRequest.getJuniperStudyGUID();
@@ -44,13 +48,13 @@ public class JuniperShipKitRoute implements Route {
         if (ddpInstance == null) {
             log.error(studyGuid + " is not a study!");
             response.status(400);
-            return new KitResponseError(KitResponse.UsualErrorMessage.UNKNOWN_STUDY.getMessage(), juniperKitRequest.getJuniperKitId(),
+            return new KitResponseError(KitResponseError.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
                     studyGuid);
         }
         if (!ddpInstance.isHasRole()) {
             log.error(studyGuid + " is not a Juniper study!");
             response.status(400);
-            return new KitResponseError(KitResponse.UsualErrorMessage.UNKNOWN_STUDY.getMessage(), juniperKitRequest.getJuniperKitId(),
+            return new KitResponseError(KitResponseError.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
                     studyGuid);
         }
 
