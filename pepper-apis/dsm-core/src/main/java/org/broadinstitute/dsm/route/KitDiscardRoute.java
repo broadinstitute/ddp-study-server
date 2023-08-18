@@ -195,10 +195,10 @@ public class KitDiscardRoute extends RequestHandler {
             }
         }
         // TOOO I did some initial work to clean up this method, largely to ensure DSM was returning the correct
-        // response codes and remove unnecessary complexity (still more to do one that). But this catch-all is just bad.
-        // It looks like a fall through from several of the clauses above, which means DSM likely wants to throw a
-        //  DSMBadRequestException, but of course we need to add a response body describing what is wrong.
-        //  It also looks like this is where a request without a token ends up.  -DC
+        // response codes and to remove unnecessary complexity (still more to do on that). But this catch-all
+        // needs improvement. It looks like a fall through from several of the clauses above, which means DSM
+        // likely wants to throw a DSMBadRequestException for at least some of those cases, but of course we need to
+        // add a response body describing what is wrong. It also looks like this is where a request without a token ends up.  -DC
         throw new RuntimeException("Something went wrong");
     }
 
