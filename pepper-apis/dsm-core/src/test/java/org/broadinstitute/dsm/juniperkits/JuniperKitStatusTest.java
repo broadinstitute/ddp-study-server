@@ -47,7 +47,8 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setupJuniperBefore() {
-        JuniperSetupUtil.setupJuniperInstance(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
+        JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");;
+        juniperSetupUtil.setupJuniperInstance();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
     }
