@@ -119,14 +119,14 @@ public class UpdateWorkflowStatusTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testUpdateProbandStatusInDB() {
+    public void testUpdateProbandStatus() {
         ParticipantData participantData = createParticipantData("ups");
         int participantDataId = participantData.getParticipantDataId();
         try {
             String workflow = "REGISTRATION_STATUS";
             String status = "ENROLLED";
             String fieldType = participantData.getFieldTypeId().orElseThrow();
-            WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, fieldType);
+            WorkflowStatusUpdate.updateProbandStatus(workflow, status, participantData, fieldType);
             String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElseThrow();
             JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
             Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());
@@ -136,12 +136,12 @@ public class UpdateWorkflowStatusTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testAddNewParticipantDataWithStatus() {
+    public void testCreateParticipantData() {
         int participantDataId = -1;
         try {
             String workflow = "REGISTRATION_TYPE";
             String status = "SELF2";
-            participantDataId = WorkflowStatusUpdate.addNewParticipantDataWithStatus(workflow, status,
+            participantDataId = WorkflowStatusUpdate.createParticipantData(workflow, status,
                     genParticipantId("anp"), ddpInstanceDto.getDdpInstanceId(), fieldTypeId);
             String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElse("");
             JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);

@@ -11,6 +11,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.painless.AddToSingleScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -89,9 +90,8 @@ public class ParticipantRecord {
                     ddpParticipantId, new AddToSingleScriptBuilder())
                     .export();
         } catch (Exception e) {
-            log.error(String.format("Error inserting participant record for guid: %s in ElasticSearch", ddpParticipantId));
-            e.printStackTrace();
-            return false;
+            throw new DsmInternalError(String.format("Error inserting participant record for guid: %s in ElasticSearch",
+                    ddpParticipantId));
         }
         return true;
     }
