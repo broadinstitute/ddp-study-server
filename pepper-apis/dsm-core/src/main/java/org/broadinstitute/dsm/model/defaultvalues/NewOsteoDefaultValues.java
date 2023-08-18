@@ -34,7 +34,7 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
     protected boolean setDefaultData() {
         if (elasticSearchParticipantDto.getDsm().isEmpty()) {
             // TODO: coding it this way since the existing behavior was to retry elastic until the data shows up
-            // but I'm not sure that is applicable here - DC
+            // but I'm not sure that is applicable here since the code is looking for DSM data - DC
             throw new ESMissingParticipantDataException("Participant dsm ES data missing");
         }
 

@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -147,7 +148,7 @@ public class DDPInstance {
     }
 
     public static DDPInstance getDDPInstanceByGuid(@NonNull String studyGuid) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ALL_ACTIVE_REALMS + QueryExtension.BY_STUDY_GUID)) {
                 stmt.setString(1, studyGuid);
@@ -155,8 +156,6 @@ public class DDPInstance {
                     if (rs.next()) {
                         dbVals.resultValue = getDDPInstanceFormResultSet(rs);
                     }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error getting information for realm with study guid " + studyGuid, e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -165,7 +164,7 @@ public class DDPInstance {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get realm information for realm with study guid " + studyGuid, results.resultException);
+            throw new DsmInternalError("Could not get ddp_instance for study guid: " + studyGuid, results.resultException);
         }
         return (DDPInstance) results.resultValue;
     }

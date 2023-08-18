@@ -6,6 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -30,17 +32,22 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
 
     @Override
     public boolean generateDefaults(String studyGuid, String participantId) {
-        String esParticipantIndex = ddpInstanceDao.getEsParticipantIndexByStudyGuid(studyGuid)
-                .orElse(StringUtils.EMPTY);
+        instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
+        if (instance == null) {
+            throw new DSMBadRequestException("Invalid study GUID: " + studyGuid);
+        }
+        String esIndex = instance.getParticipantIndexES();
+        if (StringUtils.isEmpty(esIndex)) {
+            throw new DsmInternalError("No ES participant index for study " + studyGuid);
+        }
+
         Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, participantId);
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, participantId);
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
             throw new ESMissingParticipantDataException("Participant ES data is null for participant " + participantId);
         }
-        //TODO this method does not actually take a study GUID - DC
-        instance = DDPInstance.getDDPInstance(studyGuid);
         elasticSearchParticipantDto = maybeParticipantESDataByParticipantId.get();
-        logger.info("Calling setDefaultData for index: " + esParticipantIndex + " and participantId: " + participantId);
+        logger.info("Calling setDefaultData for ES index {} and participant ID {}", esIndex, participantId);
         return setDefaultData();
     }
 }
