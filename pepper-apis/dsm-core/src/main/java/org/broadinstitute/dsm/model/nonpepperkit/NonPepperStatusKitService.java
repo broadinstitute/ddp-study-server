@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +26,7 @@ public class NonPepperStatusKitService {
         this.kitStatusDao = new KitStatusDao();
     }
 
-    public static String getUserEmailForFields(String userIdInDB, HashMap<Integer, UserDto> users) {
+    public static String getUserEmailForFields(String userIdInDB, Map<Integer, UserDto> users) {
         String userEmail = "";
         if (StringUtils.isBlank(userIdInDB)) {
             return userEmail;
@@ -48,20 +49,19 @@ public class NonPepperStatusKitService {
         return instant.toString();
     }
 
-    public KitResponse getKitsBasedOnStudyName(String studyGuid) {
+    public KitResponse getKitsByStudyName(String studyGuid) {
         if (StringUtils.isBlank(studyGuid)) {
             return new KitResponseError(KitResponseError.ErrorMessage.MISSING_STUDY_GUID);
         }
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
         if (ddpInstance == null || !ddpInstance.isHasRole()) {
-            log.error(studyGuid + " is not a Juniper study!");
+            log.info(studyGuid + " is not a Juniper study!");
             return new KitResponseError(KitResponseError.ErrorMessage.UNKNOWN_STUDY);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get all the kits
         ArrayList<NonPepperKitStatusDto> list = (ArrayList<NonPepperKitStatusDto>) kitStatusDao.getKitsByInstanceId(ddpInstance, users);
-        StatusKitResponse statusKitResponse = new StatusKitResponse(list);
-        return statusKitResponse;
+        return new StatusKitResponse(list);
 
     }
 
@@ -72,8 +72,7 @@ public class NonPepperStatusKitService {
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kit with that juniperKitId
         ArrayList<NonPepperKitStatusDto> list = (ArrayList<NonPepperKitStatusDto>) kitStatusDao.getKitsByJuniperKitId(juniperKitId, users);
-        StatusKitResponse statusKitResponse = new StatusKitResponse(list);
-        return statusKitResponse;
+        return new StatusKitResponse(list);
 
     }
 
@@ -85,8 +84,7 @@ public class NonPepperStatusKitService {
         // get the kit with that participantId
         ArrayList<NonPepperKitStatusDto> list =
                 (ArrayList<NonPepperKitStatusDto>) kitStatusDao.getKitsByParticipantId(participantId, users);
-        StatusKitResponse statusKitResponse = new StatusKitResponse(list);
-        return statusKitResponse;
+        return  new StatusKitResponse(list);
     }
 
     public KitResponse getKitsFromKitIds(String[] kitIdsArray) {
@@ -94,8 +92,7 @@ public class NonPepperStatusKitService {
         // get the kits with the given kit ids
         try {
             List<NonPepperKitStatusDto> list = kitStatusDao.getKitsByKitIdArray(kitIdsArray,  users);
-            StatusKitResponse statusKitResponse = new StatusKitResponse(list);
-            return statusKitResponse;
+            return new StatusKitResponse(list);
 
         } catch (Exception e) {
             log.error("Error getting kits by an array of kit ids", e);

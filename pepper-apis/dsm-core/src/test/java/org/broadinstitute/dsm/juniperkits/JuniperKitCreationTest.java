@@ -47,7 +47,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setupJuniperBefore() {
-        JuniperSetupUtil.setupUpAJuniperInstance(instanceName, instanceGuid, "Juniper-test", bspPrefix);
+        JuniperSetupUtil.setupJuniperInstance(instanceName, instanceGuid, "Juniper-test", bspPrefix);
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
     }
 
@@ -120,8 +120,8 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
         try {
             KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType,
                     mockEasyPostUtil, ddpInstance);
-            Assert.assertEquals(kitResponse.errorMessage, KitResponseError.ErrorMessage.MISSING_JUNIPER_KIT_ID);
-            Assert.assertEquals(kitResponse.value, null);
+            Assert.assertEquals(KitResponseError.ErrorMessage.MISSING_JUNIPER_KIT_ID, kitResponse.errorMessage);
+            Assert.assertEquals(null, kitResponse.value);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.assertEquals(newKits.size(), oldkits.size());
         } finally {
@@ -154,8 +154,8 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
         try {
             KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType,
                     mockEasyPostUtil, ddpInstance);
-            Assert.assertEquals(kitResponse.errorMessage, KitResponseError.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID);
-            Assert.assertEquals(kitResponse.value, "");
+            Assert.assertEquals(KitResponseError.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID, kitResponse.errorMessage);
+            Assert.assertEquals("", kitResponse.value);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.assertEquals(newKits.size(), oldkits.size());
         } finally {
@@ -188,7 +188,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
         try {
             KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType,
                     mockEasyPostUtil, ddpInstance);
-            Assert.assertEquals(kitResponse.errorMessage, KitResponseError.ErrorMessage.UNKNOWN_KIT_TYPE);
+            Assert.assertEquals(KitResponseError.ErrorMessage.UNKNOWN_KIT_TYPE, kitResponse.errorMessage);
             Assert.assertEquals(kitResponse.value, kitType);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.assertEquals(newKits.size(), oldkits.size());

@@ -47,7 +47,7 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setupJuniperBefore() {
-        JuniperSetupUtil.setupUpAJuniperInstance(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
+        JuniperSetupUtil.setupJuniperInstance(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
     }
@@ -60,29 +60,13 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     @Test
     public void testStatusKitEndpointByJuniperStudyGuid() {
-        String participantId = "TEST_PARTICIPANT";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
 
-        String json = "{ \"firstName\":\"P\","
-                + "\"lastName\":\"T\","
-                + "\"street1\":\"415 Main st\","
-                + "\"street2\":null,"
-                + "\"city\":\"Cambridge\","
-                + "\"state\":\"MA\","
-                + "\"postalCode\":\"02142\","
-                + "\"country\":\"USA\","
-                + "\"phoneNumber\":\" 111 - 222 - 3344\","
-                + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
-                + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"forceUpload\":false,"
-                + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
-
-        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
         try {
             createAndAssertNonPepperCreation(juniperTestKit);
 
-            StatusKitResponse kitResponse = (StatusKitResponse) nonPepperStatusKitService.getKitsBasedOnStudyName(instanceGuid);
+            StatusKitResponse kitResponse = (StatusKitResponse) nonPepperStatusKitService.getKitsByStudyName(instanceGuid);
             Assert.assertNotNull(kitResponse);
             Assert.assertNotNull(kitResponse.getKits());
             Assert.assertNotEquals(0, kitResponse.getKits().size());
@@ -96,25 +80,8 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     @Test
     public void testStatusByJuniperKitId() {
-        String participantId = "TEST_PARTICIPANT";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
-
-        String json = "{ \"firstName\":\"P\","
-                + "\"lastName\":\"T\","
-                + "\"street1\":\"415 Main st\","
-                + "\"street2\":null,"
-                + "\"city\":\"Cambridge\","
-                + "\"state\":\"MA\","
-                + "\"postalCode\":\"02142\","
-                + "\"country\":\"USA\","
-                + "\"phoneNumber\":\" 111 - 222 - 3344\","
-                + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
-                + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"forceUpload\":false,"
-                + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
-
-        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
         try {
             createAndAssertNonPepperCreation(juniperTestKit);
 
@@ -129,25 +96,8 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
 
     @Test
     public void testStatusByKitIdTest() {
-        String participantId = "TEST_PARTICIPANT";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
-
-        String json = "{ \"firstName\":\"P\","
-                + "\"lastName\":\"T\","
-                + "\"street1\":\"415 Main st\","
-                + "\"street2\":null,"
-                + "\"city\":\"Cambridge\","
-                + "\"state\":\"MA\","
-                + "\"postalCode\":\"02142\","
-                + "\"country\":\"USA\","
-                + "\"phoneNumber\":\" 111 - 222 - 3344\","
-                + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
-                + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"forceUpload\":false,"
-                + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
-
-        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
         try {
             createAndAssertNonPepperCreation(juniperTestKit);
 
@@ -176,10 +126,31 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
                         .filter(kitStatus -> kitStatus.getJuniperKitId().equals("JuniperTestKitId_" + testRandomNumber))
                         .findAny());
         NonPepperKitStatusDto nonPepperKitStatus = kitResponse.getKits().get(0);
-        Assert.assertEquals(nonPepperKitStatus.getJuniperKitId(), juniperTestKit.getJuniperKitId());
-        Assert.assertEquals(nonPepperKitStatus.getParticipantId(), juniperTestKit.getJuniperParticipantID());
-        Assert.assertEquals(nonPepperKitStatus.getErrorMessage(), "");
-        Assert.assertEquals(nonPepperKitStatus.getError(), false);
+        Assert.assertEquals(juniperTestKit.getJuniperKitId(), nonPepperKitStatus.getJuniperKitId());
+        Assert.assertEquals(juniperTestKit.getJuniperParticipantID(), nonPepperKitStatus.getParticipantId());
+        Assert.assertEquals("", nonPepperKitStatus.getErrorMessage());
+        Assert.assertEquals(false, nonPepperKitStatus.getError());
         Assert.assertTrue(StringUtils.isNotBlank(nonPepperKitStatus.getDsmShippingLabel()));
+    }
+
+    private JuniperKitRequest generateJuniperKit(int random){
+        String participantId = "TEST_PARTICIPANT";
+
+        String json = "{ \"firstName\":\"P\","
+                + "\"lastName\":\"T\","
+                + "\"street1\":\"415 Main st\","
+                + "\"street2\":null,"
+                + "\"city\":\"Cambridge\","
+                + "\"state\":\"MA\","
+                + "\"postalCode\":\"02142\","
+                + "\"country\":\"USA\","
+                + "\"phoneNumber\":\" 111 - 222 - 3344\","
+                + "\"juniperKitId\":\"JuniperTestKitId_" + random + "\","
+                + "\"juniperParticipantID\":\"" + participantId + random + "\","
+                + "\"forceUpload\":false,"
+                + "\"skipAddressValidation\":false,"
+                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
+
+        return new Gson().fromJson(json, JuniperKitRequest.class);
     }
 }

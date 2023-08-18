@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.route.juniper;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -21,14 +22,16 @@ import spark.Route;
 @Slf4j
 public class JuniperShipKitRoute implements Route {
 
-    NonPepperKitCreationService kitCreationService;
+    private final NonPepperKitCreationService kitCreationService;
 
-    public JuniperShipKitRoute(NonPepperKitCreationService kitCreationService) {
-        this.kitCreationService = kitCreationService;
+    public JuniperShipKitRoute() {
+        this.kitCreationService = new NonPepperKitCreationService();
     }
 
     public KitResponse createNonPepperKit(Request request, Response response) {
-        ShipKitRequest shipKitRequest = new Gson().fromJson(request.body(), ShipKitRequest.class);
+        try {
+            ShipKitRequest shipKitRequest = new Gson().fromJson(request.body(), ShipKitRequest.class);
+
         JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
         if (juniperKitRequest == null) {
             response.status(400);
@@ -46,13 +49,14 @@ public class JuniperShipKitRoute implements Route {
         String studyGuid = shipKitRequest.getJuniperStudyGUID();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
         if (ddpInstance == null) {
-            log.error(studyGuid + " is not a study!");
+            log.warn(studyGuid + " is not a study!");
             response.status(400);
             return new KitResponseError(KitResponseError.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
                     studyGuid);
         }
+        //check it the study is set to use this endpoint
         if (!ddpInstance.isHasRole()) {
-            log.error(studyGuid + " is not a Juniper study!");
+            log.info(studyGuid + " is not a Juniper study!");
             response.status(400);
             return new KitResponseError(KitResponseError.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
                     studyGuid);
@@ -68,10 +72,15 @@ public class JuniperShipKitRoute implements Route {
             response.status(400);
         }
         return kitResponse;
+        } catch (JsonSyntaxException exception){
+            response.status(400);
+            log.warn("Bad Json Syntax exception, will return 400", exception);
+            return new KitResponseError(KitResponseError.ErrorMessage.JSON_SYNTAX_EXCEPTION, null, exception);
+        }
     }
 
     @Override
-    public Object handle(Request request, Response response) throws Exception {
+    public Object handle(Request request, Response response) {
         return createNonPepperKit(request, response);
     }
 }

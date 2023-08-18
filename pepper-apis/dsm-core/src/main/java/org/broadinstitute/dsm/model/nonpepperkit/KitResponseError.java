@@ -1,9 +1,12 @@
 package org.broadinstitute.dsm.model.nonpepperkit;
 
+import lombok.Getter;
+
+@Getter
 public class KitResponseError extends KitResponse {
-    public ErrorMessage errorMessage;
-    public String juniperKitId;
-    public Object value;
+    private ErrorMessage errorMessage;
+    private String juniperKitId;
+    private Object value;
 
     public KitResponseError(ErrorMessage errorMessage, String juniperKitId, Object value) {
         super();
@@ -34,6 +37,7 @@ public class KitResponseError extends KitResponse {
         MISSING_STUDY_GUID,
         DSM_ERROR_SOMETHING_WENT_WRONG,
         EMPTY_REQUEST,
+        JSON_SYNTAX_EXCEPTION,
         EMPTY_STUDY_NAME, EMPTY_KIT_TYPE, NOT_IMPLEMENTED
 
     }

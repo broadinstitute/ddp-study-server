@@ -232,9 +232,9 @@ public class EasyPostUtil {
         return Address.create(toAddressMap);
     }
 
-    public Address createBroadAddress(@NonNull String name, @NonNull String street1, @NonNull String street2,
-                                      @NonNull String city, @NonNull String zip, @NonNull String state,
-                                      @NonNull String country, @NonNull String phone) throws EasyPostException {
+    public Address createAddressWithoutValidation(@NonNull String name, @NonNull String street1, @NonNull String street2,
+                                                  @NonNull String city, @NonNull String zip, @NonNull String state,
+                                                  @NonNull String country, @NonNull String phone) throws EasyPostException {
         Map<String, Object> fromAddressMap = new HashMap<>();
         fromAddressMap.put(this.name, name);
         fromAddressMap.put(this.street1, street1);
@@ -304,9 +304,10 @@ public class EasyPostUtil {
      * An address is valid only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
      *
      * @param juniperKitRequest the JuniperKitRequest with address to check
+     * @return true if easypost was able to create the address, false otherwise
      */
 
-    public boolean checkAddress(JuniperKitRequest juniperKitRequest, String phone) {
+    public boolean checkAddress(@NonNull JuniperKitRequest juniperKitRequest, String phone) {
         if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID()))
                 || StringUtils.isBlank(juniperKitRequest.getLastName())) {
             return false;
@@ -319,7 +320,7 @@ public class EasyPostUtil {
         name += juniperKitRequest.getLastName();
         if (juniperKitRequest.isSkipAddressValidation()) {
             try {
-                Address address = createBroadAddress(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
+                Address address = createAddressWithoutValidation(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
                         juniperKitRequest.getCity(),
                         juniperKitRequest.getPostalCode(), juniperKitRequest.getState(), juniperKitRequest.getCountry(), phone);
                 juniperKitRequest.setEasypostAddressId(address.getId());
@@ -340,7 +341,7 @@ public class EasyPostUtil {
             juniperKitRequest.setEasypostAddressId(deliveryAddress.getId());
             return true;
         }
-        logger.info("Address is not valid " + juniperKitRequest.getShortId());
+        logger.info(String.format("Address is not valid %s", juniperKitRequest.getShortId()));
         return false;
 
     }
