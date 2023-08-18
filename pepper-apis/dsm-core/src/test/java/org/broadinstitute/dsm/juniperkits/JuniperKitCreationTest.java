@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -17,9 +18,9 @@ import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponseError;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.util.EasyPostUtil;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -34,29 +35,30 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JuniperKitCreationTest extends DbTxnBaseTest {
 
-    final String instanceGuid = "Juniper-mock-guid";
-    final String instanceName = "Juniper-mock";
+    static final String instanceGuid = "Juniper-test-guid";
+    static final String instanceName = "Juniper-test";
     final String salivaKitType = "SALIVA";
-    final String bspPrefix = "JuniperTestProject";
+    static final String bspPrefix = "JuniperTestProject";
+    static List<String> createdKitIds = new ArrayList<>();
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-    DDPInstance ddpInstance;
+    static DDPInstance ddpInstance;
     EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
 
 
-    @Before
-    public void setupJuniperBefore() {
-        JuniperSetupUtil.setupUpAJuniperInstance(instanceName, instanceGuid, "Juniper-Mock", bspPrefix);
-        JuniperSetupUtil.loadDSMConfig();
+    @BeforeClass
+    public static void setupJuniperBefore() {
+        JuniperSetupUtil.setupUpAJuniperInstance(instanceName, instanceGuid, "Juniper-test", bspPrefix);
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
     }
 
-    @After
-    public void deleteJuniperInstance() {
+    @AfterClass
+    public static void deleteJuniperInstance() {
+        JuniperSetupUtil.deleteKitsArray(createdKitIds);
         JuniperSetupUtil.deleteJuniperTestStudies();
     }
 
     @Test
-    public void createNewMockJuniperKitTest() {
+    public void createNewJuniperKitTest() {
         String participantId = "OHSALK_";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         String kitType = salivaKitType;
@@ -73,13 +75,13 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                 + "\"juniperParticipantID\":\"" + participantId + rand + "\","
                 + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-mock-guid\"}";
+                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
-        JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
         try {
             List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
-            KitResponse kitCreationResponse = nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, salivaKitType,
+            KitResponse kitCreationResponse = nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType,
                     mockEasyPostUtil, ddpInstance);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
             Assert.assertEquals(newKits.size(), oldkits.size() + 1);
@@ -89,7 +91,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
             Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + participantId + rand);
             Assert.assertEquals(newKit.getBspCollaboratorSampleId(), bspPrefix + "_" + participantId + rand + "_" + kitType);
         } finally {
-            JuniperSetupUtil.deleteJuniperKit(mockJuniperKit.getJuniperKitId());
+            createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
     }
 
@@ -112,18 +114,18 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                 + "\"juniperParticipantID\":\"" + participantId + rand + "\","
                 + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-mock-guid\"}";
+                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
-        JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
         try {
-            KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, kitType,
+            KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType,
                     mockEasyPostUtil, ddpInstance);
             Assert.assertEquals(kitResponse.errorMessage, KitResponseError.ErrorMessage.MISSING_JUNIPER_KIT_ID);
             Assert.assertEquals(kitResponse.value, null);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.assertEquals(newKits.size(), oldkits.size());
         } finally {
-            JuniperSetupUtil.deleteJuniperKit(mockJuniperKit.getJuniperKitId());
+            createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
     }
 
@@ -146,18 +148,18 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                 + "\"juniperParticipantID\":\"" + participantId + "\","
                 + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-mock-guid\"}";
+                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
-        JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
         try {
-            KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, salivaKitType,
+            KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType,
                     mockEasyPostUtil, ddpInstance);
             Assert.assertEquals(kitResponse.errorMessage, KitResponseError.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID);
             Assert.assertEquals(kitResponse.value, "");
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.assertEquals(newKits.size(), oldkits.size());
         } finally {
-            JuniperSetupUtil.deleteJuniperKit(mockJuniperKit.getJuniperKitId());
+            createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
     }
 
@@ -180,18 +182,18 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                 + "\"juniperParticipantID\":\"" + participantId + rand + "\","
                 + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-mock-guid\"}";
+                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
-        JuniperKitRequest mockJuniperKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
         try {
-            KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(mockJuniperKit, kitType,
+            KitResponseError kitResponse = (KitResponseError) nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType,
                     mockEasyPostUtil, ddpInstance);
             Assert.assertEquals(kitResponse.errorMessage, KitResponseError.ErrorMessage.UNKNOWN_KIT_TYPE);
             Assert.assertEquals(kitResponse.value, kitType);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.assertEquals(newKits.size(), oldkits.size());
         } finally {
-            JuniperSetupUtil.deleteJuniperKit(mockJuniperKit.getJuniperKitId());
+            createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
     }
 

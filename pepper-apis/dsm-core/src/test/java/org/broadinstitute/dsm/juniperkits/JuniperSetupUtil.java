@@ -1,22 +1,16 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.DSMServer.GCP_PATH_TO_SERVICE_ACCOUNT;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -317,9 +311,17 @@ public class JuniperSetupUtil {
         });
     }
 
-    public static void loadDSMConfig() {
-        cfg = ConfigFactory.load();
-        new DSMConfig(cfg);
+    public static void deleteKitsArray(List<String> kitIds) {
+        for(String kitId: kitIds){
+            try{
+                deleteJuniperKit(kitId);
+            }catch (Exception e){
+                log.error("unable to delete kitId {}",kitId, e);
+            }finally {
+                continue;
+            }
+        }
+
     }
 
 }

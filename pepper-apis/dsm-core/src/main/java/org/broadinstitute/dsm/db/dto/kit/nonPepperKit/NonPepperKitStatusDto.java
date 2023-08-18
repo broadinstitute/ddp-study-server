@@ -32,6 +32,9 @@ public class NonPepperKitStatusDto {
     public NonPepperKitStatusDto() {
     }
 
+    /**
+     * Creates a NonPepperKitStatusDto from a builder
+     * */
     public NonPepperKitStatusDto(Builder builder) {
         this.juniperKitId = builder.juniperKitId;
         this.dsmShippingLabel = builder.dsmShippingLabel;
