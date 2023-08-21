@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -50,7 +51,7 @@ public class JuniperKitStatusTest extends DbTxnBaseTest {
         JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
         ;
         juniperSetupUtil.setupJuniperInstance();
-        ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
+        ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
     }
 

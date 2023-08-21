@@ -13,34 +13,29 @@ public class KitResponse {
     private List<NonPepperKitStatusDto> kits;
     private boolean isError;
 
-    public KitResponse makeKitResponseError(ErrorMessage errorMessage, String juniperKitId, Object value) {
-        this.errorMessage = errorMessage;
-        this.juniperKitId = juniperKitId;
-        this.value = value;
-        this.isError = true;
-        setKitsListNull();
-        return this;
+    public static KitResponse makeKitResponseError(ErrorMessage errorMessage, String juniperKitId, Object value) {
+        KitResponse kitResponse = new KitResponse();
+        kitResponse.errorMessage = errorMessage;
+        kitResponse.juniperKitId = juniperKitId;
+        kitResponse.value = value;
+        kitResponse.isError = true;
+        kitResponse.setKitsListNull();
+        return kitResponse;
     }
 
-    public KitResponse makeKitResponseError(ErrorMessage errorMessage) {
-        this.errorMessage = errorMessage;
-        this.juniperKitId = null;
-        this.value = null;
-        this.isError = true;
-        return this;
+    public static KitResponse makeKitResponseError(ErrorMessage errorMessage) {
+        return makeKitResponseError(errorMessage, null, null);
     }
 
-    public KitResponse makeKitResponseError(ErrorMessage errorMessage, String juniperKitId) {
-        this.errorMessage = errorMessage;
-        this.juniperKitId = juniperKitId;
-        this.isError = true;
-        return this;
+    public static KitResponse makeKitResponseError(ErrorMessage errorMessage, String juniperKitId) {
+        return makeKitResponseError(errorMessage, juniperKitId, null);
     }
 
-    public KitResponse makeKitStatusResponse(List<NonPepperKitStatusDto> kits) {
-        this.kits = kits;
-        this.removeErrorFields();
-        return this;
+    public static KitResponse makeKitStatusResponse(List<NonPepperKitStatusDto> kits) {
+        KitResponse kitResponse = new KitResponse();
+        kitResponse.kits = kits;
+        kitResponse.removeErrorFields();
+        return kitResponse;
     }
 
     private void removeErrorFields() {
