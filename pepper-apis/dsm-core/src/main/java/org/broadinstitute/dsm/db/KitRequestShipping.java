@@ -931,6 +931,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     // called by
     // 1. hourly job to add kit requests into db
     // 2. kit upload
+    // 3. Juniper shipKit route
+    // BSP and Mercury dummy kit routes in non-prod
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,

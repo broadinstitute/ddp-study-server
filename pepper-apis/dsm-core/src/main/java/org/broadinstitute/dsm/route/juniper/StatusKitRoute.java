@@ -5,7 +5,6 @@ import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
-import org.broadinstitute.dsm.model.nonpepperkit.KitResponseError;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -39,7 +38,7 @@ public class StatusKitRoute implements Route {
                 kitResponse = this.nonPepperStatusKitService.getKitsBasedOnParticipantId(participantId);
             } else {
                 response.status(400);
-                return KitResponseError.ErrorMessage.NOT_IMPLEMENTED;
+                return KitResponse.ErrorMessage.NOT_IMPLEMENTED;
             }
         } else if (request.requestMethod().equals(RoutePath.RequestMethod.POST.toString())
                 && request.url().contains(RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS)) {
@@ -48,13 +47,13 @@ public class StatusKitRoute implements Route {
                 kitResponse = getStatusByKitIdList(kitIds);
             } catch (JsonSyntaxException e) {
                 log.warn("Json does not have the expected syntax", e);
-                return new KitResponseError(KitResponseError.ErrorMessage.JSON_SYNTAX_EXCEPTION, null, e);
+                return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.JSON_SYNTAX_EXCEPTION, null, e);
             }
         } else {
             response.status(400);
-            return KitResponseError.ErrorMessage.NOT_IMPLEMENTED;
+            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.NOT_IMPLEMENTED, null, null);
         }
-        if (!(kitResponse instanceof KitResponseError)) {
+        if (!kitResponse.isError()) {
             response.status(200);
         } else {
             response.status(400);
@@ -66,7 +65,7 @@ public class StatusKitRoute implements Route {
         try {
             return this.nonPepperStatusKitService.getKitsFromKitIds(kitIds);
         } catch (DSMBadRequestException e) {
-            return new KitResponseError(KitResponseError.ErrorMessage.MISSING_JUNIPER_KIT_ID, null, kitIds);
+            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID, null, kitIds);
         }
     }
 }
