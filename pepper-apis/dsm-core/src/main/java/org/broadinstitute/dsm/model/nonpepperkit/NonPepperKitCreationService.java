@@ -24,6 +24,11 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @Slf4j
 public class NonPepperKitCreationService {
     public static final String JUNIPER = "JUNIPER";
+    NonPepperStatusKitService nonPepperStatusKitService;
+
+    public NonPepperKitCreationService() {
+        this.nonPepperStatusKitService = new NonPepperStatusKitService();
+    }
 
     //These are the Error Strings that are expected by Juniper
 
@@ -71,9 +76,8 @@ public class NonPepperKitCreationService {
                     juniperKitRequest.getJuniperKitId());
 
         }
-
-        log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        return new KitResponse().makeKitResponseError(null, juniperKitRequest.getJuniperKitId(), null);
+        log.info("{} for ddpInstance {} with kit type {} has been created", juniperKitRequest.getJuniperKitId(), ddpInstance.getName(), kitTypeName);
+        return this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitRequest.getJuniperKitId());
     }
 
 

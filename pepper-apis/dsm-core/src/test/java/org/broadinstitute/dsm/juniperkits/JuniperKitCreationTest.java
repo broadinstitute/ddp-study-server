@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
@@ -47,7 +48,6 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
     @BeforeClass
     public static void setupJuniperBefore() {
         JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", bspPrefix);
-        ;
         juniperSetupUtil.setupJuniperInstance();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, "juniper_study");
     }
@@ -91,6 +91,12 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                             .findAny().get();
             Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + participantId + rand);
             Assert.assertEquals(newKit.getBspCollaboratorSampleId(), bspPrefix + "_" + participantId + rand + "_" + kitType);
+            Assert.assertFalse(kitCreationResponse.isError());
+            Assert.assertNotNull(kitCreationResponse.getKits());
+            Assert.assertEquals(1, kitCreationResponse.getKits().size());
+            NonPepperKitStatusDto nonPepperKitStatusDto = kitCreationResponse.getKits().get(0);
+            Assert.assertEquals(juniperTestKit.getJuniperKitId(), nonPepperKitStatusDto.getJuniperKitId());
+            Assert.assertEquals(newKit.getDdpLabel(), nonPepperKitStatusDto.getDsmShippingLabel());
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
