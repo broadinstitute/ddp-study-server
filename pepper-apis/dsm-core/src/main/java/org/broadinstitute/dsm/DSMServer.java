@@ -776,7 +776,7 @@ public class DSMServer {
         try {
             DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new DsmInternalError("Error initializing DSMtasksSubscription", e);
         }
 
         try {
