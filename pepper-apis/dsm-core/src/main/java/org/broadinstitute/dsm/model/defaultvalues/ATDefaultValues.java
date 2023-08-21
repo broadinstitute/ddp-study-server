@@ -119,15 +119,11 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                 new org.broadinstitute.dsm.model.participant.data.ParticipantData(dataAccess);
         participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()), fieldTypeId, data);
-        try {
-            participantData.insertParticipantData("SYSTEM");
-            logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
-                    + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at "
-                    + fieldTypeId);
-            return true;
-        } catch (Exception e) {
-            throw new DsmInternalError("Error inserting participant datat for " + ddpParticipantId, e);
-        }
+        participantData.insertParticipantData("SYSTEM");
+        logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
+                + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at "
+                + fieldTypeId);
+        return true;
     }
 
     private void setDataAccess(Dao dao) {

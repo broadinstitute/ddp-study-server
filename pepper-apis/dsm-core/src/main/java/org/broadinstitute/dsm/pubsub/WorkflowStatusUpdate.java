@@ -231,7 +231,7 @@ public class WorkflowStatusUpdate {
         return dataMap.containsKey(MEMBER_TYPE) && dataMap.get(MEMBER_TYPE).equals(SELF);
     }
 
-    protected static void updateRGP(String participantId, String studyGuid) {
+    public static void updateRGP(String participantId, String studyGuid) {
         RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
         try {
             dataCreator.generateDefaults(studyGuid, participantId);
