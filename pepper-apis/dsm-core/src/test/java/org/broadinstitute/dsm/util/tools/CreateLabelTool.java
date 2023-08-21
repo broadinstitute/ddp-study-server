@@ -41,7 +41,7 @@ public class CreateLabelTool {
             EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
             Address toAddress = easyPostUtil.createAddress(participant, "413-404-9083");// pegah's email
             Address returnAddress =
-                    easyPostUtil.createBroadAddress("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge",
+                    easyPostUtil.createAddressWithoutValidation("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge",
                             "02141", "MA", "US", "617-714-8952");
             // inches and oz
             Parcel parcel = easyPostUtil.createParcel("8", "2", "7.3", "9.5"); //stool kit sizes

@@ -34,16 +34,15 @@ public class NonPepperKitServiceTest {
         map.put(5, userDto5);
 
         String user1TestEmail = nonPepperStatusKitService.getUserEmailForFields("1", map);
-        Assert.assertEquals(user1TestEmail, "user1Email");
+        Assert.assertEquals("user1Email", user1TestEmail);
 
         String userNewTestEmail = nonPepperStatusKitService.getUserEmailForFields("user6Email", map);
-        Assert.assertEquals(userNewTestEmail, "user6Email");
+        Assert.assertEquals("user6Email", userNewTestEmail);
 
         String user7TestEmail = nonPepperStatusKitService.getUserEmailForFields("7", map);
-        Assert.assertEquals(user7TestEmail, "DSM User");
+        Assert.assertEquals("DSM User", user7TestEmail);
 
-        Assert.assertEquals("", nonPepperStatusKitService.getUserEmailForFields(null, map));
-
+        Assert.assertEquals( "", nonPepperStatusKitService.getUserEmailForFields(null, map));
     }
 
     @Test
@@ -65,7 +64,6 @@ public class NonPepperKitServiceTest {
             System.out.println("++validated DATE TIME ++" + formatter.format(parsedDate));
             Assert.assertNotNull(parsedDate);
             Assert.assertEquals(parsedDate.toInstant().atZone(ZoneId.of("UTC")).toInstant(), instant);
-
         } catch (ParseException e) {
             Assert.fail();
         }

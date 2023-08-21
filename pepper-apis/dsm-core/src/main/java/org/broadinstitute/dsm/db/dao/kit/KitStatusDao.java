@@ -23,8 +23,8 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
 
     private static final String SELECT_KIT_STATUS =
             " SELECT req.*, k.*, discard.*, tracking.tracking_id as return_tracking_number, tracking.scan_by as tracking_scan_by, "
-                    + " tracking.scan_date as tracking_scan_date "
-                    + " FROM ddp_kit_request req LEFT JOIN ddp_kit k on (k.dsm_kit_request_id = req.dsm_kit_request_id) "
+                    + " tracking.scan_date as tracking_scan_date FROM ddp_kit_request req "
+                    + " LEFT JOIN ddp_kit k on (k.dsm_kit_request_id = req.dsm_kit_request_id) "
                     + " LEFT JOIN ddp_kit_discard discard on  (discard.dsm_kit_request_id = req.dsm_kit_request_id) "
                     + " LEFT JOIN ddp_kit_tracking tracking on  (tracking.kit_label = k.kit_label) ";
 
@@ -48,7 +48,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
     }
 
     public List<NonPepperKitStatusDto> getKitsByInstanceId(DDPInstance ddpInstance, HashMap<Integer, UserDto> users) {
-        ArrayList<NonPepperKitStatusDto> list = new ArrayList<>();
+        List<NonPepperKitStatusDto> list = new ArrayList<>();
         BuildNonPepperKitStatusDto builder = new BuildNonPepperKitStatusDto();
         SimpleResult simpleResult = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -71,7 +71,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
     }
 
     public List<NonPepperKitStatusDto> getKitsByJuniperKitId(String juniperKitId, HashMap<Integer, UserDto> users) {
-        ArrayList<NonPepperKitStatusDto> list = new ArrayList<>();
+        List<NonPepperKitStatusDto> list = new ArrayList<>();
         BuildNonPepperKitStatusDto builder = new BuildNonPepperKitStatusDto();
         SimpleResult simpleResult = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -94,7 +94,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
     }
 
     public List<NonPepperKitStatusDto> getKitsByParticipantId(String participantId, HashMap<Integer, UserDto> users) {
-        ArrayList<NonPepperKitStatusDto> list = new ArrayList<>();
+        List<NonPepperKitStatusDto> list = new ArrayList<>();
         BuildNonPepperKitStatusDto builder = new BuildNonPepperKitStatusDto();
         SimpleResult simpleResult = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -115,11 +115,11 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
         return list;
     }
 
-    public ArrayList<NonPepperKitStatusDto> getKitsByKitIdArray(String[] kitIdsArray, HashMap<Integer, UserDto> users)
+    public List<NonPepperKitStatusDto> getKitsByKitIdArray(String[] kitIdsArray, HashMap<Integer, UserDto> users)
             throws SQLException {
-        ArrayList<NonPepperKitStatusDto> list = new ArrayList<>();
+        List<NonPepperKitStatusDto> list = new ArrayList<>();
         for (String kitId : kitIdsArray) {
-            ArrayList<NonPepperKitStatusDto> listForKitId = (ArrayList<NonPepperKitStatusDto>) this.getKitsByJuniperKitId(kitId, users);
+            List<NonPepperKitStatusDto> listForKitId = (List<NonPepperKitStatusDto>) this.getKitsByJuniperKitId(kitId, users);
             list.addAll(listForKitId);
 
         }
@@ -127,37 +127,46 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
     }
 
     private static class BuildNonPepperKitStatusDto {
-        public Object build(ResultSet foundKitResults, HashMap<Integer, UserDto> users) throws SQLException {
-            return new NonPepperKitStatusDto.Builder()
-                    .withJuniperKitId(foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID))
-                    .withDsmShippingLabel(foundKitResults.getString(DBConstants.DSM_LABEL))
-                    .withParticipantId(foundKitResults.getString(DBConstants.DDP_PARTICIPANT_ID))
-                    .withReceiveBy(foundKitResults.getString(DBConstants.RECEIVE_BY))
-                    .withDeactivationReason(foundKitResults.getString(DBConstants.DEACTIVATION_REASON))
-                    .withTrackingNumber(foundKitResults.getString(DBConstants.TRACKING_TO_ID))
-                    .withReturnTrackingNumber(foundKitResults.getString(DBConstants.RETURN_TRACKING_NUMBER))
-                    .withError(foundKitResults.getBoolean(DBConstants.ERROR))
-                    .withErrorMessage(foundKitResults.getString(DBConstants.ERROR_MESSAGE))
-                    .withLabelDate(
-                            NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.LABEL_DATE)))
-                    .withLabelByEmail(
-                            NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.LABEL_BY), users))
-                    .withScanDate(
-                            NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.DSM_SCAN_DATE)))
-                    .withScanByEmail(NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.SCAN_BY), users))
-                    .withReceiveDate(
-                            NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.DSM_RECEIVE_DATE)))
-                    .withDeactivationDate(NonPepperStatusKitService.convertTimeStringIntoTimeStamp(
-                            foundKitResults.getLong(DBConstants.DSM_DEACTIVATED_DATE)))
-                    .withDeactivationByEmail(
-                            NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DEACTIVATED_BY), users))
-                    .withTrackingScanBy(
-                            NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.TRACKING_SCAN_BY), users))
-                    .withDiscardDate(
-                            NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.DISCARD_DATE)))
-                    .withDiscardBy(
-                            NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DISCARD_BY), users))
-                    .build();
+        public NonPepperKitStatusDto build(ResultSet foundKitResults, HashMap<Integer, UserDto> users) throws DsmInternalError {
+            try {
+                return new NonPepperKitStatusDto.Builder()
+                        .withJuniperKitId(foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID))
+                        .withDsmShippingLabel(foundKitResults.getString(DBConstants.DSM_LABEL))
+                        .withParticipantId(foundKitResults.getString(DBConstants.DDP_PARTICIPANT_ID))
+                        .withReceiveBy(foundKitResults.getString(DBConstants.RECEIVE_BY))
+                        .withDeactivationReason(foundKitResults.getString(DBConstants.DEACTIVATION_REASON))
+                        .withTrackingNumber(foundKitResults.getString(DBConstants.TRACKING_TO_ID))
+                        .withReturnTrackingNumber(foundKitResults.getString(DBConstants.RETURN_TRACKING_NUMBER))
+                        .withError(foundKitResults.getBoolean(DBConstants.ERROR))
+                        .withErrorMessage(foundKitResults.getString(DBConstants.ERROR_MESSAGE))
+                        .withLabelDate(
+                                NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.LABEL_DATE)))
+                        .withLabelByEmail(
+                                NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.LABEL_BY), users))
+                        .withScanDate(
+                                NonPepperStatusKitService.convertTimeStringIntoTimeStamp(
+                                        foundKitResults.getLong(DBConstants.DSM_SCAN_DATE)))
+                        .withScanByEmail(
+                                NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.SCAN_BY), users))
+                        .withReceiveDate(
+                                NonPepperStatusKitService.convertTimeStringIntoTimeStamp(
+                                        foundKitResults.getLong(DBConstants.DSM_RECEIVE_DATE)))
+                        .withDeactivationDate(NonPepperStatusKitService.convertTimeStringIntoTimeStamp(
+                                foundKitResults.getLong(DBConstants.DSM_DEACTIVATED_DATE)))
+                        .withDeactivationByEmail(
+                                NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DEACTIVATED_BY),
+                                        users))
+                        .withTrackingScanBy(
+                                NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.TRACKING_SCAN_BY),
+                                        users))
+                        .withDiscardDate(
+                                NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.DISCARD_DATE)))
+                        .withDiscardBy(
+                                NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DISCARD_BY), users))
+                        .build();
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error building the NonPepperKitStatusDto object from resultSet", e);
+            }
         }
 
     }

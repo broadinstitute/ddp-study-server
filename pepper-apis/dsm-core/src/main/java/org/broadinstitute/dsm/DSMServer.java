@@ -97,7 +97,6 @@ import org.broadinstitute.dsm.route.EventTypeRoute;
 import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
-import org.broadinstitute.dsm.route.juniper.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
@@ -128,6 +127,7 @@ import org.broadinstitute.dsm.route.admin.UserRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.juniper.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.juniper.StatusKitRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
@@ -588,11 +588,9 @@ public class DSMServer {
         get(apiRoot + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
-            NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-            post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+            post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
 
-            NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
-            StatusKitRoute statusKitRoute = new StatusKitRoute(nonPepperStatusKitService);
+            StatusKitRoute statusKitRoute = new StatusKitRoute();
             get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
             get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
             get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
@@ -777,7 +775,7 @@ public class DSMServer {
         try {
             DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new DsmInternalError("Error initializing DSMtasksSubscription", e);
         }
 
         try {

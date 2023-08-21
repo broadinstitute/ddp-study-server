@@ -1,38 +1,40 @@
 package org.broadinstitute.dsm.db.dto.kit.nonPepperKit;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-
 import lombok.Getter;
-import org.broadinstitute.dsm.db.dto.user.UserDto;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
-import org.broadinstitute.dsm.statics.DBConstants;
 
+/**
+* Represents the various statuses a kit can take in their time in DSM.
+ * From being new to being received. Each of the fields respond to
+ * one of the kit's variables
+* **/
 @Getter
 public class NonPepperKitStatusDto {
-    String juniperKitId;
-    String dsmShippingLabel;
-    String participantId;
-    String labelDate;
-    String labelByEmail;
-    String scanDate;
-    String scanByEmail;
-    String receiveDate;
-    String receiveBy;
-    String deactivationDate;
-    String deactivationByEmail;
-    String deactivationReason;
-    String trackingNumber;
-    String returnTrackingNumber;
-    String trackingScanBy;
     Boolean error;
-    String errorMessage;
-    String discardDate;
-    String discardBy;
+    private String juniperKitId;
+    private String dsmShippingLabel;
+    private String participantId;
+    private String labelDate;
+    private String labelByEmail;
+    private String scanDate;
+    private String scanByEmail;
+    private String receiveDate;
+    private String receiveBy;
+    private String deactivationDate;
+    private String deactivationByEmail;
+    private String deactivationReason;
+    private String trackingNumber;
+    private String returnTrackingNumber;
+    private String trackingScanBy;
+    private String errorMessage;
+    private String discardDate;
+    private String discardBy;
 
-    public NonPepperKitStatusDto() {}
+    public NonPepperKitStatusDto() {
+    }
 
+    /**
+     * Creates a NonPepperKitStatusDto from a builder
+     * */
     public NonPepperKitStatusDto(Builder builder) {
         this.juniperKitId = builder.juniperKitId;
         this.dsmShippingLabel = builder.dsmShippingLabel;
@@ -57,25 +59,25 @@ public class NonPepperKitStatusDto {
 
     public static class Builder {
 
-        String juniperKitId;
-        String dsmShippingLabel;
-        String participantId;
-        String labelDate;
-        String labelByEmail;
-        String scanDate;
-        String scanByEmail;
-        String receiveDate;
-        String receiveBy;
-        String deactivationDate;
-        String deactivationByEmail;
-        String deactivationReason;
-        String trackingNumber;
-        String returnTrackingNumber;
-        String trackingScanBy;
         Boolean error;
-        String errorMessage;
-        String discardDate;
-        String discardBy;
+        private String juniperKitId;
+        private String dsmShippingLabel;
+        private String participantId;
+        private String labelDate;
+        private String labelByEmail;
+        private String scanDate;
+        private String scanByEmail;
+        private String receiveDate;
+        private String receiveBy;
+        private String deactivationDate;
+        private String deactivationByEmail;
+        private String deactivationReason;
+        private String trackingNumber;
+        private String returnTrackingNumber;
+        private String trackingScanBy;
+        private String errorMessage;
+        private String discardDate;
+        private String discardBy;
 
 
         public Builder() {

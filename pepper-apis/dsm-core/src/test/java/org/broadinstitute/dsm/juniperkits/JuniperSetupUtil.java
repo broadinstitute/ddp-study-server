@@ -1,24 +1,27 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.DSMServer.GCP_PATH_TO_SERVICE_ACCOUNT;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.DSMConfig;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.Result;
+import org.easymock.internal.Results;
 
+/**
+ * This class has methods to set up a Juniper study in DSM database.
+ * It creates the instance, group, instance_role, kit_type, carrier,
+ * kit_dimensions, kit_return and ddp_kit_request_settings for the
+ * newly created study.
+ * It also contains methods to delete what was set up after tests are complete
+ */
 @Slf4j
 public class JuniperSetupUtil {
     private static final String INSERT_JUNIPER_GROUP =
@@ -49,209 +52,33 @@ public class JuniperSetupUtil {
     public static String ddpInstanceGroupId;
     public static String instanceRoleId;
     public static String ddpInstanceRoleId;
-    static Config cfg;
     private static String kitTypeId;
     private static String kitDimensionId;
     private static String kitReturnId;
     private static String carrierId;
     private static String ddpKitRequestSettingsId;
 
-    public static void setupUpAJuniperInstance(String instanceName, String studyGuid, String displayName, String collaboratorPrefix) {
-        //everything should get inserted in one transaction
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_GROUP, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-                    int result = stmt.executeUpdate();
-                    if (result != 1) {
-                        throw new RuntimeException("More than 1 row updated");
-                    }
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            ddpGroupId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting juniper group in ddp_group ", e);
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException("Error inserting juniper group in ddp_group ", ex);
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-                    stmt.setString(1, instanceName);
-                    stmt.setString(2, studyGuid);
-                    stmt.setString(3, displayName);
-                    stmt.setString(4, collaboratorPrefix);
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            ddpInstanceId = rs.getString(1);
-                        }
+    private static String instanceName;
+    private static String studyGuid;
+    private static String displayName;
+    private static String collaboratorPrefix;
 
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting ddp_instance for juniper group in ddp_instance ", e);
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException("Error inserting ddp_instance for juniper group in ddp_instance ", ex);
-            }
-            if (ddpGroupId == null || ddpInstanceId == null) {
-                throw new RuntimeException("Something went wrong");
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-                    stmt.setString(1, ddpInstanceId);
-                    stmt.setString(2, ddpGroupId);
-                    stmt.setString(3, ddpGroupId);
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            ddpInstanceGroupId = rs.getString(1);
-                        }
+    public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix) {
+        this.instanceName = instanceName;
+        this.studyGuid = studyGuid;
+        this.displayName = displayName;
+        this.collaboratorPrefix = collaboratorPrefix;
 
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in ddp_instance_group ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
+    }
 
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            instanceRoleId = rs.getString(1);
-                        }
-
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in ddp_instance_role ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-                    stmt.setString(1, ddpInstanceId);
-                    stmt.setString(2, instanceRoleId);
-                    stmt.setString(3, instanceRoleId);
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            ddpInstanceRoleId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in ddp_instance_group ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TYPE, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            kitTypeId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in kit_type ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_DIMENSION, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            kitDimensionId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in kit_dimension ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_RETURN, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            kitReturnId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in kit_return ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_CARRIER, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            carrierId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in kit_return ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS)) {
-                try {
-                    stmt.setString(1, ddpInstanceId);
-                    stmt.setString(2, kitTypeId);
-                    stmt.setString(3, kitReturnId);
-                    stmt.setString(4, carrierId);
-                    stmt.setString(5, kitDimensionId);
-                    stmt.setString(6, ddpInstanceId);
-                    stmt.executeUpdate();
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            ddpKitRequestSettingsId = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error inserting in kit_request_settings ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
+    private static String createDdpGroupForJuniper(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_GROUP, Statement.RETURN_GENERATED_KEYS);
+        int result = stmt.executeUpdate();
+        if (result != 1) {
+            throw new DsmInternalError("More than 1 row updated");
+        }
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "ddp_group");
     }
 
     public static void deleteJuniperTestStudies() {
@@ -317,9 +144,133 @@ public class JuniperSetupUtil {
         });
     }
 
-    public static void loadDSMConfig() {
-        cfg = ConfigFactory.load();
-        new DSMConfig(cfg);
+    public static void deleteKitsArray(List<String> kitIds) {
+        for (String kitId : kitIds) {
+            try {
+                deleteJuniperKit(kitId);
+            } catch (Exception e) {
+                log.error("unable to delete kitId {}", kitId, e);
+            } finally {
+                continue;
+            }
+        }
+
+    }
+
+    private static String getPrimaryKey(ResultSet rs, String table) throws SQLException {
+        if (rs.next()) {
+            return rs.getString(1);
+        } else {
+            throw new DsmInternalError(String.format("Unable to set up data in %s for juniper, going to role back transaction", table));
+        }
+    }
+
+    public void setupJuniperInstance() {
+
+        //everything should get inserted in one transaction
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult simpleResult = new SimpleResult();
+            try {
+                ddpGroupId = createDdpGroupForJuniper(conn);
+                ddpInstanceId = createDdpInstanceForJuniper(conn);
+                if (ddpGroupId == null || ddpInstanceId == null) {
+                    throw new DsmInternalError("Something went wrong");
+                }
+                ddpInstanceGroupId = createDdpInstanceGroup(conn);
+                instanceRoleId = createInstanceRole(conn);
+                ddpInstanceRoleId = createDdpInstanceRole(conn);
+                kitTypeId = createKitType(conn);
+                kitDimensionId = createKitDimension(conn);
+                kitReturnId = createKitReturnInformation(conn);
+                carrierId = createCarrierInformation(conn);
+                ddpKitRequestSettingsId = createKitRequestSettingsInformations(conn);
+            } catch (SQLException e) {
+                simpleResult.resultException = e;
+            }
+            return simpleResult;
+        });
+        if (results.resultException != null) {
+            log.error("Error creating juniper data ", results.resultException);
+        }
+    }
+
+    private String createKitRequestSettingsInformations(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
+        stmt.setString(1, ddpInstanceId);
+        stmt.setString(2, kitTypeId);
+        stmt.setString(3, kitReturnId);
+        stmt.setString(4, carrierId);
+        stmt.setString(5, kitDimensionId);
+        stmt.setString(6, ddpInstanceId);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "ddp_kit_request_settings");
+    }
+
+    private String createCarrierInformation(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_CARRIER, Statement.RETURN_GENERATED_KEYS);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "carrier_service");
+    }
+
+    private String createKitReturnInformation(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_RETURN, Statement.RETURN_GENERATED_KEYS);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "kit_return_information");
+    }
+
+    private String createKitDimension(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_DIMENSION, Statement.RETURN_GENERATED_KEYS);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "kit_dimension");
+    }
+
+    private String createKitType(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TYPE, Statement.RETURN_GENERATED_KEYS);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "kit_type");
+    }
+
+    private String createInstanceRole(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "instance_role");
+    }
+
+    private String createDdpInstanceRole(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
+        stmt.setString(1, ddpInstanceId);
+        stmt.setString(2, instanceRoleId);
+        stmt.setString(3, instanceRoleId);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "ddp_instance_role");
+    }
+
+    private String createDdpInstanceGroup(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS);
+        stmt.setString(1, ddpInstanceId);
+        stmt.setString(2, ddpGroupId);
+        stmt.setString(3, ddpGroupId);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "ddp_instance_group");
+    }
+
+    public String createDdpInstanceForJuniper(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_INSTANCE, Statement.RETURN_GENERATED_KEYS);
+        stmt.setString(1, instanceName);
+        stmt.setString(2, studyGuid);
+        stmt.setString(3, displayName);
+        stmt.setString(4, collaboratorPrefix);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "ddp_instance");
     }
 
 }
