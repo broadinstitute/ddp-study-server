@@ -40,9 +40,9 @@ public class UpsertPainless implements Exportable {
         UpdateByQueryRequest updateByQueryRequest = new UpdateByQueryRequest(index);
         updateByQueryRequest.setQuery(queryBuilder);
         updateByQueryRequest.setScript(painless);
-        updateByQueryRequest.setMaxRetries(5);
+        updateByQueryRequest.setMaxRetries(11);
         updateByQueryRequest.setRefresh(true);
-        updateByQueryRequest.setAbortOnVersionConflict(false);
+        updateByQueryRequest.setAbortOnVersionConflict(true);
 
         Throwable ioException = null;
         for (int tryNum = 1; tryNum < 3; tryNum++) {
@@ -62,7 +62,7 @@ public class UpsertPainless implements Exportable {
             BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
             logger.info("created/updated {} ES records for {}", getNumberOfUpserted(bulkByScrollResponse),
                     generator.getPropertyName());
-            logger.info(bulkByScrollResponse.toString());
+            logger.info("BulkByScrollResponse: {}", bulkByScrollResponse);
             return null;
         } catch (IOException e) {
             logger.info("Error occurred while exporting data to ES, on try number " + i, e);
