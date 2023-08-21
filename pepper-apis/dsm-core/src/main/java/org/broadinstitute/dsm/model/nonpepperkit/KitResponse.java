@@ -46,6 +46,7 @@ public class KitResponse {
     private void removeErrorFields() {
         this.errorMessage = null;
         this.juniperKitId = null;
+        this.value = null;
         this.isError = false;
     }
 
