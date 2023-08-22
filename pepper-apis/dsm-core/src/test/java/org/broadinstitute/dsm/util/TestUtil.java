@@ -64,7 +64,7 @@ public class TestUtil {
                 config.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), config.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 config.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 config.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
-        return auth0Util.getNewAuth0TokenWithCustomClaims(Map.of("USER_ID", userId + ""),
+        return auth0Util.getAuth0TokenWithCustomClaims(Map.of("USER_ID", userId + ""),
                 config.getString(ApplicationConfigConstants.AUTH0_SECRET),
                 config.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 config.getString(ApplicationConfigConstants.AUTH0_DOMAIN),

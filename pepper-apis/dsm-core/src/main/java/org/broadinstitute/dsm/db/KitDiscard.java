@@ -12,6 +12,7 @@ import java.util.Map;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -147,7 +148,7 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Error confirming kit discarded w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            throw new DsmInternalError("Error confirming kit discarded w/ dsm_kit_id " + kitDiscardId, results.resultException);
         }
         return (boolean) results.resultValue;
     }
