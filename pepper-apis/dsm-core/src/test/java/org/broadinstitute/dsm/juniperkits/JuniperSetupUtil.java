@@ -35,7 +35,7 @@ public class JuniperSetupUtil {
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE instance_role_id = ?;";
     private static final String INSERT_KIT_TYPE = "INSERT INTO kit_type (kit_type_name, bsp_material_type, bsp_receptacle_type) "
-            + " VALUES ('SALIVA', 'Saliva', 'Oragene Kit') ON DUPLICATE KEY UPDATE kit_type_name = 'SALIVA';";
+            + " VALUES ('SALIVA', 'juniper Saliva', 'Oragene Kit') ;";
     private static final String INSERT_KIT_DIMENSION = "INSERT INTO kit_dimension (kit_width, kit_height, kit_length, kit_weight) "
             + " VALUES ('6.9', '1.3', '5.2', '3.2') ON DUPLICATE KEY UPDATE kit_width = '6.9';";
     private static final String INSERT_KIT_RETURN = "INSERT INTO kit_return_information (return_address_name, return_address_phone) "
@@ -44,7 +44,7 @@ public class JuniperSetupUtil {
             + " VALUES ('FedEx', 'FEDEX_2_DAY') ON DUPLICATE KEY UPDATE carrier = 'FedEx';";
     private static final String INSERT_DDP_KIT_REQUEST_SETTINGS =
             "INSERT INTO ddp_kit_request_settings (ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id) "
-                    + " VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE ddp_instance_id = ?;";
+                    + " VALUES (?, ?, ?, ?, ?) ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id = ?";
     public static String ddpGroupId;
     public static String ddpInstanceId;
@@ -206,7 +206,6 @@ public class JuniperSetupUtil {
         stmt.setString(3, kitReturnId);
         stmt.setString(4, carrierId);
         stmt.setString(5, kitDimensionId);
-        stmt.setString(6, ddpInstanceId);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
         return getPrimaryKey(rs, "ddp_kit_request_settings");
@@ -247,7 +246,10 @@ public class JuniperSetupUtil {
             return kitTypeId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TYPE, Statement.RETURN_GENERATED_KEYS);
-        stmt.executeUpdate();
+        int result = stmt.executeUpdate();
+        if (result != 1) {
+            throw new DsmInternalError("More than 1 row updated");
+        }
         ResultSet rs = stmt.getGeneratedKeys();
         return getPrimaryKey(rs, "kit_type");
     }

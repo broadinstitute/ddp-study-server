@@ -22,10 +22,8 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,14 +31,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 
 /**
- * Tests the NonPepperKitCreationService class
+ * Tests the NonPepperKitCreationService and NonPepperStatusKitService class
  * To run this class use the following VM variables
  * -ea -Dconfig.file=[path to /pepper-apis/output-build-config/testing-inmemorydb.conf]
  */
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
-public class JuniperKitCreationTest extends DbTxnBaseTest {
+public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
 
     static final String instanceGuid = "Juniper-test-guid";
     static final String instanceName = "Juniper-test";
@@ -53,8 +51,8 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
 
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
 
-    @Before
-    public void setupJuniperBefore() {
+    @BeforeClass
+    public static void setupJuniperBefore() {
         JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
         ;
         juniperSetupUtil.setupJuniperInstanceAndSettings();
@@ -62,8 +60,8 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
     }
 
-    @After
-    public void deleteJuniperInstance() {
+    @AfterClass
+    public static void deleteJuniperInstance() {
         JuniperSetupUtil.deleteKitsArray(createdKitIds);
         JuniperSetupUtil.deleteJuniperInstanceAndSettings();
     }
