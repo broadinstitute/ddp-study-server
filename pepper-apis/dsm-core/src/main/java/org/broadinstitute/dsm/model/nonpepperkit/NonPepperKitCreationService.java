@@ -127,7 +127,7 @@ public class NonPepperKitCreationService {
                                       DDPInstance ddpInstance, int kitTypeId, String collaboratorParticipantId,
                                       String errorMessage, EasyPostUtil easyPostUtil, JuniperKitRequest kit,
                                       String externalOrderNumber, String juniperKitRequestId,
-                                      String ddpLabel, String userId, SimpleResult transactionResults) throws SQLException {
+                                      String ddpLabel, String userId, SimpleResult transactionResults) throws DsmInternalError {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
