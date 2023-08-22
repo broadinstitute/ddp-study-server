@@ -96,7 +96,7 @@ public class StudyDataLoaderMain {
         Options options = new Options();
 
         //todo .. take study guid from command and look for a conf file which has that study values
-        //look for conf $mbc_migration_conf.json
+        //look for conf $mbc_migration_conf.json.
         options.addOption("h", "help", false, "print help message");
         options.addOption("f", true, "Local File");
         options.addOption("g", false, "Use Google Bucket");
