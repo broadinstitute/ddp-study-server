@@ -319,6 +319,7 @@ public class EasyPostUtil {
         }
         name += juniperKitRequest.getLastName();
         if (juniperKitRequest.isSkipAddressValidation()) {
+            //if no validation is needed, we just need to create the Address instance in easypost and get its id back
             try {
                 Address address = createAddressWithoutValidation(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
                         juniperKitRequest.getCity(),
@@ -331,10 +332,12 @@ public class EasyPostUtil {
                 return false;
             }
         }
+        //to validate the address, first we need create the Address instance
         DeliveryAddress deliveryAddress =
                 new DeliveryAddress(juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(),
                         juniperKitRequest.getState(),
                         juniperKitRequest.getPostalCode(), juniperKitRequest.getCountry(), name, phone);
+        //call easypost apis to make sure the address is valid
         deliveryAddress.validate();
         if (deliveryAddress.isValid()) {
             //store the address back

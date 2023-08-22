@@ -13,10 +13,10 @@ import org.broadinstitute.dsm.db.dao.kit.KitStatusDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.statics.DBConstants;
 
 /**
  * This service returns a Juniper kit's status
- *
  */
 @Slf4j
 public class NonPepperStatusKitService {
@@ -51,52 +51,52 @@ public class NonPepperStatusKitService {
 
     public KitResponse getKitsByStudyName(String studyGuid) {
         if (StringUtils.isBlank(studyGuid)) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.MISSING_STUDY_GUID);
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_STUDY_GUID);
         }
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
         if (ddpInstance == null || !ddpInstance.isHasRole()) {
             log.info(studyGuid + " is not a Juniper study!");
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_STUDY);
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_STUDY);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get all the kits
         ArrayList<NonPepperKitStatusDto> list = (ArrayList<NonPepperKitStatusDto>) kitStatusDao.getKitsByInstanceId(ddpInstance, users);
-        return new KitResponse().makeKitStatusResponse(list);
+        return KitResponse.makeKitStatusResponse(list);
 
     }
 
     public KitResponse getKitsBasedOnJuniperKitId(String juniperKitId) {
         if (StringUtils.isBlank(juniperKitId)) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID);
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kit with that juniperKitId
         ArrayList<NonPepperKitStatusDto> list = (ArrayList<NonPepperKitStatusDto>) kitStatusDao.getKitsByJuniperKitId(juniperKitId, users);
-        return new KitResponse().makeKitStatusResponse(list);
+        return KitResponse.makeKitStatusResponse(list);
 
     }
 
     public KitResponse getKitsBasedOnParticipantId(String participantId) {
         if (StringUtils.isBlank(participantId)) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID);
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID);
         }
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kit with that participantId
         ArrayList<NonPepperKitStatusDto> list =
                 (ArrayList<NonPepperKitStatusDto>) kitStatusDao.getKitsByParticipantId(participantId, users);
-        return  new KitResponse().makeKitStatusResponse(list);
+        return KitResponse.makeKitStatusResponse(list);
     }
 
     public KitResponse getKitsFromKitIds(String[] kitIdsArray) {
         HashMap<Integer, UserDto> users = (HashMap<Integer, UserDto>) UserDao.selectAllUsers();
         // get the kits with the given kit ids
         try {
-            List<NonPepperKitStatusDto> list = kitStatusDao.getKitsByKitIdArray(kitIdsArray,  users);
-            return new KitResponse().makeKitStatusResponse(list);
+            List<NonPepperKitStatusDto> list = kitStatusDao.getKitsByKitIdArray(kitIdsArray, users);
+            return KitResponse.makeKitStatusResponse(list);
 
         } catch (Exception e) {
             log.error("Error getting kits by an array of kit ids", e);
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.DSM_ERROR_SOMETHING_WENT_WRONG);
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.DSM_ERROR_SOMETHING_WENT_WRONG);
         }
     }
 

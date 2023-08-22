@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -17,10 +18,10 @@ import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.AuthenticationException;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -62,29 +63,34 @@ public class AuthenticationRoute implements Route {
             JsonObject jsonObject = JsonParser.parseString(request.body()).getAsJsonObject();
             String auth0Token = jsonObject.get(payloadToken).getAsString();
             if (StringUtils.isBlank(auth0Token)) {
-                haltWithErrorMsg(400, response, "There was no Auth0 token in the payload");
+                haltWithErrorMsg(401, response, "There was no Auth0 token in the payload");
             }
             return new DSMToken(updateToken(auth0Token));
-        } catch (AuthenticationException e) {
-            haltWithErrorMsg(400, response, "Unable to get user information from Auth0 token", e);
         } catch (JsonParseException e) {
-            haltWithErrorMsg(400, response, "Unable to get Auth0 token from request", e);
+            haltWithErrorMsg(401, response, "Unable to get Auth0 token from request", e);
         }
-        // DSMInternalError and DSMBadRequestException are handled via Spark
+        // other exceptions are handled via Spark
         return response;
     }
 
+    /**
+     * Verify an Auth0 token, authenticate user, and return a token updated with claims
+     *
+     * @param auth0Token token to verify
+     * @return updated token
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
+     */
     private String updateToken(String auth0Token) {
-        Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(auth0Token, auth0Domain);
-        String email = auth0UserInfo.getEmail();
-
+        String email = auth0Util.getAuth0User(auth0Token, auth0Domain);
         logger.info("Authenticating user {}", email);
         UserDao userDao = new UserDao();
         UserDto userDto = userDao.getUserByEmail(email).orElseThrow(() ->
-                new DSMBadRequestException("User not found: " + email));
+                new AuthenticationException("User not found: " + email));
 
         Map<String, String> claims = updateClaims(userDto);
-        String dsmToken = auth0Util.getNewAuth0TokenWithCustomClaims(claims, clientSecret, auth0ClientId, auth0Domain,
+        String dsmToken = auth0Util.getAuth0TokenWithCustomClaims(claims, clientSecret, auth0ClientId, auth0Domain,
                 auth0MgmntAudience, audienceNameSpace);
         if (dsmToken == null) {
             throw new DsmInternalError("Assert: Auth token should not be null");

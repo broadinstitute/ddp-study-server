@@ -314,6 +314,7 @@ public class DBConstants {
     public static final String HAS_CLINICAL_KIT = "has_clinical_kit";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
+    public static final String JUNIPER_STUDY_INSTANCE_ROLE = "juniper_study";
 
     //user role
     public static final String MAILINGLIST_VIEW = "mailingList_view";

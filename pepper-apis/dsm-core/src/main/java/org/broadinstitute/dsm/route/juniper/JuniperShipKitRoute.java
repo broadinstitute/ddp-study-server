@@ -9,6 +9,7 @@ import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.ShipKitRequest;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import spark.Request;
 import spark.Response;
@@ -34,30 +35,30 @@ public class JuniperShipKitRoute implements Route {
             JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
             if (juniperKitRequest == null) {
                 response.status(400);
-                return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.EMPTY_REQUEST, null, juniperKitRequest);
+                return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.EMPTY_REQUEST, null, null);
             }
             if (StringUtils.isBlank(shipKitRequest.getJuniperStudyGUID())) {
                 response.status(400);
-                return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.EMPTY_STUDY_NAME, null, null);
+                return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.EMPTY_STUDY_NAME, null, null);
             }
             if (StringUtils.isBlank(shipKitRequest.getKitType())) {
                 response.status(400);
-                return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.EMPTY_KIT_TYPE, null, shipKitRequest.getKitType());
+                return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.EMPTY_KIT_TYPE, null, shipKitRequest.getKitType());
             }
             //getting the instance with isHasRole being set to true if the instance has role juniper_study
             String studyGuid = shipKitRequest.getJuniperStudyGUID();
-            DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, "juniper_study");
+            DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(studyGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
             if (ddpInstance == null) {
                 log.warn(studyGuid + " is not a study!");
                 response.status(400);
-                return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
+                return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
                         studyGuid);
             }
             //check it the study is set to use this endpoint
             if (!ddpInstance.isHasRole()) {
                 log.info(studyGuid + " is not a Juniper study!");
                 response.status(400);
-                return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
+                return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_STUDY, juniperKitRequest.getJuniperKitId(),
                         studyGuid);
             }
 
@@ -75,7 +76,7 @@ public class JuniperShipKitRoute implements Route {
         } catch (JsonSyntaxException exception) {
             response.status(400);
             log.warn("Bad Json Syntax exception, will return 400", exception);
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.JSON_SYNTAX_EXCEPTION, null, exception);
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.JSON_SYNTAX_EXCEPTION, null, exception);
         }
     }
 

@@ -35,19 +35,19 @@ public class NonPepperKitCreationService {
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String kitTypeName, EasyPostUtil easyPostUtil,
                                           DDPInstance ddpInstance) {
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID,
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID,
                     juniperKitRequest.getJuniperKitId(),
                     juniperKitRequest.getJuniperParticipantID());
         }
         if (StringUtils.isBlank(juniperKitRequest.getJuniperKitId())) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID , null,
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID , null,
                     juniperKitRequest.getJuniperKitId());
         }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = KitType.createKitTypeKey(kitTypeName, ddpInstance.getDdpInstanceId());
         KitType kitType = kitTypes.get(key);
         if (kitType == null) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE , juniperKitRequest.getJuniperKitId(),
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE , juniperKitRequest.getJuniperKitId(),
                     kitTypeName);
         }
 
@@ -58,7 +58,7 @@ public class NonPepperKitCreationService {
         // if the kit type has sub kits check that here
 
         if (!easyPostUtil.checkAddress(juniperKitRequest, kitRequestSettings.getPhone())) {
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.ADDRESS_VALIDATION_ERROR ,
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.ADDRESS_VALIDATION_ERROR ,
                     juniperKitRequest.getJuniperKitId(), null);
         }
 
@@ -72,12 +72,13 @@ public class NonPepperKitCreationService {
 
         if (result.resultException != null) {
             log.error(String.format("Unable to create Juniper kit for %s", juniperKitRequest), result.resultException);
-            return new KitResponse().makeKitResponseError(KitResponse.ErrorMessage.DSM_ERROR_SOMETHING_WENT_WRONG,
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.DSM_ERROR_SOMETHING_WENT_WRONG,
                     juniperKitRequest.getJuniperKitId());
 
         }
-        log.info("{} for ddpInstance {} with kit type {} has been created", juniperKitRequest.getJuniperKitId(), ddpInstance.getName(), kitTypeName);
-        return this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitRequest.getJuniperKitId());
+
+        log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
+        return KitResponse.makeKitStatusResponse(null);
     }
 
 
@@ -174,8 +175,7 @@ public class NonPepperKitCreationService {
                                 kit.getExternalOrderNumber(),
                                 false,
                                 null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
-                log.info("Created new kit in DSM with dsm_kit_request_id {} and ddpLabel {} for JuniperKitId {}", dsmKitRequestId, ddpLabel,
-                        juniperKitRequestId);
+                log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
             } catch (Exception e) {
                 transactionResults.resultException = e;
             }

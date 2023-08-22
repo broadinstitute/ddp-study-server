@@ -59,7 +59,7 @@ public class NonPepperKitStatusDto {
 
     public static class Builder {
 
-        Boolean error;
+        private Boolean error;
         private String juniperKitId;
         private String dsmShippingLabel;
         private String participantId;

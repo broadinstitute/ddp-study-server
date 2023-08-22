@@ -38,7 +38,7 @@ public class RoutePath {
     public static final String KIT_STATUS_JUNIPER_KIT_ID = "/kitstatus/juniperKit";
     public static final String KIT_STATUS_ENDPOINT_KIT_IDS = "/kitstatus/kits";
     public static final String KIT_STATUS_ENDPOINT_PARTICIPANT_ID = "/kitstatus/participant/:participantId";
-    public static final String KIT_STATUS_PARTICIPANT_ID = "/kitstatus/participantId";
+    public static final String KIT_STATUS_PARTICIPANT_ID = "/kitstatus/participant";
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
     public static final String CANCER_LIST_REQUEST = "/cancers";

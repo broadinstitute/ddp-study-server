@@ -6,8 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -47,16 +47,16 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
         return Optional.empty();
     }
 
-    public List<NonPepperKitStatusDto> getKitsByInstanceId(DDPInstance ddpInstance, HashMap<Integer, UserDto> users) {
+    public List<NonPepperKitStatusDto> getKitsByInstanceId(DDPInstance ddpInstance, Map<Integer, UserDto> users) {
         List<NonPepperKitStatusDto> list = new ArrayList<>();
         BuildNonPepperKitStatusDto builder = new BuildNonPepperKitStatusDto();
-        SimpleResult simpleResult = inTransaction((conn) -> {
+        SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_INSTANCE_ID))) {
                 stmt.setString(1, ddpInstance.getDdpInstanceId());
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    list.add((NonPepperKitStatusDto) builder.build(rs, users));
+                    list.add(builder.build(rs, users));
                 }
             } catch (Exception ex) {
                 dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()));
@@ -70,18 +70,17 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
 
     }
 
-    public List<NonPepperKitStatusDto> getKitsByJuniperKitId(String juniperKitId, HashMap<Integer, UserDto> users) {
+    public List<NonPepperKitStatusDto> getKitsByJuniperKitId(String juniperKitId, Map<Integer, UserDto> users) {
         List<NonPepperKitStatusDto> list = new ArrayList<>();
         BuildNonPepperKitStatusDto builder = new BuildNonPepperKitStatusDto();
-        SimpleResult simpleResult = inTransaction((conn) -> {
+        SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_JUNIPER_KIT_ID))) {
                 stmt.setString(1, juniperKitId);
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    list.add((NonPepperKitStatusDto) builder.build(rs, users));
+                    list.add(builder.build(rs, users));
                 }
-                dbVals.resultValue = rs;
             } catch (Exception ex) {
                 dbVals.resultException = new Exception(String.format("Error getting kits with juniper kit id %s", juniperKitId));
             }
@@ -93,16 +92,16 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
         return list;
     }
 
-    public List<NonPepperKitStatusDto> getKitsByParticipantId(String participantId, HashMap<Integer, UserDto> users) {
+    public List<NonPepperKitStatusDto> getKitsByParticipantId(String participantId, Map<Integer, UserDto> users) {
         List<NonPepperKitStatusDto> list = new ArrayList<>();
         BuildNonPepperKitStatusDto builder = new BuildNonPepperKitStatusDto();
-        SimpleResult simpleResult = inTransaction((conn) -> {
+        SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_STATUS.concat(BY_PARTICIPANT_ID))) {
                 stmt.setString(1, participantId);
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    list.add((NonPepperKitStatusDto) builder.build(rs, users));
+                    list.add(builder.build(rs, users));
                 }
             } catch (Exception ex) {
                 dbVals.resultException = new Exception(String.format("Error getting kits with participant id %s", participantId));
@@ -115,19 +114,17 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
         return list;
     }
 
-    public List<NonPepperKitStatusDto> getKitsByKitIdArray(String[] kitIdsArray, HashMap<Integer, UserDto> users)
-            throws SQLException {
+    public List<NonPepperKitStatusDto> getKitsByKitIdArray(String[] kitIdsArray, Map<Integer, UserDto> users) {
         List<NonPepperKitStatusDto> list = new ArrayList<>();
         for (String kitId : kitIdsArray) {
-            List<NonPepperKitStatusDto> listForKitId = (List<NonPepperKitStatusDto>) this.getKitsByJuniperKitId(kitId, users);
+            List<NonPepperKitStatusDto> listForKitId = this.getKitsByJuniperKitId(kitId, users);
             list.addAll(listForKitId);
-
         }
         return list;
     }
 
     private static class BuildNonPepperKitStatusDto {
-        public NonPepperKitStatusDto build(ResultSet foundKitResults, HashMap<Integer, UserDto> users) throws DsmInternalError {
+        public NonPepperKitStatusDto build(ResultSet foundKitResults, Map<Integer, UserDto> users) throws DsmInternalError {
             try {
                 return new NonPepperKitStatusDto.Builder()
                         .withJuniperKitId(foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID))
