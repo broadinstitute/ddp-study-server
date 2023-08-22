@@ -86,6 +86,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
             KitResponse kitCreationResponse =
                     nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
+            Assert.assertFalse(kitCreationResponse.isError());
             Assert.assertEquals(newKits.size(), oldkits.size() + 1);
             KitRequestShipping newKit =
                     newKits.stream().filter(kitRequestShipping -> kitRequestShipping.getDdpParticipantId().equals(participantId + rand))
