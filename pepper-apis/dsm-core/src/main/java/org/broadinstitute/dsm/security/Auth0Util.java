@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
@@ -16,6 +15,7 @@ import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -33,13 +33,14 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Auth0Util {
 
     private static final Logger logger = LoggerFactory.getLogger(Auth0Util.class);
-    private static String account;
+    private final String account;
     private static final String clientIdKey = "client_id";
     private static final String grantTypeKey = "grant_type";
     private static final String clientSecretKey = "client_secret";
@@ -51,7 +52,7 @@ public class Auth0Util {
     private final List<String> connections;
     private AuthAPI ddpAuthApi = null;
     private AuthAPI mgtAuthApi = null;
-    private String audience;
+    private final String audience;
     private String token;
     private Long expiresAt;
 
@@ -65,16 +66,21 @@ public class Auth0Util {
         this.audience = audience;
     }
 
-    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) throws AuthenticationException {
-        try {
-            Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
-            Auth0UserInfo userInfo = new Auth0UserInfo(auth0Claims.get("email").asString(), auth0Claims.get("exp").asInt());
-            verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
-
-            return userInfo;
-        } catch (Exception e) {
-            throw new AuthenticationException("Could not get Auth0 user info", e);
-        }
+    /**
+     * Verify token and return user email from token
+     *
+     * @param auth0Token token to verify
+     * @param auth0Domain auth0 domain
+     * @return user email
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
+     */
+    public String getAuth0User(@NonNull String auth0Token, String auth0Domain) {
+        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
+        String email = auth0Claims.get("email").asString();
+        verifyUserConnection(auth0Claims.get("sub").asString(), email);
+        return email;
     }
 
     private ManagementAPI configManagementApi() {
@@ -122,13 +128,18 @@ public class Auth0Util {
         }
     }
 
-    public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
-        try {
-            Optional<DecodedJWT> maybeToken = verifyAuth0Token(auth0Token, auth0Domain);
-            return maybeToken.orElseThrow().getClaims();
-        } catch (Exception e) {
-            throw new AuthenticationException("Could not verify auth0 token.", e);
-        }
+    /**
+     * Verify token and return token claims
+     *
+     * @param auth0Token token to verify
+     * @param auth0Domain auth0 domain
+     * @return a map of claims
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
+     */
+    public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) {
+        return verifyAuth0Token(auth0Token, auth0Domain).getClaims();
     }
 
     /**
@@ -169,24 +180,20 @@ public class Auth0Util {
      * @param jwt         the token to verify
      * @param auth0Domain auth0 domain
      * @return a verified, decoded JWT
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
      */
-    public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain) {
-        RSAKeyProvider keyProvider = null;
-        DecodedJWT validToken = null;
+    public static DecodedJWT verifyAuth0Token(String jwt, String auth0Domain) {
         try {
             JwkProvider jwkProvider = new JwkProviderBuilder(auth0Domain).build();
-            keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
+            RSAKeyProvider keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
+            return JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
+        } catch (JWTVerificationException e) {
+            throw new InvalidTokenException("Could not verify auth0 token", e);
         } catch (Exception e) {
-            logger.info("WARNING: Could not verify token {} due to jwk error", jwt);
+            throw new AuthenticationException("Error verifying auth0 token", e);
         }
-        if (keyProvider != null) {
-            try {
-                validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
-            } catch (Exception e) {
-                logger.info("WARNING: Could not verify token {}", jwt, e);
-            }
-        }
-        return Optional.ofNullable(validToken);
     }
 
     /**
@@ -199,14 +206,14 @@ public class Auth0Util {
      * @param signer        the valid issuer of token
      * @param secretEncoded boolean, true if the secret is base64 encoded
      * @return a verified, decoded JWT
-     * @throws TokenExpiredException – if the token has expired.
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
      */
-    public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain, String secret, String signer,
-                                                        boolean secretEncoded) {
+    public static DecodedJWT verifyAuth0Token(String jwt, String auth0Domain, String secret, String signer, boolean secretEncoded) {
         if (StringUtils.isBlank(secret)) {
             return verifyAuth0Token(jwt, auth0Domain);
         }
-        DecodedJWT validToken = null;
         byte[] tempSecret = secret.getBytes();
         if (secretEncoded) {
             tempSecret = Base64.decodeBase64(tempSecret);
@@ -218,18 +225,14 @@ public class Auth0Util {
                 verification.withIssuer(signer);
             }
             JWTVerifier verifier = verification.build();
-            validToken = verifier.verify(jwt);
-        } catch (TokenExpiredException expiredError) {
-            logger.info("WARNING: Token has expired {}", jwt, expiredError);
-        } catch (Exception error) {
-            logger.info("WARNING: Could not verify token {}", jwt, error);
+            return verifier.verify(jwt);
+        } catch (JWTVerificationException e) {
+            throw new InvalidTokenException("Could not verify auth0 token", e);
         }
-
-        return Optional.ofNullable(validToken);
     }
 
-    public String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain,
-                                                    String auth0Audience, String audienceNameSpace) throws AuthenticationException {
+    public String getAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain,
+                                                String auth0Audience, String audienceNameSpace) throws AuthenticationException {
         String requestUrl = "https://" + auth0Domain + api;
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", contentType);
@@ -240,10 +243,10 @@ public class Auth0Util {
         try {
             response = DDPRequestUtil.postRequestWithResponse(Auth0M2MResponse.class, requestUrl, requestParams, "auth0 M2M", headers);
             if (response == null) {
-                throw new AuthenticationException("Didn't receive a token from auth0!");
+                throw new AuthenticationException("Did not receive a token from auth0");
             }
         } catch (Exception e) {
-            throw new AuthenticationException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
+            throw new AuthenticationException("Did not get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
         }
         if (response.getError() != null) {
             throw new AuthenticationException("Got Auth0 M2M error " + response.getError() + " : " + response.getErrorDescription());
@@ -266,25 +269,5 @@ public class Auth0Util {
         params.add(new BasicNameValuePair(clientSecretKey, clientSecret));
         params.add(new BasicNameValuePair(audienceKey, audience));
         return params;
-    }
-
-    public static class Auth0UserInfo {
-
-        private String email;
-        private long expirationTime;
-
-
-        public Auth0UserInfo(@NonNull Object emailObj, @NonNull Object expirationTimeObj) {
-            this.email = emailObj.toString();
-            this.expirationTime = Long.parseLong(expirationTimeObj.toString());
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public long getTokenExpiration() {
-            return expirationTime;
-        }
     }
 }

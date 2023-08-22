@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.security;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import spark.Request;
 import spark.Response;
@@ -15,7 +16,7 @@ public abstract class RequestHandler implements Route {
         if (StringUtils.isNotBlank(userId)) {
             return processRequest(request, response, userId);
         }
-        throw new RuntimeException("Error user_id was missing from token");
+        throw new AuthenticationException("Error user_id was missing from token");
     }
 
     protected abstract Object processRequest(Request request, Response response, String userId) throws Exception;
