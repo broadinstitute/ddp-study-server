@@ -12,8 +12,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.easymock.internal.Results;
 
 /**
  * This class has methods to set up a Juniper study in DSM database.
@@ -81,7 +79,7 @@ public class JuniperSetupUtil {
         return getPrimaryKey(rs, "ddp_group");
     }
 
-    public static void deleteJuniperTestStudies() {
+    public static void deleteJuniperInstanceAndSettings() {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {

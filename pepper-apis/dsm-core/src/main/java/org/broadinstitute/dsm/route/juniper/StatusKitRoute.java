@@ -25,24 +25,24 @@ public class StatusKitRoute implements Route {
     public Object handle(Request request, Response response) throws Exception {
         KitResponse kitResponse;
         if (request.requestMethod().equals(RoutePath.RequestMethod.GET.toString())) {
-            if (requestContainsValue(RoutePath.KIT_STATUS_STUDY, request)) {
-                String study = request.params(RequestParameter.STUDY);
-                log.info(String.format("Got a request to return information of kits in non-pepper study %s", study));
+            if (request.url().contains(RoutePath.KIT_STATUS_STUDY)) {
+                String study = getParam(RequestParameter.STUDY, request);
+                log.info("Got a request to return information of kits in non-pepper study {}", study);
                 kitResponse = this.nonPepperStatusKitService.getKitsByStudyName(study);
-            } else if (requestContainsValue(RoutePath.KIT_STATUS_JUNIPER_KIT_ID, request)) {
-                String juniperKitId = request.params(RequestParameter.JUNIPER_KIT_ID);
-                log.info(String.format("Got a request to return information of kit with Juniper Kit Id %s", juniperKitId));
+            } else if (request.url().contains(RoutePath.KIT_STATUS_JUNIPER_KIT_ID)) {
+                String juniperKitId = getParam(RequestParameter.JUNIPER_KIT_ID, request);
+                log.info("Got a request to return information of kit with Juniper Kit Id {}", juniperKitId);
                 kitResponse = this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitId);
-            } else if (requestContainsValue(RoutePath.KIT_STATUS_PARTICIPANT_ID, request)) {
-                String participantId = request.params(RequestParameter.JUNIPER_PARTICIPANT_ID);
-                log.info(String.format("Got a request to return information of kit with Juniper Kit Id %s", participantId));
+            } else if (request.url().contains(RoutePath.KIT_STATUS_PARTICIPANT_ID)) {
+                String participantId = getParam(RequestParameter.JUNIPER_PARTICIPANT_ID, request);
+                log.info("Got a request to return information of kits with participant Id {}", participantId);
                 kitResponse = this.nonPepperStatusKitService.getKitsBasedOnParticipantId(participantId);
             } else {
                 response.status(400);
                 return KitResponse.ErrorMessage.NOT_IMPLEMENTED;
             }
         } else if (request.requestMethod().equals(RoutePath.RequestMethod.POST.toString())
-                && requestContainsValue(RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, request)) {
+                && request.url().contains(RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS)) {
             try {
                 String[] kitIds = new Gson().fromJson(request.queryMap().get(RoutePath.JUNIPER_KIT_IDS).value(), String[].class);
                 kitResponse = getStatusByKitIdList(kitIds);
@@ -62,11 +62,12 @@ public class StatusKitRoute implements Route {
         return kitResponse;
     }
 
-    private boolean requestContainsValue(String param, Request request) {
-        if (request.url().contains(param) && StringUtils.isNotBlank(request.params(param))) {
-            return true;
+    private String getParam(String paramName, Request request) {
+        String value = request.params(paramName);
+        if (StringUtils.isBlank(value)) {
+            throw new DSMBadRequestException(String.format("value provided for %s was invalid", paramName));
         }
-        throw new DSMBadRequestException(String.format("Request parameter for %s is missing ", param));
+        return value;
     }
 
     private KitResponse getStatusByKitIdList(String[] kitIds) {

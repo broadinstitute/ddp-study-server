@@ -56,7 +56,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
     @AfterClass
     public static void deleteJuniperInstance() {
         JuniperSetupUtil.deleteKitsArray(createdKitIds);
-        JuniperSetupUtil.deleteJuniperTestStudies();
+        JuniperSetupUtil.deleteJuniperInstanceAndSettings();
     }
 
     @Test
