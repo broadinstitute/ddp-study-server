@@ -8,7 +8,10 @@ manual_scaling:
   instances: 2
 {{else if eq $environment "staging"}}
 manual_scaling:
-  instances: 1
+  instances: 2
+{{else if eq $environment "test"}}
+manual_scaling:
+  instances: 2
 {{else if eq $environment "dev"}}
 manual_scaling:
   instances: 2
