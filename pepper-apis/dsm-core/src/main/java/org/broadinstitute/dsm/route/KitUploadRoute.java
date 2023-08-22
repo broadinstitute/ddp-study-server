@@ -576,7 +576,7 @@ public class KitUploadRoute extends RequestHandler {
 
                 if (skipAddressValidation) {
                     try {
-                        Address address = easyPostUtil.createBroadAddress(name, object.getStreet1(), object.getStreet2(), object.getCity(),
+                        Address address = easyPostUtil.createAddressWithoutValidation(name, object.getStreet1(), object.getStreet2(), object.getCity(),
                                 object.getPostalCode(), object.getState(), object.getCountry(), phone);
                         object.setEasyPostAddressId(address.getId());
                     } catch (EasyPostException e) {
