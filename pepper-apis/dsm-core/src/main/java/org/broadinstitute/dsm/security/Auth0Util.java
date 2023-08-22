@@ -226,7 +226,11 @@ public class Auth0Util {
                 verification.withIssuer(signer);
             }
             JWTVerifier verifier = verification.build();
-            return verifier.verify(jwt);
+            DecodedJWT validToken = verifier.verify(jwt);
+            if (validToken.getClaim(PublicClaims.EXPIRES_AT).isNull()) {
+                throw new InvalidTokenException("Token missing expiration time in the claims.");
+            }
+            return validToken;
         } catch (JWTVerificationException e) {
             throw new InvalidTokenException("Could not verify auth0 token", e);
         }
