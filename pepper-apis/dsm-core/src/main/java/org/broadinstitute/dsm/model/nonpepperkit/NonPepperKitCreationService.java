@@ -77,8 +77,8 @@ public class NonPepperKitCreationService {
 
         }
 
-        log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        return KitResponse.makeKitStatusResponse(null);
+        log.info("{} for ddpInstance {} with kit type {} has been created", juniperKitRequest.getJuniperKitId(), ddpInstance.getName(), kitTypeName);
+        return this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitRequest.getJuniperKitId());
     }
 
 
