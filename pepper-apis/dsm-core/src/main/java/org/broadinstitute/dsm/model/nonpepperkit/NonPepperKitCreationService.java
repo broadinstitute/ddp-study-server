@@ -170,8 +170,7 @@ public class NonPepperKitCreationService {
                                 kit.getExternalOrderNumber(),
                                 false,
                                 null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
-                log.info("Created new kit in DSM with dsm_kit_request_id {} and ddpLabel {} for JuniperKitId {}", dsmKitRequestId, ddpLabel,
-                        juniperKitRequestId);
+                log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
             } catch (Exception e) {
                 transactionResults.resultException = e;
             }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -32,6 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  * -ea -Dconfig.file=[path to /pepper-apis/output-build-config/testing-inmemorydb.conf]
  */
 
+@Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class JuniperKitCreationTest extends DbTxnBaseTest {
 
@@ -80,12 +82,16 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
         JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
+        log.info("Juniper test kit id is {} ", juniperTestKit.getJuniperKitId());
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
         try {
             List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             KitResponse kitCreationResponse =
                     nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
             List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
+            if (kitCreationResponse.isError()){
+                log.error(kitCreationResponse.getErrorMessage().toString());
+            }
             Assert.assertFalse(kitCreationResponse.isError());
             Assert.assertEquals(newKits.size(), oldkits.size() + 1);
             KitRequestShipping newKit =
