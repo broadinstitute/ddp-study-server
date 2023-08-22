@@ -28,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -54,6 +55,7 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -67,6 +69,7 @@ import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
+import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
@@ -96,7 +99,6 @@ import org.broadinstitute.dsm.route.EventTypeRoute;
 import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
-import org.broadinstitute.dsm.route.JuniperShipKitRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
 import org.broadinstitute.dsm.route.KitDiscardRoute;
@@ -127,6 +129,8 @@ import org.broadinstitute.dsm.route.admin.UserRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoute;
 import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.juniper.JuniperShipKitRoute;
+import org.broadinstitute.dsm.route.juniper.StatusKitRoute;
 import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
 import org.broadinstitute.dsm.route.kit.KitTrackingScanRoute;
@@ -168,6 +172,7 @@ import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTrigger
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
+import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.lddp.util.JsonTransformer;
 import org.broadinstitute.lddp.util.Utility;
@@ -594,8 +599,13 @@ public class DSMServer {
         get(apiRoot + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
-            NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-            post(dsmRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(nonPepperKitCreationService), new JsonTransformer());
+            post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
+
+            StatusKitRoute statusKitRoute = new StatusKitRoute();
+            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
+            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
+            post(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
         }
 
         if (!cfg.getBoolean("ui.production")) {
@@ -631,13 +641,8 @@ public class DSMServer {
 
         before(infoRoot + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
-            Optional<DecodedJWT> validToken =
-                    Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, signer,
-                            ddpSecretEncoded);
-            if (validToken.isEmpty()) {
-                logger.error(req.pathInfo() + " was called without valid token");
-                halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
-            }
+            Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, signer,
+                    ddpSecretEncoded);
         });
 
         get(infoRoot + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
@@ -828,7 +833,7 @@ public class DSMServer {
 
         get(uiRoot + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, auth0Domain);
         get(uiRoot + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(uiRoot + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(uiRoot + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
@@ -1069,23 +1074,41 @@ public class DSMServer {
 
     private void setupRouteGenericErrorHandlers() {
         exception(DSMBadRequestException.class, (exception, request, response) -> {
+            logger.info("Request error while processing request: {}: {}", request.url(), exception.toString());
             response.status(400);
             response.body(exception.getMessage());
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
-            logger.error("Internal error {}", exception.toString());
+            logger.error("Internal error while processing request: {}: {}", request.url(), exception.toString());
             exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });
         exception(DDPInternalError.class, (exception, request, response) -> {
-            logger.error("Internal error {}", exception.toString());
+            logger.error("Internal error while processing request: {}: {}", request.url(), exception.toString());
             exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });
         exception(AuthorizationException.class, (exception, request, response) -> {
+            logger.info("Authorization error while processing request: {}: {}", request.url(), exception.toString());
             response.status(403);
+            response.body(exception.getMessage());
+        });
+        exception(TokenExpiredException.class, (exception, request, response) -> {
+            logger.info("Token expiration while processing request: {}: {}", request.url(), exception.toString());
+            response.status(401);
+            response.body(exception.getMessage());
+        });
+        exception(InvalidTokenException.class, (exception, request, response) -> {
+            logger.info("Invalid token while processing request: {}: {}", request.url(), exception.toString());
+            response.status(401);
+            response.body(exception.getMessage());
+        });
+        exception(AuthenticationException.class, (exception, request, response) -> {
+            // this is a fallback exception, log it warn level to see why it is happening
+            logger.warn("Authentication error while processing request: {}: {}", request.url(), exception.toString());
+            response.status(401);
             response.body(exception.getMessage());
         });
     }

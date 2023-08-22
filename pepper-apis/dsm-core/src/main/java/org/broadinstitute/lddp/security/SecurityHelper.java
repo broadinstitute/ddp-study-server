@@ -6,6 +6,7 @@ import java.util.Map;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.AuthenticationException;
@@ -88,16 +89,24 @@ public class SecurityHelper {
         }
     }
 
-    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer)
-            throws InvalidTokenException, AuthenticationException {
-
+    /**
+     * Verify token and signer, and return  token claims
+     *
+     * @param token token to verify
+     * @param auth0Domain auth0 domain
+     * @param auth0Signer token issuer
+     * @return a map of claims
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
+     */
+    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer) {
         Map<String, Claim> claimsMap = Auth0Util.verifyAndParseAuth0TokenClaims(token, auth0Domain);
         if (auth0Signer.equals(claimsMap.get(CLAIM_ISSUER).asString())) {
             return claimsMap;
         } else {
             throw new InvalidTokenException("Token is not signed by the expected signer.");
         }
-
     }
 
     public enum ResultType {

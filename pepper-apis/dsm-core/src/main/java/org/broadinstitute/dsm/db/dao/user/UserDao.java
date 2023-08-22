@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -33,6 +35,9 @@ public class UserDao implements Dao<UserDto> {
     private static final String SQL_SELECT_USER_BY_ID =
             "SELECT user.user_id, user.name, user.email, user.phone_number, user.is_active FROM access_user user "
                     + "WHERE user.user_id = ?";
+
+    private static final String SQL_SELECT_ALL_USERS =
+            "SELECT user.user_id, user.name, user.email, user.phone_number, user.is_active FROM access_user user";
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = inTransaction((conn) -> {
@@ -140,5 +145,37 @@ public class UserDao implements Dao<UserDto> {
                     simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
+    }
+
+    /**
+     * generates a map of all of the users in the DSM,
+     * returns both active and deactivated users.
+     * @return Map instance, key is the user id and value is UserDto
+     * */
+    public static Map<Integer, UserDto> selectAllUsers() {
+        Map<Integer, UserDto> users = new HashMap<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ALL_USERS)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        UserDto user = new UserDto(rs.getInt(USER_ID),
+                                rs.getString(NAME),
+                                rs.getString(EMAIL),
+                                rs.getString(PHONE_NUMBER),
+                                rs.getInt(IS_ACTIVE));
+                        users.put(user.getId(), user);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error getting list of all users ", results.resultException);
+        }
+        return users;
     }
 }

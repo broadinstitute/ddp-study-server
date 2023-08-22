@@ -197,6 +197,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "denial_reason = ?, authorized_by = ? WHERE kit.dsm_kit_request_id = ?";
     private static final String MARK_ORDER_AS_TRANSMITTED =
             "update ddp_kit_request set order_transmitted_at = ? where external_order_number = ?";
+
+    private static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE =
+            " SELECT count(*) kitRequestCount from ddp_kit_request where bsp_collaborator_sample_id REGEXP \"^%1\" and kit_type_id = ?";
+
+    private static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS =
+            " select 1 from ddp_kit_request req  where req.ddp_label = ? ";
+
     private static final String QUEUE = "queue";
     private static final String ERROR = "error";
     private static final String SENT = "sent";
@@ -924,6 +931,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     // called by
     // 1. hourly job to add kit requests into db
     // 2. kit upload
+    // 3. Juniper shipKit route
+    // BSP and Mercury dummy kit routes in non-prod
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
@@ -991,7 +1000,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-            // update ES only if it's a pepper study
+            // update ES only if it's a pepper study, not for Darwin's arc or Juniper studies
             if (ddpInstanceDto.isESUpdatePossible()) {
                 try {
                     UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
@@ -999,11 +1008,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
-                    //This error will trigger on studies with no participants, this skips
-                    //the error log if that is the reason for the upsert failure.
-                        logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
+                    logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
                                 + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
-                        e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
 
@@ -1271,8 +1278,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public static int getKitCounter(@NonNull Connection conn, String collaboratorSampleId, int kitTypeId) {
-        String query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE)
-                .replace("%1", collaboratorSampleId);
+        String query = GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE.replace("%1", collaboratorSampleId);
         try (PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             stmt.setInt(1, kitTypeId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -1294,8 +1300,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
      * and checking it against db if unique
      */
     public static String generateDdpLabelID() {
-        return generateDdpLabelID(15,
-                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS));
+        return generateDdpLabelID(15, GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS);
     }
 
     public static String generateDdpLabelID(int length, String query) {
@@ -1355,7 +1360,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                          DDPParticipant participant, DDPInstanceDto ddpInstanceDto) throws Exception {
         Address toAddress = null;
         if (addressId == null && participant == null) { //if both are set to null then it is return label!
-            toAddress = easyPostUtil.createBroadAddress(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
+            toAddress = easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
                     kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
                     kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
         } else {
@@ -1428,7 +1433,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         if (kitType != null) {
 
             Address returnAddress =
-                    easyPostUtil.createBroadAddress(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
+                    easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
                             kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
                             kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
 
