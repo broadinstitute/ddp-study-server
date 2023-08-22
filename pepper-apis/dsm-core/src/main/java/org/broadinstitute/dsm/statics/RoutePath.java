@@ -7,6 +7,7 @@ import spark.Request;
 public class RoutePath {
 
     public static final String REALM = "realm";
+    public static final String JUNIPER_KIT_IDS = "kitIds";
     public static final String STUDY_GROUP = "studyGroup";
     public static final String KIT_TYPE = "kitType";
     public static final String UPLOAD_REASONS = "uploadReasons";
@@ -31,6 +32,13 @@ public class RoutePath {
     public static final String CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT = "/createClinicalDummy/:label/:type/:participantId";
     public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
     public static final String SHIP_KIT_ENDPOINT = "/shipKit";
+    public static final String KIT_STATUS_ENDPOINT_STUDY = "/kitstatus/study/:study";
+    public static final String KIT_STATUS_STUDY = "/kitstatus/study/";
+    public static final String KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID = "/kitstatus/juniperKit/:juniperKitId";
+    public static final String KIT_STATUS_JUNIPER_KIT_ID = "/kitstatus/juniperKit";
+    public static final String KIT_STATUS_ENDPOINT_KIT_IDS = "/kitstatus/kits";
+    public static final String KIT_STATUS_ENDPOINT_PARTICIPANT_ID = "/kitstatus/participant/:participantId";
+    public static final String KIT_STATUS_PARTICIPANT_ID = "/kitstatus/participant";
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
     public static final String CANCER_LIST_REQUEST = "/cancers";
