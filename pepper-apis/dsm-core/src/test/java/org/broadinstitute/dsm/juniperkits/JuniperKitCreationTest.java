@@ -49,7 +49,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
     public static void setupJuniperBefore() {
         JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", bspPrefix);
         ;
-        juniperSetupUtil.setupJuniperInstance();
+        juniperSetupUtil.setupJuniperInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
     }
 

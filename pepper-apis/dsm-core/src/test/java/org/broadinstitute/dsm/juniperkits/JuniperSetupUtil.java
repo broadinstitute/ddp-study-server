@@ -163,7 +163,7 @@ public class JuniperSetupUtil {
         }
     }
 
-    public void setupJuniperInstance() {
+    public void setupJuniperInstanceAndSettings() {
 
         //everything should get inserted in one transaction
         SimpleResult results = inTransaction((conn) -> {
