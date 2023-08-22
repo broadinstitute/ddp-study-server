@@ -122,7 +122,6 @@ import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
-import org.broadinstitute.dsm.route.admin.RegisterParticipantRoute;
 import org.broadinstitute.dsm.route.admin.StudyRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoute;
@@ -941,9 +940,6 @@ public class DSMServer {
         UserRoute userRoute = new UserRoute();
         post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
         put(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
-
-        RegisterParticipantRoute registerParticipantRoute = new RegisterParticipantRoute();
-        post(uiRoot + RoutePath.REGISTER_PARTICIPANT, registerParticipantRoute, new JsonTransformer());
     }
 
 
