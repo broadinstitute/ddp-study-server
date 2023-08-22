@@ -10,6 +10,7 @@ import java.sql.Statement;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -70,6 +71,9 @@ public class JuniperSetupUtil {
     }
 
     private static String createDdpGroupForJuniper(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(ddpGroupId)) {
+            return ddpGroupId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_GROUP, Statement.RETURN_GENERATED_KEYS);
         int result = stmt.executeUpdate();
         if (result != 1) {
@@ -181,7 +185,7 @@ public class JuniperSetupUtil {
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
-                ddpKitRequestSettingsId = createKitRequestSettingsInformations(conn);
+                ddpKitRequestSettingsId = createKitRequestSettingsInformation(conn);
             } catch (SQLException e) {
                 simpleResult.resultException = e;
             }
@@ -192,7 +196,10 @@ public class JuniperSetupUtil {
         }
     }
 
-    private String createKitRequestSettingsInformations(Connection conn) throws SQLException {
+    private String createKitRequestSettingsInformation(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(ddpKitRequestSettingsId)) {
+            return ddpKitRequestSettingsId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
         stmt.setString(1, ddpInstanceId);
         stmt.setString(2, kitTypeId);
@@ -206,6 +213,9 @@ public class JuniperSetupUtil {
     }
 
     private String createCarrierInformation(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(carrierId)) {
+            return carrierId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_CARRIER, Statement.RETURN_GENERATED_KEYS);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
@@ -213,6 +223,9 @@ public class JuniperSetupUtil {
     }
 
     private String createKitReturnInformation(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(kitReturnId)) {
+            return kitReturnId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_RETURN, Statement.RETURN_GENERATED_KEYS);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
@@ -220,6 +233,9 @@ public class JuniperSetupUtil {
     }
 
     private String createKitDimension(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(kitDimensionId)) {
+            return kitDimensionId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_DIMENSION, Statement.RETURN_GENERATED_KEYS);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
@@ -227,6 +243,9 @@ public class JuniperSetupUtil {
     }
 
     private String createKitType(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(kitTypeId)) {
+            return kitTypeId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TYPE, Statement.RETURN_GENERATED_KEYS);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
@@ -234,6 +253,9 @@ public class JuniperSetupUtil {
     }
 
     private String createInstanceRole(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(instanceRoleId)) {
+            return instanceRoleId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
@@ -241,6 +263,9 @@ public class JuniperSetupUtil {
     }
 
     private String createDdpInstanceRole(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(ddpInstanceRoleId)) {
+            return ddpInstanceRoleId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
         stmt.setString(1, ddpInstanceId);
         stmt.setString(2, instanceRoleId);
@@ -251,6 +276,9 @@ public class JuniperSetupUtil {
     }
 
     private String createDdpInstanceGroup(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(ddpInstanceGroupId)) {
+            return ddpInstanceGroupId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS);
         stmt.setString(1, ddpInstanceId);
         stmt.setString(2, ddpGroupId);
@@ -261,6 +289,9 @@ public class JuniperSetupUtil {
     }
 
     public String createDdpInstanceForJuniper(Connection conn) throws SQLException {
+        if (StringUtils.isNotBlank(ddpInstanceId)) {
+            return ddpGroupId;
+        }
         PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_INSTANCE, Statement.RETURN_GENERATED_KEYS);
         stmt.setString(1, instanceName);
         stmt.setString(2, studyGuid);
