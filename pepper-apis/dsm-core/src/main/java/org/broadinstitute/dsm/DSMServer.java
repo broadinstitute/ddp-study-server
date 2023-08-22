@@ -1059,37 +1059,40 @@ public class DSMServer {
 
     private void setupRouteGenericErrorHandlers() {
         exception(DSMBadRequestException.class, (exception, request, response) -> {
+            logger.info("Request error processing request: {}: {}", request.url(), exception.toString());
             response.status(400);
             response.body(exception.getMessage());
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
-            logger.error("Internal error {}", exception.toString());
+            logger.error("Internal error processing request: {}: {}", request.url(), exception.toString());
             exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });
         exception(DDPInternalError.class, (exception, request, response) -> {
-            logger.error("Internal error {}", exception.toString());
+            logger.error("Internal error processing request: {}: {}", request.url(), exception.toString());
             exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());
         });
         exception(AuthorizationException.class, (exception, request, response) -> {
+            logger.info("Authorization error processing request: {}: {}", request.url(), exception.toString());
             response.status(403);
             response.body(exception.getMessage());
         });
         exception(TokenExpiredException.class, (exception, request, response) -> {
+            logger.info("Token expiration processing request: {}: {}", request.url(), exception.toString());
             response.status(401);
             response.body(exception.getMessage());
         });
         exception(InvalidTokenException.class, (exception, request, response) -> {
+            logger.info("Invalid token processing request: {}: {}", request.url(), exception.toString());
             response.status(401);
             response.body(exception.getMessage());
         });
         exception(AuthenticationException.class, (exception, request, response) -> {
-            // this is a fallback exception, log it to see why it is happening
-            logger.error("Authentication error {}", exception.toString());
-            exception.printStackTrace();
+            // this is a fallback exception, log it warn level to see why it is happening
+            logger.warn("Authentication error processing request: {}: {}", request.url(), exception.toString());
             response.status(401);
             response.body(exception.getMessage());
         });
