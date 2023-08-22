@@ -22,8 +22,10 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +53,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
 
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
 
-    @BeforeClass
+    @Before
     public static void setupJuniperBefore() {
         JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
         ;
@@ -60,7 +62,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
         when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
     }
 
-    @AfterClass
+    @After
     public static void deleteJuniperInstance() {
         JuniperSetupUtil.deleteKitsArray(createdKitIds);
         JuniperSetupUtil.deleteJuniperInstanceAndSettings();
@@ -117,9 +119,10 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
 
     private void createAndAssertNonPepperCreation(JuniperKitRequest juniperTestKit) {
         List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
-        nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
+        KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
+        Assert.assertFalse(kitResponse.isError());
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
-        Assert.assertEquals(newKits.size(), oldkits.size() + 1);
+        Assert.assertEquals(oldkits.size() + 1, newKits.size());
     }
 
     private void assertStatusKitResponse(KitResponse kitResponse, JuniperKitRequest juniperTestKit, int testRandomNumber) {
