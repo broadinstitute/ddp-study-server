@@ -54,7 +54,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
 
     @Before
-    public static void setupJuniperBefore() {
+    public void setupJuniperBefore() {
         JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
         ;
         juniperSetupUtil.setupJuniperInstanceAndSettings();
@@ -63,7 +63,7 @@ public class JuniperKitCreationTest extends DbTxnBaseTest {
     }
 
     @After
-    public static void deleteJuniperInstance() {
+    public void deleteJuniperInstance() {
         JuniperSetupUtil.deleteKitsArray(createdKitIds);
         JuniperSetupUtil.deleteJuniperInstanceAndSettings();
     }
