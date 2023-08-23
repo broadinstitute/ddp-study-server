@@ -851,7 +851,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         });
     }
 
-    private static int createTestInstance(String instanceName, int studyGroupId) {
+    /**
+     * Creates a new ddp_instance for the given group
+     * @return the id of the newly created ddp_instance
+     */
+    public static int createTestInstance(String instanceName, int studyGroupId) {
         int instanceId = createInstance(instanceName);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
@@ -879,7 +883,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         return instanceId;
     }
 
-    private static int createInstance(String instanceName) {
+    public static int createInstance(String instanceName) {
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
@@ -905,7 +909,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
         return (int) res.resultValue;
     }
 
-    private static void deleteInstance(int instanceId) {
+    public static void deleteInstance(int instanceId) {
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE_GROUP)) {
                 stmt.setInt(1, instanceId);

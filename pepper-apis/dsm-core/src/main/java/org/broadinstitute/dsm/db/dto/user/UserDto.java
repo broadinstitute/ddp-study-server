@@ -29,6 +29,10 @@ public class UserDto {
         return this.id;
     }
 
+    public String getIdAsString() {
+        return Integer.toString(this.id);
+    }
+
     public Optional<String> getName() {
         return Optional.ofNullable(name);
     }

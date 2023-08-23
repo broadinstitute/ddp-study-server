@@ -16,6 +16,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.patch.Patch;
@@ -289,7 +290,7 @@ public class UserUtil {
             String msg = "User id in patch did not match the one in token, user Id in patch is " + userIdFromPatch + " user Id in token " +
                     userIdRequest;
             logger.warn(msg);
-            throw new RuntimeException(msg);
+            throw new DSMBadRequestException(msg);
         }
         return checkUserAccess(realm, userId, role, userIdRequest);
     }

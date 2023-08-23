@@ -7,14 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.Data;
@@ -35,8 +28,8 @@ public class UserAdminService {
 
     private final String operatorId;
     private final String studyGroup;
-    protected static final String USER_ADMIN_ROLE = "study_user_admin";
-    protected static final String PEPPER_ADMIN_ROLE = "pepper_admin";
+    public static final String USER_ADMIN_ROLE = "study_user_admin";
+    public static final String PEPPER_ADMIN_ROLE = "pepper_admin";
     private int adminId;
     private String adminEmail;
     private boolean initialized;
@@ -596,7 +589,7 @@ public class UserAdminService {
         return res.name;
     }
 
-    private static NameAndId studyGroupForRealm(String realm) {
+    public static NameAndId studyGroupForRealm(String realm) {
         return inTransaction(conn -> {
             NameAndId res = null;
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_GROUP_FOR_REALM)) {
@@ -637,14 +630,14 @@ public class UserAdminService {
     protected Map<String, RoleInfo> verifyOperatorAdminRoles(int operatorId, int groupId) {
         Map<String, RoleInfo> adminRoles = getOperatorAdminRoles(operatorId, groupId);
         if (adminRoles == null || adminRoles.isEmpty()) {
-            throw new DSMBadRequestException("Operator does not have user administrator privileges for study group "
+            throw new DSMBadRequestException("Operator " + operatorId + " does not have user administrator privileges for study group "
                     + studyGroup);
         }
         return adminRoles;
     }
 
     protected static Map<String, RoleInfo> getOperatorAdminRoles(int operatorId, int groupId) {
-        Map<String, RoleInfo> adminRoles = null;
+        Map<String, RoleInfo> adminRoles = Collections.emptyMap();
         List<String> roles = getRolesForUser(operatorId, groupId);
         if (roles.isEmpty()) {
             return adminRoles;
@@ -699,6 +692,10 @@ public class UserAdminService {
     }
 
 
+    /**
+     * Returns all the roles that an admin has would have access
+     * to for the given admin role in a group.
+     */
     protected static Map<String, RoleInfo> getRolesForAdmin(int groupId, String adminRole) {
         return inTransaction(conn -> {
             Map<String, RoleInfo> roles = new HashMap<>();
@@ -741,7 +738,7 @@ public class UserAdminService {
         });
     }
 
-    protected static int getRoleId(String role) {
+    public static int getRoleId(String role) {
         return inTransaction(conn -> {
             int id = -1;
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLE)) {
@@ -880,7 +877,7 @@ public class UserAdminService {
         });
     }
 
-    protected static int addGroupRole(int groupId, int roleId, int adminRoleId) {
+    public static int addGroupRole(int groupId, int roleId, int adminRoleId) {
         String errMsg = String.format("Error adding group role: groupId=%d, roleId=%d, adminRoleId=%d. ",
                 groupId, roleId, adminRoleId);
         int groupRoleId = getGroupRole(groupId, roleId);
@@ -918,7 +915,7 @@ public class UserAdminService {
         return res;
     }
 
-    protected static int addStudyGroup(String groupName) {
+    public static int addStudyGroup(String groupName) {
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_GROUP, Statement.RETURN_GENERATED_KEYS)) {
@@ -959,7 +956,7 @@ public class UserAdminService {
         });
     }
 
-    protected static int deleteUserRoles(int userId) {
+    public static int deleteUserRoles(int userId) {
         return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_ROLES)) {
                 stmt.setInt(1, userId);
@@ -971,7 +968,7 @@ public class UserAdminService {
         });
     }
 
-    protected static int deleteGroupRole(int groupRoleId) {
+    public static int deleteGroupRole(int groupRoleId) {
         return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_GROUP_ROLE)) {
                 stmt.setInt(1, groupRoleId);
@@ -983,7 +980,7 @@ public class UserAdminService {
         });
     }
 
-    protected static int deleteStudyGroup(int groupId) {
+    public static int deleteStudyGroup(int groupId) {
         return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_GROUP)) {
                 stmt.setInt(1, groupId);
@@ -995,8 +992,19 @@ public class UserAdminService {
         });
     }
 
+    /**
+     * Without validating any current roles, give the user
+     * admin permission for the realm.
+     */
+    public void setGroupAdminRole(int userId, int groupId) {
+        Map<String, RoleInfo> adminRoles = getOperatorAdminRoles(userId, groupId);
+        if (adminRoles.isEmpty()) {
+            addUserRole(userId, UserAdminService.getRoleId(USER_ADMIN_ROLE), groupId);
+        }
+    }
 
-    @Data
+
+        @Data
     protected static class RoleInfo {
         private final int roleId;
         private final String name;
@@ -1009,7 +1017,7 @@ public class UserAdminService {
         }
     }
 
-    protected static class NameAndId {
+    public static class NameAndId {
         public final String name;
         public final int id;
 
