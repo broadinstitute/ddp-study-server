@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
+import liquibase.pro.packaged.D;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +18,7 @@ import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
@@ -129,14 +131,14 @@ public class ParticipantData {
                         .withChangedBy(userEmail)
                         .build();
         if (isRelationshipIdExists()) {
-            throw new RuntimeException(String.format("Family member with that Relationship ID: %s already exists", getRelationshipId()));
+            throw new DsmInternalError(String.format("Family member with Relationship ID %s already exists", getRelationshipId()));
         }
         int createdDataKey = dataAccess.create(participantData);
         if (createdDataKey < 1) {
-            throw new RuntimeException("Could not insert participant data for : " + this.ddpParticipantId);
+            throw new DsmInternalError("Could not insert participant data for participant " + this.ddpParticipantId);
         }
         participantData.setParticipantDataId(createdDataKey);
-        logger.info(String.format("Successfully inserted data for participant: %s in db", this.ddpParticipantId));
+        logger.info("Successfully inserted data for participant {} in db", this.ddpParticipantId);
 
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(this.ddpInstanceId).orElseThrow();
         String participantGuid = Exportable.getParticipantGuid(this.ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
@@ -147,8 +149,7 @@ public class ParticipantData {
                             participantGuid, new PutToNestedScriptBuilder())
                     .export();
         } catch (Exception e) {
-            logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));
-            e.printStackTrace();
+            throw new DsmInternalError("Error inserting ES participant data for participant " + participantGuid);
         }
         return createdDataKey;
     }
