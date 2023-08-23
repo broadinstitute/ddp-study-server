@@ -62,7 +62,8 @@ public class OncHistoryTemplateRoute extends RequestHandler {
             return e.getMessage();
         } catch (DsmInternalError e) {
             response.status(500);
-            log.info("Internal error processing onc history template request: {}", e.toString());
+            log.error("Internal error processing onc history template request: {}", e.toString());
+            e.printStackTrace();
             return e.getMessage();
         } catch (Exception e) {
             // TODO in some future day we are not throwing exceptions that we do not have a mapped status code
