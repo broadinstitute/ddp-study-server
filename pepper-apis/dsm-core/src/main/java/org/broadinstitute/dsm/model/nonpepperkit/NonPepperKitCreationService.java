@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.model.nonpepperkit;
 
 import java.sql.Connection;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +14,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.util.DDPKitRequest;
@@ -24,6 +23,11 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @Slf4j
 public class NonPepperKitCreationService {
     public static final String JUNIPER = "JUNIPER";
+    NonPepperStatusKitService nonPepperStatusKitService;
+
+    public NonPepperKitCreationService() {
+        this.nonPepperStatusKitService = new NonPepperStatusKitService();
+    }
 
     //These are the Error Strings that are expected by Juniper
 
@@ -35,14 +39,14 @@ public class NonPepperKitCreationService {
                     juniperKitRequest.getJuniperParticipantID());
         }
         if (StringUtils.isBlank(juniperKitRequest.getJuniperKitId())) {
-            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID , null,
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_KIT_ID, null,
                     juniperKitRequest.getJuniperKitId());
         }
         HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = KitType.createKitTypeKey(kitTypeName, ddpInstance.getDdpInstanceId());
         KitType kitType = kitTypes.get(key);
         if (kitType == null) {
-            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE , juniperKitRequest.getJuniperKitId(),
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE, juniperKitRequest.getJuniperKitId(),
                     kitTypeName);
         }
 
@@ -53,7 +57,7 @@ public class NonPepperKitCreationService {
         // if the kit type has sub kits check that here
 
         if (!easyPostUtil.checkAddress(juniperKitRequest, kitRequestSettings.getPhone())) {
-            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.ADDRESS_VALIDATION_ERROR ,
+            return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.ADDRESS_VALIDATION_ERROR,
                     juniperKitRequest.getJuniperKitId(), null);
         }
 
@@ -72,8 +76,9 @@ public class NonPepperKitCreationService {
 
         }
 
-        log.info(juniperKitRequest.getJuniperKitId() + " " + ddpInstance.getName() + " " + kitTypeName + " kit created");
-        return KitResponse.makeKitStatusResponse(null);
+        log.info("{} for ddpInstance {} with kit type {} has been created", juniperKitRequest.getJuniperKitId(), ddpInstance.getName(),
+                kitTypeName);
+        return this.nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperKitRequest.getJuniperKitId());
     }
 
 
@@ -93,7 +98,7 @@ public class NonPepperKitCreationService {
             userId = JUNIPER;
         } else {
             log.warn("Seems like {} is not configured as a JUNIPER study! ", ddpInstance.getName());
-            transactionResults.resultException = new Exception(ddpInstance.getName() + " study is not configured to use this method.");
+            transactionResults.resultException = new DsmInternalError(ddpInstance.getName() + " study is not configured to use this method.");
             return transactionResults;
         }
 
@@ -109,18 +114,20 @@ public class NonPepperKitCreationService {
                         kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
         //In case it's needed, subkits handling should be added here
-
-        addJuniperKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
-                errorMessage, easyPostUtil, kit, externalOrderNumber, juniperKitRequestId, null, userId, transactionResults);
-
+        try {
+            addJuniperKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
+                    errorMessage, easyPostUtil, kit, externalOrderNumber, juniperKitRequestId, null, userId, transactionResults);
+        } catch (Exception e) {
+            throw new DsmInternalError("unable to add juniper kit request", e);
+        }
         return transactionResults;
     }
 
-    private SimpleResult addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings,
-                                              DDPInstance ddpInstance, int kitTypeId, String collaboratorParticipantId,
-                                              String errorMessage, EasyPostUtil easyPostUtil, JuniperKitRequest kit,
-                                              String externalOrderNumber, String juniperKitRequestId,
-                                              String ddpLabel, String userId, SimpleResult transactionResults) {
+    private void addJuniperKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings,
+                                      DDPInstance ddpInstance, int kitTypeId, String collaboratorParticipantId,
+                                      String errorMessage, EasyPostUtil easyPostUtil, JuniperKitRequest kit,
+                                      String externalOrderNumber, String juniperKitRequestId,
+                                      String ddpLabel, String userId, SimpleResult transactionResults) throws DsmInternalError {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
@@ -176,7 +183,10 @@ public class NonPepperKitCreationService {
             }
 
         }
-        return transactionResults;
+        if (transactionResults.resultException != null) {
+            throw new DsmInternalError(transactionResults.resultException);
+        }
+
     }
 
 }
