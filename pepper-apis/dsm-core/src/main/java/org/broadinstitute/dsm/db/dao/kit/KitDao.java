@@ -32,10 +32,10 @@ public interface KitDao extends Dao<KitRequestShipping> {
     Integer deleteKit(Long kitId);
 
     Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel);
+
     Optional<List<KitRequestShipping>> getSubkitsByDdpLabel(String ddpLabel, String kitLabel);
 
     List<KitRequestShipping> getKitsByHruid(String hruid);
 
     Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping);
-
 }

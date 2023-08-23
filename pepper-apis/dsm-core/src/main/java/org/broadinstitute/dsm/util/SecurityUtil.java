@@ -5,10 +5,12 @@ import static org.apache.http.client.fluent.Request.Post;
 
 import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.google.gson.GsonBuilder;
 import lombok.NonNull;
@@ -22,7 +24,9 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
 import org.broadinstitute.dsm.DSMServer;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.security.Auth0Util;
+import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import spark.Request;
 
@@ -203,14 +207,18 @@ public class SecurityUtil {
         return HttpClients.custom().setSSLSocketFactory(sslsf).build();
     }
 
+    /**
+     * Get user ID from request token
+     *
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
+     */
     public static String getUserId(@NonNull Request request) {
         String userId = null;
         Map<String, Claim> claims = getClaims(request);
-        if (claims != null && !claims.isEmpty() && claims.containsKey(AUTH0_NAMESPACE + USER_ID)) {
-            Object userIdObj = claims.get(AUTH0_NAMESPACE + USER_ID).asString();
-            if (userIdObj != null) {
-                userId = (String) userIdObj;
-            }
+        if (!claims.isEmpty() && claims.containsKey(AUTH0_NAMESPACE + USER_ID)) {
+            userId = claims.get(AUTH0_NAMESPACE + USER_ID).asString();
         }
         return userId;
     }
@@ -225,7 +233,7 @@ public class SecurityUtil {
                 }
             }
         }
-        return null;
+        return Collections.emptyMap();
     }
 
     public enum ResultType {
