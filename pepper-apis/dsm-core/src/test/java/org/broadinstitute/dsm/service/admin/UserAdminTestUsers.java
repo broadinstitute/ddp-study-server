@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +30,9 @@ public class UserAdminTestUsers {
     private final String adminRole;
     private final String studyGroup;
     private int studyGroupId;
-    private int ddpInstanceId;
+    private int ddpInstanceId = -1;
     private int userAdminRoleId;
+    private Map<String, UserAdminService.RoleInfo> studyRoles;
 
     private boolean initialized = false;
 
@@ -54,18 +54,35 @@ public class UserAdminTestUsers {
         this.adminRole = adminRole;
     }
 
+    public void close() {
+        UserDao userDao = new UserDao();
+        for (var entry: createdUserRoles.entrySet()) {
+            int userId = entry.getKey();
+            List<Integer> userRoles = entry.getValue();
+            for (int roleId: userRoles) {
+                UserAdminService.deleteUserRole(userId, roleId, studyGroupId);
+            }
+            userDao.delete(userId);
+        }
+        deleteInstance(ddpInstanceId);
+        UserAdminService.deleteStudyGroup(studyGroupId);
+    }
+
     private void initialize() {
         if (!initialized) {
+            studyGroupId = UserAdminService.verifyStudyGroup(studyGroup);
+            studyRoles = UserAdminService.getAllRolesForStudy(studyGroupId);
             userAdminRoleId = UserAdminService.getRoleId(adminRole);
             initialized = true;
         }
     }
 
-    private int createTestUser(String email, int roleId) {
+    public int createTestUser(String email, List<String> roles) {
+        initialize();
         int userId = createUser(email);
         List<Integer> roleIds = new ArrayList<>();
-        if (roleId != -1) {
-            roleIds.add(roleId);
+        for (String role: roles) {
+            roleIds.add(getRoleId(role));
         }
         createdUserRoles.put(userId, roleIds);
         return userId;
@@ -81,10 +98,20 @@ public class UserAdminTestUsers {
         return userDao.create(userDto);
     }
 
-    private int addUserRole(int userId, int roleId, int groupId) {
-        int userRoleId = UserAdminService.addUserRole(userId, roleId, groupId);
+    public int addUserRole(int userId, String role) {
+        initialize();
+        int roleId = getRoleId(role);
+        int userRoleId = UserAdminService.addUserRole(userId, roleId, studyGroupId);
         addRoleForUser(roleId, userId);
         return userRoleId;
+    }
+
+    private int getRoleId(String roleName) {
+        UserAdminService.RoleInfo roleInfo = studyRoles.get(roleName);
+        if (roleInfo == null) {
+            throw new DsmInternalError("Invalid role name for study");
+        }
+        return roleInfo.getRoleId();
     }
 
     private void addRoleForUser(int roleId, int userId) {
@@ -124,31 +151,28 @@ public class UserAdminTestUsers {
         return userId;
     }
 
-    private int setupAdmin(String adminEmail, List<Integer> rolesToManage, int groupId) {
+    private int setupAdmin(String adminEmail, List<String> rolesToManage) {
         int operatorId = createAdminUser(adminEmail, userAdminRoleId);
         try {
-            Map<String, UserAdminService.RoleInfo> adminRoles = UserAdminService.getOperatorAdminRoles(operatorId, groupId);
+            Map<String, UserAdminService.RoleInfo> adminRoles = UserAdminService.getOperatorAdminRoles(operatorId, studyGroupId);
             Assert.assertTrue("adminRoles = " + adminRoles.keySet(), adminRoles.isEmpty());
         } catch (Exception e) {
             Assert.fail("Exception from UserAdminService.verifyOperatorForGroup: " +  getStackTrace(e));
         }
 
         if (rolesToManage != null) {
-            for (int roleId: rolesToManage) {
-                addGroupRole(roleId, userAdminRoleId);
+            for (String role: rolesToManage) {
+                addGroupRole(getRoleId(role), userAdminRoleId);
             }
         }
         return operatorId;
     }
 
-    private Map<String, Integer> setupUsers(List<String> users, Collection<Integer> roleIds) {
+    private Map<String, Integer> setupUsers(List<String> users, List<String> roles) {
 
         Map<String, Integer> userToId = new HashMap<>();
         for (String user: users) {
-            int userId = createTestUser(user, -1);
-            for (int roleId : roleIds) {
-                addRoleForUser(roleId, userId);
-            }
+            int userId = createTestUser(user, roles);
             userToId.put(user, userId);
         }
         return userToId;
@@ -215,12 +239,15 @@ public class UserAdminTestUsers {
         });
     }
 
-    private static int createTestInstance(String instanceName, int studyGroupId) {
-        int instanceId = createInstance(instanceName);
+    private int createTestInstance(String instanceName) {
+        if (ddpInstanceId != -1) {
+            throw new DsmInternalError("Test instance already created");
+        }
+        ddpInstanceId = createInstance(instanceName);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setInt(1, instanceId);
+                stmt.setInt(1, ddpInstanceId);
                 stmt.setInt(2, studyGroupId);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
@@ -240,7 +267,7 @@ public class UserAdminTestUsers {
         if (res.resultException != null) {
             throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
         }
-        return instanceId;
+        return ddpInstanceId;
     }
 
     private static int createInstance(String instanceName) {
