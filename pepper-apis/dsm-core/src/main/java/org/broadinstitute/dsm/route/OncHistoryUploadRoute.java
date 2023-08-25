@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.route;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -24,17 +25,10 @@ public class OncHistoryUploadRoute extends RequestHandler {
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
-        QueryParamsMap queryParams = request.queryMap();
-        String realm;
-        if (!queryParams.hasKey(RoutePath.REALM)) {
-            response.status(400);
-            return "Request requires realm parameter";
-        }
-        realm = queryParams.value(RoutePath.REALM);
+        String realm = RouteUtil.getRealm(request);
 
         if (!canUploadOncHistory(realm, userId)) {
-            response.status(403);
-            return (UserErrorMessages.NO_RIGHTS);
+            throw new AuthorizationException("User is not authorized to upload onc history");
         }
 
         String oncHistoryUserId;
