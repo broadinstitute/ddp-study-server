@@ -141,7 +141,6 @@ public class OncHistoryTemplateService {
         boldStyle = createBoldStyle(workbook);
         largeBoldStyle = createLargeBoldStyle(workbook);
 
-        log.info("TEMP: before workbook.createSheet");
         SXSSFSheet sheet = workbook.createSheet("Onc History Upload Template");
 
         sheet.setColumnWidth(0, HEADER_COL_WIDTH);
