@@ -44,7 +44,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
     @AfterClass
     public static void tearDown() {
-        testUsers.close();
+        testUsers.deleteGeneratedData();
     }
 
     @After
@@ -68,7 +68,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             userId = testUsers.createTestUser("test_admin1@study.org", List.of(roleName));
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail();
+            Assert.fail("Unexpected exception: " + e.toString());
         }
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
 
@@ -125,7 +125,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
             userId = testUsers.createTestUser(email, List.of(roleName));
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail();
+            Assert.fail("Unexpected exception: " + e.toString());
         }
         int groupId = UserAdminService.verifyStudyGroup(TEST_GROUP);
         try {

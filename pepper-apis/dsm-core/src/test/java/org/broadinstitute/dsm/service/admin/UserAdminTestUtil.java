@@ -71,10 +71,12 @@ public class UserAdminTestUtil {
     /**
      * Call this to teardown this class, typically in an @After or @AfterClass method
      */
-    public void close() {
+    public void deleteGeneratedData() {
         deleteStudyAdminAndRoles();
-        deleteInstance(ddpInstanceId);
+        deleteInstanceGroup(ddpInstanceId);
+        ddpInstanceId = -1;
         UserAdminService.deleteStudyGroup(studyGroupId);
+        studyGroupId = -1;
     }
 
     private void initialize() {
@@ -102,7 +104,7 @@ public class UserAdminTestUtil {
         }
         initialize();
         studyGroupId = UserAdminService.addStudyGroup(studyGroup);
-        ddpInstanceId = createTestInstance(realmName, studyGroupId);
+        ddpInstanceId = createInstanceGroup(realmName, studyGroupId);
     }
 
     /**
@@ -320,7 +322,7 @@ public class UserAdminTestUtil {
         });
     }
 
-    private static int createTestInstance(String instanceName, int studyGroupId) {
+    private static int createInstanceGroup(String instanceName, int studyGroupId) {
         int instanceId = createInstance(instanceName);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
@@ -343,7 +345,11 @@ public class UserAdminTestUtil {
         });
 
         if (res.resultException != null) {
-            _deleteInstance(instanceId);
+            try {
+                deleteInstance(instanceId);
+            } catch (Exception e) {
+                log.error("Failed to delete DDP instance {}", instanceId);
+            }
             throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
         }
         return instanceId;
@@ -375,7 +381,7 @@ public class UserAdminTestUtil {
         return (int) res.resultValue;
     }
 
-    private static void deleteInstance(int instanceId) {
+    private static void deleteInstanceGroup(int instanceId) {
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE_GROUP)) {
                 stmt.setInt(1, instanceId);
@@ -386,10 +392,10 @@ public class UserAdminTestUtil {
             }
         });
 
-        _deleteInstance(instanceId);
+        deleteInstance(instanceId);
     }
 
-    private static void _deleteInstance(int instanceId) {
+    private static void deleteInstance(int instanceId) {
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE)) {
                 stmt.setInt(1, instanceId);
