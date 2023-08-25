@@ -1004,7 +1004,7 @@ public class UserAdminService {
     }
 
 
-        @Data
+    @Data
     protected static class RoleInfo {
         private final int roleId;
         private final String name;

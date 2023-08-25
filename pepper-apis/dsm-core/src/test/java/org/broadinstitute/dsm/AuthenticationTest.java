@@ -11,9 +11,14 @@ import org.broadinstitute.dsm.service.admin.UserAdminService;
 import org.broadinstitute.dsm.service.admin.UserAdminServiceTest;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
@@ -21,21 +26,21 @@ import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
 
 public class AuthenticationTest extends DbTxnBaseTest {
 
-    static UserDto dsmAdminUser;
+    private static UserDto dsmAdminUser;
 
-    static UserDto cmiKitShippingOnlyUser;
+    private static UserDto cmiKitShippingOnlyUser;
 
-    static DDPInstanceDto ddpInstance;
+    private static DDPInstanceDto ddpInstance;
 
-    static UserAdminService adminServiceForDsmAdminUser;
+    private static UserAdminService adminServiceForDsmAdminUser;
 
-    static UserAdminService adminServiceForKitShippingUser;
-    static int pecgsStudyGroupId;
-    static int cmiStudyGroupId;
+    private static UserAdminService adminServiceForKitShippingUser;
+    private static int pecgsStudyGroupId;
+    private static int cmiStudyGroupId;
 
-    static UserDao userDao = new UserDao();
+    private static UserDao userDao = new UserDao();
 
-    static final Set<Integer> groupRoleIdsToDelete = new HashSet<>();
+    private static final Set<Integer> groupRoleIdsToDelete = new HashSet<>();
 
     private static UserDto generateUser() {
         UserDto user = new UserDto("AuthTest." + System.currentTimeMillis(), "fake+" + System.currentTimeMillis() + "@broad.dev", "5555551212");
