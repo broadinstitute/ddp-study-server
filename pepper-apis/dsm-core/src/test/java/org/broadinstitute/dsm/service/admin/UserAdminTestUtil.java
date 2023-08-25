@@ -42,7 +42,7 @@ import org.junit.Assert;
  *      Call close()
  */
 @Slf4j
-public class UserAdminTestUsers {
+public class UserAdminTestUtil {
     private final Map<Integer, List<Integer>> createdUserRoles = new HashMap<>();
     private final List<Integer> createdGroupRoles = new ArrayList<>();
     private int studyGroupId = -1;
@@ -66,7 +66,7 @@ public class UserAdminTestUsers {
             "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
 
 
-    public UserAdminTestUsers() {}
+    public UserAdminTestUtil() {}
 
     /**
      * Call this to teardown this class, typically in an @After or @AfterClass method

@@ -31,11 +31,11 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     private static final String TEST_GROUP = "test_group";
     private static final String TEST_INSTANCE = "test_instance";
     private static String userAdminRole;
-    private static UserAdminTestUsers testUsers;
+    private static UserAdminTestUtil testUsers;
 
     @BeforeClass
     public static void setup() {
-        testUsers = new UserAdminTestUsers();
+        testUsers = new UserAdminTestUtil();
         testUsers.createRealmAndStudyGroup(TEST_INSTANCE, TEST_GROUP);
         userAdminRole = USER_ADMIN_ROLE;
         Assert.assertNotEquals(-1, UserAdminService.getRoleId(PEPPER_ADMIN_ROLE));
@@ -55,7 +55,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
 
     public void testGetRoleId() {
         // temporary to understand which roles are handled by liquibase
-        log.info("TEMP: all roles: {}", String.join("\n", UserAdminTestUsers.getAllRoles().keySet()));
+        log.info("TEMP: all roles: {}", String.join("\n", UserAdminTestUtil.getAllRoles().keySet()));
         int roleId = UserAdminService.getRoleId("upload_onc_history");
         Assert.assertTrue(roleId > 0);
     }
