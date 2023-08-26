@@ -50,19 +50,20 @@ public class UpsertPainless implements Exportable {
 
         Throwable ioException = null;
         for (int tryNum = 1; tryNum < 3; tryNum++) {
-            ioException = executeExport(clientInstance, updateByQueryRequest);
-            if (ioException == null) {
-                break;
+            try {
+                executeExport(clientInstance, updateByQueryRequest);
+                return;
+            } catch (IOException e) {
+                logger.info("Error occurred exporting data to ES on try number {} (retrying): {}", tryNum, e);
+                ioException = e;
             }
-            logger.info("Error occurred exporting data to ES on try number {} (retrying): {}", tryNum, ioException.toString());
         }
-        if (ioException != null) {
-            logger.error("Unable to connect to ElasticSearch: {}", ioException.getMessage());
-            throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
-        }
+        // TODO: keeping error logging until we are sure exceptions are not swallowed in the call stack
+        logger.error("Unable to connect to ElasticSearch", ioException);
+        throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
     }
 
-    private Throwable executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest) {
+    private void executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest) throws IOException {
         String errorMsg = String.format("Error updating ES index %s for %s: ", index, generator.getPropertyName());
         try {
             BulkByScrollResponse res = update(clientInstance, updateByQueryRequest);
@@ -80,9 +81,6 @@ public class UpsertPainless implements Exportable {
                     throw new DsmInternalError(errorMsg + res);
                 }
             }
-            return null;
-        } catch (IOException e) {
-            return e;
         } catch (ElasticsearchException e) {
             throw new DsmInternalError(errorMsg + e.toString(), e);
         }
