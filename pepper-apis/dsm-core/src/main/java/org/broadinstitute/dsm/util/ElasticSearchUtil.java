@@ -43,6 +43,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.handlers.util.MedicalInfo;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -717,8 +718,16 @@ public class ElasticSearchUtil {
         UpdateRequest updateRequest =
                 new UpdateRequest().index(index).type("_doc").id(participantId).doc(objectsMapES).docAsUpsert(true).retryOnConflict(5);
 
-        UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
-        logger.info("Updated ES index {} data for participant {} with response: {}", index, ddpParticipantId, updateResponse);
+        try {
+            UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+            logger.info("Updated ES index {} data for participant {} with response: {}", index, ddpParticipantId, updateResponse);
+        } catch (IOException e) {
+            throw new DsmInternalError("Error connecting to Elasticsearch", e);
+        } catch (ElasticsearchException e) {
+            // TODO We may see these for version conflicts, which we need to handle, but first step is capturing
+            // and understanding the failures
+            throw new DsmInternalError("Error updating Elasticsearch", e);
+        }
     }
 
     public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,
