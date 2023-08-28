@@ -21,6 +21,7 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.ExportToES;
@@ -142,14 +143,21 @@ public class DSMtasksSubscription {
 
     private static void generateStudyDefaultValues(AckReplyConsumer consumer, Map<String, String> attributesMap) {
         String studyGuid = attributesMap.get("studyGuid");
+        if (StringUtils.isEmpty(studyGuid)) {
+            throw new DSMBadRequestException("No studyGuid provided");
+        }
+        Defaultable defaultable = DefaultableMaker.makeDefaultable(studyGuid);
+        if (defaultable == null) {
+            logger.info("No study default values generator for {}", studyGuid);
+            consumer.ack();
+            return;
+        }
         String participantGuid = attributesMap.get("participantGuid");
         if (!ParticipantUtil.isGuid(participantGuid)) {
             consumer.ack();
             throw new DsmInternalError("Invalid participant GUID: " + participantGuid);
         }
 
-        Study study = Study.of(studyGuid);
-        Defaultable defaultable = DefaultableMaker.makeDefaultable(study);
         try {
             defaultable.generateDefaults(studyGuid, participantGuid);
             retryPerParticipant.remove(participantGuid);

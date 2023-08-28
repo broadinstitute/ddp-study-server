@@ -119,6 +119,10 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
         KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
         Assert.assertFalse(kitResponse.isError());
+        Assert.assertNotNull(kitResponse.getKits());
+        Assert.assertEquals(1, kitResponse.getKits().size());
+        Assert.assertEquals(juniperTestKit.getJuniperKitId(), kitResponse.getKits().get(0).getJuniperKitId());
+        Assert.assertNotNull(kitResponse.getKits().get(0).getDsmShippingLabel());
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
         Assert.assertEquals(oldkits.size() + 1, newKits.size());
     }
