@@ -718,7 +718,7 @@ public class ElasticSearchUtil {
                 new UpdateRequest().index(index).type("_doc").id(participantId).doc(objectsMapES).docAsUpsert(true).retryOnConflict(5);
 
         UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
-        logger.info("Update workflow information for participant " + ddpParticipantId + " to ES index " + index);
+        logger.info("Updated ES index {} data for participant {} with response: {}", index, ddpParticipantId, updateResponse);
     }
 
     public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,
