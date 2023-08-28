@@ -10,6 +10,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
@@ -24,8 +25,6 @@ public class SecurityHelper {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String BASIC = "Basic ";
-    private static final Logger logger = LoggerFactory.getLogger(SecurityHelper.class);
-
     /**
      * Creates jwt token for a monitoring application
      *
@@ -40,7 +39,7 @@ public class SecurityHelper {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't create token " + e);
+            throw new DsmInternalError("Couldn't create token " + e);
         }
     }
 
@@ -58,34 +57,25 @@ public class SecurityHelper {
             JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(SIGNER);
             builder.withExpiresAt(dateSoon);
-            if (claims != null) {
-                claims.forEach((key, value) -> {
-                    builder.withClaim(key, value);
-                });
-            }
+            claims.forEach((key, value) -> builder.withClaim(key, value));
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't create token " + e);
+            throw new DsmInternalError("Couldn't create token " + e);
         }
     }
 
-    public static String createTokenWithSigner(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims, String signer) {
+    public static String createTokenWithSigner(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims, @NonNull String signer) {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
-
             JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(signer);
             builder.withExpiresAt(dateSoon);
-            if (claims != null) {
-                claims.forEach((key, value) -> {
-                    builder.withClaim(key, value);
-                });
-            }
+            claims.forEach((key, value) -> builder.withClaim(key, value));
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't create token " + e);
+            throw new DsmInternalError("Couldn't create token " + e);
         }
     }
 

@@ -487,7 +487,7 @@ public class DSMServer {
     }
 
     protected void configureServer(@NonNull Config config) {
-        String env =  config.getString("portal.environment");
+        String env = config.getString("portal.environment");
         logger.info("Property source: {} ", env);
         logger.info("Configuring the server...");
         threadPool(-1, -1, 60000);
@@ -1049,7 +1049,6 @@ public class DSMServer {
 
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener());
-
                 startScheduler(scheduler);
             } catch (Exception e) {
                 throw new DsmInternalError("Could not create scheduler ", e);
@@ -1058,14 +1057,11 @@ public class DSMServer {
         setupErrorNotifications(cfg, schedulerName);
     }
 
-    private void startScheduler(Scheduler scheduler) throws DsmInternalError {
+    private void startScheduler(Scheduler scheduler) throws SchedulerException {
         logger.info("Setup Job Scheduler...");
-        try {
-            scheduler.start();
-            logger.info("Job Scheduler setup complete.");
-        } catch (Exception ex) {
-            throw new DsmInternalError("Unable to setup Job Scheduler.", ex);
-        }
+        scheduler.start();
+        logger.info("Job Scheduler setup complete.");
+
     }
 
     private void setupRouteGenericErrorHandlers() {
