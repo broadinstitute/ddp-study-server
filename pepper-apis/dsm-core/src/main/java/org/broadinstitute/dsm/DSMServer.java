@@ -581,11 +581,13 @@ public class DSMServer {
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
         });
-
+        // we are using dsm/ path for calls from Juniper to create a new kit, or to get a kit status
+        // these endpoints can technically be used by other users as well as Juniper, but in this point in
+        // DSM's lifetime we don't think this would happen, but if needed this implementation should change
         before(DSM_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, dsmSecretForJuniper)) {
                 logger.info("Returning 401 because token was not verified");
-                halt(401);
+                halt(401, "Token could not be verified");
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
         });
