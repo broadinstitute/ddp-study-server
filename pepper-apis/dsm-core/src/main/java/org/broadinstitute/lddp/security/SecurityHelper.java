@@ -13,8 +13,6 @@ import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SecurityHelper {
     public static final String CLAIM_ISSUER = "iss";
@@ -25,6 +23,7 @@ public class SecurityHelper {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String BASIC = "Basic ";
+    public static final String ERROR_MESSAGE =  "Couldn't create token ";
     /**
      * Creates jwt token for a monitoring application
      *
@@ -39,7 +38,7 @@ public class SecurityHelper {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new DsmInternalError("Couldn't create token " + e);
+            throw new DsmInternalError(ERROR_MESSAGE + e);
         }
     }
 
@@ -57,11 +56,11 @@ public class SecurityHelper {
             JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(SIGNER);
             builder.withExpiresAt(dateSoon);
-            claims.forEach((key, value) -> builder.withClaim(key, value));
+            claims.forEach(builder::withClaim);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new DsmInternalError("Couldn't create token " + e);
+            throw new DsmInternalError(ERROR_MESSAGE + e);
         }
     }
 
@@ -71,11 +70,11 @@ public class SecurityHelper {
             JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(signer);
             builder.withExpiresAt(dateSoon);
-            claims.forEach((key, value) -> builder.withClaim(key, value));
+            claims.forEach(builder::withClaim);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new DsmInternalError("Couldn't create token " + e);
+            throw new DsmInternalError(ERROR_MESSAGE + e);
         }
     }
 
