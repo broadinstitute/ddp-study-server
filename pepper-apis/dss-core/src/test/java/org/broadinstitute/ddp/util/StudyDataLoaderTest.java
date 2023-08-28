@@ -86,7 +86,7 @@ public class StudyDataLoaderTest {
     private static final String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-mbc-testdata-8148.json";
     public static final String QUESTION_STABLE_MAP_FILE = "src/test/resources/question_stableid_map.json";
     private static OLCService olcService;
-    private static AddressService addressService;
+    private static AddressService addressService; 
     private final String pretendAuth0UserId = "i_am_pretend";
     private final String pretendInstanceGuid = "51678L";
     private final String pretendMgmtToken = "pretendMgmtToken";
