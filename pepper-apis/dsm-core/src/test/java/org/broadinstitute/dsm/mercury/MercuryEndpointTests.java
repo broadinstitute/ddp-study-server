@@ -23,7 +23,8 @@ public class MercuryEndpointTests {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/test-config.conf")));
         String bspSecret = cfg.getString("bsp.secret");
-        String bspToken = SecurityHelper.createGpToken(bspSecret, getCurrentUnixUTCTime() + ONE_DAY_IN_SECONDS, new HashMap<>());
+        String bspToken = SecurityHelper.createTokenWithSigner(bspSecret, getCurrentUnixUTCTime() + ONE_DAY_IN_SECONDS,
+                new HashMap<>(), SecurityHelper.BSP_SIGNER);
 
         String participantId = "BrainProject_P9DH6G";
         String type = "ffpe-section";
