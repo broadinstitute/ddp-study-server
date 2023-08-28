@@ -31,6 +31,7 @@ import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
@@ -131,10 +132,14 @@ public class ElasticSearchUtil {
     // create one instance and reuse it as much as possible. Client is thread-safe per the docs.
     private static RestHighLevelClient client;
     private static Map<String, MappingMetadata> fieldMappings;
+    private static boolean initialized = false;
 
-    static {
-        initClient();
-        fetchFieldMappings();
+    private static void initialize() {
+        if (!initialized) {
+            initClient();
+            fetchFieldMappings();
+            initialized = true;
+        }
     }
 
     public static synchronized void initClient() {
@@ -144,7 +149,7 @@ public class ElasticSearchUtil {
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
             } catch (MalformedURLException e) {
-                throw new RuntimeException("Error while initializing ES client", e);
+                throw new DsmInternalError("Error while initializing ES client", e);
             }
         }
     }
@@ -154,13 +159,14 @@ public class ElasticSearchUtil {
         request.indices(PARTICIPANTS_STRUCTURED_ANY);
         try {
             logger.info("Getting ES data field mapping");
-            fieldMappings = getClientInstance().indices().getMapping(request, RequestOptions.DEFAULT).mappings();
+            fieldMappings = client.indices().getMapping(request, RequestOptions.DEFAULT).mappings();
         } catch (IOException e) {
-            throw new RuntimeException("Error while fetching field mappings from ES", e);
+            throw new DsmInternalError("Error while fetching field mappings from ES", e);
         }
     }
 
     public static RestHighLevelClient getClientInstance() {
+        initialize();
         // This should have been initialized once at the start, so we're not locking to avoid concurrency overhead.
         return client;
     }
@@ -213,6 +219,7 @@ public class ElasticSearchUtil {
 
     public static Map<String, Map<String, Object>> getSingleParticipantFromES(@NonNull String realm, @NonNull String index,
                                                                               RestHighLevelClient client, String participantHruid) {
+        initialize();
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
             logger.info("Collecting ES data from index " + index);
@@ -243,7 +250,7 @@ public class ElasticSearchUtil {
 
 
     //Dashboard used
-    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index,
+    private static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index,
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
@@ -273,6 +280,7 @@ public class ElasticSearchUtil {
     }
 
     public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index) {
+        initialize();
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
             logger.info("Collecting ES data from index: " + index);
@@ -288,6 +296,7 @@ public class ElasticSearchUtil {
 
     public static Optional<ElasticSearchParticipantDto> getParticipantESDataByParticipantId(@NonNull String index,
                                                                                             @NonNull String participantId) {
+        initialize();
         Optional<ElasticSearchParticipantDto> elasticSearch = Optional.empty();
         logger.info("Getting ES data for participant: " + participantId);
         try {
@@ -296,18 +305,6 @@ public class ElasticSearchUtil {
             throw new RuntimeException("Couldn't get ES for participant: " + participantId + " from " + index, e);
         }
         logger.info("Got ES data for participant: " + participantId + " from " + index);
-        return elasticSearch;
-    }
-
-    public static ElasticSearchParticipantDto getParticipantESDataByAltpid(@NonNull String index, @NonNull String altpid) {
-        ElasticSearchParticipantDto elasticSearch = new ElasticSearchParticipantDto.Builder().build();
-        logger.info("Getting ES data for participant: " + altpid);
-        try {
-            elasticSearch = fetchESDataByAltpid(index, altpid, client);
-        } catch (Exception e) {
-            throw new RuntimeException("Couldn't get ES for participant: " + altpid + " from " + index, e);
-        }
-        logger.info("Got ES data for participant: " + altpid + " from " + index);
         return elasticSearch;
     }
 
@@ -337,8 +334,9 @@ public class ElasticSearchUtil {
         return getElasticSearchForGivenMatch(index, altpid, client, matchQueryName);
     }
 
-    public static ElasticSearchParticipantDto getElasticSearchForGivenMatch(String index, String id, RestHighLevelClient client,
+    private static ElasticSearchParticipantDto getElasticSearchForGivenMatch(String index, String id, RestHighLevelClient client,
                                                                             String matchQueryName) throws IOException {
+        initialize();
         SearchRequest searchRequest = new SearchRequest(index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         SearchResponse response = null;
@@ -367,6 +365,7 @@ public class ElasticSearchUtil {
 
     public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull String index, @NonNull String instanceName,
                                                                                     @NonNull String filter) {
+        initialize();
         if (StringUtils.isNotBlank(index)) {
             Map<String, Map<String, Object>> esData = new HashMap<>();
             logger.info("Collecting ES data from index " + index);
@@ -402,6 +401,7 @@ public class ElasticSearchUtil {
     public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client,
                                                                                                 String indexName,
                                                                                                 Set<String> participantGuids) {
+        initialize();
         Gson gson = new Gson();
         Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
         int scrollSize = 100;
@@ -449,11 +449,7 @@ public class ElasticSearchUtil {
         return addressByParticipant;
     }
 
-    public static void removeWorkflowIfNoDataOrWrongSubject(String ddpParticipantId, DDPInstance ddpInstance,
-                                                            String collaboratorParticipantId) {
-        removeWorkflowIfNoDataOrWrongSubject(client, ddpParticipantId, ddpInstance, collaboratorParticipantId);
-    }
-
+    // TODO Remove this method -DC
     public static void removeWorkflowIfNoDataOrWrongSubject(RestHighLevelClient client, String ddpParticipantId, DDPInstance ddpInstance,
                                                             String collaboratorParticipantId) {
         String index = ddpInstance.getParticipantIndexES();
@@ -483,6 +479,7 @@ public class ElasticSearchUtil {
     }
 
     public static void writeWorkflow(@NonNull WorkflowForES workflowForES, boolean clearBeforeUpdate) {
+        initialize();
         writeWorkflow(client, workflowForES, clearBeforeUpdate);
     }
 
@@ -528,7 +525,7 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static Map<String, Object> addWorkflows(String workflow, String status, WorkflowForES.StudySpecificData studySpecificData) {
+    private static Map<String, Object> addWorkflows(String workflow, String status, WorkflowForES.StudySpecificData studySpecificData) {
         Map<String, Object> workflowMapES;
         Map<String, Object> newWorkflowMap = new HashMap<>(
                 Map.of(ESObjectConstants.WORKFLOW, workflow, STATUS, status, ESObjectConstants.DATE, SystemUtil.getISO8601DateString()));
@@ -544,6 +541,7 @@ public class ElasticSearchUtil {
 
     public static boolean updateWorkflowStudySpecific(String workflow, String status, List<Map<String, Object>> workflowListES,
                                                       WorkflowForES.StudySpecificData studySpecificData) {
+        initialize();
         boolean updated = false;
         for (Map<String, Object> workflowES : workflowListES) {
             Map<String, String> data = (Map<String, String>) workflowES.get("data");
@@ -572,7 +570,7 @@ public class ElasticSearchUtil {
         return updated;
     }
 
-    public static boolean updateWorkflowFieldsStudySpecific(String status, WorkflowForES.StudySpecificData studySpecificData,
+    private static boolean updateWorkflowFieldsStudySpecific(String status, WorkflowForES.StudySpecificData studySpecificData,
                                                             Map<String, Object> workflowES) {
         workflowES.put(STATUS, status);
         workflowES.put(ESObjectConstants.DATE, SystemUtil.getISO8601DateString());
@@ -601,10 +599,11 @@ public class ElasticSearchUtil {
 
     public static void writeDsmRecord(@NonNull DDPInstance instance, Integer id, @NonNull String ddpParticipantId,
                                       @NonNull String objectType, @NonNull String idName, Map<String, Object> nameValues) {
+        initialize();
         writeDsmRecord(client, instance, id, ddpParticipantId, objectType, idName, nameValues);
     }
 
-    public static void writeDsmRecord(RestHighLevelClient client, @NonNull DDPInstance instance, Integer id,
+    private static void writeDsmRecord(RestHighLevelClient client, @NonNull DDPInstance instance, Integer id,
                                       @NonNull String ddpParticipantId, @NonNull String objectType, @NonNull String idName,
                                       Map<String, Object> nameValues) {
         String index = instance.getParticipantIndexES();
@@ -650,10 +649,11 @@ public class ElasticSearchUtil {
 
     public static void writeSample(@NonNull DDPInstance instance, @NonNull String id, @NonNull String ddpParticipantId,
                                    @NonNull String objectType, String idName, Map<String, Object> nameValues) {
+        initialize();
         writeSample(client, instance, id, ddpParticipantId, objectType, idName, nameValues);
     }
 
-    public static void writeSample(RestHighLevelClient client, @NonNull DDPInstance instance, @NonNull String id,
+    private static void writeSample(RestHighLevelClient client, @NonNull DDPInstance instance, @NonNull String id,
                                    @NonNull String ddpParticipantId, @NonNull String objectType, String idName,
                                    Map<String, Object> nameValues) {
         String index = instance.getParticipantIndexES();
@@ -679,7 +679,7 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static void updateOrCreateMap(@NonNull Object id, @NonNull String objectType, @NonNull Map<String, Object> nameValues,
+    private static void updateOrCreateMap(@NonNull Object id, @NonNull String objectType, @NonNull Map<String, Object> nameValues,
                                          @NonNull String idName, Map<String, Object> objectsMapES) {
         List<Map<String, Object>> objectList = (List<Map<String, Object>>) objectsMapES.get(objectType);
         if (objectList != null) {
@@ -706,6 +706,7 @@ public class ElasticSearchUtil {
     }
 
     public static void updateRequest(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES) throws IOException {
+        initialize();
         updateRequest(ddpParticipantId, index, objectsMapES, client);
     }
 
@@ -717,7 +718,7 @@ public class ElasticSearchUtil {
                 new UpdateRequest().index(index).type("_doc").id(participantId).doc(objectsMapES).docAsUpsert(true).retryOnConflict(5);
 
         UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
-        logger.info("Update workflow information for participant " + ddpParticipantId + " to ES index " + index);
+        logger.info("Updated ES index {} data for participant {} with response: {}", index, ddpParticipantId, updateResponse);
     }
 
     public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,
@@ -742,6 +743,7 @@ public class ElasticSearchUtil {
     }
 
     public static Optional<Profile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
+        initialize();
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.boolQuery().should(QueryBuilders.termQuery(PROFILE_GUID, guidOrAltPid))
@@ -785,11 +787,13 @@ public class ElasticSearchUtil {
     }
 
     public static Map<String, Object> getObjectsMap(String index, String id, String object) throws Exception {
+        initialize();
         return getObjectsMap(client, index, id, object);
     }
 
     public static DDPParticipant getParticipantAsDDPParticipant(@NonNull Map<String, Map<String, Object>> participantsESData,
                                                                 @NonNull String ddpParticipantId) {
+        initialize();
         if (participantsESData != null && !participantsESData.isEmpty()) {
             Map<String, Object> participantESData = participantsESData.get(ddpParticipantId);
             if (participantESData != null && !participantESData.isEmpty()) {
@@ -820,6 +824,7 @@ public class ElasticSearchUtil {
 
     public static MedicalInfo getParticipantAsMedicalInfo(@NonNull Map<String, Map<String, Object>> participantsESData,
                                                           @NonNull String ddpParticipantId) {
+        initialize();
         if (participantsESData != null && !participantsESData.isEmpty()) {
             Map<String, Object> participantESData = participantsESData.get(ddpParticipantId);
             if (participantESData != null && !participantESData.isEmpty()) {
@@ -841,6 +846,7 @@ public class ElasticSearchUtil {
 
     public static String getPreferredLanguage(@NonNull Map<String, Map<String, Object>> participantsESData,
                                               @NonNull String ddpParticipantId) {
+        initialize();
         if (participantsESData != null && !participantsESData.isEmpty()) {
             Map<String, Object> participantESData = participantsESData.get(ddpParticipantId);
             if (participantESData != null && !participantESData.isEmpty()) {
@@ -854,7 +860,7 @@ public class ElasticSearchUtil {
     }
 
     //simple is better than complex, KISS(Keep It Simple Stupid)
-    public static AbstractQueryBuilder<? extends AbstractQueryBuilder<?>> createESQuery(@NonNull String filter) {
+    private static AbstractQueryBuilder<? extends AbstractQueryBuilder<?>> createESQuery(@NonNull String filter) {
         String[] filters = filter.split(Filter.AND);
         BoolQueryBuilder finalQuery = new BoolQueryBuilder();
 
@@ -1344,6 +1350,7 @@ public class ElasticSearchUtil {
     }
 
     public static Map<String, Map<String, Object>> getActivityDefinitions(@NonNull DDPInstance instance) {
+        initialize();
         Map<String, Map<String, Object>> esData = new HashMap<>();
         String index = instance.getActivityDefinitionIndexES();
         if (StringUtils.isNotBlank(index)) {
