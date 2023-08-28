@@ -11,12 +11,15 @@ import spark.Request;
  */
 public class RouteUtil {
 
-    public static String getRealm(Request request) {
+    public static String requireRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
         if (!queryParams.hasKey(RoutePath.REALM)) {
             throw new DSMBadRequestException("Request must include realm parameter");
         }
-        String realm = queryParams.value(RoutePath.REALM);
+        return requireRealm(queryParams.value(RoutePath.REALM));
+    }
+
+    public static String requireRealm(String realm) {
         if (StringUtils.isEmpty(realm)) {
             throw new DSMBadRequestException("Invalid realm parameter: blank");
         }

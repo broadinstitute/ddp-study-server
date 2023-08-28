@@ -50,7 +50,7 @@ public class PatchRoute extends RequestHandler {
         String requestBody = request.body();
         try {
             Patch patch = GSON.fromJson(requestBody, Patch.class);
-            String realm = patch.getRealm();
+            String realm = RouteUtil.requireRealm(patch.getRealm());
             logger.info("Got patch request made by {} for realm {} and table alias {}", userId, realm, patch.getTableAlias());
 
             if ((UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_VIEW, userIdRequest, patch)
