@@ -33,10 +33,11 @@ import spark.utils.StringUtils;
 @Slf4j
 public class UserAdminService {
 
+    public static final String USER_ADMIN_ROLE = "study_user_admin";
+    public static final String PEPPER_ADMIN_ROLE = "pepper_admin";
+
     private final String operatorId;
     private final String studyGroup;
-    protected static final String USER_ADMIN_ROLE = "study_user_admin";
-    protected static final String PEPPER_ADMIN_ROLE = "pepper_admin";
     private int adminId;
     private String adminEmail;
     private boolean initialized;
