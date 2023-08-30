@@ -1,14 +1,9 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -28,13 +23,13 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 
 @Slf4j
 public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 
     public static final String RGP_FAMILY_ID = "rgp_family_id";
+
 
     /**
      * Given an elasticSearchParticipantDto, get selected data from ES and put it in DSM DB.
@@ -112,7 +107,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }
 
         try {
-            String refSourceId = convertReferralSources(getReferralSources(activities));
+            String refSourceId = RgpReferralSource.deriveReferralSourceId(activities);
             probandDataMap.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
         } catch (Exception e) {
             // not good: we could not convert referral source, but not fatal for this process.
@@ -152,123 +147,6 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
                     .findFirst();
             return maybePhoneQuestionAnswer.map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER)).orElse("");
         }).orElse("");
-    }
-
-    /**
-     * Get ref sources from activities. Specifically get answers to FIND_OUT enrollment question.
-     *
-     * @return list of strings, empty if question or answers not found
-     */
-    protected List<String> getReferralSources(List<Activities> activities) {
-        Optional<Activities> enrollmentActivity = activities.stream().filter(activity ->
-                DDPActivityConstants.ACTIVITY_ENROLLMENT.equals(activity.getActivityCode())).findFirst();
-        if (enrollmentActivity.isEmpty()) {
-            log.warn("Could not derive referral source data, participant has no enrollment activity");
-            return new ArrayList<>();
-        }
-        List<Map<String, Object>> questionsAnswers = enrollmentActivity.get().getQuestionsAnswers();
-        Optional<Map<String, Object>> refSourceQA = questionsAnswers.stream()
-                .filter(q -> q.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID).equals(
-                        DDPActivityConstants.ENROLLMENT_FIND_OUT))
-                .findFirst();
-        if (refSourceQA.isEmpty()) {
-            log.info("Could not derive referral source data, participant has no referral source data");
-            return new ArrayList<>();
-        }
-        Object answers = refSourceQA.get().get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER);
-        return (List<String>) answers;
-    }
-
-    /**
-     * Map DSS referral sources (answers to FIND_OUT enrollment question) to DSM ref sources (the stable IDs are
-     * different)
-     *
-     * @param sources referral sources provided as DSS stable IDs
-     * @return a referral source ID
-     * @throws DsmInternalError If the expected referral source values are not present or the referral source mapping is
-     *                          missing or out of sync
-     */
-    protected String convertReferralSources(List<String> sources) {
-        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        Optional<FieldSettingsDto> refSource = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(
-                "RGP_MEDICAL_RECORDS_GROUP", DBConstants.REFERRAL_SOURCE_ID);
-
-        // for REF_SOURCE, the details column hold the mapping between DSS referral sources (answers to FIND_OUT
-        // enrollment question) to DSM ref sources
-        Optional<String> details = refSource.map(FieldSettingsDto::getDetails);
-        if (details.isEmpty()) {
-            throw new DsmInternalError("FieldSettings 'details' is empty for RGP_MEDICAL_RECORDS_GROUP REF_SOURCE");
-        }
-        Optional<String> possibleValues = refSource.map(FieldSettingsDto::getPossibleValues);
-        if (possibleValues.isEmpty()) {
-            throw new DsmInternalError("FieldSettings 'possibleValues' is empty for "
-                    + "RGP_MEDICAL_RECORDS_GROUP REF_SOURCE");
-        }
-
-        return this.deriveReferralSource(sources, details.get(), possibleValues.get());
-    }
-
-    /**
-     * Given the referral sources provided using DSS FOUND_OUT IDs, get the corresponding DSM referral source ID
-     *
-     * @param sources           referral sources provided as DSS stable IDs
-     * @param refDetails        JSON string of FieldSettings REF_SOURCE details column
-     * @param refPossibleValues JSON string of FieldSettings REF_SOURCE possibleValues column
-     * @return a referral source ID
-     * @throws DsmInternalError If the expected REF_SOURCE values are not present or the referral source mapping is
-     *                          out of sync, the method logs errors, but will throw if the provided referral sources cannot be mapped.
-     */
-    protected String deriveReferralSource(List<String> sources, String refDetails, String refPossibleValues) {
-        // algorithm: if more than one answer chosen, then use REF_SOURCE MORE_THAN_ONE,
-        // if no answer, or if the question is missing from enrollment, etc., then use REF_SOURCE NA
-
-        // details column holds a map of FIND_OUT answers to REF_SOURCE IDs
-        Map<String, String> refMap = ObjectMapperSingleton.readValue(
-                refDetails, new TypeReference<>() {
-                });
-
-        // get the REF_SOURCE IDs to verify the map is still in sync
-        List<Map<String, String>> refValues = ObjectMapperSingleton.readValue(
-                refPossibleValues, new TypeReference<>() {
-                });
-
-        Set<String> refIDs = refValues.stream().map(m -> m.get("value")).collect(Collectors.toSet());
-        Set<String> refMapValues = new HashSet<>(refMap.values());
-        // "NA" and "MORE_THAN_ONE" are not mapped
-        if (refMapValues.size() + 2 != refIDs.size() || !refIDs.containsAll(refMapValues)) {
-            // if IDs have diverged, don't stop this operation: log error and see if something is salvageable (below)
-            log.error("RGP_MEDICAL_RECORDS_GROUP REF_SOURCE 'possibleValues' do not match REF_SOURCE map in 'details'");
-        }
-
-        if (sources.isEmpty()) {
-            if (!refIDs.contains("NA")) {
-                throw new DsmInternalError("REF_SOURCE does not include a 'NA' key.");
-            }
-            return "NA";
-        }
-
-        if (sources.size() > 1) {
-            if (!refIDs.contains("MORE_THAN_ONE")) {
-                StringBuilder sb = new StringBuilder(sources.get(0));
-                for (int i = 1; i <= sources.size(); i++) {
-                    sb.append(", ").append(sources.get(i));
-                }
-                throw new DsmInternalError("REF_SOURCE does not include a 'MORE_THAN_ONE' key. "
-                        + "Participant provided referral sources: " + sb);
-            }
-            return "MORE_THAN_ONE";
-        }
-
-        String refSource = refMap.get(sources.get(0));
-        if (refSource == null) {
-            throw new DsmInternalError("There is no corresponding REF_SOURCE for participant provided referral "
-                    + "source: " + sources.get(0));
-        }
-        if (!refIDs.contains(refSource)) {
-            throw new DsmInternalError(String.format("Invalid REF_SOURCE ID for participant provided referral "
-                    + "source %s: %s", sources.get(0), refSource));
-        }
-        return refSource;
     }
 
     void insertFamilyIdToDsmES(@NonNull String esIndex, @NonNull String participantId, long familyId) {

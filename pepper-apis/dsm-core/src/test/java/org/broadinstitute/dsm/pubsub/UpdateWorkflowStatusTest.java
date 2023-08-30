@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.MEMBER_TYPE;
+import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 
 import java.time.Instant;
 import java.util.HashMap;
