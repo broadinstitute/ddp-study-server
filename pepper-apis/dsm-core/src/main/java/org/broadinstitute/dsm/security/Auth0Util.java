@@ -192,8 +192,6 @@ public class Auth0Util {
             return JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
         } catch (JWTVerificationException e) {
             throw new InvalidTokenException("Could not verify auth0 token", e);
-        } catch (Exception e) {
-            throw new AuthenticationException("Error verifying auth0 token", e);
         }
     }
 
