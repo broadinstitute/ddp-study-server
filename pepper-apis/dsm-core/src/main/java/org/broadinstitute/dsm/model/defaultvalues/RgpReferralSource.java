@@ -29,11 +29,15 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
+/**
+ * Provides support for deriving participant referral source from DSS activities
+ */
 @Slf4j
 public class RgpReferralSource {
 
     public enum UpdateStatus {
         UPDATED,
+        NOT_UPDATED,
         ERROR,
         NO_ACTIVITIES,
         NO_REFERRAL_SOURCE_IN_ACTIVITY,
@@ -50,6 +54,15 @@ public class RgpReferralSource {
         this.userId = userId;
     }
 
+    public void xxx(String jobId) {
+        // get participants for study
+
+        // for each participant attempt an update
+        // for anything other than not updated, make an entry in job log
+
+        // write job log to DB
+    }
+
     public UpdateStatus updateReferralSource(String ddpParticipantId) {
         List<Activities> activities = getParticipantActivities(ddpParticipantId);
         if (activities.isEmpty()) {
@@ -59,10 +72,8 @@ public class RgpReferralSource {
         if (refSources.isEmpty()) {
             return UpdateStatus.NO_REFERRAL_SOURCE_IN_ACTIVITY;
         }
-        return xxx(ddpParticipantId, convertReferralSources(refSources));
-    }
+        String refSourceId = convertReferralSources(refSources);
 
-    protected UpdateStatus xxx(String ddpParticipantId, String refSourceId) {
         ParticipantDataDao dataDao = new ParticipantDataDao();
         List<org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData> dataList =
                 dataDao.getParticipantDataByParticipantId(ddpParticipantId);
@@ -83,36 +94,54 @@ public class RgpReferralSource {
             return UpdateStatus.NO_PARTICIPANT_DATA;
         }
 
+        // There may be multiple participant data records due to prior update errors
+        // update all that apply to this case
+        int updateCount = 0;
         for (var participantData: rgpData) {
-            String msg = String.format("for field type %s, participant %s, participantDataId %s in realm %s",
-                    RGP_PARTICIPANT_DATA, ddpParticipantId, participantData.getParticipantDataId(), RGP_REALM);
-            log.info("Updating REFERRAL_SOURCE data {}", msg);
-
-            Optional<String> data = participantData.getData();
-            if (data.isEmpty() || StringUtils.isEmpty(data.get())) {
-                throw new DsmInternalError("Participant data empty " + msg);
-            }
-
-            try {
-                Map<String, String> props = gson.fromJson(data.get(), Map.class);
-
-                if (isProband(props)) {
-                    props.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
-                    dataDao.updateParticipantDataColumn(
-                            new org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData.Builder()
-                                    .withParticipantDataId(participantData.getParticipantDataId())
-                                    .withDdpParticipantId(ddpParticipantId)
-                                    .withDdpInstanceId(participantData.getDdpInstanceId())
-                                    .withFieldTypeId(RGP_PARTICIPANT_DATA)
-                                    .withData(gson.toJson(props))
-                                    .withLastChanged(System.currentTimeMillis())
-                                    .withChangedBy(userId).build());
-                }
-            } catch (JsonSyntaxException | JsonIOException | ClassCastException e) {
-                throw new DsmInternalError("Invalid data format " + msg, e);
+            if (updateParticipantData(participantData, ddpParticipantId, refSourceId)) {
+                updateCount++;
             }
         }
-        return UpdateStatus.UPDATED;
+
+        if (updateCount > 1) {
+            log.warn(String.format("Multiple records found for field type %s, participant %s in realm %s",
+                    RGP_PARTICIPANT_DATA, ddpParticipantId, RGP_REALM));
+        }
+        return updateCount > 0 ? UpdateStatus.UPDATED : UpdateStatus.NOT_UPDATED;
+    }
+
+    private boolean updateParticipantData(org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData participantData,
+                                          String ddpParticipantId, String refSourceId) {
+        String msg = String.format("for field type %s, participant %s, participantDataId %s in realm %s",
+                RGP_PARTICIPANT_DATA, ddpParticipantId, participantData.getParticipantDataId(), RGP_REALM);
+        log.info("Updating REFERRAL_SOURCE data {}", msg);
+
+        Optional<String> data = participantData.getData();
+        if (data.isEmpty() || StringUtils.isEmpty(data.get())) {
+            throw new DsmInternalError("Participant data empty " + msg);
+        }
+
+        try {
+            Map<String, String> props = gson.fromJson(data.get(), Map.class);
+
+            if (!isProband(props) || props.containsKey(DBConstants.REFERRAL_SOURCE_ID)) {
+                return false;
+            }
+            props.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
+            ParticipantDataDao dataDao = new ParticipantDataDao();
+            dataDao.updateParticipantDataColumn(
+                    new org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData.Builder()
+                            .withParticipantDataId(participantData.getParticipantDataId())
+                            .withDdpParticipantId(ddpParticipantId)
+                            .withDdpInstanceId(participantData.getDdpInstanceId())
+                            .withFieldTypeId(RGP_PARTICIPANT_DATA)
+                            .withData(gson.toJson(props))
+                            .withLastChanged(System.currentTimeMillis())
+                            .withChangedBy(userId).build());
+        } catch (JsonSyntaxException | JsonIOException | ClassCastException e) {
+            throw new DsmInternalError("Invalid data format " + msg, e);
+        }
+        return true;
     }
 
     private List<Activities> getParticipantActivities(String ddpParticipantId) {
