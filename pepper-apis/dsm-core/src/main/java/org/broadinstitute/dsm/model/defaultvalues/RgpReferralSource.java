@@ -54,13 +54,13 @@ public class RgpReferralSource {
         this.userId = userId;
     }
 
-    public void xxx(String jobId) {
+    public String xxx(String jobId) {
         // get participants for study
 
         // for each participant attempt an update
         // for anything other than not updated, make an entry in job log
 
-        // write job log to DB
+        // update job log record
     }
 
     public UpdateStatus updateReferralSource(String ddpParticipantId) {
