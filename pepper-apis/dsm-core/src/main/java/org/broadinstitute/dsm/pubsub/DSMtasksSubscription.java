@@ -25,7 +25,6 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.ExportToES;
-import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.defaultvalues.Defaultable;
 import org.broadinstitute.dsm.model.defaultvalues.DefaultableMaker;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
@@ -76,7 +75,7 @@ public class DSMtasksSubscription {
                     switch (taskType) {
                         case UPDATE_CUSTOM_WORKFLOW:
                             consumer.ack();
-                            WorkflowStatusUpdate.updateCustomWorkflow(attributesMap, data);
+                            runCustomWorkflow(attributesMap, data);
                             break;
                         case ELASTIC_EXPORT:
                             consumer.ack();
@@ -96,10 +95,11 @@ public class DSMtasksSubscription {
                 }
             }
         };
-        Subscriber subscriber = null;
         ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
         ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-        subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
+        Subscriber subscriber = Subscriber.newBuilder(resultSubName, receiver)
+                .setParallelPullCount(1)
+                .setExecutorProvider(resultsSubExecProvider)
                 .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
@@ -125,7 +125,7 @@ public class DSMtasksSubscription {
         Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
         maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {
             String index = ddpInstanceDto.getEsParticipantIndex();
-            logger.info("Starting migrating DSM data to ES for study: " + study + " with index: " + index);
+            logger.info("Starting migration of DSM data to ES for study {} with index {}", study, index);
             List<? extends Exportable> exportables = Arrays.asList(
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                     new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
@@ -137,7 +137,7 @@ public class DSMtasksSubscription {
                     new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()),
                     new SomaticResultMigrator(index, study));
             exportables.forEach(Exportable::export);
-            logger.info("Successfully finished migration of all DSM data to ES for study: " + study + " with index: " + index);
+            logger.info("Successfully finished migration of DSM data to ES for study {} with index {}", study, index);
         });
     }
 
@@ -171,6 +171,55 @@ public class DSMtasksSubscription {
                 throw e;
             } else {
                 consumer.nack();
+            }
+        }
+    }
+
+    /**
+     * Handling the custom workflow may be slow (DB and ES updates in the handler), and we may have to wait for ES
+     * updates to complete, so give this a thread for the work
+     */
+    private static void runCustomWorkflow(Map<String, String> attributes, String payload) {
+        Thread t = new Thread(new RunCustomWorkflow(attributes, payload));
+        t.start();
+    }
+
+    private static class RunCustomWorkflow implements Runnable {
+        private static final int NUM_RETRIES = 10;
+        private static final int SLEEP_TIME_SEC = 3;
+        private final Map<String, String> attributes;
+        private final String payload;
+
+        public RunCustomWorkflow(Map<String, String> attributes, String payload) {
+            this.attributes = attributes;
+            this.payload = payload;
+        }
+
+        public void run() {
+            for (int i = 1; i <= NUM_RETRIES; i++) {
+                try {
+                    WorkflowStatusUpdate.updateCustomWorkflow(attributes, payload);
+                    return;
+                } catch (ESMissingParticipantDataException e) {
+                    // ES data update jobs may not have completed yet
+                    logger.info("Waiting for missing ES data, try number {}: {}", i, e.toString());
+                    sleep();
+                } catch (Exception e) {
+                    logger.error("Error handling UPDATE_CUSTOM_WORKFLOW: {}", e.toString());
+                    e.printStackTrace();
+                    return;
+                }
+            }
+            logger.error("Error handling UPDATE_CUSTOM_WORKFLOW: Participant ES data not available after waiting {} seconds",
+                    NUM_RETRIES * SLEEP_TIME_SEC);
+        }
+
+        private void sleep() {
+            try {
+                TimeUnit.SECONDS.sleep(SLEEP_TIME_SEC);
+            } catch (InterruptedException e) {
+                logger.error("Unexpected InterruptedException", e);
+                Thread.currentThread().interrupt();
             }
         }
     }
