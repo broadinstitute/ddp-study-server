@@ -14,11 +14,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
@@ -54,17 +56,55 @@ public class RgpReferralSource {
         this.userId = userId;
     }
 
-    public String xxx(String jobId) {
-        // get participants for study
+    public void updateReferralSources(String jobId) {
+        DDPInstance instance = DDPInstance.getDDPInstance(RGP_REALM);
+        if (instance == null) {
+            throw new DsmInternalError("Invalid realm: " + RGP_REALM);
+        }
+        String esIndex = instance.getParticipantIndexES();
+        if (StringUtils.isEmpty(esIndex)) {
+            throw new DsmInternalError("No ES participant index for study " + RGP_REALM);
+        }
 
-        // for each participant attempt an update
-        // for anything other than not updated, make an entry in job log
+        // get study participants and their data
+        // Implementation note: we can either gather all the ptp data now (fewer queries, larger memory footprint),
+        // or just gather the ptp IDs here and query for ptp data separately (more queries, smaller memory footprint)
+        // At the time of implementation ptps per study were reasonably small (~100) and ptp data size was not large
+        ParticipantDataDao dataDao = new ParticipantDataDao();
+        List<ParticipantData> dataList =
+                dataDao.getParticipantDataByInstanceId(instance.getDdpInstanceIdAsInt());
+        Map<String, List<ParticipantData>> ptpDataByPtpId =
+                dataList.stream().collect(Collectors.groupingBy(ParticipantData::getRequiredDdpParticipantId));
+
+        List<UpdateLog> updateLog = new ArrayList<>();
+
+        // for each participant attempt an update and log results
+        for (var entry: ptpDataByPtpId.entrySet()) {
+            String ddpParticipantId = entry.getKey();
+            try {
+                UpdateStatus status = updateReferralSource(ddpParticipantId, entry.getValue(),
+                        getParticipantActivities(ddpParticipantId, esIndex));
+                updateLog.add(new UpdateLog(ddpParticipantId, status.name()));
+            } catch (Exception e) {
+                updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.ERROR.name(), e.toString()));
+            }
+        }
 
         // update job log record
+        try {
+            Gson gson = new Gson();
+            String json = gson.toJson(log);
+            log.info("[RgpReferralSource.updateReferralSources] Log:\n {}", json);
+        } catch (Exception e) {
+            log.error("Error writing operation log: {}", e.toString());
+        }
     }
 
-    public UpdateStatus updateReferralSource(String ddpParticipantId) {
-        List<Activities> activities = getParticipantActivities(ddpParticipantId);
+    protected UpdateStatus updateReferralSource(String ddpParticipantId, List<ParticipantData> dataList, List<Activities> activities) {
+        if (dataList.isEmpty()) {
+            return UpdateStatus.NO_PARTICIPANT_DATA;
+        }
+
         if (activities.isEmpty()) {
             return UpdateStatus.NO_ACTIVITIES;
         }
@@ -74,14 +114,7 @@ public class RgpReferralSource {
         }
         String refSourceId = convertReferralSources(refSources);
 
-        ParticipantDataDao dataDao = new ParticipantDataDao();
-        List<org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData> dataList =
-                dataDao.getParticipantDataByParticipantId(ddpParticipantId);
-        if (dataList.isEmpty()) {
-            return UpdateStatus.NO_PARTICIPANT_DATA;
-        }
-
-        List<org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData> rgpData = dataList.stream().filter(
+        List<ParticipantData> rgpData = dataList.stream().filter(
                 participantDataDto -> {
                     if (participantDataDto.getFieldTypeId().isPresent()) {
                         String ft = participantDataDto.getFieldTypeId().get();
@@ -144,16 +177,7 @@ public class RgpReferralSource {
         return true;
     }
 
-    private List<Activities> getParticipantActivities(String ddpParticipantId) {
-        DDPInstance instance = DDPInstance.getDDPInstance(RGP_REALM);
-        if (instance == null) {
-            throw new DsmInternalError("Invalid realm: " + RGP_REALM);
-        }
-        String esIndex = instance.getParticipantIndexES();
-        if (StringUtils.isEmpty(esIndex)) {
-            throw new DsmInternalError("No ES participant index for study " + RGP_REALM);
-        }
-
+    private List<Activities> getParticipantActivities(String ddpParticipantId, String esIndex) {
         Optional<ElasticSearchParticipantDto> esParticipant =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
         if (esParticipant.isEmpty()) {
@@ -289,5 +313,17 @@ public class RgpReferralSource {
                     + "source %s: %s", sources.get(0), refSource));
         }
         return refSource;
+    }
+
+    @AllArgsConstructor
+    private static class UpdateLog {
+        private final String ddpParticipantId;
+        private final String status;
+        private String message;
+
+        public UpdateLog(String ddpParticipantId, String status) {
+            this.ddpParticipantId = ddpParticipantId;
+            this.status = status;
+        }
     }
 }
