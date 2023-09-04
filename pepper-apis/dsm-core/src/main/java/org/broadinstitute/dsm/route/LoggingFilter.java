@@ -40,6 +40,7 @@ public class LoggingFilter implements Filter {
     @Override
     public void handle(Request request, Response response) {
         String tokenFromHeader = Utility.getTokenFromHeader(request);
+        logger.info("TEMP: logging filter request: {}", request.url());
         if (StringUtils.isNotBlank(tokenFromHeader) && !"null".equals(tokenFromHeader)) {
             DecodedJWT decodedJWT =
                     Auth0Util.verifyAuth0Token(tokenFromHeader, auth0Domain, secret, issuer, secretEncoded);

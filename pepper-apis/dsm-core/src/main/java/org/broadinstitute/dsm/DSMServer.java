@@ -483,10 +483,12 @@ public class DSMServer {
             response.header("Access-Control-Allow-Headers", headers);
             response.header("Access-Control-Allow-Credentials", "true");
             response.type("application/json");
+            logger.info("TEMP: Spark.before request {}", request.url());
         });
     }
 
     protected void configureServer(@NonNull Config config) {
+        logger.info("TEMP: Startup config: {}", config);
         String env = config.getString("portal.environment");
         logger.info("Property source: {} ", env);
         logger.info("Configuring the server...");
@@ -602,7 +604,7 @@ public class DSMServer {
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
-        if (!cfg.getBoolean(IS_PRODUCTION)) {
+        if (true || !cfg.getBoolean(IS_PRODUCTION)) {
             post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
 
             StatusKitRoute statusKitRoute = new StatusKitRoute();
