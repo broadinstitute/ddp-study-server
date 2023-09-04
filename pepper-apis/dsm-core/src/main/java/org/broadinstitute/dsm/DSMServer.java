@@ -488,7 +488,7 @@ public class DSMServer {
     }
 
     protected void configureServer(@NonNull Config config) {
-        logger.info("TEMP:  Startup config: {}", config);
+        logger.info("TEMP: Startup config: {}", config);
         String env = config.getString("portal.environment");
         logger.info("Property source: {} ", env);
         logger.info("Configuring the server...");
