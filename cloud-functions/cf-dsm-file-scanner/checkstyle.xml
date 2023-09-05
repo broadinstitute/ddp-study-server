@@ -24,6 +24,12 @@
         <property name="lineSeparator" value="lf"/>
     </module>
 
+    <module name="LineLength">
+        <property name="fileExtensions" value="java"/>
+        <property name="max" value="140"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
     <module name="TreeWalker">
         <module name="OuterTypeFilename"/>
         <module name="IllegalTokenText">
