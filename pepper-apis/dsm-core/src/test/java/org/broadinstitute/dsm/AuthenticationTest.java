@@ -32,13 +32,11 @@ public class AuthenticationTest extends DbTxnBaseTest {
 
     private static DDPInstanceDto ddpInstance;
 
-    private static UserAdminService adminServiceForDsmAdminUser;
-
-    private static UserAdminService adminServiceForKitShippingUser;
     private static int pecgsStudyGroupId;
+
     private static int cmiStudyGroupId;
 
-    private static UserDao userDao = new UserDao();
+    private static final UserDao userDao = new UserDao();
 
     private static final Set<Integer> groupRoleIdsToDelete = new HashSet<>();
 
@@ -69,8 +67,8 @@ public class AuthenticationTest extends DbTxnBaseTest {
         int ddpInstanceId = UserAdminServiceTest.createTestInstance(studyInstanceName, cmiStudyGroupId);
         ddpInstance = new DDPInstanceDto.Builder().withDdpInstanceId(ddpInstanceId).withInstanceName(studyInstanceName).build();
 
-        adminServiceForDsmAdminUser = new UserAdminService(dsmAdminUser.getIdAsString(), pecgsStudyGroup);
-        adminServiceForKitShippingUser = new UserAdminService(dsmAdminUser.getIdAsString(), cmiStudyGroup);
+        UserAdminService adminServiceForDsmAdminUser = new UserAdminService(dsmAdminUser.getIdAsString(), pecgsStudyGroup);
+        UserAdminService adminServiceForKitShippingUser = new UserAdminService(dsmAdminUser.getIdAsString(), cmiStudyGroup);
 
         int adminRoleId = UserAdminService.getRoleId(USER_ADMIN_ROLE);
         int kitShippingRoleId = UserAdminService.getRoleId(KIT_SHIPPING);
