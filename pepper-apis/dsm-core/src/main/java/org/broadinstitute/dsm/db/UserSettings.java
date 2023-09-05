@@ -104,7 +104,6 @@ public class UserSettings {
             us.defaultTissueFilter = ViewFilter.getDefaultFilterForUser(email, "tissueList");
             us.defaultParticipantFilter = ViewFilter.getDefaultFilterForUser(email, "participantList");
         }
-        logger.info("UserSettings for user w/ email " + email);
         return us;
     }
 

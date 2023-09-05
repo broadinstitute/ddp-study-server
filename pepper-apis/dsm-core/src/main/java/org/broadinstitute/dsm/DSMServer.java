@@ -22,14 +22,12 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -68,8 +66,6 @@ import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
@@ -165,7 +161,6 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
-import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTriggerListener;
@@ -197,7 +192,6 @@ import spark.Spark;
 
 public class DSMServer {
 
-    private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     public static final String CONFIG = "config";
     public static final String NOTIFICATION_UTIL = "NotificationUtil";
     public static final String KIT_UTIL = "KitUtil";
@@ -205,30 +199,34 @@ public class DSMServer {
     public static final String EVENT_UTIL = "EventUtil";
     public static final String ADDITIONAL_CRON_EXPRESSION = "externalShipper_cron_expression_additional";
     public static final String GCP_PATH_TO_SERVICE_ACCOUNT = "portal.googleProjectCredentials";
+    public static final String IS_PRODUCTION = "ui.production";
+    public static final String UNDERSCORE_TRIGGER = "_TRIGGER";
     public static final String UPS_PATH_TO_USERNAME = "ups.username";
     public static final String UPS_PATH_TO_PASSWORD = "ups.password";
     public static final String UPS_PATH_TO_ACCESSKEY = "ups.accesskey";
     public static final String UPS_PATH_TO_ENDPOINT = "ups.url";
-    private static final String gcpPathToPubsubProjectId = "pubsub.projectId";
-    private static final String gcpPathToPubsubSub = "pubsub.subscription";
-    private static final String gcpPathToDssToDsmSub = "pubsub.dss_to_dsm_subscription";
-    private static final String gcpPathToDsmToDssTopic = "pubsub.dsm_to_dss_topic";
-    private static final String gcpPathToDsmTasksSub = "pubsub.dsm_tasks_subscription";
-    public static final String gcpPathToDsmToMercuryTopic = "pubsub.dsm_to_mercury_topic";
-    public static final String gcpPathToMercuryToDsmSub = "pubsub.mercury_to_dsm_subscription";
-    public static final String gcpPathToAntiVirusSub = "pubsub.antivirus_to_dsm_subscription";
-    private static final String apiRoot = "/ddp/";
-    private static final String uiRoot = "/ui/";
-    private static final String infoRoot = "/info/";
-    private static final String signer = "org.broadinstitute.kdux";
-    private static final String[] corsHttpMethods = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
-    private static final String[] corsHttpHeaders =
+    public static final String GCP_PATH_DSM_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
+    public static final String GCP_PATH_MERCURY_DSM_SUB = "pubsub.mercury_to_dsm_subscription";
+    public static final String GCP_PATH_ANTI_VIRUS_SUB = "pubsub.antivirus_to_dsm_subscription";
+    private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
+    private static final String GCP_PATH_PUBSUB_PROJECT_ID = "pubsub.projectId";
+    private static final String GCP_PATH_PUBSUB_SUB = "pubsub.subscription";
+    private static final String GCP_PATH_DSM_DSS_SUB = "pubsub.dss_to_dsm_subscription";
+    private static final String GCP_PATH_DSM_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
+    private static final String GCP_PATH_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
+    private static final String API_ROOT = "/ddp/";
+    private static final String DSM_ROOT = "/dsm/";
+    private static final String UI_ROOT = "/ui/";
+    private static final String INFO_ROOT = "/info/";
+    private static final String KDUX_SIGNER = "org.broadinstitute.kdux";
+    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
+    private static final String[] CORS_HTTP_HEADERS =
             new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
-    private static final String vaultConf = "vault.conf";
-    private static final String gaeDeployDir = "appengine/deploy";
-    private static final Duration defaultBootWait = Duration.ofMinutes(10);
-    private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
+    private static final String VAULT_CONF = "vault.conf";
+    private static final String GAE_DEPLOY_DIR = "appengine/deploy";
+    private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
+    private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
@@ -239,16 +237,14 @@ public class DSMServer {
                 //config without secrets
                 Config cfg = ConfigFactory.load();
                 //secrets from vault in a config file
-                File vaultConfigInCwd = new File(vaultConf);
-                File vaultConfigInDeployDir = new File(gaeDeployDir, vaultConf);
+                File vaultConfigInCwd = new File(VAULT_CONF);
+                File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
                 File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
-                logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
+                logger.info("Reading config values from {}", vaultConfig.getAbsolutePath());
                 cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
 
-                if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
-                    if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
-                        System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
-                    }
+                if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT) && StringUtils.isNotBlank(cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT))) {
+                    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT));
                 }
 
                 new DSMConfig(cfg);
@@ -283,7 +279,7 @@ public class DSMServer {
         job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
 
         //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        TriggerKey triggerKey = new TriggerKey(identity + UNDERSCORE_TRIGGER, "DDP");
         SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey)
                 .withSchedule(simpleSchedule().withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
 
@@ -306,7 +302,7 @@ public class DSMServer {
         job.getJobDataMap().put(CONFIG, config);
 
         //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        TriggerKey triggerKey = new TriggerKey(identity + UNDERSCORE_TRIGGER, "DDP");
         SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey)
                 .withSchedule(simpleSchedule().withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
 
@@ -331,7 +327,7 @@ public class DSMServer {
         job.getJobDataMap().put(KIT_UTIL, kitUtil);
 
         //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        TriggerKey triggerKey = new TriggerKey(identity + UNDERSCORE_TRIGGER, "DDP");
         CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
         //add job
         scheduler.scheduleJob(job, trigger);
@@ -344,7 +340,7 @@ public class DSMServer {
      */
     public static void createScheduleJob(@NonNull Scheduler scheduler, EventUtil eventUtil, NotificationUtil notificationUtil,
                                          @NonNull Class<? extends Job> jobClass, @NonNull String identity, @NonNull String cronExpression,
-                                         @NonNull BasicTriggerListener basicTriggerListener, Config config) throws SchedulerException {
+                                         @NonNull BasicTriggerListener basicTriggerListener) throws SchedulerException {
         //create job
         JobDetail job = JobBuilder.newJob(jobClass).withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
 
@@ -365,7 +361,7 @@ public class DSMServer {
         logger.info(cronExpression);
 
         //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        TriggerKey triggerKey = new TriggerKey(identity + UNDERSCORE_TRIGGER, "DDP");
         CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
         //add job
         scheduler.scheduleJob(job, trigger);
@@ -447,7 +443,7 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds, Config cfg) {
+    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
         // Block until isReady is available, with an optional timeout to prevent
         // instance for sitting around too long in a nonresponsive state.  There is a
         // judgement call to be made here to allow for lengthy liquibase migrations during boot.
@@ -491,7 +487,8 @@ public class DSMServer {
     }
 
     protected void configureServer(@NonNull Config config) {
-        logger.info("Property source: " + config.getString("portal.environment"));
+        String env = config.getString("portal.environment");
+        logger.info("Property source: {} ", env);
         logger.info("Configuring the server...");
         threadPool(-1, -1, 60000);
         int port = config.getInt("portal.port");
@@ -501,7 +498,7 @@ public class DSMServer {
         if (appEnginePort != null) {
             port = Integer.parseInt(appEnginePort);
         }
-        long bootTimeoutSeconds = defaultBootWait.getSeconds();
+        long bootTimeoutSeconds = DEFAULT_BOOT_WAIT.getSeconds();
         if (config.hasPath(ApplicationConfigConstants.BOOT_TIMEOUT)) {
             bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
         }
@@ -509,7 +506,7 @@ public class DSMServer {
         logger.info("Using port {}", port);
         port(port);
 
-        registerAppEngineStartupCallback(bootTimeoutSeconds, config);
+        registerAppEngineStartupCallback(bootTimeoutSeconds);
 
         setupDB(config);
 
@@ -517,7 +514,7 @@ public class DSMServer {
         setupCustomRouting(config);
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
-        enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", corsHttpMethods), String.join(",", corsHttpHeaders));
+        enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
     }
 
     protected void setupDB(@NonNull Config config) {
@@ -543,39 +540,54 @@ public class DSMServer {
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
         boolean bspSecretEncoded =
-                cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED) : false;
+                cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) && cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED);
+
+        String dsmSecretForJuniper = cfg.getString(ApplicationConfigConstants.JUNIPER_SECRET);
+        String juniperSigner = cfg.getString(ApplicationConfigConstants.JUNIPER_SIGNER);
+        boolean juniperSecretEncoded =
+                cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) && cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED);
         String ddpSecret = cfg.getString(ApplicationConfigConstants.DDP_SECRET);
         boolean ddpSecretEncoded =
-                cfg.hasPath(ApplicationConfigConstants.DDP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.DDP_ENCODED) : false;
+                cfg.hasPath(ApplicationConfigConstants.DDP_ENCODED) && cfg.getBoolean(ApplicationConfigConstants.DDP_ENCODED);
         String auth0Domain = cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN);
         String auth0claimNameSpace = cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE);
 
         if (StringUtils.isBlank(bspSecret)) {
-            throw new RuntimeException("No secret supplied for BSP endpoint, system exiting.");
+            throw new DsmInternalError("No secret supplied for BSP endpoint, system exiting.");
         }
 
         if (StringUtils.isBlank(ddpSecret)) {
-            throw new RuntimeException("No secret supplied for DDP endpoint, system exiting.");
+            throw new DsmInternalError("No secret supplied for DDP endpoint, system exiting.");
         }
 
         String appRoute = cfg.hasPath("portal.appRoute") ? cfg.getString("portal.appRoute") : null;
 
         if (StringUtils.isBlank(appRoute)) {
-            throw new RuntimeException("appRoute was not configured correctly.");
+            throw new DsmInternalError("appRoute was not configured correctly.");
         }
 
-        //  capture basic route info for logging
-        //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
-        before(apiRoot + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, null, bspSecretEncoded));
-        before(uiRoot + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
-        before(infoRoot + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, signer, ddpSecretEncoded));
-        before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, signer, ddpSecretEncoded));
+        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, null, bspSecretEncoded));
+        before(DSM_ROOT + "*",
+                new LoggingFilter(auth0Domain, auth0claimNameSpace, dsmSecretForJuniper, juniperSigner, juniperSecretEncoded));
+        before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
+        before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
+        before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
         afterAfter((req, res) -> MDC.clear());
 
-        before(apiRoot + "*", (req, res) -> {
+        before(API_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
                 logger.info("Returning 401 because token was not verified");
                 halt(401);
+            }
+            res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
+        });
+        // we are using dsm/ path for calls from Juniper to create a new kit, or to get a kit status
+        // these endpoints can technically be used by other users as well as Juniper, but in this point in
+        // DSM's lifetime we don't think this would happen, but if needed this implementation should change
+        before(DSM_ROOT + "*", (req, res) -> {
+            if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, dsmSecretForJuniper)) {
+                logger.info("Returning 401 because token was not verified");
+                halt(401, "Token could not be verified");
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
         });
@@ -586,27 +598,27 @@ public class DSMServer {
 
         setupPubSub(cfg, notificationUtil);
 
-        get(apiRoot + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
-        get(apiRoot + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
-        get(apiRoot + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
+        get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
+        get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
+        get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
-        if (!cfg.getBoolean("ui.production")) {
-            post(apiRoot + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
+        if (!cfg.getBoolean(IS_PRODUCTION)) {
+            post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
 
             StatusKitRoute statusKitRoute = new StatusKitRoute();
-            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
-            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
-            get(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
-            post(apiRoot + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
+            get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
+            get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
+            get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
+            post(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
         }
 
-        if (!cfg.getBoolean("ui.production")) {
-            get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
+        if (!cfg.getBoolean(IS_PRODUCTION)) {
+            get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
                     new JsonTransformer());
 
-            get(apiRoot + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT, new CreateClinicalDummyKitRoute(
+            get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT, new CreateClinicalDummyKitRoute(
                     new OncHistoryDetailDaoImpl()), new JsonTransformer());
-            get(apiRoot + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
+            get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
         }
 
 
@@ -617,13 +629,11 @@ public class DSMServer {
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
         get(appRoute + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
 
         CancerRoute cancerRoute = new CancerRoute();
         get(appRoute + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new JsonTransformer());
-
-        UserUtil userUtil = new UserUtil();
+        get(UI_ROOT + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new JsonTransformer());
 
         auth0Util = new Auth0Util(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS),
@@ -631,27 +641,25 @@ public class DSMServer {
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
 
-        before(infoRoot + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
+        before(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
-            Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, signer,
+            Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, KDUX_SIGNER,
                     ddpSecretEncoded);
         });
 
-        get(infoRoot + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
+        get(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
 
         // requests from frontend
-        before(uiRoot + "*", (req, res) -> {
-            if (!"OPTIONS".equals(req.requestMethod())) {
-                if (!req.pathInfo().contains(RoutePath.AUTHENTICATION_REQUEST)) {
-                    String tokenFromHeader = Utility.getTokenFromHeader(req);
+        before(UI_ROOT + "*", (req, res) -> {
+            if (!"OPTIONS".equals(req.requestMethod()) && !req.pathInfo().contains(RoutePath.AUTHENTICATION_REQUEST)) {
+                String tokenFromHeader = Utility.getTokenFromHeader(req);
 
-                    boolean isTokenValid = false;
-                    if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new JWTRouteFilter(auth0Domain).isAccessAllowed(req, true, null);
-                    }
-                    if (!isTokenValid) {
-                        halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
-                    }
+                boolean isTokenValid = false;
+                if (StringUtils.isNotBlank(tokenFromHeader)) {
+                    isTokenValid = new JWTRouteFilter(auth0Domain).isAccessAllowed(req, true, null);
+                }
+                if (!isTokenValid) {
+                    halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
                 }
             }
         });
@@ -664,7 +672,7 @@ public class DSMServer {
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
         );
-        post(uiRoot + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
         KitUtil kitUtil = new KitUtil();
 
@@ -673,7 +681,7 @@ public class DSMServer {
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
         //        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
-        setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
+        setupShippingRoutes(notificationUtil, auth0Util, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
         setupMedicalRecordRoutes(cfg, notificationUtil, patchUtil);
 
@@ -694,13 +702,13 @@ public class DSMServer {
         setupSomaticUploadRoutes(cfg);
 
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
-        patch(uiRoot + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new JsonTransformer());
 
         setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
 
         //TODO - redo with pubsub
         JavaHeapDumper heapDumper = new JavaHeapDumper();
-        get(uiRoot + "/heapDump", new Route() {
+        get(UI_ROOT + "/heapDump", new Route() {
             @Override
             public Object handle(Request request, Response response) throws Exception {
                 logger.info("Received request to create java heap dump");
@@ -713,18 +721,18 @@ public class DSMServer {
     }
 
     private void setupCohortTagRoutes() {
-        post(uiRoot + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
-        post(uiRoot + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new JsonTransformer());
-        delete(uiRoot + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new JsonTransformer());
+        delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {
-        String projectId = cfg.getString(gcpPathToPubsubProjectId);
-        String subscriptionId = cfg.getString(gcpPathToPubsubSub);
-        String dsmToDssSubscriptionId = cfg.getString(gcpPathToDssToDsmSub);
-        String dsmTasksSubscriptionId = cfg.getString(gcpPathToDsmTasksSub);
-        String mercuryDsmSubscriptionId = cfg.getString(gcpPathToMercuryToDsmSub);
-        String antivirusDsmSubscriptionId = cfg.getString(gcpPathToAntiVirusSub);
+        String projectId = cfg.getString(GCP_PATH_PUBSUB_PROJECT_ID);
+        String subscriptionId = cfg.getString(GCP_PATH_PUBSUB_SUB);
+        String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_DSM_DSS_SUB);
+        String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_DSM_TASKS_SUB);
+        String mercuryDsmSubscriptionId = cfg.getString(GCP_PATH_MERCURY_DSM_SUB);
+        String antivirusDsmSubscriptionId = cfg.getString(GCP_PATH_ANTI_VIRUS_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -756,10 +764,10 @@ public class DSMServer {
                 subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
                 logger.info("Started pubsub subscription receiver for {}", subscriptionId);
             } catch (TimeoutException e) {
-                throw new RuntimeException("Timed out while starting pubsub subscription " + subscriptionId, e);
+                throw new DsmInternalError("Timed out while starting pubsub subscription " + subscriptionId, e);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get results from pubsub ", e);
+            throw new DsmInternalError("Failed to get results from pubsub ", e);
         }
 
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
@@ -792,226 +800,222 @@ public class DSMServer {
         logger.info("Pubsub setup complete");
     }
 
-    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil,
+    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util,
                                      @NonNull String auth0Domain) {
-        get(uiRoot + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
-        post(uiRoot + RoutePath.FINAL_SCAN_REQUEST, new KitFinalScanRoute(), new JsonTransformer());
-        post(uiRoot + RoutePath.RGP_FINAL_SCAN_REQUEST, new RGPKitFinalScanRoute(), new JsonTransformer());
-        post(uiRoot + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new JsonTransformer());
-        post(uiRoot + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new JsonTransformer());
-        post(uiRoot + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new JsonTransformer());
-        post(uiRoot + RoutePath.INITIAL_SCAN_REQUEST, new KitInitialScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.FINAL_SCAN_REQUEST, new KitFinalScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.RGP_FINAL_SCAN_REQUEST, new RGPKitFinalScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new JsonTransformer());
+        post(UI_ROOT + RoutePath.INITIAL_SCAN_REQUEST, new KitInitialScanRoute(), new JsonTransformer());
 
         KitDeactivationRoute kitDeactivationRoute = new KitDeactivationRoute(notificationUtil);
-        patch(uiRoot + RoutePath.DEACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.ACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.DEACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.ACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
 
-        patch(uiRoot + RoutePath.AUTHORIZE_KIT, new KitAuthorizationRoute(), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.AUTHORIZE_KIT, new KitAuthorizationRoute(), new JsonTransformer());
 
         KitExpressRoute kitExpressRoute = new KitExpressRoute(notificationUtil);
-        get(uiRoot + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new JsonTransformer());
 
         LabelSettingRoute labelSettingRoute = new LabelSettingRoute();
-        get(uiRoot + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
 
-        post(uiRoot + RoutePath.KIT_UPLOAD_REQUEST, new KitUploadRoute(notificationUtil), new JsonTransformer());
+        post(UI_ROOT + RoutePath.KIT_UPLOAD_REQUEST, new KitUploadRoute(notificationUtil), new JsonTransformer());
 
         KitLabelRoute kitLabelRoute = new KitLabelRoute();
-        get(uiRoot + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
-        post(uiRoot + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
 
-        get(uiRoot + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
         KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, auth0Domain);
-        get(uiRoot + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
-        post(uiRoot + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.DISCARD_SHOW_UPLOAD, kitDiscardRoute, new JsonTransformer());
-        post(uiRoot + RoutePath.DISCARD_CONFIRM, kitDiscardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.DISCARD_SHOW_UPLOAD, kitDiscardRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.DISCARD_CONFIRM, kitDiscardRoute, new JsonTransformer());
     }
 
     //Routes used by medical record
     private void setupMedicalRecordRoutes(@NonNull Config cfg, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
         //Medical Record
-        get(uiRoot + RoutePath.ASSIGNEE_REQUEST, new AssigneeRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.ASSIGNEE_REQUEST, new AssigneeRoute(), new JsonTransformer());
 
         InstitutionRoute institutionRoute = new InstitutionRoute();
-        post(uiRoot + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
 
         DownloadPDFRoute pdfRoute = new DownloadPDFRoute();
-        post(uiRoot + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
-        post(uiRoot + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.BUNDLE, pdfRoute, new JsonTransformer());
-        get(uiRoot + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.BUNDLE, pdfRoute, new JsonTransformer());
+        get(UI_ROOT + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
 
-        patch(uiRoot + RoutePath.ASSIGN_PARTICIPANT_REQUEST,
+        patch(UI_ROOT + RoutePath.ASSIGN_PARTICIPANT_REQUEST,
                 new AssignParticipantRoute(cfg.getString(ApplicationConfigConstants.GET_DDP_PARTICIPANT_ID),
                         cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil), new JsonTransformer());
 
         ViewFilterRoute viewFilterRoute = new ViewFilterRoute(patchUtil);
         //gets filter names for user for this realm (shared filters and user's filters
-        get(uiRoot + RoutePath.GET_FILTERS, viewFilterRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.GET_DEFAULT_FILTERS, viewFilterRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_FILTERS, viewFilterRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_DEFAULT_FILTERS, viewFilterRoute, new JsonTransformer());
         //saves the current Filter Parameters with a name for future use
-        patch(uiRoot + RoutePath.SAVE_FILTER, viewFilterRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.FILTER_DEFAULT, viewFilterRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.SAVE_FILTER, viewFilterRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.FILTER_DEFAULT, viewFilterRoute, new JsonTransformer());
 
         FilterRoute filterRoute = new FilterRoute();
         //returns List[] that is filtered based on the filterName
-        get(uiRoot + RoutePath.APPLY_FILTER, filterRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.FILTER_LIST, filterRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.APPLY_FILTER, filterRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.FILTER_LIST, filterRoute, new JsonTransformer());
         //gets the participant to go to the tissue that was clicked on
-        get(uiRoot + RoutePath.GET_PARTICIPANT, new GetParticipantRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_PARTICIPANT, new GetParticipantRoute(), new JsonTransformer());
 
         MedicalRecordLogRoute medicalRecordLogRoute = new MedicalRecordLogRoute();
-        get(uiRoot + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
 
-        //        PermalinkRoute permalinkRoute = new PermalinkRoute();
-        //        get(UI_ROOT + RoutePath.PERMALINK_PARTICIPANT_REQUEST, permalinkRoute, new JsonTransformer());
-        //        get(UI_ROOT + RoutePath.PERMALINK_INSTITUTION_REQUEST, permalinkRoute, new JsonTransformer());
-
-        get(uiRoot + RoutePath.LOOKUP, new LookupRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.LOOKUP, new LookupRoute(), new JsonTransformer());
 
         FieldSettingsRoute fieldSettingsRoute = new FieldSettingsRoute();
-        get(uiRoot + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
 
-        get(uiRoot + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new JsonTransformer());
+        get(UI_ROOT + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new JsonTransformer());
 
-        post(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
+        post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
-        post(uiRoot + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
 
-        get(uiRoot + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute());
+        get(UI_ROOT + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute());
     }
 
     private void setupMRAbstractionRoutes() {
         AbstractionFormControlRoute abstractionFormControlRoute = new AbstractionFormControlRoute();
-        get(uiRoot + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new JsonTransformer());
 
-        post(uiRoot + RoutePath.ABSTRACTION, new AbstractionRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.ABSTRACTION, new AbstractionRoute(), new JsonTransformer());
     }
 
     private void setupMiscellaneousRoutes() {
         MailingListRoute mailingListRoute = new MailingListRoute();
-        get(uiRoot + RoutePath.MAILING_LIST_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, mailingListRoute,
+        get(UI_ROOT + RoutePath.MAILING_LIST_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, mailingListRoute,
                 new JsonTransformer());
 
         ParticipantExitRoute participantExitRoute = new ParticipantExitRoute();
-        get(uiRoot + RoutePath.PARTICIPANT_EXIT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantExitRoute,
+        get(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantExitRoute,
                 new JsonTransformer());
-        post(uiRoot + RoutePath.PARTICIPANT_EXIT_REQUEST, participantExitRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST, participantExitRoute, new JsonTransformer());
 
         TriggerSurveyRoute triggerSurveyRoute = new TriggerSurveyRoute();
-        get(uiRoot + RoutePath.TRIGGER_SURVEY + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, triggerSurveyRoute,
+        get(UI_ROOT + RoutePath.TRIGGER_SURVEY + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, triggerSurveyRoute,
                 new JsonTransformer());
-        post(uiRoot + RoutePath.TRIGGER_SURVEY, triggerSurveyRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.TRIGGER_SURVEY, triggerSurveyRoute, new JsonTransformer());
 
-        get(uiRoot + RoutePath.EVENT_TYPES + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new EventTypeRoute(),
+        get(UI_ROOT + RoutePath.EVENT_TYPES + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new EventTypeRoute(),
                 new JsonTransformer());
 
         ParticipantEventRoute participantEventRoute = new ParticipantEventRoute();
-        get(uiRoot + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantEventRoute,
+        get(UI_ROOT + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantEventRoute,
                 new JsonTransformer());
-        post(uiRoot + RoutePath.SKIP_PARTICIPANT_EVENTS, participantEventRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.SKIP_PARTICIPANT_EVENTS, participantEventRoute, new JsonTransformer());
 
-        post(uiRoot + RoutePath.NDI_REQUEST, new NDIRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.NDI_REQUEST, new NDIRoute(), new JsonTransformer());
 
         DrugListRoute drugListRoute = new DrugListRoute();
-        get(uiRoot + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new JsonTransformer());
-        patch(uiRoot + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new JsonTransformer());
 
         AddFamilyMemberRoute addFamilyMemberRoute = new AddFamilyMemberRoute();
-        post(uiRoot + RoutePath.ADD_FAMILY_MEMBER, addFamilyMemberRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.ADD_FAMILY_MEMBER, addFamilyMemberRoute, new JsonTransformer());
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
-        get(uiRoot + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
     }
 
     private void setupAdminRoutes() {
         StudyRoleRoute studyRoleRoute = new StudyRoleRoute();
-        get(uiRoot + RoutePath.STUDY_ROLE, studyRoleRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.STUDY_ROLE, studyRoleRoute, new JsonTransformer());
 
         UserRoleRoute userRoleRoute = new UserRoleRoute();
-        get(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
-        post(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
-        put(uiRoot + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        put(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
 
         UserRoute userRoute = new UserRoute();
-        post(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
-        put(uiRoot + RoutePath.USER, userRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
+        put(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
     }
 
 
     private void setupSomaticUploadRoutes(@NonNull Config cfg) {
         SomaticResultUploadService somaticResultUploadService = SomaticResultUploadService.fromConfig(cfg);
-        post(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE,
+        post(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE,
                 new PostSomaticResultUploadRoute(somaticResultUploadService), new JsonTransformer());
-        delete(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService), new JsonTransformer());
-        get(uiRoot + RoutePath.SOMATIC_DOCUMENT_ROUTE,
+        delete(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService), new JsonTransformer());
+        get(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE,
                 new GetSomaticResultsRoute(somaticResultUploadService), new JsonTransformer());
-        post(uiRoot + RoutePath.TRIGGER_SOMATIC_SURVEY,
+        post(UI_ROOT + RoutePath.TRIGGER_SOMATIC_SURVEY,
                 new TriggerSomaticResultSurveyRoute(somaticResultUploadService), new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
         DashboardRoute dashboardRoute = new DashboardRoute(kitUtil);
-        get(uiRoot + RoutePath.DASHBOARD_REQUEST, dashboardRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.DASHBOARD_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
+        get(UI_ROOT + RoutePath.DASHBOARD_REQUEST, dashboardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.DASHBOARD_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
                 + RequestParameter.END, dashboardRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.SAMPLE_REPORT_REQUEST, dashboardRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.SAMPLE_REPORT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
+        get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST, dashboardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
                 + RequestParameter.END, dashboardRoute, new JsonTransformer());
 
         AllowedRealmsRoute allowedRealmsRoute = new AllowedRealmsRoute();
-        get(uiRoot + RoutePath.ALLOWED_REALMS_REQUEST, allowedRealmsRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.STUDIES, allowedRealmsRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.ALLOWED_REALMS_REQUEST, allowedRealmsRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.STUDIES, allowedRealmsRoute, new JsonTransformer());
 
         KitTypeRoute kitTypeRoute = new KitTypeRoute(kitUtil);
-        get(uiRoot + RoutePath.KIT_TYPES_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
+        get(UI_ROOT + RoutePath.KIT_TYPES_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
                 new JsonTransformer());
-        get(uiRoot + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute, new JsonTransformer());
-        get(uiRoot + RoutePath.CARRIERS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new CarrierServiceRoute(),
+        get(UI_ROOT + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.CARRIERS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new CarrierServiceRoute(),
                 new JsonTransformer());
 
-        patch(uiRoot + RoutePath.PATCH, new PatchRoute(notificationUtil, patchUtil), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.PATCH, new PatchRoute(notificationUtil, patchUtil), new JsonTransformer());
 
-        get(uiRoot + RoutePath.DASHBOARD, new NewDashboardRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.DASHBOARD, new NewDashboardRoute(), new JsonTransformer());
     }
 
     private void setupPubSubPublisherRoutes(Config config) {
-        String projectId = config.getString(gcpPathToPubsubProjectId);
-        String dsmToDssTopicId = config.getString(gcpPathToDsmToDssTopic);
+        String projectId = config.getString(GCP_PATH_PUBSUB_PROJECT_ID);
+        String dsmToDssTopicId = config.getString(GCP_PATH_DSM_DSS_TOPIC);
 
         EditParticipantPublisherRoute editParticipantPublisherRoute = new EditParticipantPublisherRoute(projectId, dsmToDssTopicId);
-        put(uiRoot + RoutePath.EDIT_PARTICIPANT, editParticipantPublisherRoute, new JsonTransformer());
+        put(UI_ROOT + RoutePath.EDIT_PARTICIPANT, editParticipantPublisherRoute, new JsonTransformer());
 
         EditParticipantMessageReceiverRoute editParticipantMessageReceiverRoute = new EditParticipantMessageReceiverRoute();
-        get(uiRoot + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
 
-        String mercuryTopicId = config.getString(gcpPathToDsmToMercuryTopic);
-        if (!config.getBoolean("ui.production")) {
+        String mercuryTopicId = config.getString(GCP_PATH_DSM_MERCURY_TOPIC);
+        if (!config.getBoolean(IS_PRODUCTION)) {
             PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
-            post(apiRoot + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+            post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
         }
 
         FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
-        get(uiRoot + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
+        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
 
-        post(uiRoot + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
+        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
 
         GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(
                 new MercurySampleDao(), projectId, mercuryTopicId, new KitDaoImpl());
-        get(uiRoot + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
 
         GetMercuryOrdersRoute getMercuryOrdersRoute = new GetMercuryOrdersRoute(
                 new MercurySampleDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
-        get(uiRoot + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new JsonTransformer());
 
     }
 
@@ -1038,7 +1042,7 @@ public class DSMServer {
 
                 createScheduleJob(scheduler, eventUtil, notificationUtil, DDPEventJob.class, "TRIGGER_DDP_EVENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_DDP_EVENT_TRIGGER),
-                        new DDPEventTriggerListener(), null);
+                        new DDPEventTriggerListener());
 
                 // currently not needed anymore but might come back
                 // createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
@@ -1046,22 +1050,20 @@ public class DSMServer {
                 // new ExternalShipperTriggerListener(), cfg);
 
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener(),
-                        cfg);
-
-
-                logger.info("Setup Job Scheduler...");
-                try {
-                    scheduler.start();
-                    logger.info("Job Scheduler setup complete.");
-                } catch (Exception ex) {
-                    throw new RuntimeException("Unable to setup Job Scheduler.", ex);
-                }
-            } catch (SchedulerException e) {
-                throw new RuntimeException("Could not create scheduler ", e);
+                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener());
+                startScheduler(scheduler);
+            } catch (Exception e) {
+                throw new DsmInternalError("Could not create scheduler ", e);
             }
         }
         setupErrorNotifications(cfg, schedulerName);
+    }
+
+    private void startScheduler(Scheduler scheduler) throws SchedulerException {
+        logger.info("Setup Job Scheduler...");
+        scheduler.start();
+        logger.info("Job Scheduler setup complete.");
+
     }
 
     private void setupRouteGenericErrorHandlers() {
@@ -1123,8 +1125,8 @@ public class DSMServer {
                     throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + e);
                 }
                 SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);
-                logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel
-                        + ".");
+                logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to {} .",
+                        slackChannel);
             } else {
                 logger.warn("Skipping error notification setup.");
             }

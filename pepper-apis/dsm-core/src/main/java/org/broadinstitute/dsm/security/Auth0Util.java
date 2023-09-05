@@ -17,6 +17,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.impl.PublicClaims;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
@@ -182,7 +183,6 @@ public class Auth0Util {
      * @return a verified, decoded JWT
      * @throws TokenExpiredException for expired token
      * @throws InvalidTokenException for invalid token
-     * @throws AuthenticationException for other authentication issues
      */
     public static DecodedJWT verifyAuth0Token(String jwt, String auth0Domain) {
         try {
@@ -191,8 +191,6 @@ public class Auth0Util {
             return JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
         } catch (JWTVerificationException e) {
             throw new InvalidTokenException("Could not verify auth0 token", e);
-        } catch (Exception e) {
-            throw new AuthenticationException("Error verifying auth0 token", e);
         }
     }
 
@@ -225,7 +223,11 @@ public class Auth0Util {
                 verification.withIssuer(signer);
             }
             JWTVerifier verifier = verification.build();
-            return verifier.verify(jwt);
+            DecodedJWT validToken = verifier.verify(jwt);
+            if (validToken.getClaim(PublicClaims.EXPIRES_AT).isNull()) {
+                throw new InvalidTokenException("Token missing expiration time in the claims.");
+            }
+            return validToken;
         } catch (JWTVerificationException e) {
             throw new InvalidTokenException("Could not verify auth0 token", e);
         }
