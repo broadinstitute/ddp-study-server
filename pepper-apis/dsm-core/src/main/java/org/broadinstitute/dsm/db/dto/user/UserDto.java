@@ -29,10 +29,6 @@ public class UserDto {
         return this.id;
     }
 
-    public String getIdAsString() {
-        return Integer.toString(this.id);
-    }
-
     public Optional<String> getName() {
         return Optional.ofNullable(name);
     }
@@ -50,6 +46,7 @@ public class UserDto {
     public Optional<String> getPhoneNumber() {
         return Optional.ofNullable(phoneNumber);
     }
+
     public Optional<Integer> getIsActive() {
         return Optional.ofNullable(isActive);
     }
