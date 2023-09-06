@@ -21,7 +21,6 @@ import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -32,6 +31,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -76,12 +76,14 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         mockDao.refSourceDetails = refSourceDetails;
     }
 
+    @After
     public void deleteParticipants() {
         if (testParticipantData != null) {
             TestParticipantUtil.deleteParticipantData(testParticipantData.getParticipantDataId());
             testParticipantData = null;
         }
     }
+    
     @Test
     public void getRefSourceOneProvided() {
         List<String> answer = List.of("TWITTER");
@@ -189,7 +191,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
     @Test
     public void updateReferralSourceTest() {
         Gson gson = new Gson();
-        ReferralSourceService service = new ReferralSourceService(TEST_USER);
+        ReferralSourceService service = new ReferralSourceService();
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("ReferralSourceServiceTest");
         List<String> answer = List.of("TWITTER");
         applyFoundOutAnswer(activities, answer);

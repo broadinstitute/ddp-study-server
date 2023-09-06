@@ -107,7 +107,7 @@ public class RoutePath {
     public static final String USER = "admin/user";
     public static final String USER_ROLE = "admin/userRole";
     public static final String STUDY_ROLE = "admin/studyRole";
-    public static final String TISSUE_LIST = "tissueList";
+    public static final String ADMIN_OPERATION = "admin/operation";
     public static final String NDI_REQUEST = "ndiRequest";
     public static final String ABSTRACTION_FORM_CONTROLS = "abstractionformcontrols";
     public static final String ABSTRACTION = "abstraction";

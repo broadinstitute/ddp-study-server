@@ -9,30 +9,40 @@ import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService;
 @Slf4j
 public class AdminOperationService {
     private final String userId;
+    private final String realm;
 
-    public AdminOperationService(String userId) {
+    public AdminOperationService(String userId, String realm) {
         this.userId = userId;
+        this.realm = realm;
     }
 
-    public String startOperation(String operationId, Map<String, String> attributes, String payload) {
-        OperationId opId;
+    public String startOperation(String operationTypeId, Map<String, String> attributes, String payload) {
+        OperationTypeId opId;
         try {
-            opId = OperationId.valueOf(operationId.toUpperCase());
+            opId = OperationTypeId.valueOf(operationTypeId.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new DSMBadRequestException("Invalid operation ID: " + operationId);
+            throw new DSMBadRequestException("Invalid operation type ID: " + operationTypeId);
         }
-        if (!(opId.equals(OperationId.SYNC_REFERRAL_SOURCE))) {
-            throw new DSMBadRequestException("Invalid operation ID: " + operationId);
+
+        // trivial for now... this will get expanded as we add more operations
+        AdminOperation adminOperation;
+        switch (opId) {
+            case SYNC_REFERRAL_SOURCE:
+                adminOperation = new ReferralSourceService();
+                adminOperation.initialize(userId, realm, attributes, payload);
+                break;
+            default:
+                throw new DSMBadRequestException("Invalid operation type ID: " + operationTypeId);
         }
 
         // create operation record
-        String jobId = "temp_job_id";
+        int operationId = 42;
 
         // call service on a thread
-        Thread t = new Thread(new RunOperation(opId, jobId, attributes, payload, userId));
+        Thread t = new Thread(new RunOperation(adminOperation, opId, operationId));
         t.start();
 
-        return jobId;
+        return Integer.toString(operationId);
     }
 
     public String getOperationResults(String operationId) {
@@ -47,37 +57,26 @@ public class AdminOperationService {
 
     }
 
-    public enum OperationId {
+    public enum OperationTypeId {
         SYNC_REFERRAL_SOURCE
     }
 
     private static class RunOperation implements Runnable {
-        private final OperationId operationId;
-        private final String jobId;
-        private final Map<String, String> attributes;
-        private final String payload;
-        private final String userId;
+        private final AdminOperation adminOperation;
+        private final OperationTypeId operationTypeId;
+        private final int operationId;
 
-        public RunOperation(OperationId operationId, String jobId, Map<String, String> attributes, String payload, String userId) {
+        public RunOperation(AdminOperation adminOperation, OperationTypeId operationTypeId, int operationId) {
+            this.adminOperation = adminOperation;
+            this.operationTypeId = operationTypeId;
             this.operationId = operationId;
-            this.jobId = jobId;
-            this.attributes = attributes;
-            this.payload = payload;
-            this.userId = userId;
         }
 
         public void run() {
             try {
-                switch (operationId) {
-                    case SYNC_REFERRAL_SOURCE:
-                        ReferralSourceService referralSource = new ReferralSourceService(userId);
-                        referralSource.updateReferralSources(jobId);
-                        break;
-                    default:
-                        log.error("RunOperation invalid operationId: {}", operationId);
-                }
+                adminOperation.run(operationId);
             } catch (Exception e) {
-                log.error("Error operation with ID: {}", operationId, e);
+                log.error("Error running operation with type: {}", operationTypeId, e);
             }
         }
     }

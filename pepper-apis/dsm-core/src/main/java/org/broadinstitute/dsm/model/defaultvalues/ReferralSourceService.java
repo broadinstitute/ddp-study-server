@@ -16,6 +16,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -23,11 +24,13 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -36,7 +39,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  * Provides support for deriving participant referral source from DSS activities
  */
 @Slf4j
-public class ReferralSourceService {
+public class ReferralSourceService implements AdminOperation {
 
     public enum UpdateStatus {
         UPDATED,
@@ -50,37 +53,60 @@ public class ReferralSourceService {
     private static final String RGP_REALM = "RGP";
     protected static final String RGP_PARTICIPANT_DATA = "RGP_PARTICIPANTS";
     private static final Gson gson = new Gson();
+    private String userId;
+    private String esIndex;
+    private Map<String, List<ParticipantData>> participantDataByPtpId;
 
-    private final String userId;
 
-    public ReferralSourceService(String userId) {
+    /**
+     * Validate input and retrieve participant data, during synchronous part of operation handling
+     *
+     * @param userId ID of user performing operation
+     * @param payload request body, if any, as ReferralSourceRequest
+     */
+    public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
         this.userId = userId;
-    }
 
-    public void updateReferralSources(String jobId) {
+        if (!realm.equalsIgnoreCase(RGP_REALM)) {
+            throw new DsmInternalError("Invalid realm for ReferralSourceService: " + realm);
+        }
         DDPInstance instance = DDPInstance.getDDPInstance(RGP_REALM);
         if (instance == null) {
             throw new DsmInternalError("Invalid realm: " + RGP_REALM);
         }
-        String esIndex = instance.getParticipantIndexES();
+        esIndex = instance.getParticipantIndexES();
         if (StringUtils.isEmpty(esIndex)) {
             throw new DsmInternalError("No ES participant index for study " + RGP_REALM);
         }
 
-        // get study participants and their data
-        // Implementation note: we can either gather all the ptp data now (fewer queries, larger memory footprint),
-        // or just gather the ptp IDs here and query for ptp data separately (more queries, smaller memory footprint)
-        // At the time of implementation ptps per study were reasonably small (~100) and ptp data size was not large
         ParticipantDataDao dataDao = new ParticipantDataDao();
-        List<ParticipantData> dataList =
-                dataDao.getParticipantDataByInstanceId(instance.getDdpInstanceIdAsInt());
-        Map<String, List<ParticipantData>> ptpDataByPtpId =
-                dataList.stream().collect(Collectors.groupingBy(ParticipantData::getRequiredDdpParticipantId));
 
+        // handle optional list of ptps
+        if (!StringUtils.isBlank(payload)) {
+            List<String> participants = getParticipantList(payload);
+            for (String participantId: participants) {
+                List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(participantId);
+                if (ptpData.isEmpty()) {
+                    throw new DSMBadRequestException("Invalid participant ID: " + participantId);
+                }
+                participantDataByPtpId.put(participantId, ptpData);
+            }
+        } else {
+            // get study participants and their data
+            // Implementation note: we can either gather all the ptp data now (fewer queries, larger memory footprint),
+            // or just gather the ptp IDs here and query for ptp data separately (more queries, smaller memory footprint)
+            // At the time of implementation ptps per study were reasonably small (~100) and ptp data size was not large
+            List<ParticipantData> dataList =
+                    dataDao.getParticipantDataByInstanceId(instance.getDdpInstanceIdAsInt());
+            participantDataByPtpId = dataList.stream().collect(Collectors.groupingBy(ParticipantData::getRequiredDdpParticipantId));
+        }
+    }
+
+    public void run(int operationId) {
         List<UpdateLog> updateLog = new ArrayList<>();
 
         // for each participant attempt an update and log results
-        for (var entry: ptpDataByPtpId.entrySet()) {
+        for (var entry: participantDataByPtpId.entrySet()) {
             String ddpParticipantId = entry.getKey();
             try {
                 UpdateStatus status = updateReferralSource(ddpParticipantId, entry.getValue(),
@@ -93,12 +119,25 @@ public class ReferralSourceService {
 
         // update job log record
         try {
-            Gson gson = new Gson();
-            String json = gson.toJson(log);
-            log.info("[RgpReferralSource.updateReferralSources] Log:\n {}", json);
+            String json = gson.toJson(updateLog);
+            log.info("[ReferralSourceService.run] Log:\n {}", json);
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
         }
+    }
+
+    private static List<String> getParticipantList(String payload) {
+        ReferralSourceRequest req;
+        try {
+            req = new Gson().fromJson(payload, ReferralSourceRequest.class);
+        } catch (Exception e) {
+            throw new DSMBadRequestException("Invalid request format. Payload: " + payload);
+        }
+        List<String> participants = req.getParticipants();
+        if (participants.isEmpty()) {
+            throw new DSMBadRequestException("Invalid request format. Empty participant list");
+        }
+        return participants;
     }
 
     protected UpdateStatus updateReferralSource(String ddpParticipantId, List<ParticipantData> dataList, List<Activities> activities) {
@@ -333,5 +372,10 @@ public class ReferralSourceService {
             this.ddpParticipantId = ddpParticipantId;
             this.status = status;
         }
+    }
+
+    @Data
+    private static class ReferralSourceRequest {
+        private List<String> participants;
     }
 }

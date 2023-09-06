@@ -1,25 +1,16 @@
 package org.broadinstitute.dsm.route.admin;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 import org.broadinstitute.dsm.route.RouteUtil;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.admin.AdminOperationService;
 import org.broadinstitute.dsm.service.admin.UserAdminService;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
-import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
@@ -46,7 +37,7 @@ public class AdminOperationRoute extends RequestHandler {
             throw new DSMBadRequestException("Operation ID cannot be empty");
         }
 
-        AdminOperationService service = new AdminOperationService(userId);
+        AdminOperationService service = new AdminOperationService(userId, realm);
         return service.startOperation(operationId, attributes, request.body());
     }
 }
