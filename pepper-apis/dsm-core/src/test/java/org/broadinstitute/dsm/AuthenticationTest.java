@@ -19,7 +19,7 @@ import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
 
 public class AuthenticationTest extends DbTxnBaseTest {
 
-    private static String dsmAdminUserId;
+    private static String morePermissionsUserId;
 
     private static String cmiKitShippingOnlyUserId;
 
@@ -44,7 +44,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
         cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, cmiStudyGroup);
         cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE, Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
-        dsmAdminUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW)));
+        morePermissionsUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW)));
         cmiKitShippingOnlyUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(), Collections.singletonList(KIT_SHIPPING)));
     }
 
@@ -71,7 +71,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
      */
     @Test
     public void mismatchAccessTest(){
-        Patch patch1 = new Patch("0", "participantId", "0", dsmAdminUserId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch1 = new Patch("0", "participantId", "0", morePermissionsUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch1.setTableAlias("oD");
 
         try {
@@ -97,7 +97,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
         gpPatch.setTableAlias("kit");
 
         try {
-            UserUtil.checkKitShippingAccessForPatch(studyInstanceName, dsmAdminUserId, null, gpPatch);
+            UserUtil.checkKitShippingAccessForPatch(studyInstanceName, morePermissionsUserId, null, gpPatch);
             Assert.fail("Did not throw expected exception");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
@@ -111,15 +111,15 @@ public class AuthenticationTest extends DbTxnBaseTest {
      */
     @Test
     public void userPatchAccessTest(){
-        Patch patch = new Patch("0", "participantId", "0", dsmAdminUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch = new Patch("0", "participantId", "0", morePermissionsUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("oD");
 
-        Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, dsmAdminUserId, PT_LIST_VIEW, null, patch));
+        Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, morePermissionsUserId, PT_LIST_VIEW, null, patch));
 
-        Patch patch2 = new Patch("0", "participantId", "0", dsmAdminUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch2 = new Patch("0", "participantId", "0", morePermissionsUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("m");
 
-        Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, dsmAdminUserId, PT_LIST_VIEW, null, patch2));
+        Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, morePermissionsUserId, PT_LIST_VIEW, null, patch2));
     }
 
     @AfterClass
