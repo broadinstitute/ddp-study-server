@@ -38,7 +38,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
     @BeforeClass
     public static void setup() {
         String nameAppend = "." + System.currentTimeMillis();
-        String studyInstanceName = "instance." + nameAppend;
+        String studyInstanceName = "instance" + nameAppend;
         String cmiStudyGroup = "cmi" + nameAppend;
 
         cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, cmiStudyGroup);
@@ -57,7 +57,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void getKitShipperRoleCannotChangeParticipantInfo(){
+    public void testKitShipperRoleCannotChangeParticipantInfo(){
         Patch patch = new Patch("0", "participantId", "0", cmiKitShippingOnlyUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
         patch.setTableAlias("oD");
 
