@@ -1,5 +1,12 @@
 package org.broadinstitute.dsm;
 
+import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
+import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
+import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
+
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
@@ -10,12 +17,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
 
-import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
-import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
-import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
 
 public class AuthenticationTest extends DbTxnBaseTest {
 
@@ -38,27 +40,32 @@ public class AuthenticationTest extends DbTxnBaseTest {
     @BeforeClass
     public static void setup() {
         String nameAppend = "." + System.currentTimeMillis();
-        String studyInstanceName = "instance" + nameAppend;
+        studyInstanceName = "instance" + nameAppend;
         String cmiStudyGroup = "cmi" + nameAppend;
 
         cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, cmiStudyGroup);
-        cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE, Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
+        cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
+                Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
-        morePermissionsUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW)));
-        cmiKitShippingOnlyUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(), Collections.singletonList(KIT_SHIPPING)));
+        morePermissionsUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW)));
+        cmiKitShippingOnlyUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                Collections.singletonList(KIT_SHIPPING)));
     }
 
     @Test
     public void testKitShipperRoleCanChangeKitInfo() {
-        Patch patch = new Patch("0",  "dsmKitRequestId", "0", cmiKitShippingOnlyUserId , new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch = new Patch("0",  "dsmKitRequestId", "0", cmiKitShippingOnlyUserId,
+                new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("kit");
 
         Assert.assertTrue(UserUtil.checkKitShippingAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, null, patch));
     }
 
     @Test
-    public void testKitShipperRoleCannotChangeParticipantInfo(){
-        Patch patch = new Patch("0", "participantId", "0", cmiKitShippingOnlyUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void testKitShipperRoleCannotChangeParticipantInfo() {
+        Patch patch = new Patch("0", "participantId", "0", cmiKitShippingOnlyUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("oD");
 
         Assert.assertFalse(UserUtil.checkKitShippingAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, null, patch));
@@ -70,8 +77,9 @@ public class AuthenticationTest extends DbTxnBaseTest {
      * users who do have said permission can make the requests.
      */
     @Test
-    public void mismatchAccessTest(){
-        Patch patch1 = new Patch("0", "participantId", "0", morePermissionsUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void mismatchAccessTest() {
+        Patch patch1 = new Patch("0", "participantId", "0", morePermissionsUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch1.setTableAlias("oD");
 
         try {
@@ -93,7 +101,8 @@ public class AuthenticationTest extends DbTxnBaseTest {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
         }
 
-        Patch gpPatch = new Patch("0",  "dsmKitRequestId", "0", cmiKitShippingOnlyUserId, new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch gpPatch = new Patch("0",  "dsmKitRequestId", "0", cmiKitShippingOnlyUserId,
+                new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM");
         gpPatch.setTableAlias("kit");
 
         try {
@@ -110,13 +119,15 @@ public class AuthenticationTest extends DbTxnBaseTest {
      * information
      */
     @Test
-    public void userPatchAccessTest(){
-        Patch patch = new Patch("0", "participantId", "0", morePermissionsUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void userPatchAccessTest() {
+        Patch patch = new Patch("0", "participantId", "0", morePermissionsUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("oD");
 
         Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, morePermissionsUserId, PT_LIST_VIEW, null, patch));
 
-        Patch patch2 = new Patch("0", "participantId", "0", morePermissionsUserId, new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch2 = new Patch("0", "participantId", "0", morePermissionsUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("m");
 
         Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, morePermissionsUserId, PT_LIST_VIEW, null, patch2));
