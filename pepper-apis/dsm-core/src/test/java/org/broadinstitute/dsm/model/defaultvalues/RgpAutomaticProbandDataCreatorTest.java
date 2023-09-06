@@ -13,18 +13,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
-import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
-import org.broadinstitute.dsm.model.elastic.sort.MockFieldSettingsDao;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.util.TestUtil;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 
@@ -66,7 +62,7 @@ public class RgpAutomaticProbandDataCreatorTest extends DbTxnBaseTest {
         profile.setGuid(participantId);
         RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
 
-        List<Activities> activities = RgpReferralSourceTest.getActivities();
+        List<Activities> activities = ReferralSourceServiceTest.getActivities();
         Map<String, String> dataMap = dataCreator.buildDataMap(participantId, familyId, instanceName,
                 activities, profile);
         Assert.assertEquals(collaboratorParticipantId, dataMap.get("COLLABORATOR_PARTICIPANT_ID"));

@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.defaultvalues;
 import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.isProband;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  * Provides support for deriving participant referral source from DSS activities
  */
 @Slf4j
-public class RgpReferralSource {
+public class ReferralSourceService {
 
     public enum UpdateStatus {
         UPDATED,
@@ -47,12 +48,12 @@ public class RgpReferralSource {
     }
 
     private static final String RGP_REALM = "RGP";
-    private static final String RGP_PARTICIPANT_DATA = "RGP_PARTICIPANTS";
+    protected static final String RGP_PARTICIPANT_DATA = "RGP_PARTICIPANTS";
     private static final Gson gson = new Gson();
 
     private final String userId;
 
-    public RgpReferralSource(String userId) {
+    public ReferralSourceService(String userId) {
         this.userId = userId;
     }
 
@@ -104,7 +105,6 @@ public class RgpReferralSource {
         if (dataList.isEmpty()) {
             return UpdateStatus.NO_PARTICIPANT_DATA;
         }
-
         if (activities.isEmpty()) {
             return UpdateStatus.NO_ACTIVITIES;
         }
@@ -112,6 +112,7 @@ public class RgpReferralSource {
         if (refSources.isEmpty()) {
             return UpdateStatus.NO_REFERRAL_SOURCE_IN_ACTIVITY;
         }
+
         String refSourceId = convertReferralSources(refSources);
 
         List<ParticipantData> rgpData = dataList.stream().filter(
@@ -143,27 +144,25 @@ public class RgpReferralSource {
         return updateCount > 0 ? UpdateStatus.UPDATED : UpdateStatus.NOT_UPDATED;
     }
 
-    private boolean updateParticipantData(org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData participantData,
-                                          String ddpParticipantId, String refSourceId) {
+    private boolean updateParticipantData(ParticipantData participantData, String ddpParticipantId, String refSourceId) {
         String msg = String.format("for field type %s, participant %s, participantDataId %s in realm %s",
                 RGP_PARTICIPANT_DATA, ddpParticipantId, participantData.getParticipantDataId(), RGP_REALM);
         log.info("Updating REFERRAL_SOURCE data {}", msg);
 
-        Optional<String> data = participantData.getData();
-        if (data.isEmpty() || StringUtils.isEmpty(data.get())) {
-            throw new DsmInternalError("Participant data empty " + msg);
-        }
-
         try {
-            Map<String, String> props = gson.fromJson(data.get(), Map.class);
+            Map<String, String> props = getDataMap(participantData);
+            if (props.isEmpty()) {
+                throw new DsmInternalError("Participant data empty " + msg);
+            }
 
+            // do not overwrite an existing referral source
             if (!isProband(props) || props.containsKey(DBConstants.REFERRAL_SOURCE_ID)) {
                 return false;
             }
             props.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
             ParticipantDataDao dataDao = new ParticipantDataDao();
             dataDao.updateParticipantDataColumn(
-                    new org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData.Builder()
+                    new ParticipantData.Builder()
                             .withParticipantDataId(participantData.getParticipantDataId())
                             .withDdpParticipantId(ddpParticipantId)
                             .withDdpInstanceId(participantData.getDdpInstanceId())
@@ -175,6 +174,15 @@ public class RgpReferralSource {
             throw new DsmInternalError("Invalid data format " + msg, e);
         }
         return true;
+    }
+
+    protected static Map<String, String> getDataMap(ParticipantData participantData) throws JsonSyntaxException {
+        Optional<String> data = participantData.getData();
+        if (data.isEmpty() || StringUtils.isEmpty(data.get())) {
+            return Collections.emptyMap();
+        }
+
+        return gson.fromJson(data.get(), Map.class);
     }
 
     private List<Activities> getParticipantActivities(String ddpParticipantId, String esIndex) {
@@ -195,7 +203,7 @@ public class RgpReferralSource {
      *                          missing or out of sync
      */
     public static String deriveReferralSourceId(List<Activities> activities) {
-        return RgpReferralSource.convertReferralSources(RgpReferralSource.getReferralSources(activities));
+        return ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
     }
 
     /**

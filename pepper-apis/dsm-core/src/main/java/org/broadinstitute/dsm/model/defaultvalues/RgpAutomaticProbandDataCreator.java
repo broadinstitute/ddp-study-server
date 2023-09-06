@@ -93,8 +93,8 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }
     }
 
-    protected Map<String, String> buildDataMap(String participantId, long familyId, String instanceName,
-                                               List<Activities> activities, Profile esProfile) {
+    protected static Map<String, String> buildDataMap(String participantId, long familyId, String instanceName,
+                                                      List<Activities> activities, Profile esProfile) {
         Map<String, String> probandDataMap;
 
         try {
@@ -107,7 +107,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }
 
         try {
-            String refSourceId = RgpReferralSource.deriveReferralSourceId(activities);
+            String refSourceId = ReferralSourceService.deriveReferralSourceId(activities);
             probandDataMap.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
         } catch (Exception e) {
             // not good: we could not convert referral source, but not fatal for this process.
@@ -118,8 +118,8 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         return probandDataMap;
     }
 
-    private Map<String, String> extractProbandDefaultData(Profile esProfile, List<Activities> participantActivities,
-                                                          long familyId, String instanceName) {
+    private static Map<String, String> extractProbandDefaultData(Profile esProfile, List<Activities> participantActivities,
+                                                                 long familyId, String instanceName) {
         String mobilePhone = getPhoneNumberFromActivities(participantActivities);
         log.info("Extracting data from participant {} ES profile...", esProfile.getGuid());
         String firstName = esProfile.getFirstName();
@@ -136,7 +136,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         return probandMemberDetails.toMap();
     }
 
-    private String getPhoneNumberFromActivities(List<Activities> activities) {
+    private static String getPhoneNumberFromActivities(List<Activities> activities) {
         Optional<Activities> maybeEnrollmentActivity =
                 activities.stream().filter(activity -> DDPActivityConstants.ACTIVITY_ENROLLMENT.equals(activity.getActivityCode()))
                         .findFirst();

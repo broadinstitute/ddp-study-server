@@ -4,7 +4,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.model.defaultvalues.RgpReferralSource;
+import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService;
 
 @Slf4j
 public class AdminOperationService {
@@ -70,7 +70,7 @@ public class AdminOperationService {
             try {
                 switch (operationId) {
                     case SYNC_REFERRAL_SOURCE:
-                        RgpReferralSource referralSource = new RgpReferralSource(userId);
+                        ReferralSourceService referralSource = new ReferralSourceService(userId);
                         referralSource.updateReferralSources(jobId);
                         break;
                     default:
