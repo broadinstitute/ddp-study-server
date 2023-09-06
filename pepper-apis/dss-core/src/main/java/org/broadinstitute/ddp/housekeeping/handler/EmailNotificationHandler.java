@@ -79,8 +79,8 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         this.pdfBucketService = pdfBucketService;
         this.pdfGenerationService = pdfGenerationService;
         Config cfg = ConfigManager.getInstance().getConfig();
-        this.emailDenyPatterns =  cfg.hasPath(ConfigFile.EMAIL_PATTERN_DENY_LIST) ?
-                cfg.getStringList(ConfigFile.EMAIL_PATTERN_DENY_LIST) : Collections.EMPTY_LIST;
+        this.emailDenyPatterns =  cfg.hasPath(ConfigFile.EMAIL_PATTERN_DENY_LIST)
+                ? cfg.getStringList(ConfigFile.EMAIL_PATTERN_DENY_LIST) : Collections.EMPTY_LIST;
     }
 
     /**
