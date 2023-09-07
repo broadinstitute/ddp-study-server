@@ -112,7 +112,7 @@ public class TestHelper {
         cfg = cfg.withValue("quartz.enableJobs", ConfigValueFactory.fromAnyRef("false"));
         cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
         cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
-        if (!cfg.getString("portal.environment").startsWith("Local")) {
+        if (!cfg.getString("portal.environment").toLowerCase().startsWith("local")) {
             throw new RuntimeException("Not local environment");
         }
 
