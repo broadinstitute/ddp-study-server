@@ -19,6 +19,11 @@
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
+    "emailPatternDenyList": [
+            {{range $i, $email := $conf.Data.emailPatternDenyList}}
+                {{if $i}},{{end}}"{{ $email }}"
+            {{end}}
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",

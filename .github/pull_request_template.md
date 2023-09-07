@@ -33,6 +33,8 @@ _How does one observe these changes in a deployed system? Note that **user visib
 
 ## Testing
 
+- [ ] I have added regression test labels to the jira ticket
+- [ ] I have added verification steps to the jira ticket
 - [ ] I have written automated positive tests
 - [ ] I have written automated negative tests
 - [ ] I have written zero automated tests but have poked around locally to verify proper functionality
