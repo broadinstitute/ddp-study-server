@@ -1,17 +1,26 @@
 package org.broadinstitute.dsm.model.patch;
 
+import static org.broadinstitute.dsm.statics.DBConstants.DDP_ONC_HISTORY_ALIAS;
+
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class PatchFactory {
 
+    private PatchFactory(){
+        throw new IllegalStateException("Utility class");
+    }
+
     public static BasePatch makePatch(Patch patch, NotificationUtil notificationUtil) {
         BasePatch patcher = new NullPatch();
-        if (isExistingRecord(patch)) {
+        if (isDeletePatch(patch)) {
+            patcher = DeletePatchFactory.produce(patch, notificationUtil);
+        } else if (isExistingRecord(patch)) {
             patcher = ExistingRecordPatchFactory.produce(patch, notificationUtil);
         } else if (isParentWithExistingKey(patch)) {
             if (isParentParticipantId(patch)) {
@@ -29,15 +38,24 @@ public class PatchFactory {
             } else if (isParticipantIdForRecord(patch)) {
                 patcher = new ParticipantRecordPatch(patch);
             }
-        } else if (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
-                    && StringUtils.isNotBlank(patch.getDdpParticipantId())) {
+        } else if (isOncHistoryDetailPatch(patch)) {
             patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
-            throw new RuntimeException("Id and parentId was null");
+            throw new DSMBadRequestException("Id and parentId was null");
         }
         patcher.setElasticSearchExportable(isElasticSearchExportable(patch));
         return patcher;
+    }
+
+    private static boolean isOncHistoryDetailPatch(Patch patch) {
+        return isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
+                && StringUtils.isNotBlank(patch.getDdpParticipantId());
+    }
+
+    private static boolean isDeletePatch(Patch patch) {
+        return patch.getNameValue().getName().contains(".deleted") &&
+                (DDP_ONC_HISTORY_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch));
     }
 
     private static boolean isSmIdCreation(Patch patch) {
@@ -67,7 +85,7 @@ public class PatchFactory {
         return StringUtils.isNotBlank(patch.getFieldId());
     }
 
-    private static boolean isTissueRelatedOncHistoryId(Patch patch) {
+    public static boolean isTissueRelatedOncHistoryId(Patch patch) {
         return OncHistoryDetail.ONC_HISTORY_DETAIL_ID.equals(patch.getParent());
     }
 

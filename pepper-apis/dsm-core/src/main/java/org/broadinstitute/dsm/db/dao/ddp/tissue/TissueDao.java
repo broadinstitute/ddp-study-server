@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -34,6 +35,8 @@ public class TissueDao implements Dao<Tissue> {
             + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
             + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
             + "WHERE realm.instance_name = ? ";
+
+    private static final String SQL_SELECT_TISSUES_BY_ONC_HISTORY_ID = " SELECT tissue_id FROM ddp_tissue WHERE onc_history_detail_id = ? ";
 
     @Override
     public int create(Tissue tissue) {
@@ -75,8 +78,30 @@ public class TissueDao implements Dao<Tissue> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting tissues for " + study, results.resultException);
+            throw new DsmInternalError("Error getting tissues for " + study, results.resultException);
         }
         return tissues;
+    }
+
+    public static List<String> getTissuesByOncHistoryDetailId(String oncHistoryDetailId) {
+        List<String> tissueIds = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_TISSUES_BY_ONC_HISTORY_ID)) {
+                stmt.setString(1, oncHistoryDetailId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        tissueIds.add(rs.getString(DBConstants.TISSUE_ID));
+                    }
+                }
+            } catch (SQLException ex) {
+                execResult.resultException = ex;
+            }
+            return execResult;
+        });
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error getting tissue id by onc history detail id " + oncHistoryDetailId, results.resultException);
+        }
+        return tissueIds;
     }
 }

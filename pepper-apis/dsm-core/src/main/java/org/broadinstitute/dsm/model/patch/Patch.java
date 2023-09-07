@@ -91,6 +91,20 @@ public class Patch {
         this.ddpParticipantId = ddpParticipantId;
     }
 
+    // Patch for deleting tissues and sm ids in a deleted oncHistory or tissue
+    public Patch(String id, String parent, String parentId, String user, NameValue nameValue, List<NameValue> nameValues, Boolean isUnique,
+                 String ddpParticipantId, String realm) {
+        this.id = id;
+        this.parent = parent;
+        this.parentId = parentId;
+        this.user = user;
+        this.nameValue = nameValue;
+        this.nameValues = nameValues;
+        this.isUnique = isUnique;
+        this.ddpParticipantId = ddpParticipantId;
+        this.realm = realm;
+    }
+
     //abstraction patch
     public Patch(String id, String parent, String parentId, String fieldId, String fieldName, String user, NameValue nameValue,
                  List<NameValue> nameValues, String ddpParticipantId) {
