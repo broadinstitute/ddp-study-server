@@ -38,11 +38,13 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
- * Provides support for deriving participant referral source from DSS activities
+ * Provides support for deriving participant referral source from DSS activities and updating ParticipantData as needed.
+ * Uses the asynchronous AdminOperation interface.
  */
 @Slf4j
 public class ReferralSourceService implements AdminOperation {
 
+    // the outcome of referral source update for each participant
     public enum UpdateStatus {
         UPDATED,
         NOT_UPDATED,
@@ -107,6 +109,11 @@ public class ReferralSourceService implements AdminOperation {
         }
     }
 
+    /**
+     * Run the asynchronous part of the operation, updating the AdminRecord with the operation results
+     *
+     * @param operationId ID for reporting results
+     */
     public void run(int operationId) {
         List<UpdateLog> updateLog = new ArrayList<>();
 
@@ -371,6 +378,7 @@ public class ReferralSourceService implements AdminOperation {
         return refSource;
     }
 
+    // the format of each participant results
     @AllArgsConstructor
     private static class UpdateLog {
         private final String ddpParticipantId;

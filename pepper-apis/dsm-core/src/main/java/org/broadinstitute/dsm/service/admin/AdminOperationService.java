@@ -6,13 +6,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService;
 
+/**
+ * Provides a service to run admin operations (e.g. fixing data, etc.) typically asynchronously, recording results
+ * in the DB for later reference
+ */
 @Slf4j
 public class AdminOperationService {
 
+    // supported operations
     public enum OperationTypeId {
         SYNC_REFERRAL_SOURCE
     }
-
 
     private final String userId;
     private final String realm;
@@ -55,7 +59,7 @@ public class AdminOperationService {
         return "not implemented";
     }
 
-    public String getJobsResults(String jobId) {
+    public String getOperationTypeResults(String jobId) {
         return "not implemented";
     }
 

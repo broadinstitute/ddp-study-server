@@ -15,7 +15,7 @@ import spark.Request;
 import spark.Response;
 
 /**
- * Provides an endpoint for various admin operations
+ * Provides an endpoint for admin operations
  */
 public class AdminOperationRoute extends RequestHandler {
     private static final String OPERATION_ID = "operationId";
@@ -37,7 +37,8 @@ public class AdminOperationRoute extends RequestHandler {
             throw new DSMBadRequestException("Operation ID cannot be empty");
         }
 
-        AdminOperationService service = new AdminOperationService(userId, realm);
+        AdminOperationService service = new AdminOperationService(RouteUtil.getUserEmail(userId), realm);
+        // if successful, returns an operation ID that can be used to get results
         return service.startOperation(operationId, attributes, request.body());
     }
 }

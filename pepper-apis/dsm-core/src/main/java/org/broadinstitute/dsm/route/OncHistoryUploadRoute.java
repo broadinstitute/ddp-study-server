@@ -28,18 +28,7 @@ public class OncHistoryUploadRoute extends RequestHandler {
             throw new AuthorizationException("User is not authorized to upload onc history");
         }
 
-        String oncHistoryUserId;
-        try {
-            UserDto user = new UserDao().get(Integer.parseInt(userId)).orElseThrow();
-            oncHistoryUserId = user.getEmailOrThrow();
-            if (oncHistoryUserId.isEmpty()) {
-                throw new DsmInternalError("Empty email address");
-            }
-        } catch (Exception e) {
-            response.status(500);
-            return "No email address for user " + userId;
-        }
-
+        String oncHistoryUserId = RouteUtil.getUserEmail(userId);
         try {
             OncHistoryUploadService service =
                     new OncHistoryUploadService(realm, oncHistoryUserId, new CodeStudyColumnsProvider());
