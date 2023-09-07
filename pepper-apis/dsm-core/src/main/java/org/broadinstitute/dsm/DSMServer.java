@@ -953,6 +953,7 @@ public class DSMServer {
 
         AdminOperationRoute adminOperationRoute = new AdminOperationRoute();
         post(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
     }
 
 

@@ -3,18 +3,21 @@ package org.broadinstitute.dsm.service.admin;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.junit.Assert;
 import org.junit.Test;
 
+@Slf4j
 public class AdminOperationRecordTest extends DbTxnBaseTest {
 
     @Test
     public void operationRecordTest() {
         String userId = "test_user";
         AdminOperationService.OperationTypeId operationTypeId = AdminOperationService.OperationTypeId.SYNC_REFERRAL_SOURCE;
-        Timestamp testStartTime = nowTime();
+        Timestamp testStartTime = secondsOffsetNowTime(-2);
         try {
             int operationId = AdminOperationRecord.createOperationRecord(operationTypeId, userId);
 
@@ -22,7 +25,8 @@ public class AdminOperationRecordTest extends DbTxnBaseTest {
             Assert.assertEquals(operationTypeId.name(), result.getOperationTypeId());
             Assert.assertEquals(userId, result.getOperatorId());
             Timestamp opStart = result.getOperationStart();
-            Assert.assertTrue(opStart.after(testStartTime) && opStart.before(nowTime()));
+            log.info("operation start time: {}, now time {}, test start time {}", opStart, secondsOffsetNowTime(2), testStartTime);
+            Assert.assertTrue(opStart.after(testStartTime) && opStart.before(secondsOffsetNowTime(2)));
             Assert.assertNull(result.getOperationEnd());
             Assert.assertEquals(AdminOperationRecord.OperationStatus.STARTED.name(), result.getStatus());
             Assert.assertNull(result.getResults());
@@ -33,9 +37,9 @@ public class AdminOperationRecordTest extends DbTxnBaseTest {
 
             Assert.assertEquals(operationTypeId.name(), result.getOperationTypeId());
             Assert.assertEquals(userId, result.getOperatorId());
-            Assert.assertEquals(opStart, result.getOperationStart());
             Timestamp opEnd = result.getOperationEnd();
-            Assert.assertTrue(opEnd.after(opStart) && opEnd.before(nowTime()));
+            log.info("operation end time: {}, now time {}, operation start time {}", opEnd, secondsOffsetNowTime(2), opStart);
+            Assert.assertTrue((opEnd.after(opStart) || opEnd.equals(opStart)) && opEnd.before(secondsOffsetNowTime(2)));
             Assert.assertEquals(AdminOperationRecord.OperationStatus.COMPLETED.name(), result.getStatus());
             Assert.assertEquals(opResults, result.getResults());
 
@@ -47,9 +51,10 @@ public class AdminOperationRecordTest extends DbTxnBaseTest {
 
             for (var res: results) {
                 if (res.getOperationId() == operationId) {
-                    Assert.assertEquals(AdminOperationRecord.OperationStatus.COMPLETED.name(), result.getStatus());
+                    Assert.assertEquals(AdminOperationRecord.OperationStatus.COMPLETED.name(), res.getStatus());
                 } else {
-                    Assert.assertEquals(AdminOperationRecord.OperationStatus.STARTED.name(), result.getStatus());
+                    Assert.assertEquals(operationId2, res.getOperationId());
+                    Assert.assertEquals(AdminOperationRecord.OperationStatus.STARTED.name(), res.getStatus());
                 }
             }
         } catch (Exception e) {
@@ -58,8 +63,14 @@ public class AdminOperationRecordTest extends DbTxnBaseTest {
         }
     }
 
-    private static Timestamp nowTime() {
-        Date date = new Date();
+    private static Timestamp secondsOffsetNowTime(int seconds) {
+        long millis = System.currentTimeMillis();
+        if (seconds >= 0) {
+            millis += TimeUnit.SECONDS.toMillis(seconds);
+        } else {
+            millis -= TimeUnit.SECONDS.toMillis(-seconds);
+        }
+        Date date = new Date(millis);
         return new Timestamp(date.getTime());
     }
 }

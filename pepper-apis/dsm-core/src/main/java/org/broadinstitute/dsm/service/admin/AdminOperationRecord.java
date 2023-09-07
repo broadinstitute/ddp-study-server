@@ -37,15 +37,12 @@ public class AdminOperationRecord {
             "SELECT * FROM admin_operation WHERE operation_type_id = ? ORDER BY operation_start DESC LIMIT 10";
 
     public static int createOperationRecord(AdminOperationService.OperationTypeId operationTypeId, String userId) {
-        Date date = new Date();
-        Timestamp startTime = new Timestamp(date.getTime());
-
         return inTransaction(conn -> {
             int id = -1;
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_OPERATION, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, operationTypeId.name());
                 stmt.setString(2, userId);
-                stmt.setTimestamp(3, startTime);
+                stmt.setTimestamp(3, nowTime());
                 stmt.setString(4, OperationStatus.STARTED.name());
                 int result = stmt.executeUpdate();
                 if (result != 1) {
@@ -67,14 +64,7 @@ public class AdminOperationRecord {
     }
 
     public static void updateOperationRecord(int operationId, OperationStatus status, String result) {
-        Timestamp endTime;
-        if (status.equals(OperationStatus.COMPLETED)) {
-            Date date = new Date();
-            endTime = new Timestamp(date.getTime());
-        } else {
-            endTime = null;
-        }
-
+        Timestamp endTime = status.equals(OperationStatus.COMPLETED) ? nowTime() : null;
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_OPERATION)) {
                 stmt.setTimestamp(1, endTime);
@@ -120,7 +110,7 @@ public class AdminOperationRecord {
     public static List<AdminOperationResponse.AdminOperationResult> getOperationTypeRecords(String operationTypeId) {
         return inTransaction(conn -> {
             List<AdminOperationResponse.AdminOperationResult> results = new ArrayList<>();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_OPERATION_BY_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_OPERATIONS_BY_TYPE_ID)) {
                 stmt.setString(1, operationTypeId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -144,5 +134,10 @@ public class AdminOperationRecord {
                 .withOperationEnd(rs.getTimestamp("operation_end"))
                 .withStatus(rs.getString("status"))
                 .withResults(rs.getString("results")).build();
+    }
+
+    protected static Timestamp nowTime() {
+        Date date = new Date(System.currentTimeMillis());
+        return new Timestamp(date.getTime());
     }
 }

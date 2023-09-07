@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.service.admin;
 
+import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,7 @@ public class AdminOperationService {
     }
 
     public String startOperation(String operationTypeId, Map<String, String> attributes, String payload) {
-        OperationTypeId opId;
-        try {
-            opId = OperationTypeId.valueOf(operationTypeId.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new DSMBadRequestException("Invalid operation type ID: " + operationTypeId);
-        }
+        OperationTypeId opId = validateOperationTypeId(operationTypeId);
 
         // trivial for now... this will get expanded as we add more operations
         AdminOperation adminOperation;
@@ -46,7 +42,7 @@ public class AdminOperationService {
         }
 
         // create operation record
-        int operationId = 42;
+        int operationId = AdminOperationRecord.createOperationRecord(opId, userId);
 
         // call service on a thread
         Thread t = new Thread(new RunOperation(adminOperation, opId, operationId));
@@ -55,12 +51,33 @@ public class AdminOperationService {
         return Integer.toString(operationId);
     }
 
-    public String getOperationResults(String operationId) {
-        return "not implemented";
+    private OperationTypeId validateOperationTypeId(String operationType) {
+        try {
+            return OperationTypeId.valueOf(operationType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new DSMBadRequestException("Invalid operation type ID: " + operationType);
+        }
     }
 
-    public String getOperationTypeResults(String jobId) {
-        return "not implemented";
+    public AdminOperationResponse getOperationResults(String operationId) {
+        try {
+            AdminOperationResponse.AdminOperationResult result = AdminOperationRecord.getOperationRecord(Integer.parseInt(operationId));
+            if (result == null) {
+                throw new DSMBadRequestException("Operation ID does not match any operations: " + operationId);
+            }
+            return new AdminOperationResponse(result);
+        } catch (NumberFormatException e) {
+            throw new DSMBadRequestException("Invalid operation ID format (expecting integer): " + operationId);
+        }
+    }
+
+    public AdminOperationResponse getOperationTypeResults(String operationTypeId) {
+        OperationTypeId opId = validateOperationTypeId(operationTypeId);
+        List<AdminOperationResponse.AdminOperationResult> results = AdminOperationRecord.getOperationTypeRecords(opId.name());
+        if (results.isEmpty()) {
+            throw new DSMBadRequestException("Operation type ID does not match any operations: " + operationTypeId);
+        }
+        return new AdminOperationResponse(results);
     }
 
 

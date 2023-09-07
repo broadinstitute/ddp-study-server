@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.onchistory.CodeStudyColumnsProvider;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryUploadService;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryValidationException;
+import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
 import spark.Request;
@@ -22,7 +23,7 @@ public class OncHistoryUploadRoute extends RequestHandler {
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
-        String realm = RouteUtil.requireRealm(request);
+        String realm = RouteUtil.requireParam(request, RoutePath.REALM);
 
         if (!canUploadOncHistory(realm, userId)) {
             throw new AuthorizationException("User is not authorized to upload onc history");

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.service.admin;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,7 +16,16 @@ public class AdminOperationResponse {
     private List<AdminOperationResult> results;
 
     public AdminOperationResponse() {
-        results = Collections.emptyList();
+        results = new ArrayList<>();
+    }
+
+    public AdminOperationResponse(AdminOperationResult result) {
+        results = new ArrayList<>();
+        addResult(result);
+    }
+
+    public AdminOperationResponse(List<AdminOperationResult> results) {
+        this.results = results;
     }
 
     public void addResult(AdminOperationResult result) {
