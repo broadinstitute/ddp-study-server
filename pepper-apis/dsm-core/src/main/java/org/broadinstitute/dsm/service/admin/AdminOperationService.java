@@ -8,6 +8,12 @@ import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService;
 
 @Slf4j
 public class AdminOperationService {
+
+    public enum OperationTypeId {
+        SYNC_REFERRAL_SOURCE
+    }
+
+
     private final String userId;
     private final String realm;
 
@@ -53,13 +59,6 @@ public class AdminOperationService {
         return "not implemented";
     }
 
-    public static void updateJobRecord(int jobId, String status, String results) {
-
-    }
-
-    public enum OperationTypeId {
-        SYNC_REFERRAL_SOURCE
-    }
 
     private static class RunOperation implements Runnable {
         private final AdminOperation adminOperation;

@@ -4,6 +4,7 @@ import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.isProband;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
+import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -44,6 +46,7 @@ public class ReferralSourceService implements AdminOperation {
     public enum UpdateStatus {
         UPDATED,
         NOT_UPDATED,
+        NA_REFERRAL_SOURCE,
         ERROR,
         NO_ACTIVITIES,
         NO_REFERRAL_SOURCE_IN_ACTIVITY,
@@ -52,6 +55,7 @@ public class ReferralSourceService implements AdminOperation {
 
     private static final String RGP_REALM = "RGP";
     protected static final String RGP_PARTICIPANT_DATA = "RGP_PARTICIPANTS";
+    protected static final String NA_REF_SOURCE = "NA";
     private static final Gson gson = new Gson();
     private String userId;
     private String esIndex;
@@ -80,6 +84,7 @@ public class ReferralSourceService implements AdminOperation {
         }
 
         ParticipantDataDao dataDao = new ParticipantDataDao();
+        participantDataByPtpId = new HashMap<>();
 
         // handle optional list of ptps
         if (!StringUtils.isBlank(payload)) {
@@ -120,7 +125,7 @@ public class ReferralSourceService implements AdminOperation {
         // update job log record
         try {
             String json = gson.toJson(updateLog);
-            log.info("[ReferralSourceService.run] Log:\n {}", json);
+            AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED, json);
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
         }
@@ -153,6 +158,9 @@ public class ReferralSourceService implements AdminOperation {
         }
 
         String refSourceId = convertReferralSources(refSources);
+        if (refSourceId.equals(NA_REF_SOURCE)) {
+            return UpdateStatus.NA_REFERRAL_SOURCE;
+        }
 
         List<ParticipantData> rgpData = dataList.stream().filter(
                 participantDataDto -> {
@@ -186,7 +194,6 @@ public class ReferralSourceService implements AdminOperation {
     private boolean updateParticipantData(ParticipantData participantData, String ddpParticipantId, String refSourceId) {
         String msg = String.format("for field type %s, participant %s, participantDataId %s in realm %s",
                 RGP_PARTICIPANT_DATA, ddpParticipantId, participantData.getParticipantDataId(), RGP_REALM);
-        log.info("Updating REFERRAL_SOURCE data {}", msg);
 
         try {
             Map<String, String> props = getDataMap(participantData);
@@ -194,10 +201,12 @@ public class ReferralSourceService implements AdminOperation {
                 throw new DsmInternalError("Participant data empty " + msg);
             }
 
-            // do not overwrite an existing referral source
-            if (!isProband(props) || props.containsKey(DBConstants.REFERRAL_SOURCE_ID)) {
+            // do not overwrite an existing referral source, unless marked as "NA" which is a placeholder
+            if (!isProband(props) || (props.containsKey(DBConstants.REFERRAL_SOURCE_ID)
+                    && !props.get(DBConstants.REFERRAL_SOURCE_ID).equals(NA_REF_SOURCE))) {
                 return false;
             }
+            log.info("Updating REFERRAL_SOURCE data {}", msg);
             props.put(DBConstants.REFERRAL_SOURCE_ID, refSourceId);
             ParticipantDataDao dataDao = new ParticipantDataDao();
             dataDao.updateParticipantDataColumn(

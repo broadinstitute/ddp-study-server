@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
+import static org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService.NA_REF_SOURCE;
 import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.isProband;
 
 import java.time.Instant;
@@ -221,8 +222,21 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
             Assert.fail("Exception from updateReferralSource: " + e);
         }
 
-        // does not already have a REFERRAL_SOURCE and ptp is proband
+        // has a non-NA REFERRAL_SOURCE and ptp is proband
         dataMap.put(FamilyMemberConstants.MEMBER_TYPE, FamilyMemberConstants.MEMBER_TYPE_SELF);
+        dataMap.put(DBConstants.REFERRAL_SOURCE_ID, "TWITTER");
+        testParticipantData.setData(gson.toJson(dataMap));
+        updateParticipantData(testParticipantData);
+        try {
+            ReferralSourceService.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
+                    List.of(testParticipantData), activities);
+            Assert.assertEquals(ReferralSourceService.UpdateStatus.NOT_UPDATED, res);
+        } catch (Exception e) {
+            Assert.fail("Exception from updateReferralSource: " + e);
+        }
+
+        // has a NA REFERRAL_SOURCE and ptp is proband
+        dataMap.put(DBConstants.REFERRAL_SOURCE_ID, NA_REF_SOURCE);
         testParticipantData.setData(gson.toJson(dataMap));
         updateParticipantData(testParticipantData);
         try {
