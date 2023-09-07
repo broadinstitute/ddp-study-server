@@ -17,8 +17,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -99,29 +101,31 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             }
         }
 
+        Collection<String> toEmailList = message.getDistributionList();
+
         //skip emails for PlayWright generated users / Email deny list
         if (!emailDenyPatterns.isEmpty()) {
-            boolean hasDenyListEmail = false;
-            List<String> nonDenyEmailList = new ArrayList<>();
-            for (String toAddress : message.getDistributionList()) {
-                boolean isDenyEmail = false;
-                Email toEmail = new Email(toAddress, toAddress);
+            //collect emails from actual distribution list (DL) that matches deny patterns and remove from original email DL.
+            //If no additional valid emails, return... else continue with filtered new DL.
+            Collection<String> denyEmailList = new HashSet<>();
+            for (String toAddress : toEmailList) {
                 for (String emailPattern : emailDenyPatterns) {
                     Pattern pattern = Pattern.compile(emailPattern);
-                    Matcher matcher = pattern.matcher(toEmail.getEmail());
+                    Matcher matcher = pattern.matcher(toAddress);
                     if (matcher.find()) {
-                        isDenyEmail = true;
-                        hasDenyListEmail = true; //to handle email DL with a PW test user and other emails
-                        break;
+                        denyEmailList.add(toAddress);
+                        break; //email matches pattern, skip checking rest of the patterns
                     }
                 }
-                if (!isDenyEmail) {
-                    nonDenyEmailList.add(toEmail.getEmail());
-                }
             }
-            if (hasDenyListEmail && nonDenyEmailList.isEmpty()) {
-                log.debug("Skipping sending email to PW user/Deny email :: {} ", message.getDistributionList());
-                return;
+            if (!denyEmailList.isEmpty()) {
+                //remove deny emails from actual email DL
+                toEmailList.removeAll(denyEmailList);
+                //if no additional non-deny emails, just return
+                if (toEmailList.isEmpty()) {
+                    log.debug("Skipping sending email to PW user/Deny email :: {} ", denyEmailList);
+                    return;
+                }
             }
         }
 
@@ -146,7 +150,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         }
 
         Personalization personalization = new Personalization();
-        for (String toAddress : message.getDistributionList()) {
+        for (String toAddress : toEmailList) {
             Email toEmail = new Email(toAddress, toAddress);
             personalization.addTo(toEmail);
             if (skippingPdfs && hasPdfConfiguration) {
@@ -177,7 +181,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         }
 
         String versionUsed = versionResult.getBody();
-        String distributionList = StringUtils.join(message.getDistributionList(), " ");
+        String distributionList = StringUtils.join(toEmailList, " ");
 
         var sendResult = sendGrid.sendMail(mail);
 
