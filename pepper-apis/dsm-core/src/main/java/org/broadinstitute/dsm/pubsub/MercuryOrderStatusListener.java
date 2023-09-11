@@ -11,26 +11,31 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
+import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class MercuryOrderStatusListener {
-    private static final Logger logger = LoggerFactory.getLogger(MercuryOrderStatusListener.class);
-
+    private MercuryOrderStatusListener(){
+        throw new IllegalStateException("Utility class");
+    }
     public static void subscribeToOrderStatus(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
+            String messageId = message.getMessageId();
             // Handle incoming message, then ack the received message.
-            logger.info("Got STATUS message with Id: " + message.getMessageId());
-
+            log.info(String.format("Got STATUS message with Id: %s", messageId));
             try {
                 processOrderStatus(message);
-                logger.info("Processing the message finished");
+                log.info("Processing the message finished");
+                consumer.ack();
+            } catch (DSMPubSubException error) {
+                log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
                 consumer.ack();
             } catch (Exception ex) {
-                logger.info("about to nack the message", ex);
+                log.info("about to nack the message", ex);
                 consumer.nack();
                 ex.printStackTrace();
             }
@@ -43,13 +48,13 @@ public class MercuryOrderStatusListener {
                 .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
-            logger.info("Started pubsub subscription receiver for mercury order status subscription");
+            log.info("Started pubsub subscription receiver for mercury order status subscription");
         } catch (TimeoutException e) {
-            throw new RuntimeException("Timed out while starting pubsub subscription for mercury order status", e);
+            throw new DSMPubSubException("Timed out while starting pubsub subscription for mercury order status", e);
         }
     }
 
-    private static void processOrderStatus(PubsubMessage message) throws Exception {
+    private static void processOrderStatus(PubsubMessage message) throws DSMPubSubException {
         String data = message.getData().toStringUtf8();
         BaseMercuryStatusMessage baseMercuryStatusMessage = new Gson().fromJson(data, BaseMercuryStatusMessage.class);
         MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage, data);
