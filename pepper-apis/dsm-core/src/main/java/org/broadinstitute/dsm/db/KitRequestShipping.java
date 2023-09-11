@@ -764,13 +764,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
         } else {
-            if (kitTypeId != null) {
-                if (StringUtils.isNotBlank(realm) && kitTypeId != null) {
+            if (kitTypeId != null && kitTypeId != null) {
                     String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE_ID));
                     stmt = conn.prepareStatement(query);
                     stmt.setString(1, realm);
                     stmt.setInt(2, kitTypeId);
-                }
             } else if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(type)) {
                 String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE));
                 stmt = conn.prepareStatement(query);
