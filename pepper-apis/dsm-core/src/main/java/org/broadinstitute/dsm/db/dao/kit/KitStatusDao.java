@@ -160,6 +160,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                                 NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.DISCARD_DATE)))
                         .withDiscardBy(
                                 NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DISCARD_BY), users))
+                        .withCurrentStatus(NonPepperStatusKitService.calculateCurrentStatus(foundKitResults))
                         .build();
             } catch (SQLException e) {
                 throw new DsmInternalError("Error building the NonPepperKitStatusDto object from resultSet", e);

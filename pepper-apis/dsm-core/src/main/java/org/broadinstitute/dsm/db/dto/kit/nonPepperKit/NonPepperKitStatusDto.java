@@ -28,6 +28,7 @@ public class NonPepperKitStatusDto {
     private String errorMessage;
     private String discardDate;
     private String discardBy;
+    private String currentStatus;
 
     public NonPepperKitStatusDto() {
     }
@@ -55,6 +56,7 @@ public class NonPepperKitStatusDto {
         this.errorMessage = builder.errorMessage;
         this.discardDate = builder.discardDate;
         this.discardBy = builder.discardBy;
+        this.currentStatus = builder.currentStatus;
     }
 
     public static class Builder {
@@ -78,10 +80,8 @@ public class NonPepperKitStatusDto {
         private String errorMessage;
         private String discardDate;
         private String discardBy;
+        private String currentStatus;
 
-
-        public Builder() {
-        }
 
         public Builder withJuniperKitId(String juniperKitId) {
             this.juniperKitId = juniperKitId;
@@ -175,6 +175,11 @@ public class NonPepperKitStatusDto {
 
         public Builder withDiscardBy(String discardBy) {
             this.discardBy = discardBy;
+            return this;
+        }
+
+        public Builder withCurrentStatus(String currentStatus) {
+            this.currentStatus = currentStatus;
             return this;
         }
 
