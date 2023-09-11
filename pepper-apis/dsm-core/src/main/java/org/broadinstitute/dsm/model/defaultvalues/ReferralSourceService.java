@@ -68,21 +68,25 @@ public class ReferralSourceService implements AdminOperation {
      * Validate input and retrieve participant data, during synchronous part of operation handling
      *
      * @param userId ID of user performing operation
+     * @param realm currently only supports RGP realm
+     * @param attributes unused
      * @param payload request body, if any, as ReferralSourceRequest
      */
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
         this.userId = userId;
 
+        // this class currently only supports RGP realm, since it is the ony realm that supports this feature
+        // recode the RGP constants in this class if that ever changes
         if (!realm.equalsIgnoreCase(RGP_REALM)) {
             throw new DsmInternalError("Invalid realm for ReferralSourceService: " + realm);
         }
-        DDPInstance instance = DDPInstance.getDDPInstance(RGP_REALM);
+        DDPInstance instance = DDPInstance.getDDPInstance(realm);
         if (instance == null) {
-            throw new DsmInternalError("Invalid realm: " + RGP_REALM);
+            throw new DsmInternalError("Invalid realm: " + realm);
         }
         esIndex = instance.getParticipantIndexES();
         if (StringUtils.isEmpty(esIndex)) {
-            throw new DsmInternalError("No ES participant index for study " + RGP_REALM);
+            throw new DsmInternalError("No ES participant index for study " + realm);
         }
 
         ParticipantDataDao dataDao = new ParticipantDataDao();
@@ -179,6 +183,7 @@ public class ReferralSourceService implements AdminOperation {
             return UpdateStatus.NA_REFERRAL_SOURCE;
         }
 
+        // only need the RGP_PARTICIPANT_DATA type ParticipantData
         List<ParticipantData> rgpData = dataList.stream().filter(
                 participantDataDto -> {
                     if (participantDataDto.getFieldTypeId().isPresent()) {

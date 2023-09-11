@@ -106,7 +106,7 @@ public class ParticipantData {
 
     public String getRequiredDdpParticipantId() {
         if (StringUtils.isBlank(ddpParticipantId)) {
-            throw new DsmInternalError("Assert: ddpParticipantId is not blank");
+            throw new DsmInternalError("Error, ddpParticipantId should not be blank");
         }
         return ddpParticipantId;
     }
