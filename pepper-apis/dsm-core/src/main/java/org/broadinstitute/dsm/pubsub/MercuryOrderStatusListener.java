@@ -34,8 +34,9 @@ public class MercuryOrderStatusListener {
             } catch (DSMPubSubException error) {
                 log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
                 consumer.ack();
+                error.printStackTrace();
             } catch (Exception ex) {
-                log.info("about to nack the message", ex);
+                log.error("Unexpected error: about to nack the message", ex);
                 consumer.nack();
                 ex.printStackTrace();
             }
