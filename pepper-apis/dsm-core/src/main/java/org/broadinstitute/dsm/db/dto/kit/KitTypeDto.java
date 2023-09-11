@@ -17,5 +17,6 @@ public class KitTypeDto {
     Boolean requiresInsertInKitTracking;
     Boolean noReturn;
     String sampleType;
+    String kitTypeDisplayName;
 
 }

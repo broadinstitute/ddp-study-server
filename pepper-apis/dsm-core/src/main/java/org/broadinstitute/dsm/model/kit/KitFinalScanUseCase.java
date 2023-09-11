@@ -151,7 +151,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                  return result;
              }
             KitRequestShipping rgpRnaKit =
-                    subkits.stream().filter(subkit -> subkit.getKitTypeName().contains("RNA")).findFirst().orElseThrow();
+                    subkits.stream().filter(subkit -> subkit.getKitTypeName().equals("RNA")).findFirst().orElseThrow();
             result = checkForKitErrors(rgpRnaKit, kitLabel, rgpRnaKit.getDdpLabel());
             if (!result.isEmpty()) {
                 return result;

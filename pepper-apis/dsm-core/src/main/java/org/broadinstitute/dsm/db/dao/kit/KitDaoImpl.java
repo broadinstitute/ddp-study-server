@@ -15,6 +15,7 @@ import java.util.Optional;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -270,7 +271,7 @@ public class KitDaoImpl implements KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultException)) {
-            throw new RuntimeException("Error inserting kit with dsm_kit_request_id: "
+            throw new DsmInternalError("Error inserting kit with dsm_kit_request_id: "
                     + kitRequestShipping.getDsmKitRequestId(), results.resultException);
         }
         return (int) results.resultValue;
@@ -304,7 +305,7 @@ public class KitDaoImpl implements KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultException)) {
-            throw new RuntimeException("Error inserting kit request for participant id: "
+            throw new DsmInternalError("Error inserting kit request for participant id: "
                     + kitRequestShipping.getDdpParticipantId(), results.resultException);
         }
         return (int) results.resultValue;
@@ -323,7 +324,7 @@ public class KitDaoImpl implements KitDao {
                         dbVals.resultValue = getKitRequestShipping(rs);
                     }
                     if (numRows > 1) {
-                        throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitRequestId);
+                        throw new DsmInternalError("Found " + numRows + " kits for dsm_kit_request_id " + kitRequestId);
                     }
                 }
             } catch (SQLException ex) {
@@ -333,7 +334,7 @@ public class KitDaoImpl implements KitDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId,
+            throw new DsmInternalError("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId,
                     results.resultException);
         }
         return Optional.ofNullable((KitRequestShipping) results.resultValue);
@@ -352,7 +353,7 @@ public class KitDaoImpl implements KitDao {
                         dbVals.resultValue = getKitRequestShipping(rs);
                     }
                     if (numRows > 1) {
-                        throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitId);
+                        throw new DsmInternalError("Found " + numRows + " kits for dsm_kit_request_id " + kitId);
                     }
                 }
             } catch (SQLException ex) {
@@ -362,7 +363,7 @@ public class KitDaoImpl implements KitDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitId,
+            throw new DsmInternalError("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitId,
                     results.resultException);
         }
         return Optional.ofNullable((KitRequestShipping) results.resultValue);
@@ -382,7 +383,7 @@ public class KitDaoImpl implements KitDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error deleting kit request with id: " + kitRequestId, simpleResult.resultException);
+            throw new DsmInternalError("Error deleting kit request with id: " + kitRequestId, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
@@ -401,7 +402,7 @@ public class KitDaoImpl implements KitDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error deleting kit with id: " + kitId, simpleResult.resultException);
+            throw new DsmInternalError("Error deleting kit with id: " + kitId, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
@@ -444,7 +445,7 @@ public class KitDaoImpl implements KitDao {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException != null) {
-                throw new RuntimeException("Error getting kit request with ddp label " + ddpLabel, dbVals.resultException);
+                throw new DsmInternalError("Error getting kit request with ddp label " + ddpLabel, dbVals.resultException);
             }
             return dbVals;
         });
@@ -492,7 +493,7 @@ public class KitDaoImpl implements KitDao {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException != null) {
-                throw new RuntimeException("Error getting kit request with ddp label " + ddpLabel, dbVals.resultException);
+                throw new DsmInternalError("Error getting kit request with ddp label " + ddpLabel, dbVals.resultException);
             }
             logger.info(String.format("Found %d subkits with ddp Label %s", subkits.size(), ddpLabel));
             return dbVals;
@@ -525,7 +526,8 @@ public class KitDaoImpl implements KitDao {
                         rs.getString(DBConstants.UPS_RETURN_STATUS),
                         (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null, null, null,
-                        null, null, rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH));
+                        null, null, rs.getString(DBConstants.KIT_LABEL_PREFIX), rs.getLong(DBConstants.KIT_LABEL_LENGTH),
+                        rs.getString(DBConstants.KIT_DISPLAY_NAME));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);
@@ -588,10 +590,10 @@ public class KitDaoImpl implements KitDao {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException != null) {
-                throw new RuntimeException("Error checking if kit exists in tracking table ", dbVals.resultException);
+                throw new DsmInternalError("Error checking if kit exists in tracking table ", dbVals.resultException);
             }
             if (dbVals.resultValue == null) {
-                throw new RuntimeException("Error checking if kit exists in tracking table ");
+                throw new DsmInternalError("Error checking if kit exists in tracking table ");
             }
             logger.info("Found " + dbVals.resultValue + " kit in tracking table w/ kit_label " + kitLabel);
             return dbVals;
@@ -619,7 +621,7 @@ public class KitDaoImpl implements KitDao {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException != null) {
-                throw new RuntimeException("Error getting kit request with shortID " + hruid, dbVals.resultException);
+                throw new DsmInternalError("Error getting kit request with shortID " + hruid, dbVals.resultException);
             }
             return dbVals;
         });
@@ -639,7 +641,7 @@ public class KitDaoImpl implements KitDao {
                     dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "dsm_kit_id "
                             + kitRequestShipping.getDsmKitId() + " does not exist or already has a Kit Label");
                 } else {
-                    logger.info("Updated kitRequests for pt w/ shortId " + kitRequestShipping.getHruid());
+                    logger.info(String.format("Updated kitRequests for pt w/ shortId %s", kitRequestShipping.getHruid()));
                 }
             } catch (Exception ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
@@ -662,7 +664,7 @@ public class KitDaoImpl implements KitDao {
                 return true;
             }
         } catch (Exception ex) {
-            throw new RuntimeException(String.format("Error getting kits for %s", ddpParticipantId));
+            throw new DsmInternalError(String.format("Error getting kits for %s", ddpParticipantId));
         }
         return false;
     }

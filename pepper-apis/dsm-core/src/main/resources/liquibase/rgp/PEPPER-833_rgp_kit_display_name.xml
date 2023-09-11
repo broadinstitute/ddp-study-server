@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="PEPPER-833_rgp_kit_type_display_name" author="pegah">
+        <addColumn tableName="kit_type">
+            <column name="kit_display_name" type="VARCHAR(500)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="PEPPER-833_rgp_blood" author="pegah">
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="BLOOD"></column>
+            <column name="bsp_material_type" value="Whole Blood Streck Cell-Free Preserved"></column>
+            <column name="bsp_receptacle_type" value="Vacutainer Cell-Free DNA Tube Camo-Top [10mL]"></column>
+            <column name="requires_insert_in_kit_tracking" value="1"></column>
+            <column name="kit_display_name" value="BLOOD &amp; RNA"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="PEPPER-833_update_rgp_blood_subkit" author="pegah">
+        <update tableName="sub_kits_settings">
+            <column name="kit_type_id" valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_display_name = 'BLOOD &amp; RNA' )"></column>
+            <where>
+                sub_kits_settings_id = (SELECT sub_kits_settings_id FROM
+                (SELECT sub_kits_settings_id FROM (SELECT * FROM sub_kits_settings) as sub
+                LEFT JOIN kit_type ktype ON (ktype.kit_type_id = sub.kit_type_id)
+                LEFT JOIN ddp_kit_request_settings dkrs ON (dkrs.ddp_kit_request_settings_id = sub.ddp_kit_request_settings_id)
+                LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = dkrs.ddp_instance_id)
+                WHERE realm.instance_name = "RGP" AND ktype.kit_type_name = "BLOOD") as sth
+                )
+            </where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
