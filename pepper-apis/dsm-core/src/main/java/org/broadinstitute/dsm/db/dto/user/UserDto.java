@@ -46,6 +46,7 @@ public class UserDto {
     public Optional<String> getPhoneNumber() {
         return Optional.ofNullable(phoneNumber);
     }
+
     public Optional<Integer> getIsActive() {
         return Optional.ofNullable(isActive);
     }
