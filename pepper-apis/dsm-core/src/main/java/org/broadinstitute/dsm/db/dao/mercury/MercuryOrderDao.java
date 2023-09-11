@@ -70,10 +70,15 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     String errorMessage = "Error getting possible mercury orders for participant %s";
 
+    private static final int MAX_CHAR_ALLOWED = 2000;
+
 
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) throws DSMPubSubException {
         long statusDate = System.currentTimeMillis();
-        String messageString = msgData.length() > 2000 ? msgData.substring(0, 1999) : msgData;
+        //check the length of fields to make sure they fit in the database
+        String messageString = msgData.substring(0, Math.min(msgData.length(), MAX_CHAR_ALLOWED));
+        String details = baseMercuryStatusMessage.getStatus().getDetails();
+        String statusDetail = details.substring(0, Math.min(details.length(), MAX_CHAR_ALLOWED));
         AtomicReference<ClinicalOrder> clinicalOrderAtomicReference = new AtomicReference<>();
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
@@ -82,7 +87,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 stmt.setString(1, mercuryStatusMessage.getOrderStatus());
                 stmt.setLong(2, statusDate);
                 stmt.setString(3, mercuryStatusMessage.getPdoKey());
-                stmt.setString(4, mercuryStatusMessage.getDetails());
+                stmt.setString(4, statusDetail);
                 stmt.setString(5, messageString);
                 stmt.setString(6, mercuryStatusMessage.getOrderID());
                 int result = stmt.executeUpdate();
