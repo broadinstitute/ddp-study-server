@@ -45,6 +45,7 @@ public class InstitutionRoute extends RequestHandler {
             return MedicalRecord.getDDPInstitutionInfo(ddpInstance, ddpParticipantId);
 
         } else if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
+            String realm = RouteUtil.requireRealm(request);
             UpdateDestructionPolicyRequest req;
             try {
                 req = new Gson().fromJson(requestBody, UpdateDestructionPolicyRequest.class);
@@ -61,6 +62,7 @@ public class InstitutionRoute extends RequestHandler {
             OncHistoryDetail.updateDestructionPolicy(
                     RouteUtil.requireParam(RequestParameter.POLICY, req.getPolicy()),
                     RouteUtil.requireParam(RequestParameter.FACILITY, req.getFacility()),
+                    realm,
                     RouteUtil.requireParam(RequestParameter.USER_MAIL, req.getUserMail())
             );
             return new Result(200);
@@ -73,6 +75,7 @@ public class InstitutionRoute extends RequestHandler {
     private static class UpdateDestructionPolicyRequest {
         private String facility;
         private String policy;
+        private String realm;
         private String userId;
         private String userMail;
     }

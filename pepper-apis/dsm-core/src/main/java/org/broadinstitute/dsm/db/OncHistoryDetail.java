@@ -103,8 +103,13 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "request = ?, destruction_policy = ?, last_changed = ?, changed_by = ?";
 
     private static final String SQL_UPDATE_DESTRUCTION_POLICY =
-            "UPDATE ddp_onc_history_detail SET destruction_policy = ?, last_changed = ?, changed_by = ? "
-                    + "WHERE facility = ?";
+            "UPDATE ddp_onc_history_detail onc "
+                    + "LEFT JOIN ddp_medical_record med ON med.medical_record_id = onc.medical_record_id "
+                    + "LEFT JOIN ddp_institution di ON di.institution_id = med.institution_id "
+                    + "LEFT JOIN ddp_participant dp ON dp.participant_id = di.participant_id "
+                    + "LEFT JOIN ddp_instance instance ON dp.ddp_instance_id = instance.ddp_instance_id "
+                    + "SET onc.destruction_policy = ?, onc.last_changed = ?, onc.changed_by = ? "
+                    + "WHERE onc.facility = ? AND instance.instance_name = ?";
 
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
     private int oncHistoryDetailId;
@@ -463,7 +468,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     /**
      * Note: this method does not create all OncHistoryDetail fields. Add those fields as needed.
      */
-    public static int creatOncHistoryDetail(OncHistoryDetail oncHistoryDetail) {
+    public static int createOncHistoryDetail(OncHistoryDetail oncHistoryDetail) {
         int medicalRecordId = oncHistoryDetail.getMedicalRecordId();
         return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_CREATE_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
@@ -542,13 +547,15 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         return mrId.intValue();
     }
 
-    public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String user) {
+    public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
+                                               @NonNull String user) {
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_DESTRUCTION_POLICY)) {
                 stmt.setString(1, policy);
                 stmt.setString(2, String.valueOf(System.currentTimeMillis()));
                 stmt.setString(3, user);
                 stmt.setString(4, facility);
+                stmt.setString(5, realm);
                 return stmt.executeUpdate();
             } catch (SQLException e) {
                 throw new DsmInternalError("Error updating destruction policy for facility " + facility, e);

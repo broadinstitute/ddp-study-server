@@ -68,18 +68,18 @@ public class OncHistoryDetailTest extends DbTxnBaseTest {
         OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
         try {
             OncHistoryDetail rec1 = builder.build();
-            recId1 = OncHistoryDetail.creatOncHistoryDetail(rec1);
+            recId1 = OncHistoryDetail.createOncHistoryDetail(rec1);
 
             builder.withDestructionPolicy("3");
             OncHistoryDetail rec2 = builder.build();
-            recId2 = OncHistoryDetail.creatOncHistoryDetail(rec2);
+            recId2 = OncHistoryDetail.createOncHistoryDetail(rec2);
 
             builder.withFacility("Other office");
             OncHistoryDetail rec3 = builder.build();
-            recId3 = OncHistoryDetail.creatOncHistoryDetail(rec3);
+            recId3 = OncHistoryDetail.createOncHistoryDetail(rec3);
 
             // update and verify
-            OncHistoryDetail.updateDestructionPolicy("5", "Office", TEST_USER);
+            OncHistoryDetail.updateDestructionPolicy("5", "Office", ddpInstanceDto.getInstanceName(), TEST_USER);
 
             OncHistoryDetailDto updateRec1 = oncHistoryDetailDao.get(recId1).orElseThrow();
             Assert.assertEquals("5", updateRec1.getColumnValues().get("destruction_policy"));
@@ -88,8 +88,8 @@ public class OncHistoryDetailTest extends DbTxnBaseTest {
             OncHistoryDetailDto updateRec3 = oncHistoryDetailDao.get(recId3).orElseThrow();
             Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
         } catch (Exception e) {
-            Assert.fail("Unexpected exception" + e.toString());
             e.printStackTrace();
+            Assert.fail("Unexpected exception" + e);
         } finally {
             if (recId1 != -1) {
                 oncHistoryDetailDao.delete(recId1);
