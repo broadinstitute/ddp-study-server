@@ -19,7 +19,7 @@ public class BaseCollectionMigratorTest {
         baseCollectionMigrator.transformObject(mockOncHistoryDetail());
         Map<String, Object> objectMap = baseCollectionMigrator.transformedList.get(0);
         Object primaryId = objectMap.get("oncHistoryDetailId");
-        Assert.assertEquals(23L, primaryId);
+        Assert.assertEquals(23, primaryId);
 
         baseCollectionMigrator.transformObject(mockTissues());
         Map<String, Object> stringObjectMap = baseCollectionMigrator.transformedList.get(0);

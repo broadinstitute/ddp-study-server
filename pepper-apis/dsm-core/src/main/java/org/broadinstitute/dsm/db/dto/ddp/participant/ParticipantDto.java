@@ -47,10 +47,6 @@ public class ParticipantDto implements Cloneable {
         this.assigneeIdTissue = Optional.ofNullable(assigneeIdTissue);
     }
 
-    public int getParticipantIdOrThrow() {
-        return participantId.orElseThrow();
-    }
-
     @Override
     public ParticipantDto clone() {
         try {

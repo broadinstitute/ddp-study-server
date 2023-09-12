@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db;
 
 import java.time.Instant;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
@@ -18,6 +19,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class OncHistoryDetailTest extends DbTxnBaseTest {
 
     private static final String TEST_USER = "TEST_USER";
@@ -80,7 +82,11 @@ public class OncHistoryDetailTest extends DbTxnBaseTest {
             OncHistoryDetail.updateDestructionPolicy("5", "Office", TEST_USER);
 
             OncHistoryDetailDto updateRec1 = oncHistoryDetailDao.get(recId1).orElseThrow();
-            Assert.assertEquals("5", updateRec1.getColumnValues().get("POLICY"));
+            Assert.assertEquals("5", updateRec1.getColumnValues().get("destruction_policy"));
+            OncHistoryDetailDto updateRec2 = oncHistoryDetailDao.get(recId2).orElseThrow();
+            Assert.assertEquals("5", updateRec2.getColumnValues().get("destruction_policy"));
+            OncHistoryDetailDto updateRec3 = oncHistoryDetailDao.get(recId3).orElseThrow();
+            Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
         } catch (Exception e) {
             Assert.fail("Unexpected exception" + e.toString());
             e.printStackTrace();
