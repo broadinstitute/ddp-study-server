@@ -24,13 +24,12 @@ import org.broadinstitute.dsm.statics.DBConstants;
 @Slf4j
 public class NonPepperStatusKitService {
     private KitStatusDao kitStatusDao;
-    private static final String QUEUE = "Queue";
+    public static final String QUEUE = "Queue";
     private static final String ERROR = "Error";
     private static final String SENT = "Sent";
     private static final String RECEIVED = "Received";
-    private static final String KIT_WITHOUT_LABEL = "Kit Without Label";
+    public static final String KIT_WITHOUT_LABEL = "Kit Without Label";
     private static final String DEACTIVATED = "Deactivated";
-    private static final String KIT_WITHOUT_LABEL_PENDING_LABEL = "Kit Without Label - Label Pending";
 
     public NonPepperStatusKitService() {
         this.kitStatusDao = new KitStatusDao();
@@ -69,12 +68,10 @@ public class NonPepperStatusKitService {
                 return SENT;
             } else if (isReceivedKit(foundKitResults)) {
                 return RECEIVED;
-            } else if (isNewKit(foundKitResults)) {
+            } else if (isNewKit(foundKitResults) || isEasyPostLabelTriggeredKit(foundKitResults)) {
                 return KIT_WITHOUT_LABEL;
             } else if (isDeactivatedKit(foundKitResults)){
                 return DEACTIVATED;
-            } else if (isEasyPostLabelTriggeredKit(foundKitResults)){
-                return KIT_WITHOUT_LABEL_PENDING_LABEL;
             } else {
                 log.error(String.format("Unable to decide the current status of kit %s", foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID)));
                 return null;

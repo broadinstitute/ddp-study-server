@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -405,6 +406,15 @@ public class UserAdminTestUtil {
                 throw new DsmInternalError(msg, ex);
             }
         });
+    }
+
+    public void setUpByConfig(String ddpInstanceId, String ddpGroupId) {
+        if (StringUtils.isBlank(ddpInstanceId) || StringUtils.isBlank(ddpGroupId)) {
+            throw new DsmInternalError("Both instanceId and groupId should have values");
+        }
+        initialize();
+        this.ddpInstanceId = Integer.parseInt(ddpInstanceId);
+        this.studyGroupId = Integer.parseInt(ddpGroupId);
     }
 
 }

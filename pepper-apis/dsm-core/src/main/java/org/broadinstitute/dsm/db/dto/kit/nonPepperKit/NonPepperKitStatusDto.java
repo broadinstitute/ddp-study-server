@@ -15,6 +15,7 @@ public class NonPepperKitStatusDto {
     private String participantId;
     private String labelDate;
     private String labelByEmail;
+    private String mfBarcode;
     private String scanDate;
     private String scanByEmail;
     private String receiveDate;
@@ -29,9 +30,8 @@ public class NonPepperKitStatusDto {
     private String discardDate;
     private String discardBy;
     private String currentStatus;
-
-    public NonPepperKitStatusDto() {
-    }
+    private String collaboratorParticipantId;
+    private String collaboratorSampleId;
 
     /**
      * Creates a NonPepperKitStatusDto from a builder
@@ -57,6 +57,9 @@ public class NonPepperKitStatusDto {
         this.discardDate = builder.discardDate;
         this.discardBy = builder.discardBy;
         this.currentStatus = builder.currentStatus;
+        this.collaboratorParticipantId = builder.collaboratorParticipantId;
+        this.collaboratorSampleId = builder.collaboratorSampleId;
+        this.mfBarcode = builder.mfBarcode;
     }
 
     public static class Builder {
@@ -67,6 +70,7 @@ public class NonPepperKitStatusDto {
         private String participantId;
         private String labelDate;
         private String labelByEmail;
+        private String mfBarcode;
         private String scanDate;
         private String scanByEmail;
         private String receiveDate;
@@ -81,7 +85,8 @@ public class NonPepperKitStatusDto {
         private String discardDate;
         private String discardBy;
         private String currentStatus;
-
+        private String collaboratorParticipantId;
+        private String collaboratorSampleId;
 
         public Builder withJuniperKitId(String juniperKitId) {
             this.juniperKitId = juniperKitId;
@@ -105,6 +110,10 @@ public class NonPepperKitStatusDto {
 
         public Builder withLabelByEmail(String labelByEmail) {
             this.labelByEmail = labelByEmail;
+            return this;
+        }
+        public Builder withMfBarcode(String mfBarcode) {
+            this.mfBarcode = mfBarcode;
             return this;
         }
 
@@ -180,6 +189,16 @@ public class NonPepperKitStatusDto {
 
         public Builder withCurrentStatus(String currentStatus) {
             this.currentStatus = currentStatus;
+            return this;
+        }
+
+        public Builder withCollaboratorParticipantId(String collaboratorParticipantId) {
+            this.collaboratorParticipantId = collaboratorParticipantId;
+            return this;
+        }
+
+        public Builder withCollaboratorSampleId(String collaboratorSampleId) {
+            this.collaboratorSampleId = collaboratorSampleId;
             return this;
         }
 

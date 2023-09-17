@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.easypost.exception.EasyPostException;
+import com.easypost.model.Address;
+import com.easypost.model.Parcel;
+import com.easypost.model.PostageLabel;
+import com.easypost.model.Shipment;
+import com.easypost.model.Tracker;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,9 +29,12 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 
@@ -46,24 +54,41 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     static List<String> createdKitIds = new ArrayList<>();
     static DDPInstance ddpInstance;
     final String salivaKitType = "SALIVA";
+    @Mock
+    EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
+    @Mock
+    Address mockEasyPostAddress = mock(Address.class);
+    @Mock
+    Shipment mockEasyPostShipment = mock(Shipment.class);
+    @Mock
+    Parcel mockEasyPostParcel = mock(Parcel.class);
+    @Mock
+    PostageLabel mockParticipantLabel = mock(PostageLabel.class);
+    @Mock
+    Tracker mockShipmentTracker = mock(Tracker.class);
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-    static EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
-
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
 
     @BeforeClass
     public static void setupJuniperBefore() {
-        JuniperSetupUtil juniperSetupUtil = new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject");
-        ;
+
+        JuniperSetupUtil juniperSetupUtil =
+                new JuniperSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group");
         juniperSetupUtil.setupJuniperInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
-        when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
+
     }
 
     @AfterClass
     public static void deleteJuniperInstance() {
         JuniperSetupUtil.deleteKitsArray(createdKitIds);
         JuniperSetupUtil.deleteJuniperInstanceAndSettings();
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        MockitoAnnotations.initMocks(this);
     }
 
     @Test
@@ -87,6 +112,22 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     }
 
     @Test
+    public void testCurrentStatusFieldAfterChanges() {
+        int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
+        try {
+            createAndAssertNonPepperCreation(juniperTestKit);
+            KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.KIT_WITHOUT_LABEL);
+            JuniperSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
+            kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.QUEUE);
+        } finally {
+            createdKitIds.add(juniperTestKit.getJuniperKitId());
+        }
+    }
+
+    @Test
     public void testStatusByJuniperKitId() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
@@ -95,39 +136,75 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
 
             KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
 
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.KIT_WITHOUT_LABEL);
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
     }
 
     @Test
-    public void testStatusByKitIdTest() {
+    public void testStatusByParticipantIdTest() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
         try {
             createAndAssertNonPepperCreation(juniperTestKit);
-            KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand);
+            KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnParticipantId(juniperTestKit.getJuniperParticipantID());
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.KIT_WITHOUT_LABEL);
 
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
     }
 
+    //    PostageLabel participantLabel = participantShipment.getPostageLabel();
+//    Tracker participantTracker = participantShipment.getTracker();
+//                    stmt.setString(1, participantLabel.getLabelUrl());
+//                    stmt.setString(3, participantShipment.getId());
+//                    stmt.setString(5, participantShipment.getTrackingCode());
+//                    stmt.setString(7, participantTracker.getPublicUrl());
+//                    kitRequestShipping.setLabelUrlTo(participantLabel.getLabelUrl());
+//                    kitRequestShipping.setEasypostToId(participantShipment.getId());
+//                    kitRequestShipping.setTrackingToId(participantShipment.getTrackingCode());
     private void createAndAssertNonPepperCreation(JuniperKitRequest juniperTestKit) {
-        List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
-        KitResponse kitResponse = nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
+        when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
+        when(mockEasyPostShipment.getTracker()).thenReturn(mockShipmentTracker);
+        when(mockShipmentTracker.getPublicUrl()).thenReturn("PUBLIC_URL");
+        when(mockParticipantLabel.getLabelUrl()).thenReturn("MOCK_LABEL_URL");
+        when(mockEasyPostAddress.getId()).thenReturn("SOME_STRING");
+        when(mockEasyPostUtil.getEasyPostAddressId(any(), any(), any())).thenReturn("SOME_STRING");
+        try {
+            when(mockEasyPostUtil.createParcel(any(), any(), any(), any())).thenReturn(mockEasyPostParcel);
+            when(mockEasyPostUtil.getAddress(any())).thenReturn(mockEasyPostAddress);
+            when(mockEasyPostUtil.createAddressWithoutValidation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
+                    mockEasyPostAddress);
+            when(mockEasyPostUtil.buyShipment(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mockEasyPostShipment);
+        } catch (EasyPostException e) {
+            throw new RuntimeException(e);
+        }
+        List<KitRequestShipping> oldKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
+        KitResponse kitResponse =
+                nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
         Assert.assertFalse(kitResponse.isError());
         Assert.assertNotNull(kitResponse.getKits());
         Assert.assertEquals(1, kitResponse.getKits().size());
-        Assert.assertEquals(juniperTestKit.getJuniperKitId(), kitResponse.getKits().get(0).getJuniperKitId());
-        Assert.assertNotNull(kitResponse.getKits().get(0).getDsmShippingLabel());
+        NonPepperKitStatusDto kitStatus = kitResponse.getKits().get(0);
+        Assert.assertEquals(juniperTestKit.getJuniperKitId(), kitStatus.getJuniperKitId());
+        Assert.assertNotNull(kitStatus.getDsmShippingLabel());
+        Assert.assertNotNull(kitStatus.getCollaboratorSampleId());
+        Assert.assertNotNull(kitStatus.getCollaboratorParticipantId());
         List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
-        Assert.assertEquals(oldkits.size() + 1, newKits.size());
+        Assert.assertEquals(oldKits.size() + 1, newKits.size());
+        KitRequestShipping newKit =
+                newKits.stream().filter(kitRequestShipping -> kitRequestShipping.getDdpParticipantId()
+                                .equals(juniperTestKit.getJuniperParticipantID()))
+                        .findAny().get();
+        Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + juniperTestKit.getJuniperParticipantID());
+        Assert.assertEquals(newKit.getBspCollaboratorSampleId(),
+                bspPrefix + "_" + juniperTestKit.getJuniperParticipantID() + "_" + salivaKitType);
     }
 
-    private void assertStatusKitResponse(KitResponse kitResponse, JuniperKitRequest juniperTestKit, int testRandomNumber) {
+    private NonPepperKitStatusDto assertStatusKitResponse(KitResponse kitResponse, JuniperKitRequest juniperTestKit, int testRandomNumber,
+                                                          String expectedStatus) {
         Assert.assertNotNull(kitResponse);
         Assert.assertNotNull(kitResponse.getKits());
         Assert.assertEquals(1, kitResponse.getKits().size());
@@ -138,9 +215,14 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         NonPepperKitStatusDto nonPepperKitStatus = kitResponse.getKits().get(0);
         Assert.assertEquals(juniperTestKit.getJuniperKitId(), nonPepperKitStatus.getJuniperKitId());
         Assert.assertEquals(juniperTestKit.getJuniperParticipantID(), nonPepperKitStatus.getParticipantId());
-        Assert.assertEquals("", nonPepperKitStatus.getErrorMessage());
+        Assert.assertTrue(StringUtils.isBlank(nonPepperKitStatus.getErrorMessage()));
         Assert.assertEquals(false, nonPepperKitStatus.getError());
         Assert.assertTrue(StringUtils.isNotBlank(nonPepperKitStatus.getDsmShippingLabel()));
+        Assert.assertNotNull(nonPepperKitStatus.getCurrentStatus());
+        Assert.assertEquals(expectedStatus, nonPepperKitStatus.getCurrentStatus());
+        Assert.assertNotNull(nonPepperKitStatus.getCollaboratorParticipantId());
+        Assert.assertNotNull(nonPepperKitStatus.getCollaboratorSampleId());
+        return nonPepperKitStatus;
     }
 
     private JuniperKitRequest generateJuniperKit(int random) {
@@ -157,7 +239,6 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 + "\"phoneNumber\":\" 111 - 222 - 3344\","
                 + "\"juniperKitId\":\"JuniperTestKitId_" + random + "\","
                 + "\"juniperParticipantID\":\"" + participantId + random + "\","
-                + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
@@ -166,42 +247,11 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
 
     @Test
     public void createNewJuniperKitTest() {
-        String participantId = "OHSALK_";
-        int rand = new Random().nextInt() & Integer.MAX_VALUE;
-        String kitType = salivaKitType;
-        String json = "{ \"firstName\":\"P\","
-                + "\"lastName\":\"T\","
-                + "\"street1\":\"415 Main st\","
-                + "\"street2\":null,"
-                + "\"city\":\"Cambridge\","
-                + "\"state\":\"MA\","
-                + "\"postalCode\":\"02142\","
-                + "\"country\":\"USA\","
-                + "\"phoneNumber\":\" 111 - 222 - 3344\","
-                + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
-                + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"forceUpload\":false,"
-                + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
-        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
-        log.info("Juniper test kit id is {} ", juniperTestKit.getJuniperKitId());
-        when(mockEasyPostUtil.checkAddress(any(), anyString())).thenReturn(true);
+        int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
         try {
-            List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
-            KitResponse kitCreationResponse =
-                    nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
-            List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
-            if (kitCreationResponse.isError()){
-                log.error(kitCreationResponse.getErrorMessage().toString());
-            }
-            Assert.assertFalse(kitCreationResponse.isError());
-            Assert.assertEquals(newKits.size(), oldkits.size() + 1);
-            KitRequestShipping newKit =
-                    newKits.stream().filter(kitRequestShipping -> kitRequestShipping.getDdpParticipantId().equals(participantId + rand))
-                            .findAny().get();
-            Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + participantId + rand);
-            Assert.assertEquals(newKit.getBspCollaboratorSampleId(), bspPrefix + "_" + participantId + rand + "_" + kitType);
+            createAndAssertNonPepperCreation(juniperTestKit);
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
@@ -224,7 +274,6 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 + "\"phoneNumber\":\" 111 - 222 - 3344\","
                 + "\"juniperKitId\":null,"
                 + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
@@ -258,7 +307,6 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 + "\"phoneNumber\":\" 111 - 222 - 3344\","
                 + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
                 + "\"juniperParticipantID\":\"" + participantId + "\","
-                + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
@@ -292,7 +340,6 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 + "\"phoneNumber\":\" 111 - 222 - 3344\","
                 + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
                 + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"forceUpload\":false,"
                 + "\"skipAddressValidation\":false,"
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 

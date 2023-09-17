@@ -1,17 +1,29 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
+import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.KitRequestCreateLabel;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
+import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
+import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 /**
@@ -24,7 +36,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @Slf4j
 public class JuniperSetupUtil {
     private static final String INSERT_JUNIPER_GROUP =
-            "INSERT INTO ddp_group (name) VALUES ('juniper test') ON DUPLICATE KEY UPDATE name = 'juniper test';";
+            "INSERT INTO ddp_group (name) VALUES (?) ON DUPLICATE KEY UPDATE name = 'juniper test';";
     private static final String INSERT_JUNIPER_INSTANCE =
             "INSERT INTO ddp_instance (instance_name, study_guid, display_name, is_active, bsp_organism, "
                     + " collaborator_id_prefix, auth0_token) VALUES (?, ?, ?, 1, 1, ?, 0) ON DUPLICATE KEY UPDATE auth0_token = 0;";
@@ -58,23 +70,28 @@ public class JuniperSetupUtil {
     private static String ddpKitRequestSettingsId;
 
     private static String instanceName;
+    private static String groupName;
     private static String studyGuid;
     private static String displayName;
     private static String collaboratorPrefix;
+    private static String userWithKitShippingAccess;
 
-    public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix) {
+    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
+
+    public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix, String groupName) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.displayName = displayName;
         this.collaboratorPrefix = collaboratorPrefix;
-
+        this.groupName = groupName;
     }
 
-    private static String createDdpGroupForJuniper(Connection conn) throws SQLException {
+    private static String createDdpGroupForJuniper(Connection conn, String groupName) throws SQLException {
         if (StringUtils.isNotBlank(ddpGroupId)) {
             return ddpGroupId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_GROUP, Statement.RETURN_GENERATED_KEYS);
+        stmt.setString(1, groupName);
         int result = stmt.executeUpdate();
         if (result != 1) {
             throw new DsmInternalError("More than 1 row updated");
@@ -97,6 +114,7 @@ public class JuniperSetupUtil {
                 delete(conn, "ddp_instance_group", "instance_group_id", ddpInstanceGroupId);
                 delete(conn, "ddp_instance", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "ddp_group", "group_id", ddpGroupId);
+                cmiAdminUtil.deleteGeneratedData();
             } catch (Exception e) {
                 dbVals.resultException = e;
             }
@@ -167,14 +185,31 @@ public class JuniperSetupUtil {
         }
     }
 
-    public void setupJuniperInstanceAndSettings() {
+    public static void changeKitToQueue(JuniperKitRequest juniperKitRequest, EasyPostUtil mockEasyPostUtil) {
+        KitRequestShipping[] kitRequests =
+                KitRequestShipping.getKitRequestsByRealm(instanceName, "uploaded", "SALIVA").toArray(new KitRequestShipping[1]);
+        Optional<KitRequestShipping> kitWeWantToChange = Arrays.stream(kitRequests)
+                .filter(kitRequestShipping -> kitRequestShipping.getParticipantId().equals(juniperKitRequest.getJuniperParticipantID()))
+                .findFirst();
+        if (kitWeWantToChange.isPresent()) {
+            KitRequestCreateLabel.updateKitLabelRequested(new KitRequestShipping[] {kitWeWantToChange.get()}, userWithKitShippingAccess,
+                    new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow());
+            List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
+            if (!kitsLabelTriggered.isEmpty()) {
+                KitUtil.createLabel(kitsLabelTriggered, mockEasyPostUtil);
+            }
+        }
 
+    }
+
+    public void setupJuniperInstanceAndSettings() {
         //everything should get inserted in one transaction
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                ddpGroupId = createDdpGroupForJuniper(conn);
+                ddpGroupId = createDdpGroupForJuniper(conn, groupName);
                 ddpInstanceId = createDdpInstanceForJuniper(conn);
+                cmiAdminUtil.setUpByConfig(ddpInstanceId, ddpGroupId);
                 if (ddpGroupId == null || ddpInstanceId == null) {
                     throw new DsmInternalError("Something went wrong");
                 }
@@ -186,6 +221,11 @@ public class JuniperSetupUtil {
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
                 ddpKitRequestSettingsId = createKitRequestSettingsInformation(conn);
+                cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
+                        Arrays.asList(KIT_SHIPPING));
+
+                userWithKitShippingAccess = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                        Collections.singletonList(KIT_SHIPPING)));
             } catch (SQLException e) {
                 simpleResult.resultException = e;
             }
@@ -193,7 +233,12 @@ public class JuniperSetupUtil {
         });
         if (results.resultException != null) {
             log.error("Error creating juniper data ", results.resultException);
+            deleteJuniperInstanceAndSettings();
         }
+    }
+
+    private static String generateUserEmail() {
+        return "AuthTest-" + System.currentTimeMillis() + "@broad.dev";
     }
 
     private String createKitRequestSettingsInformation(Connection conn) throws SQLException {

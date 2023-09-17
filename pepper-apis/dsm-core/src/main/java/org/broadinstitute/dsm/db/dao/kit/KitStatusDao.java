@@ -23,7 +23,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
 
     private static final String SELECT_KIT_STATUS =
             " SELECT req.*, k.*, discard.*, tracking.tracking_id as return_tracking_number, tracking.scan_by as tracking_scan_by, "
-                    + " tracking.scan_date as tracking_scan_date FROM ddp_kit_request req "
+                    + " tracking.scan_date as tracking_scan_date, bsp_collaborator_sample_id, bsp_collaborator_participant_id FROM ddp_kit_request req "
                     + " LEFT JOIN ddp_kit k on (k.dsm_kit_request_id = req.dsm_kit_request_id) "
                     + " LEFT JOIN ddp_kit_discard discard on  (discard.dsm_kit_request_id = req.dsm_kit_request_id) "
                     + " LEFT JOIN ddp_kit_tracking tracking on  (tracking.kit_label = k.kit_label) ";
@@ -82,7 +82,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                     list.add(builder.build(rs, users));
                 }
             } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits with juniper kit id %s", juniperKitId));
+                dbVals.resultException = new Exception(String.format("Error getting kits with juniper kit id %s", juniperKitId), ex);
             }
             return dbVals;
         });
@@ -140,6 +140,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                                 NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.LABEL_DATE)))
                         .withLabelByEmail(
                                 NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.LABEL_BY), users))
+                        .withMfBarcode(foundKitResults.getString(DBConstants.KIT_LABEL))
                         .withScanDate(
                                 NonPepperStatusKitService.convertTimeStringIntoTimeStamp(
                                         foundKitResults.getLong(DBConstants.DSM_SCAN_DATE)))
@@ -161,6 +162,8 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                         .withDiscardBy(
                                 NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DISCARD_BY), users))
                         .withCurrentStatus(NonPepperStatusKitService.calculateCurrentStatus(foundKitResults))
+                        .withCollaboratorParticipantId(foundKitResults.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
+                        .withCollaboratorSampleId(foundKitResults.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
                         .build();
             } catch (SQLException e) {
                 throw new DsmInternalError("Error building the NonPepperKitStatusDto object from resultSet", e);
