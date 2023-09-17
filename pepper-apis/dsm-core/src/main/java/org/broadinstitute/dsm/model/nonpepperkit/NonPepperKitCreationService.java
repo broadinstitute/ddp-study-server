@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.model.nonpepperkit;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -144,7 +143,7 @@ public class NonPepperKitCreationService {
         //In case it's needed, subkits handling should be added here
         try {
             addJuniperKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
-                    errorMessage, easyPostUtil, kit, externalOrderNumber, juniperKitRequestId, null, userId, transactionResults);
+                    errorMessage, easyPostUtil, kit, externalOrderNumber, juniperKitRequestId, userId, transactionResults);
         } catch (Exception e) {
             throw new DsmInternalError("unable to add juniper kit request", e);
         }
@@ -155,7 +154,7 @@ public class NonPepperKitCreationService {
                                       DDPInstance ddpInstance, int kitTypeId, String collaboratorParticipantId,
                                       String errorMessage, EasyPostUtil easyPostUtil, JuniperKitRequest kit,
                                       String externalOrderNumber, String juniperKitRequestId,
-                                      String ddpLabel, String userId, SimpleResult transactionResults) throws DsmInternalError {
+                                      String userId, SimpleResult transactionResults) throws DsmInternalError {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
@@ -177,7 +176,7 @@ public class NonPepperKitCreationService {
                 KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
                         kit.getParticipantId().trim(),
                         collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
-                        null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
+                        null, ddpInstance, bspCollaboratorSampleType, null);
                 kit.setExternalOrderNumber(externalOrderNumber);
             } catch (Exception e) {
                 transactionResults.resultException = e;
@@ -202,9 +201,7 @@ public class NonPepperKitCreationService {
                 String dsmKitRequestId =
                         KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId, participantID,
                                 collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage,
-                                kit.getExternalOrderNumber(),
-                                false,
-                                null, ddpInstance, bspCollaboratorSampleType, ddpLabel);
+                                kit.getExternalOrderNumber(), false, null, ddpInstance, bspCollaboratorSampleType, null);
                 log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
             } catch (Exception e) {
                 transactionResults.resultException = e;
