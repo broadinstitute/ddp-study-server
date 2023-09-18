@@ -211,7 +211,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                 String shortId = maybeParticipantByParticipantId.get().getProfile().map(Profile::getHruid).get();
                 addCollaboratorSampleId(tissueId, ddpInstance, ddpParticipantId, shortId);
             }
-            new TissueSMIDDao().createNewSMIDForTissueWithValue(tissueId, ffpeUser, smIdType, kitLabel);
+            new TissueSMIDDao().createNewSMIDForTissue(tissueId, ffpeUser, smIdType, kitLabel);
 
             logger.info("Kit added successfully");
             response.status(200);

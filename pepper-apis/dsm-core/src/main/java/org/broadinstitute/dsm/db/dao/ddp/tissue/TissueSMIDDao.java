@@ -26,12 +26,10 @@ public class TissueSMIDDao {
     public static final String SQL_GET_SEQUENCING_SM_ID_BASED_ON_TISSUE_ID = " SELECT * from sm_id sm "
             + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
             + "where sm.tissue_id = ? and (smtype.sm_id_type = \"uss\" or smtype.sm_id_type = \"scrolls\") "
-            + "and sm.received_date is not null ";
+            + "and sm.received_date is not null and NOT sm.deleted <=> 1 ";
     public static final String SQL_TYPE_ID_FOR_TYPE = "SELECT sm_id_type_id from sm_id_type where `sm_id_type` = ?";
     public static final String SQL_INSERT_SM_ID =
             "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, sm_id_value=?, last_changed = ?, changed_by = ?";
-    public static final String SQL_INSERT_SM_ID_WITH_VALUE =
-            "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, last_changed = ?, changed_by = ?, sm_id_value = ?";
     public static final String SQL_SELECT_SM_ID_VALUE_WITH_ID =
             "SELECT sm_id_value from sm_id where sm_id_value = ? and NOT sm_id_pk = ? and Not deleted <=> 1";
     public static final String SQL_SELECT_SM_ID_VALUE = "SELECT sm_id_value from sm_id where sm_id_value = ?  and Not deleted <=> 1";
@@ -93,44 +91,6 @@ public class TissueSMIDDao {
         }
 
         return (String) results.resultValue;
-    }
-
-    public String createNewSMIDForTissueWithValue(String tissueId, String userId, String smIdType, String smIdValue) {
-        String smIdtypeId = getTypeForName(smIdType);
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_SM_ID_WITH_VALUE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, tissueId);
-                stmt.setString(2, smIdtypeId);
-                stmt.setLong(3, System.currentTimeMillis());
-                stmt.setString(4, userId);
-                stmt.setString(5, smIdValue);
-                int result = stmt.executeUpdate();
-                if (result == 1) {
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            logger.info("Created new sm id for tissue w/ id " + tissueId);
-                            dbVals.resultValue = rs.getString(1);
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new sm id ", e);
-                    }
-                } else {
-                    throw new RuntimeException(
-                            "Error adding new sm id for tissue w/ id " + tissueId + " it was updating " + result + " rows");
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error adding new sm id for tissue w/ id " + tissueId, results.resultException);
-        } else {
-            return (String) results.resultValue;
-        }
     }
 
     public String createNewSMIDForTissue(String tissueId, String userId, @NonNull String smIdType, @NonNull String smIdValue) {
