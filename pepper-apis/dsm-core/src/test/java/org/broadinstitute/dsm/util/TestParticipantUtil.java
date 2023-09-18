@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;

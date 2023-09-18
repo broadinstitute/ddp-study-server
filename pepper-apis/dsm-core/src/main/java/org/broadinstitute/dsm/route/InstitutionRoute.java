@@ -45,7 +45,7 @@ public class InstitutionRoute extends RequestHandler {
             return MedicalRecord.getDDPInstitutionInfo(ddpInstance, ddpParticipantId);
 
         } else if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
-            String realm = RouteUtil.requireRealm(request);
+            String realm = RouteUtil.requireParam(request, RoutePath.REALM);
             UpdateDestructionPolicyRequest req;
             try {
                 req = new Gson().fromJson(requestBody, UpdateDestructionPolicyRequest.class);
