@@ -31,6 +31,10 @@ public class ParticipantDto implements Cloneable {
         this.changedBy = builder.changedBy;
     }
 
+    public void setParticipantId(int participantId) {
+        this.participantId = Optional.of(participantId);
+    }
+
     public void setDdpInstanceId(int ddpInstanceId) {
         this.ddpInstanceId = ddpInstanceId;
     }

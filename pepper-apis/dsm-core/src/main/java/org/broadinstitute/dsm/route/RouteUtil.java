@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.route;
 
+import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -15,9 +16,31 @@ public class RouteUtil {
 
     public static String requireParam(Request request, String param) {
         QueryParamsMap queryParams = request.queryMap();
-        String val = queryParams.value(param);
+        if (!queryParams.hasKey(param)) {
+            throw new DSMBadRequestException("Request must include realm parameter");
+        }
+        return requireParam(param, queryParams.value(param));
+    }
+
+    public static String requireParam(String paramName, String paramValue) {
+        if (StringUtils.isEmpty(paramValue)) {
+            throw new DSMBadRequestException("Missing request parameter: " + paramName);
+        }
+        return paramValue;
+    }
+
+    public static String requireRequestBody(Request request) {
+        String payload = request.body();
+        if (StringUtils.isBlank(payload)) {
+            throw new DSMBadRequestException("Request must include a body/payload");
+        }
+        return payload;
+    }
+
+    public static String requireStringFromJsonObject(JsonObject jsonObject, String field) {
+        String val = jsonObject.get(field).getAsString();
         if (StringUtils.isBlank(val)) {
-            throw new DSMBadRequestException(String.format("Request must include %s parameter", param));
+            throw new DSMBadRequestException(String.format("Request body must include %s field", field));
         }
         return val;
     }
@@ -29,5 +52,9 @@ public class RouteUtil {
         } catch (Exception e) {
             throw new DsmInternalError("Error getting email address for user " + userId, e);
         }
+    }
+
+    public static void handleInvalidRouteMethod(Request request, String routeName) {
+        throw new DsmInternalError(String.format("Invalid HTTP method for %s: %s", routeName, request.requestMethod()));
     }
 }
