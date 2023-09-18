@@ -163,15 +163,6 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         }
     }
 
-    //    PostageLabel participantLabel = participantShipment.getPostageLabel();
-//    Tracker participantTracker = participantShipment.getTracker();
-//                    stmt.setString(1, participantLabel.getLabelUrl());
-//                    stmt.setString(3, participantShipment.getId());
-//                    stmt.setString(5, participantShipment.getTrackingCode());
-//                    stmt.setString(7, participantTracker.getPublicUrl());
-//                    kitRequestShipping.setLabelUrlTo(participantLabel.getLabelUrl());
-//                    kitRequestShipping.setEasypostToId(participantShipment.getId());
-//                    kitRequestShipping.setTrackingToId(participantShipment.getTrackingCode());
     private void createAndAssertNonPepperCreation(JuniperKitRequest juniperTestKit) {
         when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
         when(mockEasyPostShipment.getTracker()).thenReturn(mockShipmentTracker);
