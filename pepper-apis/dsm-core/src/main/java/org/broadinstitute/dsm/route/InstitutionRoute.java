@@ -1,99 +1,82 @@
 package org.broadinstitute.dsm.route;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.exception.AuthorizationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class InstitutionRoute extends RequestHandler {
-
-    public static final String APPLY_DESTRUCTION_POLICY =
-            "UPDATE ddp_onc_history_detail SET destruction_policy = ?, last_changed = ?, changed_by = ? "
-                    + "WHERE onc_history_detail_id <> 0 AND onc_history_detail_id in "
-                    + "(SELECT onc_history_detail_id FROM (SELECT * from ddp_onc_history_detail) as something "
-                    + "WHERE something.facility = ?)";
-    private static final Logger logger = LoggerFactory.getLogger(InstitutionRoute.class);
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        String requestBody = request.body();
-        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
-        String user = String.valueOf(jsonObject.get(RequestParameter.USER_ID));
+        String requestBody = RouteUtil.requireRequestBody(request);
+
         if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
-            if (StringUtils.isNotBlank(requestBody)) {
-                String ddpParticipantId = jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID).getAsString();
-                String realm = jsonObject.get(RequestParameter.DDP_REALM).getAsString();
-                if (UserUtil.checkUserAccess(realm, userId, "mr_view", user)) {
-                    if (StringUtils.isNotBlank(ddpParticipantId) && StringUtils.isNotBlank(realm)) {
-                        DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
-                        if (ddpInstance != null) {
-                            return MedicalRecord.getDDPInstitutionInfo(ddpInstance, ddpParticipantId);
-                        }
-                    }
-                    logger.warn("Error missing ddpParticipantId " + ddpParticipantId + " or realm " + realm + " w/ userId " + user);
-                } else {
-                    response.status(500);
-                    return new Result(500, UserErrorMessages.NO_RIGHTS);
-                }
+            // TODO we should get rid of this code and the things it calls if it is obsolete.
+            log.error("InstitutionRoute POST called (expecting this request METHOD to be obsolete)");
+
+            JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
+            String user = RouteUtil.requireStringFromJsonObject(jsonObject, RequestParameter.USER_ID);
+            String ddpParticipantId = RouteUtil.requireStringFromJsonObject(jsonObject, RequestParameter.DDP_PARTICIPANT_ID);
+            String realm = RouteUtil.requireStringFromJsonObject(jsonObject, RequestParameter.DDP_REALM);
+
+            if (!UserUtil.checkUserAccess(realm, userId, "mr_view", user)) {
+                throw new AuthorizationException();
             }
+            DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+            if (ddpInstance == null) {
+                throw new DsmInternalError("Invalid realm " + realm);
+            }
+            return MedicalRecord.getDDPInstitutionInfo(ddpInstance, ddpParticipantId);
+
         } else if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
-            String policy = "";
-            if (jsonObject.has(RequestParameter.POLICY)) {
-                policy = String.valueOf(jsonObject.get(RequestParameter.POLICY));
+            String realm = RouteUtil.requireParam(request, RoutePath.REALM);
+            UpdateDestructionPolicyRequest req;
+            try {
+                req = new Gson().fromJson(requestBody, UpdateDestructionPolicyRequest.class);
+            } catch (Exception e) {
+                log.info("Invalid request format for {}", requestBody);
+                throw new DSMBadRequestException("Invalid request format");
             }
-            if (UserUtil.checkUserAccess(null, userId, "mr_request", user)) {
-                String facility = String.valueOf(jsonObject.get(RequestParameter.FACILITY));
-                String userMail = String.valueOf(jsonObject.get(RequestParameter.USER_MAIL));
-                applyDestructionPolicy(userMail, facility, policy);
-                return new Result(200);
-            } else {
-                response.status(500);
-                return new Result(500, UserErrorMessages.NO_RIGHTS);
+
+            String user = RouteUtil.requireParam(RequestParameter.USER_ID, req.getUserId());
+            if (!UserUtil.checkUserAccess(null, userId, "mr_request", user)) {
+                throw new AuthorizationException();
             }
+
+            OncHistoryDetail.updateDestructionPolicy(
+                    RouteUtil.requireParam(RequestParameter.POLICY, req.getPolicy()),
+                    RouteUtil.requireParam(RequestParameter.FACILITY, req.getFacility()),
+                    realm,
+                    RouteUtil.requireParam(RequestParameter.USER_MAIL, req.getUserMail())
+            );
+            return new Result(200);
         }
-        logger.error("Request method not known");
-        response.status(500);
-        return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
+        RouteUtil.handleInvalidRouteMethod(request, "InstitutionRoute");
+        return null;
     }
 
-    private void applyDestructionPolicy(@NonNull String user, String facility, String policy) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(APPLY_DESTRUCTION_POLICY)) {
-                if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(facility) && StringUtils.isNotBlank(policy)) {
-                    stmt.setString(1, policy);
-                    stmt.setString(2, String.valueOf(System.currentTimeMillis()));
-                    stmt.setString(3, user);
-                    stmt.setString(4, facility);
-                    stmt.executeUpdate();
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't update the destruction policy for " + facility, results.resultException);
-        }
+    @Data
+    private static class UpdateDestructionPolicyRequest {
+        private String facility;
+        private String policy;
+        private String realm;
+        private String userId;
+        private String userMail;
     }
-
 }
