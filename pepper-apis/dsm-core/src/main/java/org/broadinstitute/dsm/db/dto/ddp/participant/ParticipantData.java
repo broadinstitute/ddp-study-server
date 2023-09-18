@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -101,6 +102,13 @@ public class ParticipantData {
 
     public Optional<String> getDdpParticipantId() {
         return Optional.ofNullable(ddpParticipantId);
+    }
+
+    public String getRequiredDdpParticipantId() {
+        if (StringUtils.isBlank(ddpParticipantId)) {
+            throw new DsmInternalError("Error, ddpParticipantId should not be blank");
+        }
+        return ddpParticipantId;
     }
 
     public int getDdpInstanceId() {
