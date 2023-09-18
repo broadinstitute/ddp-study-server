@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.util.DbSharedTestContent;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-public abstract class DbTxnBaseTest {
+public abstract class DbTxnBaseTest extends ElasticBaseTest {
     @BeforeClass
     public static void initDbConnection() {
         DSMDbTestContainer.initializeTestDbs();

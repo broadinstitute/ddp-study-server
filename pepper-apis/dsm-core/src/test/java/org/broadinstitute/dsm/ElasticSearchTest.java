@@ -5,7 +5,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -445,11 +444,10 @@ public class ElasticSearchTest extends TestHelper {
         String fetchedPid = "";
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
-            Optional<ElasticSearchParticipantDto> esObject =
+            ElasticSearchParticipantDto esObject =
                     ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter, client);
-            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(Profile::getLegacyAltPid)
-                    .orElse("");
-        } catch (IOException e) {
+            fetchedPid = esObject.getProfile().map(Profile::getLegacyAltPid).orElse("");
+        } catch (Exception e) {
             Assert.fail();
             e.printStackTrace();
         }

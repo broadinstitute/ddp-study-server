@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -330,12 +329,8 @@ public class TestHelper {
             if (cfg == null) {
                 setupDB();
             }
-            try {
-                esClient = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
-                        cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"));
-            } catch (MalformedURLException e) {
-                throw new RuntimeException("Could not initialize es client", e);
-            }
+            esClient = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
+                    cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"));
         }
 
     }
