@@ -1,13 +1,12 @@
 package org.broadinstitute.dsm.model.patch;
 
-import static org.broadinstitute.dsm.statics.DBConstants.DDP_ONC_HISTORY_ALIAS;
-
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class PatchFactory {
@@ -55,7 +54,7 @@ public class PatchFactory {
 
     private static boolean isDeletePatch(Patch patch) {
         return patch.getNameValue().getName().contains(".deleted") &&
-                (DDP_ONC_HISTORY_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch));
+                (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch));
     }
 
     private static boolean isSmIdCreation(Patch patch) {

@@ -4,10 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 @Slf4j
-public class DeleteTissuePatch extends TissuePatch {
+public class DeleteTissuePatch extends ExistingRecordPatch {
     private final NotificationUtil notificationUtil;
     public DeleteTissuePatch(Patch patch, NotificationUtil notificationUtil) {
-        super(patch);
+        super(patch, notificationUtil);
         this.notificationUtil = notificationUtil;
     }
 

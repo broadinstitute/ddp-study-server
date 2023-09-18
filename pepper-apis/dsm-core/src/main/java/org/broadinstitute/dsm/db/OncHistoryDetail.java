@@ -184,16 +184,24 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
+
     @ColumnName(DBConstants.DESTRUCTION_POLICY)
     private String destructionPolicy;
+
     private String changedBy;
+
     @ColumnName(DBConstants.DELETED)
     private boolean deleted;
+
     @ColumnName(DBConstants.UNABLE_OBTAIN_TISSUE)
     private boolean unableObtainTissue;
+
     private String participantId;
+
     private String ddpParticipantId;
+
     private List<Tissue> tissues;
+
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private Long ddpInstanceId;
 
@@ -422,10 +430,10 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                             dbVals.resultValue = oncHistoryDetailId;
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new institution ", e);
+                        throw new DsmInternalError("Error getting id of new institution ", e);
                     }
                 } else {
-                    throw new RuntimeException(
+                    throw new DsmInternalError(
                             "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result
                                     + " rows");
                 }
@@ -436,7 +444,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
+            throw new DsmInternalError("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
                     results.resultException);
         } else {
             return (String) results.resultValue;
@@ -482,7 +490,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             MedicalRecordUtil.writeInstitutionIntoDb(ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm, updateElastic);
             String id = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
             if (StringUtils.isBlank(id)) {
-                throw new RuntimeException("Error adding new institution for oncHistory. Participant ID: " + participantId);
+                throw new DsmInternalError("Error adding new institution for oncHistory. Participant ID: " + participantId);
             }
             mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
             if (mrId == null) {

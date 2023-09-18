@@ -1,8 +1,5 @@
 package org.broadinstitute.dsm.model.patch;
 
-import static org.broadinstitute.dsm.statics.DBConstants.DDP_ONC_HISTORY_ALIAS;
-import static org.broadinstitute.dsm.statics.DBConstants.DDP_TISSUE_ALIAS;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +8,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class DeletePatchFactory {
@@ -21,7 +19,7 @@ public class DeletePatchFactory {
 
     public static BasePatch produce(Patch patch, NotificationUtil notificationUtil) {
         BasePatch patcher;
-        if (DDP_ONC_HISTORY_ALIAS.equals(patch.getTableAlias())) {
+        if (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias())) {
             patcher = new DeleteOncHistoryPatch(patch, notificationUtil);
         } else if (PatchFactory.isTissueRelatedOncHistoryId(patch)) {
             patcher = new DeleteTissuePatch(patch, notificationUtil);
@@ -33,10 +31,10 @@ public class DeletePatchFactory {
 
     protected static void setDeletedForChildrenFields(@NonNull Patch originalPatch, NotificationUtil notificationUtil) {
         List<Patch> deletePatches = null;
-        if (originalPatch.getNameValue().getName().equals("t.deleted") && originalPatch.getTableAlias().equals(DDP_TISSUE_ALIAS)) {
+        if (originalPatch.getNameValue().getName().equals("t.deleted") && originalPatch.getTableAlias().equals(DBConstants.DDP_TISSUE_ALIAS)) {
             deletePatches = getPatchForSmIds(originalPatch);
         } else if (originalPatch.getNameValue().getName().equals("oD.deleted") &&
-                originalPatch.getTableAlias().equals(DDP_ONC_HISTORY_ALIAS)) {
+                originalPatch.getTableAlias().equals(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS)) {
             deletePatches = getPatchForTissues(originalPatch);
         }
         for (Patch childPatch : deletePatches) {
@@ -50,9 +48,10 @@ public class DeletePatchFactory {
         List<Patch> deletePatches = new ArrayList<>();
         for (String tissueId : tissueIds) {
             NameValue nameValue = new NameValue("t.deleted", "1");
-            deletePatches.add(
-                    new Patch(tissueId, "oncHistoryDetailId", oncHistoryPatch.getId(), oncHistoryPatch.getUser(), nameValue, null, true,
-                            oncHistoryPatch.getDdpParticipantId(), oncHistoryPatch.getRealm()));
+            Patch patch = new Patch(tissueId, "oncHistoryDetailId", oncHistoryPatch.getId(), oncHistoryPatch.getUser(), nameValue, null, true,
+                    oncHistoryPatch.getDdpParticipantId(), oncHistoryPatch.getRealm());
+            patch.setTableAlias(DBConstants.DDP_TISSUE_ALIAS);
+            deletePatches.add(patch);
         }
         return deletePatches;
     }
