@@ -1,8 +1,10 @@
 package org.broadinstitute.dsm.route;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import spark.QueryParamsMap;
 import spark.Request;
 
@@ -11,18 +13,21 @@ import spark.Request;
  */
 public class RouteUtil {
 
-    public static String requireRealm(Request request) {
+    public static String requireParam(Request request, String param) {
         QueryParamsMap queryParams = request.queryMap();
-        if (!queryParams.hasKey(RoutePath.REALM)) {
-            throw new DSMBadRequestException("Request must include realm parameter");
+        String val = queryParams.value(param);
+        if (StringUtils.isBlank(val)) {
+            throw new DSMBadRequestException(String.format("Request must include %s parameter", param));
         }
-        return requireRealm(queryParams.value(RoutePath.REALM));
+        return val;
     }
 
-    public static String requireRealm(String realm) {
-        if (StringUtils.isEmpty(realm)) {
-            throw new DSMBadRequestException("Invalid realm parameter: blank");
+    public static String getUserEmail(String userId) {
+        try {
+            UserDto user = new UserDao().get(Integer.parseInt(userId)).orElseThrow();
+            return user.getEmailOrThrow();
+        } catch (Exception e) {
+            throw new DsmInternalError("Error getting email address for user " + userId, e);
         }
-        return realm;
     }
 }

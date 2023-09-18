@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.pubsub;
 
 import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD_OSTEO_INSTANCE_NAME;
+import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
+import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,6 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 public class WorkflowStatusUpdate {
     public static final String STUDY_GUID = "studyGuid";
     public static final String PARTICIPANT_GUID = "participantGuid";
-    public static final String MEMBER_TYPE = "MEMBER_TYPE";
-    public static final String SELF = "SELF";
     public static final String DSS = "DSS";
     public static final String OSTEO_RECONSENTED_WORKFLOW = "OSTEO_RECONSENTED";
     public static final String OSTEO_RECONSENTED_WORKFLOW_STATUS = "Complete";
@@ -227,8 +227,8 @@ public class WorkflowStatusUpdate {
         }
     }
 
-    private static boolean isProband(Map<String, String> dataMap) {
-        return dataMap.containsKey(MEMBER_TYPE) && dataMap.get(MEMBER_TYPE).equals(SELF);
+    public static boolean isProband(Map<String, String> dataMap) {
+        return dataMap.containsKey(MEMBER_TYPE) && dataMap.get(MEMBER_TYPE).equals(MEMBER_TYPE_SELF);
     }
 
     protected static void updateRGP(String participantId, String studyGuid) {
