@@ -221,7 +221,7 @@ public class JuniperSetupUtil {
     }
 
     private static String generateUserEmail() {
-        return "AuthTest-" + System.currentTimeMillis() + "@broad.dev";
+        return "JuniperTest-" + System.currentTimeMillis() + "@broad.dev";
     }
 
     public static void changeKitToReceived() {
