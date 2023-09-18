@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="cunningh" id="PEPPER-1075_admin_operation">
+        <createTable tableName="admin_operation">
+            <column autoIncrement="true" name="operation_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="operation_type_id" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operator_id" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation_start" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation_end" type="TIMESTAMP"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="results" type="MEDIUMTEXT"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

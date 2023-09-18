@@ -70,9 +70,9 @@ public class MedicalRecord implements HasDdpInstanceId {
     public static final String AND_P_DDP_PARTICIPANT_ID_IN = " AND p.ddp_participant_id IN (?)";
     public static final String QUESTION_MARK = "?";
     @ColumnName(DBConstants.MEDICAL_RECORD_ID)
-    private long medicalRecordId;
+    private int medicalRecordId;
     @ColumnName(DBConstants.INSTITUTION_ID)
-    private long institutionId;
+    private int institutionId;
     @ColumnName(DBConstants.DDP_INSTITUTION_ID)
     private String ddpInstitutionId;
     @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
@@ -157,7 +157,7 @@ public class MedicalRecord implements HasDdpInstanceId {
     private Boolean deleted;
 
 
-    public MedicalRecord(long medicalRecordId, long institutionId) {
+    public MedicalRecord(int medicalRecordId, int institutionId) {
         this.medicalRecordId = medicalRecordId;
         this.institutionId = institutionId;
     }
@@ -165,11 +165,11 @@ public class MedicalRecord implements HasDdpInstanceId {
     public MedicalRecord() {
     }
 
-    public MedicalRecord(long ddpInstanceId) {
+    public MedicalRecord(int ddpInstanceId) {
         this.ddpInstanceId = ddpInstanceId;
     }
 
-    public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type, String name, String contact,
+    public MedicalRecord(int medicalRecordId, int institutionId, String ddpInstitutionId, String type, String name, String contact,
                          String phone, String fax, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2,
                          String faxSent2By, String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3,
                          String mrReceived, String mrDocument, String mrDocumentFileNames, boolean mrProblem, String mrProblemText,
@@ -217,7 +217,7 @@ public class MedicalRecord implements HasDdpInstanceId {
     }
 
     public static MedicalRecord getMedicalRecord(@NonNull ResultSet rs) throws SQLException {
-        MedicalRecord medicalRecord = new MedicalRecord(rs.getLong(DBConstants.MEDICAL_RECORD_ID), rs.getLong(DBConstants.INSTITUTION_ID),
+        MedicalRecord medicalRecord = new MedicalRecord(rs.getInt(DBConstants.MEDICAL_RECORD_ID), rs.getInt(DBConstants.INSTITUTION_ID),
                 rs.getString(DBConstants.DDP_INSTITUTION_ID), rs.getString(DBConstants.TYPE), rs.getString(DBConstants.NAME),
                 rs.getString(DBConstants.CONTACT), rs.getString(DBConstants.PHONE), rs.getString(DBConstants.FAX),
                 rs.getString(DBConstants.FAX_SENT), rs.getString(DBConstants.FAX_SENT_BY), rs.getString(DBConstants.FAX_CONFIRMED),
