@@ -23,13 +23,13 @@ import org.broadinstitute.dsm.statics.DBConstants;
  */
 @Slf4j
 public class NonPepperStatusKitService {
-    private KitStatusDao kitStatusDao;
     public static final String QUEUE = "Queue";
-    private static final String ERROR = "Error";
-    private static final String SENT = "Sent";
-    private static final String RECEIVED = "Received";
+    public static final String SENT = "Sent";
+    public static final String RECEIVED = "Received";
     public static final String KIT_WITHOUT_LABEL = "Kit Without Label";
+    private static final String ERROR = "Error";
     private static final String DEACTIVATED = "Deactivated";
+    private KitStatusDao kitStatusDao;
 
     public NonPepperStatusKitService() {
         this.kitStatusDao = new KitStatusDao();
@@ -64,16 +64,17 @@ public class NonPepperStatusKitService {
                 return QUEUE;
             } else if (isErrorKit(foundKitResults)) {
                 return ERROR;
-            } else if (isSentKit(foundKitResults)) {
-                return SENT;
             } else if (isReceivedKit(foundKitResults)) {
                 return RECEIVED;
+            } else if (isSentKit(foundKitResults)) {
+                return SENT;
             } else if (isNewKit(foundKitResults) || isEasyPostLabelTriggeredKit(foundKitResults)) {
                 return KIT_WITHOUT_LABEL;
-            } else if (isDeactivatedKit(foundKitResults)){
+            } else if (isDeactivatedKit(foundKitResults)) {
                 return DEACTIVATED;
             } else {
-                log.error(String.format("Unable to decide the current status of kit %s", foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID)));
+                log.error(String.format("Unable to decide the current status of kit %s",
+                        foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID)));
                 return null;
             }
         } catch (SQLException e) {
@@ -93,13 +94,13 @@ public class NonPepperStatusKitService {
                 "0".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)));
     }
 
-    private static boolean isDeactivatedKit(ResultSet foundKitResults) throws SQLException{
+    private static boolean isDeactivatedKit(ResultSet foundKitResults) throws SQLException {
 //        and kit.deactivated_date is not null
         return StringUtils.isNotBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
-            && !DBConstants.DEACTIVATION_REASON.equals(foundKitResults.getString(DBConstants.DEACTIVATION_REASON));
+                && !DBConstants.DEACTIVATION_REASON.equals(foundKitResults.getString(DBConstants.DEACTIVATION_REASON));
     }
 
-    private static boolean isNewKit(ResultSet foundKitResults) throws SQLException{
+    private static boolean isNewKit(ResultSet foundKitResults) throws SQLException {
 //        and kit.easypost_to_id is null and kit.deactivated_date is null and not (kit.error <=> 1) and not (kit.kit_complete <=> 1) "
         return StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
                 && (StringUtils.isBlank(foundKitResults.getString(DBConstants.ERROR)) ||
@@ -115,7 +116,7 @@ public class NonPepperStatusKitService {
                 && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE));
     }
 
-    private static boolean isSentKit(ResultSet foundKitResults) throws SQLException{
+    private static boolean isSentKit(ResultSet foundKitResults) throws SQLException {
 //        and kit.kit_complete = 1 and kit.deactivated_date is null
         return ("1".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)))
                 && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE));

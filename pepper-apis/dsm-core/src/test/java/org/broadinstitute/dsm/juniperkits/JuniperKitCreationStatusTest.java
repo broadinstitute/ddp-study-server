@@ -122,6 +122,13 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
             JuniperSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
             kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
             assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.QUEUE);
+            juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
+            JuniperSetupUtil.changeKitToSent(juniperTestKit);
+            kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.SENT);
+            JuniperSetupUtil.changeKitToReceived();
+            kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.RECEIVED);
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }

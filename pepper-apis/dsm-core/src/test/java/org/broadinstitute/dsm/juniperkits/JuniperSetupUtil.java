@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.TestHelper.notificationUtil;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
 
@@ -9,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -19,8 +21,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.gp.BSPKit;
+import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
+import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.KitUtil;
@@ -58,6 +67,7 @@ public class JuniperSetupUtil {
             "INSERT INTO ddp_kit_request_settings (ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id) "
                     + " VALUES (?, ?, ?, ?, ?) ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id = ?";
+    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
     public static String ddpGroupId;
     public static String ddpInstanceId;
     public static String ddpInstanceGroupId;
@@ -68,15 +78,12 @@ public class JuniperSetupUtil {
     private static String kitReturnId;
     private static String carrierId;
     private static String ddpKitRequestSettingsId;
-
     private static String instanceName;
     private static String groupName;
     private static String studyGuid;
     private static String displayName;
     private static String collaboratorPrefix;
     private static String userWithKitShippingAccess;
-
-    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
 
     public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix, String groupName) {
         this.instanceName = instanceName;
@@ -202,6 +209,38 @@ public class JuniperSetupUtil {
 
     }
 
+    public static void changeKitToSent(JuniperKitRequest juniperTestKit) {
+        List<SentAndFinalScanPayload> scanPayloads = new ArrayList<>();
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
+        SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(juniperTestKit.getDdpLabel(), "SOME_RANDOM_KIT_LABEL");
+        scanPayloads.add(sentAndFinalScanPayload);
+        KitFinalScanRoute kitFinalScanRoute = new KitFinalScanRoute();
+        kitFinalScanRoute.scanErrorList = new ArrayList<>();
+        kitFinalScanRoute.kitPayload = new KitPayload(scanPayloads, Integer.parseInt(userWithKitShippingAccess), ddpInstanceDto);
+        kitFinalScanRoute.processRequest();
+    }
+
+    private static String generateUserEmail() {
+        return "AuthTest-" + System.currentTimeMillis() + "@broad.dev";
+    }
+
+    public static void changeKitToReceived() {
+        BSPKit bspKit = new BSPKit();
+        String kitLabel = "SOME_RANDOM_KIT_LABEL";
+        Optional<BSPKitDto> optionalBSPKitDto = bspKit.canReceiveKit(kitLabel);
+        //kit does not exist in ddp_kit table
+        if (optionalBSPKitDto.isEmpty()) {
+           return;
+        }
+        //check if kit is from a pt which is withdrawn
+        Optional<BSPKitStatus> result = bspKit.getKitStatus(optionalBSPKitDto.get(), notificationUtil);
+        if (!result.isEmpty()) {
+            return;
+        }
+        //kit found in ddp_kit table
+        bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, "BSP").orElseThrow();
+    }
+
     public void setupJuniperInstanceAndSettings() {
         //everything should get inserted in one transaction
         SimpleResult results = inTransaction((conn) -> {
@@ -235,10 +274,6 @@ public class JuniperSetupUtil {
             log.error("Error creating juniper data ", results.resultException);
             deleteJuniperInstanceAndSettings();
         }
-    }
-
-    private static String generateUserEmail() {
-        return "AuthTest-" + System.currentTimeMillis() + "@broad.dev";
     }
 
     private String createKitRequestSettingsInformation(Connection conn) throws SQLException {
