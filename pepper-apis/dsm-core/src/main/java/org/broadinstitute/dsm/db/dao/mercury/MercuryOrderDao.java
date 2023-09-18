@@ -19,7 +19,6 @@ import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
-import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 import org.broadinstitute.dsm.model.mercury.MercuryStatusMessage;
@@ -73,7 +72,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     private static final int MAX_CHAR_ALLOWED = 2000;
 
 
-    public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) throws DSMPubSubException {
+    public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) throws DsmInternalError {
         long statusDate = System.currentTimeMillis();
         //check the length of fields to make sure they fit in the database
         String messageString = msgData.substring(0, Math.min(msgData.length(), MAX_CHAR_ALLOWED));
@@ -117,17 +116,17 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                             null, statusDate, null,
                             rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), null));
                 } else {
-                    dbVals.resultException = new DSMPubSubException(String.format("Couldn't get ddp instance id for order %s",
+                    dbVals.resultException = new DsmInternalError(String.format("Couldn't get ddp instance id for order %s",
                             mercuryStatusMessage.getOrderID()));
                 }
             } catch (SQLException ex) {
                 dbVals.resultException =
-                        new DSMPubSubException(String.format("Error getting ddp instance id for order %s", mercuryStatusMessage.getOrderID()), ex);
+                        new DsmInternalError(String.format("Error getting ddp instance id for order %s", mercuryStatusMessage.getOrderID()), ex);
             }
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new DSMPubSubException("Unable to process the status of the order " + baseMercuryStatusMessage, results.resultException);
+            throw new DsmInternalError("Unable to process the status of the order " + baseMercuryStatusMessage, results.resultException);
         }
         MercuryOrderUseCase.exportStatusToES(baseMercuryStatusMessage, clinicalOrderAtomicReference.get(), statusDate);
     }
