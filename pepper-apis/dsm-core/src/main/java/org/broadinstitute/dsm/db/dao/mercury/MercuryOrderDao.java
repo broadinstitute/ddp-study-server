@@ -138,7 +138,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_FROM_BARCODE_KIT_LABEL)) {
                 stmt.setString(1, ddpParticipantId);
                 getKitsFromStatement(stmt, map);
-            } catch (Exception ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
 
@@ -154,7 +154,18 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_FROM_BARCODE_SM_ID)) {
                 stmt.setString(1, ddpParticipantId);
-                getBarcodesFromResultSet(stmt, map, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.SM_ID_VALUE),
+                                rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                                rs.getLong(DBConstants.TISSUE_ID), null);
+                        log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
+                        map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
+                    }
+                } catch (SQLException e) {
+                    throw new DsmInternalError(String.format(errorMessage, ddpParticipantId), e);
+                }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
@@ -168,22 +179,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         return map;
     }
 
-    private void getBarcodesFromResultSet(PreparedStatement stmt, HashMap<String, MercuryOrderDto> map, String ddpParticipantId) throws DsmInternalError {
-        try (ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                        rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.SM_ID_VALUE),
-                        rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                        rs.getLong(DBConstants.TISSUE_ID), null);
-                log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
-                map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
-            }
-        } catch (Exception e) {
-            throw new DsmInternalError(String.format(errorMessage, ddpParticipantId), e);
-        }
-    }
-
-    private void getKitsFromStatement(PreparedStatement stmt, HashMap<String, MercuryOrderDto> map) throws Exception{
+    private void getKitsFromStatement(PreparedStatement stmt, HashMap<String, MercuryOrderDto> map) throws SQLException {
         try (ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
@@ -216,7 +212,15 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement selectKitRequest = conn.prepareStatement(SQL_SELECT_ORDER_NUMBER)) {
                 selectKitRequest.setString(1, orderNumber);
-                dbVals.resultValue = checkIfOrderNumberExists(selectKitRequest);
+                try (ResultSet rs = selectKitRequest.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = true;
+                    } else {
+                        dbVals.resultValue = false;
+                    }
+                } catch (SQLException exception){
+                    dbVals.resultException = exception;
+                }
             } catch (Exception ex) {
                 dbVals.resultException = ex;
             }
@@ -227,16 +231,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             throw new DsmInternalError("Error checking if values exist in db", results.resultException);
         }
         return (boolean) results.resultValue;
-    }
-
-    private Boolean checkIfOrderNumberExists(PreparedStatement selectKitRequest) throws SQLException {
-        try (ResultSet rs = selectKitRequest.executeQuery()) {
-            if (rs.next()) {
-                return true;
-            } else {
-                return false;
-            }
-        }
     }
 
     public void insertMercuryOrders(List<MercuryOrderDto> newOrders, String json) {

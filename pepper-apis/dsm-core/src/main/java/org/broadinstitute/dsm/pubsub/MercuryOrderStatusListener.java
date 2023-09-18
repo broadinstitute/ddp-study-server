@@ -18,6 +18,7 @@ import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 
 @Slf4j
 public class MercuryOrderStatusListener {
+
     private MercuryOrderStatusListener(){
         throw new IllegalStateException("Utility class");
     }
@@ -28,9 +29,9 @@ public class MercuryOrderStatusListener {
             // Handle incoming message, then ack the received message.
             log.info(String.format("Got STATUS message with Id: %s", messageId));
             try {
+                consumer.ack();
                 processOrderStatus(message);
                 log.info("Processing the message finished");
-                consumer.ack();
             } catch (DSMPubSubException error) {
                 log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
                 consumer.ack();
