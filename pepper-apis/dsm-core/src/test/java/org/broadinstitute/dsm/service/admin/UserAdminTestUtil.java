@@ -57,7 +57,7 @@ public class UserAdminTestUtil {
     private boolean initialized = false;
 
     private static final String SQL_INSERT_DDP_INSTANCE =
-            "INSERT INTO ddp_instance SET instance_name = ?, is_active = 1, auth0_token = 1, migrated_ddp = 0";
+            "INSERT INTO ddp_instance SET instance_name = ?, study_guid, collaborator_id_prefix = ?, bsp_organism=1, is_active = 1, auth0_token = 1, migrated_ddp = 0";
 
     private static final String SQL_INSERT_DDP_INSTANCE_GROUP =
             "INSERT INTO ddp_instance_group SET ddp_instance_id = ?, ddp_group_id = ?";
@@ -391,32 +391,6 @@ public class UserAdminTestUtil {
             }
             return roles;
         });
-    }
-
-    private static int createInstance(String instanceName) {
-        SimpleResult res = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, instanceName);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    dbVals.resultException = new DsmInternalError("Result count was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (res.resultException != null) {
-            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
-        }
-        return (int) res.resultValue;
     }
 
     private static void deleteInstanceGroup(int instanceId) {
