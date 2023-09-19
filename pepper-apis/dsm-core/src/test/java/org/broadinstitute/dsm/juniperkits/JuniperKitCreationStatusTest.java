@@ -97,7 +97,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     public void testCurrentStatusField() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
-        createAndAssertNonPepperCreation(juniperTestKit);
+        createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
         JuniperSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
@@ -119,7 +119,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     public void testStatusByJuniperKitId() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
-        createAndAssertNonPepperCreation(juniperTestKit);
+        createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
 
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
@@ -129,7 +129,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     public void testStatusByParticipantIdTest() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
-        createAndAssertNonPepperCreation(juniperTestKit);
+        createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnParticipantId(juniperTestKit.getJuniperParticipantID());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
 
@@ -137,9 +137,10 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     /**
      * this method creates the juniperTestKitRequest in the database  by calling
      * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
+     * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
      * ***/
 
-    private void createAndAssertNonPepperCreation(JuniperKitRequest juniperTestKitRequest) {
+    private void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest) {
         createdKitIds.add(juniperTestKitRequest.getJuniperKitId());
         when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
         when(mockEasyPostShipment.getTracker()).thenReturn(mockShipmentTracker);
@@ -225,7 +226,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
 
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
-        createAndAssertNonPepperCreation(juniperTestKit);
+        createNonPepperTestKit(juniperTestKit);
     }
 
     @Test

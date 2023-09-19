@@ -18,8 +18,8 @@ import spark.Response;
 public abstract class KitStatusChangeRoute extends RequestHandler {
 
     protected NotificationUtil notificationUtil;
-    public KitPayload kitPayload;
-    public List<ScanError> scanErrorList;
+    protected KitPayload kitPayload;
+    protected List<ScanError> scanErrorList;
 
     public KitStatusChangeRoute(NotificationUtil notificationUtil) {
         this.notificationUtil = notificationUtil;
