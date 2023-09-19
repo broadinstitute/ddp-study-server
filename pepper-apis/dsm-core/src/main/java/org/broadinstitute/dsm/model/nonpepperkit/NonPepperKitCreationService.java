@@ -72,7 +72,6 @@ public class NonPepperKitCreationService {
      *
      * @return an instance of KitResponse, either as an error or KitStatus
      * **/
-
     private KitResponse validateAndInsertNonPepperKit(@NonNull KitRequestSettings kitRequestSettings, @NonNull JuniperKitRequest juniperKitRequest,
                                                          @NonNull EasyPostUtil easyPostUtil, DDPInstance ddpInstance,
                                                          KitType kitType, String kitTypeName) {
@@ -94,9 +93,7 @@ public class NonPepperKitCreationService {
             }
             juniperKitRequest.setEasypostAddressId(easypostAddressId);
             SimpleResult result = TransactionWrapper.inTransaction(conn -> {
-                SimpleResult transactionResults = new SimpleResult();
-                return createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName, conn,
-                        transactionResults);
+                return createKit(ddpInstance, kitType, juniperKitRequest, kitRequestSettings, easyPostUtil, kitTypeName, conn);
 
                 //          order external kits here if external shipper name is set for that kit request, not needed for now
             });
@@ -128,7 +125,8 @@ public class NonPepperKitCreationService {
      */
     private SimpleResult createKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, JuniperKitRequest kit,
                                    @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
-                                   @NonNull String kitTypeName, Connection conn, SimpleResult transactionResults) {
+                                   @NonNull String kitTypeName, Connection conn) {
+        SimpleResult transactionResults = new SimpleResult();
         String juniperKitRequestId;
         String userId;
         //checking ddpInstance.isHasRole() to know this is a Juniper Kit

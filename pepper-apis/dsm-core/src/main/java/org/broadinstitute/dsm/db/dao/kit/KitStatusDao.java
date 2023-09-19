@@ -129,7 +129,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
     }
 
     private static class BuildNonPepperKitStatusDto {
-        public static KitCurrentStatus calculateCurrentStatus(ResultSet foundKitResults) {
+        private static KitCurrentStatus calculateCurrentStatus(ResultSet foundKitResults) {
             try {
                 if (isDeactivatedKit(foundKitResults)) {
                     return KitCurrentStatus.DEACTIVATED;

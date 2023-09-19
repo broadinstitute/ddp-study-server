@@ -109,9 +109,6 @@ public class JuniperSetupUtil {
                 cmiAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
                 ddpInstanceId = String.valueOf(cmiAdminUtil.getDdpInstanceId());
                 ddpGroupId = String.valueOf(cmiAdminUtil.getStudyGroupId());
-                if (ddpGroupId == null || ddpInstanceId == null) {
-                    throw new DsmInternalError("Something went wrong");
-                }
                 instanceRoleId = createInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
                 kitTypeId = createKitType(conn);

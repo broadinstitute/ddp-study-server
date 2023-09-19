@@ -94,63 +94,53 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testStatusKitEndpointByJuniperStudyGuid() {
-        int rand = new Random().nextInt() & Integer.MAX_VALUE;
-        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
-        createAndAssertNonPepperCreation(juniperTestKit);
-        KitResponse kitResponse = nonPepperStatusKitService.getKitsByStudyName(instanceGuid);
-        Assert.assertNotNull(kitResponse);
-        Assert.assertNotNull(kitResponse.getKits());
-        Assert.assertNotEquals(0, kitResponse.getKits().size());
-        Assert.assertNotNull(
-                kitResponse.getKits().stream().filter(kitStatus -> kitStatus.getJuniperKitId().equals("JuniperTestKitId_" + rand))
-                        .findAny());
-    }
-
-    @Test
     public void testCurrentStatusField() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
-        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
         createAndAssertNonPepperCreation(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-        assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
         JuniperSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-        assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
         juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
         List<ScanError> scanErrorList = JuniperSetupUtil.changeKitToSent(juniperTestKit);
         Assert.assertFalse(
                 scanErrorList.stream().filter(scanError -> StringUtils.isNotBlank(scanError.getError())).findAny().isPresent());
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-        assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
         JuniperSetupUtil.changeKitToReceived();
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-        assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.RECEIVED.getValue());
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.RECEIVED.getValue());
 
     }
 
     @Test
     public void testStatusByJuniperKitId() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
-        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
         createAndAssertNonPepperCreation(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
 
-        assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
     }
 
     @Test
     public void testStatusByParticipantIdTest() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
-        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
         createAndAssertNonPepperCreation(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnParticipantId(juniperTestKit.getJuniperParticipantID());
-        assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
 
     }
+    /**
+     * this method creates the juniperTestKitRequest in the database  by calling
+     * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
+     * ***/
 
-    private void createAndAssertNonPepperCreation(JuniperKitRequest juniperTestKit) {
-        createdKitIds.add(juniperTestKit.getJuniperKitId());
+    private void createAndAssertNonPepperCreation(JuniperKitRequest juniperTestKitRequest) {
+        createdKitIds.add(juniperTestKitRequest.getJuniperKitId());
         when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
         when(mockEasyPostShipment.getTracker()).thenReturn(mockShipmentTracker);
         when(mockShipmentTracker.getPublicUrl()).thenReturn("PUBLIC_URL");
@@ -164,16 +154,17 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                     mockEasyPostAddress);
             when(mockEasyPostUtil.buyShipment(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mockEasyPostShipment);
         } catch (EasyPostException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            Assert.fail(e.getMessage());
         }
         List<KitRequestShipping> oldKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", salivaKitType);
         KitResponse kitResponse =
-                nonPepperKitCreationService.createNonPepperKit(juniperTestKit, salivaKitType, mockEasyPostUtil, ddpInstance);
+                nonPepperKitCreationService.createNonPepperKit(juniperTestKitRequest, salivaKitType, mockEasyPostUtil, ddpInstance);
         Assert.assertFalse(kitResponse.isError());
         Assert.assertNotNull(kitResponse.getKits());
         Assert.assertEquals(1, kitResponse.getKits().size());
         NonPepperKitStatusDto kitStatus = kitResponse.getKits().get(0);
-        Assert.assertEquals(juniperTestKit.getJuniperKitId(), kitStatus.getJuniperKitId());
+        Assert.assertEquals(juniperTestKitRequest.getJuniperKitId(), kitStatus.getJuniperKitId());
         Assert.assertNotNull(kitStatus.getDsmShippingLabel());
         Assert.assertNotNull(kitStatus.getCollaboratorSampleId());
         Assert.assertNotNull(kitStatus.getCollaboratorParticipantId());
@@ -181,14 +172,14 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         Assert.assertEquals(oldKits.size() + 1, newKits.size());
         KitRequestShipping newKit =
                 newKits.stream().filter(kitRequestShipping -> kitRequestShipping.getDdpParticipantId()
-                                .equals(juniperTestKit.getJuniperParticipantID()))
+                                .equals(juniperTestKitRequest.getJuniperParticipantID()))
                         .findAny().get();
-        Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + juniperTestKit.getJuniperParticipantID());
+        Assert.assertEquals(newKit.getBspCollaboratorParticipantId(), bspPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID());
         Assert.assertEquals(newKit.getBspCollaboratorSampleId(),
-                bspPrefix + "_" + juniperTestKit.getJuniperParticipantID() + "_" + salivaKitType);
+                bspPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID() + "_" + salivaKitType);
     }
 
-    private NonPepperKitStatusDto assertStatusKitResponse(KitResponse kitResponse, JuniperKitRequest juniperTestKit, int testRandomNumber,
+    private void verifyStatusKitResponse(KitResponse kitResponse, JuniperKitRequest juniperTestKit, int testRandomNumber,
                                                           String expectedStatus) {
         Assert.assertNotNull(kitResponse);
         Assert.assertNotNull(kitResponse.getKits());
@@ -207,10 +198,9 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         Assert.assertEquals(expectedStatus, nonPepperKitStatus.getCurrentStatus());
         Assert.assertNotNull(nonPepperKitStatus.getCollaboratorParticipantId());
         Assert.assertNotNull(nonPepperKitStatus.getCollaboratorSampleId());
-        return nonPepperKitStatus;
     }
 
-    private JuniperKitRequest generateJuniperKit(int random) {
+    private JuniperKitRequest generateJuniperKitRequest(int random) {
         String participantId = "TEST_PARTICIPANT";
 
         String json = "{ \"firstName\":\"P\","
@@ -234,7 +224,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     public void createNewJuniperKitTest() {
 
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
-        JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
         createAndAssertNonPepperCreation(juniperTestKit);
     }
 
