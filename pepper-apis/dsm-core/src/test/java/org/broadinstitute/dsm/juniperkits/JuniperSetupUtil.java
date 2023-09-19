@@ -132,20 +132,6 @@ public class JuniperSetupUtil {
         }
     }
 
-    private static String createDdpGroupForJuniper(Connection conn, String groupName) throws SQLException {
-        if (StringUtils.isNotBlank(ddpGroupId)) {
-            return ddpGroupId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_GROUP, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, groupName);
-        int result = stmt.executeUpdate();
-        if (result != 1) {
-            throw new DsmInternalError("More than 1 row updated");
-        }
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "ddp_group");
-    }
-
     public static void deleteJuniperInstanceAndSettings() {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();

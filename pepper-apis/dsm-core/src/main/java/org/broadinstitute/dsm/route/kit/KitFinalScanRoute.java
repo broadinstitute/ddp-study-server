@@ -13,7 +13,7 @@ public class KitFinalScanRoute extends KitStatusChangeRoute {
     }
 
     @Override
-    public void processRequest() {
+    protected void processRequest() {
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDaoImpl());
         scanErrorList.addAll(kitFinalScanUseCase.get());
     }
