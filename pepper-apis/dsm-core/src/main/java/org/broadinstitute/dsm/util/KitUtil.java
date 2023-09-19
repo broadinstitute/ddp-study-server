@@ -122,6 +122,13 @@ public class KitUtil {
     private static final String EASYPOST_RETURN_SENDER_STATUS = "return_to_sender";
     private static final String EASYPOST_ERROR_STATUS = "error";
 
+    /**
+     * createLabel buys shipments for the kit and updates their label url in the db
+     * if no easypost address id is present for the kit, the method uses the address in ES for participant
+     *
+     * @param kitsLabelTriggered List of kits that are picked up in the current label job
+     * @param easyPostUtil EasyPostUtil to use for buying shipments, if  null it is created for the specific realm of the kit
+     */
     public static void createLabel(List<KitRequestCreateLabel> kitsLabelTriggered, EasyPostUtil easyPostUtil) {
         DBUtil.updateBookmark(System.currentTimeMillis(), BOOKMARK_LABEL_CREATION_RUNNING);
         DDPInstanceDto ddpInstanceDto = null;
