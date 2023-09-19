@@ -11,8 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -43,6 +44,7 @@ import org.junit.Assert;
  *      Call close()
  */
 @Slf4j
+@Getter
 public class UserAdminTestUtil {
     private final Map<Integer, List<Integer>> createdUserRoles = new HashMap<>();
     private final List<Integer> createdGroupRoles = new ArrayList<>();
@@ -67,7 +69,70 @@ public class UserAdminTestUtil {
             "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
 
 
-    public UserAdminTestUtil() {}
+
+    public UserAdminTestUtil() {
+    }
+
+    private static int createInstanceGroup(String instanceName, String studyGuid, String collaboratorPrefix, int studyGroupId) {
+        int instanceId = createInstance(instanceName, studyGuid, collaboratorPrefix);
+        SimpleResult res = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setInt(1, instanceId);
+                stmt.setInt(2, studyGroupId);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    dbVals.resultException = new DsmInternalError("Result count was " + result);
+                }
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (res.resultException != null) {
+            try {
+                deleteInstance(instanceId);
+            } catch (Exception e) {
+                log.error("Failed to delete DDP instance {}", instanceId);
+            }
+            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
+        }
+        return instanceId;
+    }
+
+    private static int createInstance(String instanceName, String studyGuid, String collaboratorPrefix) {
+        SimpleResult res = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, instanceName);
+                stmt.setString(2, studyGuid);
+                stmt.setString(3, collaboratorPrefix);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    dbVals.resultException = new DsmInternalError("Result count was " + result);
+                }
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (res.resultException != null) {
+            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
+        }
+        return (int) res.resultValue;
+    }
 
     /**
      * Call this to teardown this class, typically in an @After or @AfterClass method
@@ -96,23 +161,25 @@ public class UserAdminTestUtil {
     /**
      * Initialize class and create a test DDP realm/instance and study group
      *
-     * @param realmName name of study realm that is not already in use
-     * @param studyGroup name of study group that is not already in use to associate with realm
+     * @param realmName          name of study realm that is not already in use
+     * @param studyGuid          study guid of the new realm we are creating
+     * @param collaboratorPrefix string that appears before the collaborator sample and participant ids specific to this realm
+     * @param studyGroup         name of study group that is not already in use to associate with realm
      */
-    public void createRealmAndStudyGroup(String realmName, String studyGroup) {
+    public void createRealmAndStudyGroup(@NonNull String realmName, String studyGuid, String collaboratorPrefix, String studyGroup) {
         if (ddpInstanceId != -1 || studyGroupId != -1) {
             throw new DsmInternalError("Realm and study group already initialized");
         }
         initialize();
         studyGroupId = UserAdminService.addStudyGroup(studyGroup);
-        ddpInstanceId = createInstanceGroup(realmName, studyGroupId);
+        ddpInstanceId = createInstanceGroup(realmName, studyGuid, collaboratorPrefix, studyGroupId);
     }
 
     /**
      * Setup study admin and study roles
      *
-     * @param adminEmail for new admin user account
-     * @param adminRole PEPPER_ADMIN or STUDY_USER_ADMIN
+     * @param adminEmail    for new admin user account
+     * @param adminRole     PEPPER_ADMIN or STUDY_USER_ADMIN
      * @param rolesToManage actual DSM roles
      * @return study admin user ID
      */
@@ -136,11 +203,12 @@ public class UserAdminTestUtil {
 
     /**
      * Add roles for study
+     *
      * @param roles actual DSM roles
      */
     public void addStudyRoles(List<String> roles) {
         assertInitialized();
-        for (String role: roles) {
+        for (String role : roles) {
             addGroupRole(getRoleId(role), userAdminRoleId);
         }
     }
@@ -153,11 +221,12 @@ public class UserAdminTestUtil {
 
     /**
      * Remove roles for study
+     *
      * @param roles existing study roles
      */
     public void removeStudyRoles(List<String> roles) {
         assertInitialized();
-        for (String role: roles) {
+        for (String role : roles) {
             removeGroupRole(getRoleId(role));
         }
     }
@@ -178,13 +247,14 @@ public class UserAdminTestUtil {
         new UserDao().delete(userAdminId);
         userAdminId = -1;
 
-        for (int groupRoleId: createdGroupRoles) {
+        for (int groupRoleId : createdGroupRoles) {
             UserAdminService.deleteGroupRole(groupRoleId);
         }
     }
 
     /**
      * Create a test user
+     *
      * @param roles list of actual DSM roles for user
      * @return user ID
      */
@@ -192,7 +262,7 @@ public class UserAdminTestUtil {
         assertInitialized();
         int userId = createUser(email);
         List<Integer> roleIds = new ArrayList<>();
-        for (String role: roles) {
+        for (String role : roles) {
             int roleId = getRoleId(role);
             UserAdminService.addUserRole(userId, roleId, studyGroupId);
             roleIds.add(roleId);
@@ -225,7 +295,7 @@ public class UserAdminTestUtil {
         if (roleIds == null) {
             throw new DsmInternalError("Invalid user: " + userId);
         }
-        for (int roleId: roleIds) {
+        for (int roleId : roleIds) {
             UserAdminService.deleteUserRole(userId, roleId, studyGroupId);
         }
         userDao.delete(userId);
@@ -234,7 +304,7 @@ public class UserAdminTestUtil {
     public void deleteAllTestUsers() {
         assertInitialized();
         UserDao userDao = new UserDao();
-        for (var entry: createdUserRoles.entrySet()) {
+        for (var entry : createdUserRoles.entrySet()) {
             _deleteTestUser(entry.getKey(), userDao);
         }
         createdUserRoles.clear();
@@ -323,39 +393,6 @@ public class UserAdminTestUtil {
         });
     }
 
-    private static int createInstanceGroup(String instanceName, int studyGroupId) {
-        int instanceId = createInstance(instanceName);
-        SimpleResult res = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setInt(1, instanceId);
-                stmt.setInt(2, studyGroupId);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    dbVals.resultException = new DsmInternalError("Result count was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (res.resultException != null) {
-            try {
-                deleteInstance(instanceId);
-            } catch (Exception e) {
-                log.error("Failed to delete DDP instance {}", instanceId);
-            }
-            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
-        }
-        return instanceId;
-    }
-
     private static int createInstance(String instanceName) {
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
@@ -406,15 +443,6 @@ public class UserAdminTestUtil {
                 throw new DsmInternalError(msg, ex);
             }
         });
-    }
-
-    public void setUpByConfig(String ddpInstanceId, String ddpGroupId) {
-        if (StringUtils.isBlank(ddpInstanceId) || StringUtils.isBlank(ddpGroupId)) {
-            throw new DsmInternalError("Both instanceId and groupId should have values");
-        }
-        initialize();
-        this.ddpInstanceId = Integer.parseInt(ddpInstanceId);
-        this.studyGroupId = Integer.parseInt(ddpGroupId);
     }
 
 }

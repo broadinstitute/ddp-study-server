@@ -57,11 +57,24 @@ public class NonPepperKitCreationService {
 
         // TODO for future if applicable, if the kit type has sub kits check that here
 
-        return validateAndInsertNewNonPepperKit(kitRequestSettings, juniperKitRequest, easyPostUtil, ddpInstance, kitType, kitTypeName);
+        return validateAndInsertNonPepperKit(kitRequestSettings, juniperKitRequest, easyPostUtil, ddpInstance, kitType, kitTypeName);
     }
+    /**
+     * Attempts to validate the juniperKitRequest received from Juniper, get an easy post id for its address and
+     * insert in the DB if all checks pass
+     *
+     * @param kitRequestSettings KitRequestSettings that shows the specific kit config for this study;
+     * @param juniperKitRequest the new JuniperKitRequest received
+     * @param easyPostUtil an instance of the EasyPostUtil
+     * @param ddpInstance DDPInstance representing the study for which we want to create kits
+     * @param kitType the KitType that the request wants to create
+     * @param kitTypeName the specific name of the request kit type
+     *
+     * @return an instance of KitResponse, either as an error or KitStatus
+     * **/
 
-    private KitResponse validateAndInsertNewNonPepperKit(KitRequestSettings kitRequestSettings, JuniperKitRequest juniperKitRequest,
-                                                         EasyPostUtil easyPostUtil, DDPInstance ddpInstance,
+    private KitResponse validateAndInsertNonPepperKit(@NonNull KitRequestSettings kitRequestSettings, @NonNull JuniperKitRequest juniperKitRequest,
+                                                         @NonNull EasyPostUtil easyPostUtil, DDPInstance ddpInstance,
                                                          KitType kitType, String kitTypeName) {
         //let's validate the participant's address
         //to validate the address, first we need create the Address instance
@@ -123,9 +136,9 @@ public class NonPepperKitCreationService {
             juniperKitRequestId = kit.getJuniperKitId();
             userId = JUNIPER;
         } else {
-            log.warn("Seems like {} is not configured as a JUNIPER study! ", ddpInstance.getName());
+            log.warn("Seems like {} is not configured as a Juniper study! ", ddpInstance.getName());
             transactionResults.resultException =
-                    new DsmInternalError(ddpInstance.getName() + " study is not configured to use this method.");
+                    new DsmInternalError(ddpInstance.getName() + " study is not configured as a Juniper study! ");
             return transactionResults;
         }
 

@@ -118,7 +118,7 @@ public class UserAdminService {
         initialized = false;
     }
 
-    public void initialize() {
+    protected void initialize() {
         if (initialized) {
             return;
         }

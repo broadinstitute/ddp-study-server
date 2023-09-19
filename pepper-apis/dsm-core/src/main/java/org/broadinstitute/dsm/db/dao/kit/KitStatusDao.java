@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
@@ -19,11 +21,13 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
+@Slf4j
 public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
 
     private static final String SELECT_KIT_STATUS =
             " SELECT req.*, k.*, discard.*, tracking.tracking_id as return_tracking_number, tracking.scan_by as tracking_scan_by, "
-                    + " tracking.scan_date as tracking_scan_date, bsp_collaborator_sample_id, bsp_collaborator_participant_id FROM ddp_kit_request req "
+                    + " tracking.scan_date as tracking_scan_date, bsp_collaborator_sample_id, bsp_collaborator_participant_id "
+                    + " FROM ddp_kit_request req "
                     + " LEFT JOIN ddp_kit k on (k.dsm_kit_request_id = req.dsm_kit_request_id) "
                     + " LEFT JOIN ddp_kit_discard discard on  (discard.dsm_kit_request_id = req.dsm_kit_request_id) "
                     + " LEFT JOIN ddp_kit_tracking tracking on  (tracking.kit_label = k.kit_label) ";
@@ -82,12 +86,13 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                     list.add(builder.build(rs, users));
                 }
             } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits with juniper kit id %s", juniperKitId), ex);
+                dbVals.resultException = ex;
             }
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new DsmInternalError(simpleResult.resultException);
+            throw new DsmInternalError(String.format("Error getting kits with juniper kit id %s", juniperKitId),
+                    simpleResult.resultException);
         }
         return list;
     }
@@ -124,6 +129,85 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
     }
 
     private static class BuildNonPepperKitStatusDto {
+        public static KitCurrentStatus calculateCurrentStatus(ResultSet foundKitResults) {
+            try {
+                if (isDeactivatedKit(foundKitResults)) {
+                    return KitCurrentStatus.DEACTIVATED;
+                } else if (isQueuedKit(foundKitResults)) {
+                    return KitCurrentStatus.QUEUE;
+                } else if (isErrorKit(foundKitResults)) {
+                    return KitCurrentStatus.ERROR;
+                } else if (isReceivedKit(foundKitResults)) {
+                    return KitCurrentStatus.RECEIVED;
+                } else if (isSentKit(foundKitResults)) {
+                    return KitCurrentStatus.SENT;
+                } else if (isNewKit(foundKitResults) || isEasyPostLabelTriggeredKit(foundKitResults)) {
+                    return KitCurrentStatus.KIT_WITHOUT_LABEL;
+                } else {
+                    log.error(String.format("Unable to determine the current status of kit %s",
+                            foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID)));
+                    return null;
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError(e);
+            }
+        }
+
+        private static boolean isEasyPostLabelTriggeredKit(ResultSet foundKitResults) throws SQLException {
+            return StringUtils.isBlank(foundKitResults.getString(DBConstants.EASYPOST_TO_ID))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.LABEL_URL_TO))
+                    && StringUtils.isNotBlank(foundKitResults.getString(DBConstants.LABEL_DATE))
+                    && (StringUtils.isBlank(foundKitResults.getString(DBConstants.ERROR)) ||
+                    "0".equals(foundKitResults.getString(DBConstants.ERROR)))
+                    && (StringUtils.isBlank(foundKitResults.getString(DBConstants.KIT_COMPLETE)) ||
+                    "0".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)));
+        }
+
+        private static boolean isDeactivatedKit(ResultSet foundKitResults) throws SQLException {
+            return StringUtils.isNotBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
+                    && !DBConstants.DEACTIVATION_REASON.equals(foundKitResults.getString(DBConstants.DEACTIVATION_REASON));
+        }
+
+        private static boolean isNewKit(ResultSet foundKitResults) throws SQLException {
+            return StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
+                    && (StringUtils.isBlank(foundKitResults.getString(DBConstants.ERROR)) ||
+                    "0".equals(foundKitResults.getString(DBConstants.ERROR)))
+                    && (StringUtils.isBlank(foundKitResults.getString(DBConstants.KIT_COMPLETE)) ||
+                    !"1".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)))
+                    && (StringUtils.isBlank(foundKitResults.getString(DBConstants.LABEL_URL_TO)));
+        }
+
+        private static boolean isReceivedKit(ResultSet foundKitResults) throws SQLException {
+            return StringUtils.isNotBlank(foundKitResults.getString(DBConstants.DSM_RECEIVE_DATE))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE));
+        }
+
+        private static boolean isSentKit(ResultSet foundKitResults) throws SQLException {
+//        and kit.kit_complete = 1 and kit.deactivated_date is null
+            return ("1".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_RECEIVE_DATE))
+                    && StringUtils.isNotBlank(foundKitResults.getString(DBConstants.DSM_SCAN_DATE));
+        }
+
+        private static boolean isErrorKit(ResultSet foundKitResults) throws SQLException {
+            return (StringUtils.isBlank(foundKitResults.getString(DBConstants.KIT_COMPLETE)) ||
+                    "0".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)))
+                    && ("1".equals(foundKitResults.getString(DBConstants.ERROR)))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE));
+        }
+
+        private static boolean isQueuedKit(ResultSet foundKitResults) throws SQLException {
+            return (StringUtils.isBlank(foundKitResults.getString(DBConstants.KIT_COMPLETE)) ||
+                    "0".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)))
+                    && (StringUtils.isBlank(foundKitResults.getString(DBConstants.ERROR)) ||
+                    "0".equals(foundKitResults.getString(DBConstants.ERROR)))
+                    && StringUtils.isNotBlank(foundKitResults.getString(DBConstants.LABEL_URL_TO))
+                    && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE));
+
+        }
+
         public NonPepperKitStatusDto build(ResultSet foundKitResults, Map<Integer, UserDto> users) throws DsmInternalError {
             try {
                 return new NonPepperKitStatusDto.Builder()
@@ -161,7 +245,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                                 NonPepperStatusKitService.convertTimeStringIntoTimeStamp(foundKitResults.getLong(DBConstants.DISCARD_DATE)))
                         .withDiscardBy(
                                 NonPepperStatusKitService.getUserEmailForFields(foundKitResults.getString(DBConstants.DISCARD_BY), users))
-                        .withCurrentStatus(NonPepperStatusKitService.calculateCurrentStatus(foundKitResults))
+                        .withCurrentStatus(calculateCurrentStatus(foundKitResults).getValue())
                         .withCollaboratorParticipantId(foundKitResults.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
                         .withCollaboratorSampleId(foundKitResults.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
                         .build();

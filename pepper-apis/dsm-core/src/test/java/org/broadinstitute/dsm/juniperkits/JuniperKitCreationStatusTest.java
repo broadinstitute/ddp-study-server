@@ -20,7 +20,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.kit.KitCurrentStatus;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
+import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
@@ -112,23 +114,25 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testCurrentStatusFieldAfterChanges() {
+    public void testCurrentStatusField() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKit(rand);
         try {
             createAndAssertNonPepperCreation(juniperTestKit);
             KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.KIT_WITHOUT_LABEL);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
             JuniperSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
             kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.QUEUE);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
             juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
-            JuniperSetupUtil.changeKitToSent(juniperTestKit);
+            List<ScanError> scanErrorList = JuniperSetupUtil.changeKitToSent(juniperTestKit);
+            Assert.assertFalse(
+                    scanErrorList.stream().filter(scanError -> StringUtils.isNotBlank(scanError.getError())).findAny().isPresent());
             kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.SENT);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
             JuniperSetupUtil.changeKitToReceived();
             kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.RECEIVED);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.RECEIVED.getValue());
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
@@ -143,7 +147,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
 
             KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
 
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.KIT_WITHOUT_LABEL);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());
         }
@@ -156,7 +160,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         try {
             createAndAssertNonPepperCreation(juniperTestKit);
             KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnParticipantId(juniperTestKit.getJuniperParticipantID());
-            assertStatusKitResponse(kitResponse, juniperTestKit, rand, NonPepperStatusKitService.KIT_WITHOUT_LABEL);
+            assertStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
 
         } finally {
             createdKitIds.add(juniperTestKit.getJuniperKitId());

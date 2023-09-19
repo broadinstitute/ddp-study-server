@@ -29,7 +29,7 @@ public class NonPepperKitStatusDto {
     private String errorMessage;
     private String discardDate;
     private String discardBy;
-    private String currentStatus;
+    private final String currentStatus;
     private String collaboratorParticipantId;
     private String collaboratorSampleId;
 

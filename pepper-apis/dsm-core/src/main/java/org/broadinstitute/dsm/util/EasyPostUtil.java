@@ -301,16 +301,17 @@ public class EasyPostUtil {
     }
 
     /**
-     * checkAddress tries creating an address in EasyPost. If it is successful,
-     * sets the kit's easypostAddressId and returns true, if not returns false
+     * getEasyPostAddressId tries creating an address in EasyPost. If it is successful,
+     * it returns the easyPost address id that is generated, if not throws an exception
      * An address is valid only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
      *
      * @param juniperKitRequest the JuniperKitRequest with address to check
-     * @return true if easypost was able to create the address, false otherwise
+     * @param phone the phone number from ddp kit request settings
+     * @param deliveryAddress an instance of DeliverAddress created from the address passed from Juniper's request
+     * @return String the easypost address id for the specific address
      */
 
-    public String getEasyPostAddressId(@NonNull JuniperKitRequest juniperKitRequest, String phone, DeliveryAddress deliveryAddress)
-            throws DsmInternalError, DSMBadRequestException {
+    public String getEasyPostAddressId(@NonNull JuniperKitRequest juniperKitRequest, String phone, DeliveryAddress deliveryAddress) {
         if (StringUtils.isBlank(juniperKitRequest.getLastName())) {
             throw new DSMBadRequestException("KitRequest did not have a last name ");
         }
