@@ -57,7 +57,7 @@ public class UserAdminTestUtil {
     private boolean initialized = false;
 
     private static final String SQL_INSERT_DDP_INSTANCE =
-            "INSERT INTO ddp_instance SET instance_name = ?, study_guid, collaborator_id_prefix = ?, bsp_organism=1, is_active = 1, auth0_token = 1, migrated_ddp = 0";
+            "INSERT INTO ddp_instance SET instance_name = ?, study_guid=?, collaborator_id_prefix = ?, bsp_organism=1, is_active = 1, auth0_token = 1, migrated_ddp = 0";
 
     private static final String SQL_INSERT_DDP_INSTANCE_GROUP =
             "INSERT INTO ddp_instance_group SET ddp_instance_id = ?, ddp_group_id = ?";
