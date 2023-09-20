@@ -144,6 +144,8 @@ public class DDPMedicalRecordDataRequest {
         Collection<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
             logger.info("Participant w/ id " + institutionRequest.getParticipantId() + " has " + institutions.size() + " institutions");
+            // TODO this should be rewritten to verify the DDP participant ID and get the participant ID to use in the following
+            // calls (which should be modified to use the participant ID instead of repeatedly looking it up -DC
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_ONC_HISTORY, institutionRequest.getParticipantId(), instanceId);
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, institutionRequest.getParticipantId(), instanceId);
             for (Institution institution : institutions) {

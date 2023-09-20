@@ -63,15 +63,15 @@ public class OncHistoryDetailPatch extends BasePatch {
                 throw new DSMBadRequestException("DDP participant ID not provided for patch");
             }
 
-            String participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
-            if (StringUtils.isBlank(participantId)) {
+            Integer participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
+            if (participantId == null) {
                 throw new DSMBadRequestException("Participant does not exist. DDP participant ID=" + ddpParticipantId);
             }
 
             // mr of that type doesn't exist yet, so create an institution and mr
-            MedicalRecordUtil.writeInstitutionIntoDb(ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
+            MedicalRecordUtil.writeInstitutionIntoDb(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
                     realm, true);
-            patch.setParentId(participantId);
+            patch.setParentId(participantId.toString());
             mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         }
         if (mrID != null) {

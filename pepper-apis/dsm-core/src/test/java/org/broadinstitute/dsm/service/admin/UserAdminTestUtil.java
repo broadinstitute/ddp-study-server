@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -54,7 +55,7 @@ public class UserAdminTestUtil {
     private boolean initialized = false;
 
     private static final String SQL_INSERT_DDP_INSTANCE =
-            "INSERT INTO ddp_instance SET instance_name = ?, is_active = 1, auth0_token = 1, migrated_ddp = 0";
+            "INSERT INTO ddp_instance SET instance_name = ?, study_guid=?, collaborator_id_prefix = ?, bsp_organism=1, is_active = 1, auth0_token = 1, migrated_ddp = 0";
 
     private static final String SQL_INSERT_DDP_INSTANCE_GROUP =
             "INSERT INTO ddp_instance_group SET ddp_instance_id = ?, ddp_group_id = ?";
@@ -95,16 +96,18 @@ public class UserAdminTestUtil {
     /**
      * Initialize class and create a test DDP realm/instance and study group
      *
-     * @param realmName name of study realm that is not already in use
-     * @param studyGroup name of study group that is not already in use to associate with realm
+     * @param realmName          name of study realm that is not already in use
+     * @param studyGuid          study guid of the new realm we are creating
+     * @param collaboratorPrefix string that appears before the collaborator sample and participant ids specific to this realm
+     * @param studyGroup         name of study group that is not already in use to associate with realm
      */
-    public void createRealmAndStudyGroup(String realmName, String studyGroup) {
+    public void createRealmAndStudyGroup(@NonNull String realmName, String studyGuid, String collaboratorPrefix, String studyGroup) {
         if (ddpInstanceId != -1 || studyGroupId != -1) {
             throw new DsmInternalError("Realm and study group already initialized");
         }
         initialize();
         studyGroupId = UserAdminService.addStudyGroup(studyGroup);
-        ddpInstanceId = createInstanceGroup(realmName, studyGroupId);
+        ddpInstanceId = createInstanceGroup(realmName, studyGuid, collaboratorPrefix, studyGroupId);
     }
 
     /**
@@ -322,8 +325,8 @@ public class UserAdminTestUtil {
         });
     }
 
-    private static int createInstanceGroup(String instanceName, int studyGroupId) {
-        int instanceId = createInstance(instanceName);
+    private static int createInstanceGroup(String instanceName, String studyGuid, String collaboratorPrefix, int studyGroupId) {
+        int instanceId = createInstance(instanceName, studyGuid, collaboratorPrefix);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
@@ -355,11 +358,13 @@ public class UserAdminTestUtil {
         return instanceId;
     }
 
-    private static int createInstance(String instanceName) {
+    private static int createInstance(String instanceName, String studyGuid, String collaboratorPrefix) {
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, instanceName);
+                stmt.setString(2, studyGuid);
+                stmt.setString(3, collaboratorPrefix);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     dbVals.resultException = new DsmInternalError("Result count was " + result);
@@ -405,6 +410,14 @@ public class UserAdminTestUtil {
                 throw new DsmInternalError(msg, ex);
             }
         });
+    }
+
+    public int getStudyGroupId() {
+        return studyGroupId;
+    }
+
+    public int getDdpInstanceId() {
+        return ddpInstanceId;
     }
 
 }
