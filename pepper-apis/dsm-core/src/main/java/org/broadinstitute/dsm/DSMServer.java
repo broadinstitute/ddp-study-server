@@ -603,7 +603,7 @@ public class DSMServer {
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
-
+        //Juniper routes
         post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
 
         StatusKitRoute statusKitRoute = new StatusKitRoute();
