@@ -22,7 +22,7 @@ public class LabelCreationJob implements Job {
             if (labelCreationStarted == 0) {
                 List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
                 if (!kitsLabelTriggered.isEmpty()) {
-                    KitUtil.createLabel(kitsLabelTriggered);
+                    KitUtil.createLabel(kitsLabelTriggered, null);
                 }
             } else if (labelCreationStarted < System.currentTimeMillis() - (SystemUtil.MILLIS_PER_HOUR * 2)) {
                 logger.error("Label creation job is running for over 2 hours now...");

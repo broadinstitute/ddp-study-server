@@ -206,7 +206,7 @@ public class RouteTestSample extends TestHelper {
         //start method of label job
         List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
         if (!kitsLabelTriggered.isEmpty()) {
-            KitUtil.createLabel(kitsLabelTriggered);
+            KitUtil.createLabel(kitsLabelTriggered, null);
             // wait for labels to get created
             try {
                 Thread.sleep(waitSeconds * 1000L); //20 sec

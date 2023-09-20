@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.route.RouteUtil;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.service.admin.SetUserRoleRequest;
 import org.broadinstitute.dsm.service.admin.UpdateUserRoleRequest;
@@ -20,13 +20,7 @@ public class UserRoleRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) {
-        String studyGroup;
-        try {
-            studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
-        } catch (Exception e) {
-            return handleError(e, "getting study group", response);
-        }
-
+        String studyGroup = UserAdminService.getStudyGroup(request.queryMap().toMap());
         UserAdminService service = new UserAdminService(userId, studyGroup);
 
         String requestMethod = request.requestMethod();
@@ -48,35 +42,22 @@ public class UserRoleRoute extends RequestHandler {
                 req = new Gson().fromJson(body, SetUserRoleRequest.class);
             } catch (Exception e) {
                 log.info("Invalid request format for {}", body);
-                response.status(400);
-                return "Invalid request format";
+                throw new DSMBadRequestException("Invalid request format");
             }
-            try {
-                service.setUserRoles(req);
-            } catch (Exception e) {
-                return handleError(e, "setting user roles", response);
-            }
+            service.setUserRoles(req);
         } else if (requestMethod.equals(RoutePath.RequestMethod.POST.toString())) {
             UpdateUserRoleRequest req;
             try {
                 req = new Gson().fromJson(body, UpdateUserRoleRequest.class);
             } catch (Exception e) {
                 log.info("Invalid request format for {}", body);
-                response.status(400);
-                return "Invalid request format";
+                throw new DSMBadRequestException("Invalid request format");
             }
-            try {
-                service.updateUserRoles(req);
-            } catch (Exception e) {
-                return handleError(e, "updating user roles", response);
-            }
+            service.updateUserRoles(req);
         } else {
-            String msg = "Invalid HTTP method for UserRoleRoute: " + requestMethod;
-            log.error(msg);
-            response.status(500);
-            return msg;
+            RouteUtil.handleInvalidRouteMethod(request, "UserRoleRoute");
+            return null;
         }
-
         return new Result(200);
     }
 
@@ -87,31 +68,9 @@ public class UserRoleRoute extends RequestHandler {
                 req = new Gson().fromJson(body, UserRoleRequest.class);
             } catch (Exception e) {
                 log.info("Invalid request format for {}", body);
-                response.status(400);
-                return "Invalid request format";
+                throw new DSMBadRequestException("Invalid request format");
             }
         }
-        try {
-            return service.getUserRoles(req);
-        } catch (Exception e) {
-            return handleError(e, "getting user roles", response);
-        }
-    }
-
-    protected static String handleError(Throwable e, String operation, Response response) {
-        if (e instanceof DSMBadRequestException) {
-            response.status(400);
-            log.info("DSMBadRequestException {}: {}", operation, e.toString());
-            return e.getMessage();
-        } else if (e instanceof DsmInternalError) {
-            log.error("Error {}: {}", operation, e.toString());
-            response.status(500);
-            return "Internal error. Contact development team";
-        }
-
-        // any other exception
-        log.error("Error {}: {}", operation, e.toString());
-        response.status(500);
-        return e.getMessage();
+        return service.getUserRoles(req);
     }
 }

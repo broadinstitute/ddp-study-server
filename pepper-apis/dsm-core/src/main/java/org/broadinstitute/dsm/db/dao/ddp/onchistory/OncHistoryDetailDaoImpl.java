@@ -53,7 +53,7 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
         OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto builder = new OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto();
         SimpleResult res = DaoUtil.getById(id, SQL_SELECT_BY_ID, builder);
         if (res.resultException != null) {
-            throw new RuntimeException("Error getting onc history detail with id: " + id,
+            throw new DsmInternalError("Error getting onc history detail with id: " + id,
                     res.resultException);
         }
         return (Optional<OncHistoryDetailDto>) res.resultValue;
@@ -113,8 +113,8 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
                 stmt.setString(2, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        oncHistoryDetail = new OncHistoryDetail(rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID),
-                                rs.getLong(DBConstants.MEDICAL_RECORD_ID), rs.getString(DBConstants.DATE_PX),
+                        oncHistoryDetail = new OncHistoryDetail(rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID),
+                                rs.getInt(DBConstants.MEDICAL_RECORD_ID), rs.getString(DBConstants.DATE_PX),
                                 rs.getString(DBConstants.TYPE_PX), rs.getString(DBConstants.LOCATION_PX),
                                 rs.getString(DBConstants.HISTOLOGY), rs.getString(DBConstants.ACCESSION_NUMBER),
                                 rs.getString(DBConstants.FACILITY),

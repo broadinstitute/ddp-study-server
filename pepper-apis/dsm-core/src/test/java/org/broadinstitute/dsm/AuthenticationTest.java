@@ -43,7 +43,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
         studyInstanceName = "instance" + nameAppend;
         String cmiStudyGroup = "cmi" + nameAppend;
 
-        cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, cmiStudyGroup);
+        cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, null, null, cmiStudyGroup);
         cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
                 Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 

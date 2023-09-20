@@ -20,6 +20,8 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.exception.CarrierRejectionException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.RateNotAvailableException;
 import org.broadinstitute.dsm.model.EasypostLabelRate;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
@@ -299,53 +301,38 @@ public class EasyPostUtil {
     }
 
     /**
-     * checkAddress tries creating an address in EasyPost. If it is successful,
-     * sets the kit's easypostAddressId and returns true, if not returns false
+     * getEasyPostAddressId tries creating an address in EasyPost. If it is successful,
+     * it returns the easyPost address id that is generated, if not throws an exception
      * An address is valid only if participant has shortId, first - and lastName, for Juniper shortId is the juniperParticipantId
      *
      * @param juniperKitRequest the JuniperKitRequest with address to check
-     * @return true if easypost was able to create the address, false otherwise
+     * @param phone the phone number from ddp kit request settings
+     * @param deliveryAddress an instance of DeliverAddress created from the address passed from Juniper's request
+     * @return String the easypost address id for the specific address
      */
 
-    public boolean checkAddress(@NonNull JuniperKitRequest juniperKitRequest, String phone) {
-        if ((StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID()))
-                || StringUtils.isBlank(juniperKitRequest.getLastName())) {
-            return false;
+    public String getEasyPostAddressId(@NonNull JuniperKitRequest juniperKitRequest, String phone, DeliveryAddress deliveryAddress) {
+        if (StringUtils.isBlank(juniperKitRequest.getLastName())) {
+            throw new DSMBadRequestException("KitRequest did not have a last name ");
         }
-        //let's validate the participant's address
-        String name = "";
-        if (StringUtils.isNotBlank(juniperKitRequest.getFirstName())) {
-            name += juniperKitRequest.getFirstName() + " ";
-        }
-        name += juniperKitRequest.getLastName();
         if (juniperKitRequest.isSkipAddressValidation()) {
             //if no validation is needed, we just need to create the Address instance in easypost and get its id back
             try {
                 Address address = createAddressWithoutValidation(name, juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(),
                         juniperKitRequest.getCity(),
                         juniperKitRequest.getPostalCode(), juniperKitRequest.getState(), juniperKitRequest.getCountry(), phone);
-                juniperKitRequest.setEasypostAddressId(address.getId());
-                return true;
+                return address.getId();
             } catch (EasyPostException e) {
                 // log the reason for address creation failure and return false. The method will then return the error code
-                logger.warn("Easypost couldn't create an address for " + juniperKitRequest.getShortId(), e);
-                return false;
+                throw new DsmInternalError("Easypost couldn't create an address for " + juniperKitRequest.getShortId(), e);
             }
         }
-        //to validate the address, first we need create the Address instance
-        DeliveryAddress deliveryAddress =
-                new DeliveryAddress(juniperKitRequest.getStreet1(), juniperKitRequest.getStreet2(), juniperKitRequest.getCity(),
-                        juniperKitRequest.getState(),
-                        juniperKitRequest.getPostalCode(), juniperKitRequest.getCountry(), name, phone);
         //call easypost apis to make sure the address is valid
         deliveryAddress.validate();
         if (deliveryAddress.isValid()) {
             //store the address back
-            juniperKitRequest.setEasypostAddressId(deliveryAddress.getId());
-            return true;
+            return deliveryAddress.getId();
         }
-        logger.info(String.format("Address is not valid %s", juniperKitRequest.getShortId()));
-        return false;
-
+        throw new DSMBadRequestException(String.format("Address is not valid %s", juniperKitRequest.getJuniperKitId()));
     }
 }
