@@ -34,77 +34,77 @@
     </changeSet>
     <changeSet id="our-health-ddp-instance-group-insert" author="pegah">
         <insert tableName="ddp_instance_group">
-            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"></column>
-            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'juniper-ourheart')"></column>
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
+            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'juniper-ourheart')"/>
         </insert>
     </changeSet>
     <changeSet id="our-health-ddp-instance-role-insert" author="pegah">
         <insert tableName="ddp_instance_role">
-            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"></column>
-            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'kit_request_activated')"></column>
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
+            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'kit_request_activated')"/>
         </insert>
         <insert tableName="ddp_instance_role">
-            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"></column>
-            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'juniper_study')"></column>
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
+            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'juniper_study')"/>
         </insert>
     </changeSet>
     <changeSet id="our-health-kit-dimension-insert" author="pegah">
         <insert tableName="kit_dimension">
-            <column name="kit_width" value="6.5"></column>
-            <column name="kit_height" value="2.5"></column>
-            <column name="kit_length" value="4.5"></column>
-            <column name="kit_weight" value="4.8"></column>
-            <column name="kit_description" value="juniper-ourheart saliva kit"></column>
+            <column name="kit_width" value="6.5"/>
+            <column name="kit_height" value="2.5"/>
+            <column name="kit_length" value="4.5"/>
+            <column name="kit_weight" value="4.8"/>
+            <column name="kit_description" value="juniper-ourheart saliva kit"/>
         </insert>
     </changeSet>
     <changeSet id="our-heart-kit-return-information-insert" author="pegah">
         <insert tableName="kit_return_information">
-            <column name="return_address_name" value="Broad Institute"></column>
-            <column name="return_address_street1" value="Attn. Broad Genomics"></column>
-            <column name="return_address_street2" value="320 Charles St. – Lab 132"></column>
-            <column name="return_address_city" value="Cambridge"></column>
-            <column name="return_address_state" value="MA"></column>
-            <column name="return_address_zip" value="02141"></column>
-            <column name="return_address_country" value="US"></column>
-            <column name="return_address_phone" value=""></column>
+            <column name="return_address_name" value="Broad Institute"/>
+            <column name="return_address_street1" value="Attn. Broad Genomics"/>
+            <column name="return_address_street2" value="320 Charles St. – Lab 132"/>
+            <column name="return_address_city" value="Cambridge"/>
+            <column name="return_address_state" value="MA"/>
+            <column name="return_address_zip" value="02141"/>
+            <column name="return_address_country" value="US"/>
+            <column name="return_address_phone" value=""/>
         </insert>
     </changeSet>
     <changeSet id="our-heart-ddp-kit-request-settings-insert" author="pegah">
         <insert tableName="ddp_kit_request_settings">
-            <column name="ddp_instance_id" valueComputed="(SELECT ddp_instance_id from ddp_instance WHERE study_guid = 'juniper-ourheart')"></column>
-            <column name="kit_type_id" valueComputed="(SELECT kit_type_id from kit_type WHERE kit_type_name = 'SALIVA')"></column>
-            <column name="kit_return_id" valueComputed="(SELECT kit_return_id FROM kit_return_information WHERE return_address_street2 = '320 Charles St. – Lab 132')"></column>
-            <column name="carrier_service_to_id" valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE service = 'FEDEX_EXPRESS_SAVER' )"></column>
-            <column name="kit_dimension_id" valueComputed="(SELECT kit_dimension_id from kit_dimension WHERE kit_description like 'juniper-ourheart saliva kit')"></column>
-            <column name="kit_label_length" value="14"></column>
+            <column name="ddp_instance_id" valueComputed="(SELECT ddp_instance_id from ddp_instance WHERE study_guid = 'juniper-ourheart')"/>
+            <column name="kit_type_id" valueComputed="(SELECT kit_type_id from kit_type WHERE kit_type_name = 'SALIVA')"/>
+            <column name="kit_return_id" valueComputed="(SELECT kit_return_id FROM kit_return_information WHERE return_address_street2 = '320 Charles St. – Lab 132')"/>
+            <column name="carrier_service_to_id" valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE service = 'FEDEX_EXPRESS_SAVER' )"/>
+            <column name="kit_dimension_id" valueComputed="(SELECT kit_dimension_id from kit_dimension WHERE kit_description like 'juniper-ourheart saliva kit')"/>
+            <column name="kit_label_length" value="14"/>
         </insert>
     </changeSet>
     <changeSet id="our-heart-ddp-group-roles" author="pegah">
         <insert tableName="ddp_group_role">
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"></column>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
         <insert tableName="ddp_group_role">
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"></column>
-            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"></column>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
         <insert tableName="ddp_group_role">
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"></column>
-            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"></column>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
     <changeSet id="juniper-ourheart-pepper-admin" author="pegah">
         <insert tableName="access_user_role_group">
-            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'wluken@broadinstitute.org')"></column>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"></column>
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
+            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'wluken@broadinstitute.org')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"/>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
         </insert>
         <insert tableName="access_user_role_group">
-            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'ptaheri@broadinstitute.org')"></column>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"></column>
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
+            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'ptaheri@broadinstitute.org')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"/>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
         </insert>
     </changeSet>
 </databaseChangeLog>
