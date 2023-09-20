@@ -3,6 +3,11 @@
                    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet author="pegah" id="new-juniper-study-instance-role">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM instance_role WHERE name='juniper_study';
+            </sqlCheck>
+        </preConditions>
         <insert tableName="instance_role">
             <column name="name" value="juniper_study"/>
         </insert>
@@ -30,7 +35,7 @@
     <changeSet id="our-health-ddp-instance-group-insert" author="pegah">
         <insert tableName="ddp_instance_group">
             <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"></column>
-            <column name="ddp_group_id" valueComputed="(select ddp_group_id from ddp_group where name = 'juniper-ourheart')"></column>
+            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'juniper-ourheart')"></column>
         </insert>
     </changeSet>
     <changeSet id="our-health-ddp-instance-role-insert" author="pegah">
@@ -88,6 +93,18 @@
             <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
             <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"></column>
             <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="juniper-ourheart-pepper-admin" author="pegah">
+        <insert tableName="access_user_role_group">
+            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'wluken@broadinstitute.org')"></column>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"></column>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
+        </insert>
+        <insert tableName="access_user_role_group">
+            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'ptaheri@broadinstitute.org')"></column>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"></column>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"></column>
         </insert>
     </changeSet>
 </databaseChangeLog>
