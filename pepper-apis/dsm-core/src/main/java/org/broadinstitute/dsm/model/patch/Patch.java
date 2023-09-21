@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 @Data
 public class Patch {
 
-    public static final String SQL_CHECK_UNIQUE = "SELECT * FROM $table WHERE ($colName = ? ) and deleted <=> 0 ";
+    public static final String SQL_CHECK_UNIQUE = "SELECT * FROM $table WHERE ($colName = ? ) and deleted <> 1 ";
     public static final String TABLE = "$table";
     public static final String PK = "$pk";
     public static final String COL_NAME = "$colName";
@@ -137,6 +137,11 @@ public class Patch {
         }
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
+            if (dbElement.isUniqueField) {
+                if(!isValueUnique(dbElement, String.valueOf(nameValue.getValue()))){
+                    throw new DuplicateException(dbElement.getColumnName());
+                }
+            }
             try (PreparedStatement stmt = conn.prepareStatement(
                     SQL_UPDATE_VALUES.replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName())
                             .replace(PK, dbElement.getPrimaryKey()))) {
@@ -174,12 +179,13 @@ public class Patch {
         return true;
     }
 
-    public static Boolean isValueUnique(@NonNull DBElement dbElement) {
+    public static Boolean isValueUnique(@NonNull DBElement dbElement, String value) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     SQL_CHECK_UNIQUE.replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName()))) {
                 try {
+                    stmt.setString(1, value);
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
                         dbVals.resultValue = false;

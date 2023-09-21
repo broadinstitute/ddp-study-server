@@ -24,6 +24,7 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.db.structure.UniqueField;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -83,6 +84,7 @@ public class Tissue {
     @ColumnName (DBConstants.PATHOLOGY_REPORT)
     private String pathologyReport;
 
+    @UniqueField(true)
     @ColumnName (DBConstants.COLLABORATOR_SAMPLE_ID)
     private String collaboratorSampleId;
 
@@ -97,9 +99,11 @@ public class Tissue {
     @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String scrollsReceived;
 
+    @UniqueField(true)
     @ColumnName (DBConstants.SK_ID)
     private String skId;
 
+    @UniqueField(true)
     @ColumnName (DBConstants.SM_ID)
     private String smId;
 

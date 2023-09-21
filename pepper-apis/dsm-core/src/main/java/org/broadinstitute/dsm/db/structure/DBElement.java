@@ -14,16 +14,19 @@ public class DBElement {
     public String primaryKey;
     public String columnName;
     public SqlDateConverter dateConverter;
+    public Boolean isUniqueField;
 
     public DBElement(String tableName, String tableAlias, String primaryKey, String columnName) {
         this.tableName = tableName;
         this.tableAlias = tableAlias;
         this.primaryKey = primaryKey;
         this.columnName = columnName;
+        this.isUniqueField = false;
     }
 
-    public DBElement(String tableName, String tableAlias, String primaryKey, String columnName, DbDateConversion dateConverter) {
+    public DBElement(String tableName, String tableAlias, String primaryKey, String columnName, DbDateConversion dateConverter, Boolean isUniqueField) {
         this(tableName, tableAlias, primaryKey, columnName);
+        this.isUniqueField = isUniqueField;
         if (dateConverter != null) {
             this.dateConverter = dateConverter.value();
         }
