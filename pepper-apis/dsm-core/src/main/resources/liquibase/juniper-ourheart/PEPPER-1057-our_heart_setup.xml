@@ -95,16 +95,4 @@
             <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
-    <changeSet id="juniper-ourheart-pepper-admin" author="pegah">
-        <insert tableName="access_user_role_group">
-            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'wluken@broadinstitute.org')"/>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"/>
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
-        </insert>
-        <insert tableName="access_user_role_group">
-            <column name="user_id" valueComputed="(SELECT user_id FROM access_user WHERE email = 'ptaheri@broadinstitute.org')"/>
-            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name = 'pepper_admin')"/>
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
-        </insert>
-    </changeSet>
 </databaseChangeLog>
