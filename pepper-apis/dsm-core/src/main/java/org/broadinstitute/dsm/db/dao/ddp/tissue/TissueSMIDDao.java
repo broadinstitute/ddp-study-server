@@ -87,7 +87,7 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting type ids for sm id " + type, results.resultException);
+            throw new DsmInternalError("Error getting type ids for sm id " + type, results.resultException);
         }
 
         return (String) results.resultValue;
@@ -111,10 +111,10 @@ public class TissueSMIDDao {
                             dbVals.resultValue = rs.getString(1);
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new sm id ", e);
+                        throw new DsmInternalError("Error getting id of new sm id ", e);
                     }
                 } else {
-                    throw new RuntimeException(
+                    throw new DsmInternalError(
                             "Error adding new sm id for tissue w/ id " + tissueId + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
@@ -124,7 +124,7 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error adding new sm id for tissue w/ id " + tissueId, results.resultException);
+            throw new DsmInternalError("Error adding new sm id for tissue w/ id " + tissueId, results.resultException);
         } else {
             return (String) results.resultValue;
         }
@@ -150,7 +150,7 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting values from sm_id table matching " + smIdValue, results.resultException);
+            throw new DsmInternalError("Error getting values from sm_id table matching " + smIdValue, results.resultException);
         }
 
         return (boolean) results.resultValue;
@@ -175,7 +175,7 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting values from sm_id table matching " + smIdValue, results.resultException);
+            throw new DsmInternalError("Error getting values from sm_id table matching " + smIdValue, results.resultException);
         }
 
         return (boolean) results.resultValue;
@@ -208,7 +208,7 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of smIds for instance " + instanceName, results.resultException);
+            throw new DsmInternalError("Couldn't get list of smIds for instance " + instanceName, results.resultException);
         }
         logger.info(String.format("Got %d participants smIds in DSM DB for %s ", smIds.size(), instanceName));
         return smIds;
@@ -232,7 +232,7 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
+            throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
         }
         logger.info(String.format("Got %d sequencing smIds in DSM DB for %d ", smIds.size(), tissueId));
         return smIds;
