@@ -22,6 +22,7 @@ public class MercuryOrderStatusListener {
     private MercuryOrderStatusListener(){
         throw new IllegalStateException("Utility class");
     }
+
     public static void subscribeToOrderStatus(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
