@@ -194,7 +194,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
         for (ActivityDto activityDto : allActivities) {
 
-            if (activityDto.getActivityCode().equalsIgnoreCase("prequal")) {
+            //if (activityDto.getActivityCode().equalsIgnoreCase("prequal")) {
 
                 //load allActivityTransVars .. map of varName , Conf file i18n translationVarName
                 //readAllTranslations(activityBuilder);
@@ -206,14 +206,16 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 log.info("###### activity : {} .. parent: {}  .. version: {}", activityDto.getActivityCode(),
                         activityDto.getParentActivityCode(), versionDto.getVersionTag());
 
-                //if (activityDto.getActivityCode().equalsIgnoreCase("PREQUAL")) {
-                traverseActivity(handle, activity);
-                //}
+                if (!activityDto.getActivityCode().startsWith("FAMILY_HISTORY") &&
+                        !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY") &&
+                        !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
+                    traverseActivity(handle, activity);
+                }
 
                 log.info("MISSING translation vars in es.conf: {}", activityDto.getActivityCode());
                 String gsonDataMiss = gson.toJson(missingTransVars, typeObject);
                 log.info(gsonDataMiss);
-            }
+            //}
         }
     }
 
