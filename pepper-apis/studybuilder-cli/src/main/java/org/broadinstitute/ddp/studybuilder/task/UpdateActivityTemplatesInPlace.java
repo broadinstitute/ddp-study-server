@@ -112,7 +112,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
                     }
                 }
                 for (ActivityDef nestedDef : nestedDefs) {
-                    updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, versionTag,
+                    updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, nestedDef.getVersionTag(),
                             nestedActivityConf.get(nestedDef.getActivityCode()), updateTask, nestedDef.getActivityCode());
                 }
                 found = true;
