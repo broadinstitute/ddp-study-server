@@ -67,12 +67,12 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
                     + " status_detail = ?, status_message = ? where order_id = ?";
 
-    String errorMessage = "Error getting possible mercury orders for participant %s";
+    String errorMessage = "Error getting eligible barcodes for a mercury order for participant %s";
 
     private static final int MAX_CHAR_ALLOWED = 2000;
 
 
-    public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) throws DsmInternalError {
+    public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) {
         long statusDate = System.currentTimeMillis();
         //check the length of fields to make sure they fit in the database
         String messageString = msgData.substring(0, Math.min(msgData.length(), MAX_CHAR_ALLOWED));
@@ -116,12 +116,12 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                             null, statusDate, null,
                             rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), null));
                 } else {
-                    dbVals.resultException = new DsmInternalError(String.format("Couldn't get ddp instance id for order %s",
+                    dbVals.resultException = new DsmInternalError(String.format("Couldn't find an order based on the order id %s",
                             mercuryStatusMessage.getOrderID()));
                 }
             } catch (SQLException ex) {
                 dbVals.resultException =
-                        new DsmInternalError(String.format("Error getting ddp instance id for order %s", mercuryStatusMessage.getOrderID()), ex);
+                        new DsmInternalError(String.format("ECouldn't find an order based on the order id %s, ES update will fail", mercuryStatusMessage.getOrderID()), ex);
             }
             return dbVals;
         });

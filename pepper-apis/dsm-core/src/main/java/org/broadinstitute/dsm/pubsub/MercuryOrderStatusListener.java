@@ -27,18 +27,16 @@ public class MercuryOrderStatusListener {
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             String messageId = message.getMessageId();
             // Handle incoming message, then ack the received message.
-            log.info(String.format("Got STATUS message with Id: %s", messageId));
+            log.info(String.format("Got Mercury status message with Id: {}", messageId));
             try {
                 consumer.ack();
                 processOrderStatus(message);
-                log.info("Processing the message finished");
+                log.info("Processing the status message from Mercury finished");
             } catch (DSMPubSubException error) {
                 log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
-                consumer.ack();
                 error.printStackTrace();
             } catch (Exception ex) {
-                log.error("Unexpected error: about to nack the message", ex);
-                consumer.nack();
+                log.error("Unexpected error: about to nack the status message from Mercury", ex);
                 ex.printStackTrace();
             }
 
@@ -56,10 +54,9 @@ public class MercuryOrderStatusListener {
         }
     }
 
-    private static void processOrderStatus(PubsubMessage message) throws DSMPubSubException {
+    private static void processOrderStatus(PubsubMessage message) {
         String data = message.getData().toStringUtf8();
         BaseMercuryStatusMessage baseMercuryStatusMessage = new Gson().fromJson(data, BaseMercuryStatusMessage.class);
         MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage, data);
-
     }
 }
