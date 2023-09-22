@@ -28,14 +28,14 @@
     </changeSet>
     <changeSet id="our-health-ddp-group-insert" author="pegah">
         <insert tableName="ddp_group">
-            <column name="name" value="juniper-ourheart"/>
+            <column name="name" value="juniper-ourHealth"/>
             <column name="description" value="Juniper Our Health"/>
         </insert>
     </changeSet>
     <changeSet id="our-health-ddp-instance-group-insert" author="pegah">
         <insert tableName="ddp_instance_group">
             <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
-            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'juniper-ourheart')"/>
+            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'juniper-ourHealth')"/>
         </insert>
     </changeSet>
     <changeSet id="our-health-ddp-instance-role-insert" author="pegah">
@@ -80,16 +80,16 @@
     </changeSet>
     <changeSet id="our-heart-ddp-group-roles" author="pegah">
         <insert tableName="ddp_group_role">
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
             <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
         <insert tableName="ddp_group_role">
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
             <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
             <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
         <insert tableName="ddp_group_role">
-            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourheart')"/>
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
             <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
             <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
