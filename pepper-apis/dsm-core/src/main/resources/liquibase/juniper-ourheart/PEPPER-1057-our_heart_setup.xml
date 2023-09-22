@@ -12,6 +12,16 @@
             <column name="name" value="juniper_study"/>
         </insert>
     </changeSet>
+    <changeSet author="pegah" id="kit_request_activated-instance-role">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM instance_role WHERE name='kit_request_activated';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="instance_role">
+            <column name="name" value="kit_request_activated"/>
+        </insert>
+    </changeSet>
     <changeSet id="our-health-ddp-instance-insert" author="pegah">
         <insert tableName="ddp_instance">
             <column name="instance_name" value="juniper-ourheart"/>
