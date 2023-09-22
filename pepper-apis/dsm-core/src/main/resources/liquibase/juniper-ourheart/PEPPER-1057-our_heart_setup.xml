@@ -22,6 +22,16 @@
             <column name="name" value="kit_request_activated"/>
         </insert>
     </changeSet>
+    <changeSet author="pegah" id="kit_type-insert">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM kit_type WHERE kit_type_name='SALIVA';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="SALIVA"/>
+        </insert>
+    </changeSet>
     <changeSet id="our-health-ddp-instance-insert" author="pegah">
         <insert tableName="ddp_instance">
             <column name="instance_name" value="juniper-ourheart"/>
