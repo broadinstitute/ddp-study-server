@@ -74,7 +74,6 @@
             <column name="ddp_instance_id" valueComputed="(SELECT ddp_instance_id from ddp_instance WHERE study_guid = 'juniper-ourheart')"/>
             <column name="kit_type_id" valueComputed="(SELECT kit_type_id from kit_type WHERE kit_type_name = 'SALIVA')"/>
             <column name="kit_return_id" valueComputed="(SELECT kit_return_id FROM kit_return_information WHERE return_address_street2 = '320 Charles St. – Lab 132')"/>
-            <column name="carrier_service_to_id" valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE service = 'FEDEX_EXPRESS_SAVER' )"/>
             <column name="kit_dimension_id" valueComputed="(SELECT kit_dimension_id from kit_dimension WHERE kit_description like 'juniper-ourheart saliva kit')"/>
             <column name="kit_label_length" value="14"/>
         </insert>
