@@ -66,7 +66,7 @@
             <column name="return_address_state" value="MA"/>
             <column name="return_address_zip" value="02141"/>
             <column name="return_address_country" value="US"/>
-            <column name="return_address_phone" value=""/>
+            <column name="return_address_phone" value="(617) 714-8952"/>
         </insert>
     </changeSet>
     <changeSet id="our-heart-ddp-kit-request-settings-insert" author="pegah">
