@@ -93,7 +93,6 @@ public class DataSyncJob implements Job {
             log.info("Completed executing DataSyncJob");
         } catch (Exception e) {
             log.error("Exception executing DataSyncJob", e);
-            e.printStackTrace();
         }
     }
 
