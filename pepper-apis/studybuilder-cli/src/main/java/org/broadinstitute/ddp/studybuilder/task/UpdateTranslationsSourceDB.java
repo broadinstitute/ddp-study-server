@@ -88,7 +88,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     private Map<String, String> missingTransVars = new TreeMap<>();
     private List<String> templateTypes = new ArrayList<>();
     Gson gson = new Gson();
-    Type typeObject = new TypeToken<HashMap>() {}.getType();
+    Type typeObject = new TypeToken<HashMap>() {
+    }.getType();
 
 
     public UpdateTranslationsSourceDB(List<String> variablesToSkip) {
@@ -104,7 +105,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        log.info("TASK:: UpdateTemplatesInPlace ");
+        log.info("TASK:: UpdateTranslationsSourceDB ");
 
         //load i18n
         //todo pass as params
@@ -196,25 +197,28 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
             //if (activityDto.getActivityCode().equalsIgnoreCase("prequal")) {
 
-                //load allActivityTransVars .. map of varName , Conf file i18n translationVarName
-                //readAllTranslations(activityBuilder);
-                //readAllTransVars(activityBuilder);
+            //load allActivityTransVars .. map of varName , Conf file i18n translationVarName
+            //readAllTranslations(activityBuilder);
+            //readAllTransVars(activityBuilder);
 
-                //get latest version
-                ActivityVersionDto versionDto = jdbiActVersion.getActiveVersion(activityDto.getActivityId()).get();
-                FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
-                log.info("###### activity : {} .. parent: {}  .. version: {}", activityDto.getActivityCode(),
-                        activityDto.getParentActivityCode(), versionDto.getVersionTag());
+            //get latest version
+            ActivityVersionDto versionDto = jdbiActVersion.getActiveVersion(activityDto.getActivityId()).get();
+            FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
+            log.info("###### activity : {} .. parent: {}  .. version: {}", activityDto.getActivityCode(),
+                    activityDto.getParentActivityCode(), versionDto.getVersionTag());
 
-                if (!activityDto.getActivityCode().startsWith("FAMILY_HISTORY") &&
-                        !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY") &&
-                        !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
-                    traverseActivity(handle, activity);
-                }
+            if (!activityDto.getActivityCode().startsWith("FAMILY_HISTORY") &&
+                    !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY") &&
+                    !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
+                traverseActivity(handle, activity);
+            }
 
-                log.info("MISSING translation vars in es.conf: {}", activityDto.getActivityCode());
-                String gsonDataMiss = gson.toJson(missingTransVars, typeObject);
-                log.info(gsonDataMiss);
+            //if (activityDto.getActivityCode().equalsIgnoreCase("ABOUTYOU")) {
+            //    traverseActivity(handle, activity);
+            //}
+            log.info("MISSING translation vars in es.conf: {}", activityDto.getActivityCode());
+            String gsonDataMiss = gson.toJson(missingTransVars, typeObject);
+            log.info(gsonDataMiss);
             //}
         }
     }
@@ -519,7 +523,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         } else {
             //compare and update translation value
             Translation translation = esTranslationOpt.get();
-            String currentText = enTranslation.getText();
+            String currentText = translation.getText();
             if (!currentText.equals(latestText)) {
                 if (latestText == null || latestText.isBlank()) {
                     log.warn("EMPTY new text for variable: {} . ignored", variableName);
