@@ -13,6 +13,7 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 public class ElasticTestContainer {
 
     private static final String ELASTIC_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:7.17.10";
+    private static final String ELASTIC_USER = "elastic";
     private static ElasticsearchContainer container;
     private static boolean initialized = false;
 
@@ -50,9 +51,10 @@ public class ElasticTestContainer {
             ConfigManager configManager = ConfigManager.getInstance();
             Map<String, String> keyValues = new HashMap<>();
             keyValues.put(ApplicationConfigConstants.ES_URL, url);
-            keyValues.put(ApplicationConfigConstants.ES_USERNAME, "elastic");
+            keyValues.put(ApplicationConfigConstants.ES_USERNAME, ELASTIC_USER);
             keyValues.put(ApplicationConfigConstants.ES_PASSWORD, "");
             rewriteConfigValues(keyValues, configManager);
+            ElasticSearchUtil.initClient(url, ELASTIC_USER, "", null);
         } catch (Exception e) {
             throw new DsmInternalError("Error starting ES test container", e);
         }

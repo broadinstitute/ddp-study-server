@@ -59,8 +59,8 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
         return (Optional<OncHistoryDetailDto>) res.resultValue;
     }
 
-    private static class BuildOncHistoryDetailDto implements ResultsBuilder {
-        public Object build(ResultSet rs) throws SQLException {
+    public static class BuildOncHistoryDetailDto implements ResultsBuilder {
+        public OncHistoryDetailDto build(ResultSet rs) throws SQLException {
             ResultSetMetaData md = rs.getMetaData();
             int colCount = md.getColumnCount();
             Map<String, Object> row = new HashMap<>(colCount);

@@ -44,7 +44,8 @@ public class ElasticContainerTest extends ElasticBaseTest {
             String profileJson = TestUtil.readFile("elastic/participantProfile.json");
             String ddpParticipantId = "ElasticContainerTest_ptp";
 
-            UpdateRequest updateRequest = new UpdateRequest().index(index).id(ddpParticipantId).doc(profileJson, XContentType.JSON).docAsUpsert(true);
+            UpdateRequest updateRequest = new UpdateRequest().index(index).id(ddpParticipantId)
+                    .doc(profileJson, XContentType.JSON).docAsUpsert(true);
             UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
             log.info("UpdateResponse: {}", updateResponse);
         } catch (Exception e) {

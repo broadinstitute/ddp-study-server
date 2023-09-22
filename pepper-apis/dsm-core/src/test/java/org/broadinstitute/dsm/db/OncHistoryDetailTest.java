@@ -29,7 +29,7 @@ public class OncHistoryDetailTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        String instanceName = String.format("ReferralSourceServiceTest_%d", Instant.now().toEpochMilli());
+        String instanceName = String.format("OncHistoryDetailTest_%d", Instant.now().toEpochMilli());
         ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, instanceName);
     }
 

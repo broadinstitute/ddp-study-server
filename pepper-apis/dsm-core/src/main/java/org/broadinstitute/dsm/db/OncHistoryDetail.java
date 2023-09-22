@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
@@ -70,6 +72,9 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
             + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
+
+    public static final String SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD =
+            "SELECT onc.* FROM ddp_onc_history_detail onc WHERE medical_record_id = ?";
 
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
@@ -329,6 +334,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         return oncHistoryDetail;
     }
 
+    // TODO: there should be no need for the realm parameter -DC
     public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -425,6 +431,24 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                                                                                            List<String> participantIds) {
         String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
         return getOncHistoryDetails(realm, queryAddition);
+    }
+
+    public static List<OncHistoryDetailDto> getOncHistoryDetailByMedicalRecord(int medicalRecordId) {
+        return inTransaction(conn -> {
+            List<OncHistoryDetailDto> records = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD)) {
+                stmt.setInt(1, medicalRecordId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto builder = new OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto();
+                    while (rs.next()) {
+                        records.add(builder.build(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting onc history detail for medical record ID=" + medicalRecordId, e);
+            }
+            return records;
+        });
     }
 
     public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy) {

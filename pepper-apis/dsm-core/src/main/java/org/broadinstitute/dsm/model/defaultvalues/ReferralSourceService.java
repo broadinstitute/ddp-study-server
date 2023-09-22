@@ -256,12 +256,7 @@ public class ReferralSourceService implements AdminOperation {
     }
 
     private List<Activities> getParticipantActivities(String ddpParticipantId, String esIndex) {
-        Optional<ElasticSearchParticipantDto> esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
-        if (esParticipant.isEmpty()) {
-            throw new ESMissingParticipantDataException("Participant ES data is null for participant " + ddpParticipantId);
-        }
-        return esParticipant.get().getActivities();
+        return ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId).getActivities();
     }
 
     /**

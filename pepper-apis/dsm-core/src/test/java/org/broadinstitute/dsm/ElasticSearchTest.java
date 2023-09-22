@@ -445,7 +445,7 @@ public class ElasticSearchTest extends TestHelper {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             ElasticSearchParticipantDto esObject =
-                    ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter, client);
+                    ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter);
             fetchedPid = esObject.getProfile().map(Profile::getLegacyAltPid).orElse("");
         } catch (Exception e) {
             Assert.fail();
@@ -461,7 +461,7 @@ public class ElasticSearchTest extends TestHelper {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             ElasticSearchParticipantDto esObject =
-                    ElasticSearchUtil.fetchESDataByAltpid("participants_structured.atcp.atcp", altpid, client);
+                    ElasticSearchUtil.fetchESDataByAltpid("participants_structured.atcp.atcp", altpid);
             fetchedPid = esObject.getProfile().map(Profile::getLegacyAltPid).orElse("");
         } catch (IOException e) {
             Assert.fail();

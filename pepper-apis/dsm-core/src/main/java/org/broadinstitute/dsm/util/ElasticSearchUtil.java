@@ -72,6 +72,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,11 +146,17 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static synchronized void initClient() {
+    public static void initClient() {
         if (client == null) {
-            client = getClientForElasticsearchCloud(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+            initClient(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD), getProxy());
+        }
+    }
+
+    public static synchronized void initClient(String url, String username, String password, String proxy) {
+        if (client == null) {
+            client = getClientForElasticsearchCloud(url, username, password, proxy);
         }
     }
 
@@ -172,9 +179,7 @@ public class ElasticSearchUtil {
 
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl, @NonNull String userName,
                                                                      String password) {
-        String proxy = DSMConfig.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
-                ? DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
-        return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
+        return getClientForElasticsearchCloud(baseUrl, userName, password, getProxy());
     }
 
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl, @NonNull String userName,
@@ -213,6 +218,11 @@ public class ElasticSearchUtil {
         }
     }
 
+    private static String getProxy() {
+        return DSMConfig.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
+                ? DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+    }
+
     public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl, @NonNull String userName,
                                                                        @NonNull String password, String proxy) {
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
@@ -220,7 +230,9 @@ public class ElasticSearchUtil {
 
     protected static SearchResponse search(SearchRequest searchRequest) {
         try {
-            return client.search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse res = client.search(searchRequest, RequestOptions.DEFAULT);
+            logger.info("ES search response {}", res);
+            return res;
         } catch (IOException e) {
             throw new DsmInternalError("Error contacting ES server", e);
         }
@@ -305,7 +317,7 @@ public class ElasticSearchUtil {
 
     public static ElasticSearchParticipantDto getParticipantESDataByParticipantId(@NonNull String index, @NonNull String participantId) {
         initialize();
-        ElasticSearchParticipantDto elasticSearch  = fetchESDataByParticipantId(index, participantId, client);
+        ElasticSearchParticipantDto elasticSearch = fetchESDataByParticipantId(index, participantId);
         logger.info("Got ES data for participant: {} from {}", participantId, index);
         return elasticSearch;
     }
@@ -315,7 +327,7 @@ public class ElasticSearchUtil {
 
         logger.info("Getting ES data for participant: " + altpid);
         try {
-            elasticSearch = fetchESDataByAltpid(index, altpid, client);
+            elasticSearch = fetchESDataByAltpid(index, altpid);
         } catch (Exception e) {
             throw new RuntimeException("Couldn't get ES for participant: " + altpid + " from " + index, e);
         }
@@ -324,18 +336,16 @@ public class ElasticSearchUtil {
         return elasticSearch;
     }
 
-    public static ElasticSearchParticipantDto fetchESDataByParticipantId(String index, String participantId,
-                                                                         RestHighLevelClient client) {
+    public static ElasticSearchParticipantDto fetchESDataByParticipantId(String index, String participantId) {
         String matchQueryName = ParticipantUtil.isGuid(participantId) ? PROFILE_GUID : PROFILE_LEGACYALTPID;
-        return getElasticSearchForGivenMatch(index, participantId, client, matchQueryName);
+        return getElasticSearchForGivenMatch(index, participantId, matchQueryName);
     }
 
-    public static ElasticSearchParticipantDto fetchESDataByAltpid(String index, String altpid, RestHighLevelClient client) {
-        return getElasticSearchForGivenMatch(index, altpid, client, PROFILE_LEGACYALTPID);
+    public static ElasticSearchParticipantDto fetchESDataByAltpid(String index, String altpid) {
+        return getElasticSearchForGivenMatch(index, altpid, PROFILE_LEGACYALTPID);
     }
 
-    private static ElasticSearchParticipantDto getElasticSearchForGivenMatch(String index, String id, RestHighLevelClient client,
-                                                                             String matchQueryName) {
+    private static ElasticSearchParticipantDto getElasticSearchForGivenMatch(String index, String id, String matchQueryName) {
         initialize();
         SearchRequest searchRequest = new SearchRequest(index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -477,10 +487,6 @@ public class ElasticSearchUtil {
 
     public static void writeWorkflow(@NonNull WorkflowForES workflowForES, boolean clearBeforeUpdate) {
         initialize();
-        writeWorkflow(client, workflowForES, clearBeforeUpdate);
-    }
-
-    public static void writeWorkflow(RestHighLevelClient client, @NonNull WorkflowForES workflowForES, boolean clearBeforeUpdate) {
         String ddpParticipantId = workflowForES.getDdpParticipantId();
         DDPInstance instance = workflowForES.getInstance();
         String index = instance.getParticipantIndexES();
@@ -702,13 +708,13 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static void updateRequest(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES) throws IOException {
+    public static void updateRequest(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES) {
         initialize();
-        updateRequest(ddpParticipantId, index, objectsMapES, client);
+        doUpdate(ddpParticipantId, index, objectsMapES, client);
     }
 
-    private static void updateRequest(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES,
-                                      RestHighLevelClient client) throws IOException {
+    private static void doUpdate(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES,
+                                 RestHighLevelClient client) {
         String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
                 getParticipantESDataByAltpid(client, index, ddpParticipantId).getProfile().map(Profile::getGuid).orElse(ddpParticipantId);
         UpdateRequest updateRequest =
@@ -727,11 +733,26 @@ public class ElasticSearchUtil {
     }
 
     public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,
-                                     Map<String, Object> objectsMapES) throws IOException {
+                                     Map<String, Object> objectsMapES) {
         if (client != null) {
-            updateRequest(ddpParticipantId, index, objectsMapES, client);
+            doUpdate(ddpParticipantId, index, objectsMapES, client);
         } else {
             logger.error("RestHighLevelClient was null");
+        }
+    }
+
+    public static void updateRequest(@NonNull String ddpParticipantId, String index, String jsonProperty) {
+        initialize();
+        UpdateRequest updateRequest =
+                new UpdateRequest().index(index).id(ddpParticipantId).doc(jsonProperty, XContentType.JSON)
+                        .docAsUpsert(true).retryOnConflict(5);
+        try {
+            UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+            logger.info("Updated ES index {} data for participant {} with response: {}", index, ddpParticipantId, updateResponse);
+        } catch (IOException e) {
+            throw new DsmInternalError("Error connecting to Elasticsearch", e);
+        } catch (ElasticsearchException e) {
+            throw new DsmInternalError("Error updating Elasticsearch", e);
         }
     }
 
