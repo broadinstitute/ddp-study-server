@@ -269,7 +269,7 @@ public class ParticipantWrapper {
 
     private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
         for (SmId smId : smIds) {
-            Long tissueId = smId.getTissueId();
+            Integer tissueId = smId.getTissueId();
             tissues.stream().filter(tissue -> tissue.getTissueId().equals(tissueId)).findFirst()
                     .ifPresent(tissue -> fillSmIdsByType(smId, tissue));
         }
