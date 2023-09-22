@@ -59,12 +59,10 @@ public class JuniperSetupUtil {
                     + " collaborator_id_prefix, auth0_token) VALUES (?, ?, ?, 1, 1, ?, 0) ON DUPLICATE KEY UPDATE auth0_token = 0;";
     private static final String INSERT_DDP_INSTANCE_GROUP = "INSERT INTO ddp_instance_group (ddp_instance_id, ddp_group_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE ddp_group_id = ?;";
-    private static final String INSERT_INSTANCE_ROLE = "INSERT INTO instance_role (name) "
-            + " VALUES ('juniper_study') ON DUPLICATE KEY UPDATE name = 'juniper_study';";
+    private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE instance_role_id = ?;";
-    private static final String INSERT_KIT_TYPE = "INSERT INTO kit_type (kit_type_name, bsp_material_type, bsp_receptacle_type) "
-            + " VALUES ('SALIVA', 'juniper Saliva', 'Oragene Kit') ;";
+    private static final String SELECT_KIT_TYPE_ID = "SELECT kit_type_id FROM kit_type WHERE kit_type_name = ?";
     private static final String INSERT_KIT_DIMENSION = "INSERT INTO kit_dimension (kit_width, kit_height, kit_length, kit_weight) "
             + " VALUES ('6.9', '1.3', '5.2', '3.2') ON DUPLICATE KEY UPDATE kit_width = '6.9';";
     private static final String INSERT_KIT_RETURN = "INSERT INTO kit_return_information (return_address_name, return_address_phone) "
@@ -109,9 +107,9 @@ public class JuniperSetupUtil {
                 cmiAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
                 ddpInstanceId = String.valueOf(cmiAdminUtil.getDdpInstanceId());
                 ddpGroupId = String.valueOf(cmiAdminUtil.getStudyGroupId());
-                instanceRoleId = createInstanceRole(conn);
+                instanceRoleId = getInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
-                kitTypeId = createKitType(conn);
+                kitTypeId = getKitTypeId(conn);
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
@@ -136,13 +134,11 @@ public class JuniperSetupUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
-                delete(conn, "kit_type", "kit_type_id", kitTypeId);
                 delete(conn, "kit_dimension", "kit_dimension_id", kitDimensionId);
                 delete(conn, "kit_return_information", "kit_return_id", kitReturnId);
                 delete(conn, "carrier_service", "carrier_service_id", carrierId);
                 delete(conn, "ddp_kit_request_settings", "ddp_kit_request_settings_id", ddpKitRequestSettingsId);
                 delete(conn, "ddp_instance_role", "ddp_instance_role_id", ddpInstanceRoleId);
-                delete(conn, "instance_role", "instance_role_id", instanceRoleId);
                 delete(conn, "ddp_instance_group", "instance_group_id", ddpInstanceGroupId);
                 delete(conn, "ddp_instance", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "ddp_group", "group_id", ddpGroupId);
@@ -312,26 +308,22 @@ public class JuniperSetupUtil {
         return getPrimaryKey(rs, "kit_dimension");
     }
 
-    private String createKitType(Connection conn) throws SQLException {
+    private String getKitTypeId(Connection conn) throws SQLException {
         if (StringUtils.isNotBlank(kitTypeId)) {
             return kitTypeId;
         }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TYPE, Statement.RETURN_GENERATED_KEYS);
-        int result = stmt.executeUpdate();
-        if (result != 1) {
-            throw new DsmInternalError("More than 1 row updated");
-        }
-        ResultSet rs = stmt.getGeneratedKeys();
+        PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_TYPE_ID);
+        stmt.setString(1, "SALIVA");
+        ResultSet rs = stmt.executeQuery();
         return getPrimaryKey(rs, "kit_type");
     }
 
-    private String createInstanceRole(Connection conn) throws SQLException {
+    private String getInstanceRole(Connection conn) throws SQLException {
         if (StringUtils.isNotBlank(instanceRoleId)) {
             return instanceRoleId;
         }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
+        PreparedStatement stmt = conn.prepareStatement(SELECT_INSTANCE_ROLE);
+        ResultSet rs = stmt.executeQuery();
         return getPrimaryKey(rs, "instance_role");
     }
 

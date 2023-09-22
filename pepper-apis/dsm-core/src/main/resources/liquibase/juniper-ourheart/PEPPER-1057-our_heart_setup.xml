@@ -30,6 +30,8 @@
         </preConditions>
         <insert tableName="kit_type">
             <column name="kit_type_name" value="SALIVA"/>
+            <column name="bsp_material_type" value="Saliva"/>
+            <column name="bsp_receptacle_type" value="Oragene Kit"/>
         </insert>
     </changeSet>
     <changeSet id="our-health-ddp-instance-insert" author="pegah">
