@@ -41,7 +41,7 @@ public class PatchFactory {
             patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
-            throw new DSMBadRequestException("Id and parentId was null");
+            throw new DSMBadRequestException("Id and parentId was null in the patch request");
         }
         patcher.setElasticSearchExportable(isElasticSearchExportable(patch));
         return patcher;

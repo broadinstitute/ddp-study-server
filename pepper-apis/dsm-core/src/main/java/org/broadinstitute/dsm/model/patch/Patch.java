@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 @Data
 public class Patch {
 
-    public static final String SQL_CHECK_UNIQUE = "SELECT * FROM $table WHERE ($colName = ? ) and deleted <> 1 ";
+    public static final String SQL_CHECK_UNIQUE = "SELECT * FROM $table WHERE ($colName = ? ) and NOT deleted <=> 1 ";
     public static final String TABLE = "$table";
     public static final String PK = "$pk";
     public static final String COL_NAME = "$colName";
@@ -138,7 +138,7 @@ public class Patch {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             if (dbElement.isUniqueField) {
-                if(!isValueUnique(dbElement, String.valueOf(nameValue.getValue()))){
+                if (!isValueUnique(dbElement, String.valueOf(nameValue.getValue()))) {
                     throw new DuplicateException(dbElement.getColumnName());
                 }
             }
@@ -200,6 +200,10 @@ public class Patch {
             }
             return dbVals;
         });
+        if (results.resultException != null) {
+            throw new RuntimeException(String.format("Error while checking the uniqueness of the value for {} ", dbElement.getColumnName()),
+                    results.resultException);
+        }
         return (Boolean) results.resultValue;
     }
 }

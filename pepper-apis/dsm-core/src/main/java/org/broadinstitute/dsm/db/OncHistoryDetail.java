@@ -195,24 +195,16 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
-
     @ColumnName(DBConstants.DESTRUCTION_POLICY)
     private String destructionPolicy;
-
     private String changedBy;
-
     @ColumnName(DBConstants.DELETED)
     private boolean deleted;
-
     @ColumnName(DBConstants.UNABLE_OBTAIN_TISSUE)
     private boolean unableObtainTissue;
-
     private String participantId;
-
     private String ddpParticipantId;
-
     private List<Tissue> tissues;
-
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private Long ddpInstanceId;
 
@@ -452,10 +444,10 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                             dbVals.resultValue = oncHistoryDetailId;
                         }
                     } catch (Exception e) {
-                        throw new DsmInternalError("Error getting id of new institution ", e);
+                        throw new RuntimeException("Error getting id of new institution ", e);
                     }
                 } else {
-                    throw new DsmInternalError(
+                    throw new RuntimeException(
                             "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result
                                     + " rows");
                 }
@@ -466,7 +458,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
+            throw new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
                     results.resultException);
         } else {
             return (String) results.resultValue;
