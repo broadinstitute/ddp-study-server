@@ -92,7 +92,8 @@ public class DataSyncJob implements Job {
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> run(handle, exporter));
             log.info("Completed executing DataSyncJob");
         } catch (Exception e) {
-            throw new JobExecutionException(e, false);
+            log.error("Exception executing DataSyncJob", e);
+            e.printStackTrace();
         }
     }
 
