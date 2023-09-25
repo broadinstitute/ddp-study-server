@@ -360,16 +360,16 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm, String queryAddition) {
         logger.info("Collection oncHistoryDetail information");
         Map<String, List<OncHistoryDetail>> oncHistory = new HashMap<>();
-        Map<Long, Tissue> tissues = new HashMap<>();
+        Map<Integer, Tissue> tissues = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     DBUtil.getFinalQuery(SQL_SELECT_ONC_HISTORY_DETAIL, queryAddition) + SQL_ORDER_BY)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    Map<Long, OncHistoryDetail> oncHistoryMap = new HashMap<>();
+                    Map<Integer, OncHistoryDetail> oncHistoryMap = new HashMap<>();
                     while (rs.next()) {
-                        long oncHistoryDetailId = rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID);
+                        int oncHistoryDetailId = rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID);
                         SmId tissueSmId = Tissue.getSMIds(rs);
                         Tissue tissue;
                         if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {

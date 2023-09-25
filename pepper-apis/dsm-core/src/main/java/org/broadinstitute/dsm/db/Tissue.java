@@ -57,10 +57,10 @@ public class Tissue {
             "INSERT INTO ddp_tissue SET onc_history_detail_id = ?, last_changed = ?, changed_by = ?";
     @TableName (name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
     @ColumnName (DBConstants.TISSUE_ID)
-    private Long tissueId;
+    private Integer tissueId;
 
     @ColumnName (DBConstants.ONC_HISTORY_DETAIL_ID)
-    private Long oncHistoryDetailId;
+    private Integer oncHistoryDetailId;
 
     @ColumnName (DBConstants.NOTES)
     private String notes;
@@ -150,7 +150,7 @@ public class Tissue {
     public Tissue() {
     }
 
-    public Tissue(long tissueId, Long oncHistoryDetailId, String notes, Integer countReceived, String tissueType, String tissueSite,
+    public Tissue(int tissueId, Integer oncHistoryDetailId, String notes, Integer countReceived, String tissueType, String tissueSite,
                   String tumorType, String hE, String pathologyReport, String collaboratorSampleId, String blockSent,
                   String scrollsReceived, String skId, String smId, String sentGp, String firstSmId, String additionalValuesJson,
                   String expectedReturn, String returnDate, String returnFedexId, String shlWorkNumber, String tumorPercentage,
@@ -194,7 +194,7 @@ public class Tissue {
         if (StringUtils.isBlank(tissueId)) {
             return null;
         }
-        Tissue tissue = new Tissue(rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID),
+        Tissue tissue = new Tissue(rs.getInt(DBConstants.TISSUE_ID), rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID),
                 rs.getString(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
                 (Integer) rs.getObject(DBConstants.COUNT_RECEIVED), rs.getString(DBConstants.TISSUE_TYPE),
                 rs.getString(DBConstants.TISSUE_SITE), rs.getString(DBConstants.TUMOR_TYPE), rs.getString(DBConstants.H_E),
@@ -214,7 +214,7 @@ public class Tissue {
     public static List<Tissue> getTissue(@NonNull Connection conn, @NonNull String oncHistoryDetailId) {
         List<Tissue> tissueList = new ArrayList<>();
         SimpleResult dbVals = new SimpleResult();
-        Map<Long, Tissue> tissues = new HashMap<>();
+        Map<Integer, Tissue> tissues = new HashMap<>();
         try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_TISSUE)) {
             stmt.setString(1, oncHistoryDetailId);
             try (ResultSet rs = stmt.executeQuery()) {
