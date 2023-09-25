@@ -82,13 +82,13 @@ public class StudyDataExportJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            log.info("Running job {}", getKey());
+            log.info("[StudyDataExportJob] Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
             run();
             long elapsed = Instant.now().toEpochMilli() - start;
-            log.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
+            log.info("[StudyDataExportJob] Finished job {}. Took {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
-            log.error("Error while executing job {}", getKey(), e);
+            log.error("[StudyDataExportJob] Error while executing job {}", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }
@@ -101,21 +101,21 @@ public class StudyDataExportJob implements Job {
         GoogleCredentials credentials = GoogleCredentialUtil
                 .initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
         if (credentials == null) {
-            log.error("No Google credentials are provided, skipping job {}", getKey());
+            log.error("[StudyDataExportJob] No Google credentials provided, skipping job {}", getKey());
             return;
         }
 
         var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
         Bucket bucket = bucketClient.getBucket(bucketName);
         if (bucket == null) {
-            log.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
+            log.error("[StudyDataExportJob] Could not find google bucket {}, skipping job {}", bucketName, getKey());
             return;
         }
 
         List<StudyDto> studyDtos = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS,
                 handle -> handle.attach(JdbiUmbrellaStudy.class).findAll());
         Collections.shuffle(studyDtos);
-        log.info("Found {} studies for data export", studyDtos.size());
+        log.info("[StudyDataExportJob] Found {} studies for data export", studyDtos.size());
 
         // Invalidate the caches for a fresh export
         ActivityDefStore.getInstance().clear();
@@ -131,7 +131,7 @@ public class StudyDataExportJob implements Job {
         for (var studyDto : studyDtos) {
             String studyGuid = studyDto.getGuid();
             if (!studyDto.isDataExportEnabled()) {
-                log.warn("Study {} does not have data export enabled, skipping data export", studyGuid);
+                log.warn("[StudyDataExportJob] Study {} does not have data export enabled, skipping data export", studyGuid);
                 continue;
             }
 
@@ -143,7 +143,7 @@ public class StudyDataExportJob implements Job {
                             .addPoint(1, Instant.now().toEpochMilli());
                 }
             } catch (Exception e) {
-                log.error("Error while exporting data for study {}, continuing", studyGuid, e);
+                log.error("[StudyDataExportJob] Error exporting data for study {}, continuing", studyGuid, e);
             }
         }
     }
