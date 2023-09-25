@@ -34,12 +34,8 @@ public class MercuryOrderStatusListener {
                 consumer.ack();
                 processOrderStatus(message);
                 log.info("Processing the status message from Mercury finished");
-            } catch (DsmInternalError error) {
-                log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
-                error.printStackTrace();
             } catch (Exception ex) {
                 log.error("Unexpected error for status message from Mercury", ex);
-                ex.printStackTrace();
             }
 
         };

@@ -97,13 +97,16 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                                 baseMercuryStatusMessage.getStatus().getJson(), baseMercuryStatusMessage.getStatus().getOrderID()));
                     }
                 } else {
-                    dbVals.resultException = new RuntimeException(
+                    dbVals.resultException = new DsmInternalError(
                             "Error updating Mercury status for order id " + mercuryStatusMessage.getOrderID()
                                     + " it was updating 0 rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException =
-                        new RuntimeException("Error updating Mercury status for order id " + mercuryStatusMessage.getOrderID(), ex);
+                        new DsmInternalError(String.format(
+                                "Error encountered while updating Mercury status for order id %s, status message received was %s",
+                                        mercuryStatusMessage.getOrderID(), baseMercuryStatusMessage), ex);
+                return dbVals;
             }
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_LAST_UPDATED_ORDER)) {
                 stmt.setString(1, mercuryStatusMessage.getOrderID());
@@ -121,12 +124,14 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 }
             } catch (SQLException ex) {
                 dbVals.resultException =
-                        new DsmInternalError(String.format("Couldn't find an order based on the order id %s, ES update will fail", mercuryStatusMessage.getOrderID()), ex);
+                        new DsmInternalError(String.format(
+                                "Couldn't find an order based on the order id %s, ES update will fail. Status message received was %s",
+                                mercuryStatusMessage.getOrderID(), baseMercuryStatusMessage), ex);
             }
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new DsmInternalError("Unable to process the status of the order " + baseMercuryStatusMessage, results.resultException);
+            throw (DsmInternalError) results.resultException;
         }
         MercuryOrderUseCase.exportStatusToES(baseMercuryStatusMessage, clinicalOrderAtomicReference.get(), statusDate);
     }
@@ -214,7 +219,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     } else {
                         dbVals.resultValue = false;
                     }
-                } catch (SQLException exception){
+                } catch (SQLException exception) {
                     dbVals.resultException = exception;
                 }
             } catch (SQLException ex) {
@@ -224,7 +229,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError(String.format("Error checking if mercury order number {} exist in db", orderNumber), results.resultException);
+            throw new DsmInternalError(String.format("Error checking if mercury order number %s exist in db", orderNumber),
+                    results.resultException);
         }
         return (boolean) results.resultValue;
     }
@@ -277,7 +283,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
         });
         if (results.resultException != null) {
-            throw new DsmInternalError(String.format("Error inserting mercury order for order with json {}", messageJson), results.resultException);
+            throw new DsmInternalError(String.format("Error inserting mercury order for order with json {}", messageJson),
+                    results.resultException);
         }
         return (int) results.resultValue;
     }
