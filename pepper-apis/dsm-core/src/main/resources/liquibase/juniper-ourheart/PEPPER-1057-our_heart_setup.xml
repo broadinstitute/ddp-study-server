@@ -116,4 +116,11 @@
             <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
         </insert>
     </changeSet>
+    <changeSet id="our-heart-extra-ddp-group-roles" author="pegah">
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+    </changeSet>
 </databaseChangeLog>
