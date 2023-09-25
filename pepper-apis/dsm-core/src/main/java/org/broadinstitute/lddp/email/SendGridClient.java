@@ -3,9 +3,9 @@ package org.broadinstitute.lddp.email;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonObject;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -15,7 +15,7 @@ import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
 import lombok.NonNull;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.dsm.exception.NotificationSentException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +37,10 @@ public class SendGridClient {
     /**
      * Used to send emails using SendGrid templates.
      */
-    public void sendSingleEmail(@NonNull String sendGridTemplate, @NonNull Recipient recipient, JsonObject settings) {
-        ArrayList<Recipient> recipientList = new ArrayList<>();
+    public void sendSingleEmail(@NonNull String sendGridTemplate, @NonNull Recipient recipient, EmailSender sender) {
+        List<Recipient> recipientList = new ArrayList<>();
         recipientList.add(recipient);
-        sendEmail(sendGridTemplate, recipientList, settings);
+        sendEmail(sendGridTemplate, recipientList, sender);
     }
 
     /**
@@ -50,14 +50,14 @@ public class SendGridClient {
      * SendGrid otherwise.
      */
     private void sendEmail(@NonNull String sendGridTemplate, @NonNull Collection<Recipient> recipientList,
-                           JsonObject settings) {
+                           EmailSender sender) {
         try {
             if (recipientList.size() == 0) {
                 throw new IllegalArgumentException("RecipientList cannot be empty.");
             }
-            sendRequestUsingTemplate((Recipient) (recipientList.toArray())[0], sendGridTemplate, sendGrid, settings);
+            sendRequestUsingTemplate((Recipient) (recipientList.toArray())[0], sendGridTemplate, sender);
         } catch (Exception ex) {
-            throw new NotificationSentException("An error occurred trying to send emails. " + ex.getMessage());
+            throw new DsmInternalError("An error occurred trying to send emails. " + ex.getMessage());
         }
     }
 
@@ -66,10 +66,10 @@ public class SendGridClient {
      * Sends a request per recipient to SendGrid.
      */
     private void sendRequestUsingTemplate(@NonNull Recipient recipient, @NonNull String sendGridTemplate,
-                                          @NonNull SendGrid sendGrid, JsonObject settings)
+                                          EmailSender sender)
             throws Exception {
         logger.info(LOG_PREFIX + " - About to send 1 email request for " + sendGridTemplate + "...");
-        Mail mail = configureTemplateEmail(sendGridTemplate, recipient, settings);
+        Mail mail = configureTemplateEmail(sendGridTemplate, recipient, sender);
         send(sendGrid, mail);
     }
 
@@ -90,10 +90,10 @@ public class SendGridClient {
         return sendGridPersonalization;
     }
 
-    private Mail configureTemplateEmail(@NonNull String template, Recipient recipient, JsonObject settings) {
+    private Mail configureTemplateEmail(@NonNull String template, Recipient recipient, EmailSender sender) {
         Personalization sendGridPersonalization = addToHeader(recipient);
 
-        Email fromEmail = new Email(settings.get("sendGridFrom").getAsString(), settings.get("sendGridFromName").getAsString());
+        Email fromEmail = new Email(sender.getFromEmailAddress(), sender.getFromName());
 
         Mail mail = new Mail();
         mail.setFrom(fromEmail);

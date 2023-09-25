@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -29,6 +28,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.email.EmailRecord;
+import org.broadinstitute.lddp.email.EmailSender;
 import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.lddp.email.SendGridClient;
 import org.broadinstitute.lddp.exception.EmailQueueException;
@@ -44,7 +44,7 @@ public class NotificationUtil {
     private static final Logger logger = LoggerFactory.getLogger(NotificationUtil.class);
     private static String emailKey = null;
     private static String emailProxyUrl = null;
-    private static JsonObject emailClientSettings = null;
+    private static EmailSender emailSender;
     private static Map<String, JsonElement> notificationLookup = new HashMap<>();
     private static Map<String, JsonElement> reminderNotificationLookup = new HashMap<>();
 
@@ -83,7 +83,9 @@ public class NotificationUtil {
     public synchronized void startup(@NonNull Config config) {
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
         emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
-        emailClientSettings = (JsonObject) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS)));
+        JsonObject senderInfo = (JsonObject) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS)));
+        emailSender = new EmailSender(senderInfo.get("sendGridFrom").getAsString(), senderInfo.get("sendGridFromName").getAsString());
+        logger.info("Will send email from " + emailSender.getFromEmailAddress() + " " + emailSender.getFromName());
 
         JsonArray array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)));
         for (JsonElement notificationInfo : array) {
@@ -210,7 +212,7 @@ public class NotificationUtil {
             emailClientSettings.addProperty("sendGridFrom", from);
             emailClientSettings.addProperty("sendGridFromName", name);
             sendGridClient.sendSingleEmail(sendGridTemplate, emailRecipient,
-                    new Gson().fromJson(emailClientSettings.toString(), JsonObject.class));
+                    new EmailSender(from, name));
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
@@ -238,7 +240,7 @@ public class NotificationUtil {
                         template = templateRecords.getKey();
 
                         for (EmailRecord record : templateRecords.getValue()) {
-                            sendGridClient.sendSingleEmail(template, record.getRecipient(), emailClientSettings);
+                            sendGridClient.sendSingleEmail(template, record.getRecipient(), emailSender);
                             EmailRecord.startProcessing(record.getRecordId());
                         }
 
