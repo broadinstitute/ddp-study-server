@@ -134,7 +134,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     }
 
     public Map<String, MercuryOrderDto> getPossibleBarcodesForParticipant(String ddpParticipantId) {
-        String errorMessage = "Error getting eligible barcodes for a mercury order for participant %s";
+        String errorMessage = "Error getting eligible barcodes for a mercury order for participant "+ ddpParticipantId;
         HashMap<String, MercuryOrderDto> map = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -158,8 +158,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError(String.format(errorMessage, ddpParticipantId),
-                    results.resultException);
+            throw new DsmInternalError(errorMessage, results.resultException);
         }
 
         results = inTransaction((conn) -> {
@@ -175,8 +174,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
-                } catch (SQLException e) {
-                    throw new DsmInternalError(String.format(errorMessage, ddpParticipantId), e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
