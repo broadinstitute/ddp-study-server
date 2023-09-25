@@ -1,11 +1,8 @@
 package org.broadinstitute.ddp.util;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
 
-import com.sendgrid.Client;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.Method;
@@ -14,10 +11,7 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
-import org.apache.http.impl.NoConnectionReuseStrategy;
-import org.apache.http.impl.client.HttpClients;
 
 /**
  * A little util class to make it more convenient to send a SendGrid email message
@@ -78,7 +72,7 @@ public class SendGridMailUtil {
             throw new RuntimeException(msg, e);
         }
 
-        SendGrid sendGrid = createSendGridInstance(sendGridApiKey, proxy);
+        SendGrid sendGrid = SendGridFactory.createSendGridInstance(sendGridApiKey, proxy);
         Response response;
         try {
             response = sendGrid.api(request);
@@ -95,22 +89,5 @@ public class SendGridMailUtil {
         } else {
             log.info("Successfully submitted message to SendGrid with subject {}", mailMessage.subject);
         }
-    }
-
-    private static SendGrid createSendGridInstance(String sendGridApiKey, String proxy) {
-        var httpClientBuilder = HttpClients.custom();
-        if (proxy != null && !proxy.isBlank()) {
-            URL proxyUrl;
-            try {
-                proxyUrl = new URL(proxy);
-            } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("proxy needs to be a valid url");
-            }
-            httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
-            httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
-            log.info("Using SendGrid proxy: {}", proxy);
-        }
-        var client = new Client(httpClientBuilder.build());
-        return new SendGrid(sendGridApiKey, client);
     }
 }

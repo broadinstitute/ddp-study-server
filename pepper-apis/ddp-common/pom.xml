@@ -101,5 +101,12 @@
             <artifactId>mysql</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- sendgrid for email sending -->
+        <dependency>
+            <!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
+            <groupId>com.sendgrid</groupId>
+            <artifactId>sendgrid-java</artifactId>
+        </dependency>
+
     </dependencies>
 </project>
