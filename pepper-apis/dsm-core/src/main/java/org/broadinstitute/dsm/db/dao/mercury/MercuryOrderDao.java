@@ -121,7 +121,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 }
             } catch (SQLException ex) {
                 dbVals.resultException =
-                        new DsmInternalError(String.format("ECouldn't find an order based on the order id %s, ES update will fail", mercuryStatusMessage.getOrderID()), ex);
+                        new DsmInternalError(String.format("Couldn't find an order based on the order id %s, ES update will fail", mercuryStatusMessage.getOrderID()), ex);
             }
             return dbVals;
         });
@@ -137,7 +137,16 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_FROM_BARCODE_KIT_LABEL)) {
                 stmt.setString(1, ddpParticipantId);
-                getKitsFromStatement(stmt, map);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.KIT_LABEL),
+                                rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                                null, rs.getLong("kit." + DBConstants.DSM_KIT_REQUEST_ID));
+                        log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
+                        map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
+                    }
+                }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
@@ -179,19 +188,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         return map;
     }
 
-    private void getKitsFromStatement(PreparedStatement stmt, HashMap<String, MercuryOrderDto> map) throws SQLException {
-        try (ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                        rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.KIT_LABEL),
-                        rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                        null, rs.getLong("kit." + DBConstants.DSM_KIT_REQUEST_ID));
-                log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
-                map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
-            }
-        }
-    }
-
     @Override
     public int create(MercuryOrderDto mercuryOrderDto) {
         throw new IllegalStateException("This method should not be used");
@@ -221,14 +217,14 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 } catch (SQLException exception){
                     dbVals.resultException = exception;
                 }
-            } catch (Exception ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError("Error checking if values exist in db", results.resultException);
+            throw new DsmInternalError(String.format("Error checking if mercury order number {} exist in db", orderNumber), results.resultException);
         }
         return (boolean) results.resultValue;
     }
@@ -281,7 +277,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
         });
         if (results.resultException != null) {
-            throw new DsmInternalError("Error inserting mercury order ", results.resultException);
+            throw new DsmInternalError(String.format("Error inserting mercury order for order with json {}", messageJson), results.resultException);
         }
         return (int) results.resultValue;
     }

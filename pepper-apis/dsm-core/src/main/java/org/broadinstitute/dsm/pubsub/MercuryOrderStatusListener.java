@@ -14,6 +14,7 @@ import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 
 @Slf4j
@@ -33,7 +34,7 @@ public class MercuryOrderStatusListener {
                 consumer.ack();
                 processOrderStatus(message);
                 log.info("Processing the status message from Mercury finished");
-            } catch (DSMPubSubException error) {
+            } catch (DsmInternalError error) {
                 log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
                 error.printStackTrace();
             } catch (Exception ex) {
