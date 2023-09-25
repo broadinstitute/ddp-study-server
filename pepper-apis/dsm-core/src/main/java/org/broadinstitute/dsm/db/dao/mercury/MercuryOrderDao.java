@@ -67,10 +67,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
                     + " status_detail = ?, status_message = ? where order_id = ?";
 
-    String errorMessage = "Error getting eligible barcodes for a mercury order for participant %s";
-
     private static final int MAX_CHAR_ALLOWED = 2000;
-
 
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) {
         long statusDate = System.currentTimeMillis();
@@ -137,6 +134,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     }
 
     public Map<String, MercuryOrderDto> getPossibleBarcodesForParticipant(String ddpParticipantId) {
+        String errorMessage = "Error getting eligible barcodes for a mercury order for participant %s";
         HashMap<String, MercuryOrderDto> map = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -219,8 +217,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     } else {
                         dbVals.resultValue = false;
                     }
-                } catch (SQLException exception) {
-                    dbVals.resultException = exception;
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
