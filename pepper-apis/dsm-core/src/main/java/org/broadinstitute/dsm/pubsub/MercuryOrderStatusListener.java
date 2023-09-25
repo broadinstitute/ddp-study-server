@@ -29,7 +29,7 @@ public class MercuryOrderStatusListener {
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             String messageId = message.getMessageId();
             // Handle incoming message, then ack the received message.
-            log.info(String.format("Got Mercury status message with Id: {}", messageId));
+            log.info("Got Mercury status message with Id: {}", messageId);
             try {
                 consumer.ack();
                 processOrderStatus(message);
@@ -38,7 +38,7 @@ public class MercuryOrderStatusListener {
                 log.error("Error happened parsing Mercury Status Message, DSM will ack the message", error);
                 error.printStackTrace();
             } catch (Exception ex) {
-                log.error("Unexpected error: about to nack the status message from Mercury", ex);
+                log.error("Unexpected error for status message from Mercury", ex);
                 ex.printStackTrace();
             }
 
