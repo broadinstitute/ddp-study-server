@@ -120,6 +120,7 @@ import org.broadinstitute.dsm.route.TriggerSomaticResultSurveyRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.admin.AdminOperationRoute;
 import org.broadinstitute.dsm.route.admin.StudyRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoleRoute;
 import org.broadinstitute.dsm.route.admin.UserRoute;
@@ -602,15 +603,15 @@ public class DSMServer {
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
 
-        if (!cfg.getBoolean(IS_PRODUCTION)) {
-            post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
+        //Juniper routes
+        post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
 
-            StatusKitRoute statusKitRoute = new StatusKitRoute();
-            get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
-            get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
-            get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
-            post(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
-        }
+        StatusKitRoute statusKitRoute = new StatusKitRoute();
+        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
+        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
+        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
+        post(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
+
 
         if (!cfg.getBoolean(IS_PRODUCTION)) {
             get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
@@ -949,6 +950,10 @@ public class DSMServer {
         UserRoute userRoute = new UserRoute();
         post(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
         put(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
+
+        AdminOperationRoute adminOperationRoute = new AdminOperationRoute();
+        post(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
     }
 
 

@@ -78,8 +78,8 @@ public class TissueList {
 
     public static List<TissueList> getAllTissueListsForRealm(String realm, String query) {
         List<TissueList> results = new ArrayList<>();
-        HashMap<Long, Tissue> tissues = new HashMap<>();
-        HashMap<Long, OncHistoryDetail> oncHistoryDetailHashMap = new HashMap<>();
+        HashMap<Integer, Tissue> tissues = new HashMap<>();
+        HashMap<Integer, OncHistoryDetail> oncHistoryDetailHashMap = new HashMap<>();
         HashMap<String, Participant> participantHashMap = new HashMap<>();
         SimpleResult result = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -118,7 +118,7 @@ public class TissueList {
                         }
                     }
                     for (Tissue tissue : tissues.values()) {
-                        Long tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        Integer tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
                         OncHistoryDetail oncHistoryDetail = oncHistoryDetailHashMap.get(tissueOncHistoryDetailId);
                         oncHistoryDetail.getTissues().add(tissue);
                     } //  add onchistories to their particiapnt

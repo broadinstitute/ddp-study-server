@@ -1,0 +1,16 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+<changeSet id="add_order_transmitted_at_if_not_exists" author="pegah">
+    <preConditions onFail="MARK_RAN">
+        <not>
+            <columnExists tableName="ddp_kit_request" columnName="order_transmitted_at" />
+        </not>
+    </preConditions>
+    <addColumn tableName="ddp_kit_request">
+        <column name="order_transmitted_at" type="DATETIME(6)" />
+    </addColumn>
+</changeSet>
+</databaseChangeLog>

@@ -2,8 +2,8 @@ package org.broadinstitute.dsm.db.dto.mercury;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ public class MercuryOrderUseCase {
             throws NoSuchElementException {
         List<MercuryOrderDto> orders = new ArrayList<>();
         MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
-        HashMap<String, MercuryOrderDto> participantBarcodes = mercuryOrderDao.getPossibleBarcodesForParticipant(ddpParticipantId);
+        Map<String, MercuryOrderDto> participantBarcodes = mercuryOrderDao.getPossibleBarcodesForParticipant(ddpParticipantId);
         Arrays.stream(barcodes).forEach(barcode -> {
             if (!participantBarcodes.containsKey(barcode)) {
                 String message = String.format(
@@ -50,12 +50,10 @@ public class MercuryOrderUseCase {
 
     public static void exportToES(List<MercuryOrderDto> newOrders) {
         ClinicalOrder clinicalOrder = new ClinicalOrder();
-        newOrders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getDsmKitRequestId() != null).findFirst().ifPresent(order -> {
-            clinicalOrder.setDsmKitRequestId(order.getDsmKitRequestId());
-        });
-        newOrders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getTissueId() != null).findFirst().ifPresent(order -> {
-            clinicalOrder.setTissueId(order.getTissueId());
-        });
+        newOrders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getDsmKitRequestId() != null).findFirst().ifPresent(order ->
+            clinicalOrder.setDsmKitRequestId(order.getDsmKitRequestId()));
+        newOrders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getTissueId() != null).findFirst().ifPresent(order ->
+            clinicalOrder.setTissueId(order.getTissueId()));
         MercuryOrderDto order = newOrders.get(0);
         clinicalOrder.setDdpParticipantId(order.getDdpParticipantId());
         clinicalOrder.setOrderId(order.getOrderId());
