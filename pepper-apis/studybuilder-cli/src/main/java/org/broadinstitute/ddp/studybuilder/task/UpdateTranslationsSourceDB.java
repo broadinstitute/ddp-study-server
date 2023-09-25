@@ -33,6 +33,7 @@ import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
+import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -226,8 +227,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         long activityId = activity.getActivityId();
 
         log.info("Comparing activity {} naming details...", activity.getActivityCode());
-        //var task = new UpdateActivityBaseSettings();
-        //task.init(cfgPath, studyCfg, varsCfg);
+        var task = new UpdateActivityBaseSettings();
+        task.init(cfgPath, studyCfg, varsCfg);
         //compareNamingDetails(handle, activity.getActivityCode(), activityId, activity.);
         //task.compareStatusSummaries(handle, definition, activityId);
 
@@ -268,6 +269,37 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 log.info("Updated naming details for activity {} .. language: {}", activityCode, "es");
             }
         }
+    }
+
+    public void compareStatusSummaries(Handle handle, String activityCode, long activityId, ActivityVersionDto versionDto) {
+        if (activityCode.equalsIgnoreCase("LOVEDONE") || activityCode.equalsIgnoreCase("prequal")) {
+            return;
+        }
+        var activityI18nDao = handle.attach(ActivityI18nDao.class);
+        Map<String, SummaryTranslation> currentSummaries = activityI18nDao
+                .findSummariesByActivityId(activityId)
+                .stream()
+                //.collect(Collectors.toMap(this::statusSummaryKey, Functions.identity()));
+                .collect(Collectors.toMap(SummaryTranslation::getLanguageCode, Functions.identity()));
+
+        SummaryTranslation currentES = currentSummaries.get("es");
+        /*ActivityI18nDetail latestDetails =
+                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES);
+        if (latestDetails == null) {
+            return;
+        }
+
+        if (currentES == null) {
+            //insert new
+            List<ActivityI18nDetail> newDetails = Collections.singletonList(latestDetails);
+            activityI18nDao.insertDetails(newDetails);
+            log.info("NEW: Inserted naming details for activity {} .. language: {}", activityCode, "es");
+        } else {
+            if (!currentES.equals(latestDetails)) {
+                activityI18nDao.updateDetails(Collections.singletonList(latestDetails));
+                log.info("Updated naming details for activity {} .. language: {}", activityCode, "es");
+            }
+        }*/
     }
 
     private ActivityI18nDetail buildLatestNamingDetail(long activityId, long revisionId, String activityCode,
