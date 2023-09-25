@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import com.google.common.base.Functions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
@@ -7,9 +8,11 @@ import com.typesafe.config.ConfigFactory;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiTemplate;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
@@ -29,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentD
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -57,6 +61,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,15 +125,15 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
         //traverseStudySettings(handle, studyDto.getId());
         //traverseKitConfigurations(handle, studyDto.getId());
-        //traverseEventConfigurations(handle, studyDto.getId());
+        traverseEventConfigurations(handle, studyDto.getId());
         traverseActivities(handle, studyDto.getId(), activityBuilder);
         String gsonDataEN = gson.toJson(allActTransMapEN, typeObject);
         log.info("---------EN---------");
-        log.info(gsonDataEN);
+        //log.info(gsonDataEN);
 
         log.info("---------ES---------");
         String gsonDataES = gson.toJson(allActTransMapES, typeObject);
-        log.info(gsonDataES);
+        //log.info(gsonDataES);
 
     }
 
@@ -136,28 +141,16 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     private void traverseEventConfigurations(Handle handle, long studyId) {
         log.info("Comparing templates in event configurations...");
 
-        Map<String, Config> latestAnnouncementEvents = new HashMap<>();
-        for (var eventCfg : studyCfg.getConfigList("events")) {
-            if ("ANNOUNCEMENT".equals(eventCfg.getString("action.type"))) {
-                String eventKey = hashEvent(eventCfg);
-                latestAnnouncementEvents.put(eventKey, eventCfg);
-            }
-        }
-
         var eventDao = handle.attach(EventDao.class);
         var templateDao = handle.attach(TemplateDao.class);
 
         for (var eventConfig : eventDao.getAllEventConfigurationsByStudyId(studyId)) {
             if (EventActionType.ANNOUNCEMENT.equals(eventConfig.getEventActionType())) {
-                String eventKey = hashEvent(handle, eventConfig);
-                Config eventCfg = latestAnnouncementEvents.get(eventKey);
-
                 long timestamp = Instant.now().toEpochMilli();
                 long templateId = ((AnnouncementEventAction) eventConfig.getEventAction()).getMessageTemplateId();
                 Template current = templateDao.loadTemplateByIdAndTimestamp(templateId, timestamp);
-                Template latest = parseAndValidateTemplate(eventCfg, "action.msgTemplate");
-
-                String tag = String.format("event %s announcementMessageTemplate %d", eventKey, templateId);
+                String tag = String.format("event announcementMessageTemplate %d", templateId);
+                compareTemplate(handle, tag, current, "announcements");
             }
         }
     }
@@ -213,8 +206,14 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 traverseActivity(handle, activity);
             }
 
+            compareNamingDetails(handle, activity.getActivityCode().toLowerCase(), activity.getActivityId(), versionDto);
+            Template hintTemplate = activity.getReadonlyHintTemplate();
+            compareTemplate(handle, activity.getTag(), hintTemplate, activity.getActivityCode());
+            Template lastUpdatedTemplate = activity.getReadonlyHintTemplate();
+            compareTemplate(handle, activity.getTag(), lastUpdatedTemplate, activity.getActivityCode());
+
             //if (activityDto.getActivityCode().equalsIgnoreCase("ABOUTYOU")) {
-            //    traverseActivity(handle, activity);
+                //traverseActivity(handle, activity);
             //}
             log.info("MISSING translation vars in es.conf: {}", activityDto.getActivityCode());
             String gsonDataMiss = gson.toJson(missingTransVars, typeObject);
@@ -227,9 +226,9 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         long activityId = activity.getActivityId();
 
         log.info("Comparing activity {} naming details...", activity.getActivityCode());
-        var task = new UpdateActivityBaseSettings();
-        task.init(cfgPath, studyCfg, varsCfg);
-        //task.compareNamingDetails(handle, definition, activityId, versionDto);
+        //var task = new UpdateActivityBaseSettings();
+        //task.init(cfgPath, studyCfg, varsCfg);
+        //compareNamingDetails(handle, activity.getActivityCode(), activityId, activity.);
         //task.compareStatusSummaries(handle, definition, activityId);
 
 
@@ -239,6 +238,96 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         for (int i = 0; i < sections.size(); i++) {
             traverseSection(handle, i + 1, sections.get(i), activity.getActivityCode());
         }
+    }
+
+    public void compareNamingDetails(Handle handle, String activityCode, long activityId, ActivityVersionDto versionDto) {
+        if (activityCode.equalsIgnoreCase("LOVEDONE") || activityCode.equalsIgnoreCase("prequal")) {
+            return;
+        }
+        var activityI18nDao = handle.attach(ActivityI18nDao.class);
+        Map<String, ActivityI18nDetail> currentDetails = activityI18nDao
+                .findDetailsByActivityIdAndTimestamp(activityId, versionDto.getRevStart())
+                .stream()
+                .collect(Collectors.toMap(ActivityI18nDetail::getIsoLangCode, Functions.identity()));
+
+        ActivityI18nDetail currentES = currentDetails.get("es");
+        ActivityI18nDetail latestDetails =
+                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES);
+        if (latestDetails == null) {
+            return;
+        }
+
+        if (currentES == null) {
+            //insert new
+            List<ActivityI18nDetail> newDetails = Collections.singletonList(latestDetails);
+            activityI18nDao.insertDetails(newDetails);
+            log.info("NEW: Inserted naming details for activity {} .. language: {}", activityCode, "es");
+        } else {
+            if (!currentES.equals(latestDetails)) {
+                activityI18nDao.updateDetails(Collections.singletonList(latestDetails));
+                log.info("Updated naming details for activity {} .. language: {}", activityCode, "es");
+            }
+        }
+    }
+
+    private ActivityI18nDetail buildLatestNamingDetail(long activityId, long revisionId, String activityCode,
+                                                                     ActivityI18nDetail current) {
+
+        String key = activityCode;
+        if (activityCode.equalsIgnoreCase("CONSENT_ASSENT") || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
+            key = "parental";
+        }
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
+                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
+            key = "somatic_consent_addendum";
+        }
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
+                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
+            key = "somatic_consent_addendum";
+        }
+        if (activityCode.equalsIgnoreCase("ABOUTYOU")) {
+            key = "about_you";
+        }
+        if (activityCode.equalsIgnoreCase("ABOUTCHILD")) {
+            key = "about_child";
+        }
+
+        String name = null;
+        if (i18nCfgEs.hasPath(key + "." + "name")) {
+            name = i18nCfgEs.getString(key + "." + "name");
+        }
+        if (name == null) {
+            return null;
+        }
+
+        String secondName = null;
+        if (i18nCfgEs.hasPath(key + "." + "secondName")) {
+            secondName = i18nCfgEs.getString(key + "." + "secondName");
+        }
+
+        String title = null;
+        if (i18nCfgEs.hasPath(key + "." + "title")) {
+            title = i18nCfgEs.getString(key + "." + "title");
+        }
+        String subTitle = null;
+        if (i18nCfgEs.hasPath(key + "." + "subTitle")) {
+            subTitle = i18nCfgEs.getString(key + "." + "subTitle");
+        }
+        String description = null;
+        if (i18nCfgEs.hasPath(key + "." + "subTitle")) {
+            description = i18nCfgEs.getString(key + "." + "description");
+        }
+
+        ActivityI18nDetail latest = new ActivityI18nDetail(
+                activityId,
+                "es",
+                name,
+                secondName,
+                title,
+                subTitle,
+                description,
+                current == null ? revisionId : current.getRevisionId());
+        return latest;
     }
 
     public void traverseSection(Handle handle, int sectionNum, FormSectionDef section, String activityCode) {
@@ -478,7 +567,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
         //tailored to Osteo for now
         String key = activityCode.toLowerCase() + "." + variableName;
-        if (activityCode.startsWith("CONSENT_ASSENT") || activityCode.startsWith("PARENTAL_CONSENT")) {
+        if (activityCode.equalsIgnoreCase("CONSENT_ASSENT") || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
             key = "parental." + variableName;
         }
         if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
