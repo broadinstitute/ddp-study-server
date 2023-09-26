@@ -79,8 +79,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
         ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
         log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
 
-        compareBasicSettings(handle, activityCfg, activityId);
-        compareNamingDetails(handle, activityCfg, activityId, versionDto);
+        //compareBasicSettings(handle, activityCfg, activityId);
+        //compareNamingDetails(handle, activityCfg, activityId, versionDto);
         compareStatusSummaries(handle, activityCfg, activityId);
     }
 
@@ -225,7 +225,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
         for (String key : currentSummaries.keySet()) {
             SummaryTranslation current = currentSummaries.get(key);
             SummaryTranslation latest = latestSummaries.remove(key);
-            if (!current.equals(latest)) {
+            if (!current.equals(latest) && current.getLanguageCode().equalsIgnoreCase("es")) {
                 updatedSummaries.add(latest);
             }
         }

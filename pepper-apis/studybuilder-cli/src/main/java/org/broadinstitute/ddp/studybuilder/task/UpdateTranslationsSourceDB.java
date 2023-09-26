@@ -313,9 +313,9 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
             key = "somatic_consent_addendum";
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
-                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
-            key = "somatic_consent_addendum";
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC") ||
+                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
+            key = "somatic_consent_addendum_pediatric";
         }
         if (activityCode.equalsIgnoreCase("ABOUTYOU")) {
             key = "about_you";
@@ -606,9 +606,9 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
             key = "somatic_consent_addendum." + variableName;
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
-                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
-            key = "somatic_consent_addendum." + variableName;
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC") ||
+                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
+            key = "somatic_consent_addendum_pediatric." + variableName;
         }
         if (activityCode.equalsIgnoreCase("ABOUTYOU")) {
             key = "about_you." + variableName;
