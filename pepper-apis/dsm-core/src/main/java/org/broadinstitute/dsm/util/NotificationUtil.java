@@ -208,11 +208,7 @@ public class NotificationUtil {
         emailRecipient.setPersonalization(mapy);
         try {
             SendGridClient sendGridClient = new SendGridClient(SendGridFactory.createSendGridInstance(emailKey, emailProxyUrl));
-            JsonObject emailClientSettings = new JsonObject();
-            emailClientSettings.addProperty("sendGridFrom", from);
-            emailClientSettings.addProperty("sendGridFromName", name);
-            sendGridClient.sendSingleEmail(sendGridTemplate, emailRecipient,
-                    new EmailSender(from, name));
+            sendGridClient.sendSingleEmail(sendGridTemplate, emailRecipient, new EmailSender(from, name));
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
