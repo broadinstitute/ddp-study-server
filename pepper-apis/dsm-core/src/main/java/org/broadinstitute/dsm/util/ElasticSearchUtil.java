@@ -741,7 +741,7 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static void updateRequest(@NonNull String ddpParticipantId, String index, String jsonProperty) {
+    public static void updateParticipant(@NonNull String ddpParticipantId, String index, String jsonProperty) {
         initialize();
         UpdateRequest updateRequest =
                 new UpdateRequest().index(index).id(ddpParticipantId).doc(jsonProperty, XContentType.JSON)
