@@ -89,6 +89,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 int result = stmt.executeUpdate();
                 if (result != 0) {
                     log.info("Updated Mercury status for order id " + mercuryStatusMessage.getOrderID());
+                    baseMercuryStatusMessage.getStatus().setDetails(statusDetail);
                     if (baseMercuryStatusMessage.getStatus().getOrderStatus().equals(FAILED)) {
                         log.error(String.format("Mercury rejected the sequencing order %s with order number %s",
                                 baseMercuryStatusMessage.getStatus().getJson(), baseMercuryStatusMessage.getStatus().getOrderID()));
