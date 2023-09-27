@@ -86,13 +86,13 @@ public class DataSyncJob implements Job {
                     .getCurrentlyExecutingJobs().stream()
                     .anyMatch(jctx -> jctx.getJobDetail().getKey().equals(StudyDataExportJob.getKey()));
             if (exportCurrentlyRunning) {
-                log.warn("Regular data export job currently running, skipping sync job");
+                log.warn("[DataSyncJob] Regular data export job currently running, skipping sync job");
                 return;
             }
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> run(handle, exporter));
             log.info("Completed executing DataSyncJob");
         } catch (Exception e) {
-            throw new JobExecutionException(e, false);
+            log.error("Exception executing DataSyncJob", e);
         }
     }
 
@@ -100,6 +100,7 @@ public class DataSyncJob implements Job {
         log.info("Running DataSyncJob");
         List<DataSyncRequest> requests = handle.attach(DataExportDao.class).findLatestDataSyncRequests();
         if (requests.isEmpty()) {
+            log.info("[DataSyncJob] No sync requests");
             return;
         }
 
@@ -139,28 +140,30 @@ public class DataSyncJob implements Job {
             DataExporter.evictCachedAuth0Emails(auth0UserIds);
         }
 
+        log.info("[DataSyncJob] Syncing {} studies", studyUsers.entrySet().size());
         Set<Long> distinctUsers = new HashSet<>();
         for (Map.Entry<Long, Set<Long>> entry : studyUsers.entrySet()) {
             Long studyId = entry.getKey();
             Set<Long> userIds = entry.getValue();
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
             if (studyDto.isDataExportEnabled()) {
-                log.info("Syncing data for study {}", studyDto.getGuid());
+                log.info("[DataSyncJob] Syncing data for study {}", studyDto.getGuid());
                 exporter.exportParticipantsToElasticsearchByIds(handle, studyDto, userIds, true);
 
                 //data sync to users index
                 exporter.exportUsersToElasticsearch(handle, studyDto, userIds);
                 distinctUsers.addAll(userIds);
             } else {
-                log.warn("Study {} does not have data export enabled, skipping data sync", studyDto.getGuid());
+                log.warn("[DataSyncJob] Study {} does not have data export enabled, skipping data sync", studyDto.getGuid());
             }
         }
 
+        log.info("[DataSyncJob] Deleting old sync requests");
         DataSyncRequest latestRequest = requests.get(0);    // Already sorted in descending order.
         handle.attach(DataExportDao.class).deleteDataSyncRequestsAtOrOlderThan(latestRequest.getId());
 
         long elapsed = System.currentTimeMillis() - start;
-        log.info("Finished job {}, took {} ms, processed {} requests, synced {} users",
+        log.info("[DataSyncJob] Finished job {}, took {} ms, processed {} requests, synced {} users",
                 getKey(), elapsed, requests.size(), distinctUsers.size());
     }
 }

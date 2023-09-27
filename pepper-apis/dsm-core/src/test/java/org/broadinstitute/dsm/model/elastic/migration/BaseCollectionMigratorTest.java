@@ -23,7 +23,7 @@ public class BaseCollectionMigratorTest {
 
         baseCollectionMigrator.transformObject(mockTissues());
         Map<String, Object> stringObjectMap = baseCollectionMigrator.transformedList.get(0);
-        Assert.assertEquals(11L, stringObjectMap.get("tissueId"));
+        Assert.assertEquals(11, stringObjectMap.get("tissueId"));
         Assert.assertEquals("notes", stringObjectMap.get("notes"));
     }
 
@@ -35,7 +35,7 @@ public class BaseCollectionMigratorTest {
     }
 
     private List<Tissue> mockTissues() {
-        List<Tissue> fieldValue = new ArrayList<>(List.of(new Tissue(11, 22L,
+        List<Tissue> fieldValue = new ArrayList<>(List.of(new Tissue(11, 22,
                 "notes", null, null, "awdwadawdawdawd", null, null, null, null, null, null,
                 null, null, "Awdawd", null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null), new Tissue(555, null,

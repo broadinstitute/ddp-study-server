@@ -36,7 +36,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     @BeforeClass
     public static void setup() {
         testUsers = new UserAdminTestUtil();
-        testUsers.createRealmAndStudyGroup(TEST_INSTANCE, TEST_GROUP);
+        testUsers.createRealmAndStudyGroup(TEST_INSTANCE, null, null, TEST_GROUP);
         userAdminRole = USER_ADMIN_ROLE;
         Assert.assertNotEquals(-1, UserAdminService.getRoleId(PEPPER_ADMIN_ROLE));
         Assert.assertNotEquals(-1, UserAdminService.getRoleId(USER_ADMIN_ROLE));

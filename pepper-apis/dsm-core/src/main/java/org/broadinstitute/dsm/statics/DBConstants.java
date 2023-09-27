@@ -2,6 +2,10 @@ package org.broadinstitute.dsm.statics;
 
 public class DBConstants {
 
+    private DBConstants(){
+        throw new IllegalStateException("Utility class");
+    }
+
     //table names
     public static final String DDP_MEDICAL_RECORD = "ddp_medical_record";
     public static final String DDP_ONC_HISTORY = "ddp_onc_history";
@@ -128,6 +132,7 @@ public class DBConstants {
     public static final String GBF_CONFIRMATION = "gbf_confirmation";
     public static final String EXTERNAL_ORDER_NUMBER = "external_order_number";
     public static final String CE_ORDER = "CE_order";
+    public static final String KIT_COMPLETE = "kit_complete";
     public static final String NO_RETURN = "no_return";
     public static final String EXTERNAL_ORDER_STATUS = "external_order_status";
     public static final String EXTERNAL_ORDER_DATE = "external_order_date";
