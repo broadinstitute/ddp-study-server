@@ -49,6 +49,7 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -718,7 +719,12 @@ public class ElasticSearchUtil {
         String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
                 getParticipantESDataByAltpid(client, index, ddpParticipantId).getProfile().map(Profile::getGuid).orElse(ddpParticipantId);
         UpdateRequest updateRequest =
-                new UpdateRequest().index(index).type("_doc").id(participantId).doc(objectsMapES).docAsUpsert(true).retryOnConflict(5);
+                new UpdateRequest().index(index).type("_doc")
+                        .id(participantId)
+                        .doc(objectsMapES)
+                        .docAsUpsert(true)
+                        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
+                        .retryOnConflict(5);
 
         try {
             UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);

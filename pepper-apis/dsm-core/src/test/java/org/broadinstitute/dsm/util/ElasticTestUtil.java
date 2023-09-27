@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.util;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public class ElasticTestUtil {
         return res.getSourceAsString();
     }
 
-    public static void addParticipantAndInstitution(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
+    public static void addInstitutionAndMedicalRecord(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
         String ddpParticipantId = participantDto.getDdpParticipantIdOrThrow();
         Institution institution = new Institution(String.format("%s_GUID", ddpParticipantId), "PHYSICIAN");
         String lastUpdated = Long.toString(System.currentTimeMillis());
@@ -107,6 +108,25 @@ public class ElasticTestUtil {
                         ddpInstanceDto
                 )
         ).export();
+    }
+
+    public static void createParticipant(ParticipantDto participantDto, String esIndex) {
+        String ddpParticipantId = participantDto.getDdpParticipantIdOrThrow();
+        try {
+            Map<String, Object> props = new HashMap<>();
+            props.put("ddpParticipantId", ddpParticipantId);
+            props.put("participantId", participantDto.getParticipantIdOrThrow());
+            props.put("created", participantDto.getLastChanged());
+            Map<String, Object> parent = new HashMap<>();
+            parent.put("participant", props);
+            Map<String, Object> source = new HashMap<>();
+            source.put("dsm", parent);
+
+            ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, source);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception adding property for participant " + ddpParticipantId);
+        }
     }
 
     public static void addProperty(String ddpParticipantId, String propertyPath, String index) {

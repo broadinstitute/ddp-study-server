@@ -62,10 +62,10 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
         try {
             testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
             //ElasticTestUtil.addProperty(ddpParticipantId, "dsm", esIndex);
-            ElasticTestUtil.addDsmParticipant(testParticipant, ddpInstanceDto);
+            ElasticTestUtil.createParticipant(testParticipant, esIndex);
             log.info("TEMP: Participant document with ptp: {}", ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
 
-            ElasticTestUtil.addParticipantAndInstitution(testParticipant, ddpInstanceDto);
+            ElasticTestUtil.addInstitutionAndMedicalRecord(testParticipant, ddpInstanceDto);
 
             Gson gson = new Gson();
             String profileJson = TestUtil.readFile("elastic/participantProfile.json");
@@ -75,8 +75,8 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             log.info("TEMP: Participant document with profile and med record: {}",
                     ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
 
-            String activitiesJson = TestUtil.readFile("elastic/lmsActivities.json");
-            ElasticTestUtil.addActivities(ddpParticipantId, activitiesJson, esIndex);
+            //String activitiesJson = TestUtil.readFile("elastic/lmsActivities.json");
+            //ElasticTestUtil.addActivities(ddpParticipantId, activitiesJson, esIndex);
 
             String patchJson = TestUtil.readFile("onchistory/patch.json");
 
@@ -86,11 +86,12 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             patch.setRealm(instanceName);
 
             OncHistoryDetailPatch oncHistoryDetailPatch = new OncHistoryDetailPatch(patch);
+            log.info("TEMP: Doing patch");
+            oncHistoryDetailPatch.setElasticSearchExportable(true);
             oncHistoryDetailPatch.doPatch();
             log.info("TEMP: Participant document with oncHistory patch: {}",
                     ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
 
-            String shortId = profile.getHruid();
             ElasticSearchParticipantDto esParticipant =
                      ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
             log.info("TEMP: esParticipant {}", esParticipant);
