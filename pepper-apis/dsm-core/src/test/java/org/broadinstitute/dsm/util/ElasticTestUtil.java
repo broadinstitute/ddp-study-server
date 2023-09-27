@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.util;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,10 +10,13 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
+import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
@@ -125,7 +129,34 @@ public class ElasticTestUtil {
             ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, source);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception adding property for participant " + ddpParticipantId);
+            Assert.fail("Unexpected exception creating ES participant " + ddpParticipantId);
+        }
+    }
+
+    public static void createOncHistoryDetail(OncHistoryDetail oncHistoryDetail, String ddpParticipantId, String esIndex) {
+        try {
+            Map<String, Object> props = new HashMap<>();
+            props.put("oncHistoryDetailId", oncHistoryDetail.getOncHistoryDetailId());
+            props.put("ddpInstanceId", oncHistoryDetail.getDdpInstanceId());
+            props.put("phone", oncHistoryDetail.getPhone());
+            props.put("fax", oncHistoryDetail.getFax());
+            props.put("facility", oncHistoryDetail.getFacility());
+            props.put("destructionPolicy", oncHistoryDetail.getDestructionPolicy());
+            Map<String, Object> source = new HashMap<>();
+            source.put("oncHistoryDetail", props);
+
+            String scriptText = String.format("if (ctx._source.dsm.%s == null) {"
+                            + "ctx._source.dsm.%s = new ArrayList(); }"
+                            + "ctx._source.dsm.%s.add(params.%s);",
+                    ONC_HISTORY_DETAIL, ONC_HISTORY_DETAIL, ONC_HISTORY_DETAIL, ONC_HISTORY_DETAIL);
+            BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+            queryBuilder.must(QueryBuilders.termsQuery("_id", ddpParticipantId));
+
+            UpsertPainless upsert = new UpsertPainless(null, esIndex, null, queryBuilder);
+            upsert.export(scriptText, source, "oncHistoryDetail");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating oncHistoryDetail for participant " + ddpParticipantId);
         }
     }
 

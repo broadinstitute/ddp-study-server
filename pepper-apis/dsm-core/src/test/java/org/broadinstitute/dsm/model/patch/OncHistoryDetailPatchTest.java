@@ -86,7 +86,6 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             patch.setRealm(instanceName);
 
             OncHistoryDetailPatch oncHistoryDetailPatch = new OncHistoryDetailPatch(patch);
-            log.info("TEMP: Doing patch");
             oncHistoryDetailPatch.setElasticSearchExportable(true);
             oncHistoryDetailPatch.doPatch();
             log.info("TEMP: Participant document with oncHistory patch: {}",

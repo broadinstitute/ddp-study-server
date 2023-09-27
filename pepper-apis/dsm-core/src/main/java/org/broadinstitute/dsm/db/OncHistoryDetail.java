@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +20,18 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.lucene.search.join.ScoreMode;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -33,6 +39,9 @@ import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,9 +121,8 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "LEFT JOIN ddp_medical_record med ON med.medical_record_id = onc.medical_record_id "
                     + "LEFT JOIN ddp_institution di ON di.institution_id = med.institution_id "
                     + "LEFT JOIN ddp_participant dp ON dp.participant_id = di.participant_id "
-                    + "LEFT JOIN ddp_instance instance ON dp.ddp_instance_id = instance.ddp_instance_id "
                     + "SET onc.destruction_policy = ?, onc.last_changed = ?, onc.changed_by = ? "
-                    + "WHERE onc.facility = ? AND instance.instance_name = ?";
+                    + "WHERE onc.facility = ? AND dp.ddp_instance_id = ?";
 
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
     private int oncHistoryDetailId;
@@ -305,6 +313,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.request = builder.request;
         this.destructionPolicy = builder.destructionPolicy;
         this.changedBy = builder.changedBy;
+        this.ddpInstanceId = (long)builder.ddpInstanceId;
     }
 
     public static OncHistoryDetail getOncHistoryDetail(@NonNull ResultSet rs) throws SQLException {
@@ -330,7 +339,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
                         tissues, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION), rs.getString(DBConstants.DESTRUCTION_POLICY),
                         rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE), rs.getString(DBConstants.PARTICIPANT_ID),
-                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
+                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID));
         return oncHistoryDetail;
     }
 
@@ -573,18 +582,40 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
                                                @NonNull String user) {
-        inTransaction(conn -> {
+        DDPInstanceDto ddpInstance = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm).orElseThrow(() ->
+                new DSMBadRequestException("Invalid realm : " + realm));
+
+        int updateCnt = inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_DESTRUCTION_POLICY)) {
                 stmt.setString(1, policy);
                 stmt.setString(2, String.valueOf(System.currentTimeMillis()));
                 stmt.setString(3, user);
                 stmt.setString(4, facility);
-                stmt.setString(5, realm);
+                stmt.setInt(5, ddpInstance.getDdpInstanceId());
                 return stmt.executeUpdate();
             } catch (SQLException e) {
                 throw new DsmInternalError("Error updating destruction policy for facility " + facility, e);
             }
         });
+
+        if (updateCnt > 0) {
+            String index = ddpInstance.getEsParticipantIndex();
+            String scriptText = String.format("for (a in ctx._source.dsm.oncHistoryDetail) "
+                    + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}", facility, policy);
+            BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+            int instanceId = ddpInstance.getDdpInstanceId();
+            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.oncHistoryDetail.ddpInstanceId", instanceId);
+            queryBuilder.must(QueryBuilders.nestedQuery("dsm.oncHistoryDetail", qb, ScoreMode.None));
+
+            try {
+                UpsertPainless upsert = new UpsertPainless(null, index, null, queryBuilder);
+                upsert.export(scriptText, Collections.emptyMap(), "destructionPolicy");
+            } catch (Exception e) {
+                String msg = String.format("Error updating ElasticSearch oncHistoryDetail destruction policy for index %s, "
+                        + "facility=%s, policy=%s", index, facility, policy);
+                throw new DsmInternalError(msg, e);
+            }
+        }
     }
 
     // Note: this builder is not complete, add fields as needed
@@ -597,6 +628,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         private String request;
         private String destructionPolicy;
         private String changedBy;
+        private int ddpInstanceId;
 
         public Builder withMedicalRecordId(int medicalRecordId) {
             this.medicalRecordId = medicalRecordId;
@@ -635,6 +667,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
         public Builder withChangedBy(String changedBy) {
             this.changedBy = changedBy;
+            return this;
+        }
+
+        public Builder withDdpInstanceId(int ddpInstanceId) {
+            this.ddpInstanceId = ddpInstanceId;
             return this;
         }
 
