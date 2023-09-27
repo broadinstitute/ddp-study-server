@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
@@ -30,7 +31,6 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
-import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -38,6 +38,7 @@ import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -307,6 +308,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.request = builder.request;
         this.destructionPolicy = builder.destructionPolicy;
         this.changedBy = builder.changedBy;
+        this.ddpInstanceId = (long)builder.ddpInstanceId;
     }
 
     public static OncHistoryDetail getOncHistoryDetail(@NonNull ResultSet rs) throws SQLException {
@@ -336,6 +338,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         return oncHistoryDetail;
     }
 
+    // TODO: there should be no need for the realm parameter -DC
     public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -554,15 +557,14 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         return mrId.intValue();
     }
 
-    // TODO temporary hack until we have an ES test container working -DC
+    // TODO: temporary hack until ES test containers are available
     public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
                                                @NonNull String user) {
         updateDestructionPolicy(policy, facility, realm, user, true);
     }
 
-    protected static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
-                                                  @NonNull String user, boolean updateEs) {
-
+    public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
+                                               @NonNull String user, boolean updateElastic) {
         DDPInstanceDto ddpInstance = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm).orElseThrow(() ->
                 new DSMBadRequestException("Invalid realm : " + realm));
 
@@ -579,19 +581,21 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             }
         });
 
-        if (updateEs && updateCnt > 0) {
+        if (updateElastic && updateCnt > 0) {
             String index = ddpInstance.getEsParticipantIndex();
-            Map<String, Object> source = new HashMap<>();
-            String scriptText = String.format("ctx._source.dsm.oncHistoryDetail.destructionPolicy = %s);", policy);
+            String scriptText = String.format("for (a in ctx._source.dsm.oncHistoryDetail) "
+                    + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}", facility, policy);
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-            queryBuilder.must(QueryBuilders.termsQuery("dsm.oncHistoryDetail.facility", facility));
+            int instanceId = ddpInstance.getDdpInstanceId();
+            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.oncHistoryDetail.ddpInstanceId", instanceId);
+            queryBuilder.must(QueryBuilders.nestedQuery("dsm.oncHistoryDetail", qb, ScoreMode.None));
 
             try {
                 UpsertPainless upsert = new UpsertPainless(null, index, null, queryBuilder);
-                upsert.export(scriptText, source, "destructionPolicy");
+                upsert.export(scriptText, Collections.emptyMap(), "destructionPolicy");
             } catch (Exception e) {
                 String msg = String.format("Error updating ElasticSearch oncHistoryDetail destruction policy for index %s, "
-                                + "facility=%s, policy=%s", index, facility, policy);
+                        + "facility=%s, policy=%s", index, facility, policy);
                 throw new DsmInternalError(msg, e);
             }
         }
@@ -607,6 +611,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         private String request;
         private String destructionPolicy;
         private String changedBy;
+        private int ddpInstanceId;
 
         public Builder withMedicalRecordId(int medicalRecordId) {
             this.medicalRecordId = medicalRecordId;
@@ -645,6 +650,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
         public Builder withChangedBy(String changedBy) {
             this.changedBy = changedBy;
+            return this;
+        }
+
+        public Builder withDdpInstanceId(int ddpInstanceId) {
+            this.ddpInstanceId = ddpInstanceId;
             return this;
         }
 
