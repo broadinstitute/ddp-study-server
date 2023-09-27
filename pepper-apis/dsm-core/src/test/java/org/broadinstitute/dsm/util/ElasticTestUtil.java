@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.util;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
-import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
@@ -75,18 +72,26 @@ public class ElasticTestUtil {
         }
     }
 
-    public static String getParticipantDocument(String index, String ddpParticipantId) {
+    public static String getParticipantDocumentAsString(String index, String ddpParticipantId) {
+        return _getParticipantDocument(index, ddpParticipantId).getSourceAsString();
+    }
+
+    public static Map<String, Object> getParticipantDocument(String index, String ddpParticipantId) {
+        return _getParticipantDocument(index, ddpParticipantId).getSource();
+    }
+
+    private static GetResponse _getParticipantDocument(String index, String ddpParticipantId) {
         GetResponse res = null;
         try {
             RestHighLevelClient client = ElasticSearchUtil.getClientInstance();
 
-            GetRequest getRequest = new GetRequest().index(index).type("_doc").id(ddpParticipantId);
+            GetRequest getRequest = new GetRequest().index(index).id(ddpParticipantId);
             res = client.get(getRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception getting document for participant " + ddpParticipantId);
         }
-        return res.getSourceAsString();
+        return res;
     }
 
     public static void addInstitutionAndMedicalRecord(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
@@ -114,7 +119,7 @@ public class ElasticTestUtil {
         ).export();
     }
 
-    public static void createParticipant(ParticipantDto participantDto, String esIndex) {
+    public static void createParticipant(String esIndex, ParticipantDto participantDto) {
         String ddpParticipantId = participantDto.getDdpParticipantIdOrThrow();
         try {
             Map<String, Object> props = new HashMap<>();
@@ -133,7 +138,7 @@ public class ElasticTestUtil {
         }
     }
 
-    public static void createOncHistoryDetail(OncHistoryDetail oncHistoryDetail, String ddpParticipantId, String esIndex) {
+    public static void createOncHistoryDetail(String esIndex, OncHistoryDetail oncHistoryDetail, String ddpParticipantId) {
         try {
             Map<String, Object> props = new HashMap<>();
             props.put("oncHistoryDetailId", oncHistoryDetail.getOncHistoryDetailId());
@@ -160,31 +165,14 @@ public class ElasticTestUtil {
         }
     }
 
-    public static void addProperty(String ddpParticipantId, String propertyPath, String index) {
-
-        String scriptText = String.format("if (ctx._source.%s == null) {"
-                        + "ctx._source.%s = new ArrayList(); }",
-                propertyPath, propertyPath);
-        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-        queryBuilder.must(QueryBuilders.termsQuery("_id", ddpParticipantId));
-
-        try {
-            UpsertPainless upsert = new UpsertPainless(null, index, null, queryBuilder);
-            upsert.export(scriptText, Collections.emptyMap(), "(none)");
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Unexpected exception adding property for participant " + ddpParticipantId);
-        }
-    }
-
-    public static void addParticipantProfile(Profile profile, String esIndex) {
+    public static void addParticipantProfile(String esIndex, Profile profile) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> valueMap = mapper.convertValue(profile, Map.class);
         Map<String, Object> profileMap = Map.of("profile", valueMap);
         ElasticSearchUtil.updateRequest(profile.getGuid(), esIndex, profileMap);
     }
 
-    public static void addActivities(String ddpParticipantId, String activitiesJson, String esIndex) {
+    public static void addActivities(String esIndex, String ddpParticipantId, String activitiesJson) {
         ElasticSearchUtil.updateParticipant(ddpParticipantId, esIndex, activitiesJson);
     }
 }

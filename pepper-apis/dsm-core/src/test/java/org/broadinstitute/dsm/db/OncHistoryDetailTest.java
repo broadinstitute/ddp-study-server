@@ -52,7 +52,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
     public void updateDestructionPolicyTest() {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("OncHistoryDetailTest");
         testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
-        ElasticTestUtil.createParticipant(testParticipant, esIndex);
+        ElasticTestUtil.createParticipant(esIndex, testParticipant);
 
         int medicalRecordId = OncHistoryDetail.verifyOrCreateMedicalRecord(testParticipant.getParticipantId().orElseThrow(),
                 ddpParticipantId, ddpInstanceDto.getInstanceName(), false);
@@ -73,22 +73,22 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             OncHistoryDetail rec1 = builder.build();
             recId1 = OncHistoryDetail.createOncHistoryDetail(rec1);
             rec1.setOncHistoryDetailId(recId1);
-            ElasticTestUtil.createOncHistoryDetail(rec1, ddpParticipantId, esIndex);
-            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
+            ElasticTestUtil.createOncHistoryDetail(esIndex, rec1, ddpParticipantId);
+            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             builder.withDestructionPolicy("3");
             OncHistoryDetail rec2 = builder.build();
             recId2 = OncHistoryDetail.createOncHistoryDetail(rec2);
             rec2.setOncHistoryDetailId(recId2);
-            ElasticTestUtil.createOncHistoryDetail(rec2, ddpParticipantId, esIndex);
-            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
+            ElasticTestUtil.createOncHistoryDetail(esIndex, rec2, ddpParticipantId);
+            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             builder.withFacility("Other office");
             OncHistoryDetail rec3 = builder.build();
             recId3 = OncHistoryDetail.createOncHistoryDetail(rec3);
             rec3.setOncHistoryDetailId(recId3);
-            ElasticTestUtil.createOncHistoryDetail(rec3, ddpParticipantId, esIndex);
-            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
+            ElasticTestUtil.createOncHistoryDetail(esIndex, rec3, ddpParticipantId);
+            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             // update and verify
             OncHistoryDetail.updateDestructionPolicy("5", "Office", ddpInstanceDto.getInstanceName(), TEST_USER);
@@ -100,7 +100,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             OncHistoryDetailDto updateRec3 = oncHistoryDetailDao.get(recId3).orElseThrow();
             Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
 
-            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
+            log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception" + e);

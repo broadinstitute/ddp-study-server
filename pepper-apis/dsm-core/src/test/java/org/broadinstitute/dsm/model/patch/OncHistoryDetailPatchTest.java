@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.model.patch;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +14,11 @@ import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -45,13 +50,24 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
     @AfterClass
     public static void tearDown() {
-        ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
+        try {
+            Assert.assertNull(testParticipant);
+            ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception: " + e);
+        }
     }
 
     @After
     public void deleteParticipants() {
         if (testParticipant != null) {
-            TestParticipantUtil.deleteParticipant(testParticipant.getParticipantId().orElseThrow());
+            Optional<ParticipantRecordDto> recordDto = ParticipantRecordDao.of()
+                    .getParticipantRecordByParticipantId(testParticipant.getParticipantIdOrThrow());
+            recordDto.ifPresent(participantRecordDto -> ParticipantRecordDao.of()
+                    .delete(participantRecordDto.getParticipantRecordId().orElseThrow()));
+
+            TestParticipantUtil.deleteParticipant(testParticipant.getParticipantIdOrThrow());
             testParticipant = null;
         }
     }
@@ -61,22 +77,16 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("OncHistoryDetailPatchTest");
         try {
             testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
-            //ElasticTestUtil.addProperty(ddpParticipantId, "dsm", esIndex);
-            ElasticTestUtil.createParticipant(testParticipant, esIndex);
-            log.info("TEMP: Participant document with ptp: {}", ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
-
+            ElasticTestUtil.createParticipant(esIndex, testParticipant);
             ElasticTestUtil.addInstitutionAndMedicalRecord(testParticipant, ddpInstanceDto);
 
             Gson gson = new Gson();
             String profileJson = TestUtil.readFile("elastic/participantProfile.json");
             Profile profile = gson.fromJson(profileJson, Profile.class);
             profile.setGuid(ddpParticipantId);
-            ElasticTestUtil.addParticipantProfile(profile, esIndex);
+            ElasticTestUtil.addParticipantProfile(esIndex, profile);
             log.info("TEMP: Participant document with profile and med record: {}",
-                    ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
-
-            //String activitiesJson = TestUtil.readFile("elastic/lmsActivities.json");
-            //ElasticTestUtil.addActivities(ddpParticipantId, activitiesJson, esIndex);
+                    ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             String patchJson = TestUtil.readFile("onchistory/patch.json");
 
@@ -89,13 +99,26 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             oncHistoryDetailPatch.setElasticSearchExportable(true);
             oncHistoryDetailPatch.doPatch();
             log.info("TEMP: Participant document with oncHistory patch: {}",
-                    ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId));
+                    ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+
+            Map<String, Object> participantMap = ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId);
+            log.info("TEMP: Participant document with oncHistory patch: {}", participantMap);
+            log.info("TEMP: participantMap.keySet(): {}", participantMap.keySet());
 
             ElasticSearchParticipantDto esParticipant =
                      ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
             log.info("TEMP: esParticipant {}", esParticipant);
             Profile esProfile = esParticipant.getProfile().orElseThrow();
             Assert.assertEquals(profile.getHruid(), esProfile.getHruid());
+
+            Dsm dsm = esParticipant.getDsm().orElseThrow();
+            log.info("dsm {}", dsm);
+            List<MedicalRecord> medRecords = dsm.getMedicalRecord();
+            log.info("Med records {}", medRecords);
+            Assert.assertEquals(2, medRecords.size());
+
+            List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
+            log.info("Onc history detail list {}", oncHistoryDetailList);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception: " + e);
@@ -107,6 +130,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             for (MedicalRecord medRecord: medRecords) {
                 List<OncHistoryDetailDto> oncHistoryDetailList =
                         OncHistoryDetail.getOncHistoryDetailByMedicalRecord(medRecord.getMedicalRecordId());
+                log.info("For med record {} oncHistoryDetailList.size() {}", medRecord.getMedicalRecordId(), oncHistoryDetailList.size());
                 OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
                 for (var ohd: oncHistoryDetailList) {
                     oncHistoryDetailDao.delete((Integer)ohd.getColumnValues().get(DBConstants.ONC_HISTORY_DETAIL_ID));
