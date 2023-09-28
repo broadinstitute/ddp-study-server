@@ -11,10 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -83,8 +80,8 @@ public class NotificationUtil {
     public synchronized void startup(@NonNull Config config) {
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
         emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
-        JsonObject senderInfo = (JsonObject) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS)));
-        emailSender = new EmailSender(senderInfo.get("sendGridFrom").getAsString(), senderInfo.get("sendGridFromName").getAsString());
+
+        new Gson().fromJson(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS), EmailSender.class);
         logger.info("Will send email from " + emailSender.getFromEmailAddress() + " " + emailSender.getFromName());
 
         JsonArray array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)));
