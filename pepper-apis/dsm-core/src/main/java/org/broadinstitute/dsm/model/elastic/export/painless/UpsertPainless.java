@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
 public class UpsertPainless implements Exportable {
 
     private static final Logger logger = LoggerFactory.getLogger(UpsertPainless.class);
-    private final Generator generator;
+    private Generator generator;
     private final String index;
-    private final ScriptBuilder scriptBuilder;
+    private ScriptBuilder scriptBuilder;
     private final QueryBuilder queryBuilder;
 
 
@@ -35,6 +35,11 @@ public class UpsertPainless implements Exportable {
         this.generator = generator;
         this.index = index;
         this.scriptBuilder = scriptBuilder;
+        this.queryBuilder = queryBuilder;
+    }
+
+    public UpsertPainless(String index, QueryBuilder queryBuilder) {
+        this.index = index;
         this.queryBuilder = queryBuilder;
     }
 

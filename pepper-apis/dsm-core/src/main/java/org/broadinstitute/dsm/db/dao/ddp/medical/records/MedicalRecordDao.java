@@ -113,6 +113,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
         if (simpleResult.resultException != null) {
             throw new RuntimeException("Error deleting medical record with id: " + id, simpleResult.resultException);
         }
+        logger.info("Deleted medical record with ID {}", id);
         return (int) simpleResult.resultValue;
     }
 

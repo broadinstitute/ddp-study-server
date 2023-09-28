@@ -172,7 +172,7 @@ public class ElasticTestUtil {
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
             queryBuilder.must(QueryBuilders.termsQuery("_id", ddpParticipantId));
 
-            UpsertPainless upsert = new UpsertPainless(null, esIndex, null, queryBuilder);
+            UpsertPainless upsert = new UpsertPainless(esIndex, queryBuilder);
             upsert.export(scriptText, source, "oncHistoryDetail");
         } catch (Exception e) {
             e.printStackTrace();
