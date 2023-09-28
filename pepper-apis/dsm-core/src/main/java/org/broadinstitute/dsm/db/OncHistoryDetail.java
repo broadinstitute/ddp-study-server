@@ -587,8 +587,8 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}", facility, policy);
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
             int instanceId = ddpInstance.getDdpInstanceId();
-            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.oncHistoryDetail.ddpInstanceId", instanceId);
-            queryBuilder.must(QueryBuilders.nestedQuery("dsm.oncHistoryDetail", qb, ScoreMode.None));
+            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.medicalRecord.ddpInstanceId", instanceId);
+            queryBuilder.must(QueryBuilders.nestedQuery("dsm.medicalRecord", qb, ScoreMode.None));
 
             try {
                 UpsertPainless upsert = new UpsertPainless(null, index, null, queryBuilder);
