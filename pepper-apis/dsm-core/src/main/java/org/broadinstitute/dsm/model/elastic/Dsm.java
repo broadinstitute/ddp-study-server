@@ -58,7 +58,7 @@ public class Dsm {
     @SerializedName(ESObjectConstants.MEDICAL_RECORD)
     List<MedicalRecord> medicalRecord;
 
-    @SerializedName(ESObjectConstants.ONC_HISTORY_DETAIL_RECORDS)
+    @SerializedName(ESObjectConstants.ONC_HISTORY_DETAIL)
     List<OncHistoryDetail> oncHistoryDetail;
 
     @SerializedName(ESObjectConstants.SOMATIC_RESULT_UPLOAD)

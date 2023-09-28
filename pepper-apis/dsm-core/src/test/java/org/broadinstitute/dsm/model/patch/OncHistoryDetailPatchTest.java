@@ -12,12 +12,14 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -62,11 +64,6 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
     @After
     public void deleteParticipants() {
         if (testParticipant != null) {
-            Optional<ParticipantRecordDto> recordDto = ParticipantRecordDao.of()
-                    .getParticipantRecordByParticipantId(testParticipant.getParticipantIdOrThrow());
-            recordDto.ifPresent(participantRecordDto -> ParticipantRecordDao.of()
-                    .delete(participantRecordDto.getParticipantRecordId().orElseThrow()));
-
             TestParticipantUtil.deleteParticipant(testParticipant.getParticipantIdOrThrow());
             testParticipant = null;
         }
@@ -140,6 +137,16 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
                 medicalRecordDao.delete(medRecord.getMedicalRecordId());
                 institutionDao.delete(medRecord.getInstitutionId());
             }
+            int participantId = testParticipant.getParticipantIdOrThrow();
+            Optional<ParticipantRecordDto> recordDto = ParticipantRecordDao.of()
+                    .getParticipantRecordByParticipantId(participantId);
+            recordDto.ifPresent(participantRecordDto -> ParticipantRecordDao.of()
+                    .delete(participantRecordDto.getParticipantRecordId().orElseThrow()));
+            Optional<OncHistoryDto> oncHistory = OncHistoryDao.getByParticipantId(participantId);
+            oncHistory.ifPresent(oncHistoryDto -> {
+                OncHistoryDao ohDao = new OncHistoryDao();
+                ohDao.delete(oncHistoryDto.getOncHistoryId());
+            });
         }
     }
 }
