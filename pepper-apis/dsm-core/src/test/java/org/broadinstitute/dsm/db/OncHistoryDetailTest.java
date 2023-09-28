@@ -79,7 +79,7 @@ public class OncHistoryDetailTest extends DbTxnBaseTest {
             recId3 = OncHistoryDetail.createOncHistoryDetail(rec3);
 
             // update and verify
-            OncHistoryDetail.updateDestructionPolicy("5", "Office", ddpInstanceDto.getInstanceName(), TEST_USER);
+            OncHistoryDetail.updateDestructionPolicy("5", "Office", ddpInstanceDto.getInstanceName(), TEST_USER, false);
 
             OncHistoryDetailDto updateRec1 = oncHistoryDetailDao.get(recId1).orElseThrow();
             Assert.assertEquals("5", updateRec1.getColumnValues().get("destruction_policy"));

@@ -44,8 +44,8 @@
     {{end}}
 	},
     "slack": {
-        "hook": "{{$slack.hook}}",
-        "channel": "{{$slack.channel}}",
+        "hook": "",
+        "channel": "",
         "queueSize": 10,
         "intervalInMillis": 60000
     },
