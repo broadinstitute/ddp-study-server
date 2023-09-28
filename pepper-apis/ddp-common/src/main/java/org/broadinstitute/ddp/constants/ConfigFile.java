@@ -108,7 +108,7 @@ public class ConfigFile {
     public static final String PUBSUB_TASKS_RESULT_TOPIC = "pubsub.pubSubTasksResultTopic";
     public static final String PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.pubSubTaskSubscriberAwaitRunningTimeout";
     public static final String PUBSUB_DSM_TASKS_TOPIC = "pubsub.pubSubDsmTasksTopic";
-    // todo arz remove slack hook info from vault and secret manager in all envs, disable API keys from slack
+
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
 
     public static final String DOMAIN = "domain";
