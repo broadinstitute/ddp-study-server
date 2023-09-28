@@ -59,6 +59,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             e.printStackTrace();
             Assert.fail("Unexpected exception: " + e);
         }
+        ElasticTestUtil.deleteIndex(esIndex);
     }
 
     @After
@@ -95,6 +96,9 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             OncHistoryDetailPatch oncHistoryDetailPatch = new OncHistoryDetailPatch(patch);
             oncHistoryDetailPatch.setElasticSearchExportable(true);
             oncHistoryDetailPatch.doPatch();
+
+            // TODO: ElasticDataExportAdapter should probably force a refresh, but for now...
+            Thread.sleep(1000);
             log.info("TEMP: Participant document with oncHistory patch: {}",
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
@@ -116,6 +120,9 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
             List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
             log.info("Onc history detail list {}", oncHistoryDetailList);
+            Assert.assertEquals(1, oncHistoryDetailList.size());
+            OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.get(0);
+            Assert.assertEquals(ddpParticipantId, oncHistoryDetail.getDdpParticipantId());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception: " + e);

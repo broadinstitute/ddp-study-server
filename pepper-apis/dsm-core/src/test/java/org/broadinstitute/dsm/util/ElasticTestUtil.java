@@ -18,8 +18,10 @@ import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactor
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
 import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -59,6 +61,18 @@ public class ElasticTestUtil {
             Assert.fail("Unexpected exception creating index: " + e);
         }
         return indexName;
+    }
+
+    public static void deleteIndex(String esIndex) {
+        try {
+            RestHighLevelClient client = ElasticSearchUtil.getClientInstance();
+            DeleteIndexRequest request = new DeleteIndexRequest(esIndex);
+            AcknowledgedResponse res = client.indices().delete(request, RequestOptions.DEFAULT);
+            log.info("AcknowledgedResponse: {}", res);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception deleting index: " + e);
+        }
     }
 
     public static void updateMapping(String esIndex, String mappingJson) {

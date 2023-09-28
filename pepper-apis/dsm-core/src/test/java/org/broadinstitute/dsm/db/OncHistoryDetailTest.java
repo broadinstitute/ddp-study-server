@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.db;
 
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -9,7 +11,10 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
@@ -37,6 +42,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
     @AfterClass
     public static void tearDown() {
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
+        ElasticTestUtil.deleteIndex(esIndex);
     }
 
 
@@ -100,6 +106,23 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             OncHistoryDetailDto updateRec3 = oncHistoryDetailDao.get(recId3).orElseThrow();
             Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
 
+            Thread.sleep(1000);
+            ElasticSearchParticipantDto esParticipant =
+                    ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+
+            Dsm dsm = esParticipant.getDsm().orElseThrow();
+            List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
+            Assert.assertEquals(3, oncHistoryDetailList.size());
+            for (OncHistoryDetail oncHistoryDetail: oncHistoryDetailList) {
+                int recId = oncHistoryDetail.getOncHistoryDetailId();
+                if (recId == recId1 || recId == recId2) {
+                    Assert.assertEquals("5", oncHistoryDetail.getDestructionPolicy());
+                } else if (recId == recId3) {
+                    Assert.assertEquals("3", oncHistoryDetail.getDestructionPolicy());
+                } else {
+                    Assert.fail("Unknown oncHistoryDetail record ID " + recId);
+                }
+            }
             log.info("TEMP: Participant document: {}", ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         } catch (Exception e) {
             e.printStackTrace();
