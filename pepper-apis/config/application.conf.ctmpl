@@ -8,7 +8,6 @@
 {{with $auth0 := index $conf.Data "auth0"}}
 {{with $testingConf := secret (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := secret (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 {
     "dbUrl": "{{$conf.Data.dbUrl}}",
@@ -43,12 +42,6 @@
 		"token" : "{{$conf.Data.auth0LogEvents.token}}"
     {{end}}
 	},
-    "slack": {
-        "hook": "{{$slack.hook}}",
-        "channel": "{{$slack.channel}}",
-        "queueSize": 10,
-        "intervalInMillis": 60000
-    },
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
     "healthcheckPassword": "{{$conf.Data.healthcheckPassword}}",
