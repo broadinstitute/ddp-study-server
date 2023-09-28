@@ -356,6 +356,7 @@ public class ElasticSearchUtil {
         searchRequest.source(searchSourceBuilder);
 
         SearchResponse response = search(searchRequest);
+        logger.info("ES search on index {}, match {} on {}", index, matchQueryName, id);
         SearchHits hits = response.getHits();
         Map<String, Object> sourceMap = null;
         TotalHits totalHits = hits.getTotalHits();

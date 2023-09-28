@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -59,9 +60,10 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("OncHistoryDetailTest");
         testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
+        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
 
         int medicalRecordId = OncHistoryDetail.verifyOrCreateMedicalRecord(testParticipant.getParticipantId().orElseThrow(),
-                ddpParticipantId, ddpInstanceDto.getInstanceName(), false);
+                ddpParticipantId, ddpInstanceDto.getInstanceName(), true);
 
         // add some onc history detail records
         OncHistoryDetail.Builder builder = new OncHistoryDetail.Builder()
@@ -106,11 +108,10 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             OncHistoryDetailDto updateRec3 = oncHistoryDetailDao.get(recId3).orElseThrow();
             Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
 
-            Thread.sleep(1000);
             ElasticSearchParticipantDto esParticipant =
                     ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
-
             Dsm dsm = esParticipant.getDsm().orElseThrow();
+            
             List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
             Assert.assertEquals(3, oncHistoryDetailList.size());
             for (OncHistoryDetail oncHistoryDetail: oncHistoryDetailList) {

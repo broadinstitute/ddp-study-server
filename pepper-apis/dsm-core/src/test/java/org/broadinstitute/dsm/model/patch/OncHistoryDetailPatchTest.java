@@ -78,16 +78,14 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             ElasticTestUtil.createParticipant(esIndex, testParticipant);
             ElasticTestUtil.addInstitutionAndMedicalRecord(testParticipant, ddpInstanceDto);
 
-            Gson gson = new Gson();
-            String profileJson = TestUtil.readFile("elastic/participantProfile.json");
-            Profile profile = gson.fromJson(profileJson, Profile.class);
-            profile.setGuid(ddpParticipantId);
-            ElasticTestUtil.addParticipantProfile(esIndex, profile);
+            Profile profile = ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
+                    ddpParticipantId);
             log.info("TEMP: Participant document with profile and med record: {}",
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             String patchJson = TestUtil.readFile("onchistory/patch.json");
 
+            Gson gson = new Gson();
             Patch patch = gson.fromJson(patchJson, Patch.class);
             patch.setDdpParticipantId(ddpParticipantId);
             patch.setParentId(testParticipant.getParticipantId().toString());

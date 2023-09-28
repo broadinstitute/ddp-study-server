@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -176,6 +177,21 @@ public class ElasticTestUtil {
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception creating oncHistoryDetail for participant " + ddpParticipantId);
+        }
+    }
+
+    public static Profile addParticipantProfileFromFile(String esIndex, String fileName, String ddpParticipantId) {
+        Gson gson = new Gson();
+        try {
+            String profileJson = TestUtil.readFile(fileName);
+            Profile profile = gson.fromJson(profileJson, Profile.class);
+            profile.setGuid(ddpParticipantId);
+            addParticipantProfile(esIndex, profile);
+            return profile;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
+            return null;
         }
     }
 
