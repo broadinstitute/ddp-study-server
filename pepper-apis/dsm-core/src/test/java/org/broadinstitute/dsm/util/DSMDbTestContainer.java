@@ -20,7 +20,6 @@ public class DSMDbTestContainer {
             log.info("Already initialized DSM test db");
             return;
         }
-        ElasticTestContainer.initialize();
         Config cfg = ConfigManager.getInstance().getConfig();
         Boolean useDisposableTestDbs = ConfigUtil.getBoolIfPresent(cfg, ConfigFile.USE_DISPOSABLE_TEST_DB);
         if (useDisposableTestDbs != null && !useDisposableTestDbs) {
