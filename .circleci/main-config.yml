@@ -53,7 +53,6 @@ executors:
       - image: broadinstitute/study-server-build:pubsub-1
       - image: cimg/redis:5.0
       - image: cimg/mysql:5.7
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
@@ -871,7 +870,6 @@ jobs:
                 restore_m2_cache: true
                 save_m2_cache: false
             - render-configs
-            - create-test-dbs
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dsm-core
