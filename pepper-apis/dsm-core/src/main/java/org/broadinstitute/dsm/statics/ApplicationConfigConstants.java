@@ -71,6 +71,10 @@ public class ApplicationConfigConstants {
     public static final String EMAIL_FRONTEND_URL_FOR_LINKS = "email.frontendUrl";
     public static final String EMAIL_GP_RECIPIENT = "email.gp_recipient";
     public static final String EMAIL_KEY = "email.key";
+    /**
+     * proxy url that should be used when sending sendgrid API requests
+     */
+    public static final String EMAIL_PROXY_URL = "email.proxyUrl";
     public static final String EMAIL_CLIENT_SETTINGS = "email.clientSettings";
     public static final String EMAIL_NOTIFICATIONS = "email.notifications";
     public static final String EMAIL_REMINDER_NOTIFICATIONS = "email.reminderNotifications";
