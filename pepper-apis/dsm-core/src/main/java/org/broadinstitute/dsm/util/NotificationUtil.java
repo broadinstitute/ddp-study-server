@@ -79,8 +79,9 @@ public class NotificationUtil {
 
     public synchronized void startup(@NonNull Config config) {
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
-        emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
-
+        if (config.hasPath(ApplicationConfigConstants.EMAIL_PROXY_URL)) {
+            emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
+        }
         new Gson().fromJson(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS), EmailSender.class);
         logger.info("Will send email from " + emailSender.getFromEmailAddress() + " " + emailSender.getFromName());
 
