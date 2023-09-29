@@ -81,7 +81,10 @@ public class UpdateActivityBaseSettings implements CustomTask {
 
         //compareBasicSettings(handle, activityCfg, activityId);
         //compareNamingDetails(handle, activityCfg, activityId, versionDto);
-        compareStatusSummaries(handle, activityCfg, activityId);
+        if (activityCode.equalsIgnoreCase("ABOUTYOU") ||
+                activityCode.startsWith("RELEASE")) {
+            compareStatusSummaries(handle, activityCfg, activityId);
+        }
     }
 
     private void compareBasicSettings(Handle handle, Config definition, long activityId) {
