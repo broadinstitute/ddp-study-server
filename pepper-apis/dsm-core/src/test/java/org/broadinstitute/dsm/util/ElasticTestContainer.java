@@ -25,7 +25,8 @@ public class ElasticTestContainer {
 
         container = new ElasticsearchContainer(ELASTIC_IMAGE)
                 .withExposedPorts(9200)
-                .withEnv("xpack.security.enabled", "false");
+                .withEnv("xpack.security.enabled", "false")
+                .withEnv("discovery.type", "single-node");
 
         Runnable containerShutdown = () -> {
             log.info("Shutting down ES test container");
