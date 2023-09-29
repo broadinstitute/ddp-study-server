@@ -3,9 +3,9 @@ package org.broadinstitute.lddp.email;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonObject;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -15,34 +15,32 @@ import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
 import lombok.NonNull;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.dsm.exception.NotificationSentException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Used for integrating with SendGrid...
+ * SendGridClient is a legacy wrapper for using SendGrid, carried over from
+ * the legacy DDP repo, and used exclusively by DSM.
  */
 public class SendGridClient {
 
     private static final Logger logger = LoggerFactory.getLogger(SendGridClient.class);
 
     private static final String LOG_PREFIX = "SendGrid";
+    private final SendGrid sendGrid;
 
-    private String sendGridKey;
-    private JsonObject settings = null;
-
-    public void configure(String sendGridKey, JsonObject settings) {
-        this.sendGridKey = sendGridKey;
-        this.settings = settings;
+    public SendGridClient(SendGrid sendGrid) {
+        this.sendGrid = sendGrid;
     }
 
     /**
      * Used to send emails using SendGrid templates.
      */
-    public void sendSingleEmail(@NonNull String sendGridTemplate, @NonNull Recipient recipient) {
-        ArrayList<Recipient> recipientList = new ArrayList<>();
+    public void sendSingleEmail(@NonNull String sendGridTemplate, @NonNull Recipient recipient, EmailSender sender) {
+        List<Recipient> recipientList = new ArrayList<>();
         recipientList.add(recipient);
-        sendEmail(sendGridTemplate, recipientList);
+        sendEmail(sendGridTemplate, recipientList, sender);
     }
 
     /**
@@ -51,15 +49,15 @@ public class SendGridClient {
      * Probably best/safest to use that for marketing campaigns that are sent immediately and would require lots of calls to
      * SendGrid otherwise.
      */
-    private void sendEmail(@NonNull String sendGridTemplate, @NonNull Collection<Recipient> recipientList) {
+    private void sendEmail(@NonNull String sendGridTemplate, @NonNull Collection<Recipient> recipientList,
+                           EmailSender sender) {
         try {
             if (recipientList.size() == 0) {
                 throw new IllegalArgumentException("RecipientList cannot be empty.");
             }
-            SendGrid sendGrid = new SendGrid(sendGridKey);
-            sendRequestUsingTemplate((Recipient) (recipientList.toArray())[0], sendGridTemplate, sendGrid);
+            sendRequestUsingTemplate((Recipient) (recipientList.toArray())[0], sendGridTemplate, sender);
         } catch (Exception ex) {
-            throw new NotificationSentException("An error occurred trying to send emails. " + ex.getMessage());
+            throw new DsmInternalError("An error occurred trying to send emails. " + ex.getMessage());
         }
     }
 
@@ -67,10 +65,11 @@ public class SendGridClient {
     /**
      * Sends a request per recipient to SendGrid.
      */
-    private void sendRequestUsingTemplate(@NonNull Recipient recipient, @NonNull String sendGridTemplate, @NonNull SendGrid sendGrid)
+    private void sendRequestUsingTemplate(@NonNull Recipient recipient, @NonNull String sendGridTemplate,
+                                          EmailSender sender)
             throws Exception {
         logger.info(LOG_PREFIX + " - About to send 1 email request for " + sendGridTemplate + "...");
-        Mail mail = configureTemplateEmail(sendGridTemplate, recipient);
+        Mail mail = configureTemplateEmail(sendGridTemplate, recipient, sender);
         send(sendGrid, mail);
     }
 
@@ -91,10 +90,10 @@ public class SendGridClient {
         return sendGridPersonalization;
     }
 
-    private Mail configureTemplateEmail(@NonNull String template, Recipient recipient) {
+    private Mail configureTemplateEmail(@NonNull String template, Recipient recipient, EmailSender sender) {
         Personalization sendGridPersonalization = addToHeader(recipient);
 
-        Email fromEmail = new Email(settings.get("sendGridFrom").getAsString(), settings.get("sendGridFromName").getAsString());
+        Email fromEmail = new Email(sender.getFromEmailAddress(), sender.getFromName());
 
         Mail mail = new Mail();
         mail.setFrom(fromEmail);
