@@ -9,11 +9,11 @@ import org.junit.Test;
 public class NotificationUtilTest {
 
     @Test
-    public void testStartup() {
+    public void testInitialization() {
         Config cfg = ConfigFactory.parseResources("NotificationUtilTest.conf");
         try {
             var notificationUtil = new NotificationUtil(cfg);
-            notificationUtil.startup(cfg);
+            notificationUtil.initialize(cfg);
         } catch (Exception e) {
             fail("Could not start notification util due to " + e.getMessage());
         }
