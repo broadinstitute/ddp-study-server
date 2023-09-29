@@ -583,7 +583,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
         if (updateElastic && updateCnt > 0) {
             String index = ddpInstance.getEsParticipantIndex();
-            
+
             String scriptText = String.format("if (ctx._source.dsm.oncHistoryDetail != null) "
                     + "{for (a in ctx._source.dsm.oncHistoryDetail) "
                     + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}}", facility, policy);
