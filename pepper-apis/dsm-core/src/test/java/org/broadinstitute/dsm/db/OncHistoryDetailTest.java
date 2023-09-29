@@ -64,7 +64,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
         int medicalRecordId = OncHistoryDetail.verifyOrCreateMedicalRecord(testParticipant.getParticipantId().orElseThrow(),
                 ddpParticipantId, instanceName, true);
 
-        log.info("TEMP: Participant record for {}: {}", ddpParticipantId,
+        log.debug("ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
         ParticipantDto ptp2 = null;
@@ -80,7 +80,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             ElasticTestUtil.createParticipant(esIndex, ptp2);
             ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId2);
 
-            log.info("TEMP: Participant record for {}: {}", ddpParticipantId2,
+            log.debug("ES participant record for {}: {}", ddpParticipantId2,
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId2));
             ptp2MedicalRecordId = OncHistoryDetail.verifyOrCreateMedicalRecord(ptp2.getParticipantId().orElseThrow(),
                     ddpParticipantId2, instanceName, true);
