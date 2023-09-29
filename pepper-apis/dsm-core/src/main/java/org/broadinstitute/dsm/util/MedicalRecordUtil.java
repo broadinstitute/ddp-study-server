@@ -254,11 +254,12 @@ public class MedicalRecordUtil {
         return false;
     }
 
-    public static Number isInstitutionTypeInDB(@NonNull String participantId) {
+    public static Integer isInstitutionTypeInDB(@NonNull String participantId) {
+        logger.info("Checking for medical record of type {} for participant {}", NOT_SPECIFIED, participantId);
         return isInstitutionTypeInDB(participantId, NOT_SPECIFIED);
     }
 
-    public static Number isInstitutionTypeInDB(@NonNull String participantId, @NonNull String type) {
+    public static Integer isInstitutionTypeInDB(@NonNull String participantId, @NonNull String type) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement checkParticipant = conn.prepareStatement(SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT)) {
@@ -276,9 +277,9 @@ public class MedicalRecordUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting medical record id for pt w/ id " + participantId, results.resultException);
+            throw new DsmInternalError("Error getting medical record id for pt w/ id " + participantId, results.resultException);
         }
-        return (Number) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
     public static Integer getParticipantIdByDdpParticipantId(@NonNull String ddpParticipantId, @NonNull String realm) {

@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.patch;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
+import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -80,16 +82,14 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
             Profile profile = ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
                     ddpParticipantId);
-            log.info("TEMP: Participant document with profile and med record: {}",
-                    ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             String patchJson = TestUtil.readFile("onchistory/patch.json");
-
             Gson gson = new Gson();
             Patch patch = gson.fromJson(patchJson, Patch.class);
             patch.setDdpParticipantId(ddpParticipantId);
-            patch.setParentId(testParticipant.getParticipantId().toString());
+            patch.setParentId(Integer.toString(testParticipant.getParticipantIdOrThrow()));
             patch.setRealm(instanceName);
+            patch.setId(null);
 
             OncHistoryDetailPatch oncHistoryDetailPatch = new OncHistoryDetailPatch(patch);
             oncHistoryDetailPatch.setElasticSearchExportable(true);
@@ -97,30 +97,27 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
             // TODO: ElasticDataExportAdapter should probably force a refresh, but for now...
             Thread.sleep(1000);
-            log.info("TEMP: Participant document with oncHistory patch: {}",
+            log.debug("Participant document with oncHistory patch: {}",
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-
-            Map<String, Object> participantMap = ElasticTestUtil.getParticipantDocument(esIndex, ddpParticipantId);
-            log.info("TEMP: Participant document with oncHistory patch: {}", participantMap);
-            log.info("TEMP: participantMap.keySet(): {}", participantMap.keySet());
 
             ElasticSearchParticipantDto esParticipant =
                      ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
-            log.info("TEMP: esParticipant {}", esParticipant);
             Profile esProfile = esParticipant.getProfile().orElseThrow();
             Assert.assertEquals(profile.getHruid(), esProfile.getHruid());
 
             Dsm dsm = esParticipant.getDsm().orElseThrow();
-            log.info("dsm {}", dsm);
             List<MedicalRecord> medRecords = dsm.getMedicalRecord();
-            log.info("Med records {}", medRecords);
+            log.debug("Med records {}", medRecords);
             Assert.assertEquals(2, medRecords.size());
 
             List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
-            log.info("Onc history detail list {}", oncHistoryDetailList);
             Assert.assertEquals(1, oncHistoryDetailList.size());
             OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.get(0);
-            Assert.assertEquals(ddpParticipantId, oncHistoryDetail.getDdpParticipantId());
+            log.debug("Onc history detail {}", oncHistoryDetail);
+
+            Map<String, String> patchMap = nameValuesToMap(patch.getNameValues());
+            Assert.assertEquals(patchMap.get("oD.destructionPolicy"), oncHistoryDetail.getDestructionPolicy());
+            Assert.assertEquals(patchMap.get("oD.facility"), oncHistoryDetail.getFacility());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception: " + e);
@@ -153,5 +150,13 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
                 ohDao.delete(oncHistoryDto.getOncHistoryId());
             });
         }
+    }
+
+    private static Map<String, String> nameValuesToMap(List<NameValue> nameValues) {
+        Map<String, String> nameToValue = new HashMap<>();
+        for (var nameValue: nameValues) {
+            nameToValue.put(nameValue.getName(), nameValue.getValue().toString());
+        }
+        return nameToValue;
     }
 }

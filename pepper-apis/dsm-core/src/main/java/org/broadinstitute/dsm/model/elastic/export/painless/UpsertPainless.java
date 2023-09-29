@@ -51,7 +51,7 @@ public class UpsertPainless implements Exportable {
     public void export(String script, Map<String, Object> source, String propertyName) {
         RestHighLevelClient clientInstance = ElasticSearchUtil.getClientInstance();
         Script painless = new Script(ScriptType.INLINE, "painless", script, source);
-        logger.info("TEMP: upsert script: {}", painless);
+        logger.debug("upsert script: {}", painless);
         UpdateByQueryRequest updateByQueryRequest = new UpdateByQueryRequest(index);
         updateByQueryRequest.setQuery(queryBuilder);
         updateByQueryRequest.setScript(painless);

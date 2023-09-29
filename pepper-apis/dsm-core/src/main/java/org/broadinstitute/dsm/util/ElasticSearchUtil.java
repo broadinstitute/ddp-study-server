@@ -232,7 +232,8 @@ public class ElasticSearchUtil {
     protected static SearchResponse search(SearchRequest searchRequest) {
         try {
             SearchResponse res = client.search(searchRequest, RequestOptions.DEFAULT);
-            logger.info("ES search response {}", res);
+            logger.info("ES search returned {}", res.getHits().getTotalHits());
+            logger.debug("ES search response {}", res);
             return res;
         } catch (IOException e) {
             throw new DsmInternalError("Error contacting ES server", e);

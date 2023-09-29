@@ -460,11 +460,10 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
     }
 
-    public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+    public static int createOncHistoryDetail(@NonNull int medicalRecordId, @NonNull String changedBy) {
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, medicalRecordId);
+                stmt.setInt(1, medicalRecordId);
                 stmt.setString(2, OncHistoryDetail.STATUS_REVIEW);
                 stmt.setLong(3, System.currentTimeMillis());
                 stmt.setString(4, changedBy);
@@ -472,30 +471,18 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            String oncHistoryDetailId = rs.getString(1);
-                            logger.info("Added new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId);
-                            dbVals.resultValue = oncHistoryDetailId;
+                            int id = rs.getInt(1);
+                            logger.info("Added new oncHistoryDetail (ID={}) for medicalRecord {}", id, medicalRecordId);
+                            return id;
                         }
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new institution ", e);
                     }
-                } else {
-                    throw new RuntimeException(
-                            "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result
-                                    + " rows");
                 }
+                throw new DsmInternalError(String.format("Error creating ddp_onc_history_detail for medical record %d: "
+                        + "result key not present", medicalRecordId));
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError("Error creating ddp_onc_history_detail for medical record " + medicalRecordId);
             }
-            return dbVals;
         });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
-                    results.resultException);
-        } else {
-            return (String) results.resultValue;
-        }
     }
 
     /**

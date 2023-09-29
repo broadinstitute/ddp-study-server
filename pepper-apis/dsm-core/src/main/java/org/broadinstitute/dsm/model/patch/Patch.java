@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
@@ -140,9 +141,9 @@ public class Patch {
                 stmt.setString(4, id);
                 int result = stmt.executeUpdate();
                 if (result == 1) {
-                    logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
+                    logger.info("Updated {} value in table {}, record ID={}", nameValue.getName(), dbElement.getTableName(), id);
                 } else {
-                    throw new RuntimeException(
+                    throw new DsmInternalError(
                             "Error updating " + dbElement.getTableName() + " record of w/ id " + id + " it was updating " + result
                                     + " rows");
                 }
