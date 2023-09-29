@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
@@ -39,8 +40,13 @@ public class UpsertPainless implements Exportable {
 
     @Override
     public void export() {
+        export(scriptBuilder.build(), generator.generate(), generator.getPropertyName());
+    }
+
+    public void export(String script, Map<String, Object> source, String propertyName) {
         RestHighLevelClient clientInstance = ElasticSearchUtil.getClientInstance();
-        Script painless = new Script(ScriptType.INLINE, "painless", scriptBuilder.build(), generator.generate());
+        Script painless = new Script(ScriptType.INLINE, "painless", script, source);
+        logger.info("TEMP: upsert script: {}", painless);
         UpdateByQueryRequest updateByQueryRequest = new UpdateByQueryRequest(index);
         updateByQueryRequest.setQuery(queryBuilder);
         updateByQueryRequest.setScript(painless);
@@ -51,7 +57,7 @@ public class UpsertPainless implements Exportable {
         Throwable ioException = null;
         for (int tryNum = 1; tryNum < 3; tryNum++) {
             try {
-                executeExport(clientInstance, updateByQueryRequest);
+                executeExport(clientInstance, updateByQueryRequest, propertyName);
                 return;
             } catch (IOException e) {
                 logger.info("Error occurred exporting data to ES on try number {} (retrying): {}", tryNum, e);
@@ -63,10 +69,11 @@ public class UpsertPainless implements Exportable {
         throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
     }
 
-    private void executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest) throws IOException {
-        String errorMsg = String.format("Error updating ES index %s for %s: ", index, generator.getPropertyName());
+    private void executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest,
+                               String propertyName) throws IOException {
+        String errorMsg = String.format("Error updating ES index %s for %s: ", index, propertyName);
         try {
-            BulkByScrollResponse res = update(clientInstance, updateByQueryRequest);
+            BulkByScrollResponse res = update(clientInstance, updateByQueryRequest, propertyName);
             if (!res.getBulkFailures().isEmpty()) {
                 if (res.getVersionConflicts() == 0) {
                     throw new DsmInternalError(errorMsg + res);
@@ -76,7 +83,7 @@ public class UpsertPainless implements Exportable {
                 if (refreshResponse.getStatus() != RestStatus.OK) {
                     throw new DsmInternalError(String.format("ES index refresh failed for %s: %s", index, refreshResponse));
                 }
-                res = update(clientInstance, updateByQueryRequest);
+                res = update(clientInstance, updateByQueryRequest, propertyName);
                 if (!res.getBulkFailures().isEmpty()) {
                     throw new DsmInternalError(errorMsg + res);
                 }
@@ -86,15 +93,15 @@ public class UpsertPainless implements Exportable {
         }
     }
 
-    private BulkByScrollResponse update(RestHighLevelClient client, UpdateByQueryRequest req) throws IOException {
+    private static BulkByScrollResponse update(RestHighLevelClient client, UpdateByQueryRequest req,
+                                               String propertyName) throws IOException {
         BulkByScrollResponse res = client.updateByQuery(req, RequestOptions.DEFAULT);
-        logger.info("created/updated {} ES records for {}", getNumberOfUpserted(res),
-                generator.getPropertyName());
+        logger.info("created/updated {} ES records for {}", getNumberOfUpserted(res), propertyName);
         logger.info("BulkByScrollResponse: {}", res);
         return res;
     }
 
-    private long getNumberOfUpserted(BulkByScrollResponse bulkByScrollResponse) {
+    private static long getNumberOfUpserted(BulkByScrollResponse bulkByScrollResponse) {
         return Math.max(bulkByScrollResponse.getCreated(), bulkByScrollResponse.getUpdated());
     }
 
