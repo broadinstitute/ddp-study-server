@@ -145,6 +145,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         var eventDao = handle.attach(EventDao.class);
         var templateDao = handle.attach(TemplateDao.class);
 
+        //watch out for variables with same name referring to diff activities //todo
         for (var eventConfig : eventDao.getAllEventConfigurationsByStudyId(studyId)) {
             if (EventActionType.ANNOUNCEMENT.equals(eventConfig.getEventActionType())) {
                 long timestamp = Instant.now().toEpochMilli();
@@ -152,6 +153,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 Template current = templateDao.loadTemplateByIdAndTimestamp(templateId, timestamp);
                 String tag = String.format("event announcementMessageTemplate %d", templateId);
                 compareTemplate(handle, tag, current, "announcements");
+                //todo differentiate osteo_thank_you_announcement_p1 and osteo_thank_you_announcement_p2 for child
+                //get activityId from eventConfig.eventConfigurationDto
             }
         }
     }
@@ -629,7 +632,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (variableName.startsWith("c_") || variableName.startsWith("cancer_")) {
             key = "cancer." + variableName;
         }
-
         if (!i18nCfgEs.hasPath(key)) {
             missingTransVars.put(key, enTranslation.getText());
             return;
