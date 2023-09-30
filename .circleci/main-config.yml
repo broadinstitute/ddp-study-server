@@ -872,6 +872,7 @@ jobs:
                 restore_m2_cache: true
                 save_m2_cache: false
             - render-configs
+            - create-test-dbs
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dsm-core
