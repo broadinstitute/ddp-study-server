@@ -53,11 +53,13 @@ executors:
       - image: broadinstitute/study-server-build:pubsub-1
       - image: cimg/redis:5.0
       - image: cimg/mysql:5.7
+      - image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
           MYSQL_USER: user
           MYSQL_PASSWORD: passw0rd
+          discovery.type: single-node
     resource_class: medium+ #default medium not big enough for tests
 
   build-deploy-executor:
