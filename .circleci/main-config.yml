@@ -61,6 +61,11 @@ executors:
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
         environment:
           discovery.type: single-node
+          xpack.security.enabled: false
+          cluster.name: elasticsearch
+          transport.host: localhost
+          network.host: 127.0.0.1
+          http.port: 9200
     resource_class: medium+ #default medium not big enough for tests
 
   build-deploy-executor:

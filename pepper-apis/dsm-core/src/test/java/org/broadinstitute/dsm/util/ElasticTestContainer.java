@@ -3,8 +3,11 @@ package org.broadinstitute.dsm.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
@@ -22,6 +25,15 @@ public class ElasticTestContainer {
             log.warn("ElasticTestContainer already initialized");
             return;
         }
+
+        ConfigManager configManager = ConfigManager.getInstance();
+        Boolean useDisposableTestDbs = ConfigUtil.getBoolIfPresent(configManager.getConfig(), ConfigFile.USE_DISPOSABLE_TEST_DB);
+        if (useDisposableTestDbs != null && !useDisposableTestDbs) {
+            log.info("Using external ElasticSearch instance (not using ElasticSearch test container)");
+            initialized = true;
+            return;
+        }
+        log.info("Using ElasticSearch test container");
 
         container = new ElasticsearchContainer(ELASTIC_IMAGE)
                 .withExposedPorts(9200)
@@ -49,7 +61,6 @@ public class ElasticTestContainer {
             String url = String.format("https://%s", container.getHttpHostAddress());
             log.info("ES container url {}", url);
 
-            ConfigManager configManager = ConfigManager.getInstance();
             Map<String, String> keyValues = new HashMap<>();
             keyValues.put(ApplicationConfigConstants.ES_URL, url);
             keyValues.put(ApplicationConfigConstants.ES_USERNAME, ELASTIC_USER);
