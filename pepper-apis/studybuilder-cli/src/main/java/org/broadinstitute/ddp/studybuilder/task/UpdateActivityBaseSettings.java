@@ -152,7 +152,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
         for (String language : currentDetails.keySet()) {
             ActivityI18nDetail current = currentDetails.get(language);
             ActivityI18nDetail latest = latestDetails.remove(language);
-            if (!current.equals(latest)) {
+            if (!current.equals(latest) && language.equalsIgnoreCase("es")) {
                 updatedDetails.add(latest);
             }
         }
