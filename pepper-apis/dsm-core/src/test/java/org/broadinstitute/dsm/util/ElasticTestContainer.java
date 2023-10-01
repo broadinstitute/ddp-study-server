@@ -16,7 +16,6 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 public class ElasticTestContainer {
 
     private static final String ELASTIC_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:7.17.10";
-    private static final String ELASTIC_USER = "elastic";
     private static ElasticsearchContainer container;
     private static boolean initialized = false;
 
@@ -27,9 +26,14 @@ public class ElasticTestContainer {
         }
 
         ConfigManager configManager = ConfigManager.getInstance();
-        Boolean useDisposableTestDbs = ConfigUtil.getBoolIfPresent(configManager.getConfig(), ConfigFile.USE_DISPOSABLE_TEST_DB);
+        Config cfg = configManager.getConfig();
+        Boolean useDisposableTestDbs = ConfigUtil.getBoolIfPresent(cfg, ConfigFile.USE_DISPOSABLE_TEST_DB);
         if (useDisposableTestDbs != null && !useDisposableTestDbs) {
             log.info("Using external ElasticSearch instance (not using ElasticSearch test container)");
+            // do this here to avoid DSMConfig initialization issues
+            ElasticSearchUtil.initClient(cfg.getString(ApplicationConfigConstants.ES_URL),
+                    cfg.getString(ApplicationConfigConstants.ES_USERNAME),
+                    cfg.getString(ApplicationConfigConstants.ES_PASSWORD), null);
             initialized = true;
             return;
         }
@@ -63,10 +67,10 @@ public class ElasticTestContainer {
 
             Map<String, String> keyValues = new HashMap<>();
             keyValues.put(ApplicationConfigConstants.ES_URL, url);
-            keyValues.put(ApplicationConfigConstants.ES_USERNAME, ELASTIC_USER);
+            keyValues.put(ApplicationConfigConstants.ES_USERNAME, "");
             keyValues.put(ApplicationConfigConstants.ES_PASSWORD, "");
             rewriteConfigValues(keyValues, configManager);
-            ElasticSearchUtil.initClient(url, ELASTIC_USER, "", null);
+            ElasticSearchUtil.initClient(url, "", "", null);
         } catch (Exception e) {
             throw new DsmInternalError("Error starting ES test container", e);
         }
