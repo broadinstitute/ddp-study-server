@@ -12,7 +12,6 @@ import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiTemplate;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
@@ -34,7 +33,6 @@ import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -71,12 +69,9 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.ddp.studybuilder.BuilderUtils.parseAndValidateTemplate;
-
 /**
  * General task to iterate through all templates in a study and update them in-place. For each template, this will
- * compare the template text, the variables, and the variable translations, updating these things in-place without
- * revisioning.
+ * compare the template text, the variables, and the variable translations, updating these things in-place without revisioning.
  * Source of truth is DB.
  * Iterate through each translation variable in DB and find matching variable in i198n.es.conf
  * and add/update the translation
@@ -216,6 +211,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 traverseActivity(handle, activity);
 
                 compareNamingDetails(handle, activity.getActivityCode().toLowerCase(), activity.getActivityId(), versionDto);
+                //todo handle activity summaries
+
                 Template hintTemplate = activity.getReadonlyHintTemplate();
                 compareTemplate(handle, activity.getTag(), hintTemplate, activity.getActivityCode());
                 Template lastUpdatedTemplate = activity.getReadonlyHintTemplate();
@@ -273,38 +270,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 log.info("Updated naming details for activity {} .. language: {}", activityCode, "es");
             }
         }
-    }
-
-    public void compareStatusSummaries(Handle handle, String activityCode, long activityId, ActivityVersionDto versionDto) {
-        if (activityCode.equalsIgnoreCase("LOVEDONE") || activityCode.equalsIgnoreCase("prequal")) {
-            return;
-        }
-        var activityI18nDao = handle.attach(ActivityI18nDao.class);
-        Map<String, SummaryTranslation> currentSummaries = activityI18nDao
-                .findSummariesByActivityId(activityId)
-                .stream()
-                //.collect(Collectors.toMap(this::statusSummaryKey, Functions.identity()));
-                .collect(Collectors.toMap(SummaryTranslation::getLanguageCode, Functions.identity()));
-
-        SummaryTranslation currentES = currentSummaries.get("es");
-        //todo ??
-        /*ActivityI18nDetail latestDetails =
-                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES);
-        if (latestDetails == null) {
-            return;
-        }
-
-        if (currentES == null) {
-            //insert new
-            List<ActivityI18nDetail> newDetails = Collections.singletonList(latestDetails);
-            activityI18nDao.insertDetails(newDetails);
-            log.info("NEW: Inserted naming details for activity {} .. language: {}", activityCode, "es");
-        } else {
-            if (!currentES.equals(latestDetails)) {
-                activityI18nDao.updateDetails(Collections.singletonList(latestDetails));
-                log.info("Updated naming details for activity {} .. language: {}", activityCode, "es");
-            }
-        }*/
     }
 
     private ActivityI18nDetail buildLatestNamingDetail(long activityId, long revisionId, String activityCode,
