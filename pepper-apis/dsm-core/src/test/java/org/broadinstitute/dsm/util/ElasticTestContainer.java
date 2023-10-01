@@ -31,9 +31,9 @@ public class ElasticTestContainer {
         if (useDisposableTestDbs != null && !useDisposableTestDbs) {
             log.info("Using external ElasticSearch instance (not using ElasticSearch test container)");
             // do this here to avoid DSMConfig initialization issues
-            ElasticSearchUtil.initClient(cfg.getString(ApplicationConfigConstants.ES_URL),
-                    cfg.getString(ApplicationConfigConstants.ES_USERNAME),
-                    cfg.getString(ApplicationConfigConstants.ES_PASSWORD), null);
+            ElasticSearchUtil.initClient(cfg.getString(ConfigFile.ELASTICSEARCH_URL),
+                    cfg.getString(ConfigFile.ELASTICSEARCH_USERNAME),
+                    cfg.getString(ConfigFile.ELASTICSEARCH_PASSWORD), null);
             initialized = true;
             return;
         }
