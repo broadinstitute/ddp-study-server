@@ -6,6 +6,7 @@ import java.net.URL;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -27,8 +28,8 @@ public class ElasticContainerTest extends ElasticBaseTest {
     @Test
     public void addParticipantTest() {
         Config cfg = ConfigManager.getInstance().getConfig();
-        String url = cfg.getString("elasticSearch.url");
-        String user = cfg.getString("elasticSearch.username");
+        String url = cfg.getString(ConfigFile.ELASTICSEARCH_URL);
+        String user = cfg.getString(ConfigFile.ELASTICSEARCH_USERNAME);
 
         log.info("Getting ES client with URL {}, user {}", url, user);
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(url, user, null, null)) {
