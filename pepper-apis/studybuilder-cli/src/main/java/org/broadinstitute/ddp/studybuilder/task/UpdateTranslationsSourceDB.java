@@ -311,7 +311,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (i18nCfgEs.hasPath(key + "." + "title")) {
             title = i18nCfgEs.getString(key + "." + "title");
         }
-        log.info("----Title: {} for activity: {} .. key: {} ", title, activityCode, key);
+        log.info("Title: {} for activity: {} .. key: {} ", title, activityCode, key);
         String subTitle = null;
         if (i18nCfgEs.hasPath(key + "." + "subTitle")) {
             subTitle = i18nCfgEs.getString(key + "." + "subTitle");
