@@ -79,12 +79,9 @@ public class UpdateActivityBaseSettings implements CustomTask {
         ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
         log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
 
+        compareStatusSummaries(handle, activityCfg, activityId);
         //compareBasicSettings(handle, activityCfg, activityId);
         //compareNamingDetails(handle, activityCfg, activityId, versionDto);
-        if (activityCode.equalsIgnoreCase("ABOUTYOU") ||
-                activityCode.startsWith("RELEASE")) {
-            compareStatusSummaries(handle, activityCfg, activityId);
-        }
     }
 
     private void compareBasicSettings(Handle handle, Config definition, long activityId) {
@@ -230,6 +227,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
             SummaryTranslation latest = latestSummaries.remove(key);
             if (!current.equals(latest) && current.getLanguageCode().equalsIgnoreCase("es")) {
                 updatedSummaries.add(latest);
+                //log.info("updating translation text to: {}", latest.getText());
             }
         }
 
