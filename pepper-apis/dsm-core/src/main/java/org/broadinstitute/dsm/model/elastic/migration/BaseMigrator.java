@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
@@ -42,15 +43,19 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         while (participantsIterator.hasNext()) {
             Map.Entry<String, Object> entry = participantsIterator.next();
             String participantId = entry.getKey();
-            if (ParticipantUtil.isGuid(participantId)) {
-                Object participantDetails = entry.getValue();
-                transformObject(participantDetails);
-                Map<String, Object> finalMapToUpsert = generate();
-                bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
-            }
-            if (isReadyToExport(participantsIterator)) {
-                totalExported += bulkExportFacade.executeBulkUpsert();
-                bulkExportFacade.clear();
+            try {
+                if (ParticipantUtil.isGuid(participantId)) {
+                    Object participantDetails = entry.getValue();
+                    transformObject(participantDetails);
+                    Map<String, Object> finalMapToUpsert = generate();
+                    bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
+                }
+                if (isReadyToExport(participantsIterator)) {
+                    totalExported += bulkExportFacade.executeBulkUpsert();
+                    bulkExportFacade.clear();
+                }
+            } catch (Exception e){
+                throw new DsmInternalError(String.format("Error occurred while trying to export data for participant %s with data %s", participantId, entry.getValue().toString()), e);
             }
         }
         logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with "
