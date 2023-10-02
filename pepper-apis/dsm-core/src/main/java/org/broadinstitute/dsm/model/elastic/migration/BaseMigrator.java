@@ -54,8 +54,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
                     totalExported += bulkExportFacade.executeBulkUpsert();
                     bulkExportFacade.clear();
                 }
-            }catch (Exception e){
-                throw new DsmInternalError(String.format("Error occurred while trying to export data for participant %s", participantId), e);
+            } catch (Exception e){
+                throw new DsmInternalError(String.format("Error occurred while trying to export data for participant %s with data %s", participantId, entry.getValue().toString()), e);
             }
         }
         logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with "
