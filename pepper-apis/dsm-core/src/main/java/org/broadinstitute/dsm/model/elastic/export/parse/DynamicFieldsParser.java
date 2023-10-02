@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.search.SourceMapDeserializer;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -53,27 +54,31 @@ public class DynamicFieldsParser extends BaseParser {
         }
 
         Object parsedValue;
-        if (DATE_TYPE.equals(displayType)) {
-            parsedValue = forDate(element);
-        } else if (CHECKBOX_TYPE.equals(displayType)) {
-            parsedValue = forBoolean(element);
-        } else if (isActivityRelatedType()) {
-            Optional<String> maybeType = getTypeFromPossibleValuesJson();
-            this.displayType = maybeType.orElse(StringUtils.EMPTY);
-            parsedValue = maybeType.map(displayType -> {
-                if (parser instanceof TypeParser) {
-                    return parse(displayType);
-                } else {
-                    return parse(element);
-                }
-            }).orElse(forString(element));
-        } else if (NUMBER.equals(displayType)) {
-            parsedValue = forNumeric(element);
-        } else {
-            parsedValue = forString(element);
+        try {
+            if (DATE_TYPE.equals(displayType)) {
+                parsedValue = forDate(element);
+            } else if (CHECKBOX_TYPE.equals(displayType)) {
+                parsedValue = forBoolean(element);
+            } else if (isActivityRelatedType()) {
+                Optional<String> maybeType = getTypeFromPossibleValuesJson();
+                this.displayType = maybeType.orElse(StringUtils.EMPTY);
+                parsedValue = maybeType.map(dt -> {
+                    if (parser instanceof TypeParser) {
+                        return parse(dt);
+                    } else {
+                        return parse(element);
+                    }
+                }).orElse(forString(element));
+            } else if (NUMBER.equals(displayType)) {
+                parsedValue = forNumeric(element);
+            } else {
+                parsedValue = forString(element);
+            }
+        } catch (Exception e) {
+            throw new DsmInternalError(String.format("Error parsing value %s for field %s", element, fieldName), e);
+        } finally {
+            displayType = null;
         }
-
-        displayType = null;
 
         return parsedValue;
     }
