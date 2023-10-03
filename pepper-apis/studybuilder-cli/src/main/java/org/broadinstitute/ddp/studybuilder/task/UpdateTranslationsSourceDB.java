@@ -11,12 +11,14 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -188,6 +190,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         var activityDao = handle.attach(ActivityDao.class);
         var jdbiActivity = handle.attach(JdbiActivity.class);
         var jdbiActVersion = handle.attach(JdbiActivityVersion.class);
+        var jdbiActivityValidation = handle.attach(JdbiActivityValidation.class);
+        var templateDao = handle.attach(TemplateDao.class);
 
         //load study config from DB .. all activities latest version
         List<ActivityDto> allActivities = jdbiActivity.findOrderedDtosByStudyId(studyId);
@@ -217,6 +221,18 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 compareTemplate(handle, activity.getTag(), hintTemplate, activity.getActivityCode());
                 Template lastUpdatedTemplate = activity.getReadonlyHintTemplate();
                 compareTemplate(handle, activity.getTag(), lastUpdatedTemplate, activity.getActivityCode());
+
+                //handle activity level validations / errorMessages / messageTempates
+                List<ActivityValidationDto> validationDtos = jdbiActivityValidation._findByActivityId(activityDto.getActivityId());
+                for (ActivityValidationDto validationDto : validationDtos) {
+                    //NOTE: ActivityDef does not include messageTemplate info.. todo in future
+                    //load message template info and variables info
+                    Long errorMsgTemplateId = validationDto.getErrorMessageTemplateId();
+                    if (errorMsgTemplateId != null) {
+                        Template messageTemplate = templateDao.loadTemplateByIdAndTimestamp(errorMsgTemplateId, versionDto.getRevStart());
+                        compareTemplate(handle, activity.getTag(), messageTemplate, "activity_validations");
+                    }
+                }
             }
 
             log.info("MISSING translation vars in es.conf: {}", activityDto.getActivityCode());
@@ -227,7 +243,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
     void traverseActivity(Handle handle, FormActivityDef activity) {
         //long activityId = activity.getActivityId();
-        log.info("Comparing activity {} naming details...", activity.getActivityCode());
+        //log.info("Comparing activity {} naming details...", activity.getActivityCode());
         //var task = new UpdateActivityBaseSettings();
         //task.init(cfgPath, studyCfg, varsCfg);
         //compareNamingDetails(handle, activity.getActivityCode(), activityId, activity.);
@@ -273,7 +289,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     }
 
     private ActivityI18nDetail buildLatestNamingDetail(long activityId, long revisionId, String activityCode,
-                                                                     ActivityI18nDetail current) {
+                                                       ActivityI18nDetail current) {
 
         String key = activityCode;
         if (activityCode.equalsIgnoreCase("CONSENT_ASSENT") || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
@@ -537,6 +553,9 @@ public class UpdateTranslationsSourceDB implements CustomTask {
             return;
         }
         long revisionId = current.getRevisionId().get();
+        if (current.getVariables() == null || current.getVariables().isEmpty()) {
+            log.warn("NO TEMPLATE VARS: {} ", current.getTemplateText());
+        }
         for (var currentVar : current.getVariables()) {
             compareVariable(handle, tag, revisionId, currentVar, activityCode);
         }
