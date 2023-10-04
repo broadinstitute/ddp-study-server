@@ -11,14 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.util.SendGridFactory;
 import org.broadinstitute.dsm.db.EmailQueue;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -28,6 +25,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.email.EmailRecord;
+import org.broadinstitute.lddp.email.EmailSender;
 import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.lddp.email.SendGridClient;
 import org.broadinstitute.lddp.exception.EmailQueueException;
@@ -42,12 +40,13 @@ public class NotificationUtil {
     public static final String KITREQUEST_LINK = "/permalink/whereto?";
     private static final Logger logger = LoggerFactory.getLogger(NotificationUtil.class);
     private static String emailKey = null;
-    private static JsonObject emailClientSettings = null;
+    private static String emailProxyUrl = null;
+    private static EmailSender emailSender;
     private static Map<String, JsonElement> notificationLookup = new HashMap<>();
     private static Map<String, JsonElement> reminderNotificationLookup = new HashMap<>();
 
     public NotificationUtil(@NonNull Config config) {
-        startup(config);
+        initialize(config);
     }
 
     public static Long getLastChanged(@NonNull String participantId) {
@@ -78,9 +77,13 @@ public class NotificationUtil {
         return (Long) results.resultValue;
     }
 
-    public synchronized void startup(@NonNull Config config) {
+    public synchronized void initialize(@NonNull Config config) {
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
-        emailClientSettings = (JsonObject) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS)));
+        if (config.hasPath(ApplicationConfigConstants.EMAIL_PROXY_URL)) {
+            emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
+        }
+        emailSender = new Gson().fromJson(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS), EmailSender.class);
+        logger.info("Will send email from " + emailSender.getFromEmailAddress() + " " + emailSender.getFromName());
 
         JsonArray array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)));
         for (JsonElement notificationInfo : array) {
@@ -202,12 +205,8 @@ public class NotificationUtil {
         Recipient emailRecipient = new Recipient(to);
         emailRecipient.setPersonalization(mapy);
         try {
-            SendGridClient sendGridClient = new SendGridClient();
-            JsonObject emailClientSettings = new JsonObject();
-            emailClientSettings.addProperty("sendGridFrom", from);
-            emailClientSettings.addProperty("sendGridFromName", name);
-            sendGridClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class));
-            sendGridClient.sendSingleEmail(sendGridTemplate, emailRecipient);
+            SendGridClient sendGridClient = new SendGridClient(SendGridFactory.createSendGridInstance(emailKey, emailProxyUrl));
+            sendGridClient.sendSingleEmail(sendGridTemplate, emailRecipient, new EmailSender(from, name));
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
@@ -221,8 +220,7 @@ public class NotificationUtil {
         int totalNotificationsToProcess = 0;
 
         try {
-            SendGridClient sendGridClient = new SendGridClient();
-            sendGridClient.configure(emailKey, emailClientSettings);
+            SendGridClient sendGridClient = new SendGridClient(SendGridFactory.createSendGridInstance(emailKey, emailProxyUrl));
 
             Map<String, ArrayList<EmailRecord>> records = EmailRecord.getRecordsForProcessing();
 
@@ -236,7 +234,7 @@ public class NotificationUtil {
                         template = templateRecords.getKey();
 
                         for (EmailRecord record : templateRecords.getValue()) {
-                            sendGridClient.sendSingleEmail(template, record.getRecipient());
+                            sendGridClient.sendSingleEmail(template, record.getRecipient(), emailSender);
                             EmailRecord.startProcessing(record.getRecordId());
                         }
 
