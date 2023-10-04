@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -212,7 +213,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                     !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY") &&
                     !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
 
-                traverseActivity(handle, activity);
+                traverseActivity(handle, activity, versionDto);
 
                 compareNamingDetails(handle, activity.getActivityCode().toLowerCase(), activity.getActivityId(), versionDto);
                 //todo handle activity summaries
@@ -241,19 +242,14 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
     }
 
-    void traverseActivity(Handle handle, FormActivityDef activity) {
+    void traverseActivity(Handle handle, FormActivityDef activity, ActivityVersionDto versionDto) {
         //long activityId = activity.getActivityId();
-        //log.info("Comparing activity {} naming details...", activity.getActivityCode());
-        //var task = new UpdateActivityBaseSettings();
-        //task.init(cfgPath, studyCfg, varsCfg);
-        //compareNamingDetails(handle, activity.getActivityCode(), activityId, activity.);
-        //task.compareStatusSummaries(handle, definition, activityId);
-
         List<FormSectionDef> sections = activity.getAllSections();
         log.info("ACTIVITY: {} .. DB sections: {}  ", activity.getActivityCode(), sections.size());
 
         for (int i = 0; i < sections.size(); i++) {
-            traverseSection(handle, i + 1, sections.get(i), activity.getActivityCode());
+            //traverseSection(handle, i + 1, sections.get(i), activity);
+            traverseSection(handle, i, sections.get(i), activity);
         }
     }
 
@@ -349,9 +345,54 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         return latest;
     }
 
-    public void traverseSection(Handle handle, int sectionNum, FormSectionDef section, String activityCode) {
+    public void traverseSection(Handle handle, int sectionNum, FormSectionDef section, ActivityDef activity) {
+        String activityCode = activity.getActivityCode();
         String prefix = String.format("section %d", sectionNum);
-        compareTemplate(handle, prefix, section.getNameTemplate(), activityCode);
+        Template sectionNameTemplate = section.getNameTemplate();
+        if (sectionNameTemplate != null) {
+            if (sectionNameTemplate.getTemplateText().startsWith("$")) {
+
+                compareTemplate(handle, prefix, sectionNameTemplate, activityCode);
+                /*var templateDao = handle.attach(TemplateDao.class);
+                TemplateVariable templateVariable = sectionNameTemplate.getVariables().stream().findFirst().get();
+                String updVarName = "$"+templateVariable.getName();
+                templateDao.getJdbiTemplateVariable().update(templateVariable.getId().get(),
+                        sectionNameTemplate.getTemplateId(), updVarName);*/
+            } else {
+                //need to add translations
+                //load both en and es for activity_code + section + sectionNum
+                String varName = activityCode.toLowerCase() + "_s" + sectionNum + "_name";
+                String enText = sectionNameTemplate.getTemplateText();
+                String key = activityCode.toLowerCase() + "." + varName;
+                if (activityCode.equalsIgnoreCase("PARENTAL_CONSENT") ||
+                        activityCode.equalsIgnoreCase("CONSENT_ASSENT")) {
+                    key = "parental." + varName;
+                }
+                if (activityCode.contains("CONSENT_ADDENDUM_PEDIATRIC")) {
+                    key = "somatic_consent_addendum_pediatric." + varName;
+                } else {
+                    if (activityCode.contains("CONSENT_ADDENDUM")) {
+                        key = "somatic_consent_addendum." + varName;
+                    }
+                }
+                long revId = sectionNameTemplate.getRevisionId().get();
+                log.info("EN text: {}  .. version: {} .. key: {} ", enText,  revId, key);
+                String esText = i18nCfgEs.getString(key);
+                log.info("es-key: {} .. esText: {}   ", key, esText);
+
+                //varName = "$"+varName;
+                var templateDao = handle.attach(TemplateDao.class);
+                long varId = templateDao.getJdbiTemplateVariable().insertVariable(sectionNameTemplate.getTemplateId(), varName);
+                log.info("inserted varId: {} .. revision: {} ..", varId, revId);
+                //update template with new varId
+                templateDao.getJdbiTemplate().update(sectionNameTemplate.getTemplateId(), sectionNameTemplate.getTemplateCode(),
+                        sectionNameTemplate.getTemplateType(), "$"+varName, revId);
+                //insert translations
+                var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
+                jdbiVariableSubstitution.insert("en", enText, revId, varId);
+                jdbiVariableSubstitution.insert("es", esText, revId, varId);
+            }
+        }
 
         List<FormBlockDef> blocks = section.getBlocks();
         for (int i = 0; i < blocks.size(); i++) {
