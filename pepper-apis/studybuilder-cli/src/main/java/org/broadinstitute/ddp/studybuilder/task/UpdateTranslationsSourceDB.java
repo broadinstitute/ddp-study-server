@@ -347,17 +347,11 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
     public void traverseSection(Handle handle, int sectionNum, FormSectionDef section, ActivityDef activity) {
         String activityCode = activity.getActivityCode();
-        String prefix = String.format("section %d", sectionNum);
+        //String prefix = String.format("section %d", sectionNum);
         Template sectionNameTemplate = section.getNameTemplate();
         if (sectionNameTemplate != null) {
             if (sectionNameTemplate.getTemplateText().startsWith("$")) {
-
-                compareTemplate(handle, prefix, sectionNameTemplate, activityCode);
-                /*var templateDao = handle.attach(TemplateDao.class);
-                TemplateVariable templateVariable = sectionNameTemplate.getVariables().stream().findFirst().get();
-                String updVarName = "$"+templateVariable.getName();
-                templateDao.getJdbiTemplateVariable().update(templateVariable.getId().get(),
-                        sectionNameTemplate.getTemplateId(), updVarName);*/
+                //compareTemplate(handle, prefix, sectionNameTemplate, activityCode);
             } else {
                 //need to add translations
                 //load both en and es for activity_code + section + sectionNum
@@ -378,12 +372,11 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 long revId = sectionNameTemplate.getRevisionId().get();
                 log.info("EN text: {}  .. version: {} .. key: {} ", enText,  revId, key);
                 String esText = i18nCfgEs.getString(key);
-                log.info("es-key: {} .. esText: {}   ", key, esText);
+                log.info("esText: {}   ", esText);
 
-                //varName = "$"+varName;
                 var templateDao = handle.attach(TemplateDao.class);
                 long varId = templateDao.getJdbiTemplateVariable().insertVariable(sectionNameTemplate.getTemplateId(), varName);
-                log.info("inserted varId: {} .. revision: {} ..", varId, revId);
+                log.info("NEW section name: inserted varId: {} .. revision: {} ..", varId, revId);
                 //update template with new varId
                 templateDao.getJdbiTemplate().update(sectionNameTemplate.getTemplateId(), sectionNameTemplate.getTemplateCode(),
                         sectionNameTemplate.getTemplateType(), "$"+varName, revId);
