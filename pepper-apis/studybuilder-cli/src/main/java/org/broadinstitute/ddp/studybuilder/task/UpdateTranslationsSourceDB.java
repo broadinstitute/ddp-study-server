@@ -53,17 +53,14 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.AnnouncementEventAction;
-import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
 
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -73,10 +70,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * General task to iterate through all templates in a study and update them in-place. For each template, this will
+ * General task to iterate through all templates in a study and update them in-place.
+ * For each activity of the study, iterate through each section, block, each template and for each template, this will
  * compare the template text, the variables, and the variable translations, updating these things in-place without revisioning.
  * Source of truth is DB.
- * Iterate through each translation variable in DB and find matching variable in i198n.es.conf
+ * Iterate through each translation variable in DB and find matching variable in i18n.es.conf
  * and add/update the translation
  */
 @Slf4j
@@ -91,7 +89,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     private Map<String, Map> allActTransMapEN;
     private Map<String, Map> allActTransMapES;
     private Map<String, String> missingTransVars = new TreeMap<>();
-    private List<String> templateTypes = new ArrayList<>();
     Gson gson = new Gson();
     Type typeObject = new TypeToken<HashMap>() {
     }.getType();
@@ -113,9 +110,11 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         log.info("TASK:: UpdateTranslationsSourceDB ");
 
         //load i18n
-        //todo pass as params
+        //todo pass as params and need controls to block running on studies accidentally
         i18nCfgEn = ConfigFactory.parseFile(Paths.get("studybuilder-cli/studies/osteo/i18n/en.conf").toFile());
         i18nCfgEs = ConfigFactory.parseFile(Paths.get("studybuilder-cli/studies/osteo/i18n/es.conf").toFile());
+
+        //Maps to save ALL translations for any verification
         allActTransMapEN = new TreeMap<String, Map>();
         allActTransMapES = new TreeMap<String, Map>();
 
@@ -123,18 +122,15 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         User admin = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, admin.getId());
 
-        //traverseStudySettings(handle, studyDto.getId());
-        //traverseKitConfigurations(handle, studyDto.getId());
         traverseEventConfigurations(handle, studyDto.getId());
         traverseActivities(handle, studyDto.getId(), activityBuilder);
         String gsonDataEN = gson.toJson(allActTransMapEN, typeObject);
-        //log.info("---------EN---------");
+        //log.info("Reverse engineered EN translation file");
         //log.info(gsonDataEN);
 
-        //log.info("---------ES---------");
+        //log.info("Reverse engineered ES translation file");
         String gsonDataES = gson.toJson(allActTransMapES, typeObject);
         //log.info(gsonDataES);
-
     }
 
     // Note: This currently assumes only ANNOUNCEMENT event actions has templates.
@@ -152,7 +148,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 long templateId = ((AnnouncementEventAction) eventConfig.getEventAction()).getMessageTemplateId();
                 Template current = templateDao.loadTemplateByIdAndTimestamp(templateId, timestamp);
                 String tag = String.format("event announcementMessageTemplate %d", templateId);
-                //handle same variable names in diff activities like osteo_thank_you_announcement_p1 and osteo_thank_you_announcement_p2 for child
+                //handle same variable names in diff activities like
+                //osteo_thank_you_announcement_p1 and osteo_thank_you_announcement_p2 for child
                 //get activityId from eventConfig.eventConfigurationDto
                 EventConfigurationDto eventConfigurationDto = eventConfig.getEventTrigger().getEventConfigurationDto();
                 Long linkedActivityId = eventConfigurationDto.getActivityStatusTriggerStudyActivityId();
@@ -168,25 +165,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
     }
 
-    // Best-effort attempt at making a unique identifier for event configuration.
-    // watch out for scenarios where diff events might end up with same unique identifier
-    // ex:- trigger and order are same but diff pre/cancel expressions !
-    private String hashEvent(Config eventCfg) {
-        return String.format("%s-%d",
-                EventBuilder.triggerAsStr(eventCfg.getConfig("trigger")),
-                eventCfg.getInt("order"));
-    }
-
-    // Best-effort attempt at making a unique identifier for event configuration.
-    private String hashEvent(Handle handle, EventConfiguration eventConfig) {
-        return String.format("%s-%d",
-                EventBuilder.triggerAsStr(handle, eventConfig.getEventTrigger()),
-                eventConfig.getExecutionOrder());
-    }
-
     //Source of Truth is DB
-    //Read DB for activity latest version and get translations from current 18n.<lc>.conf and update in DB
-    //Dont look at conf file.. todo try to generate conf file..later
+    //Read DB for activity's latest version and get translations from current 18n.<lc>.conf and update in DB
     private void traverseActivities(Handle handle, long studyId, ActivityBuilder activityBuilder) {
         var activityDao = handle.attach(ActivityDao.class);
         var jdbiActivity = handle.attach(JdbiActivity.class);
@@ -194,26 +174,21 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         var jdbiActivityValidation = handle.attach(JdbiActivityValidation.class);
         var templateDao = handle.attach(TemplateDao.class);
 
-        //load study config from DB .. all activities latest version
+        //load study config from DB. All activities latest version
         List<ActivityDto> allActivities = jdbiActivity.findOrderedDtosByStudyId(studyId);
         log.info("Activity count: {} ", allActivities.size());
-        for (ActivityDto dto : allActivities) {
-            log.debug(" activity : {} .. parent: {} ", dto.getActivityCode(), dto.getParentActivityCode());
-        }
-
         for (ActivityDto activityDto : allActivities) {
-
             //get latest version
             ActivityVersionDto versionDto = jdbiActVersion.getActiveVersion(activityDto.getActivityId()).get();
             FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
-            log.info("#activity : {} .. parent: {}  .. version: {}", activityDto.getActivityCode(),
-                    activityDto.getParentActivityCode(), versionDto.getVersionTag());
+            log.info("#activity : {}  .. version: {}", activityDto.getActivityCode(), versionDto.getVersionTag());
 
-            if (!activityDto.getActivityCode().startsWith("FAMILY_HISTORY") &&
-                    !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY") &&
-                    !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
+            //tailored to osteo for now
+            if (!activityDto.getActivityCode().startsWith("FAMILY_HISTORY")
+                    && !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY")
+                    && !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
 
-                traverseActivity(handle, activity, versionDto);
+                traverseActivity(handle, activity);
 
                 compareNamingDetails(handle, activity.getActivityCode().toLowerCase(), activity.getActivityId(), versionDto);
                 //todo handle activity summaries
@@ -236,24 +211,24 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 }
             }
 
+            //manual check in logs if any translations are missing  in es.json
             log.info("MISSING translation vars in es.conf: {}", activityDto.getActivityCode());
             String gsonDataMiss = gson.toJson(missingTransVars, typeObject);
             log.info(gsonDataMiss);
         }
     }
 
-    void traverseActivity(Handle handle, FormActivityDef activity, ActivityVersionDto versionDto) {
-        //long activityId = activity.getActivityId();
+    void traverseActivity(Handle handle, FormActivityDef activity) {
         List<FormSectionDef> sections = activity.getAllSections();
         log.info("ACTIVITY: {} .. DB sections: {}  ", activity.getActivityCode(), sections.size());
 
         for (int i = 0; i < sections.size(); i++) {
-            //traverseSection(handle, i + 1, sections.get(i), activity);
             traverseSection(handle, i, sections.get(i), activity);
         }
     }
 
     public void compareNamingDetails(Handle handle, String activityCode, long activityId, ActivityVersionDto versionDto) {
+        //osteo specific .. cleanup later
         if (activityCode.equalsIgnoreCase("LOVEDONE") || activityCode.equalsIgnoreCase("prequal")) {
             return;
         }
@@ -287,16 +262,18 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     private ActivityI18nDetail buildLatestNamingDetail(long activityId, long revisionId, String activityCode,
                                                        ActivityI18nDetail current) {
 
+        //for now tailored to osteo because osteo es.json elements dont match with activity names
+        //todo change later
         String key = activityCode;
         if (activityCode.equalsIgnoreCase("CONSENT_ASSENT") || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
             key = "parental";
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
-                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM")
+                || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
             key = "somatic_consent_addendum";
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC") ||
-                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC")
+                || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
             key = "somatic_consent_addendum_pediatric";
         }
         if (activityCode.equalsIgnoreCase("ABOUTYOU")) {
@@ -347,10 +324,10 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
     public void traverseSection(Handle handle, int sectionNum, FormSectionDef section, ActivityDef activity) {
         String activityCode = activity.getActivityCode();
-        //String prefix = String.format("section %d", sectionNum);
         Template sectionNameTemplate = section.getNameTemplate();
         if (sectionNameTemplate != null) {
             if (sectionNameTemplate.getTemplateText().startsWith("$")) {
+                //todo section name comparison . 
                 //compareTemplate(handle, prefix, sectionNameTemplate, activityCode);
             } else {
                 //need to add translations
@@ -358,8 +335,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 String varName = activityCode.toLowerCase() + "_s" + sectionNum + "_name";
                 String enText = sectionNameTemplate.getTemplateText();
                 String key = activityCode.toLowerCase() + "." + varName;
-                if (activityCode.equalsIgnoreCase("PARENTAL_CONSENT") ||
-                        activityCode.equalsIgnoreCase("CONSENT_ASSENT")) {
+                if (activityCode.equalsIgnoreCase("PARENTAL_CONSENT")
+                        || activityCode.equalsIgnoreCase("CONSENT_ASSENT")) {
                     key = "parental." + varName;
                 }
                 if (activityCode.contains("CONSENT_ADDENDUM_PEDIATRIC")) {
@@ -370,7 +347,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                     }
                 }
                 long revId = sectionNameTemplate.getRevisionId().get();
-                log.info("EN text: {}  .. version: {} .. key: {} ", enText,  revId, key);
+                log.info("EN text: {}  .. version: {} .. key: {} ", enText, revId, key);
                 String esText = i18nCfgEs.getString(key);
                 log.info("esText: {}   ", esText);
 
@@ -379,7 +356,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 log.info("NEW section name: inserted varId: {} .. revision: {} ..", varId, revId);
                 //update template with new varId
                 templateDao.getJdbiTemplate().update(sectionNameTemplate.getTemplateId(), sectionNameTemplate.getTemplateCode(),
-                        sectionNameTemplate.getTemplateType(), "$"+varName, revId);
+                        sectionNameTemplate.getTemplateType(), "$" + varName, revId);
                 //insert translations
                 var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
                 jdbiVariableSubstitution.insert("en", enText, revId, varId);
@@ -389,13 +366,13 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
         List<FormBlockDef> blocks = section.getBlocks();
         for (int i = 0; i < blocks.size(); i++) {
-            traverseBlockNew(handle, sectionNum, i + 1, null, blocks.get(i), activityCode);
+            traverseBlock(handle, sectionNum, i + 1, null, blocks.get(i), activityCode);
         }
     }
 
 
-    private void traverseBlockNew(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
-                                  FormBlockDef block, String activityCode) {
+    private void traverseBlock(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
+                               FormBlockDef block, String activityCode) {
         switch (block.getBlockType()) {
             case CONTENT:
                 traverseContent(handle, sectionNum, blockNum, nestedNum, (ContentBlockDef) block, activityCode);
@@ -415,7 +392,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
                 List<FormBlockDef> condNested = condBlock.getNested();
                 for (int i = 0; i < condNested.size(); i++) {
-                    traverseBlockNew(handle, sectionNum, blockNum, i + 1, condNested.get(i), activityCode);
+                    traverseBlock(handle, sectionNum, blockNum, i + 1, condNested.get(i), activityCode);
                 }
 
                 break;
@@ -428,7 +405,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 List<FormBlockDef> groupNested = groupBlock.getNested();
 
                 for (int i = 0; i < groupNested.size(); i++) {
-                    traverseBlockNew(handle, sectionNum, blockNum, i + 1, groupNested.get(i), activityCode);
+                    traverseBlock(handle, sectionNum, blockNum, i + 1, groupNested.get(i), activityCode);
                 }
 
                 break;
@@ -532,7 +509,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 throw new DDPException("Unhandled question type: " + question.getQuestionType());
         }
 
-        //todo
         traverseQuestionValidations(handle, question, activityCode);
     }
 
@@ -588,6 +564,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
         long revisionId = current.getRevisionId().get();
         if (current.getVariables() == null || current.getVariables().isEmpty()) {
+            //manual check in logs to alert if any missed
             log.warn("NO TEMPLATE VARS: {} ", current.getTemplateText());
         }
         for (var currentVar : current.getVariables()) {
@@ -614,17 +591,18 @@ public class UpdateTranslationsSourceDB implements CustomTask {
             allActTransMapES.put(activityCode, new TreeMap());
         }
 
-        //tailored to Osteo for now
+        //tailored to Osteo for now because es.json element names don't match with activity codes
         String key = activityCode.toLowerCase() + "." + variableName;
-        if (activityCode.equalsIgnoreCase("CONSENT_ASSENT") || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
+        if (activityCode.equalsIgnoreCase("CONSENT_ASSENT")
+                || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
             key = "parental." + variableName;
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM") ||
-                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM")
+                || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
             key = "somatic_consent_addendum." + variableName;
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC") ||
-                activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
+        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC")
+                || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
             key = "somatic_consent_addendum_pediatric." + variableName;
         }
         if (activityCode.equalsIgnoreCase("ABOUTYOU")) {
@@ -633,7 +611,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (activityCode.equalsIgnoreCase("ABOUTCHILD")) {
             key = "about_child." + variableName;
         }
-        //
         if (variableName.startsWith("COUNTRY_")) {
             key = "country." + variableName;
         }
@@ -694,9 +671,14 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
         //check for ddp.isGoverned mismatch !
         if (enText.contains("ddp.isGovernedParticipant") && !latestText.contains("$ddp.isGovernedParticipant")) {
+            //manual check in logs to alert if any missed
             log.warn("MISMATCH: activity: {} .. var: {} ..enText: {} and key: {} .. latestText: {}  ", activityCode,
                     variableName, enText, key, latestText);
         }
     }
+
+    //todo
+    //method to search/replace template variable value
+    //and revision the related template if needed
 
 }
