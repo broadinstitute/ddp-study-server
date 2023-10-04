@@ -326,42 +326,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         String activityCode = activity.getActivityCode();
         Template sectionNameTemplate = section.getNameTemplate();
         if (sectionNameTemplate != null) {
-            if (sectionNameTemplate.getTemplateText().startsWith("$")) {
-                //todo section name comparison . 
-                //compareTemplate(handle, prefix, sectionNameTemplate, activityCode);
-            } else {
-                //need to add translations
-                //load both en and es for activity_code + section + sectionNum
-                String varName = activityCode.toLowerCase() + "_s" + sectionNum + "_name";
-                String enText = sectionNameTemplate.getTemplateText();
-                String key = activityCode.toLowerCase() + "." + varName;
-                if (activityCode.equalsIgnoreCase("PARENTAL_CONSENT")
-                        || activityCode.equalsIgnoreCase("CONSENT_ASSENT")) {
-                    key = "parental." + varName;
-                }
-                if (activityCode.contains("CONSENT_ADDENDUM_PEDIATRIC")) {
-                    key = "somatic_consent_addendum_pediatric." + varName;
-                } else {
-                    if (activityCode.contains("CONSENT_ADDENDUM")) {
-                        key = "somatic_consent_addendum." + varName;
-                    }
-                }
-                long revId = sectionNameTemplate.getRevisionId().get();
-                log.info("EN text: {}  .. version: {} .. key: {} ", enText, revId, key);
-                String esText = i18nCfgEs.getString(key);
-                log.info("esText: {}   ", esText);
-
-                var templateDao = handle.attach(TemplateDao.class);
-                long varId = templateDao.getJdbiTemplateVariable().insertVariable(sectionNameTemplate.getTemplateId(), varName);
-                log.info("NEW section name: inserted varId: {} .. revision: {} ..", varId, revId);
-                //update template with new varId
-                templateDao.getJdbiTemplate().update(sectionNameTemplate.getTemplateId(), sectionNameTemplate.getTemplateCode(),
-                        sectionNameTemplate.getTemplateType(), "$" + varName, revId);
-                //insert translations
-                var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
-                jdbiVariableSubstitution.insert("en", enText, revId, varId);
-                jdbiVariableSubstitution.insert("es", esText, revId, varId);
-            }
+            handleSectionNames(handle, sectionNum, activityCode, sectionNameTemplate);
         }
 
         List<FormBlockDef> blocks = section.getBlocks();
@@ -370,6 +335,44 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
     }
 
+    private void handleSectionNames(Handle handle, int sectionNum, String activityCode, Template sectionNameTemplate) {
+        if (sectionNameTemplate.getTemplateText().startsWith("$")) {
+            //todo section name comparison . 
+            //compareTemplate(handle, prefix, sectionNameTemplate, activityCode);
+        } else {
+            //need to add translations
+            //load both en and es for activity_code + section + sectionNum
+            String varName = activityCode.toLowerCase() + "_s" + sectionNum + "_name";
+            String enText = sectionNameTemplate.getTemplateText();
+            String key = activityCode.toLowerCase() + "." + varName;
+            if (activityCode.equalsIgnoreCase("PARENTAL_CONSENT")
+                    || activityCode.equalsIgnoreCase("CONSENT_ASSENT")) {
+                key = "parental." + varName;
+            }
+            if (activityCode.contains("CONSENT_ADDENDUM_PEDIATRIC")) {
+                key = "somatic_consent_addendum_pediatric." + varName;
+            } else {
+                if (activityCode.contains("CONSENT_ADDENDUM")) {
+                    key = "somatic_consent_addendum." + varName;
+                }
+            }
+            long revId = sectionNameTemplate.getRevisionId().get();
+            log.info("EN text: {}  .. version: {} .. key: {} ", enText, revId, key);
+            String esText = i18nCfgEs.getString(key);
+            log.info("esText: {}   ", esText);
+
+            var templateDao = handle.attach(TemplateDao.class);
+            long varId = templateDao.getJdbiTemplateVariable().insertVariable(sectionNameTemplate.getTemplateId(), varName);
+            log.info("NEW section name: inserted varId: {} .. revision: {} ..", varId, revId);
+            //update template with new varId
+            templateDao.getJdbiTemplate().update(sectionNameTemplate.getTemplateId(), sectionNameTemplate.getTemplateCode(),
+                    sectionNameTemplate.getTemplateType(), "$" + varName, revId);
+            //insert translations
+            var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
+            jdbiVariableSubstitution.insert("en", enText, revId, varId);
+            jdbiVariableSubstitution.insert("es", esText, revId, varId);
+        }
+    }
 
     private void traverseBlock(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
                                FormBlockDef block, String activityCode) {
@@ -421,7 +424,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         compareTemplate(handle, prefix, block.getAddButtonTemplate(), activityCode);
     }
 
-    // Note: for now, we're querying the content block templates here.
     private void traverseContent(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
                                  ContentBlockDef block, String activityCode) {
         String type = block.getBlockType().name();
