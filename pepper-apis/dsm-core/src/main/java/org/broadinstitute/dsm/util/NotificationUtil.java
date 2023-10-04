@@ -46,7 +46,7 @@ public class NotificationUtil {
     private static Map<String, JsonElement> reminderNotificationLookup = new HashMap<>();
 
     public NotificationUtil(@NonNull Config config) {
-        startup(config);
+        initialize(config);
     }
 
     public static Long getLastChanged(@NonNull String participantId) {
@@ -77,11 +77,12 @@ public class NotificationUtil {
         return (Long) results.resultValue;
     }
 
-    public synchronized void startup(@NonNull Config config) {
+    public synchronized void initialize(@NonNull Config config) {
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
-        emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
-
-        new Gson().fromJson(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS), EmailSender.class);
+        if (config.hasPath(ApplicationConfigConstants.EMAIL_PROXY_URL)) {
+            emailProxyUrl = config.getString(ApplicationConfigConstants.EMAIL_PROXY_URL);
+        }
+        emailSender = new Gson().fromJson(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS), EmailSender.class);
         logger.info("Will send email from " + emailSender.getFromEmailAddress() + " " + emailSender.getFromName());
 
         JsonArray array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)));
