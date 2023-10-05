@@ -89,6 +89,8 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     private Map<String, Map> allActTransMapEN;
     private Map<String, Map> allActTransMapES;
     private Map<String, String> missingTransVars = new TreeMap<>();
+    private String enFilePath = "studybuilder-cli/studies/osteo/i18n/en.conf";
+    private String esFilePath = "studybuilder-cli/studies/osteo/i18n/es.conf";
     Gson gson = new Gson();
     Type typeObject = new TypeToken<HashMap>() {
     }.getType();
@@ -110,9 +112,10 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         log.info("TASK:: UpdateTranslationsSourceDB ");
 
         //load i18n
-        //todo pass as params and need controls to block running on studies accidentally
-        i18nCfgEn = ConfigFactory.parseFile(Paths.get("studybuilder-cli/studies/osteo/i18n/en.conf").toFile());
-        i18nCfgEs = ConfigFactory.parseFile(Paths.get("studybuilder-cli/studies/osteo/i18n/es.conf").toFile());
+        //todo pass file path as params
+        //need controls to block running on studies accidentally
+        i18nCfgEn = ConfigFactory.parseFile(Paths.get(enFilePath).toFile());
+        i18nCfgEs = ConfigFactory.parseFile(Paths.get(esFilePath).toFile());
 
         //Maps to save ALL translations for any verification
         allActTransMapEN = new TreeMap<String, Map>();
