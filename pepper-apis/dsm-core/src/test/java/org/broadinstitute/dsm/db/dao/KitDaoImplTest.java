@@ -61,10 +61,10 @@ public class KitDaoImplTest extends DbTxnBaseTest {
                 List.of(USER_ADMIN_ROLE));
         KitTypeDto kitTypeDto = KitTypeDto.builder()
                 .withRequiresInsertInKitTracking(false)
-                .withRequiredRole(0) // todo arz get real admin role
+                .withRequiredRole(userAdminTestUtil.getRoleId(USER_ADMIN_ROLE)) // todo arz get real admin role
                 .withManualSentTrack(false)
                 .withNoReturn(false)
-                .withKitTypeName(KIT_TYPE_NAME)  // todo arz is there a sample type column in the database?
+                .withKitTypeName(KIT_TYPE_NAME)
                 .build();
         kitTypeId = kitTypeDao.create(kitTypeDto);
         ddpInstanceId = userAdminTestUtil.getDdpInstanceId();
@@ -85,7 +85,7 @@ public class KitDaoImplTest extends DbTxnBaseTest {
         kitReq.setDdpKitRequestId(KIT_NAME);
         kitReq.setKitTypeId(Long.toString(kitTypeId));
         kitRequestId = kitDao.insertKitRequest(kitReq);
-        kitReq.setDsmKitRequestId(Long.valueOf(kitRequestId));
+        kitReq.setDsmKitRequestId(kitRequestId);
         kitId = kitDao.insertKit(kitReq);
     }
 
