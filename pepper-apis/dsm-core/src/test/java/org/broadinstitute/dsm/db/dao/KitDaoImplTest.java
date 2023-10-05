@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm.db.dao;
 
+import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
+
+import java.util.List;
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -11,34 +16,22 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
 import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
-
 @Slf4j
 public class KitDaoImplTest extends DbTxnBaseTest {
 
-    private static KitDaoImpl kitDao = new KitDaoImpl();
+    private static final KitDaoImpl kitDao = new KitDaoImpl();
 
-    private static Long kitId;
+    private static final UserAdminTestUtil userAdminTestUtil = new UserAdminTestUtil();
 
-    private static Integer participantId;
+    private static final ParticipantDao participantDao = new ParticipantDao();
 
-    private static Long kitRequestId;
-
-    private static UserAdminTestUtil userAdminTestUtil = new UserAdminTestUtil();
-
-    private static ParticipantDao participantDao = new ParticipantDao();
-
-    private static KitTypeDao kitTypeDao = new KitTypeImpl();
+    private static final KitTypeDao kitTypeDao = new KitTypeImpl();
 
     private static final String KIT_NAME = "KITDAOTEST";
 
@@ -46,11 +39,15 @@ public class KitDaoImplTest extends DbTxnBaseTest {
 
     private static final String PARTICIPANT_ID = "KITDAOTEST123";
 
-    private static Integer ddpInstanceId;
+    private static final String TRACKING_RETURN_ID = KIT_NAME + "TRACKINGID";
+
+    private static Long kitId;
+
+    private static Integer participantId;
+
+    private static Long kitRequestId;
 
     private static Integer kitTypeId;
-
-    private static final String TRACKING_RETURN_ID = KIT_NAME + "TRACKINGID";
 
     private static Integer userId;
 
@@ -61,13 +58,13 @@ public class KitDaoImplTest extends DbTxnBaseTest {
                 List.of(USER_ADMIN_ROLE));
         KitTypeDto kitTypeDto = KitTypeDto.builder()
                 .withRequiresInsertInKitTracking(false)
-                .withRequiredRole(userAdminTestUtil.getRoleId(USER_ADMIN_ROLE)) // todo arz get real admin role
+                .withRequiredRole(userAdminTestUtil.getRoleId(USER_ADMIN_ROLE))
                 .withManualSentTrack(false)
                 .withNoReturn(false)
                 .withKitTypeName(KIT_TYPE_NAME)
                 .build();
         kitTypeId = kitTypeDao.create(kitTypeDto);
-        ddpInstanceId = userAdminTestUtil.getDdpInstanceId();
+        int ddpInstanceId = userAdminTestUtil.getDdpInstanceId();
         ParticipantDto participantDto =
                 new ParticipantDto.Builder(ddpInstanceId, System.currentTimeMillis())
                         .withDdpParticipantId(PARTICIPANT_ID)
