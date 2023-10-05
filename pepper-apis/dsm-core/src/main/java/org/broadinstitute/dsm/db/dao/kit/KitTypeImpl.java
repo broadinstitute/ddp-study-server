@@ -23,9 +23,8 @@ public class KitTypeImpl implements KitTypeDao {
             + "required_role, "
             + "manual_sent_track, "
             + "requires_insert_in_kit_tracking, "
-            + "no_return, "
-            + "sample_type) "
-            + "VALUES (?,?,?,?,?,?,?,?,?)";
+            + "no_return) "
+            + "VALUES (?,?,?,?,?,?,?,?)";
 
     private static final String SQL_DELETE_KIT_TYPE = "DELETE FROM "
             + "kit_type "
@@ -44,7 +43,6 @@ public class KitTypeImpl implements KitTypeDao {
                 stmt.setBoolean(6, kitTypeDto.getManualSentTrack());
                 stmt.setBoolean(7, kitTypeDto.getRequiresInsertInKitTracking());
                 stmt.setBoolean(8, kitTypeDto.getNoReturn());
-                stmt.setString(9, kitTypeDto.getSampleType());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {

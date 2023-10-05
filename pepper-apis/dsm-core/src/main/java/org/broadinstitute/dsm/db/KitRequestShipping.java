@@ -268,6 +268,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.KIT_TYPE_NAME)
     private String kitTypeName;
 
+    // at runtime, this must be an integer that maps to kit_type_id foreign key
     private String kitTypeId;
 
     @ColumnName(DBConstants.DEACTIVATION_REASON)

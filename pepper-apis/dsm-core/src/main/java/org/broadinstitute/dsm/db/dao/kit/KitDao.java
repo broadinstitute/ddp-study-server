@@ -15,13 +15,17 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping, String userId);
 
-    Optional<ScanError> insertKitTracking(KitRequestShipping kitRequestShipping, String userId);
-
     Optional<ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
 
-    Integer insertKit(KitRequestShipping kitRequestShipping);
+    /**
+     * Inserts a new ddp_kit using kit fields from the given {@link KitRequestShipping}
+     */
+    Long insertKit(KitRequestShipping kitRequestShipping);
 
-    Integer insertKitRequest(KitRequestShipping kitRequestShipping);
+    /**
+     * Inserts a new ddp_kit_request and returns the generated primary key
+     */
+    Long insertKitRequest(KitRequestShipping kitRequestShipping);
 
     Optional<KitRequestShipping> getKitRequest(Long kitRequestId);
 
@@ -38,4 +42,10 @@ public interface KitDao extends Dao<KitRequestShipping> {
     List<KitRequestShipping> getKitsByHruid(String hruid);
 
     Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping);
+
+    /**
+     * Inserts a new row in ddp_kit_tracking if there is no row for the given kitLabel
+     */
+    Optional<ScanError> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId,
+                                                     int userId);
 }

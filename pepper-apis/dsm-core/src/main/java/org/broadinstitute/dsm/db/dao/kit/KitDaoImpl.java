@@ -76,10 +76,13 @@ public class KitDaoImpl implements KitDao {
             + "WHERE "
             + "dsm_kit_id = ?";
 
-    private static final String INSERT_KIT_TRACKING = "INSERT INTO "
-            + "ddp_kit_tracking "
-            + "SET "
-            + "scan_date = ?, scan_by = ?, tracking_id = ?, kit_label = ?";
+    /**
+     * No-op upsert, if existing primary key is found, nothing happens
+     */
+    private static final String UPSERT_KIT_TRACKING = "INSERT INTO "
+            + "ddp_kit_tracking (scan_date, scan_by, tracking_id, kit_label) "
+            + "values (?, ?, ?, ?) on duplicate key update kit_tracking_id=kit_tracking_id";
+
 
     private static final String SQL_GET_KIT_BY_DDP_LABEL = "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
             + "req.kit_type_id, req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
@@ -147,6 +150,8 @@ public class KitDaoImpl implements KitDao {
     private static final String SQL_DELETE_KIT_REQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
 
     private static final String SQL_DELETE_KIT = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
+
+    private static final String SQL_DELETE_KIT_TRACKING = "DELETE FROM ddp_kit_tracking WHERE kit_label = ?";
 
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
 
@@ -241,7 +246,7 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Integer insertKit(KitRequestShipping kitRequestShipping) {
+    public Long insertKit(KitRequestShipping kitRequestShipping) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
@@ -261,7 +266,7 @@ public class KitDaoImpl implements KitDao {
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
+                        dbVals.resultValue = rs.getLong(1);
                     }
                 }
             } catch (SQLException ex) {
@@ -273,11 +278,11 @@ public class KitDaoImpl implements KitDao {
             throw new RuntimeException("Error inserting kit with dsm_kit_request_id: "
                     + kitRequestShipping.getDsmKitRequestId(), results.resultException);
         }
-        return (int) results.resultValue;
+        return (long) results.resultValue;
     }
 
     @Override
-    public Integer insertKitRequest(KitRequestShipping kitRequestShipping) {
+    public Long insertKitRequest(KitRequestShipping kitRequestShipping) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_REQUEST, Statement.RETURN_GENERATED_KEYS)) {
@@ -295,7 +300,7 @@ public class KitDaoImpl implements KitDao {
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
+                        dbVals.resultValue = rs.getLong(1);
                     }
                 }
             } catch (SQLException ex) {
@@ -307,7 +312,7 @@ public class KitDaoImpl implements KitDao {
             throw new RuntimeException("Error inserting kit request for participant id: "
                     + kitRequestShipping.getDdpParticipantId(), results.resultException);
         }
-        return (int) results.resultValue;
+        return (long) results.resultValue;
     }
 
     @Override
@@ -383,6 +388,24 @@ public class KitDaoImpl implements KitDao {
 
         if (simpleResult.resultException != null) {
             throw new RuntimeException("Error deleting kit request with id: " + kitRequestId, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
+    }
+
+    public Integer deleteKitTrackingByKitLabel(String kitLabel) {
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_TRACKING)) {
+                stmt.setString(1, kitLabel);
+                execResult.resultValue = stmt.executeUpdate();
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error deleting kit tracking for kit " + kitLabel, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
@@ -541,29 +564,26 @@ public class KitDaoImpl implements KitDao {
         return kitRequestShipping;
     }
 
-    @Override
-    public Optional<ScanError> insertKitTracking(KitRequestShipping kitRequestShipping, String userId) {
+    private Optional<ScanError> insertKitTrackingIfNotExists(KitRequestShipping kitRequestShipping, int userId) {
         Optional<ScanError> result = Optional.empty();
+        String errorMessage = "Unable to insert tracking information for  " + kitRequestShipping.getKitLabel() + ". "
+                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER;
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TRACKING)) {
+            try (PreparedStatement stmt = conn.prepareStatement(UPSERT_KIT_TRACKING)) {
                 stmt.setLong(1, System.currentTimeMillis());
-                stmt.setString(2, userId);
+                stmt.setInt(2, userId);
                 stmt.setString(3, kitRequestShipping.getTrackingId());
                 stmt.setString(4, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
-                            "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
-                                    + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
-                    logger.error("The number of affected rows for kit label " + kitRequestShipping.getKitLabel() + "is not 1.");
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
+                    logger.error(rowsAffected + " affected rows for kit label " + kitRequestShipping.getKitLabel());
                 } else {
                     logger.info("Added tracking for kit w/ kit_label " + kitRequestShipping.getKitLabel());
                 }
             } catch (Exception ex) {
-                dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
-                        "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
-                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+                dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
                 logger.error("Unable to save kit tracking information for kit label " + kitRequestShipping.getKitLabel(), ex);
             }
             return dbVals;
@@ -652,6 +672,14 @@ public class KitDaoImpl implements KitDao {
             result = Optional.ofNullable((ScanError) results.resultValue);
         }
         return result;
+    }
+
+    @Override
+    public Optional<ScanError> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId, int userId) {
+        KitRequestShipping kitRequestShipping = new KitRequestShipping();
+        kitRequestShipping.setTrackingId(trackingReturnId);
+        kitRequestShipping.setKitLabel(kitLabel);
+        return insertKitTrackingIfNotExists(kitRequestShipping, userId);
     }
 
     public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
