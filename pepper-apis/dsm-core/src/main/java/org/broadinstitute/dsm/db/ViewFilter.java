@@ -25,7 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.ParticipantColumn;
@@ -236,7 +236,7 @@ public class ViewFilter {
                     dbVals.resultException = e;
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
-                dbVals.resultException = new DuplicateException(viewFilter.getFilterName());
+                dbVals.resultException = new DsmInternalError(viewFilter.getFilterName(), ex);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }

@@ -7,13 +7,11 @@ import lombok.NonNull;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.patch.BasePatch;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.model.patch.PatchFactory;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -65,11 +63,7 @@ public class PatchRoute extends RequestHandler {
                 throw new AuthorizationException("User is not authorized to patch participant data");
             }
         } catch (JsonSyntaxException e) {
-            throw new DSMBadRequestException("Invalid request payload format for patch", e);
-        } catch (DuplicateException e) {
-            // TODO: fix this by inspecting the DuplicateException throwers to see if cases are due to
-            // bad request data (400)
-            throw new DsmInternalError("Duplicate value:" + e.getMessage(), e);
+            throw new DSMBadRequestException("Invalid request payload format for patch: " + requestBody, e);
         }
     }
 }

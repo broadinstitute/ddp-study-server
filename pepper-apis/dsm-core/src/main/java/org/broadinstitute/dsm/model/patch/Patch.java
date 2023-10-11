@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -146,9 +146,9 @@ public class Patch {
                             + dbElement.getPrimaryKey() + "=" + id + ".  " + result + " rows updated.");
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
-                throw new DuplicateException("Error updating " + dbElement.getTableName() + "."
-                        + dbElement.getColumnName() + " with value " + nameValue.getValue() + " for "
-                        + dbElement.getPrimaryKey() + "=" + id, ex);
+                throw new DsmInternalError(String.format("Error updating %s.%s with value %s for %s=%s",
+                        dbElement.getTableName(), dbElement.getColumnName(), nameValue.getValue(),
+                        dbElement.getPrimaryKey(), id), ex);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }

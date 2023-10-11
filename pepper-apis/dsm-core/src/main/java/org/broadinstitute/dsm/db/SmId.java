@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -99,7 +99,7 @@ public class SmId {
             String smIdId = new TissueSMIDDao().createNewSMIDForTissue(tissueId, userId, smIdType, smIdValue);
             return smIdId;
         } else {
-            throw new DuplicateException("Duplicate or blank value for sm id value " + smIdValue);
+            throw new DsmInternalError("Duplicate or blank value for sm id value " + smIdValue);
         }
     }
 }
