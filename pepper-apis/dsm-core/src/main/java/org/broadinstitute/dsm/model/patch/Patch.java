@@ -147,7 +147,8 @@ public class Patch {
                                     + " rows");
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
-                throw new DuplicateException(dbElement.getColumnName());
+                throw new DuplicateException("Error updating " + dbElement.getTableName() + "."
+                        + dbElement.getColumnName() + " with value " + nameValue.getValue() + " for id " + id, ex);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }

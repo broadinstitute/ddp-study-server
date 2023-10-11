@@ -65,11 +65,11 @@ public class PatchRoute extends RequestHandler {
                 throw new AuthorizationException("User is not authorized to patch participant data");
             }
         } catch (JsonSyntaxException e) {
-            throw new DSMBadRequestException("Invalid request payload format for patch");
+            throw new DSMBadRequestException("Invalid request payload format for patch", e);
         } catch (DuplicateException e) {
             // TODO: fix this by inspecting the DuplicateException throwers to see if cases are due to
             // bad request data (400)
-            throw new DsmInternalError("Duplicate value", e);
+            throw new DsmInternalError("Duplicate value:" + e.getMessage(), e);
         }
     }
 }
