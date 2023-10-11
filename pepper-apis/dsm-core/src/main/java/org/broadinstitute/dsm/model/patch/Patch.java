@@ -142,9 +142,8 @@ public class Patch {
                 if (result == 1) {
                     logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
                 } else {
-                    throw new RuntimeException(
-                            "Error updating " + dbElement.getTableName() + " record of w/ id " + id + " it was updating " + result
-                                    + " rows");
+                    throw new RuntimeException("Error updating " + dbElement.getTableName() + " with "
+                            + dbElement.getPrimaryKey() + "=" + id + ".  " + result + " rows updated.");
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
                 throw new DuplicateException("Error updating " + dbElement.getTableName() + "."
