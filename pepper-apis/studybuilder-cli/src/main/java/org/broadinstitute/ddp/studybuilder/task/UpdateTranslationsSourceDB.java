@@ -628,6 +628,16 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (variableName.startsWith("c_") || variableName.startsWith("cancer_")) {
             key = "cancer." + variableName;
         }
+        if (activityCode.equalsIgnoreCase("PREQUAL")) {
+            //handle same varName for both self and child prompt_COUNTRY
+            if (variableName.equalsIgnoreCase("prompt_COUNTRY") && tag.contains("SELF_COUNTRY")) {
+                key = "prequal.location_prompt_self";
+            }
+            if (variableName.equalsIgnoreCase("prompt_COUNTRY") && tag.contains("CHILD_COUNTRY")) {
+                key = "prequal.location_prompt_child";
+            }
+        }
+
         if (!i18nCfgEs.hasPath(key)) {
             missingTransVars.put(key, enTranslation.getText());
             log.warn("Missing translation for var: {} in ES.JSON with lookup key: {} ", variableName, key);
@@ -663,10 +673,10 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                         translation.getRevisionId().get(),
                         translation.getLanguageCode(),
                         latestText);
+                allActTransMapES.get(activityCode).put(variableName, latestText);
                 if (updated) {
                     log.info("[{}] variable {} language {}: updated substitution. \ncurrent text: {}  \nlatest  text: {}",
                             tag, variableName, translation.getLanguageCode(), currentText, latestText);
-                    allActTransMapES.get(activityCode).put(variableName, latestText);
                 } else {
                     throw new DDPException(String.format(
                             "Could not update substitution for %s variable %s language %s",
