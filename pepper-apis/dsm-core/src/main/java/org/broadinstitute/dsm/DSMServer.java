@@ -65,7 +65,6 @@ import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
-import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
@@ -1061,7 +1060,6 @@ public class DSMServer {
                 throw new DsmInternalError("Could not create scheduler ", e);
             }
         }
-        setupErrorNotifications(cfg, schedulerName);
     }
 
     private void startScheduler(Scheduler scheduler) throws SchedulerException {
@@ -1110,33 +1108,6 @@ public class DSMServer {
             response.status(401);
             response.body(exception.getMessage());
         });
-    }
-
-    protected void setupErrorNotifications(Config config, String schedulerName) {
-        if (config == null) {
-            throw new IllegalArgumentException("Config should be provided");
-        } else {
-            logger.info("Setup error notifications...");
-            if (config.hasPath("slack.hook") && config.hasPath("slack.channel")) {
-                String appEnv = config.getString("portal.environment");
-                String slackHookUrlString = config.getString("slack.hook");
-                String gcpServiceName = config.getString("slack.gcpServiceName");
-                String rootPackage = DSMServer.class.getPackageName();
-                URI slackHookUrl;
-                String slackChannel = config.getString("slack.channel");
-                try {
-                    slackHookUrl = new URI(slackHookUrlString);
-                } catch (URISyntaxException e) {
-                    throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + e);
-                }
-                SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);
-                logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to {} .",
-                        slackChannel);
-            } else {
-                logger.warn("Skipping error notification setup.");
-            }
-
-        }
     }
 
     private static class ReadinessRoute implements Route {

@@ -8,7 +8,6 @@ Our thanks to the many open-source projects that we rely on for Pepper, each of 
 * [Google Guava](https://github.com/google/guava)
 * [Google Cloud](https://github.com/googleapis/google-cloud-java)
 * [Logback](https://logback.qos.ch)
-* [JSlack](https://github.com/seratch/jslack)
 * [Typesafe Config](https://github.com/lightbend/config)
 * [Zeroturnaround Exec](https://github.com/zeroturnaround/zt-exec)
 * [SendGrid](https://github.com/sendgrid/sendgrid-java)
