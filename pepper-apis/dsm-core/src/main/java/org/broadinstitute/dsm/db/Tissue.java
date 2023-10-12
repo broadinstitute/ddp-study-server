@@ -114,7 +114,7 @@ public class Tissue {
     private String changedBy;
 
     @ColumnName (DBConstants.DELETED)
-    private Boolean deleted;
+    private boolean deleted;
 
     @ColumnName (DBConstants.FIRST_SM_ID)
     private String firstSmId;
@@ -294,7 +294,7 @@ public class Tissue {
         });
     }
 
-    @JsonProperty ("hECount")
+    @JsonProperty("hECount")
     public Integer gethECount() {
         return hECount;
     }

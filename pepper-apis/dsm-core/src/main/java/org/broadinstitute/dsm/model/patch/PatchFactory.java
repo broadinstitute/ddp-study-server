@@ -52,7 +52,7 @@ public class PatchFactory {
                 && StringUtils.isNotBlank(patch.getDdpParticipantId());
     }
 
-    private static boolean isDeletePatch(Patch patch) {
+    public static boolean isDeletePatch(Patch patch) {
         return patch.getNameValue().getName().contains(".deleted") &&
                 (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch));
     }

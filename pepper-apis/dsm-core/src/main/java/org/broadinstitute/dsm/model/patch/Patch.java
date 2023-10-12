@@ -16,6 +16,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -184,7 +185,7 @@ public class Patch {
         return String.format("Error updating %s.%s with value %s for %s=%s", table, column, value, primaryKey, id);
     }
 
-    public static Boolean isValueUnique(@NonNull DBElement dbElement) {
+    public static Boolean isValueUnique(@NonNull DBElement dbElement, String value) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
