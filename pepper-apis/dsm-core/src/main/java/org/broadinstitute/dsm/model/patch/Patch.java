@@ -155,7 +155,8 @@ public class Patch {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error updating " + dbElement.getTableName() + " record w/ id " + id, results.resultException);
+            throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
+                    nameValue.getValue(), dbElement.getPrimaryKey(), id), results.resultException);
         }
         return true;
     }
