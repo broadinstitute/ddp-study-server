@@ -143,11 +143,11 @@ public class Patch {
                     logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
                 } else {
                     throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
-                            nameValue.getValue(), dbElement.getPrimaryKey(), id));
+                            nameValue.getValue(), dbElement.getPrimaryKey(), id) + ": " + result + " rows updated");
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
                 throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
-                        nameValue.getValue(), dbElement.getPrimaryKey(), id));
+                        nameValue.getValue(), dbElement.getPrimaryKey(), id), ex);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
