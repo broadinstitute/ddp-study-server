@@ -60,6 +60,8 @@ executors:
           MYSQL_PASSWORD: passw0rd
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
         environment:
+          # Note: for this test-only container, we do not enable security since it adds an unnecessary
+          # layer of complexity
           discovery.type: single-node
           xpack.security.enabled: false
           cluster.name: elasticsearch

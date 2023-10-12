@@ -39,6 +39,7 @@ public class ElasticTestContainer {
         }
         log.info("Using ElasticSearch test container");
 
+        // Note: for this test-only container, we do not enable security since it adds an unnecessary layer of complexity
         container = new ElasticsearchContainer(ELASTIC_IMAGE)
                 .withExposedPorts(9200)
                 .withEnv("xpack.security.enabled", "false")

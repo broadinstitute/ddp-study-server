@@ -37,11 +37,13 @@ public class ParticipantDto implements Cloneable {
     }
 
     public int getParticipantIdOrThrow() {
-        return getParticipantId().orElseThrow(() -> new DsmInternalError("Participant ID cannot be null"));
+        return getParticipantId().orElseThrow(() -> new DsmInternalError(String.format("Participant ID cannot "
+                + " be null for DDP participant ID %s and instance ID %d", getDdpParticipantId().orElse("null"), ddpInstanceId)));
     }
 
     public String getDdpParticipantIdOrThrow() {
-        return getDdpParticipantId().orElseThrow(() -> new DsmInternalError("DDP participant ID cannot be null"));
+        return getDdpParticipantId().orElseThrow(() -> new DsmInternalError(String.format("DDP participant ID cannot"
+                + " be null for participant ID %d and instance ID %d", getParticipantId().orElse(-1), ddpInstanceId)));
     }
 
     public void setDdpInstanceId(int ddpInstanceId) {

@@ -178,11 +178,26 @@ public class ElasticSearchUtil {
         return client;
     }
 
+    /**
+     * Get ElasticSearch client
+     *
+     * @param baseUrl URL of ElasticSearch instance
+     * @param userName ES user name
+     * @param password ES password (null for local/test ES instance)
+     */
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl, @NonNull String userName,
                                                                      String password) {
         return getClientForElasticsearchCloud(baseUrl, userName, password, getProxy());
     }
 
+    /**
+     * Get ElasticSearch client
+     *
+     * @param baseUrl URL of ElasticSearch instance
+     * @param userName ES user name
+     * @param password ES password (null for local/test ES instance)
+     * @param proxy ES proxy (null for no proxy)
+     */
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl, @NonNull String userName,
                                                                      String password, String proxy) {
         try {
