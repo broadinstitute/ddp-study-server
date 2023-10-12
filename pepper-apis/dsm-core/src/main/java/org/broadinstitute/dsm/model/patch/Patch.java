@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -142,12 +142,12 @@ public class Patch {
                 if (result == 1) {
                     logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
                 } else {
-                    throw new RuntimeException(
-                            "Error updating " + dbElement.getTableName() + " record of w/ id " + id + " it was updating " + result
-                                    + " rows");
+                    throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
+                            nameValue.getValue(), dbElement.getPrimaryKey(), id) + ": " + result + " rows updated");
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
-                throw new DuplicateException(dbElement.getColumnName());
+                throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
+                        nameValue.getValue(), dbElement.getPrimaryKey(), id), ex);
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
@@ -155,9 +155,14 @@ public class Patch {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error updating " + dbElement.getTableName() + " record w/ id " + id, results.resultException);
+            throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
+                    nameValue.getValue(), dbElement.getPrimaryKey(), id), results.resultException);
         }
         return true;
+    }
+
+    private static String toErrorMessage(String table, String column, Object value, String primaryKey, String id) {
+        return String.format("Error updating %s.%s with value %s for %s=%s", table, column, value, primaryKey, id);
     }
 
     public static Boolean isValueUnique(@NonNull DBElement dbElement) {
