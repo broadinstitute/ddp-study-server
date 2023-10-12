@@ -142,13 +142,12 @@ public class Patch {
                 if (result == 1) {
                     logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
                 } else {
-                    throw new RuntimeException("Error updating " + dbElement.getTableName() + " with "
-                            + dbElement.getPrimaryKey() + "=" + id + ".  " + result + " rows updated.");
+                    throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
+                            nameValue.getValue(), dbElement.getPrimaryKey(), id));
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
-                throw new DsmInternalError(String.format("Error updating %s.%s with value %s for %s=%s",
-                        dbElement.getTableName(), dbElement.getColumnName(), nameValue.getValue(),
-                        dbElement.getPrimaryKey(), id), ex);
+                throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
+                        nameValue.getValue(), dbElement.getPrimaryKey(), id));
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
@@ -159,6 +158,10 @@ public class Patch {
             throw new RuntimeException("Error updating " + dbElement.getTableName() + " record w/ id " + id, results.resultException);
         }
         return true;
+    }
+
+    private static String toErrorMessage(String table, String column, Object value, String primaryKey, String id) {
+        return String.format("Error updating %s.%s with value %s for %s=%s", table, column, value, primaryKey, id);
     }
 
     public static Boolean isValueUnique(@NonNull DBElement dbElement) {
