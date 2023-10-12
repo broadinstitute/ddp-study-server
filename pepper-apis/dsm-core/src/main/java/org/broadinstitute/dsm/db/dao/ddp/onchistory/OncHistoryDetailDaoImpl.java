@@ -143,7 +143,8 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
                                         + DBConstants.ADDITIONAL_VALUES_JSON), null, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION),
                                 rs.getString(DBConstants.DESTRUCTION_POLICY), rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE),
                                 rs.getString(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getLong(DBConstants.DDP_INSTANCE_ID));
+                                rs.getLong(DBConstants.DDP_INSTANCE_ID),
+                                rs.getInt(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DELETED));
                     }
 
                 }

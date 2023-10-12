@@ -13,9 +13,14 @@ public class DeleteTissuePatch extends ExistingRecordPatch {
 
     @Override
     public Object doPatch() {
-        Object o = super.doPatch();
-        DeletePatchFactory.setDeletedForChildrenFields(this.patch, notificationUtil);
-        return o;
+        Object o = null;
+        try {
+            o = super.doPatch();
+        } finally {
+            DeletePatchFactory.setDeletedForChildrenFields(this.patch, notificationUtil);
+            return o;
+        }
+
     }
 
 }

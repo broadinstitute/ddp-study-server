@@ -248,9 +248,12 @@ public class ParticipantWrapper {
 
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+            oncHistoryDetails.removeIf(oncHistoryDetail -> oncHistoryDetail.isDeleted());
             List<SomaticResultUpload> somaticResultUpload = esDsm.getSomaticResultUpload();
             List<Tissue> tissues = esDsm.getTissue();
+            tissues.removeIf(tissue -> tissue.isDeleted());
             List<SmId> smIds = esDsm.getSmId();
+            smIds.removeIf(smId -> smId.getDeleted());
             List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
             mapSmIdsToProperTissue(tissues, smIds);
             mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);

@@ -22,7 +22,7 @@ public class TissueDao implements Dao<Tissue> {
 
 
     private static final String SQL_SELECT_TISSUES_BY_STUDY = "SELECT p.ddp_participant_id, "
-            + "tissue_id, t.onc_history_detail_id, t.notes, count_received, tissue_type, tissue_site, tumor_type, h_e, pathology_report, "
+            + "tissue_id, t.onc_history_detail_id, t.notes, t.deleted, count_received, tissue_type, tissue_site, tumor_type, h_e, pathology_report, "
             + "collaborator_sample_id, "
             + "block_sent, scrolls_received, sk_id, sm_id, sent_gp, first_sm_id, additional_tissue_value_json, expected_return, "
             + "return_date, return_fedex_id, shl_work_number, block_id_shl, tumor_percentage, tissue_sequence, scrolls_count, uss_count, "

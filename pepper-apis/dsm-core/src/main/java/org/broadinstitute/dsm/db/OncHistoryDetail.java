@@ -62,7 +62,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "collaborator_sample_id, block_sent, scrolls_received, sk_id, sm_id, "
                     + "sent_gp, first_sm_id, additional_tissue_value_json, expected_return, return_date, return_fedex_id, "
                     + "shl_work_number, block_id_shl, tumor_percentage, tissue_sequence, "
-                    + "scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, "
+                    + "scrolls_count, uss_count, h_e_count, blocks_count, t.deleted, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, "
                     + "sm.tissue_id, smt.sm_id_type FROM ddp_onc_history_detail oD "
                     + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id "
                     + "AND NOT oD.deleted <=> 1 AND NOT m.deleted <=> 1) "
@@ -265,7 +265,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
                             String gender, String additionalValuesJson, List<Tissue> tissues, String tissueProblemOption,
                             String destructionPolicy, boolean unableObtainTissue, String participantId, String ddpParticipantId,
-                            long ddpInstanceId) {
+                            long ddpInstanceId, Integer deleted) {
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.medicalRecordId = medicalRecordId;
         this.datePx = datePx;
@@ -297,6 +297,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.ddpInstanceId = ddpInstanceId;
+        this.deleted = deleted == 1;
     }
 
     public OncHistoryDetail(Builder builder) {
@@ -334,7 +335,8 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
                         tissues, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION), rs.getString(DBConstants.DESTRUCTION_POLICY),
                         rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE), rs.getString(DBConstants.PARTICIPANT_ID),
-                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
+                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID),
+                        rs.getInt(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DELETED));
         return oncHistoryDetail;
     }
 
@@ -402,7 +404,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     }
                     //add tissues to their onc history
                     for (Tissue tissue : tissues.values()) {
-                        long tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        Integer tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
                         OncHistoryDetail oncHistoryDetail = oncHistoryMap.get(tissueOncHistoryDetailId);
                         oncHistoryDetail.getTissues().add(tissue);
                     } //  add onchistories to their particiapnt

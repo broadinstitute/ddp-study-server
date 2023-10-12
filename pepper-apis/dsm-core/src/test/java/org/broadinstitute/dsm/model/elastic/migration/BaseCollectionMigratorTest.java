@@ -30,7 +30,7 @@ public class BaseCollectionMigratorTest {
     private List mockOncHistoryDetail() {
         OncHistoryDetail oncHistoryDetail =
                 new OncHistoryDetail(23, 0, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                        null, null, null, null, null, null, null, null, null, mockTissues(), null, null, false, null, null, 0);
+                        null, null, null, null, null, null, null, null, null, mockTissues(), null, null, false, null, null, 0, null);
         return Collections.singletonList(oncHistoryDetail);
     }
 
@@ -38,10 +38,10 @@ public class BaseCollectionMigratorTest {
         List<Tissue> fieldValue = new ArrayList<>(List.of(new Tissue(11, 22,
                 "notes", null, null, "awdwadawdawdawd", null, null, null, null, null, null,
                 null, null, "Awdawd", null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null), new Tissue(555, null,
+                null, null, null, null, null, null, null, null, null, null), new Tissue(555, null,
                 null, null, null, null, null, null, null, "awdawd", null, null,
                 null, null, "awdawddwa", null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null)));
+                null, null, null, null, null, null, null, null, null, null)));
         return fieldValue;
     }
 

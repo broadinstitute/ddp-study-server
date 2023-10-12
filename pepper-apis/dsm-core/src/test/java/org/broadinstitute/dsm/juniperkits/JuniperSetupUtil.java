@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.TestHelper.notificationUtil;
+import static org.broadinstitute.dsm.patch.TestParticipantUtil.getPrimaryKey;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
 
@@ -24,7 +25,6 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.gp.BSPKit;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
@@ -52,8 +52,6 @@ import org.broadinstitute.lddp.db.SimpleResult;
  */
 @Slf4j
 public class JuniperSetupUtil {
-    private static final String INSERT_JUNIPER_GROUP =
-            "INSERT INTO ddp_group (name) VALUES (?) ON DUPLICATE KEY UPDATE name = 'juniper test';";
     private static final String INSERT_JUNIPER_INSTANCE =
             "INSERT INTO ddp_instance (instance_name, study_guid, display_name, is_active, bsp_organism, "
                     + " collaborator_id_prefix, auth0_token) VALUES (?, ?, ?, 1, 1, ?, 0) ON DUPLICATE KEY UPDATE auth0_token = 0;";
@@ -203,14 +201,6 @@ public class JuniperSetupUtil {
             }
         }
 
-    }
-
-    private static String getPrimaryKey(ResultSet rs, String table) throws SQLException {
-        if (rs.next()) {
-            return rs.getString(1);
-        } else {
-            throw new DsmInternalError(String.format("Unable to set up data in %s for juniper, going to role back transaction", table));
-        }
     }
 
     public static void changeKitToQueue(JuniperKitRequest juniperKitRequest, EasyPostUtil mockEasyPostUtil) {

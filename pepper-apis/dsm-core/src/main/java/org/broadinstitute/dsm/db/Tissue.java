@@ -45,11 +45,11 @@ public class Tissue {
             + "LEFT JOIN ddp_tissue as t on (t.onc_history_detail_id = oD.onc_history_detail_id) WHERE p.participant_id = ?";
     private static final Logger logger = LoggerFactory.getLogger(Tissue.class);
     private static final String SQL_SELECT_TISSUE =
-            "SELECT tissue_id, onc_history_detail_id, notes, count_received, tissue_type, tissue_site, tumor_type, h_e, "
+            "SELECT t.tissue_id, onc_history_detail_id, notes, count_received, tissue_type, tissue_site, tumor_type, h_e, "
                     + "pathology_report, collaborator_sample_id, block_sent, expected_return, return_date, return_fedex_id, "
                     + "scrolls_received, sk_id, sm_id, "
                     + "scrolls_count, uss_count, blocks_count, h_e_count, first_sm_id, sent_gp, last_changed, changed_by, "
-                    + "additional_tissue_value_json, shl_work_number, block_id_shl, "
+                    + "additional_tissue_value_json, shl_work_number, block_id_shl, t.deleted, "
                     + "tumor_percentage, tissue_sequence, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, sm.tissue_id "
                     + "FROM ddp_tissue t "
                     + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id AND NOT sm.deleted <=> 1 AND NOT t.deleted <=> 1) "
@@ -159,7 +159,7 @@ public class Tissue {
                   String scrollsReceived, String skId, String smId, String sentGp, String firstSmId, String additionalValuesJson,
                   String expectedReturn, String returnDate, String returnFedexId, String shlWorkNumber, String tumorPercentage,
                   String tissueSequence, Integer scrollsCount, Integer ussCount, Integer blocksCount, Integer hECount,
-                  String blockIdShl, List<SmId> ussSMIDs, List<SmId> scrollSMIDs, List<SmId> heSMID) {
+                  String blockIdShl, List<SmId> ussSMIDs, List<SmId> scrollSMIDs, List<SmId> heSMID, Integer deleted) {
         this.tissueId = tissueId;
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.notes = notes;
@@ -191,6 +191,7 @@ public class Tissue {
         this.scrollSMID = scrollSMIDs;
         this.ussSMID = ussSMIDs;
         this.heSMID = heSMID;
+        this.deleted = deleted == 1;
     }
 
     public static Tissue getTissue(@NonNull ResultSet rs) throws SQLException {
@@ -211,7 +212,8 @@ public class Tissue {
                 rs.getString(DBConstants.TISSUE_SEQUENCE), (Integer) rs.getObject(DBConstants.SCROLLS_COUNT),
                 (Integer) rs.getObject(DBConstants.USS_COUNT), (Integer) rs.getObject(DBConstants.BLOCKS_COUNT),
                 (Integer) rs.getObject(DBConstants.H_E_COUNT), rs.getString(DBConstants.BLOCK_ID_SHL),
-                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
+                rs.getInt(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DELETED));
         return tissue;
     }
 
