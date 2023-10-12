@@ -8,14 +8,6 @@
         </encoder>
     </appender>
 
-    <!-- appender that sends error messages into slack.  Hook and channel are set in applcation.conf -->
-    <appender name="SLACK" class="org.broadinstitute.ddp.log.SlackAppender">
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
     <appender name="REDISCONNVALIDATOR" class="org.broadinstitute.ddp.log.RedisConnectionValidatorAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
