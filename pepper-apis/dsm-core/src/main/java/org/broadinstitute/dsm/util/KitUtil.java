@@ -323,7 +323,9 @@ public class KitUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of assignees ", results.resultException);
+            throw new RuntimeException(
+                    String.format("Error getting kitCollaboratorId for participant %s in realm with id %s", ddpParticipantId, realmId),
+                    results.resultException);
         }
         return (String) results.resultValue;
     }
@@ -346,7 +348,9 @@ public class KitUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of assignees ", results.resultException);
+            throw new RuntimeException(
+                    String.format("Error getting TissueCollaboratorId for participant %s in realm with id %s", ddpParticipantId, realmId),
+                    results.resultException);
         }
         return (String) results.resultValue;
     }

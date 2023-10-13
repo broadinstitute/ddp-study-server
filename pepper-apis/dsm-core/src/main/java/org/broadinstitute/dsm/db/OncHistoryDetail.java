@@ -425,7 +425,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of oncHistories ", results.resultException);
+            throw new DsmInternalError("Couldn't get list of oncHistories ", results.resultException);
         }
 
         logger.info("Got " + oncHistory.size() + " participants oncHistories in DSM DB for " + realm);

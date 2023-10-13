@@ -101,25 +101,25 @@ public class ClinicalKitDto {
     }
 
     public void setNecessaryParticipantDataToClinicalKit(String ddpParticipantId, DDPInstance ddpInstance) {
+        logger.info("Setting PHI to clinical kit's accessioning data for {}", ddpParticipantId);
         Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
             throw new RuntimeException("Participant ES Data is not found for " + ddpParticipantId);
         }
-
+        ElasticSearchParticipantDto elasticSearchParticipantDto = maybeParticipantESDataByParticipantId.get();
         try {
-            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(Dsm::getDateOfBirth).orElse(""));
-            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getFirstName).orElse(""));
-            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getLastName).orElse(""));
-            this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
-            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getHruid).orElse("");
+            this.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(""));
+            this.setFirstName(elasticSearchParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
+            this.setLastName(elasticSearchParticipantDto.getProfile().map(Profile::getLastName).orElse(""));
+            this.setGender(getParticipantGender(elasticSearchParticipantDto, ddpInstance.getName()));
+            String shortId = elasticSearchParticipantDto.getProfile().map(Profile::getHruid).orElse("");
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                            ddpInstance.isMigratedDDP(),
-                            ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
+                            ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
-            throw new RuntimeException("Participant doesn't exist / is not valid for kit", e);
+            throw new RuntimeException(String.format("Participant {} doesn't exist / is not valid for kit", ddpParticipantId), e);
         }
     }
 
@@ -135,6 +135,7 @@ public class ClinicalKitDto {
                 return oncHistoryWithGender.get().getGender();
             }
         }
+        logger.info("Participant {} did not have gender on tissue pages, will look into activities", participantByShortId.getParticipantId());
         //if gender is not set on tissue page get answer from "ABOUT_YOU.ASSIGNED_SEX"
         return getGenderFromActivities(participantByShortId.getActivities());
     }

@@ -304,7 +304,6 @@ public class Tissue {
                 case "he": {
                     this.heSMID.add(tissueSmId);
                     break;
-
                 }
                 case "uss": {
                     this.ussSMID.add(tissueSmId);
