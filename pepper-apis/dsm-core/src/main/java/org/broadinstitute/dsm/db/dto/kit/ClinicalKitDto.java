@@ -113,7 +113,7 @@ public class ClinicalKitDto {
             this.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(""));
             this.setFirstName(elasticSearchParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
             this.setLastName(elasticSearchParticipantDto.getProfile().map(Profile::getLastName).orElse(""));
-            this.setGender(getParticipantGender(elasticSearchParticipantDto, ddpInstance.getName()));
+            this.setGender(getParticipantGender(elasticSearchParticipantDto, ddpInstance.getName(), ddpParticipantId));
             String shortId = elasticSearchParticipantDto.getProfile().map(Profile::getHruid).orElse("");
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
@@ -124,16 +124,17 @@ public class ClinicalKitDto {
         }
     }
 
-    private String getParticipantGender(ElasticSearchParticipantDto participantByShortId, String realm) {
+    private String getParticipantGender(ElasticSearchParticipantDto participantByShortId, String realm, String ddpParticipantId) {
         // if gender is set on tissue page use that
-        if(StringUtils.isBlank(participantByShortId.getParticipantId())){
-            throw new DsmInternalError(String.format("The participant %s is missing participant id", participantByShortId.getProfile().get().getGuid()));
+        String participantId = participantByShortId.getParticipantId();
+        if(StringUtils.isBlank(participantId)){
+            throw new DsmInternalError(String.format("The participant %s is missing participant id", ddpParticipantId));
         }
         List<String> list = new ArrayList();
-        list.add(participantByShortId.getParticipantId());
+        list.add(participantId);
         Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetailsByParticipantIds(realm, list);
         if (!oncHistoryDetails.isEmpty()) {
-            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantByShortId.getParticipantId()).stream()
+            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantId).stream()
                     .filter(o -> StringUtils.isNotBlank(o.getGender())).findFirst();
             if (oncHistoryWithGender.isPresent()) {
                 return oncHistoryWithGender.get().getGender();
