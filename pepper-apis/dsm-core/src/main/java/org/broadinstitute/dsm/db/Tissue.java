@@ -191,7 +191,7 @@ public class Tissue {
         this.scrollSMID = scrollSMIDs;
         this.ussSMID = ussSMIDs;
         this.heSMID = heSMID;
-        this.deleted = deleted == 1;
+        this.deleted = (deleted != null && deleted == 1);
     }
 
     public static Tissue getTissue(@NonNull ResultSet rs) throws SQLException {

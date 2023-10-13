@@ -297,7 +297,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.ddpInstanceId = ddpInstanceId;
-        this.deleted = deleted == 1;
+        this.deleted =  (deleted != null && deleted == 1);
     }
 
     public OncHistoryDetail(Builder builder) {
