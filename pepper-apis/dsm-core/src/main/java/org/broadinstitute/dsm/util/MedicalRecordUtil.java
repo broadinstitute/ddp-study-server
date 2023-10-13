@@ -50,13 +50,16 @@ public class MedicalRecordUtil {
                     + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id "
                     + "AND NOT rec.deleted <=> 1 AND part.participant_id = ? AND inst.type = ?";
 
-    public static int  writeNewMedicalRecordIntoDb(Connection conn, String institutionId, String ddpParticipantId,
-                                                       String instanceName, String ddpInstitutionId, boolean updateElastic) {
+    public static int insertMedicalRecord(Connection conn, String institutionId, String ddpParticipantId,
+                                          String instanceName, String ddpInstitutionId, boolean updateElastic) {
         int mrId = writeMedicalRecord(conn, institutionId);
         // mrId can be null if medical record already exists
         if (updateElastic) {
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
             String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+            if (StringUtils.isBlank(participantGuid)) {
+                throw new DsmInternalError("No participant GUID found for participant ID: " + ddpParticipantId);
+            }
             MedicalRecord medicalRecord = new MedicalRecord();
             medicalRecord.setMedicalRecordId(mrId);
             medicalRecord.setDdpParticipantId(ddpParticipantId);
@@ -64,15 +67,9 @@ public class MedicalRecordUtil {
             medicalRecord.setDdpInstanceId(ddpInstanceDto.getDdpInstanceId());
             medicalRecord.setDdpInstitutionId(ddpInstitutionId);
 
-            try {
-                UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
-                        ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid,
-                        new PutToNestedScriptBuilder()).export();
-            } catch (Exception e) {
-                logger.error(String.format("Error inserting new medical record for participant with id: %s in ElasticSearch",
-                        ddpParticipantId));
-                e.printStackTrace();
-            }
+            UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
+                    ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid,
+                    new PutToNestedScriptBuilder()).export();
         }
         return mrId;
     }
@@ -93,7 +90,7 @@ public class MedicalRecordUtil {
             insertNewRecord.setString(3, SystemUtil.SYSTEM);
             int result = insertNewRecord.executeUpdate();
             if (result != 1) {
-                throw new RuntimeException("Error updating medical record");
+                throw new DsmInternalError("Error inserting medical record: number of rows inserted was " + result);
             }
             try (ResultSet rs = insertNewRecord.getGeneratedKeys()) {
                 if (!rs.next()) {
@@ -103,7 +100,7 @@ public class MedicalRecordUtil {
             }
             logger.info("Added new medical record for institution with id {}", institutionId);
         } catch (SQLException e) {
-            throw new RuntimeException("Error inserting new medical record ", e);
+            throw new DsmInternalError("Error inserting medical record for institution " + institutionId, e);
         }
         return mrId;
     }
@@ -204,13 +201,13 @@ public class MedicalRecordUtil {
             if (rs.next()) { //no next if no generated return key -> update of institution timestamp does not return new key
                 String institutionId = rs.getString(1);
                 if (StringUtils.isNotBlank(institutionId)) {
-                    logger.info("Added institution w/ id " + institutionId + " for participant w/ id " + ddpParticipantId);
-                    return MedicalRecordUtil.writeNewMedicalRecordIntoDb(conn, institutionId, ddpParticipantId,
+                    logger.info("Added institution with id {} for participant {}", institutionId, ddpParticipantId);
+                    return MedicalRecordUtil.insertMedicalRecord(conn, institutionId, ddpParticipantId,
                             instanceName, ddpInstitutionId, updateElastic);
                 }
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Error getting id of new institution ", e);
+        } catch (SQLException e) {
+            throw new DsmInternalError("Error getting id of new institution for participant " + ddpParticipantId, e);
         }
         return null;
     }
@@ -257,11 +254,12 @@ public class MedicalRecordUtil {
         return false;
     }
 
-    public static Number isInstitutionTypeInDB(@NonNull String participantId) {
+    public static Integer isInstitutionTypeInDB(@NonNull String participantId) {
+        logger.info("Checking for medical record of type {} for participant {}", NOT_SPECIFIED, participantId);
         return isInstitutionTypeInDB(participantId, NOT_SPECIFIED);
     }
 
-    public static Number isInstitutionTypeInDB(@NonNull String participantId, @NonNull String type) {
+    public static Integer isInstitutionTypeInDB(@NonNull String participantId, @NonNull String type) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement checkParticipant = conn.prepareStatement(SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT)) {
@@ -279,9 +277,9 @@ public class MedicalRecordUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting medical record id for pt w/ id " + participantId, results.resultException);
+            throw new DsmInternalError("Error getting medical record id for pt w/ id " + participantId, results.resultException);
         }
-        return (Number) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
     public static Integer getParticipantIdByDdpParticipantId(@NonNull String ddpParticipantId, @NonNull String realm) {

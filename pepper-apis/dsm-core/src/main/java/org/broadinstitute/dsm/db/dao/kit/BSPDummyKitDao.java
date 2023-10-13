@@ -81,15 +81,15 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstance.getDdpInstanceId()).orElseThrow(() -> {
             throw new RuntimeException("Random participant id was not generated");
         });
-        Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId =
+        ElasticSearchParticipantDto esParticipantDto =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-        while (maybeParticipantByParticipantId.isEmpty() || maybeParticipantByParticipantId.get().getProfile().map(Profile::getHruid)
-                .isEmpty() || !maybeParticipantByParticipantId.get().getStatus().get().equals("ENROLLED") && tries < 10) {
+        while (esParticipantDto.getProfile().map(Profile::getHruid).isEmpty()
+                || !esParticipantDto.getStatus().get().equals("ENROLLED") && tries < 10) {
             tries++;
             ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstance.getDdpInstanceId()).orElseThrow(() -> {
                 throw new RuntimeException("Random participant id was not generated");
             });
-            maybeParticipantByParticipantId =
+            esParticipantDto =
                     ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
         }
         return ddpParticipantId;

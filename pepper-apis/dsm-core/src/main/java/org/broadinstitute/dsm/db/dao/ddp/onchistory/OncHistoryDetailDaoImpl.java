@@ -13,6 +13,7 @@ import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
@@ -23,6 +24,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
 
+@Slf4j
 public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDetailDto> {
 
     public static final String SQL_SELECT_TISSUE_RECEIVED =
@@ -45,6 +47,7 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
         if (simpleResult.resultException != null) {
             throw new DsmInternalError("Error deleting ddp_onc_history_detail with id: " + id, simpleResult.resultException);
         }
+        log.info("Deleted onc history detail record with ID {}", id);
         return (int) simpleResult.resultValue;
     }
 
@@ -59,8 +62,8 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
         return (Optional<OncHistoryDetailDto>) res.resultValue;
     }
 
-    private static class BuildOncHistoryDetailDto implements ResultsBuilder {
-        public Object build(ResultSet rs) throws SQLException {
+    public static class BuildOncHistoryDetailDto implements ResultsBuilder {
+        public OncHistoryDetailDto build(ResultSet rs) throws SQLException {
             ResultSetMetaData md = rs.getMetaData();
             int colCount = md.getColumnCount();
             Map<String, Object> row = new HashMap<>(colCount);

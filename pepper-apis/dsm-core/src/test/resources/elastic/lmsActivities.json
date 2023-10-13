@@ -1,0 +1,318 @@
+{
+  "activities": [
+    {
+      "activityCode": "CONSENT_ASSENT",
+      "createdAt": 1687877487886,
+      "completedAt": 1687877517968,
+      "activityVersion": "v2",
+      "lastUpdatedAt": 1687877517968,
+      "parentInstanceGuid": null,
+      "questionsAnswers": [
+        {
+          "stableId": "CONSENT_ASSENT_BLOOD",
+          "answer": true,
+          "CONSENT_ASSENT_BLOOD": true,
+          "questionType": "BOOLEAN"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_TISSUE",
+          "CONSENT_ASSENT_TISSUE": true,
+          "answer": true,
+          "questionType": "BOOLEAN"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_CHILD_FIRSTNAME",
+          "answer": "E2E-Child-SpinkaNortheast",
+          "CONSENT_ASSENT_CHILD_FIRSTNAME": "E2E-Child-SpinkaNortheast",
+          "questionType": "TEXT"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_CHILD_LASTNAME",
+          "answer": "Playwright-StoltenbergBorders",
+          "CONSENT_ASSENT_CHILD_LASTNAME": "Playwright-StoltenbergBorders",
+          "questionType": "TEXT"
+        },
+        {
+          "date": "2010-12-30",
+          "dateFields": {
+            "month": 12,
+            "year": 2010,
+            "day": 30
+          },
+          "stableId": "CONSENT_ASSENT_CHILD_DOB",
+          "answer": "2010-12-30",
+          "CONSENT_ASSENT_CHILD_DOB": "2010-12-30",
+          "questionType": "DATE"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_FIRSTNAME",
+          "answer": "E2E-GerholdDodge",
+          "CONSENT_ASSENT_FIRSTNAME": "E2E-GerholdDodge",
+          "questionType": "TEXT"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_LASTNAME",
+          "answer": "Playwright-WardSoutheast",
+          "questionType": "TEXT",
+          "CONSENT_ASSENT_LASTNAME": "Playwright-WardSoutheast"
+        },
+        {
+          "CONSENT_ASSENT_PARENT_SIGNATURE": "E2E-GerholdDodge Playwright-WardSoutheast",
+          "stableId": "CONSENT_ASSENT_PARENT_SIGNATURE",
+          "answer": "E2E-GerholdDodge Playwright-WardSoutheast",
+          "questionType": "TEXT"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_RELATIONSHIP",
+          "answer": [
+            "PARENT"
+          ],
+          "groupedOptions": {},
+          "optionDetails": [],
+          "CONSENT_ASSENT_RELATIONSHIP": [
+            "PARENT"
+          ],
+          "nestedOptions": {},
+          "questionType": "PICKLIST"
+        },
+        {
+          "stableId": "MAILING_ADDRESS",
+          "answer": [
+            [
+              "E2E-CHILD-SPINKANORTHEAST PLAYWRIGHT-STOLTENBERGBORDERS",
+              "415 MAIN STREET",
+              "",
+              "CAMBRIDGE",
+              "MA",
+              "02142-1027",
+              "US",
+              "354956200"
+            ]
+          ],
+          "questionType": "COMPOSITE"
+        },
+        {
+          "stableId": "CONSENT_ASSENT_CHILD_SIGNATURE",
+          "CONSENT_ASSENT_CHILD_SIGNATURE": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "answer": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "questionType": "TEXT"
+        }
+      ],
+      "guid": "LTXZNAPRO8",
+      "attributes": {},
+      "status": "COMPLETE"
+    },
+    {
+      "activityCode": "CONSENT_ADDENDUM_PEDIATRIC",
+      "createdAt": 1687877519059,
+      "completedAt": 1687877526563,
+      "activityVersion": "v2",
+      "lastUpdatedAt": 1687877526563,
+      "parentInstanceGuid": null,
+      "questionsAnswers": [
+        {
+          "stableId": "SOMATIC_CONSENT_TUMOR_PEDIATRIC",
+          "answer": true,
+          "SOMATIC_CONSENT_TUMOR_PEDIATRIC": true,
+          "questionType": "BOOLEAN"
+        },
+        {
+          "stableId": "SOMATIC_SINGATURE_PEDIATRIC",
+          "SOMATIC_SINGATURE_PEDIATRIC": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "answer": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "questionType": "TEXT"
+        },
+        {
+          "stableId": "SOMATIC_ASSENT_ADDENDUM",
+          "answer": true,
+          "SOMATIC_ASSENT_ADDENDUM": true,
+          "questionType": "BOOLEAN"
+        },
+        {
+          "stableId": "ADDENDUM",
+          "answer": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "ADDENDUM": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "questionType": "TEXT"
+        }
+      ],
+      "guid": "3HNJCOY5AX",
+      "attributes": {},
+      "status": "COMPLETE"
+    },
+    {
+      "activityCode": "MEDICAL_RELEASE",
+      "createdAt": 1687877526735,
+      "completedAt": 1687877531071,
+      "activityVersion": "v2",
+      "lastUpdatedAt": 1687877531071,
+      "parentInstanceGuid": null,
+      "questionsAnswers": [
+        {
+          "stableId": "PHYSICIAN",
+          "answer": [
+            [
+              "Massachusetts General Hospital",
+              "",
+              "Boston",
+              "MA"
+            ]
+          ],
+          "questionType": "COMPOSITE"
+        },
+        {
+          "stableId": "RELEASE_SELF_AGREEMENT",
+          "answer": true,
+          "RELEASE_SELF_AGREEMENT": true,
+          "questionType": "AGREEMENT"
+        },
+        {
+          "stableId": "RELEASE_SIGNATURE",
+          "answer": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "RELEASE_SIGNATURE": "E2E-Child-SpinkaNortheast Playwright-StoltenbergBorders",
+          "questionType": "TEXT"
+        }
+      ],
+      "guid": "JA8L96EETI",
+      "attributes": {},
+      "status": "COMPLETE"
+    },
+    {
+      "activityCode": "ABOUT_YOUR_CANCER",
+      "createdAt": 1687877531334,
+      "completedAt": null,
+      "activityVersion": "v1",
+      "lastUpdatedAt": 1687877539233,
+      "parentInstanceGuid": null,
+      "questionsAnswers": [
+        {
+          "date": "2000-02",
+          "dateFields": {
+            "month": 2,
+            "year": 2000,
+            "day": null
+          },
+          "stableId": "DIAGNOSIS_DATE",
+          "answer": "2000-02",
+          "questionType": "DATE",
+          "DIAGNOSIS_DATE": "2000-02"
+        },
+        {
+          "stableId": "INITIAL_BODY_LOC_LIST",
+          "answer": [
+            [
+              "BLOOD"
+            ],
+            [
+              "LUNG"
+            ]
+          ],
+          "INITIAL_BODY_LOC_LIST": [
+            [
+              "BLOOD"
+            ],
+            [
+              "LUNG"
+            ]
+          ],
+          "questionType": "COMPOSITE"
+        },
+        {
+          "stableId": "CANCER_FREE",
+          "answer": [
+            "NO"
+          ],
+          "groupedOptions": {},
+          "optionDetails": [],
+          "CANCER_FREE": [
+            "NO"
+          ],
+          "nestedOptions": {},
+          "questionType": "PICKLIST"
+        },
+        {
+          "stableId": "HAD_BODY_LOC_LIST",
+          "HAD_BODY_LOC_LIST": [
+            [
+              "PANCREAS"
+            ]
+          ],
+          "answer": [
+            [
+              "PANCREAS"
+            ]
+          ],
+          "questionType": "COMPOSITE"
+        },
+        {
+          "stableId": "TREATMENTS",
+          "answer": [
+            "RADIATION"
+          ],
+          "TREATMENTS": [
+            "RADIATION"
+          ],
+          "groupedOptions": {},
+          "optionDetails": [],
+          "nestedOptions": {},
+          "questionType": "PICKLIST"
+        },
+        {
+          "stableId": "THERAPY_LIST",
+          "answer": [
+            [
+              "ABARELIX_PLENAXIS"
+            ]
+          ],
+          "THERAPY_LIST": [
+            [
+              "ABARELIX_PLENAXIS"
+            ]
+          ],
+          "questionType": "COMPOSITE"
+        }
+      ],
+      "guid": "GIJDYIYXZI",
+      "attributes": {},
+      "status": "IN_PROGRESS"
+    },
+    {
+      "activityCode": "ADD_PARTICIPANT",
+      "createdAt": 1687877518075,
+      "completedAt": null,
+      "activityVersion": "v1",
+      "lastUpdatedAt": 1687877518079,
+      "parentInstanceGuid": null,
+      "questionsAnswers": [
+        {
+          "stableId": "CHILD_COUNTRY_COPY",
+          "CHILD_COUNTRY_COPY": [
+            "US"
+          ],
+          "answer": [
+            "US"
+          ],
+          "groupedOptions": {},
+          "optionDetails": [],
+          "nestedOptions": {},
+          "questionType": "PICKLIST"
+        },
+        {
+          "stableId": "CHILD_STATE_COPY",
+          "answer": [
+            "MA"
+          ],
+          "groupedOptions": {},
+          "optionDetails": [],
+          "nestedOptions": {},
+          "CHILD_STATE_COPY": [
+            "MA"
+          ],
+          "questionType": "PICKLIST"
+        }
+      ],
+      "guid": "RTKISIVD2V",
+      "attributes": {},
+      "status": "CREATED"
+    }
+  ]
+}

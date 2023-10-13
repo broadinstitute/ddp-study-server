@@ -1,17 +1,17 @@
 package org.broadinstitute.lddp.handlers.util;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class InstitutionRequest {
     private long id; //submissionId of survey
     private String participantId; //UUID (alt pid)
     private String lastUpdated; //last updated date for institution survey
-    private ArrayList<Institution> institutions; //institutions
+    private List<Institution> institutions; //institutions
 
     public InstitutionRequest() {
     }
 
-    public InstitutionRequest(long id, String participantId, ArrayList<Institution> institution, String lastUpdated) {
+    public InstitutionRequest(long id, String participantId, List<Institution> institution, String lastUpdated) {
         this.id = id;
         this.participantId = participantId;
         this.institutions = institution;
@@ -42,11 +42,11 @@ public class InstitutionRequest {
         this.lastUpdated = lastUpdated;
     }
 
-    public ArrayList<Institution> getInstitutions() {
+    public List<Institution> getInstitutions() {
         return institutions;
     }
 
-    public void setInstitutions(ArrayList<Institution> institutions) {
+    public void setInstitutions(List<Institution> institutions) {
         this.institutions = institutions;
     }
 

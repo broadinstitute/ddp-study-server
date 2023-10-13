@@ -101,18 +101,15 @@ public class ClinicalKitDto {
     }
 
     public void setNecessaryParticipantDataToClinicalKit(String ddpParticipantId, DDPInstance ddpInstance) {
-        Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
+        ElasticSearchParticipantDto esParticipantDto =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-        if (maybeParticipantESDataByParticipantId.isEmpty()) {
-            throw new RuntimeException("Participant ES Data is not found for " + ddpParticipantId);
-        }
 
         try {
-            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(Dsm::getDateOfBirth).orElse(""));
-            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getFirstName).orElse(""));
-            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getLastName).orElse(""));
-            this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
-            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getHruid).orElse("");
+            this.setDateOfBirth(esParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(""));
+            this.setFirstName(esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
+            this.setLastName(esParticipantDto.getProfile().map(Profile::getLastName).orElse(""));
+            this.setGender(getParticipantGender(esParticipantDto, ddpInstance.getName()));
+            String shortId = esParticipantDto.getProfile().map(Profile::getHruid).orElse("");
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                             ddpInstance.isMigratedDDP(),
