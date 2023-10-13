@@ -403,7 +403,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     }
                     //add tissues to their onc history
                     for (Tissue tissue : tissues.values()) {
-                        long tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        int tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
                         OncHistoryDetail oncHistoryDetail = oncHistoryMap.get(tissueOncHistoryDetailId);
                         oncHistoryDetail.getTissues().add(tissue);
                     } //  add onchistories to their particiapnt
