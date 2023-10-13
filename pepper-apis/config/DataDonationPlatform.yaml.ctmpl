@@ -13,8 +13,13 @@ manual_scaling:
 manual_scaling:
   instances: 2
 {{else if eq $environment "dev"}}
-manual_scaling:
-  instances: 2
+automatic_scaling:
+  max_instances: 2
+  min_instances: 1
+  target_cpu_utilization: 0.95
+  target_throughput_utilization: 0.95
+  max_concurrent_requests: 80
+  max_pending_latency: 30s
 {{else}}
 basic_scaling:
   max_instances: 2
