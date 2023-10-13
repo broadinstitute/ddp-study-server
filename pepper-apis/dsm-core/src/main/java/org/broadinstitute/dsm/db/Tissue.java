@@ -84,7 +84,7 @@ public class Tissue {
     @ColumnName (DBConstants.PATHOLOGY_REPORT)
     private String pathologyReport;
 
-    @UniqueField(true)
+    @UniqueField()
     @ColumnName (DBConstants.COLLABORATOR_SAMPLE_ID)
     private String collaboratorSampleId;
 
@@ -99,11 +99,11 @@ public class Tissue {
     @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String scrollsReceived;
 
-    @UniqueField(true)
+    @UniqueField()
     @ColumnName (DBConstants.SK_ID)
     private String skId;
 
-    @UniqueField(true)
+    @UniqueField()
     @ColumnName (DBConstants.SM_ID)
     private String smId;
 

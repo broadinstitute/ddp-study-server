@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -123,7 +122,7 @@ public class PatchUtil {
             }
 
             ColumnName[] columnName = field.getAnnotationsByType(ColumnName.class);
-            UniqueField[] uniqueFields = field.getAnnotationsByType(UniqueField.class);
+            UniqueField isUniqueField = field.getAnnotation(UniqueField.class);
             if (columnName.length > 0) {
                 for (ColumnName column : columnName) {
                     String nameKey = column.value();
@@ -136,7 +135,7 @@ public class PatchUtil {
                     if (StringUtils.isNotBlank(columnPrefix)) {
                         fieldKey = columnPrefix.concat("_").concat(field.getName());
                     }
-                    boolean isUnique = Arrays.stream(uniqueFields).anyMatch(uniqueField -> uniqueField.value());
+                    boolean isUnique = isUniqueField != null;
                     columnNameMap.put(fieldKey,
                             new DBElement(tableName, tableAlias, primaryKey, column.value(), field.getAnnotation(DbDateConversion.class), isUnique));
                     dataBaseMap.put(nameKey, field.getName());

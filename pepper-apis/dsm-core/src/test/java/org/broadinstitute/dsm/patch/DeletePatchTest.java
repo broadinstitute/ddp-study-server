@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.patch.BasePatch;
 import org.broadinstitute.dsm.model.patch.DeleteOncHistoryPatch;
 import org.broadinstitute.dsm.model.patch.DeletePatchFactory;
@@ -19,6 +21,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class DeletePatchTest extends DbTxnBaseTest {
     private static final String participantGuid = "TEST_PARTICIPANT";
     private static String participantId;
@@ -91,7 +94,7 @@ public class DeletePatchTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testDeleteOncHistoryPatch() {
+    public void testDeleteOncHistoryAndUniquePatch() {
         String institutionId = testParticipantUtil.createInstitutionForParticipant(participantId);
         String medicalRecordId = testParticipantUtil.createMRForParticipant(institutionId);
         String oncHistoryId = testParticipantUtil.createOncHistoryForParticipant(medicalRecordId);
@@ -109,19 +112,43 @@ public class DeletePatchTest extends DbTxnBaseTest {
         SmId tissueSmId = tissue.getUssSMID().stream().filter(smId -> String.valueOf(smId.getSmIdPk()).equals(smIdPk)).findAny().get();
         Assert.assertEquals(String.valueOf(tissueSmId.getTissueId()), tissueId);
 
+        String tissueSkIdUniquePatch = "{\"id\":" + tissueId + ",\"user\":\"" + testParticipantUtil.userEmail +
+                "\",\"nameValue\":{\"name\":\"t.skId\",\"value\":\"123\"},\"ddpParticipantId\":\""
+                + participantGuid + "\",\"parent\":\"oncHistoryDetailId\",\"parentId\":" + oncHistoryId +
+                ",\"tableAlias\":\"t\",\"isUnique\":true,\"realm\":\"" + instanceName + "\"}";
+        Patch patch = new Gson().fromJson(tissueSkIdUniquePatch, Patch.class);
+        BasePatch patcher = PatchFactory.makePatch(patch, null);
+        try {
+            patcher.doPatch();
+        } catch (Exception e){
+            log.error("", e);
+        }
+
+        tissueSkIdUniquePatch = "{\"id\":" + tissueId + ",\"user\":\"" + testParticipantUtil.userEmail +
+                "\",\"nameValue\":{\"name\":\"t.skId\",\"value\":\"123\"},\"ddpParticipantId\":\""
+                + participantGuid + "\",\"parent\":\"oncHistoryDetailId\",\"parentId\":" + oncHistoryId +
+                ",\"tableAlias\":\"t\",\"isUnique\":true,\"realm\":\"" + instanceName + "\"}";
+        patch = new Gson().fromJson(tissueSkIdUniquePatch, Patch.class);
+        patcher = PatchFactory.makePatch(patch, null);
+        try {
+            patcher.doPatch();
+        } catch (Exception e) {
+            Assert.assertTrue(e instanceof DuplicateException);
+        }
+
         String oncHistoryDeleteJson = "{\"id\":\"" + oncHistoryId + "\",\"user\":\"" + testParticipantUtil.userEmail
                 + "\",\"nameValue\":{\"name\":\"oD.deleted\",\"value\":true},\"ddpParticipantId\":" + participantGuid
                 + ",\"parent\":\"participantId\",\"parentId\":" + participantId
                 + ",\"tableAlias\":\"oD\",\"isUnique\":true,\"realm\":\"" + instanceName + "\"}";
         Patch oncHistoryDeletePatch = new Gson().fromJson(oncHistoryDeleteJson, Patch.class);
-        BasePatch patcher = DeletePatchFactory.produce(oncHistoryDeletePatch, null);
+        patcher = DeletePatchFactory.produce(oncHistoryDeletePatch, null);
         patcher.doPatch();
         oncHistoryDetail = testParticipantUtil.getOncHistoryDetailById(oncHistoryId);
         Assert.assertTrue(oncHistoryDetail.isDeleted());
         tissue = oncHistoryDetail.getTissues().stream().findFirst().get();
-        Assert.assertTrue(tissue.getDeleted());
+        Assert.assertTrue(tissue.isDeleted());
         tissueSmId = tissue.getUssSMID().stream().filter(smId -> String.valueOf(smId.getSmIdPk()).equals(smIdPk)).findAny().get();
-        Assert.assertTrue(tissueSmId.getDeleted());
+        Assert.assertTrue(tissueSmId.isDeleted());
     }
 
 }

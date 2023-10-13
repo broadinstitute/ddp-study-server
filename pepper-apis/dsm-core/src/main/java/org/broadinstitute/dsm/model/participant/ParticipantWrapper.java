@@ -258,7 +258,7 @@ public class ParticipantWrapper {
             }
             List<SmId> smIds = esDsm.getSmId();
             if (smIds != null) {
-                smIds.removeIf(smId -> smId.getDeleted() == true);
+                smIds.removeIf(smId -> smId.isDeleted() == true);
             }
             List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
             mapSmIdsToProperTissue(tissues, smIds);
