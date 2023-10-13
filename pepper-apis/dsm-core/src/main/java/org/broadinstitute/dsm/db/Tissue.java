@@ -317,7 +317,7 @@ public class Tissue {
                     logger.error("Unknown type");
             }
         } catch (SQLException e) {
-            throw new DsmInternalError(e);
+            throw new DsmInternalError(String.format("Error setting type for smId with id: ", tissueSmId.getSmIdPk()), e);
         }
     }
 

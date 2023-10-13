@@ -425,7 +425,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError("Couldn't get list of oncHistories ", results.resultException);
+            throw new DsmInternalError(String.format("Couldn't get list of oncHistories with queryAddition '%s' and for realm %s", queryAddition, realm), results.resultException);
         }
 
         logger.info("Got " + oncHistory.size() + " participants oncHistories in DSM DB for " + realm);
@@ -434,7 +434,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm,
                                                                                            List<String> participantIds) {
-        logger.info("Getting onc histories for participants {}", Arrays.toString(participantIds.toArray()));
+        logger.info("Getting onc histories for participants {}", String.join(", ", participantIds));
         String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
         return getOncHistoryDetails(realm, queryAddition);
     }

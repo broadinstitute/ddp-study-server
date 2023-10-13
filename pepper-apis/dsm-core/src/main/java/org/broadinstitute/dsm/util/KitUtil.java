@@ -27,6 +27,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.Value;
@@ -323,7 +324,7 @@ public class KitUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException(
+            throw new DsmInternalError(
                     String.format("Error getting kitCollaboratorId for participant %s in realm with id %s", ddpParticipantId, realmId),
                     results.resultException);
         }
@@ -348,7 +349,7 @@ public class KitUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException(
+            throw new DsmInternalError(
                     String.format("Error getting TissueCollaboratorId for participant %s in realm with id %s", ddpParticipantId, realmId),
                     results.resultException);
         }

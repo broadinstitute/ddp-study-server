@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
@@ -101,11 +102,11 @@ public class ClinicalKitDto {
     }
 
     public void setNecessaryParticipantDataToClinicalKit(String ddpParticipantId, DDPInstance ddpInstance) {
-        logger.info("Setting PHI to clinical kit's accessioning data for {}", ddpParticipantId);
+        logger.info("Setting PHI to clinical kit's accessioning data for {} in study {}", ddpParticipantId, ddpInstance.getName());
         Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
-            throw new RuntimeException("Participant ES Data is not found for " + ddpParticipantId);
+            throw new DsmInternalError("Participant ES Data is not found for " + ddpParticipantId);
         }
         ElasticSearchParticipantDto elasticSearchParticipantDto = maybeParticipantESDataByParticipantId.get();
         try {
@@ -119,12 +120,15 @@ public class ClinicalKitDto {
                             ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
-            throw new RuntimeException(String.format("Participant {} doesn't exist / is not valid for kit", ddpParticipantId), e);
+            throw new DsmInternalError(String.format("Error getting participant data for %s", ddpParticipantId), e);
         }
     }
 
     private String getParticipantGender(ElasticSearchParticipantDto participantByShortId, String realm) {
         // if gender is set on tissue page use that
+        if(StringUtils.isBlank(participantByShortId.getParticipantId())){
+            throw new DsmInternalError(String.format("The participant %s is missing participant id", participantByShortId.getProfile().get().getGuid()));
+        }
         List<String> list = new ArrayList();
         list.add(participantByShortId.getParticipantId());
         Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetailsByParticipantIds(realm, list);
