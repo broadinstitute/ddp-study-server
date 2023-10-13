@@ -119,7 +119,7 @@ public class ClinicalKitDto {
                             ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
-            throw new RuntimeException("Participant doesn't exist / is not valid for kit " + e.getMessage());
+            throw new RuntimeException("Participant doesn't exist / is not valid for kit", e);
         }
     }
 

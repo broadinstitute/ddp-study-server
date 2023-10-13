@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -433,6 +434,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm,
                                                                                            List<String> participantIds) {
+        logger.info("Getting onc histories for participants {}", Arrays.toString(participantIds.toArray()));
         String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
         return getOncHistoryDetails(realm, queryAddition);
     }
