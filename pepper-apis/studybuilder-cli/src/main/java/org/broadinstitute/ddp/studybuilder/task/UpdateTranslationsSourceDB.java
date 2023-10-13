@@ -144,9 +144,9 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         var templateDao = handle.attach(TemplateDao.class);
 
         //watch out for variables with same name referring to diff activities //todo
-        String key = "announcements";
         for (var eventConfig : eventDao.getAllEventConfigurationsByStudyId(studyId)) {
             if (EventActionType.ANNOUNCEMENT.equals(eventConfig.getEventActionType())) {
+                String key = "announcements";
                 long timestamp = Instant.now().toEpochMilli();
                 long templateId = ((AnnouncementEventAction) eventConfig.getEventAction()).getMessageTemplateId();
                 Template current = templateDao.loadTemplateByIdAndTimestamp(templateId, timestamp);
@@ -271,12 +271,10 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (activityCode.equalsIgnoreCase("CONSENT_ASSENT") || activityCode.equalsIgnoreCase("PARENTAL_CONSENT")) {
             key = "parental";
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM")
-                || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
+        if (activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
             key = "somatic_consent_addendum";
         }
-        if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC")
-                || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
+        if (activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
             key = "somatic_consent_addendum_pediatric";
         }
         if (activityCode.equalsIgnoreCase("ABOUTYOU")) {
@@ -314,7 +312,9 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
 
         ActivityI18nDetail latest = new ActivityI18nDetail(
+                current.getId(),
                 activityId,
+                current.getLangCodeId(),
                 "es",
                 name,
                 secondName,
@@ -645,10 +645,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         }
 
         String latestText = i18nCfgEs.getString(key);
-        if (enText.contains("ddp.isGovernedParticipant")) {
-            log.warn("$ddp.isGovernedParticipant: var: {} ..enText: {} and key: {} latestText: {} ",
-                    variableName, enText, key, latestText);
-        }
         if (esTranslationOpt.isEmpty()) {
             //insert new
             jdbiVariableSubstitution.insert("es", latestText, revisionId, variableId);
