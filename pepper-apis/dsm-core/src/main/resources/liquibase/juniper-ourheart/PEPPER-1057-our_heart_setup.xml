@@ -1,0 +1,126 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="pegah" id="new-juniper-study-instance-role">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM instance_role WHERE name='juniper_study';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="instance_role">
+            <column name="name" value="juniper_study"/>
+        </insert>
+    </changeSet>
+    <changeSet author="pegah" id="kit_request_activated-instance-role">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM instance_role WHERE name='kit_request_activated';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="instance_role">
+            <column name="name" value="kit_request_activated"/>
+        </insert>
+    </changeSet>
+    <changeSet author="pegah" id="kit_type-insert">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM kit_type WHERE kit_type_name='SALIVA';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="SALIVA"/>
+            <column name="bsp_material_type" value="Saliva"/>
+            <column name="bsp_receptacle_type" value="Oragene Kit"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-health-ddp-instance-insert" author="pegah">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="juniper-ourheart"/>
+            <column name="study_guid" value="juniper-ourheart"/>
+            <column name="display_name" value="Our Health"/>
+            <column name="is_active" value="1"/>
+            <column name="bsp_group" value="Endocrine/MPG"/>
+            <column name="bsp_collection" value="SC-57013"/>
+            <column name="bsp_organism" value="1"/>
+            <column name="collaborator_id_prefix" value="PN"/>
+            <column name="auth0_token" value="0"/>
+            <column name="billing_reference" value="CO 8201079"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-health-ddp-group-insert" author="pegah">
+        <insert tableName="ddp_group">
+            <column name="name" value="juniper-ourHealth"/>
+            <column name="description" value="Juniper Our Health"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-health-ddp-instance-group-insert" author="pegah">
+        <insert tableName="ddp_instance_group">
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
+            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'juniper-ourHealth')"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-health-ddp-instance-role-insert" author="pegah">
+        <insert tableName="ddp_instance_role">
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
+            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'kit_request_activated')"/>
+        </insert>
+        <insert tableName="ddp_instance_role">
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'juniper-ourheart')"/>
+            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'juniper_study')"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-health-kit-dimension-insert" author="pegah">
+        <insert tableName="kit_dimension">
+            <column name="kit_width" value="6.5"/>
+            <column name="kit_height" value="2.5"/>
+            <column name="kit_length" value="4.5"/>
+            <column name="kit_weight" value="4.8"/>
+            <column name="kit_description" value="juniper-ourheart saliva kit"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-heart-kit-return-information-insert" author="pegah">
+        <insert tableName="kit_return_information">
+            <column name="return_address_name" value="Broad Institute"/>
+            <column name="return_address_street1" value="Attn. Broad Genomics"/>
+            <column name="return_address_street2" value="320 Charles St. – Lab 132"/>
+            <column name="return_address_city" value="Cambridge"/>
+            <column name="return_address_state" value="MA"/>
+            <column name="return_address_zip" value="02141"/>
+            <column name="return_address_country" value="US"/>
+            <column name="return_address_phone" value="(617) 714-8952"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-heart-ddp-kit-request-settings-insert" author="pegah">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id" valueComputed="(SELECT ddp_instance_id from ddp_instance WHERE study_guid = 'juniper-ourheart')"/>
+            <column name="kit_type_id" valueComputed="(SELECT kit_type_id from kit_type WHERE kit_type_name = 'SALIVA')"/>
+            <column name="kit_return_id" valueComputed="(SELECT kit_return_id FROM kit_return_information WHERE return_address_street2 = '320 Charles St. – Lab 132')"/>
+            <column name="kit_dimension_id" valueComputed="(SELECT kit_dimension_id from kit_dimension WHERE kit_description like 'juniper-ourheart saliva kit')"/>
+            <column name="kit_label_length" value="14"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-heart-ddp-group-roles" author="pegah">
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+    </changeSet>
+    <changeSet id="our-heart-extra-ddp-group-roles" author="pegah">
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='juniper-ourHealth')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

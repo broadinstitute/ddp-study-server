@@ -90,7 +90,10 @@ public class UserUtil {
     }
 
     public static String getUserId(Request request) {
-        QueryParamsMap queryParams = request.queryMap();
+        return getUserId(request.queryMap());
+    }
+
+    public static String getUserId(QueryParamsMap queryParams) {
         String userId = "";
         if (queryParams.value(USER_ID) != null) {
             userId = queryParams.get(USER_ID).value();

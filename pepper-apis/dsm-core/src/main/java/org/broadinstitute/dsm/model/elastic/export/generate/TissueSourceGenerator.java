@@ -27,7 +27,7 @@ public class TissueSourceGenerator extends ParentChildRelationGenerator {
             DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(generatorPayload.getInstanceName()).orElseThrow();
             OncHistoryDetail oncHistoryDetail = new OncHistoryDetail();
             String oncHistoryDetailId = generatorPayload.getParentId();
-            oncHistoryDetail.setOncHistoryDetailId(Long.valueOf(oncHistoryDetailId));
+            oncHistoryDetail.setOncHistoryDetailId(Integer.valueOf(oncHistoryDetailId));
             if (StringUtils.isNotBlank(generatorPayload.getValue().toString())) {
                 oncHistoryDetail.setRequest(OncHistoryDetail.STATUS_RETURNED);
             } else {

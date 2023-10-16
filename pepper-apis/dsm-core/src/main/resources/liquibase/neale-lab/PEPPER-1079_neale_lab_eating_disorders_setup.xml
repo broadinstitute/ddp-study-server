@@ -1,0 +1,86 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="eating-disorders-ddp-instance-insert" author="pegah">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="eating-disorders"/>
+            <column name="study_guid" value="eating-disorders"/>
+            <column name="display_name" value="Eating Disorders"/>
+            <column name="is_active" value="1"/>
+            <column name="bsp_group" value="Neuropsychiatry"/>
+            <column name="bsp_collection" value="SC-57371"/>
+            <column name="bsp_organism" value="1"/>
+            <column name="collaborator_id_prefix" value="BRE"/>
+            <column name="auth0_token" value="0"/>
+            <column name="billing_reference" value="CO 8201079"/>
+        </insert>
+    </changeSet>
+    <changeSet id="eating-disorders-ddp-group-insert" author="pegah">
+        <insert tableName="ddp_group">
+            <column name="name" value="neale-lab"/>
+            <column name="description" value="Neale Lab Group"/>
+        </insert>
+    </changeSet>
+    <changeSet id="eating-disorders-ddp-instance-group-insert" author="pegah">
+        <insert tableName="ddp_instance_group">
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'eating-disorders')"/>
+            <column name="ddp_group_id" valueComputed="(select group_id from ddp_group where name = 'neale-lab')"/>
+        </insert>
+    </changeSet>
+    <changeSet id="eating-disorders-ddp-instance-role-insert" author="pegah">
+        <insert tableName="ddp_instance_role">
+            <column name="ddp_instance_id" valueComputed="(select ddp_instance_id from ddp_instance where study_guid = 'eating-disorders')"/>
+            <column name="instance_role_id" valueComputed="(select instance_role_id from instance_role where name = 'kit_request_activated')"/>
+        </insert>
+    </changeSet>
+    <changeSet id="eating-disorders-kit-dimension-insert" author="pegah">
+        <insert tableName="kit_dimension">
+            <column name="kit_width" value="6.5"/>
+            <column name="kit_height" value="2.5"/>
+            <column name="kit_length" value="4.5"/>
+            <column name="kit_weight" value="4.8"/>
+            <column name="kit_description" value="eating-disorders saliva kit"/>
+        </insert>
+    </changeSet>
+    <changeSet id="eating-disorders-ddp-kit-request-settings-insert" author="pegah">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id" valueComputed="(SELECT ddp_instance_id from ddp_instance WHERE study_guid = 'eating-disorders')"/>
+            <column name="kit_type_id" valueComputed="(SELECT kit_type_id from kit_type WHERE kit_type_name = 'SALIVA')"/>
+            <column name="kit_return_id" valueComputed="(SELECT kit_return_id FROM kit_return_information WHERE return_address_street2 = '320 Charles St. – Lab 132')"/>
+            <column name="kit_dimension_id" valueComputed="(SELECT kit_dimension_id from kit_dimension WHERE kit_description like 'eating-disorders saliva kit')"/>
+            <column name="kit_label_length" value="14"/>
+        </insert>
+    </changeSet>
+    <changeSet id="neale-lab-ddp-group-roles" author="pegah">
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='neale-lab')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='neale-lab')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='neale-lab')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_deactivation')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='neale-lab')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_express')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='neale-lab')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_upload')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+        <insert tableName="ddp_group_role">
+            <column name="group_id" valueComputed="(SELECT group_id FROM ddp_group WHERE name='neale-lab')"/>
+            <column name="role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='kit_shipping_view')"/>
+            <column name="admin_role_id" valueComputed="(SELECT role_id FROM access_role WHERE name='study_user_admin')"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

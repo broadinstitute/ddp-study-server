@@ -27,7 +27,7 @@ public class OncHistoryDetailPatch extends BasePatch {
         NULL_KEY.put(NAME_VALUE, null);
     }
 
-    private Number mrID;
+    private Integer mrID;
     private String oncHistoryDetailId;
 
     {
@@ -63,19 +63,22 @@ public class OncHistoryDetailPatch extends BasePatch {
                 throw new DSMBadRequestException("DDP participant ID not provided for patch");
             }
 
-            String participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
-            if (StringUtils.isBlank(participantId)) {
+            logger.info("Medical record not found for participant {}, creating one", ddpParticipantId);
+            Integer participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
+            if (participantId == null) {
                 throw new DSMBadRequestException("Participant does not exist. DDP participant ID=" + ddpParticipantId);
             }
 
             // mr of that type doesn't exist yet, so create an institution and mr
-            MedicalRecordUtil.writeInstitutionIntoDb(ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
+            MedicalRecordUtil.writeInstitutionIntoDb(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
                     realm, true);
-            patch.setParentId(participantId);
+            patch.setParentId(participantId.toString());
             mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         }
         if (mrID != null) {
-            oncHistoryDetailId = OncHistoryDetail.createNewOncHistoryDetail(mrID.toString(), patch.getUser());
+            oncHistoryDetailId = Integer.toString(OncHistoryDetail.createOncHistoryDetail(mrID, patch.getUser()));
+            logger.info("[OncHistoryDetailPatch] Created oncHistoryDetail record (ID={}) for participant {}, medicalRecordId={}",
+                    oncHistoryDetailId, ddpParticipantId, mrID);
         }
         // TODO this seems wrong because if oncHistoryDetailId is null at this point things will blow up later -DC
         resultMap.put(ONC_HISTORY_DETAIL_ID, oncHistoryDetailId);

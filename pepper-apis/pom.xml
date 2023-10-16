@@ -191,14 +191,6 @@
                 <version>2.3.0</version>
             </dependency>
 
-            <!-- sendgrid for email sending -->
-            <dependency>
-                <!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
-                <groupId>com.sendgrid</groupId>
-                <artifactId>sendgrid-java</artifactId>
-                <version>4.7.1</version>
-            </dependency>
-
             <dependency>
                 <!-- simplifies making http calls to other systems -->
                 <groupId>org.apache.httpcomponents</groupId>
@@ -529,7 +521,13 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>mysql</artifactId>
-                <version>1.17.6</version>
+                <version>1.18.1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>1.19.0</version>
                 <scope>test</scope>
             </dependency>
 

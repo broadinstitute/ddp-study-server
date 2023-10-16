@@ -5,8 +5,8 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+
+import org.broadinstitute.ddp.util.SendGridFactory;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.model.KitDDPSummary;
 import org.broadinstitute.dsm.util.DBTestUtil;
@@ -133,12 +133,8 @@ public class NotificationJobTest extends TestHelper {
     }
 
     @Test
-    @Ignore("Throws that error when run at ALL Tests, not if run alone! Caused by: java.security.cert.CertificateException: "
-            + "No X509TrustManager implementation available")
     public void testSendSingleEmail() throws Exception {
         String emailClientKey = cfg.getString("errorAlert.key");
-        JsonObject emailClientSettings = (JsonObject) ((new JsonParser()).parse(cfg.getString("errorAlert.clientSettings")));
-        SendGridClient sendGridClient = new SendGridClient();
-        sendGridClient.configure(emailClientKey, emailClientSettings);
+        SendGridClient sendGridClient = new SendGridClient(SendGridFactory.createSendGridInstance(emailClientKey, null));
     }
 }

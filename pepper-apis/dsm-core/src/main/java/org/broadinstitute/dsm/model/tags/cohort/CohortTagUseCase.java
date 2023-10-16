@@ -8,7 +8,7 @@ import lombok.Data;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.painless.ScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -53,10 +53,10 @@ public class CohortTagUseCase {
         this.scriptBuilder = scriptBuilder;
     }
 
-    public int insert() throws DuplicateException {
+    public int insert() {
         if (participantHasTag()) {
-            throw new DuplicateException(String.format("Participant %s Already has tag %s", cohortTagPayload.getDdpParticipantId(),
-                    cohortTagPayload.getCohortTagName()));
+            throw new DsmInternalError(String.format("Participant %s Already has tag %s",
+                    cohortTagPayload.getDdpParticipantId(), cohortTagPayload.getCohortTagName()));
         }
         logger.info("Inserting cohort tag with tag name: " + getCohortTagName()
                 + " for participant with id: " + getDdpParticipantId());
