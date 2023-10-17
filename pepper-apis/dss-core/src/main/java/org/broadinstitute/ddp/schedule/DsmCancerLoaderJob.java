@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.CancerStore;
+import org.broadinstitute.ddp.db.dto.CancerItem;
 import org.broadinstitute.ddp.housekeeping.schedule.Keys;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -69,9 +70,9 @@ public class DsmCancerLoaderJob implements Job {
             var dsm = new DsmClient(ConfigManager.getInstance().getConfig());
             var result = dsm.listCancers();
             if (result.getStatusCode() == 200) {
-                List<String> names = result.getBody();
-                CancerStore.getInstance().populate(names);
-                log.info("Loaded {} cancers into pepper", names == null ? 0 : names.size());
+                List<CancerItem> cancers = result.getBody();
+                CancerStore.getInstance().populate(cancers);
+                log.info("Loaded {} cancers into pepper", cancers == null ? 0 : cancers.size());
             } else {
                 log.error("Could not fetch DSM cancer list, got response status code {}",
                         result.getStatusCode(), result.getThrown());

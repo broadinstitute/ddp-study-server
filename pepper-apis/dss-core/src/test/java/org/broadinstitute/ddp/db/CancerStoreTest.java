@@ -1,11 +1,9 @@
 package org.broadinstitute.ddp.db;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.broadinstitute.ddp.model.dsm.Cancer;
+import org.broadinstitute.ddp.db.dto.CancerItem;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,65 +12,78 @@ public class CancerStoreTest {
 
     @Test
     public void test_givenStoreIsInstantiated_whenItsInstanceIsRequested_thenItsNotNull() {
-        List<String> testCancerList = new ArrayList<String>();
-        testCancerList.addAll(Arrays.asList("Cancer2", "Cancer1", "Cancer3", "Cancer1"));
         CancerStore cancerStore = CancerStore.getInstance();
         Assert.assertNotNull(cancerStore);
     }
 
     @Test
     public void test_givenStoreIsPopulated_whenItsQueried_thenOnlyUniqueElementsAreReturned() {
-        List<String> testCancerList = new ArrayList<String>();
-        testCancerList.addAll(Arrays.asList("Cancer2", "Cancer1", "Cancer3", "Cancer1"));
+        List<CancerItem> testCancerList = CancerItem.toCancerItemList(
+                List.of("Cancer2", "Cancer1", "Cancer3", "Cancer1"), "en");
+
         CancerStore cancerStore = CancerStore.getInstance();
         cancerStore.populate(testCancerList);
 
-        Set<Cancer> cancers = cancerStore.getCancerList();
+        Set<CancerItem> cancers = cancerStore.getCancerList("en");
         Assert.assertNotNull(cancers);
         Assert.assertEquals(3, cancers.size());
-        Assert.assertTrue(cancers.stream().filter(drug -> drug.getName().equals("Cancer1")).count() == 1);
+        Assert.assertEquals(1, cancers.stream().filter(cancerItem -> cancerItem.getCancerName().equals("Cancer1")).count());
     }
 
     @Test
     public void test_givenStoreIsPopulatedWithCancers_whenItsQueried_thenItReturnsExactlyThatCancers() {
-        List<String> testCancerList = new ArrayList<String>();
-        testCancerList.addAll(Arrays.asList("Cancer2", "Cancer1", "Cancer3"));
+        List<CancerItem> testCancerList = CancerItem.toCancerItemList(List.of("Cancer2", "Cancer1", "Cancer3"), "en");
         CancerStore cancerStore = CancerStore.getInstance();
         cancerStore.populate(testCancerList);
 
-        Set<Cancer> cancers = cancerStore.getCancerList();
+        Set<CancerItem> cancers = cancerStore.getCancerList("en");
         Assert.assertNotNull(cancers);
         Assert.assertEquals(3, cancers.size());
-        Assert.assertTrue(cancers.contains(new Cancer("Cancer1", null)));
-        Assert.assertTrue(cancers.contains(new Cancer("Cancer2", null)));
-        Assert.assertTrue(cancers.contains(new Cancer("Cancer3", null)));
+        Assert.assertTrue(cancers.contains(new CancerItem("Cancer1", "en")));
+        Assert.assertTrue(cancers.contains(new CancerItem("Cancer2", "en")));
+        Assert.assertTrue(cancers.contains(new CancerItem("Cancer3", "en")));
     }
 
     @Test
     public void test_givenCancerListIsNull_whenAttemptToAddItToStoreIsMade_thenItIsIgnored() {
         CancerStore cancerStore = CancerStore.getInstance();
-        cancerStore.populate(Arrays.asList("Cancer1"));
+        cancerStore.populate(CancerItem.toCancerItemList(List.of("Cancer1"), "en"));
 
         cancerStore.populate(null);
 
-        Set<Cancer> cancers = cancerStore.getCancerList();
+        Set<CancerItem> cancers = cancerStore.getCancerList("en");
         Assert.assertEquals(1, cancers.size());
-        Assert.assertTrue(cancers.contains(new Cancer("Cancer1", null)));
+        Assert.assertTrue(cancers.contains(new CancerItem("Cancer1", "en")));
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void test_givenStoreIsQueried_whenAttemptToModifyReturnedSetIsMade_thenExceptionIsThrown() {
-        List<String> testCancerList = new ArrayList<String>();
-        testCancerList.add("Cancer4");
-        testCancerList.add("Cancer5");
-        testCancerList.add("Cancer6");
-        testCancerList.add("Cancer1");
+        List<CancerItem> testCancerList = CancerItem.toCancerItemList(
+                List.of("Cancer4", "Cancer5", "Cancer6", "Cancer1"), "en");
 
         CancerStore cancerStore = CancerStore.getInstance();
         cancerStore.populate(testCancerList);
-        Set<Cancer> cancers = cancerStore.getCancerList();
+        Set<CancerItem> cancers = cancerStore.getCancerList("en");
         Assert.assertNotNull(cancers);
         cancers.remove(cancers.iterator().next());
+    }
+
+    @Test
+    public void test_onlyCancersInSelectedLanguageAreReturned() {
+        CancerItem spanishItem = new CancerItem("Something in Spanish", "es");
+        CancerItem englishItem = new CancerItem("Something in English", "en");
+
+        CancerStore.getInstance().populate(List.of(spanishItem, englishItem));
+
+        Set<CancerItem> spanishCancers = CancerStore.getInstance().getCancerList("es");
+
+        Assert.assertEquals(1, spanishCancers.size());
+        Assert.assertEquals(spanishItem, spanishCancers.iterator().next());
+
+        Set<CancerItem> englishCancers = CancerStore.getInstance().getCancerList("en");
+
+        Assert.assertEquals(1, englishCancers.size());
+        Assert.assertEquals(englishItem, englishCancers.iterator().next());
     }
 
 }

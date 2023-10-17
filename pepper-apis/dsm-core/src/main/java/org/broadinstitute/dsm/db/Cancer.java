@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.broadinstitute.ddp.db.dto.CancerItem;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -15,27 +17,22 @@ import org.slf4j.LoggerFactory;
 
 public class Cancer {
 
-    public static final String SQL_GET_ALL_ACTIVE_CANCERS = "SELECT display_name FROM cancer_list WHERE active=1";
-    private static final Logger logger = LoggerFactory.getLogger(Cancer.class);
-    private String displayName;
-    private int active;
-    private int id;
+    public static final String SQL_GET_ALL_ACTIVE_CANCERS = "SELECT display_name, language FROM cancer_list WHERE active=1";
 
-    public static List<String> getCancers() {
-        List<String> cancerList = new ArrayList<>();
+    private static final Logger logger = LoggerFactory.getLogger(Cancer.class);
+
+    public static List<CancerItem> getCancers() {
+        List<CancerItem> cancerList = new ArrayList<>();
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
 
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_ALL_ACTIVE_CANCERS)) {
-                if (stmt != null) {
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            cancerList.add(rs.getString(DBConstants.DISPLAY_NAME));
-                        }
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        cancerList.add(new CancerItem(rs.getString(DBConstants.DISPLAY_NAME),
+                                rs.getString(DBConstants.LANGUAGE)));
                     }
-                } else {
-                    throw new RuntimeException("Cancer list is empty");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -44,9 +41,9 @@ public class Cancer {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting cancer list ", results.resultException);
+            throw new DsmInternalError("Error getting cancer list ", results.resultException);
         }
-        logger.info("cancer list size is " + cancerList.size() + ".");
+        logger.info("return cancer list with " + cancerList.size() + " items.");
 
         return cancerList;
 
