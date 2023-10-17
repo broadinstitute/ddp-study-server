@@ -49,7 +49,11 @@ public class CancerStore {
      * Returns all the cancers for the given language
      */
     public Set<CancerItem> getCancerList(String languageIsoCode) {
-        return Collections.unmodifiableSet(cancersByLanguage.get(languageIsoCode));
+        if (cancersByLanguage.get(languageIsoCode) == null) {
+            return Collections.emptySet();
+        } else {
+            return Collections.unmodifiableSet(cancersByLanguage.get(languageIsoCode));
+        }
     }
 
 }

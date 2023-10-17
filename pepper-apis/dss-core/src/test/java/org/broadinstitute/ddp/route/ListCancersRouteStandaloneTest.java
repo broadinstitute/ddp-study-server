@@ -25,12 +25,12 @@ public class ListCancersRouteStandaloneTest extends IntegrationTestSuite.TestCas
 
     private static final String EXPECTED_CANCERS = "[\n"
             + "\t{\n"
-            + "\t\t\"name\":\"Cancer in English\",\n"
+            + "\t\t\"name\":\"Cancer1\",\n"
             + "\t\t\"language\":\"en\"\n"
             + "\t},\n"
             + "\t{\n"
-            + "\t\t\"name\":\"Cancer in Spanish\",\n"
-            + "\t\t\"language\":\"es\"\n"
+            + "\t\t\"name\":\"Cancer2\",\n"
+            + "\t\t\"language\":\"en\"\n"
             + "\t}\n"
             + "]";
 

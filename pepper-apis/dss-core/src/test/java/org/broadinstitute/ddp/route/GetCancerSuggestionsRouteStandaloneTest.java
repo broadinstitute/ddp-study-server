@@ -182,7 +182,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("results", Matchers.hasSize(1))
-                .body("results[0].cancer.name", Matchers.hasItems(englishCancer));
+                .body("results[0].cancer.name", Matchers.equalTo(englishCancer));
 
         // change profile to Spanish
         try {
@@ -198,7 +198,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
                     .when().get(url).then().assertThat()
                     .statusCode(200).contentType(ContentType.JSON)
                     .body("results", Matchers.hasSize(1))
-                    .body("results[0].cancer.name", Matchers.hasItems(spanishCancer));
+                    .body("results[0].cancer.name", Matchers.equalTo(spanishCancer));
         } finally {
             // reset language to English
             TransactionWrapper.useTxn(handle -> {
