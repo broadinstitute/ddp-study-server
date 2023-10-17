@@ -35,10 +35,10 @@ public class CancerStore {
     public synchronized void populate(List<CancerItem> cancerItems) {
         cancers = Collections.unmodifiableList(cancerItems);
         for (CancerItem cancer : cancers) {
-            if (!cancersByLanguage.containsKey(cancer.getLanguage())) {
-                cancersByLanguage.put(cancer.getLanguage(), new LinkedHashSet<>());
+            if (!cancersByLanguage.containsKey(cancer.getIsoLanguageCode())) {
+                cancersByLanguage.put(cancer.getIsoLanguageCode(), new LinkedHashSet<>());
             }
-            cancersByLanguage.get(cancer.getLanguage()).add(cancer);
+            cancersByLanguage.get(cancer.getIsoLanguageCode()).add(cancer);
         }
     }
 

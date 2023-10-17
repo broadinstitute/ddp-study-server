@@ -15,19 +15,19 @@ public class CancerItem {
     private final String cancerName;
 
     @SerializedName("language")
-    private final String language;
+    private final String isoLanguageCode;
 
-    public CancerItem(String cancerName, String language) {
+    public CancerItem(String cancerName, String isoLanguageCode) {
         this.cancerName = cancerName;
-        this.language = language;
+        this.isoLanguageCode = isoLanguageCode;
     }
 
     public String getCancerName() {
         return cancerName;
     }
 
-    public String getLanguage() {
-        return language;
+    public String getIsoLanguageCode() {
+        return isoLanguageCode;
     }
 
     @Override
@@ -39,12 +39,12 @@ public class CancerItem {
             return false;
         }
         CancerItem that = (CancerItem) o;
-        return cancerName.equals(that.cancerName) && language.equals(that.language);
+        return cancerName.equals(that.cancerName) && isoLanguageCode.equals(that.isoLanguageCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(cancerName, language);
+        return Objects.hash(cancerName, isoLanguageCode);
     }
 
     /**
