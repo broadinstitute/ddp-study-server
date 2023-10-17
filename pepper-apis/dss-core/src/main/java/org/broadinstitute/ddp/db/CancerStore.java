@@ -33,13 +33,15 @@ public class CancerStore {
     }
 
     public synchronized void populate(List<CancerItem> cancerItems) {
-        cancers = Collections.unmodifiableList(cancerItems);
-        cancersByLanguage.clear();
-        for (CancerItem cancer : cancers) {
-            if (!cancersByLanguage.containsKey(cancer.getIsoLanguageCode())) {
-                cancersByLanguage.put(cancer.getIsoLanguageCode(), new LinkedHashSet<>());
+        if (cancerItems != null) {
+            cancers = Collections.unmodifiableList(cancerItems);
+            cancersByLanguage.clear();
+            for (CancerItem cancer : cancers) {
+                if (!cancersByLanguage.containsKey(cancer.getIsoLanguageCode())) {
+                    cancersByLanguage.put(cancer.getIsoLanguageCode(), new LinkedHashSet<>());
+                }
+                cancersByLanguage.get(cancer.getIsoLanguageCode()).add(cancer);
             }
-            cancersByLanguage.get(cancer.getIsoLanguageCode()).add(cancer);
         }
     }
 

@@ -98,6 +98,7 @@ public class DsmClient {
      * @return result with cancer names
      */
     public ApiResult<List<CancerItem>, Void> listCancers() {
+        HttpResponse<String> response = null;
         try {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
             var request = HttpRequest.newBuilder()
@@ -105,7 +106,7 @@ public class DsmClient {
                     .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
-            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode == 200) {
                 Type type = new TypeToken<List<CancerItem>>() {}.getType();
@@ -116,7 +117,11 @@ public class DsmClient {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            log.error("Trouble getting cancer list from {}", baseUrl, e);
+            String responseBody = null;
+            if (response != null) {
+                responseBody = response.body();
+            }
+            log.error("Response from {} was {}", baseUrl, responseBody, e);
             return ApiResult.thrown(e);
         }
     }
