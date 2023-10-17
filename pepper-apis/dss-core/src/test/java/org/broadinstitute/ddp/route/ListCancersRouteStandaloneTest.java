@@ -47,10 +47,10 @@ public class ListCancersRouteStandaloneTest extends IntegrationTestSuite.TestCas
         log.info("Calling the route, url = " + url);
         RestAssured.given().when().get(url).then().assertThat().statusCode(200).contentType(ContentType.JSON)
                 .body("$", Matchers.hasSize(2))
-                .body("[0].name", Matchers.is("Cancer in English"))
+                .body("[0].name", Matchers.is("Cancer1"))
                 .body("[0].language", Matchers.is("en"))
-                .body("[1].name", Matchers.is("Cancer in Spanish"))
-                .body("[1].language", Matchers.is("es"));
+                .body("[1].name", Matchers.is("Cancer2"))
+                .body("[1].language", Matchers.is("en"));
         CancerStore.getInstance().populate(Collections.emptyList());
     }
 }

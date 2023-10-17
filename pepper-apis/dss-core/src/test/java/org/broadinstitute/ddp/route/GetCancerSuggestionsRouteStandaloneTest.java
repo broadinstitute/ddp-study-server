@@ -182,13 +182,13 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("results", Matchers.hasSize(1))
-                .body("results[0].cancer.name", Matchers.equalTo(englishCancer));
+                .body("results[0].cancer.name", Matchers.is(englishCancer));
 
         // change profile to Spanish
         try {
             TransactionWrapper.useTxn(handle -> {
                 var userProfileBuilder = new UserProfile(originalProfile).toBuilder();
-                userProfileBuilder.preferredLangCode("en");
+                userProfileBuilder.preferredLangCode("es");
                 var profileDao = handle.attach(UserProfileDao.class);
                 profileDao.updateProfile(userProfileBuilder.build());
             });
@@ -198,7 +198,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
                     .when().get(url).then().assertThat()
                     .statusCode(200).contentType(ContentType.JSON)
                     .body("results", Matchers.hasSize(1))
-                    .body("results[0].cancer.name", Matchers.equalTo(spanishCancer));
+                    .body("results[0].cancer.name", Matchers.is(spanishCancer));
         } finally {
             // reset language to English
             TransactionWrapper.useTxn(handle -> {
