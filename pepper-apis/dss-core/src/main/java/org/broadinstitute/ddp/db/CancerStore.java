@@ -34,6 +34,7 @@ public class CancerStore {
 
     public synchronized void populate(List<CancerItem> cancerItems) {
         cancers = Collections.unmodifiableList(cancerItems);
+        cancersByLanguage.clear();
         for (CancerItem cancer : cancers) {
             if (!cancersByLanguage.containsKey(cancer.getIsoLanguageCode())) {
                 cancersByLanguage.put(cancer.getIsoLanguageCode(), new LinkedHashSet<>());
@@ -46,7 +47,7 @@ public class CancerStore {
      * Returns all the cancers for the given language
      */
     public Set<CancerItem> getCancerList(String languageIsoCode) {
-        return cancersByLanguage.get(languageIsoCode);
+        return Collections.unmodifiableSet(cancersByLanguage.get(languageIsoCode));
     }
 
 }

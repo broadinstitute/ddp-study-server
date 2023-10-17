@@ -112,7 +112,7 @@ public class DsmClient {
                 List<CancerItem> names = gson.fromJson(response.body(), type);
                 return ApiResult.ok(statusCode, names);
             } else {
-                log.error("Trouble getting cancer list from {}", baseUrl);
+                log.error("Cancer list at {} returned {}", baseUrl, statusCode);
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {

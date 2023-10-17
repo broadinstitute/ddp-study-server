@@ -43,7 +43,7 @@ public class Cancer {
         if (results.resultException != null) {
             throw new DsmInternalError("Error getting cancer list ", results.resultException);
         }
-        logger.info("return cancer list with " + cancerList.size() + " items.");
+        logger.info("returning cancer list with " + cancerList.size() + " items.");
 
         return cancerList;
 
