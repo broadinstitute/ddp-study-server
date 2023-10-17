@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class Cancer {
 
-    public static final String SQL_GET_ALL_ACTIVE_CANCERS = "SELECT display_name, language FROM cancer_list WHERE active=1";
+    public static final String SQL_GET_ALL_ACTIVE_CANCERS = "SELECT display_name, iso_language_code FROM cancer_list WHERE active=1";
 
     private static final Logger logger = LoggerFactory.getLogger(Cancer.class);
 
