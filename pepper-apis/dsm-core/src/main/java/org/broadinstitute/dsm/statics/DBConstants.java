@@ -21,6 +21,7 @@ public class DBConstants {
     public static final String DDP_PARTICIPANT_ID = "ddp_participant_id";
     public static final String DDP_KIT_REQUEST = "ddp_kit_request";
     public static final String DDP_KIT = "ddp_kit";
+    public static final String LANGUAGE = "iso_language_code";
 
     public static final String REQUIRES_INSERT_KIT_TRACKING = "requires_insert_in_kit_tracking";
 

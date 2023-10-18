@@ -8,6 +8,7 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TES
 import static org.broadinstitute.ddp.constants.TestConstants.TEST_USER_PROFILE_BIRTH_DAY;
 import static org.broadinstitute.ddp.constants.TestConstants.TEST_USER_PROFILE_BIRTH_MONTH;
 import static org.broadinstitute.ddp.constants.TestConstants.TEST_USER_PROFILE_BIRTH_YEAR;
+import static org.broadinstitute.ddp.constants.TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE;
 import static org.broadinstitute.ddp.constants.TestConstants.getTestStudyBloodPexEXPR;
 import static org.broadinstitute.ddp.constants.TestConstants.getTestStudyTissuePexEXPR;
 import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CREATED;
@@ -621,7 +622,7 @@ public class TestDataSetupUtil {
                 .preferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
-                .preferredLangCode(null)
+                .preferredLangCode(TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                 .timeZone(ZoneId.of("America/New_York"))
                 .skipLanguagePopup(random
                         ? rand.nextBoolean()

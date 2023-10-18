@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.db.dto.CancerItem;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -96,7 +97,8 @@ public class DsmClient {
      *
      * @return result with cancer names
      */
-    public ApiResult<List<String>, Void> listCancers() {
+    public ApiResult<List<CancerItem>, Void> listCancers() {
+        HttpResponse<String> response = null;
         try {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
             var request = HttpRequest.newBuilder()
@@ -104,18 +106,22 @@ public class DsmClient {
                     .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
-            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode == 200) {
-                Type type = new TypeToken<List<String>>() {}.getType();
-                List<String> names = gson.fromJson(response.body(), type);
+                Type type = new TypeToken<List<CancerItem>>() {}.getType();
+                List<CancerItem> names = gson.fromJson(response.body(), type);
                 return ApiResult.ok(statusCode, names);
             } else {
-                log.error("Trouble getting cancer list from {}", baseUrl);
+                log.error("Cancer list at {} returned {}", baseUrl, statusCode);
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            log.error("Trouble getting cancer list from {}", baseUrl, e);
+            String responseBody = null;
+            if (response != null) {
+                responseBody = response.body();
+            }
+            log.error("Response from {} was {}", baseUrl, responseBody, e);
             return ApiResult.thrown(e);
         }
     }
