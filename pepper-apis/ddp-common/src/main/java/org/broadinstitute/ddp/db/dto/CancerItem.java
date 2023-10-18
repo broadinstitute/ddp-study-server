@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +11,8 @@ import java.util.Objects;
 /**
  * The name of a cancer and its language
  */
+@AllArgsConstructor
+@Data
 public class CancerItem {
 
     @SerializedName("name")
@@ -16,19 +20,6 @@ public class CancerItem {
 
     @SerializedName("language")
     private final String isoLanguageCode;
-
-    public CancerItem(String cancerName, String isoLanguageCode) {
-        this.cancerName = cancerName;
-        this.isoLanguageCode = isoLanguageCode;
-    }
-
-    public String getCancerName() {
-        return cancerName;
-    }
-
-    public String getIsoLanguageCode() {
-        return isoLanguageCode;
-    }
 
     @Override
     public boolean equals(Object o) {
