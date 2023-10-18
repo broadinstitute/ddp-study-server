@@ -67,7 +67,6 @@ public class RouteUtil {
         return new JWTConverter().convertJWTFromHeader(req.headers(AUTHORIZATION), false);
     }
 
-    // todo arz does this default to english?
     public static LanguageDto getUserLanguage(Request req) {
         return req.attribute(StudyLanguageResolutionFilter.USER_LANGUAGE);
     }
