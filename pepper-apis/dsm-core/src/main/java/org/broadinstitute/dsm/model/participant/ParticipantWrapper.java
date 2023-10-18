@@ -185,6 +185,7 @@ public class ParticipantWrapper {
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.MEDICAL_RECORD, ddpInstanceId);
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.ONC_HISTORY_DETAIL, ddpInstanceId);
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.SOMATIC_RESULT_UPLOAD, ddpInstanceId);
+            filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.CLINICAL_ORDER, ddpInstanceId);
         }
         dataAsMap.size();
     }

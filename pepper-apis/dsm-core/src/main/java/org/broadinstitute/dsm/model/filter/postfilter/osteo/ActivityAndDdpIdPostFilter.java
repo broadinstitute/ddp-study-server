@@ -12,17 +12,24 @@ import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterStrategy;
 
 
-public class OldOsteoPostFilter extends BaseStudyPostFilter {
+/**
+ * A class that filters Activity and nested Medical Record, OncHistory and KitShippingRequest documents so that
+ * information commingled in an Elasticsearch index is cleaned and tailored to the OS1 use case.
+ */
+public class ActivityAndDdpIdPostFilter extends BaseStudyPostFilter {
 
     private final StudyPostFilterStrategy<Activities> oldOsteoFilter;
 
-    protected OldOsteoPostFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
+    private final DsmDdpInstanceIdPostFilter ddpInstanceIdFilter;
+
+    protected ActivityAndDdpIdPostFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         super(elasticSearchParticipantDto, ddpInstanceDto);
         this.oldOsteoFilter = new OldOsteoPostFilterStrategy();
+        this.ddpInstanceIdFilter = new DsmDdpInstanceIdPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
     }
 
     public static StudyPostFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
-        return new OldOsteoPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
+        return new ActivityAndDdpIdPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
     }
 
     @Override
@@ -31,6 +38,7 @@ public class OldOsteoPostFilter extends BaseStudyPostFilter {
                 .filter(oldOsteoFilter)
                 .collect(Collectors.toList());
         elasticSearchParticipantDto.setActivities(filteredActivities);
+        this.ddpInstanceIdFilter.filter();
     }
 
 }
