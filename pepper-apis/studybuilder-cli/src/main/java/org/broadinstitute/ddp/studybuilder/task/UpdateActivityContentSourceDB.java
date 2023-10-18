@@ -60,10 +60,11 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.AnnouncementEventAction;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -87,10 +88,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @NoArgsConstructor
-public class UpdateActivityContentSourceDB implements CustomTask {
-    private Path cfgPath;
-    private Config studyCfg;
-    private Config varsCfg;
+public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
     private List<String> variablesToSkip;
     private Config i18nCfgEn;
     private Config i18nCfgEs;
@@ -101,10 +99,8 @@ public class UpdateActivityContentSourceDB implements CustomTask {
     private Map<String, String> missingTransVars = new TreeMap<>();
     private String enFilePath = "studybuilder-cli/studies/pancan/i18n/en.conf";
     private String esFilePath = "studybuilder-cli/studies/pancan/i18n/es.conf";
-    private User adminUser;
 
-    private Instant timestamp;
-    private Config cfg;
+    private User adminUser;
     private ActivityDao activityDao;
     private JdbiTemplate jdbiTemplate;
     private JdbiBlockContent jdbiBlockContent;
@@ -115,21 +111,14 @@ public class UpdateActivityContentSourceDB implements CustomTask {
     private Set<TemplateUpdateInfo> templateUpdateList;
     private boolean revision = true;
 
-    Gson gson = new Gson();
+    private static final String TEMPLATE_UPDATES = "template-updates";
+    private static final Gson gson = GsonUtil.standardGson();
     Type typeObject = new TypeToken<HashMap>() {
     }.getType();
 
 
     public UpdateActivityContentSourceDB(List<String> variablesToSkip) {
         this.variablesToSkip = variablesToSkip;
-    }
-
-    @Override
-    public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        cfgPath = cfgPath;
-        studyCfg = studyCfg;
-        varsCfg = varsCfg;
-        timestamp = Instant.now();
     }
 
     @Override
@@ -142,6 +131,7 @@ public class UpdateActivityContentSourceDB implements CustomTask {
         jdbiRevision = handle.attach(JdbiRevision.class);
         templateDao = handle.attach(TemplateDao.class);
         jdbiBlockContent = handle.attach(JdbiBlockContent.class);
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
         adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
 
         //load i18n
@@ -154,26 +144,19 @@ public class UpdateActivityContentSourceDB implements CustomTask {
 
         //template with multiple substitutions
         //should we group ?
-        //todo read the changes from a patch config file
-        Set<TemplateUpdateInfo> infos = new HashSet<>();
-        infos.add(new TemplateUpdateInfo("Nikhil Wagle, MD", "Diane Diehl, PhD", TemplateActionType.UPDATE));
-        infos.add(new TemplateUpdateInfo("Corrie Painter, PhD", "",
-                TemplateActionType.UPDATE));
-
-        templateUpdateList.addAll(infos);
-        templateUpdateList.add(new TemplateUpdateInfo(
-                "Nikhil Wagle, MD, Dana-Farber Cancer Institute, 450 Brookline Ave, Boston, MA, 02215",
-                "Diane Diehl, PhD, Count Me In, 415 Main Street, 105B, Cambridge, MA 02142",
-                TemplateActionType.UPDATE));
+        //load dataCfg
+        List<? extends Config> configList = dataCfg.getConfigList(TEMPLATE_UPDATES);
+        for (Config tmplUpdateCfg : configList) {
+            TemplateUpdateInfo tmplUpdInfo = gson.fromJson(ConfigUtil.toJson(tmplUpdateCfg), TemplateUpdateInfo.class);
+            templateUpdateList.add(tmplUpdInfo);
+        }
 
         //Maps to save ALL translations for any verification
         allActTransMapEN = new TreeMap<String, Map>();
         allActTransMapES = new TreeMap<String, Map>();
         interestedTransVarsMapEN = new TreeMap<String, Set<TemplateVariable>>();
         interestedTemplatesMapEN = new TreeMap<String, Set<Template>>();
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
-        User admin = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
-        var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, admin.getId());
+        //var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, adminUser.getId());
 
         //traverseEventConfigurations(handle, studyDto.getId());
         traverseActivities(handle, studyDto);
