@@ -20,11 +20,7 @@ public class ListCancersRoute implements Route {
 
     @Override
     public List<CancerItem> handle(Request request, Response response) {
-        String cancerLanguage = LanguageStore.DEFAULT_LANG_CODE;
-        LanguageDto userLanguage = getUserLanguage(request);
-        if (userLanguage != null) {
-            cancerLanguage = userLanguage.getIsoCode();
-        }
+        String cancerLanguage = getUserLanguage(request).getIsoCode();
         return cancerService.fetchCancers(cancerLanguage);
     }
 }
