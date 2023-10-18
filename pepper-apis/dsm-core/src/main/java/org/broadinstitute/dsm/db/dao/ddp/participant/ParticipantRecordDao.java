@@ -8,8 +8,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -32,6 +35,8 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
     private static final String SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID = "SELECT * FROM ddp_participant_record"
             + SQL_FILTER_BY_PARTICIPANT_ID + ";";
+
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_participant_record WHERE participant_record_id = ?";
 
     public static ParticipantRecordDao of() {
         return new ParticipantRecordDao();
@@ -76,8 +81,14 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
     }
 
     @Override
+    @VisibleForTesting
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = DaoUtil.deleteById(id, SQL_DELETE_BY_ID);
+        if (simpleResult.resultException != null) {
+            throw new DsmInternalError("Error deleting ddp_participant_record with id: " + id,
+                    simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override

@@ -81,8 +81,7 @@ public class ParticipantUtil {
         }
         StringBuilder email = new StringBuilder();
         ElasticSearchParticipantDto elasticSearchParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, participantId)
-                        .orElse(new ElasticSearchParticipantDto.Builder().build());
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, participantId);
         email.append(elasticSearchParticipantDto.getProfile()
                 .map(Profile::getEmail)
                 .orElse(""));
