@@ -49,6 +49,7 @@ public class KitUtil {
                     + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
     public static final String BOOKMARK_LABEL_CREATION_RUNNING = "label_creation_running";
     public static final String IGNORE_AUTO_DEACTIVATION = "ignore_auto_deactivation";
+    public static final String PECGS_RESEARCH = "PECGS_RESEARCH";
     private static final String SYSTEM_AUTOMATICALLY_DEACTIVATED = "system_automatically_deactivated";
     //easypost end statuses
     private static final String EASYPOST_DELIVERED_STATUS = "delivered";
@@ -120,14 +121,22 @@ public class KitUtil {
     private static final String EASYPOST_FAILURE_STATUS = "failure";
     private static final String EASYPOST_RETURN_SENDER_STATUS = "return_to_sender";
     private static final String EASYPOST_ERROR_STATUS = "error";
-    public static final String PECGS_RESEARCH = "PECGS_RESEARCH";
 
-    public static void createLabel(List<KitRequestCreateLabel> kitsLabelTriggered) {
+    /**
+     * createLabel buys shipments for the kit and updates their label url in the db
+     * if no easypost address id is present for the kit, the method uses the address in ES for participant
+     *
+     * @param kitsLabelTriggered List of kits that are picked up in the current label job
+     * @param easyPostUtil EasyPostUtil to use for buying shipments, if  null it is created for the specific realm of the kit
+     */
+    public static void createLabel(List<KitRequestCreateLabel> kitsLabelTriggered, EasyPostUtil easyPostUtil) {
         DBUtil.updateBookmark(System.currentTimeMillis(), BOOKMARK_LABEL_CREATION_RUNNING);
         DDPInstanceDto ddpInstanceDto = null;
 
         for (KitRequestCreateLabel kitLabelTriggered : kitsLabelTriggered) {
-            EasyPostUtil easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
+            if (easyPostUtil == null) {
+                easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
+            }
             Address toAddress = null;
             try {
                 DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName());

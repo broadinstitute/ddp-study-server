@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.DaoException;
@@ -75,10 +76,16 @@ import org.jdbi.v3.core.Handle;
  * revisioned, use this task with caution and only if it makes sense for your use-case.
  */
 @Slf4j
+@NoArgsConstructor
 public class UpdateTemplatesInPlace implements CustomTask {
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
+    private List<String> variablesToSkip;
+
+    public UpdateTemplatesInPlace(List<String> variablesToSkip) {
+        this.variablesToSkip = variablesToSkip;
+    }
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -222,6 +229,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
             }
         }
     }
+
 
     void traverseActivity(Handle handle, long studyId, ActivityBuilder activityBuilder, ActivityDao activityDao,
                           JdbiActivity jdbiActivity, JdbiActivityVersion jdbiActVersion, String filepath) {
@@ -585,13 +593,24 @@ public class UpdateTemplatesInPlace implements CustomTask {
             String currentText = translation.getText();
             String latestText = latestTranslations.remove(language);
             if (!currentText.equals(latestText)) {
+                if (latestText == null || latestText.isBlank()) {
+                    log.warn("EMPTY new text for variable: {} . ignored", variableName);
+                    continue;
+                }
+                if (variablesToSkip != null && variablesToSkip.contains(variableName)) {
+                    log.info("SKIPPED new text for variable: {}", variableName);
+                    continue;
+                }
+
                 boolean updated = jdbiVariableSubstitution.update(
                         translation.getId().get(),
                         translation.getRevisionId().get(),
                         language,
                         latestText);
                 if (updated) {
-                    log.info("[{}] variable {} language {}: updated substitution", tag, variableName, language);
+                    log.info("[{}] variable {} language {}: updated substitution. \ncurrent text: {}  \nlatest  text: {}",
+                            tag, variableName, language, currentText, latestText);
+                    //log.info("\ncurrent text: {}  \nlatest  text: {}", currentText, latestText);
                 } else {
                     throw new DDPException(String.format(
                             "Could not update substitution for %s variable %s language %s",

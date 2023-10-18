@@ -35,6 +35,8 @@ public class ApplicationConfigConstants {
 
     //security information
     public static final String BSP_SECRET = "bsp.secret";
+    public static final String JUNIPER_SECRET = "juniper.secret";
+    public static final String JUNIPER_SIGNER = "juniper.signer";
     public static final String BSP_ENCODED = "bsp.secretEncoded";
     public static final String DDP_SECRET = "portal.jwtDdpSecret";
     public static final String DDP_ENCODED = "auth0.isSecretBase64Encoded";
@@ -69,6 +71,10 @@ public class ApplicationConfigConstants {
     public static final String EMAIL_FRONTEND_URL_FOR_LINKS = "email.frontendUrl";
     public static final String EMAIL_GP_RECIPIENT = "email.gp_recipient";
     public static final String EMAIL_KEY = "email.key";
+    /**
+     * proxy url that should be used when sending sendgrid API requests
+     */
+    public static final String EMAIL_PROXY_URL = "email.proxyUrl";
     public static final String EMAIL_CLIENT_SETTINGS = "email.clientSettings";
     public static final String EMAIL_NOTIFICATIONS = "email.notifications";
     public static final String EMAIL_REMINDER_NOTIFICATIONS = "email.reminderNotifications";
@@ -89,11 +95,9 @@ public class ApplicationConfigConstants {
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_DEACTIVATED = "portal.dashboardKitDeactivated";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_SENT_REPORT = "portal.dashboardReportKitSent";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_RECEIVED_REPORT = "portal.dashboardReportKitReceived";
-    public static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS = "portal.checkDdpLabelIdQuery";
     public static final String GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE = "portal.checkTrackingQuery";
     public static final String GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL = "portal.checkKitTypeNeedsTrackingQuery";
     public static final String INSERT_KIT = "portal.insertKit";
-    public static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE = "portal.counterCollaboratorSample";
     public static final String GET_UNSENT_KIT_REQUESTS_FOR_REALM = "portal.unsentKitRequestsPerRealmQuery";
     public static final String GET_UPLOADED_KITS = "portal.selectUploadedKits";
     public static final String GET_LABEL_SETTINGS = "portal.labelSettingsQuery";

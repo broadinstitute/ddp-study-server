@@ -1,16 +1,21 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
@@ -21,9 +26,9 @@ public class UpsertPainless implements Exportable {
 
     private static final Logger logger = LoggerFactory.getLogger(UpsertPainless.class);
     private Generator generator;
-    private String index;
+    private final String index;
     private ScriptBuilder scriptBuilder;
-    private QueryBuilder queryBuilder;
+    private final QueryBuilder queryBuilder;
 
 
     public UpsertPainless(Generator generator, String index, ScriptBuilder scriptBuilder, QueryBuilder queryBuilder) {
@@ -33,48 +38,75 @@ public class UpsertPainless implements Exportable {
         this.queryBuilder = queryBuilder;
     }
 
+    public UpsertPainless(String index, QueryBuilder queryBuilder) {
+        this.index = index;
+        this.queryBuilder = queryBuilder;
+    }
+
     @Override
     public void export() {
+        export(scriptBuilder.build(), generator.generate(), generator.getPropertyName());
+    }
+
+    public void export(String script, Map<String, Object> source, String propertyName) {
         RestHighLevelClient clientInstance = ElasticSearchUtil.getClientInstance();
-        Script painless = new Script(ScriptType.INLINE, "painless", scriptBuilder.build(), generator.generate());
+        Script painless = new Script(ScriptType.INLINE, "painless", script, source);
+        logger.debug("upsert script: {}", painless);
         UpdateByQueryRequest updateByQueryRequest = new UpdateByQueryRequest(index);
         updateByQueryRequest.setQuery(queryBuilder);
         updateByQueryRequest.setScript(painless);
-        updateByQueryRequest.setMaxRetries(5);
+        updateByQueryRequest.setMaxRetries(11);
         updateByQueryRequest.setRefresh(true);
-        updateByQueryRequest.setAbortOnVersionConflict(false);
+        updateByQueryRequest.setAbortOnVersionConflict(true);
 
         Throwable ioException = null;
         for (int tryNum = 1; tryNum < 3; tryNum++) {
-            ioException = executeExport(clientInstance, updateByQueryRequest, tryNum);
-            if (ioException == null) {
-                break;
+            try {
+                executeExport(clientInstance, updateByQueryRequest, propertyName);
+                return;
+            } catch (IOException e) {
+                logger.info("Error occurred exporting data to ES on try number {} (retrying): {}", tryNum, e);
+                ioException = e;
             }
         }
-        if (ioException != null) {
-            logger.error("Unable to connect to ElasticSearch: {}", ioException.getMessage());
-            throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
-        }
+        // TODO: keeping error logging until we are sure exceptions are not swallowed in the call stack
+        logger.error("Unable to connect to ElasticSearch", ioException);
+        throw new DsmInternalError("Unable to connect to ElasticSearch", ioException);
     }
 
-    private Throwable executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest, int i) {
+    private void executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest,
+                               String propertyName) throws IOException {
+        String errorMsg = String.format("Error updating ES index %s for %s: ", index, propertyName);
         try {
-            BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
-            logger.info("created/updated {} ES records for {}", getNumberOfUpserted(bulkByScrollResponse),
-                    generator.getPropertyName());
-            return null;
-        } catch (IOException e) {
-            logger.info("Error occurred while exporting data to ES, on try number " + i, e);
-            return e;
-        } catch (Exception e) {
-            // TODO adding this since callers seem to be ignoring exceptions from this method
-            // once that is cleaned up we can get rid of this - DC
-            logger.error("Error updating ES index {}: {}", index, e.toString());
-            throw e;
+            BulkByScrollResponse res = update(clientInstance, updateByQueryRequest, propertyName);
+            if (!res.getBulkFailures().isEmpty()) {
+                if (res.getVersionConflicts() == 0) {
+                    throw new DsmInternalError(errorMsg + res);
+                }
+                RefreshResponse refreshResponse =
+                        clientInstance.indices().refresh(new RefreshRequest(index), RequestOptions.DEFAULT);
+                if (refreshResponse.getStatus() != RestStatus.OK) {
+                    throw new DsmInternalError(String.format("ES index refresh failed for %s: %s", index, refreshResponse));
+                }
+                res = update(clientInstance, updateByQueryRequest, propertyName);
+                if (!res.getBulkFailures().isEmpty()) {
+                    throw new DsmInternalError(errorMsg + res);
+                }
+            }
+        } catch (ElasticsearchException e) {
+            throw new DsmInternalError(errorMsg + e.toString(), e);
         }
     }
 
-    private long getNumberOfUpserted(BulkByScrollResponse bulkByScrollResponse) {
+    private static BulkByScrollResponse update(RestHighLevelClient client, UpdateByQueryRequest req,
+                                               String propertyName) throws IOException {
+        BulkByScrollResponse res = client.updateByQuery(req, RequestOptions.DEFAULT);
+        logger.info("created/updated {} ES records for {}", getNumberOfUpserted(res), propertyName);
+        logger.info("BulkByScrollResponse: {}", res);
+        return res;
+    }
+
+    private static long getNumberOfUpserted(BulkByScrollResponse bulkByScrollResponse) {
         return Math.max(bulkByScrollResponse.getCreated(), bulkByScrollResponse.getUpdated());
     }
 

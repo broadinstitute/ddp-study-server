@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class SmId {
     @ColumnName(DBConstants.SM_ID_TYPE)
     private String smIdType;
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
-    private Long tissueId;
+    private Integer tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
     private Integer smIdPk;
     @ColumnName(DBConstants.DELETED)
@@ -42,7 +42,7 @@ public class SmId {
     public SmId() {
     }
 
-    public SmId(Integer smIdPk, String smIdType, String smIdValue, Long tissueId) {
+    public SmId(Integer smIdPk, String smIdType, String smIdValue, Integer tissueId) {
         this.smIdPk = smIdPk;
         this.smIdType = smIdType;
         this.smIdValue = smIdValue;
@@ -50,7 +50,7 @@ public class SmId {
     }
 
     public SmId(Integer smIdPk, String smType, String smIdValue, Integer tissueId, Boolean deleted) {
-        this(smIdPk, smType, smIdValue, tissueId.longValue());
+        this(smIdPk, smType, smIdValue, tissueId);
         this.deleted = deleted;
     }
 
@@ -66,7 +66,7 @@ public class SmId {
                     rs.getInt(DBConstants.SM_ID_PK),
                     rs.getString(DBConstants.SM_ID_TYPE_ID),
                     rs.getString(DBConstants.SM_ID_VALUE),
-                    rs.getLong("sm." + DBConstants.TISSUE_ID)
+                    rs.getInt("sm." + DBConstants.TISSUE_ID)
             );
             if (tissueSmId != null) {
                 tissueSmId.setDeleted(rs.getBoolean("sm." + DBConstants.DELETED));
@@ -99,7 +99,7 @@ public class SmId {
             String smIdId = new TissueSMIDDao().createNewSMIDForTissue(tissueId, userId, smIdType, smIdValue);
             return smIdId;
         } else {
-            throw new DuplicateException("Duplicate or blank value for sm id value " + smIdValue);
+            throw new DsmInternalError("Duplicate or blank value for sm id value " + smIdValue);
         }
     }
 }

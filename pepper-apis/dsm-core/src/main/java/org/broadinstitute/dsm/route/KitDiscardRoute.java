@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.route;
 
+import java.io.IOException;
+import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.ArrayList;
 
 import com.google.gson.Gson;
 import lombok.NonNull;
@@ -11,6 +11,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitDiscard;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -19,7 +22,6 @@ import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,15 +34,12 @@ public class KitDiscardRoute extends RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(KitDiscardRoute.class);
 
     private static final String DIFFERENT_USER = "DIFFERENT_USER";
-    private static final String USER_NO_RIGHT = "USER_NO_RIGHT";
 
     private final Auth0Util auth0Util;
-    private final UserUtil userUtil;
     private final String auth0Domain;
 
-    public KitDiscardRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain) {
+    public KitDiscardRoute(@NonNull Auth0Util auth0Util, @NonNull String auth0Domain) {
         this.auth0Util = auth0Util;
-        this.userUtil = userUtil;
         this.auth0Domain = auth0Domain;
     }
 
@@ -51,71 +50,67 @@ public class KitDiscardRoute extends RequestHandler {
         if (queryParams.value(RoutePath.REALM) != null) {
             realm = queryParams.get(RoutePath.REALM).value();
         } else {
-            throw new RuntimeException("No realm query param was sent");
+            throw new DSMBadRequestException("No realm query param was sent");
         }
         String userIdRequest = UserUtil.getUserId(request);
 
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)
-                    || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+            if (canDiscardSample(realm, userId, userIdRequest)
+                    || canExitParticipant(realm, userId, userIdRequest)) {
                 return KitDiscard.getExitedKits(realm);
-            } else {
-                response.status(500);
-                return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
+            return new Result(403, UserErrorMessages.NO_RIGHTS);
         }
+
         if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
             String requestBody = request.body();
             KitDiscard kitAction = new Gson().fromJson(requestBody, KitDiscard.class);
             if (request.url().contains(RoutePath.DISCARD_SHOW_UPLOAD)) {
-                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)
-                        || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
-                    if (kitAction.getPath() != null) {
-                        byte[] bytes = GoogleBucket.downloadFile(null,
-                                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitAction.getPath());
-                        if (bytes != null) {
-                            logger.info("Got file from bucket");
-                            try {
-                                HttpServletResponse rawResponse = response.raw();
-                                rawResponse.getOutputStream().write(bytes);
-                                rawResponse.setStatus(200);
-                                rawResponse.getOutputStream().flush();
-                                rawResponse.getOutputStream().close();
-                                return new Result(200);
-                            } catch (IOException e) {
-                                throw new RuntimeException("Couldn't send file ", e);
-                            }
+                if (!canDiscardSample(realm, userId, userIdRequest)
+                        && !canExitParticipant(realm, userId, userIdRequest)) {
+                    return new Result(403, UserErrorMessages.NO_RIGHTS);
+                }
+                if (kitAction.getPath() != null) {
+                    byte[] bytes = GoogleBucket.downloadFile(null,
+                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitAction.getPath());
+                    if (bytes != null) {
+                        logger.info("Got file from bucket");
+                        try {
+                            HttpServletResponse rawResponse = response.raw();
+                            rawResponse.getOutputStream().write(bytes);
+                            rawResponse.setStatus(200);
+                            rawResponse.getOutputStream().flush();
+                            rawResponse.getOutputStream().close();
+                            return new Result(200);
+                        } catch (IOException e) {
+                            throw new DsmInternalError("Couldn't send file ", e);
                         }
                     }
-                } else {
-                    response.status(500);
-                    return new Result(500, UserErrorMessages.NO_RIGHTS);
                 }
             } else {
                 if (StringUtils.isNotBlank(kitAction.getKitDiscardId())) {
                     if (StringUtils.isNotBlank(kitAction.getAction())) {
-                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)
-                                || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+                        if (canDiscardSample(realm, userId, userIdRequest)
+                                || canExitParticipant(realm, userId, userIdRequest)) {
                             kitAction.setAction(kitAction.getKitDiscardId(), kitAction.getAction());
                             return new Result(200);
                         } else {
-                            response.status(500);
-                            return new Result(500, UserErrorMessages.NO_RIGHTS);
+                            return new Result(403, UserErrorMessages.NO_RIGHTS);
                         }
                     }
                     if (StringUtils.isNotBlank(kitAction.getDiscardDate())) {
-                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)) {
+                        if (canDiscardSample(realm, userId, userIdRequest)) {
                             kitAction.setKitDiscarded(kitAction.getKitDiscardId(), userIdRequest, kitAction.getDiscardDate());
                             return new Result(200);
                         } else {
-                            response.status(500);
-                            return new Result(500, UserErrorMessages.NO_RIGHTS);
+                            return new Result(403, UserErrorMessages.NO_RIGHTS);
                         }
                     }
                 }
             }
         }
+
         if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
             // confirm discard of sample
             if (request.url().contains(RoutePath.DISCARD_CONFIRM)) {
@@ -124,40 +119,33 @@ public class KitDiscardRoute extends RequestHandler {
 
                 String token = kitAction.getToken();
                 if (StringUtils.isNotBlank(token)) {
-                    Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(token, auth0Domain);
-                    if (auth0UserInfo != null) {
-                        String email = auth0UserInfo.getEmail();
-                        UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();
-                        if (userDto != null && userDto.getId() > 0) {
-                            ArrayList<String> userSetting = userUtil.getUserAccessRoles(email);
-                            if (userSetting.contains(DBConstants.KIT_SHIPPING) || userSetting.contains(DBConstants.DISCARD_SAMPLE)) {
-                                KitDiscard kit = KitDiscard.getKitDiscard(kitAction.getKitDiscardId());
-                                if (kit.getChangedById() != userDto.getId()) {
-                                    if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), userDto.getId())) {
-                                        return new Result(200, userDto.getName().orElse(""));
-                                    }
-                                    throw new RuntimeException("Failed to save confirm");
-                                } else {
-                                    return new Result(500, DIFFERENT_USER);
-                                }
-                            } else {
-                                return new Result(500, USER_NO_RIGHT);
-                            }
-                        } else {
-                            throw new RuntimeException("User is not known in DSM");
+                    String email = auth0Util.getAuth0User(token, auth0Domain);
+                    UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();
+                    if (userDto.getId() <= 0) {
+                        throw new DSMBadRequestException("Invalid DSM user " + email);
+                    }
+                    List<String> userSetting = UserUtil.getUserAccessRoles(email);
+                    if (!userSetting.contains(DBConstants.KIT_SHIPPING) && !userSetting.contains(DBConstants.DISCARD_SAMPLE)) {
+                        return new Result(403, UserErrorMessages.NO_RIGHTS);
+                    }
+                    KitDiscard kit = KitDiscard.getKitDiscard(kitAction.getKitDiscardId());
+                    if (kit.getChangedById() != userDto.getId()) {
+                        if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), userDto.getId())) {
+                            return new Result(200, userDto.getName().orElse(""));
                         }
+                        throw new DsmInternalError("Error confirming kit discarded. dsm_kit_id: " + kitAction.getKitDiscardId());
                     } else {
-                        throw new RuntimeException("User not found");
+                        return new Result(500, DIFFERENT_USER);
                     }
                 }
             } else {
-                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)) {
+                if (canDiscardSample(realm, userId, userIdRequest)) {
                     //save note and files
                     String kitDiscardId = null;
                     if (queryParams.value(KitDiscard.KIT_DISCARD_ID) != null) {
                         kitDiscardId = queryParams.get(KitDiscard.KIT_DISCARD_ID).value();
                     } else {
-                        throw new RuntimeException("No kitDiscardId query param was sent");
+                        throw new DSMBadRequestException("No kitDiscardId query param was sent");
                     }
 
                     //create a kitAction with the given kitDiscardId
@@ -202,11 +190,23 @@ public class KitDiscardRoute extends RequestHandler {
                         }
                     }
                 } else {
-                    response.status(500);
-                    return new Result(500, UserErrorMessages.NO_RIGHTS);
+                    return new Result(403, UserErrorMessages.NO_RIGHTS);
                 }
             }
         }
+        // TOOO I did some initial work to clean up this method, largely to ensure DSM was returning the correct
+        // response codes and to remove unnecessary complexity (still more to do on that). But this catch-all
+        // needs improvement. It looks like a fall through from several of the clauses above, which means DSM
+        // likely wants to throw a DSMBadRequestException for at least some of those cases, but of course we need to
+        // add a response body describing what is wrong. It also looks like this is where a request without a token ends up.  -DC
         throw new RuntimeException("Something went wrong");
+    }
+
+    private static boolean canDiscardSample(String realm, String userId, String userIdRequest) {
+        return UserUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest);
+    }
+
+    private static boolean canExitParticipant(String realm, String userId, String userIdRequest) {
+        return UserUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest);
     }
 }

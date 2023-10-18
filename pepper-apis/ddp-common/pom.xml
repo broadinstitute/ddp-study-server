@@ -15,6 +15,7 @@
         <logback.version>1.4.5</logback.version>
         <sonar.sources>src/main/java</sonar.sources>
         <sonar.java.binaries>target/classes</sonar.java.binaries>
+        <liquibase.version>4.8.0</liquibase.version>
     </properties>
 
     <dependencies>
@@ -64,6 +65,7 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
@@ -99,5 +101,13 @@
             <artifactId>mysql</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- sendgrid for email sending -->
+        <dependency>
+            <!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
+            <groupId>com.sendgrid</groupId>
+            <artifactId>sendgrid-java</artifactId>
+            <version>4.8.1</version>
+        </dependency>
+
     </dependencies>
 </project>

@@ -1,48 +1,30 @@
 package org.broadinstitute.dsm.model;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 
-import org.apache.commons.lang3.StringUtils;
-
+/** Please do not add to this class or use it in new places
+ * This is a component in the inconsistent identification of ddp_instance by study_guid and instance_name.
+ * TODO: We need to fix having two different non-key identifiers for a ddp_instance (that is, either instance name or
+ * study guid, not both). See https://broadworkbench.atlassian.net/browse/PEPPER-1067. -DC
+ *
+ */
 public enum Study {
     ATCP("ATCP"),
     RGP("RGP"),
-    SINGULAR("SINGULAR"),
-    LMS("LMS"),
-    OSTEO2("OSTEO2"),
     CMI_OSTEO("CMI-OSTEO");
 
-    private static final List<Study> PE_CGS = Arrays.asList(LMS, OSTEO2);
-    private static final String CMI_PREFIX = "cmi-";
     private String value;
 
     Study(String value) {
         this.value = value;
     }
 
-    public static boolean isPECGS(String instanceName) {
-        instanceName = instanceName
-                .replace(CMI_PREFIX, StringUtils.EMPTY)
-                .toUpperCase();
-
-        try {
-            Study study = valueOf(instanceName);
-            return PE_CGS.contains(study);
-        } catch (IllegalArgumentException iae) {
-            return false;
-        }
-
-    }
-
-    public static Study of(String studyGuid) throws Exception {
+    public static Study of(String studyGuid) {
         for (Study study : Study.values()) {
-            if (study.value.equals(studyGuid)) {
+            if (study.value.equalsIgnoreCase(studyGuid)) {
                 return study;
             }
         }
-        throw new NoSuchElementException("Study: ".concat(studyGuid).concat(" does not exist"));
+        throw new DsmInternalError("Study: ".concat(studyGuid).concat(" does not exist"));
     }
-
 }

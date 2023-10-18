@@ -206,7 +206,7 @@ public class RouteTestSample extends TestHelper {
         //start method of label job
         List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
         if (!kitsLabelTriggered.isEmpty()) {
-            KitUtil.createLabel(kitsLabelTriggered);
+            KitUtil.createLabel(kitsLabelTriggered, null);
             // wait for labels to get created
             try {
                 Thread.sleep(waitSeconds * 1000L); //20 sec
@@ -415,7 +415,7 @@ public class RouteTestSample extends TestHelper {
         EasyPostUtil easyPostUtil = new EasyPostUtil(instanceName);
         Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952");
         Address returnAddress =
-                easyPostUtil.createBroadAddress("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge", "02141",
+                easyPostUtil.createAddressWithoutValidation("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge", "02141",
                         "MA", "US", "617-714-8952");
         Parcel parcel = easyPostUtil.createParcel("3.2", "6.9", "1.3", "5.2");
         CustomsInfo customs = null;

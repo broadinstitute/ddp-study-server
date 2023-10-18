@@ -72,6 +72,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
         if (simpleResult.resultException != null) {
             throw new DsmInternalError("Error deleting ddp_institution record with id: " + id, simpleResult.resultException);
         }
+        logger.info("Deleted institution with ID {}", id);
         return (int) simpleResult.resultValue;
     }
 

@@ -1,0 +1,29 @@
+{
+  "id": "1907",
+  "user": "cunningh@broadinstitute.org",
+  "nameValue": null,
+  "ddpParticipantId": "65O12N4YDZGT6JCC3W8N",
+  "parent": "participantId",
+  "parentId": 15525,
+  "nameValues": [
+    {
+      "name": "oD.facility",
+      "value": "Office"
+    },
+    {
+      "name": "oD.phone",
+      "value": "123-456-7890"
+    },
+    {
+      "name": "oD.fax",
+      "value": "123-456-7890"
+    },
+    {
+      "name": "oD.destructionPolicy",
+      "value": "12"
+    }
+  ],
+  "tableAlias": "oD",
+  "isUnique": true,
+  "realm": "cmi-lms"
+}

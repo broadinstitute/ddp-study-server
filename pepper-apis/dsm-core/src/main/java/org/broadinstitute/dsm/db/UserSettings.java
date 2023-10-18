@@ -6,9 +6,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -26,6 +28,8 @@ public class UserSettings {
             "SELECT rows_on_page, rows_set_0, rows_set_1, rows_set_2, date_format FROM user_settings settings, access_user user "
                     + "WHERE user.user_id = settings.user_id AND user.is_active = 1";
     private static final String SQL_INSERT_USER_SETTINGS = "INSERT INTO user_settings SET user_id = ?";
+
+    private static final String SQL_DELETE_USER_SETTINGS = "DELETE FROM user_settings WHERE user_id = ?";
 
     private static final String USER_ID = "userId";
 
@@ -100,16 +104,41 @@ public class UserSettings {
             us.defaultTissueFilter = ViewFilter.getDefaultFilterForUser(email, "tissueList");
             us.defaultParticipantFilter = ViewFilter.getDefaultFilterForUser(email, "participantList");
         }
-        logger.info("UserSettings for user w/ email " + email);
         return us;
     }
 
-    public static void insertUserSetting(Connection conn, int userId) {
-        try (PreparedStatement insertKit = conn.prepareStatement(SQL_INSERT_USER_SETTINGS)) {
-            insertKit.setInt(1, userId);
-            insertKit.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Error inserting new user_settings ", e);
+    public static int createUserSettings(int userId) {
+        return inTransaction(conn -> insertUserSetting(conn, userId));
+    }
+
+    public static int insertUserSetting(Connection conn, int userId) {
+        int id = -1;
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER_SETTINGS, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, userId);
+            int result = stmt.executeUpdate();
+            if (result != 1) {
+                throw new DsmInternalError("Error inserting user setting. Result count was " + result);
+            }
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    id = rs.getInt(1);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DsmInternalError("Error inserting user setting", ex);
         }
+        return id;
+    }
+
+    public static int deleteUserSettings(int userId) {
+        return inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_SETTINGS)) {
+                stmt.setInt(1, userId);
+                return stmt.executeUpdate();
+            } catch (SQLException ex) {
+                String msg = String.format("Error deleting user settings: userId=%d", userId);
+                throw new DsmInternalError(msg, ex);
+            }
+        });
     }
 }

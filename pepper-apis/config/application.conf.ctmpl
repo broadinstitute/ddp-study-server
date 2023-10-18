@@ -8,7 +8,6 @@
 {{with $auth0 := index $conf.Data "auth0"}}
 {{with $testingConf := secret (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := secret (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 {
     "dbUrl": "{{$conf.Data.dbUrl}}",
@@ -19,6 +18,11 @@
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
+    "emailPatternDenyList": [
+            {{range $i, $email := $conf.Data.emailPatternDenyList}}
+                {{if $i}},{{end}}"{{ $email }}"
+            {{end}}
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
@@ -38,12 +42,6 @@
 		"token" : "{{$conf.Data.auth0LogEvents.token}}"
     {{end}}
 	},
-    "slack": {
-        "hook": "{{$slack.hook}}",
-        "channel": "{{$slack.channel}}",
-        "queueSize": 10,
-        "intervalInMillis": 60000
-    },
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
     "healthcheckPassword": "{{$conf.Data.healthcheckPassword}}",
@@ -179,7 +177,6 @@
         "dsmBaseUrl": "https://dsm.datadonationplatform.org:443"
     {{end}}
 }
-{{end}}
 {{end}}
 {{end}}
 {{end}}

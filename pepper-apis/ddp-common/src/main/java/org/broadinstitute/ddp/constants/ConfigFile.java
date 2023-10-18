@@ -108,10 +108,7 @@ public class ConfigFile {
     public static final String PUBSUB_TASKS_RESULT_TOPIC = "pubsub.pubSubTasksResultTopic";
     public static final String PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.pubSubTaskSubscriberAwaitRunningTimeout";
     public static final String PUBSUB_DSM_TASKS_TOPIC = "pubsub.pubSubDsmTasksTopic";
-    public static final String SLACK_HOOK = "slack.hook";
-    public static final String SLACK_CHANNEL = "slack.channel";
-    public static final String SLACK_QUEUE_SIZE = "slack.queueSize";
-    public static final String SLACK_INTERVAL_IN_MILLIS = "slack.intervalInMillis";
+
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
 
     public static final String DOMAIN = "domain";
@@ -141,6 +138,7 @@ public class ConfigFile {
 
     public static final String AUTH0_IP_ALLOW_LIST = "auth0.ipAllowList";
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
+    public static final String EMAIL_PATTERN_DENY_LIST = "emailPatternDenyList";
 
     public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
     public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";

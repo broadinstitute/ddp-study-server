@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +20,18 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.join.ScoreMode;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -32,6 +39,9 @@ import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +82,9 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
             + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
 
+    public static final String SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD =
+            "SELECT onc.* FROM ddp_onc_history_detail onc WHERE medical_record_id = ?";
+
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_RECEIVED = "received";
@@ -90,8 +103,6 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     public static final String PROBLEM_OTHER_OLD = "Other";
     public static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
     private static final Logger logger = LoggerFactory.getLogger(OncHistoryDetail.class);
-    private static final String SQL_CREATE_ONC_HISTORY =
-            "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
     private static final String SQL_SELECT_ONC_HISTORY =
             "SELECT onc_history_detail_id, medical_record_id, date_px, type_px, location_px, histology, accession_number, facility,"
                     + " phone, fax, notes, additional_values_json, request, fax_sent, fax_sent_by, fax_confirmed, fax_sent_2, "
@@ -100,11 +111,24 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "WHERE NOT (deleted <=> 1)";
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
+
+    private static final String SQL_CREATE_ONC_HISTORY_DETAIL =
+            "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, date_px = ?, type_px = ?, location_px = ?, facility = ?, "
+                    + "request = ?, destruction_policy = ?, last_changed = ?, changed_by = ?";
+
+    private static final String SQL_UPDATE_DESTRUCTION_POLICY =
+            "UPDATE ddp_onc_history_detail onc "
+                    + "LEFT JOIN ddp_medical_record med ON med.medical_record_id = onc.medical_record_id "
+                    + "LEFT JOIN ddp_institution di ON di.institution_id = med.institution_id "
+                    + "LEFT JOIN ddp_participant dp ON dp.participant_id = di.participant_id "
+                    + "SET onc.destruction_policy = ?, onc.last_changed = ?, onc.changed_by = ? "
+                    + "WHERE onc.facility = ? AND dp.ddp_instance_id = ?";
+
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
-    private Long oncHistoryDetailId;
+    private int oncHistoryDetailId;
 
     @ColumnName(DBConstants.MEDICAL_RECORD_ID)
-    private Long medicalRecordId;
+    private int medicalRecordId;
 
     @ColumnName(DBConstants.DATE_PX)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
@@ -204,7 +228,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.ddpInstanceId = ddpInstanceId;
     }
 
-    public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
+    public OncHistoryDetail(Integer oncHistoryDetailId, Integer medicalRecordId, String datePx, String typePx, String locationPx,
                             String histology, String accessionNumber, String facility, String phone, String fax, String notes,
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
@@ -240,7 +264,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.unableObtainTissue = unableObtainTissue;
     }
 
-    public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
+    public OncHistoryDetail(Integer oncHistoryDetailId, Integer medicalRecordId, String datePx, String typePx, String locationPx,
                             String histology, String accessionNumber, String facility, String phone, String fax, String notes,
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
@@ -280,10 +304,22 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.ddpInstanceId = ddpInstanceId;
     }
 
+    public OncHistoryDetail(Builder builder) {
+        this.medicalRecordId = builder.medicalRecordId;
+        this.datePx = builder.datePx;
+        this.typePx = builder.typePx;
+        this.locationPx = builder.locationPx;
+        this.facility = builder.facility;
+        this.request = builder.request;
+        this.destructionPolicy = builder.destructionPolicy;
+        this.changedBy = builder.changedBy;
+        this.ddpInstanceId = (long)builder.ddpInstanceId;
+    }
+
     public static OncHistoryDetail getOncHistoryDetail(@NonNull ResultSet rs) throws SQLException {
         List tissues = new ArrayList<>();
         OncHistoryDetail oncHistoryDetail =
-                new OncHistoryDetail(rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID), rs.getLong(DBConstants.MEDICAL_RECORD_ID),
+                new OncHistoryDetail(rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID), rs.getInt(DBConstants.MEDICAL_RECORD_ID),
                         rs.getString(DBConstants.DATE_PX), rs.getString(DBConstants.TYPE_PX), rs.getString(DBConstants.LOCATION_PX),
                         rs.getString(DBConstants.HISTOLOGY), rs.getString(DBConstants.ACCESSION_NUMBER), rs.getString(DBConstants.FACILITY),
                         rs.getString(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.PHONE),
@@ -303,10 +339,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
                         tissues, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION), rs.getString(DBConstants.DESTRUCTION_POLICY),
                         rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE), rs.getString(DBConstants.PARTICIPANT_ID),
-                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
+                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID));
         return oncHistoryDetail;
     }
 
+    // TODO: there should be no need for the realm parameter -DC
     public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -338,16 +375,16 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm, String queryAddition) {
         logger.info("Collection oncHistoryDetail information");
         Map<String, List<OncHistoryDetail>> oncHistory = new HashMap<>();
-        Map<Long, Tissue> tissues = new HashMap<>();
+        Map<Integer, Tissue> tissues = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     DBUtil.getFinalQuery(SQL_SELECT_ONC_HISTORY_DETAIL, queryAddition) + SQL_ORDER_BY)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    Map<Long, OncHistoryDetail> oncHistoryMap = new HashMap<>();
+                    Map<Integer, OncHistoryDetail> oncHistoryMap = new HashMap<>();
                     while (rs.next()) {
-                        long oncHistoryDetailId = rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID);
+                        int oncHistoryDetailId = rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID);
                         SmId tissueSmId = Tissue.getSMIds(rs);
                         Tissue tissue;
                         if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {
@@ -405,11 +442,28 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         return getOncHistoryDetails(realm, queryAddition);
     }
 
-    public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+    public static List<OncHistoryDetailDto> getOncHistoryDetailByMedicalRecord(int medicalRecordId) {
+        return inTransaction(conn -> {
+            List<OncHistoryDetailDto> records = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD)) {
+                stmt.setInt(1, medicalRecordId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto builder = new OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto();
+                    while (rs.next()) {
+                        records.add(builder.build(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting onc history detail for medical record ID=" + medicalRecordId, e);
+            }
+            return records;
+        });
+    }
+
+    public static int createOncHistoryDetail(@NonNull int medicalRecordId, @NonNull String changedBy) {
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, medicalRecordId);
+                stmt.setInt(1, medicalRecordId);
                 stmt.setString(2, OncHistoryDetail.STATUS_REVIEW);
                 stmt.setLong(3, System.currentTimeMillis());
                 stmt.setString(4, changedBy);
@@ -417,30 +471,50 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            String oncHistoryDetailId = rs.getString(1);
-                            logger.info("Added new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId);
-                            dbVals.resultValue = oncHistoryDetailId;
+                            int id = rs.getInt(1);
+                            logger.info("Added new oncHistoryDetail (ID={}) for medicalRecord {}", id, medicalRecordId);
+                            return id;
                         }
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new institution ", e);
                     }
-                } else {
-                    throw new RuntimeException(
-                            "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result
-                                    + " rows");
                 }
+                throw new DsmInternalError(String.format("Error creating ddp_onc_history_detail for medical record %d: "
+                        + "result key not present", medicalRecordId));
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError("Error creating ddp_onc_history_detail for medical record " + medicalRecordId);
             }
-            return dbVals;
         });
+    }
 
-        if (results.resultException != null) {
-            throw new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
-                    results.resultException);
-        } else {
-            return (String) results.resultValue;
-        }
+    /**
+     * Note: this method does not create all OncHistoryDetail fields. Add those fields as needed.
+     */
+    public static int createOncHistoryDetail(OncHistoryDetail oncHistoryDetail) {
+        int medicalRecordId = oncHistoryDetail.getMedicalRecordId();
+        return inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_CREATE_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setInt(1, medicalRecordId);
+                stmt.setString(2, oncHistoryDetail.datePx);
+                stmt.setString(3, oncHistoryDetail.typePx);
+                stmt.setString(4, oncHistoryDetail.locationPx);
+                stmt.setString(5, oncHistoryDetail.facility);
+                stmt.setString(6, oncHistoryDetail.request);
+                stmt.setString(7, oncHistoryDetail.destructionPolicy);
+                stmt.setLong(8, System.currentTimeMillis());
+                stmt.setString(9, oncHistoryDetail.changedBy);
+                int result = stmt.executeUpdate();
+                if (result == 1) {
+                    try (ResultSet rs = stmt.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            return rs.getInt(1);
+                        }
+                    }
+                }
+                throw new DsmInternalError(String.format("Error creating ddp_onc_history_detail for medical record %d: "
+                        + "result key not present", medicalRecordId));
+            } catch (SQLException ex) {
+                throw new DsmInternalError("Error creating ddp_onc_history_detail for medical record " + medicalRecordId);
+            }
+        });
     }
 
     @JsonProperty("dynamicFields")
@@ -479,10 +553,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                                                   boolean updateElastic) {
         Number mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
         if (mrId == null) {
-            MedicalRecordUtil.writeInstitutionIntoDb(ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm, updateElastic);
-            String id = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
-            if (StringUtils.isBlank(id)) {
-                throw new RuntimeException("Error adding new institution for oncHistory. Participant ID: " + participantId);
+            MedicalRecordUtil.writeInstitutionIntoDb(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm,
+                    updateElastic);
+            Integer id = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
+            if (id == null) {
+                throw new DsmInternalError("Error adding new institution for oncHistory. Participant ID: " + participantId);
             }
             mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
             if (mrId == null) {
@@ -490,5 +565,107 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             }
         }
         return mrId.intValue();
+    }
+
+    public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
+                                               @NonNull String user) {
+        DDPInstanceDto ddpInstance = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm).orElseThrow(() ->
+                new DSMBadRequestException("Invalid realm : " + realm));
+
+        int updateCnt = inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_DESTRUCTION_POLICY)) {
+                stmt.setString(1, policy);
+                stmt.setString(2, String.valueOf(System.currentTimeMillis()));
+                stmt.setString(3, user);
+                stmt.setString(4, facility);
+                stmt.setInt(5, ddpInstance.getDdpInstanceId());
+                return stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error updating destruction policy for facility " + facility, e);
+            }
+        });
+
+        if (updateCnt > 0) {
+            String index = ddpInstance.getEsParticipantIndex();
+
+            String scriptText = String.format("if (ctx._source.dsm.oncHistoryDetail != null) "
+                    + "{for (a in ctx._source.dsm.oncHistoryDetail) "
+                    + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}}", facility, policy);
+            BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+            int instanceId = ddpInstance.getDdpInstanceId();
+            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.medicalRecord.ddpInstanceId", instanceId);
+            queryBuilder.must(QueryBuilders.nestedQuery("dsm.medicalRecord", qb, ScoreMode.None));
+
+            try {
+                UpsertPainless upsert = new UpsertPainless(null, index, null, queryBuilder);
+                upsert.export(scriptText, Collections.emptyMap(), "destructionPolicy");
+            } catch (Exception e) {
+                String msg = String.format("Error updating ElasticSearch oncHistoryDetail destruction policy for index %s, "
+                        + "facility=%s, policy=%s", index, facility, policy);
+                throw new DsmInternalError(msg, e);
+            }
+        }
+    }
+
+    // Note: this builder is not complete, add fields as needed
+    public static class Builder {
+        private int medicalRecordId;
+        private String datePx;
+        private String typePx;
+        private String locationPx;
+        private String facility;
+        private String request;
+        private String destructionPolicy;
+        private String changedBy;
+        private int ddpInstanceId;
+
+        public Builder withMedicalRecordId(int medicalRecordId) {
+            this.medicalRecordId = medicalRecordId;
+            return this;
+        }
+
+        public Builder withDatePx(String datePx) {
+            this.datePx = datePx;
+            return this;
+        }
+
+        public Builder withTypePx(String typePx) {
+            this.typePx = typePx;
+            return this;
+        }
+
+        public Builder withLocationPx(String locationPx) {
+            this.locationPx = locationPx;
+            return this;
+        }
+
+        public Builder withFacility(String facility) {
+            this.facility = facility;
+            return this;
+        }
+
+        public Builder withRequest(String request) {
+            this.request = request;
+            return this;
+        }
+
+        public Builder withDestructionPolicy(String destructionPolicy) {
+            this.destructionPolicy = destructionPolicy;
+            return this;
+        }
+
+        public Builder withChangedBy(String changedBy) {
+            this.changedBy = changedBy;
+            return this;
+        }
+
+        public Builder withDdpInstanceId(int ddpInstanceId) {
+            this.ddpInstanceId = ddpInstanceId;
+            return this;
+        }
+
+        public OncHistoryDetail build() {
+            return new OncHistoryDetail(this);
+        }
     }
 }

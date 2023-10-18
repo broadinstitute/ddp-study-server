@@ -1,12 +1,11 @@
 package org.broadinstitute.dsm.service.onchistory;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -19,29 +18,16 @@ public class ColumnValidatorTest {
 
     @BeforeClass
     public static void setup() {
-        JsonArray pv1 = new JsonArray();
-        JsonObject val1 = new JsonObject();
-        val1.addProperty("value", "attr1");
-        pv1.add(val1);
-        JsonObject val2 = new JsonObject();
-        val2.addProperty("value", "attr2");
-        pv1.add(val2);
-        FieldSettingsDto.Builder builder = new FieldSettingsDto.Builder(0);
-        FieldSettingsDto fieldSettingsDto1 = builder.withColumnName("pick1")
-                .withPossibleValues(pv1.toString()).build();
+        Map<String, List<String>> colValues = new HashMap<>();
+        List<String> values = new ArrayList<>();
+        values.add("attr1");
+        values.add("attr2");
+        colValues.put("pick1", values);
 
-        JsonObject val3 = new JsonObject();
-        val3.addProperty("value", "attr3");
-        JsonArray pv2 = new JsonArray();
-        pv2.add(val1);
-        pv2.add(val2);
-        pv2.add(val3);
-
-        FieldSettingsDto fieldSettingsDto2 = builder.withColumnName("pick2")
-                .withPossibleValues(pv2.toString()).build();
-
-        List<FieldSettingsDto> picklists = Arrays.asList(fieldSettingsDto1, fieldSettingsDto2);
-        validator = new ColumnValidator(picklists);
+        List<String> values2 = new ArrayList<>(values);
+        values2.add("attr3");
+        colValues.put("pick2", values2);
+        validator = new ColumnValidator(colValues);
     }
 
     @Test

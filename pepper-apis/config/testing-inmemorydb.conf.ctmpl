@@ -32,6 +32,9 @@
     "dbInstanceId": "ddp-dev",
     "restrictRegisterRoute": false,
     "restrictAuth0LogEventRoute": false,
+    "emailPatternDenyList": [
+        "@test.firecloud.org"
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",

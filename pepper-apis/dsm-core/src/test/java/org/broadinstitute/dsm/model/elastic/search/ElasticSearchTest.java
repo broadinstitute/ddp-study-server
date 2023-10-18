@@ -4,7 +4,6 @@ package org.broadinstitute.dsm.model.elastic.search;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.model.elastic.Address;
@@ -83,9 +82,8 @@ public class ElasticSearchTest {
                 new ElasticSearchParticipantDto.Builder().withStatusTimeStamp(1_000_000L).withProfile(esProfile).withStatus("TESTING")
                         .withAddress(esAddress).build();
         Map<String, Object> esMap = GSON.fromJson(GSON.toJson(elasticSearchParticipantDto), Map.class);
-        Optional<ElasticSearchParticipantDto> maybeElasticSearchParticipantDto = new ElasticSearch().parseSourceMap(esMap);
+        ElasticSearchParticipantDto esParticipantDto = new ElasticSearch().parseSourceMap(esMap);
         try {
-            ElasticSearchParticipantDto esParticipantDto = maybeElasticSearchParticipantDto.get();
             Assert.assertEquals("Tommy", esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
             Assert.assertEquals("Barsum", esParticipantDto.getAddress().map(Address::getCountry).orElse(""));
             Assert.assertEquals("TESTING", esParticipantDto.getStatus().orElse(""));

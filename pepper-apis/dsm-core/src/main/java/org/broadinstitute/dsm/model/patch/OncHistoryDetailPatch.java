@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
@@ -26,7 +27,7 @@ public class OncHistoryDetailPatch extends BasePatch {
         NULL_KEY.put(NAME_VALUE, null);
     }
 
-    private Number mrID;
+    private Integer mrID;
     private String oncHistoryDetailId;
 
     {
@@ -44,30 +45,42 @@ public class OncHistoryDetailPatch extends BasePatch {
     }
 
     private void prepare() {
+        // TODO this method needs to be rewritten, but for now at least verify the input at the correct points -DC
+        String parentId = patch.getParentId();
+        String ddpParticipantId = patch.getDdpParticipantId();
+        String realm = patch.getRealm();
+        if (StringUtils.isBlank(realm)) {
+            throw new DSMBadRequestException("Realm not provided for patch");
+        }
+
         // TODO this code should be replaced by a call to OncHistoryDetail.verifyOrCreateInstitution, but that's
         // a bit scary to do without some testing code in place -DC
-        if (StringUtils.isNotBlank(patch.getParentId())) {
-            mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
+        if (StringUtils.isNotBlank(parentId)) {
+            mrID = MedicalRecordUtil.isInstitutionTypeInDB(parentId);
         }
         if (mrID == null) {
-            if (StringUtils.isNotBlank(patch.getDdpParticipantId())) {
-                // mr of that type doesn't exist yet, so create an institution and mr
-                MedicalRecordUtil.writeInstitutionIntoDb(patch.getDdpParticipantId(), MedicalRecordUtil.NOT_SPECIFIED,
-                        patch.getRealm(), true);
-                String participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(patch.getDdpParticipantId(), patch.getRealm());
-                if (StringUtils.isBlank(participantId)) {
-                    throw new RuntimeException("Error adding new institution for oncHistory for pt w/ id " + patch.getParentId());
-                }
-                patch.setParentId(participantId);
-                mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
-            } else {
-                throw new RuntimeException("Error adding new institution for oncHistory for pt w/ id " + patch.getParentId());
+            if (StringUtils.isBlank(ddpParticipantId)) {
+                throw new DSMBadRequestException("DDP participant ID not provided for patch");
             }
+
+            logger.info("Medical record not found for participant {}, creating one", ddpParticipantId);
+            Integer participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
+            if (participantId == null) {
+                throw new DSMBadRequestException("Participant does not exist. DDP participant ID=" + ddpParticipantId);
+            }
+
+            // mr of that type doesn't exist yet, so create an institution and mr
+            MedicalRecordUtil.writeInstitutionIntoDb(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
+                    realm, true);
+            patch.setParentId(participantId.toString());
+            mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         }
         if (mrID != null) {
-            oncHistoryDetailId = OncHistoryDetail.createNewOncHistoryDetail(mrID.toString(), patch.getUser());
+            oncHistoryDetailId = Integer.toString(OncHistoryDetail.createOncHistoryDetail(mrID, patch.getUser()));
+            logger.info("[OncHistoryDetailPatch] Created oncHistoryDetail record (ID={}) for participant {}, medicalRecordId={}",
+                    oncHistoryDetailId, ddpParticipantId, mrID);
         }
-        // TOOD this seems wrong because if oncHistoryDetailId is null at this point things will blow up later -DC
+        // TODO this seems wrong because if oncHistoryDetailId is null at this point things will blow up later -DC
         resultMap.put(ONC_HISTORY_DETAIL_ID, oncHistoryDetailId);
     }
 

@@ -1,110 +1,140 @@
 package org.broadinstitute.dsm;
 
-import static org.broadinstitute.dsm.TestHelper.cfg;
-import static org.broadinstitute.dsm.TestHelper.setupDB;
+import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
+import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
+import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
 
-import org.broadinstitute.dsm.db.dao.user.UserDao;
-import org.broadinstitute.dsm.db.dto.user.UserDto;
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.patch.Patch;
+import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class AuthenticationTest {
-    public static final String UNIT_TESTER_EMAIL = "testUsersEmails.unitTesterEmail";
-    public static final String GP_UNIT_TESTER_EMAIL = "testUsersEmails.gpUnitTesterEmail";
 
 
-    @Before
-    public void first() {
-        setupDB();
+public class AuthenticationTest extends DbTxnBaseTest {
 
+    private static String morePermissionsUserId;
+
+    private static String cmiKitShippingOnlyUserId;
+
+    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
+
+    private static String studyInstanceName;
+
+    private static String generateUserEmail() {
+        return "AuthTest-" + System.currentTimeMillis() + "@broad.dev";
     }
+
+    /**
+     * Create new groups, a new ddp_instance, associated roles,
+     * a few new users and set their permissions.
+     */
+    @BeforeClass
+    public static void setup() {
+        String nameAppend = "." + System.currentTimeMillis();
+        studyInstanceName = "instance" + nameAppend;
+        String cmiStudyGroup = "cmi" + nameAppend;
+
+        cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, null, null, cmiStudyGroup);
+        cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
+                Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
+
+        morePermissionsUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW)));
+        cmiKitShippingOnlyUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                Collections.singletonList(KIT_SHIPPING)));
+    }
+
     @Test
-    @Ignore
-    public void GPPatchKitAccessTest(){
-        String realm = "osteo2";
-
-        String gpUserId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
-
-        Patch patch = new Patch("0",  "dsmKitRequestId", "0", gpUserId , new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void testKitShipperRoleCanChangeKitInfo() {
+        Patch patch = new Patch("0",  "dsmKitRequestId", "0", cmiKitShippingOnlyUserId,
+                new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("kit");
 
-        Assert.assertTrue(UserUtil.checkKitShippingAccessForPatch(realm, gpUserId, null, patch));
+        Assert.assertTrue(UserUtil.checkKitShippingAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, null, patch));
     }
 
     @Test
-    @Ignore
-    public void GPPatchOtherAccessTest(){
-        String realm = "osteo2";
-
-        String gpUserId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
-
-        Patch patch = new Patch("0", "participantId", "0", gpUserId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void testKitShipperRoleCannotChangeParticipantInfo() {
+        Patch patch = new Patch("0", "participantId", "0", cmiKitShippingOnlyUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("oD");
 
-        Assert.assertFalse(UserUtil.checkKitShippingAccessForPatch(realm, gpUserId, null, patch));
+        Assert.assertFalse(UserUtil.checkKitShippingAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, null, patch));
     }
 
+    /**
+     * Verifies that users who don't have permission to make
+     * patch requests can't make patch requests, and that
+     * users who do have said permission can make the requests.
+     */
     @Test
-    @Ignore
-    public void mismatchAccessTest(){
-        String realm = "osteo2";
-
-        String userId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
-        String gpUserId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(GP_UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId() );
-
-        Patch patch1 = new Patch("0", "participantId", "0", userId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void mismatchAccessTest() {
+        Patch patch1 = new Patch("0", "participantId", "0", morePermissionsUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch1.setTableAlias("oD");
 
         try {
-            Assert.assertFalse(UserUtil.checkUserAccessForPatch(realm, gpUserId, DBConstants.PT_LIST_VIEW, null, patch1));
+            UserUtil.checkUserAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, PT_LIST_VIEW, null, patch1);
+            Assert.fail("Did not throw expected exception");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
         }
         try {
-            Assert.assertFalse(UserUtil.checkUserAccessForPatch(realm, gpUserId, DBConstants.MR_VIEW, null, patch1));
+            UserUtil.checkUserAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, DBConstants.MR_VIEW, null, patch1);
+            Assert.fail("Did not throw expected exception");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
         }
         try {
-            Assert.assertFalse(UserUtil.checkUserAccessForPatch(realm, gpUserId, DBConstants.MR_ABSTRACTER, null, patch1));
+            UserUtil.checkUserAccessForPatch(studyInstanceName, cmiKitShippingOnlyUserId, DBConstants.MR_ABSTRACTER, null, patch1);
+            Assert.fail("Did not throw expected exception");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
         }
 
-        Patch gpPatch = new Patch("0",  "dsmKitRequestId", "0", gpUserId , new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch gpPatch = new Patch("0",  "dsmKitRequestId", "0", cmiKitShippingOnlyUserId,
+                new NameValue("kit.collectionDate",  "2023-04-24"), null, "XSZSRS1MS3D4OAEK2DPM");
         gpPatch.setTableAlias("kit");
+
         try {
-            Assert.assertFalse(UserUtil.checkKitShippingAccessForPatch(realm, userId, null, gpPatch));
+            UserUtil.checkKitShippingAccessForPatch(studyInstanceName, morePermissionsUserId, null, gpPatch);
+            Assert.fail("Did not throw expected exception");
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("User id in patch did not match the one in token"));
         }
-
     }
 
+    /**
+     * Verifies that a user who has access to interact
+     * with the participant list can update participant
+     * information
+     */
     @Test
-    @Ignore
-    public void userPatchAccessTest(){
-        String realm = "osteo2";
-
-        String userId = Integer.toString(new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId());
-
-        Patch patch = new Patch("0", "participantId", "0", userId , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+    public void userPatchAccessTest() {
+        Patch patch = new Patch("0", "participantId", "0", morePermissionsUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("oD");
 
-        Assert.assertTrue(UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, null, patch));
+        Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, morePermissionsUserId, PT_LIST_VIEW, null, patch));
 
-        Patch patch2 = new Patch("0", "participantId", "0", cfg.getString(UNIT_TESTER_EMAIL) , new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM") ;
+        Patch patch2 = new Patch("0", "participantId", "0", morePermissionsUserId,
+                new NameValue("oD.locationPx",  "location"), null, "XSZSRS1MS3D4OAEK2DPM");
         patch.setTableAlias("m");
 
-        Assert.assertTrue(UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, null, patch2));
+        Assert.assertTrue(UserUtil.checkUserAccessForPatch(studyInstanceName, morePermissionsUserId, PT_LIST_VIEW, null, patch2));
     }
 
-
-
+    @AfterClass
+    public static void teardown() {
+        cmiAdminUtil.deleteGeneratedData();
+    }
 }

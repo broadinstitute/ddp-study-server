@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,11 +75,11 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException(String.format("Could not create data for participant data with id: %s for participant with guid: %s",
-                    participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
+            throw new DsmInternalError("Could not create participant data for DDP participant id: "
+                    + participantData.getRequiredDdpParticipantId());
         }
-        logger.info(String.format("Created data for participant data with id: %d for participant with guid: %s",
-                (int) simpleResult.resultValue, participantData.getDdpParticipantId()));
+        logger.info("Created participant data with ID {} for DDP participant ID: {}",
+                simpleResult.resultValue, participantData.getRequiredDdpParticipantId());
         return (int) simpleResult.resultValue;
 
     }
@@ -121,7 +122,7 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting participant data with " + id, results.resultException);
+            throw new DsmInternalError("Error getting participant data with ID " + id, results.resultException);
         }
         return Optional.ofNullable((ParticipantData) results.resultValue);
     }
@@ -141,12 +142,11 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return execResult;
         });
         if (result.resultException != null) {
-            throw new RuntimeException(String.format("Could not update data for participant data with id: %s for participant with guid: %s",
-                    participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
+            throw new DsmInternalError("Could not update participant data for DDP participant id: "
+                    + participantData.getRequiredDdpParticipantId());
         }
-        logger.info(String.format("Updated data for participant data with id: %s for participant with guid: %s",
-                participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
-
+        logger.info("Updated participant data with ID {} for DDP participant ID: {}",
+                participantData.getParticipantDataId(), participantData.getRequiredDdpParticipantId());
         return (int) result.resultValue;
     }
 

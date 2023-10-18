@@ -15,6 +15,8 @@ import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
@@ -42,8 +44,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     @Override
     protected boolean setDefaultData() {
         if (isParticipantDataNotInES()) {
-            logger.info("Participant does not have profile and activities in ES yet...");
-            return false;
+            throw new ESMissingParticipantDataException("Participant does not yet have profile and activities in ES");
         }
 
         boolean inserted = insertExitStatusForParticipant() && insertGenomicIdForParticipant();
@@ -58,20 +59,20 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
                     objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
             ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(), new HashMap<>(
                     Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
-            log.info("Updated participant : {} dsm values in elastic", ddpParticipantId);
-
+            log.info("Updated participant {} dsm values in elastic", ddpParticipantId);
         } catch (Exception e) {
-                logger.info("UpdateRequest for participantData failed" + e.getMessage());
+            throw new DsmInternalError("UpdateRequest for participantData failed", e);
         }
         return inserted;
     }
 
     private boolean isParticipantDataNotInES() {
+        // TODO: unclear why we would continue with an empty profile (note &&) but leaving as is -DC
         return elasticSearchParticipantDto.getProfile().isEmpty() && elasticSearchParticipantDto.getActivities().isEmpty();
     }
 
 
-    boolean isParticipantRegistrationComplete() {
+    protected boolean isParticipantRegistrationComplete() {
         return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isRegistrationComplete);
     }
 
@@ -118,15 +119,11 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                 new org.broadinstitute.dsm.model.participant.data.ParticipantData(dataAccess);
         participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()), fieldTypeId, data);
-        try {
-            participantData.insertParticipantData("SYSTEM");
-            logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
-                    + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at "
-                    + fieldTypeId);
-            return true;
-        } catch (RuntimeException re) {
-            return false;
-        }
+        participantData.insertParticipantData("SYSTEM");
+        logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
+                + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at "
+                + fieldTypeId);
+        return true;
     }
 
     private void setDataAccess(Dao dao) {

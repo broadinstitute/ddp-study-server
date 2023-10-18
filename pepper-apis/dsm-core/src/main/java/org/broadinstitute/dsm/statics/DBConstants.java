@@ -2,6 +2,10 @@ package org.broadinstitute.dsm.statics;
 
 public class DBConstants {
 
+    private DBConstants(){
+        throw new IllegalStateException("Utility class");
+    }
+
     //table names
     public static final String DDP_MEDICAL_RECORD = "ddp_medical_record";
     public static final String DDP_ONC_HISTORY = "ddp_onc_history";
@@ -128,6 +132,7 @@ public class DBConstants {
     public static final String GBF_CONFIRMATION = "gbf_confirmation";
     public static final String EXTERNAL_ORDER_NUMBER = "external_order_number";
     public static final String CE_ORDER = "CE_order";
+    public static final String KIT_COMPLETE = "kit_complete";
     public static final String NO_RETURN = "no_return";
     public static final String EXTERNAL_ORDER_STATUS = "external_order_status";
     public static final String EXTERNAL_ORDER_DATE = "external_order_date";
@@ -314,6 +319,7 @@ public class DBConstants {
     public static final String HAS_CLINICAL_KIT = "has_clinical_kit";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
+    public static final String JUNIPER_STUDY_INSTANCE_ROLE = "juniper_study";
 
     //user role
     public static final String MAILINGLIST_VIEW = "mailingList_view";
@@ -565,4 +571,15 @@ public class DBConstants {
 
     //INDEXES
     public static final String OSTEO_INDEX = "participants_structured.cmi.cmi-osteo";
+
+    // ddp_kit table columns
+    public static final String LABEL_BY = "label_by";
+    public static final String LABEL_DATE = "label_date";
+    public static final String SCAN_BY = "scan_by";
+    public static final String DEACTIVATED_BY = "deactivated_by";
+    public static final String RECEIVE_BY = "receive_by";
+    public static final String TRACKING_TO_ID = "tracking_to_id";
+    public static final String ERROR_MESSAGE = "message";
+    public static final String RETURN_TRACKING_NUMBER = "return_tracking_number";
+    public static final String TRACKING_SCAN_BY = "tracking_scan_by";
 }

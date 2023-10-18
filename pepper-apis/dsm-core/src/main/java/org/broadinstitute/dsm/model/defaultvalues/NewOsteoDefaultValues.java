@@ -11,6 +11,7 @@ import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.ElasticDataExportAdapter;
 import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
@@ -32,8 +33,11 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
     @Override
     protected boolean setDefaultData() {
         if (elasticSearchParticipantDto.getDsm().isEmpty()) {
-            return false;
+            // TODO: coding it this way since the existing behavior was to retry elastic until the data shows up
+            // but I'm not sure that is applicable here since the code is looking for DSM data - DC
+            throw new ESMissingParticipantDataException("Participant dsm ES data missing");
         }
+
         Dsm dsm = elasticSearchParticipantDto.getDsm().get();
         DDPInstanceDto ddpInstanceByInstanceName =
                 ddpInstanceDao.getDDPInstanceByInstanceName(NEW_OSTEO_INSTANCE_NAME).orElseThrow();

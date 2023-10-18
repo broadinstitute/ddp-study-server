@@ -108,12 +108,14 @@ public class ElasticSearch implements ElasticSearchable {
         return totalCount;
     }
 
-    public Optional<ElasticSearchParticipantDto> parseSourceMap(Map<String, Object> sourceMap) {
-        if (sourceMap == null) {
-            return Optional.of(new ElasticSearchParticipantDto.Builder().build());
+    public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap) {
+        if (sourceMap != null) {
+            Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
+            if (deserializedSourceMap.isPresent()) {
+                return deserializedSourceMap.get();
+            }
         }
-        Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
-        return deserializedSourceMap.isPresent() ? deserializedSourceMap : Optional.of(new ElasticSearchParticipantDto.Builder().build());
+        return new ElasticSearchParticipantDto.Builder().build();
     }
 
     public List<ElasticSearchParticipantDto> parseSourceMaps(SearchHit[] searchHits) {
@@ -123,14 +125,9 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> result = new ArrayList<>();
         String ddp = getDdpFromSearchHit(Arrays.stream(searchHits).findFirst().orElse(null));
         for (SearchHit searchHit : searchHits) {
-            Optional<ElasticSearchParticipantDto> maybeElasticSearchResult = null;
-
-            maybeElasticSearchResult = parseSourceMap(searchHit.getSourceAsMap());
-
-            maybeElasticSearchResult.ifPresent(elasticSearchParticipantDto -> {
-                elasticSearchParticipantDto.setDdp(ddp);
-                result.add(elasticSearchParticipantDto);
-            });
+            ElasticSearchParticipantDto participantDto = parseSourceMap(searchHit.getSourceAsMap());
+            participantDto.setDdp(ddp);
+            result.add(participantDto);
         }
         return result;
     }
@@ -175,7 +172,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     @Override
@@ -199,7 +196,7 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
 
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     @Override
@@ -247,7 +244,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     private AbstractQueryBuilder addOsteo2Filter(AbstractQueryBuilder queryBuilder) {
@@ -287,7 +284,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + participantIndexES);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
     @Override
@@ -310,7 +307,7 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by id: " + participantId,
                     e);
         }
-        return parseSourceMap(sourceAsMap).orElseThrow();
+        return parseSourceMap(sourceAsMap);
     }
 
     @Override
@@ -331,7 +328,7 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> elasticSearchParticipantDtos = parseSourceMaps(searchResponse.getHits().getHits());
         logger.info("Got " + elasticSearchParticipantDtos.size() + " participants from ES for instance " + esParticipantsIndex);
-        return new ElasticSearch(elasticSearchParticipantDtos, searchResponse.getHits().getTotalHits());
+        return new ElasticSearch(elasticSearchParticipantDtos, searchResponse.getHits().getTotalHits().value);
     }
 
     private BoolQueryBuilder getBoolQueryOfParticipantsId(List<String> participantIds) {

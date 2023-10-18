@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.MEMBER_TYPE;
+import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -66,18 +67,9 @@ public class UpdateWorkflowStatusTest extends DbTxnBaseTest {
         participantDataMap.put("REGISTRATION_STATUS", "REGISTERED");
         participantDataMap.put("MEMBER_TYPE", "SELF");
 
-        String participantId = genParticipantId(participantIdSeed);
-        ParticipantData participantData = new ParticipantData.Builder()
-                .withDdpParticipantId(participantId).withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                .withFieldTypeId(fieldTypeId).withData(gson.toJson(participantDataMap))
-                .withLastChanged(System.currentTimeMillis()).withChangedBy(userDto.getEmail().orElse("")).build();
-
-        participantData.setParticipantDataId(participantDataDao.create(participantData));
-        return participantData;
-    }
-
-    private static String genParticipantId(String seed) {
-        return String.format("WorkflowUpdateStatusTest_%s_%d", seed, Instant.now().toEpochMilli());
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("UpdateWorkflowStatusTest_" + participantIdSeed);
+        return TestParticipantUtil.createParticipantData(ddpParticipantId, participantDataMap, fieldTypeId,
+                ddpInstanceDto.getDdpInstanceId(), userDto.getEmailOrThrow());
     }
 
     private static void deleteParticipantData(int participantDataId) {
@@ -119,14 +111,14 @@ public class UpdateWorkflowStatusTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testUpdateProbandStatusInDB() {
+    public void testUpdateProbandStatus() {
         ParticipantData participantData = createParticipantData("ups");
         int participantDataId = participantData.getParticipantDataId();
         try {
             String workflow = "REGISTRATION_STATUS";
             String status = "ENROLLED";
             String fieldType = participantData.getFieldTypeId().orElseThrow();
-            WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, fieldType);
+            WorkflowStatusUpdate.updateProbandStatus(workflow, status, participantData, fieldType);
             String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElseThrow();
             JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
             Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());
@@ -136,13 +128,14 @@ public class UpdateWorkflowStatusTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testAddNewParticipantDataWithStatus() {
+    public void testCreateParticipantData() {
         int participantDataId = -1;
         try {
             String workflow = "REGISTRATION_TYPE";
             String status = "SELF2";
-            participantDataId = WorkflowStatusUpdate.addNewParticipantDataWithStatus(workflow, status,
-                    genParticipantId("anp"), ddpInstanceDto.getDdpInstanceId(), fieldTypeId);
+            participantDataId = WorkflowStatusUpdate.createParticipantData(workflow, status,
+                    TestParticipantUtil.genDDPParticipantId("UpdateWorkflowStatusTest_anp"),
+                    ddpInstanceDto.getDdpInstanceId(), fieldTypeId);
             String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElse("");
             JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
             Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());

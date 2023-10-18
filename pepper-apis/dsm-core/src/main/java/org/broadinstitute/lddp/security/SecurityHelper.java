@@ -6,13 +6,13 @@ import java.util.Map;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SecurityHelper {
     public static final String CLAIM_ISSUER = "iss";
@@ -23,8 +23,7 @@ public class SecurityHelper {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String BASIC = "Basic ";
-    private static final Logger logger = LoggerFactory.getLogger(SecurityHelper.class);
-
+    public static final String ERROR_MESSAGE =  "Couldn't create token ";
     /**
      * Creates jwt token for a monitoring application
      *
@@ -39,7 +38,7 @@ public class SecurityHelper {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't create token " + e);
+            throw new DsmInternalError(ERROR_MESSAGE + e);
         }
     }
 
@@ -57,47 +56,46 @@ public class SecurityHelper {
             JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(SIGNER);
             builder.withExpiresAt(dateSoon);
-            if (claims != null) {
-                claims.forEach((key, value) -> {
-                    builder.withClaim(key, value);
-                });
-            }
+            claims.forEach(builder::withClaim);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't create token " + e);
+            throw new DsmInternalError(ERROR_MESSAGE + e);
         }
     }
 
-    public static String createGpToken(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims) {
+    public static String createTokenWithSigner(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims, @NonNull String signer) {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
-
             JWTCreator.Builder builder = JWT.create();
-            builder.withIssuer(BSP_SIGNER);
+            builder.withIssuer(signer);
             builder.withExpiresAt(dateSoon);
-            if (claims != null) {
-                claims.forEach((key, value) -> {
-                    builder.withClaim(key, value);
-                });
-            }
+            claims.forEach(builder::withClaim);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't create token " + e);
+            throw new DsmInternalError(ERROR_MESSAGE + e);
         }
     }
 
-    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer)
-            throws InvalidTokenException, AuthenticationException {
-
+    /**
+     * Verify token and signer, and return  token claims
+     *
+     * @param token token to verify
+     * @param auth0Domain auth0 domain
+     * @param auth0Signer token issuer
+     * @return a map of claims
+     * @throws TokenExpiredException for expired token
+     * @throws InvalidTokenException for invalid token
+     * @throws AuthenticationException for other authentication issues
+     */
+    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer) {
         Map<String, Claim> claimsMap = Auth0Util.verifyAndParseAuth0TokenClaims(token, auth0Domain);
         if (auth0Signer.equals(claimsMap.get(CLAIM_ISSUER).asString())) {
             return claimsMap;
         } else {
             throw new InvalidTokenException("Token is not signed by the expected signer.");
         }
-
     }
 
     public enum ResultType {

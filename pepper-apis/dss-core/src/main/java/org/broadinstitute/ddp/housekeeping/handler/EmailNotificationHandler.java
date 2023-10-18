@@ -17,17 +17,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Personalization;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.SendGridClient;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -48,6 +55,7 @@ import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -56,6 +64,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
     private final PdfService pdfService;
     private final PdfBucketService pdfBucketService;
     private final PdfGenerationService pdfGenerationService;
+    private List<String> emailDenyPatterns;
 
     static String generateSalutation(String firstName, String lastName, String defaultSalutation) {
         if (StringUtils.isNotEmpty(firstName) && StringUtils.isNotEmpty(lastName)) {
@@ -71,6 +80,9 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         this.pdfService = pdfService;
         this.pdfBucketService = pdfBucketService;
         this.pdfGenerationService = pdfGenerationService;
+        Config cfg = ConfigManager.getInstance().getConfig();
+        this.emailDenyPatterns =  cfg.hasPath(ConfigFile.EMAIL_PATTERN_DENY_LIST)
+                ? cfg.getStringList(ConfigFile.EMAIL_PATTERN_DENY_LIST) : Collections.EMPTY_LIST;
     }
 
     /**
@@ -86,6 +98,34 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     apisHandle -> messageShouldBeIgnored(apisHandle, studyGuid, participantGuid));
             if (shouldIgnore) {
                 return;
+            }
+        }
+
+        Collection<String> toEmailList = message.getDistributionList();
+
+        //skip emails for PlayWright generated users / Email deny list
+        if (!emailDenyPatterns.isEmpty()) {
+            //collect emails from actual distribution list (DL) that matches deny patterns and remove from original email DL.
+            //If no additional valid emails, return... else continue with filtered new DL.
+            Collection<String> denyEmailList = new HashSet<>();
+            for (String toAddress : toEmailList) {
+                for (String emailPattern : emailDenyPatterns) {
+                    Pattern pattern = Pattern.compile(emailPattern);
+                    Matcher matcher = pattern.matcher(toAddress);
+                    if (matcher.find()) {
+                        denyEmailList.add(toAddress);
+                        break; //email matches pattern, skip checking rest of the patterns
+                    }
+                }
+            }
+            if (!denyEmailList.isEmpty()) {
+                //remove deny emails from actual email DL
+                toEmailList.removeAll(denyEmailList);
+                //if no additional non-deny emails, just return
+                if (toEmailList.isEmpty()) {
+                    log.debug("Skipping sending email to PW user/Deny email :: {} ", denyEmailList);
+                    return;
+                }
             }
         }
 
@@ -110,7 +150,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         }
 
         Personalization personalization = new Personalization();
-        for (String toAddress : message.getDistributionList()) {
+        for (String toAddress : toEmailList) {
             Email toEmail = new Email(toAddress, toAddress);
             personalization.addTo(toEmail);
             if (skippingPdfs && hasPdfConfiguration) {
@@ -141,7 +181,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         }
 
         String versionUsed = versionResult.getBody();
-        String distributionList = StringUtils.join(message.getDistributionList(), " ");
+        String distributionList = StringUtils.join(toEmailList, " ");
 
         var sendResult = sendGrid.sendMail(mail);
 

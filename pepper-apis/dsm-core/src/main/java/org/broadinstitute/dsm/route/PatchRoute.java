@@ -2,14 +2,16 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import lombok.NonNull;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.AuthorizationException;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.patch.BasePatch;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.model.patch.PatchFactory;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -39,34 +41,29 @@ public class PatchRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         if (PatchUtil.getColumnNameMap() == null) {
-            response.status(500);
-            throw new RuntimeException("ColumnNameMap is null!");
+            throw new DsmInternalError("PatchUtil.ColumnNameMap is null");
         }
+
+        String userIdRequest = UserUtil.getUserId(request);
+        String requestBody = request.body();
         try {
-            String userIdRequest = UserUtil.getUserId(request);
-            String requestBody = request.body();
             Patch patch = GSON.fromJson(requestBody, Patch.class);
             String realm = patch.getRealm();
-            logger.info("Received a patch request, made by " + userId + " in realm "+realm +" for table alias " + patch.getTableAlias());
+            logger.info("Got patch request made by {} for realm {} and table alias {}", userId, realm, patch.getTableAlias());
+
             if ((UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_VIEW, userIdRequest, patch)
                     || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.MR_ABSTRACTER, userIdRequest, patch)
                     || UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.PT_LIST_VIEW, userIdRequest, patch))
-                    || ( UserUtil.checkKitShippingAccessForPatch(realm, userId, userIdRequest, patch))) {
+                    || UserUtil.checkKitShippingAccessForPatch(realm, userId, userIdRequest, patch)) {
 
-                    BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
-                    return patcher.doPatch();
+                BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
+                return patcher.doPatch();
 
             } else {
-                response.status(403);
-                logger.warn("User with id {} does not have needed privileges", userId);
-                return UserErrorMessages.NO_RIGHTS;
+                throw new AuthorizationException("User is not authorized to patch participant data");
             }
-        } catch (DuplicateException e) {
-            response.status(500);
-            throw new RuntimeException("Duplicate value", e);
-        } catch (Exception e) {
-            response.status(500);
-            throw new RuntimeException("An error occurred while attempting to patch ", e);
+        } catch (JsonSyntaxException e) {
+            throw new DSMBadRequestException("Invalid request payload format for patch: " + requestBody, e);
         }
     }
 }

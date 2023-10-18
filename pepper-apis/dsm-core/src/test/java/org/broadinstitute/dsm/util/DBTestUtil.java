@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -29,6 +30,7 @@ import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
+@Slf4j
 public class DBTestUtil {
 
     public static final String CHECK_KIT_REQUEST = "select * from ddp_kit_request req where req.ddp_participant_id = ?";
@@ -1127,19 +1129,25 @@ public class DBTestUtil {
     }
 
     public static DDPInstanceDto createTestDdpInstance(DDPInstanceDao ddpInstanceDao, String ddpInstanceName) {
+        return createTestDdpInstance(ddpInstanceDao, ddpInstanceName, null);
+    }
+
+    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDao ddpInstanceDao, String ddpInstanceName, String esIndex) {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
         ddpInstanceDto.setInstanceName(ddpInstanceName);
         ddpInstanceDto.setStudyGuid(ddpInstanceName);
+        ddpInstanceDto.setEsParticipantIndex(esIndex);
         ddpInstanceDto.setIsActive(true);
         ddpInstanceDto.setAuth0Token(false);
         ddpInstanceDto.setMigratedDdp(false);
         int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
         ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
+        log.info("Created test DDP instance {} with ID={}", ddpInstanceName, testCreatedInstanceId);
         return ddpInstanceDto;
     }
 
     public static UserDto createTestDsmUser(String name, String email, UserDao userDao, UserDto userDto) {
-        userDto = new UserDto(0, name, email, "");
+        userDto = new UserDto(name, email, "");
         userDto.setId(userDao.create(userDto));
         return userDto;
     }

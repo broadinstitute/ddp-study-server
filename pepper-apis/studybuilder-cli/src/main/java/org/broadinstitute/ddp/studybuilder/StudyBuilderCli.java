@@ -30,7 +30,7 @@ import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 
 /**
- * Main entry point for command-line tool that helps stand up a study.
+ * Main entry point for command-line tool that helps stand up a study
  */
 public class StudyBuilderCli {
 
@@ -108,16 +108,26 @@ public class StudyBuilderCli {
 
         Config varsCfg = ConfigFactory.empty();
         if (cmd.hasOption("vars")) {
-            String varsFile = cmd.getOptionValue("vars");
-            varsCfg = ConfigFactory.parseFile(new File(varsFile));
+            String fileName = cmd.getOptionValue("vars");
+            File varsFile = new File(fileName);
+            if (!varsFile.exists()) {
+                System.err.println("Could not find vars file: " + fileName);
+                return;
+            }
+            varsCfg = ConfigFactory.parseFile(varsFile);
             log("using study variables file: %s", varsFile);
         }
 
         Config subsCfg = ConfigFactory.empty();
         if (cmd.hasOption("substitutions")) {
-            String subsFile = cmd.getOptionValue("substitutions");
-            subsCfg = ConfigFactory.parseFile(new File(subsFile));
-            log("using substitutions file: %s", subsFile);
+            String fileName = cmd.getOptionValue("substitutions");
+            File subsFile = new File(fileName);
+            if (!subsFile.exists()) {
+                System.err.println("Could not find substitutions file: " + fileName);
+                return;
+            }
+            subsCfg = ConfigFactory.parseFile(subsFile);
+            log("using substitutions file: %s", fileName);
         }
 
         log("resolving substitutions configuration...");
@@ -276,7 +286,7 @@ public class StudyBuilderCli {
             LanguageStore.init(handle);
             task.accept(handle);
             if (isDryRun) {
-                log("rolling back execution...");
+                log("In dry-run mode: rolling back execution...");
                 handle.rollback();
             }
         });

@@ -101,13 +101,20 @@ public class JWTRouteFilterTest {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/dsm-test-config.conf")));
         String bspSecret = cfg.getString("bsp.secret");
+        String juniperSecret = cfg.getString("juniper.secret");
+        String juniperSigner = cfg.getString("juniper.signer");
         String ddpSecret = cfg.getString("portal.jwtDdpSecret");
         String monitoringSecret = cfg.getString("portal.jwtMonitoringSecret");
 
         System.out.println("monitoring token: " + SecurityHelper.createMonitoringToken(monitoringSecret, SecurityHelper.MONITORING_SYSTEM));
 
-        String bspToken = SecurityHelper.createGpToken(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
+        String bspToken = SecurityHelper.createTokenWithSigner(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS,
+                new HashMap<>(), SecurityHelper.BSP_SIGNER);
         System.out.println("Token for bsp: " + bspToken);
+
+        String juniperToken = SecurityHelper.createTokenWithSigner(juniperSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS,
+                new HashMap<>(), juniperSigner);
+        System.out.println("Token for juniper: " + juniperToken);
 
         String ddpToken = SecurityHelper.createToken(ddpSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
         System.out.println("Token for appRoute: " + ddpToken);

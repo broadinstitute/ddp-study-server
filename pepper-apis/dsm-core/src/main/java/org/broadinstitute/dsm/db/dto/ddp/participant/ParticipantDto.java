@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.db.dto.ddp.participant;
 import java.util.Optional;
 
 import lombok.Getter;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 
 @Getter
 public class ParticipantDto implements Cloneable {
@@ -29,6 +30,20 @@ public class ParticipantDto implements Cloneable {
         this.assigneeIdTissue = builder.assigneeIdTissue;
         this.lastChanged = builder.lastChanged;
         this.changedBy = builder.changedBy;
+    }
+
+    public void setParticipantId(int participantId) {
+        this.participantId = Optional.of(participantId);
+    }
+
+    public int getParticipantIdOrThrow() {
+        return getParticipantId().orElseThrow(() -> new DsmInternalError(String.format("Participant ID cannot "
+                + " be null for DDP participant ID %s and instance ID %d", getDdpParticipantId().orElse("null"), ddpInstanceId)));
+    }
+
+    public String getDdpParticipantIdOrThrow() {
+        return getDdpParticipantId().orElseThrow(() -> new DsmInternalError(String.format("DDP participant ID cannot"
+                + " be null for participant ID %d and instance ID %d", getParticipantId().orElse(-1), ddpInstanceId)));
     }
 
     public void setDdpInstanceId(int ddpInstanceId) {
