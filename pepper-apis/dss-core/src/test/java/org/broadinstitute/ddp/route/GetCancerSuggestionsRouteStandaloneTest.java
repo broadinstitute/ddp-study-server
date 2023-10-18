@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -30,8 +31,6 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
     private static final String URL_TEMPLATE = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.CANCER_SUGGESTION;
     private static String token;
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private static final String SPANISH_LANGUAGE_CODE = "es";
-    private static final String ENGLISH_LANGUAGE_CODE = "en";
 
 
     @BeforeClass
@@ -67,7 +66,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenOneCancerNameMatchesPattern_whenRouteIsCalled_thenItReturnsListWithValidSingleItem() {
-        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of(TestData.CANCER_NAME), ENGLISH_LANGUAGE_CODE));
+        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of(TestData.CANCER_NAME),
+                LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -81,7 +81,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenPatternMatchesCancerNameMultipleTimes_whenRouteIsCalled_thenItReturnsSingleMatch() {
-        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("Sarcoma"), ENGLISH_LANGUAGE_CODE));
+        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("Sarcoma"),
+                LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE, "s");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -94,7 +95,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
     @Test
     public void givenManyCancerNamesMatchPattern_whenRouteIsCalled_thenItReturnsListWithSuggestions() {
         CancerStore.getInstance().populate(CancerItem.toCancerItemList(
-                List.of("Sarcoma", "Carcinoma", "Melanoma"), ENGLISH_LANGUAGE_CODE));
+                List.of("Sarcoma", "Carcinoma", "Melanoma"), LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE, "noma");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -109,7 +110,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
     @Test
     public void givenQueryIsNotSpecified_whenRouteIsCalled_thenReturnedSuggestionsContainAllCancers() {
         CancerStore.getInstance().populate(CancerItem.toCancerItemList(
-                List.of("Sarcoma", "Carcinoma", "Melanoma"), ENGLISH_LANGUAGE_CODE));
+                List.of("Sarcoma", "Carcinoma", "Melanoma"), LanguageStore.ENGLISH_LANG_CODE));
         String query = "";
         String url = createUrlFromTemplate(URL_TEMPLATE, query);
         RestAssured.given().auth().oauth2(token)
@@ -123,7 +124,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
     @Test
     public void givenQueryIsMalformed_whenRouteIsCalled_thenItReturns400() {
         CancerStore.getInstance().populate(CancerItem.toCancerItemList(
-                List.of("Sarcoma", "Carcinoma", "Melanoma"), ENGLISH_LANGUAGE_CODE));
+                List.of("Sarcoma", "Carcinoma", "Melanoma"), LanguageStore.ENGLISH_LANG_CODE));
         String query = "Sarcoma!";
         String url = createUrlFromTemplate(URL_TEMPLATE, query);
         RestAssured.given().auth().oauth2(token)
@@ -134,7 +135,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
     @Test
     public void givenPatternContainsMetachars_whenRouteIsCalled_thenPatternWorksAsLiteralText() {
         CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("Sarcoma (Angiosarcoma cancer)"),
-                ENGLISH_LANGUAGE_CODE));
+                LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE, "Sarcoma (Angiosarcoma");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -145,7 +146,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenCancerNameAndPatternHaveDifferentCase_whenRouteIsCalled_thenPatternMatchesCancerName() {
-        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("SARCOMA"), ENGLISH_LANGUAGE_CODE));
+        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("SARCOMA"),
+                LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE, "sarcoma");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -161,7 +163,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
         String second = "BAR FOO";
         String last = "BAR 2FOO";
         CancerStore.getInstance().populate(CancerItem.toCancerItemList(
-                List.of(second, last, first, third, "no match"), ENGLISH_LANGUAGE_CODE));
+                List.of(second, last, first, third, "no match"), LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE, "foo");
         RestAssured.given().auth().oauth2(token)
                 .when().get(url).then().assertThat()
@@ -181,8 +183,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
         String englishCancer = "This is English";
 
         List<CancerItem> cancersWithTwoLanguages = new ArrayList<>();
-        cancersWithTwoLanguages.add(new CancerItem(englishCancer, ENGLISH_LANGUAGE_CODE));
-        cancersWithTwoLanguages.add(new CancerItem(spanishCancer, SPANISH_LANGUAGE_CODE));
+        cancersWithTwoLanguages.add(new CancerItem(englishCancer, LanguageStore.ENGLISH_LANG_CODE));
+        cancersWithTwoLanguages.add(new CancerItem(spanishCancer, LanguageStore.SPANISH_LANG_CODE));
 
         CancerStore.getInstance().populate(cancersWithTwoLanguages);
 
@@ -195,7 +197,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
         // change profile to Spanish and add Spanish to the list of allowed languages for the study
         TransactionWrapper.useTxn(handle -> {
-            LanguageDto spanish = handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(SPANISH_LANGUAGE_CODE);
+            LanguageDto spanish = handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(
+                    LanguageStore.SPANISH_LANG_CODE);
             var userProfileBuilder = new UserProfile(originalProfile).toBuilder();
             userProfileBuilder.preferredLangCode(spanish.getIsoCode());
             userProfileBuilder.preferredLangId(spanish.getId());
@@ -204,7 +207,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
             StudyDto testStudy = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(testData.getStudyGuid());
             studyLanguageId.set(handle.attach(StudyLanguageDao.class).insert(testStudy.getId(), spanish.getId()));
-            log.info(String.format("Updated study %s to include language %s.", testStudy.getGuid(), spanish.getIsoCode()));
+            log.info(String.format("Updated study %s to include language %s.", testStudy.getGuid(),
+                    spanish.getIsoCode()));
         });
 
         url = createUrlFromTemplate(URL_TEMPLATE, "ñ");
@@ -226,7 +230,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void testSanitization() {
-        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("foo bar"), ENGLISH_LANGUAGE_CODE));
+        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("foo bar"),
+                LanguageStore.ENGLISH_LANG_CODE));
 
         String url = createUrlFromTemplate(URL_TEMPLATE, "[foo");
         RestAssured.given().auth().oauth2(token)
@@ -243,7 +248,8 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenLookupWithCyrillicCharacterThatDoesNotMatchAnything() {
-        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("SARCOMA", "MELANOMA"), ENGLISH_LANGUAGE_CODE));
+        CancerStore.getInstance().populate(CancerItem.toCancerItemList(List.of("SARCOMA", "MELANOMA"),
+                LanguageStore.ENGLISH_LANG_CODE));
         String url = createUrlFromTemplate(URL_TEMPLATE, "ффф");
         RestAssured.given().auth().oauth2(token)
 
