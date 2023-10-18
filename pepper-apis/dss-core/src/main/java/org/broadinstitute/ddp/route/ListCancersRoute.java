@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.CancerItem;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
