@@ -1,23 +1,24 @@
 package org.broadinstitute.ddp.db;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
-
-import org.broadinstitute.ddp.model.dsm.Cancer;
+import org.broadinstitute.ddp.db.dto.CancerItem;
 
 public class CancerStore {
 
-    private static Set<Cancer> cancers;
+    private static List<CancerItem> cancers;
     private static CancerStore instance;
     private static volatile Object lockVar = "lock";
+    private final Map<String, Set<CancerItem>> cancersByLanguage = new HashMap<>();
 
     private CancerStore() {
-        cancers = new HashSet<Cancer>();
+        cancers = new ArrayList<>();
     }
 
     public static CancerStore getInstance() {
@@ -31,21 +32,28 @@ public class CancerStore {
         return instance;
     }
 
-    public synchronized void populate(List<String> cancerNames) {
-        if (CollectionUtils.isEmpty(cancerNames)) {
-            return;
+    public synchronized void populate(List<CancerItem> cancerItems) {
+        if (cancerItems != null) {
+            cancers = Collections.unmodifiableList(cancerItems);
+            cancersByLanguage.clear();
+            for (CancerItem cancer : cancers) {
+                if (!cancersByLanguage.containsKey(cancer.getIsoLanguageCode())) {
+                    cancersByLanguage.put(cancer.getIsoLanguageCode(), new LinkedHashSet<>());
+                }
+                cancersByLanguage.get(cancer.getIsoLanguageCode()).add(cancer);
+            }
         }
-        cancers = new HashSet<>();
-        cancers.addAll(
-                cancerNames.stream().map(
-                    cancerName -> new Cancer(cancerName, null)
-                ).collect(Collectors.toSet())
-        );
-        cancers = Collections.unmodifiableSet(cancers);
     }
 
-    public Set<Cancer> getCancerList() {
-        return cancers;
+    /**
+     * Returns all the cancers for the given language
+     */
+    public Set<CancerItem> getCancerList(String languageIsoCode) {
+        if (cancersByLanguage.get(languageIsoCode) == null) {
+            return Collections.emptySet();
+        } else {
+            return Collections.unmodifiableSet(cancersByLanguage.get(languageIsoCode));
+        }
     }
 
 }

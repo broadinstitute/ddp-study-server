@@ -10,8 +10,12 @@ public class Cancer {
     @SerializedName("description")
     private String description;
 
-    public Cancer(String name, String description) {
+    public Cancer(String name) {
         this.name = name;
+    }
+
+    public Cancer(String name, String description) {
+        this(name);
         this.description = description;
     }
 

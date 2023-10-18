@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="andrew" id="PEPPER-1182_cancer_list_translations">
+        <addColumn tableName="cancer_list">
+            <column name="iso_language_code" type="varchar(5)"/>
+        </addColumn>
+
+        <sql>update cancer_list
+             set iso_language_code = 'en'</sql>
+
+        <addUniqueConstraint tableName="cancer_list" columnNames="display_name,iso_language_code"
+                             constraintName="cancer_list_uk"/>
+
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Carcinoma suprarrenocortical"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer anal"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Angiosarcoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de Apéndice"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de vejiga"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de hueso"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de cerebro"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de mama"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de cuello uterino"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Colangiocarcinoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Condrosarcoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cordoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer colorrectal"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Fibromatosis de tipo desmoide"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer esófagico"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma de Ewing"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de ojo"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de trompas de Falopio"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de vesícula biliar"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer gástrico (de estómago)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Tumor del estroma gastrointestinal (TEGI ; GIST)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Enfermedad trofoblástica gestacional"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Tumor de células gigantes del hueso (TCG)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de cabeza y cuello"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma de Kaposi (SK)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de riñón (células renales)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Leucemia"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Liposarcoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de hígado"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer pulmonar (de células no pequeñas y células pequeñas)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Linfoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Melanoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Carcinoma de células de Merkel"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Mesotelioma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Mieloma múltiple"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Osteosarcoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de ovario"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de páncreas"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Paraganglioma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de paratiroides"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de pene"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Feocromocitoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Blastoma pleuropulmonar (BPP)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer peritoneal primario"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de prostata"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer rectal"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de células renales (riñón)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Retinoblastoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma retroperitoneal"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Rabdomiosarcoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer cutáneo"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de intestino delgado"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma de Ewing de tejidos blandos"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma de tejidos blandos"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de estómago (gástrico)"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma sinovial"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer testicular"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de garganta"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de tiroides"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer de uretra"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer uterino"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Sarcoma uterino"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer vaginal"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" value="Cáncer vulvar"/>
+            <column name="iso_language_code" value="es"/>
+        </insert>
+
+    </changeSet>
+
+
+</databaseChangeLog>
