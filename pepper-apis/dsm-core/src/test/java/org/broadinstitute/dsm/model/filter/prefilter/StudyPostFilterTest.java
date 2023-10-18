@@ -10,8 +10,8 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
-import org.broadinstitute.dsm.model.filter.postfilter.osteo.NewOsteoPostFilter;
-import org.broadinstitute.dsm.model.filter.postfilter.osteo.OldOsteoPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.osteo.DsmDdpInstanceIdPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.osteo.ActivityAndDdpIdPostFilter;
 import org.junit.Test;
 
 public class StudyPostFilterTest {
@@ -22,7 +22,7 @@ public class StudyPostFilterTest {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(newOsteoInstanceName).build();
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder().build();
         Optional<StudyPostFilter> maybeNewOsteoPreFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
-        assertTrue(maybeNewOsteoPreFilter.get() instanceof NewOsteoPostFilter);
+        assertTrue(maybeNewOsteoPreFilter.get() instanceof DsmDdpInstanceIdPostFilter);
 
     }
 
@@ -32,7 +32,7 @@ public class StudyPostFilterTest {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(oldOsteoInstanceName).build();
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder().build();
         Optional<StudyPostFilter> maybeOldOsteoPreFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
-        assertTrue(maybeOldOsteoPreFilter.get() instanceof OldOsteoPostFilter);
+        assertTrue(maybeOldOsteoPreFilter.get() instanceof ActivityAndDdpIdPostFilter);
 
     }
 
