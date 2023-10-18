@@ -36,7 +36,6 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
     @BeforeClass
     public static void setupClass() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        // be
         token = testData.getTestingUser().getToken();
     }
 

@@ -4,6 +4,7 @@ import java.util.List;
 
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.CancerItem;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.service.CancerService;
@@ -20,15 +21,11 @@ public class ListCancersRoute implements Route {
 
     @Override
     public List<CancerItem> handle(Request request, Response response) {
-        // todo arz factor out to separate util
-        String languageCode = "en"; // default to English
+        String cancerLanguage = LanguageStore.DEFAULT_LANG_CODE;
         LanguageDto userLanguage = getUserLanguage(request);
         if (userLanguage != null) {
-            if (StringUtils.isNotBlank(userLanguage.getIsoCode())) {
-                languageCode = userLanguage.getIsoCode();
-            }
+            cancerLanguage = userLanguage.getIsoCode();
         }
-
-        return cancerService.fetchCancers(languageCode);
+        return cancerService.fetchCancers(cancerLanguage);
     }
 }
