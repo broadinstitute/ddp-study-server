@@ -13,7 +13,11 @@ import org.jdbi.v3.core.Handle;
  */
 public class LanguageStore {
 
-    public static final String DEFAULT_LANG_CODE = "en";
+    public static final String SPANISH_LANG_CODE = "es";
+
+    public static final String ENGLISH_LANG_CODE = "en";
+
+    public static final String DEFAULT_LANG_CODE = ENGLISH_LANG_CODE;
 
     private static final Map<String, LanguageDto> languages = new ConcurrentHashMap<>();
 

@@ -18,12 +18,14 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.net.ssl.SSLSession;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.db.dto.CancerItem;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -53,7 +55,7 @@ public class DsmClientTest {
 
     @Test
     public void testListCancers() throws IOException, InterruptedException {
-        var sampleCancerList = new String[] {"Cancer1", "Cancer2", "Cancer3", "Cancer4"};
+        var sampleCancerList = CancerItem.toCancerItemList(List.of("Cancer1", "Cancer2", "Cancer3", "Cancer4"), "en");
 
         when(mockHttp.send(any(), any())).thenReturn(TestResponse.of(200, gson.toJson(sampleCancerList)));
         var result = dsm.listCancers();
@@ -63,7 +65,7 @@ public class DsmClientTest {
         assertNull(result.getError());
         assertNull(result.getThrown());
         assertEquals(200, result.getStatusCode());
-        assertArrayEquals(sampleCancerList, result.getBody().toArray(new String[] {}));
+        assertArrayEquals(sampleCancerList.toArray(), result.getBody().toArray(new CancerItem[0]));
 
         ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
         verify(mockHttp, times(1)).send(captor.capture(), any());
