@@ -38,11 +38,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitTypeImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitShippingIds;
@@ -270,7 +273,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.KIT_TYPE_NAME)
     private String kitTypeName;
 
-    private String kitTypeDisplayName;
+    private String displayName;
 
     private String kitTypeId;
 
@@ -380,7 +383,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
                               String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction,
-                              String receivedBy, String sampleNotes, String kitLabelPrefix, Long kitLabelLength, String kitTypeDisplayName) {
+                              String receivedBy, String sampleNotes, String kitLabelPrefix, Long kitLabelLength,
+                              String kitTypeDisplayName) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.bspCollaboratorParticipantId = bspCollaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -421,7 +425,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.sampleNotes = sampleNotes;
         this.kitLabelPrefix = kitLabelPrefix;
         this.kitLabelLength = kitLabelLength;
-        this.kitTypeDisplayName = kitTypeDisplayName;
+        this.displayName = kitTypeDisplayName;
     }
 
     public static KitRequestShipping getKitRequestShipping(@NonNull ResultSet rs) throws SQLException {
@@ -522,12 +526,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequests;
     }
 
-    private static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull String realm, String target, String kitType,
-                                                                        Integer kitTypeId, boolean getAll) {
+    private static Map<String, List<KitRequestShipping>> getKitRequestsByKitId(@NonNull String realm, String target, Integer kitTypeId, boolean getAll) {
         Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = getPreparedStatement(conn, target, realm, kitType, kitTypeId, getAll)) {
+            try (PreparedStatement stmt = getSelectKitReqPreparedStatement(conn, target, realm, kitTypeId, getAll)) {
                 if (stmt != null) {
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
@@ -535,7 +538,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         }
                     }
                 } else {
-                    throw new RuntimeException("No prepareStatement was created " + target + " " + realm + " " + kitType);
+                    throw new DsmInternalError("No prepareStatement was created " + target + " " + realm + " " + kitTypeId);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -634,23 +637,24 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     /**
      * Read KitRequests form ddp_kit_request
      * request participants information from ddp
+     *
      */
-    public static List<KitRequestShipping> getKitRequestsByRealm(@NonNull String realm, String target, String kitType) {
-        if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(kitType)) {
-            List<KitSubKits> subKits = KitSubKits.getSubKits(realm, kitType);
+    public static List<KitRequestShipping> getKitRequestsByRealm(@NonNull String realm, String target, String kitTypeName) {
+        if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(kitTypeName)) {
+            List<KitSubKits> subKits = KitSubKits.getSubKits(realm, kitTypeName);
             //selected kit type has sub kits, so query for them
             if (subKits != null && !subKits.isEmpty()) {
                 List<KitRequestShipping> wholeList = new ArrayList<>();
                 for (KitSubKits kit : subKits) {
                     if (!kit.isHideOnSamplePages()) {
                         Collection<List<KitRequestShipping>> kits =
-                                getAllKitRequestsByRealm(realm, target, null, kit.getKitTypeId(), false).values();
+                                getAllKitRequestsByRealm(realm, target, kit.getKitTypeId(), false).values();
                         for (List<KitRequestShipping> kitRequestList : kits) {
                             wholeList.addAll(kitRequestList);
                         }
                     } else if (!target.equals(UPLOADED) && !target.equals(ERROR) && !target.equals(QUEUE) && !target.equals(DEACTIVATED)) {
                         Collection<List<KitRequestShipping>> kits =
-                                getAllKitRequestsByRealm(realm, target, kit.getKitName(), null, false).values();
+                                getAllKitRequestsByRealm(realm, target, kit.getKitTypeId(), false).values();
                         for (List<KitRequestShipping> kitRequestList : kits) {
                             wholeList.addAll(kitRequestList);
                         }
@@ -660,7 +664,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
         }
         List<KitRequestShipping> wholeList = new ArrayList<>();
-        Collection<List<KitRequestShipping>> kits = getAllKitRequestsByRealm(realm, target, kitType, null, false).values();
+        KitTypeDto kitTypes = KitTypeImpl.getKitTypes(realm, kitTypeName);
+        Collection<List<KitRequestShipping>> kits =
+                getAllKitRequestsByRealm(realm, target, kitTypes.getKitTypeId(), false).values();
         for (List<KitRequestShipping> kitRequestList : kits) {
             wholeList.addAll(kitRequestList);
         }
@@ -689,10 +695,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 && elasticSearchParticipantDto.getParticipantId().equals(kit.getDdpParticipantId());
     }
 
-    public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target, String kitType,
+    public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target,
                                                                                  Integer kitTypeId, boolean getAll) {
         logger.info("Collecting kit information");
-        Map<String, List<KitRequestShipping>> kitRequests = getKitRequests(realm, target, kitType, kitTypeId, getAll);
+        Map<String, List<KitRequestShipping>> kitRequests = getKitRequestsByKitId(realm, target, kitTypeId, getAll);
         if (!kitRequests.isEmpty() && !getAll) {
             if (StringUtils.isBlank(realm)) {
                 logger.info("Found " + kitRequests.size() + " " + target + " KitRequests across all realms ");
@@ -756,25 +762,18 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequests;
     }
 
-    private static PreparedStatement getPreparedStatement(@NonNull Connection conn, String target, @NonNull String realm, String type,
-                                                          Integer kitTypeId, boolean getAll) throws SQLException {
+    private static PreparedStatement getSelectKitReqPreparedStatement(@NonNull Connection conn, String target, @NonNull String realm,
+                                                                      Integer kitTypeId, boolean getAll) throws SQLException {
         PreparedStatement stmt = null;
         if (getAll) {
             String query = SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM);
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
         } else {
-            if (kitTypeId != null && kitTypeId != null) {
-                    String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE_ID));
-                    stmt = conn.prepareStatement(query);
-                    stmt.setString(1, realm);
-                    stmt.setInt(2, kitTypeId);
-            } else if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(type)) {
-                String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE));
-                stmt = conn.prepareStatement(query);
-                stmt.setString(1, realm);
-                stmt.setString(2, type);
-            }
+            String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE_ID));
+            stmt = conn.prepareStatement(query);
+            stmt.setString(1, realm);
+            stmt.setInt(2, kitTypeId);
         }
         return stmt;
     }
@@ -1020,7 +1019,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
                     logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
-                                + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
+                            + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
                     e.printStackTrace();
                 }
             }
@@ -1371,9 +1370,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                          DDPParticipant participant, DDPInstanceDto ddpInstanceDto) throws Exception {
         Address toAddress = null;
         if (addressId == null && participant == null) { //if both are set to null then it is return label!
-            toAddress = easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
-                    kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
-                    kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
+            toAddress =
+                    easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
+                            kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
+                            kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
         } else {
             if (StringUtils.isNotBlank(addressId)) {
                 toAddress = easyPostUtil.getAddress(addressId);

@@ -121,7 +121,7 @@ public class DBConstants {
     public static final String LABEL_TRIGGERED_DATE = "label_date";
     public static final String CREATED_BY = "created_by";
     public static final String KIT_TYPE_DISPLAY_NAME = "kit_type_display_name";
-    public static final String KIT_DISPLAY_NAME = "kit_display_name";
+    public static final String KIT_DISPLAY_NAME = "display_name";
     public static final String EXTERNAL_SHIPPER = "external_shipper";
     public static final String EXTERNAL_KIT_NAME = "external_name";
     public static final String EXTERNAL_CLIENT_ID = "external_client_id";

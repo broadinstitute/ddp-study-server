@@ -109,19 +109,8 @@ public class KitDaoImpl implements KitDao {
                     + "WHERE ( req.ddp_label = ? or ddp_label like ? )";
 
     private static final String INSERT_KIT = "INSERT INTO ddp_kit "
-            + "(dsm_kit_request_id, "
-            + "kit_label, "
-            + "label_url_to, "
-            + "label_url_return, "
-            + "easypost_to_id, "
-            + "easypost_return_id, "
-            + "tracking_to_id, "
-            + "tracking_return_id, "
-            + "easypost_tracking_to_url, "
-            + "easypost_tracking_return_url, "
-            + "error, "
-            + "message, "
-            + "easypost_address_id_to) "
+            + "(dsm_kit_request_id, kit_label, label_url_to, label_url_return, easypost_to_id, easypost_return_id, tracking_to_id, "
+            + "tracking_return_id, easypost_tracking_to_url, easypost_tracking_return_url, error, message, easypost_address_id_to) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String INSERT_KIT_REQUEST = "INSERT INTO "
@@ -639,7 +628,7 @@ public class KitDaoImpl implements KitDao {
                     dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "dsm_kit_id "
                             + kitRequestShipping.getDsmKitId() + " does not exist or already has a Kit Label");
                 } else {
-                    logger.info(String.format("Updated kitRequests for pt w/ shortId %s", kitRequestShipping.getHruid()));
+                    logger.info("Updated kitRequests for pt w/ shortId {}", kitRequestShipping.getHruid());
                 }
             } catch (Exception ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),

@@ -6,7 +6,7 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="PEPPER-833_rgp_kit_type_display_name" author="pegah">
         <addColumn tableName="kit_type">
-            <column name="kit_display_name" type="VARCHAR(500)"></column>
+            <column name="display_name" type="VARCHAR(500)"></column>
         </addColumn>
     </changeSet>
     <changeSet id="PEPPER-833_rgp_blood" author="pegah">
@@ -15,12 +15,12 @@
             <column name="bsp_material_type" value="Whole Blood Streck Cell-Free Preserved"></column>
             <column name="bsp_receptacle_type" value="Vacutainer Cell-Free DNA Tube Camo-Top [10mL]"></column>
             <column name="requires_insert_in_kit_tracking" value="1"></column>
-            <column name="kit_display_name" value="BLOOD &amp; RNA"></column>
+            <column name="display_name" value="BLOOD &amp; RNA"></column>
         </insert>
     </changeSet>
     <changeSet id="PEPPER-833_update_rgp_blood_subkit" author="pegah">
         <update tableName="sub_kits_settings">
-            <column name="kit_type_id" valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_display_name = 'BLOOD &amp; RNA' )"></column>
+            <column name="kit_type_id" valueComputed="(SELECT kit_type_id FROM kit_type WHERE display_name = 'BLOOD &amp; RNA' )"></column>
             <where>
                 sub_kits_settings_id = (SELECT sub_kits_settings_id FROM
                 (SELECT sub_kits_settings_id FROM (SELECT * FROM sub_kits_settings) as sub

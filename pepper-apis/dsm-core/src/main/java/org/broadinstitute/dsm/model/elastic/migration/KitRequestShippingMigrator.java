@@ -14,7 +14,7 @@ public class KitRequestShippingMigrator extends BaseCollectionMigrator {
 
     @Override
     protected Map<String, Object> getDataByRealm() {
-        Map<String, List<KitRequestShipping>> kitRequests = KitRequestShipping.getAllKitRequestsByRealm(realm, null, null, null, true);
+        Map<String, List<KitRequestShipping>> kitRequests = KitRequestShipping.getAllKitRequestsByRealm(realm, null, null,  true);
         return (Map) kitRequests;
     }
 

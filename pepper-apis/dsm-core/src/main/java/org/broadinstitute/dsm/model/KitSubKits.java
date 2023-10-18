@@ -10,6 +10,7 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class KitSubKits {
     }
 
     /**
-     * Getting all kit types
+     * Getting subkits for a kit type
      */
     public static List<KitSubKits> getSubKits(@NonNull String realm, @NonNull String kitType) {
         List<KitSubKits> subKits = new ArrayList<>();
@@ -63,10 +64,10 @@ public class KitSubKits {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error looking up kit type  ", results.resultException);
+            throw new DsmInternalError("Error looking up sub kit with type  "+ kitType, results.resultException);
         }
         if (subKits.size() > 1) { //otherwise it found the normal kit
-            logger.info("Found " + subKits.size() + " subKits");
+            logger.info("Found {} subKits", subKits.size());
             return subKits;
         }
         return null;

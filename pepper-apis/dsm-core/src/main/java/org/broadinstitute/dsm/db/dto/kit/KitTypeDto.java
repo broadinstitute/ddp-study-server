@@ -10,13 +10,13 @@ public class KitTypeDto {
     Integer kitTypeId;
     String kitTypeName;
     String bspMaterialType;
-    String bspReceptacleTyep;
+    String bspReceptacleType;
     String customsJson;
     Integer requiredRole;
     Boolean manualSentTrack;
     Boolean requiresInsertInKitTracking;
     Boolean noReturn;
     String sampleType;
-    String kitTypeDisplayName;
+    String displayName;
 
 }
