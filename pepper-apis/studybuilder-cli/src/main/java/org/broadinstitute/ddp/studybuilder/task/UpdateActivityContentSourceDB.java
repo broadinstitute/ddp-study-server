@@ -198,11 +198,6 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
         BlockContentDto blockContentDto = jdbiBlockContent.findDtoByBodyTemplateId(template.getTemplateId()).get();
         log.info("blockID: {} .. tileTemplateId: {}", blockContentDto.getBlockId(), blockContentDto.getTitleTemplateId());
 
-        //revision this template
-        long newRevId = jdbiRevision.copyAndTerminate(template.getRevisionId().get(), meta);
-        jdbiTemplate.updateRevisionIdById(newRevId, template.getTemplateId());
-        templateDao.disableTemplate(template.getTemplateId(), meta);
-
         //revision the block
         long newBlockRevId = jdbiRevision.copyAndTerminate(blockContentDto.getRevisionId(), meta);
         jdbiBlockContent.updateRevisionById(blockContentDto.getId(), newBlockRevId);
