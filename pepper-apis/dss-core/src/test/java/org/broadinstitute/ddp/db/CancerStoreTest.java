@@ -8,6 +8,8 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.CancerItem;
 
 import org.broadinstitute.ddp.json.CancerSuggestionResponse;
+import org.broadinstitute.ddp.model.suggestion.CancerSuggestion;
+import org.broadinstitute.ddp.model.suggestion.PatternMatch;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -118,10 +120,16 @@ public class CancerStoreTest {
         matches = CancerStore.getInstance().getCancerSuggestions("tom", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
         Assert.assertEquals(cancer3, matches.getResults().iterator().next().getCancer().getName());
+        CancerSuggestion suggestion = matches.getResults().iterator().next();
+        PatternMatch match = suggestion.getMatches().iterator().next();
+        Assert.assertEquals(1, suggestion.getMatches().size());
+        Assert.assertEquals(22, match.getOffset());
+        Assert.assertEquals(3, match.getLength());
 
         matches = CancerStore.getInstance().getCancerSuggestions("esófagico", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
         Assert.assertEquals(cancer1, matches.getResults().iterator().next().getCancer().getName());
+        Assert.assertEquals(7, matches.getResults().iterator().next().getMatches().iterator().next().getOffset());
 
         matches = CancerStore.getInstance().getCancerSuggestions("gástricX", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(0, matches.getResults().size());
@@ -131,7 +139,15 @@ public class CancerStoreTest {
 
         matches = CancerStore.getInstance().getCancerSuggestions("gastric", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
-        Assert.assertEquals(cancer3, matches.getResults().iterator().next().getCancer().getName());
+        suggestion = matches.getResults().iterator().next();
+        match = suggestion.getMatches().iterator().next();
+        Assert.assertEquals(cancer3, suggestion.getCancer().getName());
+        Assert.assertEquals(1, suggestion.getMatches().size());
+
+        Assert.assertEquals(1, suggestion.getMatches().size());
+        Assert.assertEquals(7, match.getOffset());
+        Assert.assertEquals(7, match.getLength());
+
 
 
 

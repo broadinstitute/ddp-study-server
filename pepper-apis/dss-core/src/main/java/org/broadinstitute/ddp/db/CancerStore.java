@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -85,19 +86,20 @@ public class CancerStore {
      */
     public CancerSuggestionResponse getCancerSuggestions(String cancerQuery, String language, int limit) {
         String upperCancerQuery = cancerQuery.toUpperCase();
+        boolean isSpanish = LanguageStore.SPANISH_LANG_CODE.equalsIgnoreCase(language);
+        String asciiCharsReplacedWithSpanishChars = upperCancerQuery;
 
         // first pass filter: find simple matches
         Set<CancerItem> cancerMatches = new HashSet<>(getInstance().getCancerList(language).stream()
                 .filter(cancer -> cancer.getCancerName().toUpperCase().contains(upperCancerQuery))
                 .collect(Collectors.toList()));
 
-        if (LanguageStore.SPANISH_LANG_CODE.equals(language)) {
+        if (isSpanish) {
             // for Spanish, replace unaccented chars with accented chars so that we find matches
             // with different keyboard configurations.
             String[] accentedReplacements = new String[] {"ü", "ñ", "é", "á", "í", "ó", "ú"};
             String[] unaccentedInputs =    new String[] {"u", "n", "e", "a", "i", "o", "u"};
 
-            String asciiCharsReplacedWithSpanishChars = upperCancerQuery;
             for (int charIndex = 0; charIndex < accentedReplacements.length; charIndex++) {
                 // look for a match by replacing one character at a time
                 String charToReplace = unaccentedInputs[charIndex].toUpperCase();
@@ -115,14 +117,24 @@ public class CancerStore {
 
         // now rank the matches in a way that puts left-most matches near the top, favoring word start matches
         List<CancerSuggestion> sortedSuggestions = new ArrayList<>();
+        String regex = upperCancerQuery;
+        if (isSpanish) {
+            // search for the exact match or the match with Spanish accented chars substituted
+            regex = String.format("((%s)|(%s))", regex, asciiCharsReplacedWithSpanishChars);
+        }
+        Pattern pattern = Pattern.compile(regex);
         var suggestionComparator = new StringSuggestionTypeaheadComparator(upperCancerQuery);
         cancerMatches.stream()
                 .sorted((lhs, rhs) -> suggestionComparator.compare(lhs.getCancerName(), rhs.getCancerName()))
                 .limit(limit)
                 .forEach(cancer -> {
-                    int offset = cancer.getCancerName().toUpperCase().indexOf(upperCancerQuery);
-                    sortedSuggestions.add(new CancerSuggestion(new Cancer(cancer.getCancerName()),
-                            Collections.singletonList(new PatternMatch(offset, cancerQuery.length()))));
+                    Matcher matcher = pattern.matcher(cancer.getCancerName().toUpperCase());
+                    if (matcher.find()) {
+                        int offset = matcher.start();
+                        int hitLength = matcher.end() - offset;
+                        sortedSuggestions.add(new CancerSuggestion(new Cancer(cancer.getCancerName()),
+                                Collections.singletonList(new PatternMatch(offset, hitLength))));
+                    }
                 });
 
         return new CancerSuggestionResponse(cancerQuery, sortedSuggestions);
