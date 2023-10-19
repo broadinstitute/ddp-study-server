@@ -590,6 +590,11 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (allActTransMapEN.get(activityCode) == null) {
             allActTransMapEN.put(activityCode, new TreeMap());
         }
+        if (allActTransMapEN.get(activityCode).get(variableName) != null && !variableName.contains("announcement")) {
+            //check and handle these manually or in code as special case
+            log.warn("**SAME Variable Name found in activity : {} ..variableName: {},  first text: {} .. newText: {} ",
+                    activityCode, variableName, allActTransMapEN.get(activityCode).get(variableName), enText);
+        }
         allActTransMapEN.get(activityCode).put(variableName, enTranslation.getText());
 
         if (allActTransMapES.get(activityCode) == null) {
@@ -605,6 +610,14 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM")
                 || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM")) {
             key = "somatic_consent_addendum." + variableName;
+            //special case to handle same variable name in same activity
+            if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM")
+                && variableName.equalsIgnoreCase("somatic_consent_addendum_election_agree_pediatric")
+                    && allActTransMapES.get(activityCode).get(variableName) == null) {
+                //set key
+                key = "somatic_consent_addendum.somatic_consent_addendum_election_agree1";
+            }
+
         }
         if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM_PEDIATRIC")
                 || activityCode.equalsIgnoreCase("CONSENT_ADDENDUM_PEDIATRIC")) {
@@ -669,7 +682,6 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                         translation.getRevisionId().get(),
                         translation.getLanguageCode(),
                         latestText);
-                allActTransMapES.get(activityCode).put(variableName, latestText);
                 if (updated) {
                     log.info("[{}] variable {} language {}: updated substitution. \ncurrent text: {}  \nlatest  text: {}",
                             tag, variableName, translation.getLanguageCode(), currentText, latestText);
@@ -679,6 +691,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                             tag, variableName, translation.getLanguageCode()));
                 }
             }
+            allActTransMapES.get(activityCode).put(variableName, latestText);
         }
         //check for ddp.isGoverned mismatch !
         if (enText.contains("ddp.isGovernedParticipant") && !latestText.contains("$ddp.isGovernedParticipant")) {
