@@ -1,11 +1,13 @@
 package org.broadinstitute.ddp.db;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.CancerItem;
 
+import org.broadinstitute.ddp.json.CancerSuggestionResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -87,6 +89,57 @@ public class CancerStoreTest {
 
         Assert.assertEquals(1, englishCancers.size());
         Assert.assertEquals(englishItem, englishCancers.iterator().next());
+    }
+
+    @Test
+    public void testSpanishNonAccentedCharsFindAccentedCharsForSpanish() {
+        List<CancerItem> cancers = new ArrayList<>();
+        String cancer1 = "Cáncer esófagico";
+        String cancer2 = "Cáncer pulmonar (de células no pequeñas y células pequeñas)";
+        String cancer3 = "Cáncer gástrico (de estómago)";
+        cancers.add(new CancerItem(cancer1, LanguageStore.SPANISH_LANG_CODE));
+        cancers.add(new CancerItem(cancer2, LanguageStore.SPANISH_LANG_CODE));
+        cancers.add(new CancerItem(cancer3, LanguageStore.SPANISH_LANG_CODE));
+
+        CancerStore.getInstance().populate(cancers);
+
+        CancerSuggestionResponse matches = CancerStore.getInstance().getCancerSuggestions("esofagico",
+                LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(1, matches.getResults().size());
+        Assert.assertEquals(cancer1, matches.getResults().iterator().next().getCancer().getName());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("Cancer", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(3, matches.getResults().size());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("celulas", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(1, matches.getResults().size());
+        Assert.assertEquals(cancer2, matches.getResults().iterator().next().getCancer().getName());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("tom", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(1, matches.getResults().size());
+        Assert.assertEquals(cancer3, matches.getResults().iterator().next().getCancer().getName());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("esófagico", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(1, matches.getResults().size());
+        Assert.assertEquals(cancer1, matches.getResults().iterator().next().getCancer().getName());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("gástricX", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(0, matches.getResults().size());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("gastricX", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(0, matches.getResults().size());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("gastric", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(1, matches.getResults().size());
+        Assert.assertEquals(cancer3, matches.getResults().iterator().next().getCancer().getName());
+
+
+
+
+
+
+
+
     }
 
 }
