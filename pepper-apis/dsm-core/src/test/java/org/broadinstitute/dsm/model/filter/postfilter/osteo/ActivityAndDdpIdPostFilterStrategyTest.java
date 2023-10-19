@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterStrategy;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class OldOsteoPostFilterStrategyTest {
+public class ActivityAndDdpIdPostFilterStrategyTest {
 
     StudyPostFilterStrategy<Activities> oldOsteoPostFilterStrategy = new OldOsteoPostFilterStrategy();
 

@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.SomaticResultUpload;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -19,7 +21,7 @@ import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.junit.Test;
 
 
-public class NewOsteoPostFilterTest {
+public class DsmDdpInstanceIdPostFilterTest {
 
     @Test
     public void filterWithExistingInstanceId() {
@@ -41,6 +43,16 @@ public class NewOsteoPostFilterTest {
                 new KitRequestShipping(1),
                 new KitRequestShipping(1),
                 new KitRequestShipping(1))));
+
+        esDsm.setSomaticResultUpload(new ArrayList<>(List.of(
+                new SomaticResultUpload(1),
+                new SomaticResultUpload(2),
+                new SomaticResultUpload(1)
+        )));
+        esDsm.setClinicalOrder(new ArrayList<>(List.of(
+                new ClinicalOrder(1),
+                new ClinicalOrder(2)
+        )));
 
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder()
                 .withDsm(esDsm)
@@ -65,6 +77,12 @@ public class NewOsteoPostFilterTest {
         assertEquals(List.of(1L, 1L, 1L), esDsm.getKitRequestShipping().stream().map(KitRequestShipping::getDdpInstanceId)
                 .collect(Collectors.toList()));
 
+        assertEquals(2, esDsm.getSomaticResultUpload().size());
+        assertEquals(List.of(1L, 1L), esDsm.getSomaticResultUpload().stream().map(SomaticResultUpload::getDdpInstanceId)
+                .collect(Collectors.toList()));
+        assertEquals(1, esDsm.getClinicalOrder().size());
+        assertEquals(List.of(1L), esDsm.getClinicalOrder().stream().map(ClinicalOrder::getDdpInstanceId)
+                .collect(Collectors.toList()));
     }
 
     @Test
