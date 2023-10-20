@@ -87,7 +87,6 @@ public class CancerStore {
     public CancerSuggestionResponse getCancerSuggestions(String cancerQuery, String language, int limit) {
         String upperCancerQuery = cancerQuery.toUpperCase();
         boolean isSpanish = LanguageStore.SPANISH_LANG_CODE.equalsIgnoreCase(language);
-        String asciiCharsReplacedWithSpanishChars = upperCancerQuery;
 
         // first pass filter: find simple matches
         Set<CancerItem> cancerMatches = new HashSet<>(getInstance().getCancerList(language).stream()
@@ -95,40 +94,28 @@ public class CancerStore {
                 .collect(Collectors.toList()));
 
         if (isSpanish) {
-            // for Spanish, replace unaccented chars with accented chars so that we find matches
+            // for Spanish, replace accented chars with unaccented chars so that we find matches
             // with different keyboard configurations.
-            String[] accentedReplacements = new String[] {"ü", "ñ", "é", "á", "í", "ó", "ú"};
-            String[] unaccentedInputs =    new String[] {"u", "n", "e", "a", "i", "o", "u"};
-
-            for (int charIndex = 0; charIndex < accentedReplacements.length; charIndex++) {
-                // look for a match by replacing one character at a time
-                String charToReplace = unaccentedInputs[charIndex].toUpperCase();
-                String replacementChar = accentedReplacements[charIndex].toUpperCase();
-                asciiCharsReplacedWithSpanishChars = asciiCharsReplacedWithSpanishChars.replaceAll(charToReplace,
-                        "(" + charToReplace + "|" + replacementChar + ")");
-            }
-
-            String regex = asciiCharsReplacedWithSpanishChars;
             cancerMatches.addAll(getInstance().getCancerList(language).stream()
-                    .filter(cancer -> Pattern.compile(regex).matcher(
-                            cancer.getCancerName().toUpperCase()).find())
+                    .filter(cancer -> replaceAccentedCharsWithUnaccentedChars(cancer.getCancerName()).contains(
+                                    replaceAccentedCharsWithUnaccentedChars(upperCancerQuery)))
                     .collect(Collectors.toList()));
         }
 
         // now rank the matches in a way that puts left-most matches near the top, favoring word start matches
         List<CancerSuggestion> sortedSuggestions = new ArrayList<>();
-        String regex = upperCancerQuery;
+        String regex = Pattern.quote(upperCancerQuery);
         if (isSpanish) {
-            // search for the exact match or the match with Spanish accented chars substituted
-            regex = String.format("((%s)|(%s))", regex, asciiCharsReplacedWithSpanishChars);
+            regex = Pattern.quote(replaceAccentedCharsWithUnaccentedChars(upperCancerQuery));
         }
+
         Pattern pattern = Pattern.compile(regex);
         var suggestionComparator = new StringSuggestionTypeaheadComparator(upperCancerQuery);
         cancerMatches.stream()
                 .sorted((lhs, rhs) -> suggestionComparator.compare(lhs.getCancerName(), rhs.getCancerName()))
                 .limit(limit)
                 .forEach(cancer -> {
-                    Matcher matcher = pattern.matcher(cancer.getCancerName().toUpperCase());
+                    Matcher matcher = pattern.matcher(replaceAccentedCharsWithUnaccentedChars(cancer.getCancerName().toUpperCase()));
                     if (matcher.find()) {
                         int offset = matcher.start();
                         int hitLength = matcher.end() - offset;
@@ -140,4 +127,18 @@ public class CancerStore {
         return new CancerSuggestionResponse(cancerQuery, sortedSuggestions);
     }
 
+    private String replaceAccentedCharsWithUnaccentedChars(String cancerName) {
+        String[] accentedChars =   new String[] {"ü", "ñ", "é", "á", "í", "ó", "ú"};
+        String[] unaccentedChars = new String[] {"u", "n", "e", "a", "i", "o", "u"};
+        String spanishCharsReplacedWithAsciiChars = cancerName.toUpperCase();
+        for (int charIndex = 0; charIndex < accentedChars.length; charIndex++) {
+            // replace the accented chars with unaccented chars by array index correspondence
+            String charToReplace = accentedChars[charIndex].toUpperCase();
+            String replacementChar = unaccentedChars[charIndex].toUpperCase();
+
+            spanishCharsReplacedWithAsciiChars = spanishCharsReplacedWithAsciiChars.replaceAll(charToReplace,
+                    replacementChar);
+        }
+        return spanishCharsReplacedWithAsciiChars;
+    }
 }
