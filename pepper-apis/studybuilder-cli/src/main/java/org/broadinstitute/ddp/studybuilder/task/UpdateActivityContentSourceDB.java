@@ -97,8 +97,8 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
     private Map<String, Map> allActTransMapEN;
     private Map<String, Map> allActTransMapES;
     private Map<String, String> missingTransVars = new TreeMap<>();
-    private String enFilePath = "studybuilder-cli/studies/pancan/i18n/en.conf";
-    private String esFilePath = "studybuilder-cli/studies/pancan/i18n/es.conf";
+    private String enFilePath;
+    private String esFilePath;
 
     private User adminUser;
     private ActivityDao activityDao;
@@ -118,6 +118,12 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
 
 
     public UpdateActivityContentSourceDB(List<String> variablesToSkip) {
+        this.variablesToSkip = variablesToSkip;
+    }
+
+    public UpdateActivityContentSourceDB(String enFilePathFile, String esFilePath, List<String> variablesToSkip) {
+        this.enFilePath = enFilePathFile;
+        this.esFilePath = esFilePath;
         this.variablesToSkip = variablesToSkip;
     }
 

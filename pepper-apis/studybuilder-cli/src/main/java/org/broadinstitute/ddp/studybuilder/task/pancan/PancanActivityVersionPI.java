@@ -14,11 +14,13 @@ import java.util.List;
 public class PancanActivityVersionPI implements CustomTask {
 
     private List<CustomTask> taskList = new ArrayList<>();
+    private String enFilePath = "studybuilder-cli/studies/pancan/i18n/en.conf";
+    private String esFilePath = "studybuilder-cli/studies/pancan/i18n/es.conf";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
 
-        UpdateActivityContentSourceDB pancanUpdatesPI = new UpdateActivityContentSourceDB();
+        UpdateActivityContentSourceDB pancanUpdatesPI = new UpdateActivityContentSourceDB(enFilePath, esFilePath, null);
         taskList.add(pancanUpdatesPI);
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
 
