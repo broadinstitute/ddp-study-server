@@ -8,10 +8,17 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.CancerItem;
 
 import org.broadinstitute.ddp.json.CancerSuggestionResponse;
+import org.broadinstitute.ddp.model.suggestion.CancerSuggestion;
+import org.broadinstitute.ddp.model.suggestion.PatternMatch;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class CancerStoreTest {
+
+    private static final String SPANISH_CANCER1 = "Cáncer esófagico";
+    private static final String SPANISH_CANCER2 = "Cáncer pulmonar (de células no pequeñas y células pequeñas)";
+    private static final String SPANISH_CANCER3 = "Cáncer gástrico (de estómago)";
+    private static final String CANCER_WITH_MULTIPLE_HITS = "This is 123match 456match mátch";
 
     @Test
     public void test_givenStoreIsInstantiated_whenItsInstanceIsRequested_thenItsNotNull() {
@@ -92,36 +99,51 @@ public class CancerStoreTest {
     }
 
     @Test
-    public void testSpanishNonAccentedCharsFindAccentedCharsForSpanish() {
-        List<CancerItem> cancers = new ArrayList<>();
-        String cancer1 = "Cáncer esófagico";
-        String cancer2 = "Cáncer pulmonar (de células no pequeñas y células pequeñas)";
-        String cancer3 = "Cáncer gástrico (de estómago)";
-        cancers.add(new CancerItem(cancer1, LanguageStore.SPANISH_LANG_CODE));
-        cancers.add(new CancerItem(cancer2, LanguageStore.SPANISH_LANG_CODE));
-        cancers.add(new CancerItem(cancer3, LanguageStore.SPANISH_LANG_CODE));
+    public void testHitPositionsAndLengths() {
+        CancerStore.getInstance().populate(buildSpanishCancers());
+        CancerSuggestionResponse matches = CancerStore.getInstance().getCancerSuggestions("gastric", LanguageStore.SPANISH_LANG_CODE, 100);
 
-        CancerStore.getInstance().populate(cancers);
+        Assert.assertEquals(1, matches.getResults().size());
+        CancerSuggestion suggestion = matches.getResults().iterator().next();
+        PatternMatch match = suggestion.getMatches().iterator().next();
+        Assert.assertEquals(SPANISH_CANCER3, suggestion.getCancer().getName());
+        Assert.assertEquals(1, suggestion.getMatches().size());
+
+        Assert.assertEquals(1, suggestion.getMatches().size());
+        Assert.assertEquals(7, match.getOffset());
+        Assert.assertEquals(7, match.getLength());
+
+        matches = CancerStore.getInstance().getCancerSuggestions("tom", LanguageStore.SPANISH_LANG_CODE, 100);
+        Assert.assertEquals(1, matches.getResults().size());
+        Assert.assertEquals(SPANISH_CANCER3, matches.getResults().iterator().next().getCancer().getName());
+        suggestion = matches.getResults().iterator().next();
+
+        match = suggestion.getMatches().iterator().next();
+        Assert.assertEquals(1, suggestion.getMatches().size());
+        Assert.assertEquals(22, match.getOffset());
+        Assert.assertEquals(3, match.getLength());
+    }
+
+    @Test
+    public void testSpanishNonAccentedCharsFindAccentedCharsForSpanish() {
+        CancerStore.getInstance().populate(buildSpanishCancers());
 
         CancerSuggestionResponse matches = CancerStore.getInstance().getCancerSuggestions("esofagico",
                 LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
-        Assert.assertEquals(cancer1, matches.getResults().iterator().next().getCancer().getName());
+        Assert.assertEquals(SPANISH_CANCER1, matches.getResults().iterator().next().getCancer().getName());
 
         matches = CancerStore.getInstance().getCancerSuggestions("Cancer", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(3, matches.getResults().size());
 
         matches = CancerStore.getInstance().getCancerSuggestions("celulas", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
-        Assert.assertEquals(cancer2, matches.getResults().iterator().next().getCancer().getName());
-
-        matches = CancerStore.getInstance().getCancerSuggestions("tom", LanguageStore.SPANISH_LANG_CODE, 100);
-        Assert.assertEquals(1, matches.getResults().size());
-        Assert.assertEquals(cancer3, matches.getResults().iterator().next().getCancer().getName());
+        Assert.assertEquals(SPANISH_CANCER2, matches.getResults().iterator().next().getCancer().getName());
 
         matches = CancerStore.getInstance().getCancerSuggestions("esófagico", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
-        Assert.assertEquals(cancer1, matches.getResults().iterator().next().getCancer().getName());
+        Assert.assertEquals(SPANISH_CANCER1, matches.getResults().iterator().next().getCancer().getName());
+        Assert.assertEquals(7, matches.getResults().iterator().next().getMatches().iterator().next().getOffset());
 
         matches = CancerStore.getInstance().getCancerSuggestions("gástricX", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(0, matches.getResults().size());
@@ -131,15 +153,15 @@ public class CancerStoreTest {
 
         matches = CancerStore.getInstance().getCancerSuggestions("gastric", LanguageStore.SPANISH_LANG_CODE, 100);
         Assert.assertEquals(1, matches.getResults().size());
-        Assert.assertEquals(cancer3, matches.getResults().iterator().next().getCancer().getName());
+        Assert.assertEquals(SPANISH_CANCER3, matches.getResults().iterator().next().getCancer().getName());
+    }
 
-
-
-
-
-
-
-
+    private List<CancerItem> buildSpanishCancers() {
+        List<CancerItem> cancers = new ArrayList<>();
+        cancers.add(new CancerItem(SPANISH_CANCER1, LanguageStore.SPANISH_LANG_CODE));
+        cancers.add(new CancerItem(SPANISH_CANCER2, LanguageStore.SPANISH_LANG_CODE));
+        cancers.add(new CancerItem(SPANISH_CANCER3, LanguageStore.SPANISH_LANG_CODE));
+        return cancers;
     }
 
 }
