@@ -196,7 +196,6 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
         log.info("revisioning and updating template : {}", template.getTemplateText());
         for (TemplateUpdateInfo updateInfo : updateInfos) {
             newTemplateText = newTemplateText.replace(updateInfo.getSearchString(), updateInfo.getReplaceString());
-            newTemplateText = newTemplateText.replace("<li></li>", ""); //remove empty tags if any
         }
         log.info("updated new template text: {} ", newTemplateText);
 
