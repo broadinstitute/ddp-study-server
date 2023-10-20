@@ -37,7 +37,7 @@ public class SmId {
     @ColumnName(DBConstants.SM_ID_PK)
     private Integer smIdPk;
     @ColumnName(DBConstants.DELETED)
-    private boolean deleted;
+    private Boolean deleted;
 
     public SmId() {
     }

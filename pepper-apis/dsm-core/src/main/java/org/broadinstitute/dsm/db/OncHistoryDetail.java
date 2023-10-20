@@ -265,7 +265,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
                             String gender, String additionalValuesJson, List<Tissue> tissues, String tissueProblemOption,
                             String destructionPolicy, boolean unableObtainTissue, String participantId, String ddpParticipantId,
-                            long ddpInstanceId, Integer deleted) {
+                            long ddpInstanceId, boolean deleted) {
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.medicalRecordId = medicalRecordId;
         this.datePx = datePx;
@@ -297,7 +297,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.ddpInstanceId = ddpInstanceId;
-        this.deleted =  (deleted != null && deleted == 1);
+        this.deleted =  deleted;
     }
 
     public OncHistoryDetail(Builder builder) {
@@ -336,7 +336,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                         tissues, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION), rs.getString(DBConstants.DESTRUCTION_POLICY),
                         rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE), rs.getString(DBConstants.PARTICIPANT_ID),
                         rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID),
-                        rs.getInt(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DELETED));
+                        rs.getBoolean(DBConstants.DDP_ONC_HISTORY_DETAIL_DELETED));
         return oncHistoryDetail;
     }
 
@@ -404,7 +404,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     }
                     //add tissues to their onc history
                     for (Tissue tissue : tissues.values()) {
-                        Integer tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        int tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
                         OncHistoryDetail oncHistoryDetail = oncHistoryMap.get(tissueOncHistoryDetailId);
                         oncHistoryDetail.getTissues().add(tissue);
                     } //  add onchistories to their particiapnt

@@ -5,10 +5,8 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 
 @Slf4j
 public class DeleteTissuePatch extends ExistingRecordPatch {
-    private final NotificationUtil notificationUtil;
     public DeleteTissuePatch(Patch patch, NotificationUtil notificationUtil) {
         super(patch, notificationUtil);
-        this.notificationUtil = notificationUtil;
     }
 
     @Override
@@ -17,7 +15,7 @@ public class DeleteTissuePatch extends ExistingRecordPatch {
         try {
             o = super.doPatch();
         } finally {
-            DeletePatchFactory.setDeletedForChildrenFields(this.patch, notificationUtil);
+            DeletePatchFactory.deleteChildrenFields(this.patch, this.getNotificationUtil());
             return o;
         }
 

@@ -46,30 +46,6 @@ public class TissueSMIDDao {
                     + "WHERE realm.instance_name = ?";
     private static final Logger logger = LoggerFactory.getLogger(TissueSMIDDao.class);
 
-    public static List<String> getSmIdPksForTissue(String tissueId) {
-        List<String> smIds = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SM_ID_BASED_ON_TISSUE_ID)) {
-                stmt.setString(1, tissueId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        smIds.add(rs.getString(DBConstants.SM_ID_PK));
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
-        }
-        logger.info("Got %d smId pks in DSM DB for tissue with id %s", smIds.size() , tissueId);
-        return smIds;
-    }
-
     public String getTypeForName(String type) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -107,7 +83,7 @@ public class TissueSMIDDao {
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            logger.info(String.format("Created new sm id for tissue w/ id %s ", tissueId));
+                            logger.info("Created new sm id for tissue w/ id {} ", tissueId);
                             dbVals.resultValue = rs.getString(1);
                         }
                     } catch (Exception e) {
@@ -210,7 +186,7 @@ public class TissueSMIDDao {
         if (results.resultException != null) {
             throw new DsmInternalError("Couldn't get list of smIds for instance " + instanceName, results.resultException);
         }
-        logger.info(String.format("Got %d participants smIds in DSM DB for %s ", smIds.size(), instanceName));
+        logger.info("Got {} participants smIds in DSM DB for {} ", smIds.size(), instanceName);
         return smIds;
     }
 
@@ -235,6 +211,30 @@ public class TissueSMIDDao {
             throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
         }
         logger.info(String.format("Got %d sequencing smIds in DSM DB for %d ", smIds.size(), tissueId));
+        return smIds;
+    }
+
+    public static List<String> getSmIdPksForTissue(String tissueId) {
+        List<String> smIds = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SM_ID_BASED_ON_TISSUE_ID)) {
+                stmt.setString(1, tissueId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        smIds.add(rs.getString(DBConstants.SM_ID_PK));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
+        }
+        logger.info("Got %d smId pks in DSM DB for tissue with id %s", smIds.size() , tissueId);
         return smIds;
     }
 }

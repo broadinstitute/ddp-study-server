@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.TestHelper.notificationUtil;
-import static org.broadinstitute.dsm.patch.TestParticipantUtil.getPrimaryKey;
+import static org.broadinstitute.dsm.patch.TestPatchUtil.getPrimaryKey;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
 

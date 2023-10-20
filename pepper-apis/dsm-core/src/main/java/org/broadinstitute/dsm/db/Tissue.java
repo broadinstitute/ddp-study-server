@@ -213,7 +213,7 @@ public class Tissue {
                 (Integer) rs.getObject(DBConstants.USS_COUNT), (Integer) rs.getObject(DBConstants.BLOCKS_COUNT),
                 (Integer) rs.getObject(DBConstants.H_E_COUNT), rs.getString(DBConstants.BLOCK_ID_SHL),
                 new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
-                rs.getInt(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DELETED));
+                rs.getInt(DBConstants.DDP_TISSUE_DELETED));
         return tissue;
     }
 

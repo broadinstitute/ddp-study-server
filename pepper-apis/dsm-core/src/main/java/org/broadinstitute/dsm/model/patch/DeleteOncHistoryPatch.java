@@ -1,14 +1,14 @@
 package org.broadinstitute.dsm.model.patch;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.util.NotificationUtil;
+import org.elasticsearch.ElasticsearchException;
 
 @Slf4j
 public class DeleteOncHistoryPatch extends ExistingOncHistoryPatch {
-    private final NotificationUtil notificationUtil;
     public DeleteOncHistoryPatch(Patch patch, NotificationUtil notificationUtil) {
         super(patch, notificationUtil);
-        this.notificationUtil = notificationUtil;
         this.dbElementBuilder = new DefaultDBElementBuilder();
     }
 
@@ -17,8 +17,10 @@ public class DeleteOncHistoryPatch extends ExistingOncHistoryPatch {
         Object o = null;
         try {
             o = super.doPatch();
-        } finally {
-            DeletePatchFactory.setDeletedForChildrenFields(this.patch, notificationUtil);
+        } catch (DsmInternalError e){}
+        catch (ElasticsearchException e){}
+        finally {
+            DeletePatchFactory.deleteChildrenFields(this.patch, this.getNotificationUtil());
             return o;
         }
     }

@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.NonNull;
-import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class DeletePatchFactory {
-    public final static String ONC_HISTORY_DELETED_FIELD = "oD.deleted";
-    public final static String TISSUE_DELETED_FIELD = "t.deleted";
-    public final static String SM_ID_DELETED_FIELD = "sm.deleted";
-    public final static String TRUE_FLAG = "1";
+    private static final String ONC_HISTORY_DELETED_FIELD = "oD.deleted";
+    private static final String TISSUE_DELETED_FIELD = "t.deleted";
+    private static final String SM_ID_DELETED_FIELD = "sm.deleted";
+    private static final String TRUE_FLAG = "1";
     private DeletePatchFactory() {
         throw new IllegalStateException("Utility class");
     }
@@ -28,13 +28,13 @@ public class DeletePatchFactory {
         } else if (PatchFactory.isTissueRelatedOncHistoryId(patch)) {
             patcher = new DeleteTissuePatch(patch, notificationUtil);
         } else {
-            throw new NotImplementedException("This method should not reach here");
+            throw new DsmInternalError("This method should not reach here");
         }
         return patcher;
     }
 
-    protected static void setDeletedForChildrenFields(@NonNull Patch originalPatch, NotificationUtil notificationUtil) {
-        List<Patch> deletePatches = null;
+    protected static void deleteChildrenFields(@NonNull Patch originalPatch, NotificationUtil notificationUtil) {
+        List<Patch> deletePatches = new ArrayList<>();
         if (isTissuePatch(originalPatch)) {
             deletePatches = getPatchForSmIds(originalPatch);
         } else if (isOncHistoryPatch(originalPatch)) {

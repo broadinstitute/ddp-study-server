@@ -16,7 +16,6 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -140,7 +139,7 @@ public class Patch {
             SimpleResult dbVals = new SimpleResult();
             if (dbElement.isUniqueField) {
                 if (!isValueUnique(dbElement, String.valueOf(nameValue.getValue()))) {
-                    throw new DuplicateException(dbElement.getColumnName());
+                    throw new DsmInternalError(dbElement.getColumnName());
                 }
             }
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -207,7 +206,7 @@ public class Patch {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException(String.format("Error while checking the uniqueness of the value for {} ", dbElement.getColumnName()),
+            throw new DsmInternalError("Error while checking the uniqueness of the value for " + dbElement.getColumnName(),
                     results.resultException);
         }
         return (Boolean) results.resultValue;

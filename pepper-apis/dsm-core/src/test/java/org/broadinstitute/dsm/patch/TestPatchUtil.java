@@ -28,7 +28,7 @@ import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
-public class TestParticipantUtil {
+public class TestPatchUtil {
     private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
     private static final String INSERT_PARTICIPANT =
             "INSERT INTO ddp_participant (ddp_participant_id, ddp_instance_id, last_version_date, last_changed) VALUES (?, ?, ?,?) ";
@@ -83,7 +83,7 @@ public class TestParticipantUtil {
     private static String studyGuid;
     private static String collaboratorPrefix;
 
-    public TestParticipantUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName) {
+    public TestPatchUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.collaboratorPrefix = collaboratorPrefix;

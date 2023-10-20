@@ -53,6 +53,7 @@ public class PatchFactory {
     }
 
     public static boolean isDeletePatch(Patch patch) {
+        // check that the patch is for updating a `deleted` flags, and it's for either onchistory or tissue filters
         return patch.getNameValue().getName().contains(".deleted") &&
                 (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch));
     }

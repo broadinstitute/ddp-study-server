@@ -33,6 +33,9 @@ public class DBConstants {
     public static final String DDP_MEDICAL_RECORD_ALIAS = "m";
     public static final String DDP_ONC_HISTORY_ALIAS = "o";
     public static final String DDP_ONC_HISTORY_DETAIL_ALIAS = "oD";
+    public static final String DDP_ONC_HISTORY_DETAIL_DELETED = "oD.deleted";
+    public static final String DDP_TISSUE_DELETED = "t.deleted";
+
     public static final String DDP_TISSUE_ALIAS = "t";
     public static final String SM_ID_ALIAS = "sm";
     public static final String DDP_KIT_REQUEST_ALIAS = "k";

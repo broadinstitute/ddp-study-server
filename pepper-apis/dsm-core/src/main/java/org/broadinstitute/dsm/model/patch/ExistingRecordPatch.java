@@ -33,7 +33,7 @@ public class ExistingRecordPatch extends BasePatch {
 
     private static final Logger logger = LoggerFactory.getLogger(ExistingRecordPatch.class);
 
-    private final NotificationUtil notificationUtil;
+    public final NotificationUtil notificationUtil;
 
     public ExistingRecordPatch(Patch patch, NotificationUtil notificationUtil) {
         super(patch);
@@ -216,5 +216,9 @@ public class ExistingRecordPatch extends BasePatch {
     @Override
     protected String getIdForES() {
         return patch.getId();
+    }
+
+    protected NotificationUtil getNotificationUtil() {
+        return this.notificationUtil;
     }
 }

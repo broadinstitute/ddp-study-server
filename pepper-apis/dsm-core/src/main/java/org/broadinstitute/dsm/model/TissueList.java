@@ -118,7 +118,7 @@ public class TissueList {
                         }
                     }
                     for (Tissue tissue : tissues.values()) {
-                        Integer tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        int tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
                         OncHistoryDetail oncHistoryDetail = oncHistoryDetailHashMap.get(tissueOncHistoryDetailId);
                         oncHistoryDetail.getTissues().add(tissue);
                     } //  add onchistories to their particiapnt
