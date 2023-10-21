@@ -1,9 +1,12 @@
 package org.broadinstitute.dsm.db;
 
+import java.util.Optional;
+
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 @Data
@@ -12,7 +15,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
         alias = DBConstants.DDP_MERCURY_SEQUENCING_ALIAS,
         primaryKey = DBConstants.MERCURY_SEQUENCING_ID,
         columnPrefix = "")
-public class ClinicalOrder {
+public class ClinicalOrder implements HasDdpInstanceId {
     @ColumnName(DBConstants.MERCURY_SEQUENCING_ID)
     public String mercurySequencingId;
 
@@ -75,5 +78,12 @@ public class ClinicalOrder {
 
     }
 
+    public ClinicalOrder(long ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
+    }
 
+    @Override
+    public Optional<Long> extractDdpInstanceId() {
+        return Optional.of(getDdpInstanceId());
+    }
 }

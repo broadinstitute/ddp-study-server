@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.dsm.Cancer;
 
 public class CancerSuggestion {
+
     @SerializedName("cancer")
     private Cancer cancer;
     @SerializedName("matches")

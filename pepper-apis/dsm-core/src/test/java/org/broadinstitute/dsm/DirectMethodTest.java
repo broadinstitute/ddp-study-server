@@ -17,6 +17,7 @@ import java.util.Set;
 import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.dto.CancerItem;
 import org.broadinstitute.dsm.db.Cancer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.Drug;
@@ -661,11 +662,11 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void cancerListEndpoint() {
-        List<String> cancerList = Cancer.getCancers();
+        List<CancerItem> cancerList = Cancer.getCancers();
         int size = cancerList.size();
         String count = DBTestUtil.getStringFromQuery("SELECT count(*) FROM cancer_list WHERE active=1", null, "count(*)");
         int actualSize = Integer.parseInt(count);
-        HashSet<String> noDuplicateCancer = new HashSet<>(cancerList);
+        HashSet<CancerItem> noDuplicateCancer = new HashSet<>(cancerList);
 
         Assert.assertFalse(cancerList.isEmpty());
         Assert.assertEquals("Checking for size to make sure nothing has changed in DB", 65, size);

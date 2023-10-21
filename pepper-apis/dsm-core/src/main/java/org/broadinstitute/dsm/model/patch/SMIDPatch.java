@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
-import org.broadinstitute.dsm.exception.DuplicateException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 
@@ -50,7 +50,7 @@ public class SMIDPatch extends BasePatch {
             }
             return resultMap;
         } else {
-            throw new DuplicateException("Duplicate or blank value for sm id value " + getSMIDValue());
+            throw new DsmInternalError("Duplicate or blank value for sm id value " + getSMIDValue());
         }
     }
 

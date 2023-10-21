@@ -41,12 +41,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
             throw new DsmInternalError("No ES participant index for study " + studyGuid);
         }
 
-        Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, participantId);
-        if (maybeParticipantESDataByParticipantId.isEmpty()) {
-            throw new ESMissingParticipantDataException("Participant ES data is null for participant " + participantId);
-        }
-        elasticSearchParticipantDto = maybeParticipantESDataByParticipantId.get();
+        elasticSearchParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, participantId);
         logger.info("Calling setDefaultData for ES index {} and participant ID {}", esIndex, participantId);
         return setDefaultData();
     }

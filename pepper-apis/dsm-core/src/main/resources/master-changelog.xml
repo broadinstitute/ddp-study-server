@@ -142,4 +142,5 @@
     <include file="liquibase/order_transmitted_at_column_ddp_kit_request.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/juniper-ourheart/PEPPER-1057-our_heart_setup.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/neale-lab/PEPPER-1079_neale_lab_eating_disorders_setup.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-1182_cancer_list_translations.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

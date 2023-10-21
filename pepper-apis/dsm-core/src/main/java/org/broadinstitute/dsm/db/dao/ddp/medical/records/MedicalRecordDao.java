@@ -113,6 +113,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
         if (simpleResult.resultException != null) {
             throw new RuntimeException("Error deleting medical record with id: " + id, simpleResult.resultException);
         }
+        logger.info("Deleted medical record with ID {}", id);
         return (int) simpleResult.resultValue;
     }
 
@@ -127,10 +128,11 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
         return (Optional<MedicalRecord>) res.resultValue;
     }
 
-    private static class BuildMedicalRecord implements ResultsBuilder {
+    public static class BuildMedicalRecord implements ResultsBuilder {
 
-        public Object build(ResultSet rs) throws SQLException {
-            return new MedicalRecord(rs.getInt(DBConstants.MEDICAL_RECORD_ID),
+        public MedicalRecord build(ResultSet rs) throws SQLException {
+            return new MedicalRecord(
+                    rs.getInt(DBConstants.MEDICAL_RECORD_ID),
                     rs.getInt(DBConstants.INSTITUTION_ID));
         }
     }

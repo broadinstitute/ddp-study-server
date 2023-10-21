@@ -1,0 +1,3812 @@
+{
+  "dynamic": "true",
+  "dynamic_templates": [
+    {
+      "strings": {
+        "match_mapping_type": "string",
+        "mapping": {
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "fielddata": true,
+              "analyzer": "case_insensitive_sort",
+              "type": "text"
+            }
+          },
+          "type": "text"
+        }
+      }
+    }
+  ],
+  "properties": {
+    "activities": {
+      "type": "nested",
+      "properties": {
+        "activityCode": {
+          "type": "keyword"
+        },
+        "activityVersion": {
+          "type": "keyword"
+        },
+        "attributes": {
+          "properties": {
+            "DDP_KIT_REASON_TYPE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "DDP_KIT_REQUEST_ID": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            }
+          }
+        },
+        "completedAt": {
+          "type": "date"
+        },
+        "createdAt": {
+          "type": "date"
+        },
+        "guid": {
+          "type": "keyword"
+        },
+        "lastUpdatedAt": {
+          "type": "date"
+        },
+        "parentInstanceGuid": {
+          "type": "keyword"
+        },
+        "questionsAnswers": {
+          "type": "nested",
+          "properties": {
+            "ADDENDUM": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ADDENDUM_CONSENT_BOOL": {
+              "type": "boolean"
+            },
+            "ADDENDUM_CONSENT_BOOL_PEDIATRIC": {
+              "type": "boolean"
+            },
+            "ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC": {
+              "type": "date"
+            },
+            "ADDENDUM_CONSENT_PATIENT_SINGATURE_PEDIATRIC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ADDENDUM_CONSENT_SINGATURE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ADDENDUM_CONSENT_SINGATURE_PEDIATRIC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "AFRO_HISPANIC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "BIRTH_SEX_ASSIGN": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "BLOOD_TEST_LIST": {
+              "type": "text"
+            },
+            "CANCER_FREE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CHILD_COUNTRY": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CHILD_COUNTRY_COPY": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CHILD_CURRENT_AGE": {
+              "type": "long"
+            },
+            "CHILD_STATE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CHILD_STATE_COPY": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONFIDENCE_LEVEL_ID": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_BLOOD": {
+              "type": "boolean"
+            },
+            "CONSENT_ASSENT_CHILD_DOB": {
+              "type": "date"
+            },
+            "CONSENT_ASSENT_CHILD_FIRSTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_CHILD_LASTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_CHILD_SIGNATURE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_FIRSTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_LASTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_PARENT_SIGNATURE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_RELATIONSHIP": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_ASSENT_TISSUE": {
+              "type": "boolean"
+            },
+            "CONSENT_BLOOD": {
+              "type": "boolean"
+            },
+            "CONSENT_DOB": {
+              "type": "date"
+            },
+            "CONSENT_FIRSTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_LASTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "CONSENT_TISSUE": {
+              "type": "boolean"
+            },
+            "CURRENT_BODY_LOC_LIST": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "DIAGNOSIS_DATE": {
+              "type": "date"
+            },
+            "ESTIMATED_DATE": {
+              "type": "text"
+            },
+            "FAMILY_SIDE_Q_1": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FAMILY_SIDE_Q_3": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_GRANDPARENT_AGE_RANGE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_GRANDPARENT_ALIAS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_GRANDPARENT_HAD_CANCER": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_GRANDPARENT_LIVING": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_GRANDPARENT_SEX_AT_BIRTH": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_OTHER_FACTORS_CANCER_RISK": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT1_AGE_RANGE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT1_ALIAS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT1_HAD_CANCER": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT1_JEWISH_ANC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT1_LIVING": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT1_SEX_AT_BIRTH": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT2_AGE_RANGE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT2_ALIAS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT2_HAD_CANCER": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT2_JEWISH_ANC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT2_LIVING": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT2_SEX_AT_BIRTH": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT_SIBLING_AGE_RANGE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT_SIBLING_ALIAS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT_SIBLING_CANCERS_LIST": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT_SIBLING_HAD_CANCER": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT_SIBLING_LIVING": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_PARENT_SIBLING_SEX_AT_BIRTH": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_SIBLING_AGE_RANGE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_SIBLING_ALIAS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_SIBLING_HAD_CANCER": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_SIBLING_LIVING": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "FH_SIBLING_SEX_AT_BIRTH": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "GENDER_IDENTITY": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "HAD_BODY_LOC_LIST": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "HIGHEST_LEVEL_SCHOOL_ID": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "HOW_HEAR": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "INDIGENOUS_NATIVE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "INITIAL_BODY_LOC_LIST": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "LONGITUDINAL_BLOOD_TEST_LIST": {
+              "type": "text"
+            },
+            "LONGITUDINAL_VACCINE_RECEIVED_LIST": {
+              "type": "text"
+            },
+            "LONGITUDINAL_VACCINE_STUDY_LIST": {
+              "type": "text"
+            },
+            "LONGITUDINAL_VIRAL_TEST_LIST": {
+              "type": "text"
+            },
+            "MIXED_RACE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "NO_CHILDREN": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "OTHER_COMMENTS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENT1_IDK": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENT2_IDK": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_BLOOD": {
+              "type": "boolean"
+            },
+            "PARENTAL_CONSENT_CHILD_DOB": {
+              "type": "date"
+            },
+            "PARENTAL_CONSENT_CHILD_FIRSTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_CHILD_LASTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_FIRSTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_LASTNAME": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_RELATIONSHIP": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_SIGNATURE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "PARENTAL_CONSENT_TISSUE": {
+              "type": "boolean"
+            },
+            "PROBLEM_UNDERSTANDING_WRITTEN_ID": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "RACE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "READ_HOSPITAL_MATERIALS_ID": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "RELEASE_SELF_AGREEMENT": {
+              "type": "boolean"
+            },
+            "RELEASE_SIGNATURE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "RESULT_FILE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "SELF_COUNTRY": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "SELF_CURRENT_AGE": {
+              "type": "long"
+            },
+            "SELF_PROVINCE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "SELF_STATE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "SHOW_RESULTS": {
+              "type": "boolean"
+            },
+            "SOMATIC_ASSENT_ADDENDUM": {
+              "type": "boolean"
+            },
+            "SOMATIC_CONSENT_ADDENDUM_TUMOR": {
+              "type": "boolean"
+            },
+            "SOMATIC_CONSENT_TUMOR_PEDIATRIC": {
+              "type": "boolean"
+            },
+            "SOMATIC_SINGATURE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "SOMATIC_SINGATURE_PEDIATRIC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "SPEAK_LANGUAGE_ID": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "THERAPY_LIST": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "TREATMENTS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "VIRAL_TEST_LIST": {
+              "type": "text"
+            },
+            "WHO_ENROLLING": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "answer": {
+              "type": "text"
+            },
+            "date": {
+              "type": "date"
+            },
+            "dateFields": {
+              "properties": {
+                "day": {
+                  "type": "short"
+                },
+                "month": {
+                  "type": "short"
+                },
+                "year": {
+                  "type": "short"
+                }
+              }
+            },
+            "groupedOptions": {
+              "type": "object"
+            },
+            "nestedOptions": {
+              "properties": {
+                "AMERICANINDIAN_OR_ALASKAN": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ASIAN": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "BLACK_OR_AFRICAN": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "INTERNET": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "SOCIAL_MEDIA": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "TRANSGENDER": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "WHITE": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "WOM": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                }
+              }
+            },
+            "optionDetails": {
+              "properties": {
+                "details": {
+                  "type": "text"
+                },
+                "option": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "prion_medical_diagnosis_date": {
+              "type": "text"
+            },
+            "prion_medical_earliest_symptoms": {
+              "type": "text"
+            },
+            "questionType": {
+              "type": "keyword"
+            },
+            "selected": {
+              "type": "keyword"
+            },
+            "stableId": {
+              "type": "keyword"
+            }
+          }
+        },
+        "status": {
+          "type": "keyword"
+        }
+      }
+    },
+    "address": {
+      "properties": {
+        "city": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "country": {
+          "type": "keyword"
+        },
+        "guid": {
+          "type": "keyword"
+        },
+        "mailToName": {
+          "type": "text"
+        },
+        "phone": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "plusCode": {
+          "type": "keyword"
+        },
+        "state": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "street1": {
+          "type": "text"
+        },
+        "street2": {
+          "type": "text"
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "zip": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        }
+      }
+    },
+    "dsm": {
+      "properties": {
+        "activities": {
+          "type": "nested",
+          "properties": {
+            "dynamicFields": {
+              "properties": {
+                "lmsInvitaeBamOption": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "lmsInvitaeBamReceived": {
+                  "type": "date"
+                },
+                "lmsInvitaeNotes": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "lmsInvitaeReportReceived": {
+                  "type": "date"
+                },
+                "lmsInvitaeTab": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "requestStatus": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "clinicalOrder": {
+          "type": "nested",
+          "properties": {
+            "barcode": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "createdBy": {
+              "type": "text"
+            },
+            "ddpInstanceId": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "dsmKitRequestId": {
+              "type": "keyword"
+            },
+            "kitTypeId": {
+              "type": "keyword"
+            },
+            "mercuryPdoId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "mercurySequencingId": {
+              "type": "keyword"
+            },
+            "orderDate": {
+              "type": "date"
+            },
+            "orderId": {
+              "type": "keyword",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "orderStatus": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "statusDate": {
+              "type": "date"
+            },
+            "statusDetail": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueId": {
+              "type": "keyword"
+            }
+          }
+        },
+        "cohortTag": {
+          "type": "nested",
+          "properties": {
+            "cohortTagId": {
+              "type": "keyword"
+            },
+            "cohortTagName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ddpInstanceId": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            }
+          }
+        },
+        "dateOfBirth": {
+          "type": "date",
+          "format": "strict_year_month_day"
+        },
+        "dateOfMajority": {
+          "type": "date",
+          "format": "strict_year_month_day"
+        },
+        "diagnosisMonth": {
+          "type": "integer"
+        },
+        "diagnosisYear": {
+          "type": "integer"
+        },
+        "familyId": {
+          "type": "long"
+        },
+        "hasConsentedToBloodDraw": {
+          "type": "boolean"
+        },
+        "hasConsentedToTissueSample": {
+          "type": "boolean"
+        },
+        "kitRequestShipping": {
+          "type": "nested",
+          "properties": {
+            "CEOrder": {
+              "type": "boolean"
+            },
+            "authorization": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "authorizedBy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "bspCollaboratorParticipantId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "bspCollaboratorSampleId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ceOrder": {
+              "type": "boolean"
+            },
+            "collectionDate": {
+              "type": "date"
+            },
+            "createdBy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ddpInstanceId": {
+              "type": "long"
+            },
+            "ddpKitRequestId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ddpLabel": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "deactivatedDate": {
+              "type": "date"
+            },
+            "deactivationReason": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "denialReason": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "dsmKitId": {
+              "type": "keyword"
+            },
+            "dsmKitRequestId": {
+              "type": "keyword"
+            },
+            "easypostAddressIdTo": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "easypostShipmentStatus": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "easypostToId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "easypostTrackingReturnUrl": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "easypostTrackingToUrl": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "error": {
+              "type": "boolean"
+            },
+            "express": {
+              "type": "boolean"
+            },
+            "externalOrderDate": {
+              "type": "date"
+            },
+            "externalOrderNumber": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "externalOrderStatus": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "externalResponse": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "instanceName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "kitComplete": {
+              "type": "boolean"
+            },
+            "kitLabel": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "kitRequiringTrackingScan": {
+              "type": "boolean"
+            },
+            "kitTypeId": {
+              "type": "keyword"
+            },
+            "kitTypeName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "labelDate": {
+              "type": "date"
+            },
+            "labelUrlReturn": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "labelUrlTo": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "message": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "needsApproval": {
+              "type": "boolean"
+            },
+            "noReturn": {
+              "type": "boolean"
+            },
+            "receiveBy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "receiveDate": {
+              "type": "date"
+            },
+            "result": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "scanDate": {
+              "type": "date"
+            },
+            "sequencingRestriction": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "testResult": {
+              "type": "nested",
+              "properties": {
+                "isCorrected": {
+                  "type": "boolean"
+                },
+                "result": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "timeCompleted": {
+                  "type": "date"
+                }
+              }
+            },
+            "trackingId": {
+              "type": "keyword"
+            },
+            "trackingReturnId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "trackingToId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "uploadReason": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "upsReturnStatus": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "upsTrackingStatus": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            }
+          }
+        },
+        "medicalRecord": {
+          "type": "nested",
+          "properties": {
+            "contact": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "crRequired": {
+              "type": "boolean"
+            },
+            "ddpInstanceId": {
+              "type": "keyword"
+            },
+            "ddpInstitutionId": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "duplicate": {
+              "type": "boolean"
+            },
+            "fax": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "faxConfirmed": {
+              "type": "date"
+            },
+            "faxConfirmed2": {
+              "type": "date"
+            },
+            "faxConfirmed3": {
+              "type": "date"
+            },
+            "faxSent": {
+              "type": "date"
+            },
+            "faxSent2": {
+              "type": "date"
+            },
+            "faxSent2By": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "faxSent3": {
+              "type": "date"
+            },
+            "faxSent3By": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "faxSentBy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "followUpRequired": {
+              "type": "boolean"
+            },
+            "followUpRequiredText": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "followUps": {
+              "type": "text"
+            },
+            "followupRequired": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "institutionId": {
+              "type": "keyword"
+            },
+            "international": {
+              "type": "boolean"
+            },
+            "medicalRecordId": {
+              "type": "keyword"
+            },
+            "mrDocument": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "mrDocumentFileName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "mrProblem": {
+              "type": "boolean"
+            },
+            "mrProblemText": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "mrReceived": {
+              "type": "date"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "noActionNeeded": {
+              "type": "boolean"
+            },
+            "notes": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "participantId": {
+              "type": "keyword"
+            },
+            "pathologyPresent": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "phone": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "reviewMedicalRecord": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "unableObtain": {
+              "type": "boolean"
+            },
+            "unableObtainText": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            }
+          }
+        },
+        "newOsteoParticipant": {
+          "properties": {
+            "abstractionReady": {
+              "type": "boolean"
+            },
+            "assigneeIdMr": {
+              "type": "text"
+            },
+            "assigneeIdTissue": {
+              "type": "text"
+            },
+            "auth0Token": {
+              "type": "boolean"
+            },
+            "baseUrl": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "crReceived": {
+              "type": "date"
+            },
+            "crSent": {
+              "type": "date"
+            },
+            "ddpInstanceId": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "exitBy": {
+              "type": "long"
+            },
+            "exitDate": {
+              "type": "date"
+            },
+            "instanceName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "migratedDdp": {
+              "type": "boolean"
+            },
+            "minimalMr": {
+              "type": "boolean"
+            },
+            "mrAttentionFlagD": {
+              "type": "long"
+            },
+            "notes": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "notificationRecipients": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "oncHistoryId": {
+              "type": "keyword"
+            },
+            "participantId": {
+              "type": "keyword"
+            },
+            "tissueAttentionFlagD": {
+              "type": "long"
+            }
+          }
+        },
+        "oncHistory": {
+          "properties": {
+            "created": {
+              "type": "date"
+            },
+            "lastChanged": {
+              "type": "long"
+            },
+            "oncHistoryId": {
+              "type": "keyword"
+            },
+            "participantId": {
+              "type": "keyword"
+            },
+            "reviewed": {
+              "type": "date"
+            }
+          }
+        },
+        "oncHistoryDetail": {
+          "type": "nested",
+          "properties": {
+            "accessionNumber": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "datePx": {
+              "type": "date"
+            },
+            "ddpInstanceId": {
+              "type": "long"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "deleted": {
+              "type": "boolean"
+            },
+            "destructionPolicy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "dynamicFields": {
+              "properties": {
+                "blockToRequest": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "blocksToRequest": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "extensiveTreatmentEffect": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "facilityPathReview": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "facilityWhereSampleReviewed": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "necrosis": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "percentNecrosis": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "percentViableTumor": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "slidesToRequest": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "slidesTotal": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "totalNumOfSlidesMentioned": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "tumorSize": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "txEffect": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "viableTumor": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "vocabCheck": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                }
+              }
+            },
+            "facility": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "fax": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "faxConfirmed": {
+              "type": "date"
+            },
+            "faxConfirmed2": {
+              "type": "date"
+            },
+            "faxConfirmed3": {
+              "type": "date"
+            },
+            "faxSent": {
+              "type": "date"
+            },
+            "faxSent2": {
+              "type": "date"
+            },
+            "faxSent2By": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "faxSent3": {
+              "type": "date"
+            },
+            "faxSent3By": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "faxSentBy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "gender": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "histology": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "locationPx": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "medicalRecordId": {
+              "type": "keyword"
+            },
+            "notes": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "oncHistoryDetailId": {
+              "type": "keyword"
+            },
+            "phone": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "request": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueProblemOption": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueReceived": {
+              "type": "date"
+            },
+            "typePx": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "unableObtainTissue": {
+              "type": "boolean"
+            }
+          }
+        },
+        "participant": {
+          "properties": {
+            "abstractionReady": {
+              "type": "boolean"
+            },
+            "assigneeIdMr": {
+              "type": "text"
+            },
+            "assigneeIdTissue": {
+              "type": "text"
+            },
+            "auth0Token": {
+              "type": "boolean"
+            },
+            "baseUrl": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "crReceived": {
+              "type": "date"
+            },
+            "crSent": {
+              "type": "date"
+            },
+            "created": {
+              "type": "date"
+            },
+            "ddpInstanceId": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "dynamicFields": {
+              "type": "object"
+            },
+            "exitBy": {
+              "type": "long"
+            },
+            "exitDate": {
+              "type": "date"
+            },
+            "instanceName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "migratedDdp": {
+              "type": "boolean"
+            },
+            "minimalMr": {
+              "type": "boolean"
+            },
+            "mrAttentionFlagD": {
+              "type": "long"
+            },
+            "notes": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "notificationRecipients": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "oncHistoryId": {
+              "type": "keyword"
+            },
+            "participantId": {
+              "type": "keyword"
+            },
+            "reviewed": {
+              "type": "date"
+            },
+            "tissueAttentionFlagD": {
+              "type": "long"
+            }
+          }
+        },
+        "participantData": {
+          "type": "nested",
+          "properties": {
+            "ddpInstanceId": {
+              "type": "keyword"
+            },
+            "ddpParticipantId": {
+              "type": "keyword"
+            },
+            "fieldTypeId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "participantDataId": {
+              "type": "keyword"
+            }
+          }
+        },
+        "pdfs": {
+          "properties": {
+            "configName": {
+              "type": "keyword"
+            },
+            "displayName": {
+              "type": "text"
+            }
+          }
+        },
+        "smId": {
+          "type": "nested",
+          "properties": {
+            "deleted": {
+              "type": "boolean"
+            },
+            "smIdPk": {
+              "type": "keyword"
+            },
+            "smIdType": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "smIdValue": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueId": {
+              "type": "keyword"
+            }
+          }
+        },
+        "somaticResultUpload": {
+          "type": "nested",
+          "properties": {
+            "createdAt": {
+              "type": "long"
+            },
+            "createdByUserId": {
+              "type": "long"
+            },
+            "ddpInstanceId": {
+              "type": "long"
+            },
+            "deletedAt": {
+              "type": "long"
+            },
+            "deletedByUserId": {
+              "type": "long"
+            },
+            "fileName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "isVirusFree": {
+              "type": "boolean"
+            },
+            "mimeType": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "participantId": {
+              "type": "long"
+            },
+            "sentAt": {
+              "type": "long"
+            },
+            "somaticDocumentId": {
+              "type": "keyword"
+            }
+          }
+        },
+        "tissue": {
+          "type": "nested",
+          "properties": {
+            "blockIdShl": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "blockSent": {
+              "type": "date"
+            },
+            "blocksCount": {
+              "type": "long"
+            },
+            "collaboratorSampleId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "countReceived": {
+              "type": "long"
+            },
+            "deleted": {
+              "type": "boolean"
+            },
+            "dynamicFields": {
+              "type": "object"
+            },
+            "expectedReturn": {
+              "type": "date"
+            },
+            "firstSmId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "hE": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "hECount": {
+              "type": "long"
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "notes": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "oncHistoryDetailId": {
+              "type": "keyword"
+            },
+            "pathologyReport": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "returnDate": {
+              "type": "date"
+            },
+            "returnFedexId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "scrollsCount": {
+              "type": "long"
+            },
+            "scrollsReceived": {
+              "type": "date"
+            },
+            "sentGp": {
+              "type": "date"
+            },
+            "shlWorkNumber": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "skId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "smId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueId": {
+              "type": "keyword"
+            },
+            "tissueSequence": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueSite": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tissueType": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tumorPercentage": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "tumorType": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            },
+            "ussCount": {
+              "type": "long"
+            }
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "nested",
+      "properties": {
+        "authorizedAt": {
+          "type": "date"
+        },
+        "blobName": {
+          "type": "text"
+        },
+        "bucket": {
+          "type": "text"
+        },
+        "fileName": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "fileSize": {
+          "type": "long"
+        },
+        "guid": {
+          "type": "keyword"
+        },
+        "mimeType": {
+          "type": "text"
+        },
+        "scanResult": {
+          "type": "keyword"
+        },
+        "scannedAt": {
+          "type": "date"
+        },
+        "uploadedAt": {
+          "type": "date"
+        }
+      }
+    },
+    "invitations": {
+      "properties": {
+        "acceptedAt": {
+          "type": "date"
+        },
+        "contactEmail": {
+          "type": "keyword",
+          "fields": {
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            },
+            "text": {
+              "type": "text"
+            }
+          }
+        },
+        "createdAt": {
+          "type": "date"
+        },
+        "guid": {
+          "type": "keyword"
+        },
+        "notes": {
+          "type": "text"
+        },
+        "type": {
+          "type": "keyword"
+        },
+        "verifiedAt": {
+          "type": "date"
+        },
+        "voidedAt": {
+          "type": "date"
+        }
+      }
+    },
+    "medicalProviders": {
+      "properties": {
+        "city": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "guid": {
+          "type": "keyword"
+        },
+        "institutionName": {
+          "type": "text"
+        },
+        "legacyGuid": {
+          "type": "keyword"
+        },
+        "phone": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "physicianName": {
+          "type": "text"
+        },
+        "postalCode": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "state": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            }
+          }
+        },
+        "type": {
+          "type": "keyword"
+        }
+      }
+    },
+    "profile": {
+      "properties": {
+        "createdAt": {
+          "type": "date"
+        },
+        "doNotContact": {
+          "type": "boolean"
+        },
+        "email": {
+          "type": "keyword",
+          "fields": {
+            "text": {
+              "type": "text"
+            }
+          }
+        },
+        "firstName": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            },
+            "normalize": {
+              "type": "keyword",
+              "normalizer": "my_normalizer"
+            }
+          }
+        },
+        "guid": {
+          "type": "keyword"
+        },
+        "hruid": {
+          "type": "keyword"
+        },
+        "lastName": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            },
+            "lower_case_sort": {
+              "type": "text",
+              "analyzer": "case_insensitive_sort",
+              "fielddata": true
+            },
+            "normalize": {
+              "type": "keyword",
+              "normalizer": "my_normalizer"
+            }
+          }
+        },
+        "legacyAltPid": {
+          "type": "keyword"
+        },
+        "legacyShortId": {
+          "type": "keyword"
+        },
+        "preferredLanguage": {
+          "type": "keyword"
+        }
+      }
+    },
+    "proxies": {
+      "type": "keyword"
+    },
+    "samples": {
+      "properties": {
+        "bspCollaboratorParticipantId": {
+          "type": "keyword"
+        },
+        "bspCollaboratorSampleId": {
+          "type": "keyword"
+        },
+        "carrier": {
+          "type": "keyword"
+        },
+        "delivered": {
+          "type": "date",
+          "format": "strict_year_month_day"
+        },
+        "kitRequestId": {
+          "type": "keyword"
+        },
+        "kitType": {
+          "type": "keyword"
+        },
+        "received": {
+          "type": "date",
+          "format": "strict_year_month_day"
+        },
+        "sent": {
+          "type": "date",
+          "format": "strict_year_month_day"
+        },
+        "trackingIn": {
+          "type": "keyword"
+        },
+        "trackingOut": {
+          "type": "keyword"
+        }
+      }
+    },
+    "status": {
+      "type": "keyword"
+    },
+    "statusTimestamp": {
+      "type": "date"
+    },
+    "workflows": {
+      "properties": {
+        "date": {
+          "type": "date"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "workflow": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

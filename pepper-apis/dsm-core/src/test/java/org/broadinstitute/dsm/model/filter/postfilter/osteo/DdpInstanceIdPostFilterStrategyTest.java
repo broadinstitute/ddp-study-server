@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterStrategy;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class NewOsteoPostFilterStrategyTest {
+public class DdpInstanceIdPostFilterStrategyTest {
 
     private static final int NEW_OSTEO_ARTIFICIAL_INSTANCE_ID = 100;
 
@@ -18,7 +18,7 @@ public class NewOsteoPostFilterStrategyTest {
             new DDPInstanceDto.Builder()
             .withDdpInstanceId(NEW_OSTEO_ARTIFICIAL_INSTANCE_ID).build();
 
-    private final StudyPostFilterStrategy<HasDdpInstanceId> newOsteoFilter = new NewOsteoPostFilterStrategy(ddpInstanceDto);
+    private final StudyPostFilterStrategy<HasDdpInstanceId> newOsteoFilter = new DdpInstanceIdPostFilterStrategy(ddpInstanceDto);
 
     @Test
     public void correctInstanceId() {
