@@ -80,8 +80,8 @@ public class KitDaoImpl implements KitDao {
      * No-op upsert, if existing primary key is found, nothing happens
      */
     private static final String UPSERT_KIT_TRACKING = "INSERT INTO "
-            + "ddp_kit_tracking (scan_date, scan_by, tracking_id, kit_label) "
-            + "values (?, ?, ?, ?) on duplicate key update kit_tracking_id=kit_tracking_id";
+            + "ddp_kit_tracking set scan_date = ?, scan_by = ?, tracking_id = ?, kit_label = ? "
+            + "on duplicate key update kit_tracking_id=kit_tracking_id";
 
 
     private static final String SQL_GET_KIT_BY_DDP_LABEL = "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
