@@ -241,6 +241,11 @@ public class DSMServer {
                 File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
                 File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
                 logger.info("Reading config values from {}", vaultConfig.getAbsolutePath());
+
+                if (cfg.hasPath(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)) {
+                    logger.warn("{} should be in environment-specific configuration, not static source code",
+                            ApplicationConfigConstants.EMAIL_NOTIFICATIONS);
+                }
                 cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
 
                 if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT) && StringUtils.isNotBlank(cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT))) {
