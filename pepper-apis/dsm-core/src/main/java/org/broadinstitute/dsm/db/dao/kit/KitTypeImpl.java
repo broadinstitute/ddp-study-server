@@ -74,7 +74,7 @@ public class KitTypeImpl implements KitTypeDao {
         });
         if (kitTypes.isEmpty()) {
             throw new DsmInternalError(
-                    String.format("No kit was found for study %s with kit type name %s", realm, kitTypeName));
+                    String.format("No kit type was found for study %s with kit type name %s", realm, kitTypeName));
         }
         return kitTypes.get(0);
     }

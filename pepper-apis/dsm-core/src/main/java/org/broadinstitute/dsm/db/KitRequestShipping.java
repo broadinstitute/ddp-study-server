@@ -532,19 +532,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequests;
     }
 
-    private static Map<String, List<KitRequestShipping>> getKitRequestsByKitId(@NonNull String realm, String target, Integer kitTypeId, boolean getAll) {
+    private static Map<String, List<KitRequestShipping>> getKitRequestsByKitId(@NonNull String realm, String target, Integer kitTypeId,
+                                                                               boolean getAll) {
         Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = getSelectKitReqPreparedStatement(conn, target, realm, kitTypeId, getAll)) {
-                if (stmt != null) {
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            addKitRequest(rs, kitRequests);
-                        }
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        addKitRequest(rs, kitRequests);
                     }
-                } else {
-                    throw new DsmInternalError("No prepareStatement was created " + target + " " + realm + " " + kitTypeId);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -643,7 +640,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     /**
      * Read KitRequests form ddp_kit_request
      * request participants information from ddp
-     *
      */
     public static List<KitRequestShipping> getKitRequestsByRealm(@NonNull String realm, String target, String kitTypeName) {
         if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(kitTypeName)) {

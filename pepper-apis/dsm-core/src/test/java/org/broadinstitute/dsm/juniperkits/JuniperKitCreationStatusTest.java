@@ -298,8 +298,9 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         String kitType = "BLOOD";
         try {
             KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
+            Assert.fail();
         } catch (DsmInternalError e) {
-            Assert.assertTrue(e.getMessage().contains(String.format("No kit was found for study %s with kit type name %s", instanceName, kitType)));
+            Assert.assertTrue(e.getMessage().contains(String.format("No kit type was found for study %s with kit type name %s", instanceName, kitType)));
             String json = "{ \"firstName\":\"P\","
                     + "\"lastName\":\"T\","
                     + "\"street1\":\"415 Main st\","
@@ -320,9 +321,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                     nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType, mockEasyPostUtil, ddpInstance);
             Assert.assertEquals(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE, kitResponse.getErrorMessage());
             Assert.assertEquals(kitResponse.getValue(), kitType);
-            return;
         }
-        Assert.fail();
     }
 
 }
