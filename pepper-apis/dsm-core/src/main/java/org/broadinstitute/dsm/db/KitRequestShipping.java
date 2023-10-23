@@ -31,6 +31,7 @@ import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import lombok.NonNull;
@@ -273,6 +274,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.KIT_TYPE_NAME)
     private String kitTypeName;
 
+
+    @JsonProperty("displayName")
     private String displayName;
 
     private String kitTypeId;
@@ -426,6 +429,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.kitLabelPrefix = kitLabelPrefix;
         this.kitLabelLength = kitLabelLength;
         this.displayName = kitTypeDisplayName;
+        if (StringUtils.isBlank(displayName)) {
+            this.displayName = this.kitTypeName;
+        }
     }
 
     public static KitRequestShipping getKitRequestShipping(@NonNull ResultSet rs) throws SQLException {

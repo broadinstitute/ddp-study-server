@@ -12,9 +12,12 @@ public class KitRequestShippingMigrator extends BaseCollectionMigrator {
         super(index, realm, ESObjectConstants.KIT_REQUEST_SHIPPING);
     }
 
+    /**
+     * returns the list of KitRequestShippings for the realm mapped to the participant guid
+     * */
     @Override
     protected Map<String, Object> getDataByRealm() {
-        Map<String, List<KitRequestShipping>> kitRequests = KitRequestShipping.getAllKitRequestsByRealm(realm, null, null,  true);
+        Map<String, List<KitRequestShipping>> kitRequests = KitRequestShipping.getAllKitRequestsByRealm(realm, null, null, true);
         return (Map) kitRequests;
     }
 

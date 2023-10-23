@@ -52,8 +52,8 @@ public class KitTypeImpl implements KitTypeDao {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_TYPE)) {
-                stmt.setObject(1, realm);
-                stmt.setObject(2, kitTypeName);
+                stmt.setString(1, realm);
+                stmt.setString(2, kitTypeName);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         kitTypes.add(KitTypeDto.builder()
@@ -70,7 +70,7 @@ public class KitTypeImpl implements KitTypeDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error looking up kit type  ", results.resultException);
+            throw new RuntimeException(String.format("Error looking up kit type %s in realm %s ", kitTypeName, realm), results.resultException);
         }
         if (kitTypes.size() != 1) {
             // JDBC does not fetch all the data at once, so we need to read all the kit types here and then later
