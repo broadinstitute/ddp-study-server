@@ -5,8 +5,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class KitRequestShippingTest {
-    private static String BLOOD_RNA_KIT_TYPE_NAME = "BLOOD";
-    private static String BLOOD_RNA_KIT_TYPE_DISPLAY_NAME = "BLOOD and RNA";
+    public static String BLOOD_RNA_KIT_TYPE_NAME = "BLOOD";
+    public static String BLOOD_RNA_KIT_TYPE_DISPLAY_NAME = "BLOOD and RNA";
     private static String guid = "TEST_GUID";
 
 
