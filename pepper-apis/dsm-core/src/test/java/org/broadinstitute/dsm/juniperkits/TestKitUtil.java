@@ -54,7 +54,7 @@ import org.mockito.Mock;
  */
 
 @Slf4j
-public class KitUtil {
+public class TestKitUtil {
 
     private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
@@ -76,7 +76,7 @@ public class KitUtil {
     private static final String INSERT_SUB_KITS_SETTINGS =
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
-    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id = ?";
+    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
     private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
     public static String ddpGroupId;
     public static String ddpInstanceId;
@@ -109,7 +109,7 @@ public class KitUtil {
     @Mock
     Tracker mockShipmentTracker = mock(Tracker.class);
 
-    public KitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
+    public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
                                   String kitTypeName) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
@@ -166,16 +166,23 @@ public class KitUtil {
             throw new RuntimeException("Error deleting ", ex);
         }
     }
+    private static void delete(Connection conn, String tableName, String primaryColumn, List<String> ids) {
+        for(String id: ids){
+            delete(conn, tableName, primaryColumn, id);
+        }
+
+    }
 
     public static void deleteKit(String ddpKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
-            String dsmKitRequestId;
+            List<String> dsmKitRequestId = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
-                stmt.setString(1, ddpKitRequestId);
+                stmt.setString(1, ddpKitRequestId.concat("\\_%"));
                 try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dsmKitRequestId = rs.getString("dsm_kit_request_id");
-                    } else {
+                    while (rs.next()) {
+                        dsmKitRequestId.add(rs.getString("dsm_kit_request_id"));
+                    }
+                    if (dsmKitRequestId.isEmpty()) {
                         log.warn("Kit Not Found " + ddpKitRequestId);
                         return null;
                     }

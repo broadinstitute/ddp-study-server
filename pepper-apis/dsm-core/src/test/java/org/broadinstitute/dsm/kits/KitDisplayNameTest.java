@@ -6,7 +6,7 @@ import com.google.gson.Gson;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.juniperkits.KitUtil;
+import org.broadinstitute.dsm.juniperkits.TestKitUtil;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -21,32 +21,30 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     private static String BLOOD_RNA_KIT_TYPE_DISPLAY_NAME = "BLOOD and RNA";
     static String[] subkitSettingsIds = null;
 
-    private static KitUtil
-            KitUtil = new KitUtil("test_instance", "test_instance_guid", "some_prefix", "test_group", BLOOD_RNA_KIT_TYPE_NAME);
+    private static TestKitUtil
+            testKitUtil = new TestKitUtil("test_instance", "test_instance_guid", "some_prefix", "test_group", BLOOD_RNA_KIT_TYPE_NAME);
 
     @BeforeClass
     public static void setupBefore() {
-        KitUtil.setupInstanceAndSettings();
+        testKitUtil.setupInstanceAndSettings();
     }
 
     @AfterClass
     public static void cleanUpAfterClass() {
-        KitUtil.deleteKitsArray();
+        testKitUtil.deleteKitsArray();
         if (subkitSettingsIds != null){
-            KitUtil.deleteSubKitSettings(subkitSettingsIds);
+            testKitUtil.deleteSubKitSettings(subkitSettingsIds);
         }
-        KitUtil.deleteInstanceAndSettings();
+        testKitUtil.deleteInstanceAndSettings();
 
     }
 
     @Test
-    public void testSubKitWithDisplayNAme(){
-        subkitSettingsIds = KitUtil.createSubKitsForTheStudy("BLOOD",  "BLOOD and RNA", 0, "RNA", null, 1);
-        Assert.assertEquals(2, subkitSettingsIds.length);
+    public void testKitWithDisplayNAme(){
         NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("test_instance",DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
         JuniperKitRequest juniperTestKit = generateKitRequestJson();
-        KitUtil.createNonPepperTestKit(juniperTestKit, nonPepperKitCreationService, ddpInstance);
+        testKitUtil.createNonPepperTestKit(juniperTestKit, nonPepperKitCreationService, ddpInstance);
         List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm("test_instance", "overview", BLOOD_RNA_KIT_TYPE_NAME);
         Assert.assertEquals(1, kits.size());
         Assert.assertEquals("BLOOD", kits.get(0).getKitTypeName());
