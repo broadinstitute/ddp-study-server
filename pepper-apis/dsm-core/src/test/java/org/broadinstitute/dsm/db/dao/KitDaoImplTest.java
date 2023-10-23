@@ -126,4 +126,14 @@ public class KitDaoImplTest extends DbTxnBaseTest {
         insertKitTrackingAndRunAssertions(false);
         insertKitTrackingAndRunAssertions(true);
     }
+
+    @Test
+    public void testAttemptToInsertDuplicateKitTrackingRowReturnsScanError() {
+        Assert.fail("not written yet");
+    }
+
+    @Test
+    public void testAttemptToInsertDuplicateKitScanInfoReturnsScanError() {
+        Assert.fail("not written yet");
+    }
 }

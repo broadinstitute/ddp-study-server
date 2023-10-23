@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,23 +66,25 @@ public class KitDaoImpl implements KitDao {
             + "(SELECT 1 FROM "
             + "ddp_kit_tracking tracking "
             + "WHERE tracking.kit_label = ?) AS existing_rows";
-    private static final String UPDATE_KIT_REQUEST = "UPDATE ddp_kit SET "
+
+    // update various ddp_kit scan fields if they have not been set already.  If
+    // they have already been set, do nothing.
+    private static final String SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY = "UPDATE ddp_kit SET "
             + "kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? "
             + "WHERE "
             + "dsm_kit_request_id = (SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) "
             + "AND not kit_complete <=> 1 "
-            + "AND deactivated_date is null";
+            + "AND deactivated_date is null "
+            + "AND not exists (select 1 from ddp_kit where kit_label = ?)";
+
     private static final String UPDATE_KIT_LABEL = "UPDATE ddp_kit SET "
             + "kit_label = ? "
             + "WHERE "
             + "dsm_kit_id = ?";
 
-    /**
-     * No-op upsert, if existing primary key is found, nothing happens
-     */
-    private static final String UPSERT_KIT_TRACKING = "INSERT INTO "
-            + "ddp_kit_tracking set scan_date = ?, scan_by = ?, tracking_id = ?, kit_label = ? "
-            + "on duplicate key update kit_tracking_id=kit_tracking_id";
+    private static final String INSERT_KIT_TRACKING = "INSERT INTO "
+            + "ddp_kit_tracking(scan_date, scan_by, tracking_id, kit_label) "
+            + "(select ?, ?, ?, ? from dual where not exists (select 1 from ddp_kit_tracking where (tracking_id = ? or kit_label = ?)))";
 
 
     private static final String SQL_GET_KIT_BY_DDP_LABEL = "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
@@ -155,6 +158,20 @@ public class KitDaoImpl implements KitDao {
 
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
 
+    /**
+     * Returns at most one ddp_kit_tracking row that has the given kit_label or tracking_id
+     */
+    private static final String SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID =
+            "select t.kit_label,\n" +
+            "       t.tracking_id,\n" +
+            "       (select email from access_user where user_id = t.scan_by) as scan_by,\n" +
+            "       case when t.scan_date is not null\n" +
+            "            then from_unixtime(t.scan_date/1000)\n" +
+            "            else null\n" +
+            "       end as scan_date\n" +
+            "from ddp_kit_tracking t\n" +
+            "        where t.kit_label = ? or t.tracking_id = ? limit 1";
+
     @Override
     public int create(KitRequestShipping kitRequestDto) {
         return 0;
@@ -186,27 +203,32 @@ public class KitDaoImpl implements KitDao {
         Optional<ScanError> result = Optional.empty();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_REQUEST)) {
+
+            // todo arz test that attempts to update kit to break uk to reproduce
+            try (PreparedStatement stmt = conn.prepareStatement(SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setString(2, userId);
                 stmt.setString(3, kitRequestShipping.getKitLabel());
                 stmt.setString(4, kitRequestShipping.getDdpLabel());
+                stmt.setString(5, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
+                    // todo arz PR comment: with the new insert query, instead of a key violation,
+                    // rowsAffected will be 0 and this error will be returned to the user
                     dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "ddp_label "
-                            + kitRequestShipping.getDdpLabel() + " does not exist or already has a Kit Label");
+                            + kitRequestShipping.getDdpLabel() + " does not exist or already has a kit Label");
                 } else {
-                    logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
+                    logger.info("Updated ddp_kit.kit_label to {} for kit request  {}.",
+                            kitRequestShipping.getKitLabel(), kitRequestShipping.getDdpLabel());
                     if (StringUtils.isNotBlank(kitRequestShipping.getBspCollaboratorParticipantId())) {
                         dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), null,
                                 kitRequestShipping.getBspCollaboratorParticipantId());
                     }
                 }
-            } catch (Exception ex) {
+            } catch (SQLException ex) {
                 logger.error("Not able to update the kit for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
-                        "Kit Label \"" + kitRequestShipping.getDdpLabel() + "\" was already scanned.\n"
-                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+                        "An unexpected error has occurred");
             }
             return dbVals;
         });
@@ -564,27 +586,59 @@ public class KitDaoImpl implements KitDao {
         return kitRequestShipping;
     }
 
+    /**
+     * Inserts a row into the kit tracking table as long as no row exists in the table
+     * with the given kit label or tracking id.  If a row exists with either of these values,
+     * no row is inserted and a scan error is returned with information about the existing row.
+     */
     private Optional<ScanError> insertKitTrackingIfNotExists(KitRequestShipping kitRequestShipping, int userId) {
         Optional<ScanError> result = Optional.empty();
-        String errorMessage = "Unable to insert tracking information for  " + kitRequestShipping.getKitLabel() + ". "
-                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER;
+        String errorMessage = String.format("Unable to insert tracking %s for %s.", kitRequestShipping.getTrackingId(),
+                kitRequestShipping.getKitLabel());
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(UPSERT_KIT_TRACKING)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID)) {
+                // If a kit exists with the given kit label or tracking id, the unique key will be violated
+                // on insert.  Return an error to the user with some information about the existing row.
+                stmt.setString(1, kitRequestShipping.getKitLabel());
+                stmt.setString(2, kitRequestShipping.getTrackingId());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        String kitLabel = rs.getString(DBConstants.KIT_LABEL);
+                        String trackingId = rs.getString(DBConstants.TRACKING_ID);
+                        String scannedAt = rs.getString(DBConstants.DSM_SCAN_DATE);
+                        String scannedBy = rs.getString(DBConstants.SCAN_BY);
+                        dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
+                                String.format("Kit % was already associated with tracking id %s by %s at %s",
+                                        kitLabel, trackingId, scannedBy, scannedAt));
+                        return dbVals;
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
+                logger.error(errorMessage, ex);
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TRACKING)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setInt(2, userId);
                 stmt.setString(3, kitRequestShipping.getTrackingId());
                 stmt.setString(4, kitRequestShipping.getKitLabel());
+                stmt.setString(5, kitRequestShipping.getTrackingId());
+                stmt.setString(6, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
+                    // todo arz PR comment with insert query change, what was a unique key violation
+                    // becomes 0 rows affected, triggering this error
                     dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
-                    logger.error(rowsAffected + " affected rows for kit label " + kitRequestShipping.getKitLabel());
+                    logger.error(String.format(errorMessage + " %s rows affected", rowsAffected));
                 } else {
-                    logger.info("Added tracking for kit w/ kit_label " + kitRequestShipping.getKitLabel());
+                    logger.info("Added tracking id {} for kit {}", kitRequestShipping.getTrackingId(),
+                            kitRequestShipping.getKitLabel());
                 }
-            } catch (Exception ex) {
+            } catch (SQLException ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
-                logger.error("Unable to save kit tracking information for kit label " + kitRequestShipping.getKitLabel(), ex);
+                logger.error(errorMessage, ex);
             }
             return dbVals;
         });
