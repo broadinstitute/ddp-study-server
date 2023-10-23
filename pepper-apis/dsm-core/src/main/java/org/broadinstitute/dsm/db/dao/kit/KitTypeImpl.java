@@ -49,8 +49,7 @@ public class KitTypeImpl implements KitTypeDao {
     public static KitTypeDto getKitTypes(@NonNull String realm, @NonNull String kitTypeName) {
         log.info("Finding kit typ for realm {} with kit type name {}", realm, kitTypeName);
         List<KitTypeDto> kitTypes = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+        inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_TYPE)) {
                 stmt.setString(1, realm);
                 stmt.setString(2, kitTypeName);
@@ -61,23 +60,18 @@ public class KitTypeImpl implements KitTypeDao {
                                 .withKitTypeName(rs.getString(DBConstants.KIT_TYPE_NAME))
                                 .withDisplayName(rs.getString(DBConstants.DISPLAY_NAME))
                                 .build());
+                        if (kitTypes.size() > 1) {
+                            // we already found a kitType with that name for this realm, if there is more this is a config error
+                            throw new DsmInternalError(
+                                    String.format("More than one kit type were found for realm %s with kit type name %s", realm, kitTypeName));
+                        }
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError(ex);
             }
-            return dbVals;
+            return null;
         });
-
-        if (results.resultException != null) {
-            throw new RuntimeException(String.format("Error looking up kit type %s in realm %s ", kitTypeName, realm), results.resultException);
-        }
-        if (kitTypes.size() != 1) {
-            // JDBC does not fetch all the data at once, so we need to read all the kit types here and then later
-            // throw an error if there was more than one kit type for this realm with the same name
-            throw new DsmInternalError(
-                    String.format("%d kit types were found for realm %s with kit type name %s", kitTypes.size(), realm, kitTypeName));
-        }
         return kitTypes.get(0);
     }
 

@@ -574,15 +574,12 @@ public class KitDaoImpl implements KitDao {
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            if (dbVals.resultException != null) {
-                throw new DsmInternalError("Error checking if kit exists in tracking table ", dbVals.resultException);
+                dbVals.resultException =  new DsmInternalError("Error checking if kit exists in tracking table ", dbVals.resultException);
             }
             if (dbVals.resultValue == null) {
                 throw new DsmInternalError("Error checking if kit exists in tracking table ");
             }
-            logger.info(String.format("Found %s kit in tracking table w/ kit_label %s ", dbVals.resultValue,  kitLabel));
+            logger.info("Found {} kit in tracking table w/ kit_label {} ", dbVals.resultValue,  kitLabel);
             return dbVals;
         });
 

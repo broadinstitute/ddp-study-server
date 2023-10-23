@@ -9,7 +9,7 @@
             <column name="display_name" type="VARCHAR(500)"></column>
         </addColumn>
     </changeSet>
-    <changeSet id="PEPPER-833_rgp_blood" author="pegah">
+    <changeSet id="PEPPER-833_new_rgp_blood" author="pegah">
         <insert tableName="kit_type">
             <column name="kit_type_name" value="BLOOD"></column>
             <column name="bsp_material_type" value="Whole Blood Streck Cell-Free Preserved"></column>
@@ -33,6 +33,9 @@
         </update>
     </changeSet>
     <changeSet author="pegah" id="PEPPER-833-remove-kit-type-constraint">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="kit_type_name_UNIQUE" columnNames="kit_type_name" tableName="kit_type"></indexExists>
+        </preConditions>
         <dropUniqueConstraint uniqueColumns="kit_type_name" constraintName="kit_type_name_UNIQUE" tableName="kit_type"/>
     </changeSet>
 </databaseChangeLog>

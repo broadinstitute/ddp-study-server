@@ -24,6 +24,7 @@ import com.easypost.model.Parcel;
 import com.easypost.model.PostageLabel;
 import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
+import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -97,17 +98,16 @@ public class TestKitUtil {
     private static String userWithKitShippingAccess;
     @Getter
     @Mock
-    EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
+    static EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
     @Mock
-    Address mockEasyPostAddress = mock(Address.class);
+    static Address mockEasyPostAddress = mock(Address.class);
+    @Mock static  Shipment mockEasyPostShipment = mock(Shipment.class);
     @Mock
-    Shipment mockEasyPostShipment = mock(Shipment.class);
+    static Parcel mockEasyPostParcel = mock(Parcel.class);
     @Mock
-    Parcel mockEasyPostParcel = mock(Parcel.class);
+    static PostageLabel mockParticipantLabel = mock(PostageLabel.class);
     @Mock
-    PostageLabel mockParticipantLabel = mock(PostageLabel.class);
-    @Mock
-    Tracker mockShipmentTracker = mock(Tracker.class);
+    static Tracker mockShipmentTracker = mock(Tracker.class);
 
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
                                   String kitTypeName) {
@@ -414,7 +414,7 @@ public class TestKitUtil {
      * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
      ***/
 
-    public void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
+    public static void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
                                        DDPInstance ddpInstance) {
         createdKitIds.add(juniperTestKitRequest.getJuniperKitId());
         when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
@@ -454,6 +454,26 @@ public class TestKitUtil {
                 collaboratorPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID());
         Assert.assertEquals(newKit.getBspCollaboratorSampleId(),
                 collaboratorPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID() + "_" + kitTypeName);
+    }
+
+    public static JuniperKitRequest generateKitRequestJson(){
+        String participantId = "TEST_PARTICIPANT";
+
+        String json = "{ \"firstName\":\"P\","
+                + "\"lastName\":\"T\","
+                + "\"street1\":\"415 Main st\","
+                + "\"street2\":null,"
+                + "\"city\":\"Cambridge\","
+                + "\"state\":\"MA\","
+                + "\"postalCode\":\"02142\","
+                + "\"country\":\"USA\","
+                + "\"phoneNumber\":\" 111 - 222 - 3344\","
+                + "\"juniperKitId\":\"kitId_\","
+                + "\"juniperParticipantID\":\"" + participantId  + "\","
+                + "\"skipAddressValidation\":false,"
+                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
+
+        return new Gson().fromJson(json, JuniperKitRequest.class);
     }
 
 }
