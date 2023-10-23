@@ -18,7 +18,7 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     private static String BLOOD_RNA_KIT_TYPE_NAME = "BLOOD";
     private static String BLOOD_RNA_KIT_TYPE_DISPLAY_NAME = "BLOOD and RNA";
     private static TestKitUtil
-            testKitUtil = new TestKitUtil("test_instance", "test_instance_guid", "some_prefix", "test_group", BLOOD_RNA_KIT_TYPE_NAME);
+            testKitUtil = new TestKitUtil("test_instance", "test_instance_guid", "some_prefix", "kit_test_group", BLOOD_RNA_KIT_TYPE_NAME);
 
     @BeforeClass
     public static void setupBefore() {

@@ -299,7 +299,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         try {
             KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
         } catch (DsmInternalError e) {
-            Assert.assertTrue(e.getMessage().contains(String.format("kit types were found for realm %s with kit type name %s", instanceName, kitType)));
+            Assert.assertTrue(e.getMessage().contains(String.format("No kit was found for study %s with kit type name %s", instanceName, kitType)));
             String json = "{ \"firstName\":\"P\","
                     + "\"lastName\":\"T\","
                     + "\"street1\":\"415 Main st\","
