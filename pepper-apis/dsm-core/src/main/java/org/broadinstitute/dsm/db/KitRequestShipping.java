@@ -101,7 +101,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) ";
     public static final String SQL_SELECT_KIT_REQUEST =
-            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
                     + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
                     + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
