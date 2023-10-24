@@ -84,24 +84,8 @@ import org.slf4j.LoggerFactory;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
-    public static final String SQL_SELECT_KIT_REQUEST_NEW =
-            "SELECT kt.kit_type_name, realm.instance_name, request.bsp_collaborator_participant_id, request.bsp_collaborator_sample_id, "
-                    + "request.ddp_participant_id, request.ddp_label, request.dsm_kit_request_id, "
-                    + "request.kit_type_id, request.external_order_status, request.external_order_number, request.external_order_date, "
-                    + "request.external_response, request.upload_reason, kt.no_return, request.created_by, "
-                    + "kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, kit.label_url_return, "
-                    + "kit.tracking_to_id, kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, "
-                    + "kit.easypost_to_id, kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
-                    + "kit.receive_date, kit.receive_by, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
-                    + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
-                    + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
-                    + "kit.sequencing_restriction, kit.sample_notes FROM ddp_kit_request request "
-                    + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
-                    + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
-                    + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) ";
     public static final String SQL_SELECT_KIT_REQUEST =
-            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
                     + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
                     + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
@@ -477,59 +461,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
         }
         return kitRequestShipping;
-    }
-
-    public static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull DDPInstance instance) {
-        return getKitRequests(instance, null);
-    }
-
-    public static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull DDPInstance instance, String queryAddition) {
-        logger.info("Collection sample information");
-        Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            String addition = queryAddition;
-            if (StringUtils.isNotBlank(addition)) {
-                addition = addition.replaceAll("k\\.", "");
-            }
-
-            String query = SQL_SELECT_KIT_REQUEST_NEW;
-            if (DDPInstance.getDDPInstanceWithRole(instance.getName(), DBConstants.UPS_TRACKING_ROLE).isHasRole()) {
-                query = SQL_SELECT_KIT_WITH_QUERY_EXTENSION_FOR_UPS_TABLE;
-                query = DBUtil.getFinalQuery(query.concat(QueryExtension.AND_REALM_INSTANCE_ID), addition);
-                try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                    stmt.setString(1, instance.getDdpInstanceId());
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            addUPSKitRequest(rs, kitRequests);
-                        }
-                    }
-                } catch (SQLException ex) {
-                    dbVals.resultException = ex;
-                }
-                return dbVals;
-            } else {
-                query = DBUtil.getFinalQuery(query.concat(QueryExtension.WHERE_REALM_INSTANCE_ID), addition);
-                try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                    stmt.setString(1, instance.getDdpInstanceId());
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            addKitRequest(rs, kitRequests);
-                        }
-                    }
-                } catch (SQLException ex) {
-                    dbVals.resultException = ex;
-                }
-                return dbVals;
-            }
-
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of samples ", results.resultException);
-        }
-        logger.info("Got " + kitRequests.size() + " participants samples in DSM DB for " + instance.getName());
-        return kitRequests;
     }
 
     private static Map<String, List<KitRequestShipping>> getKitRequestsByKitId(@NonNull String realm, String target, Integer kitTypeId,
