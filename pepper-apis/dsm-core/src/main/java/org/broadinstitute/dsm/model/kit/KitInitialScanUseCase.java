@@ -52,7 +52,7 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
                 }
             }
         }
-        return Optional.ofNullable(new ScanError(kit, "kit for participant with ShortId \"" + hruid + "\" was not found.\n"
+        return Optional.ofNullable(new ScanError(kit, "Kit for participant with ShortId \"" + hruid + "\" was not found.\n"
                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
     }
 
