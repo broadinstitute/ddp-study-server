@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.kits;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.util.KitUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,6 +41,15 @@ public class KitRequestShippingTest {
                 null, null, null, null, null, null, BLOOD_RNA_KIT_TYPE_DISPLAY_NAME);
         Assert.assertEquals(kitWithDisplayName.getDisplayName(), BLOOD_RNA_KIT_TYPE_DISPLAY_NAME);
         Assert.assertEquals(kitWithDisplayName.getKitTypeName(), BLOOD_RNA_KIT_TYPE_NAME);
+    }
+
+    @Test
+    public void testKitRequestSettingsNotFound(){
+        KitRequestSettings kitRequestSettings = new KitRequestSettings(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null, null, null, 0, null, 11, null);
+        Assert.assertTrue(KitUtil.kitRequestSettingsNotFound(kitRequestSettings));;
+
+        KitRequestSettings kitRequestSettings2 = new KitRequestSettings("some carrier like fedex", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null, null, null, 0, null, 10, null);
+        Assert.assertFalse(KitUtil.kitRequestSettingsNotFound(kitRequestSettings2));;
     }
 
 }

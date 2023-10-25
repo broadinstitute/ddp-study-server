@@ -38,7 +38,7 @@ public class KitRequestCreateLabel {
     private final String participantCollaboratorId;
     private final String collaboratorIdPrefix;
     private final boolean hasAuth0Token;
-    private final KitRequestSettings kitRequestSettings;
+    private KitRequestSettings kitRequestSettings;
     private final KitType kitTyp;
     private final String billingReference;
     private final String participantIndexES;

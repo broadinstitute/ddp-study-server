@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
@@ -29,13 +30,16 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.junit.Assert;
 import org.mockito.Mock;
@@ -474,6 +478,23 @@ public class TestKitUtil {
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
         return new Gson().fromJson(json, JuniperKitRequest.class);
+    }
+
+    public static void changeKitToQueue(JuniperKitRequest juniperKitRequest, String kitTypeName, boolean createLabel) {
+        KitRequestShipping[] kitRequests =
+                KitRequestShipping.getKitRequestsByRealm(instanceName, "uploaded", kitTypeName).toArray(new KitRequestShipping[1]);
+        Optional<KitRequestShipping> kitWeWantToChange = Arrays.stream(kitRequests)
+                .filter(kitRequestShipping -> kitRequestShipping.getParticipantId().equals(juniperKitRequest.getJuniperParticipantID()))
+                .findFirst();
+        if (kitWeWantToChange.isPresent()) {
+            KitRequestCreateLabel.updateKitLabelRequested(new KitRequestShipping[] {kitWeWantToChange.get()}, userWithKitShippingAccess,
+                    new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow());
+            List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
+            if (createLabel && !kitsLabelTriggered.isEmpty()) {
+                KitUtil.createLabel(kitsLabelTriggered, mockEasyPostUtil);
+            }
+        }
+
     }
 
 }

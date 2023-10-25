@@ -135,6 +135,17 @@ public class KitUtil {
         DDPInstanceDto ddpInstanceDto = null;
 
         for (KitRequestCreateLabel kitLabelTriggered : kitsLabelTriggered) {
+            if (kitRequestSettingsNotFound(kitLabelTriggered.getKitRequestSettings())) {
+                int kitTypeId = kitLabelTriggered.getKitTyp().getKitTypeId();
+                Map<Integer, KitRequestSettings> kitRequestSettingsMap = KitRequestSettings.getKitRequestSettingsForSubKit(kitLabelTriggered.getInstanceID(), kitTypeId);
+                if (kitRequestSettingsMap.containsKey(kitTypeId)) {
+                    kitLabelTriggered.setKitRequestSettings(kitRequestSettingsMap.get(kitLabelTriggered.getKitTyp().getKitTypeId()));
+                } else {
+                    logger.error("No kit request settings was found for kit with dsm_kit_request_id {} and kit_type {} for realm {}, "
+                            + " label creation for this one will be skipped", kitLabelTriggered.getDsmKitRequestId(), kitLabelTriggered.getKitType(), kitLabelTriggered.getInstanceName());
+                    continue;
+                }
+            }
             if (easyPostUtil == null) {
                 easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
             }
@@ -224,6 +235,17 @@ public class KitUtil {
         DBUtil.updateBookmark(0, BOOKMARK_LABEL_CREATION_RUNNING);
     }
 
+    public static boolean kitRequestSettingsNotFound(KitRequestSettings kitRequestSettings) {
+        return (kitRequestSettings == null || (kitRequestSettings.getCarrierTo() == null && kitRequestSettings.getServiceTo() == null
+                && kitRequestSettings.getCarrierToId() == null && kitRequestSettings.getCarrierToAccountNumber() == null && kitRequestSettings.getCarrierReturnId() == null
+                && kitRequestSettings.getCarrierReturn() == null && kitRequestSettings.getServiceReturn() == null && kitRequestSettings.getCarrierRetrunAccountNumber() == null
+                && kitRequestSettings.getWeight() == null && kitRequestSettings.getLength() == null && kitRequestSettings.getHeight() == null && kitRequestSettings.getWeight() == null
+                && kitRequestSettings.getCollaboratorSampleTypeOverwrite() == null && kitRequestSettings.getCollaboratorParticipantLengthOverwrite() == null && kitRequestSettings.getReturnName() == null
+                && kitRequestSettings.getReturnStreet1() == null && kitRequestSettings.getReturnStreet2() == null && kitRequestSettings.getReturnCity() == null && kitRequestSettings.getReturnZip() == null
+                && kitRequestSettings.getReturnState() == null && kitRequestSettings.getReturnCountry() == null && kitRequestSettings.getPhone() == null && kitRequestSettings.getDisplayName() == null
+                && kitRequestSettings.getExternalShipper() == null && kitRequestSettings.getExternalShipperKitName() == null));
+    }
+
     public static List<KitRequestCreateLabel> getListOfKitsLabelTriggered() {
         List<KitRequestCreateLabel> kitsLabelTriggered = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -258,7 +280,7 @@ public class KitUtil {
                                         rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
                                         rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
                                         rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME), 0, null,
-                                        rs.getInt(DBConstants.DDP_INSTANCE_ID), //label creation doesn't care if kit was part of sub kit...
+                                        rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                         rs.getInt(DBConstants.HAS_CARE_OF)),
                                 new KitType(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                         rs.getString(DBConstants.KIT_TYPE_NAME), rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME),
