@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,39 @@ public class KitUtil {
                     + "LEFT JOIN carrier_service cs_to on (dkc.carrier_service_to_id=cs_to.carrier_service_id) "
                     + "LEFT JOIN carrier_service cs_return on (dkc.carrier_service_return_id=cs_return.carrier_service_id) "
                     + "LEFT JOIN kit_return_information ret on (dkc.kit_return_id=ret.kit_return_id) "
-                    + "LEFT JOIN kit_type t on (request.kit_type_id = t.kit_type_id) where ex.ddp_participant_exit_id is null";
+                    + "LEFT JOIN kit_type t on (request.kit_type_id = t.kit_type_id) where ex.ddp_participant_exit_id is null "
+                    + "and ddp_kit_request_settings_id is not null";
+    
+    private static final String SQL_SELECT_SUB_KITS_LABEL_TRIGGERED = "SELECT *, cs_to.carrier as carrierTo, cs_to.easypost_carrier_id as carrierToId, " 
+                    + " cs_to.carrier_account_number as carrierToAccountNumber, cs_to.service as serviceTo, " 
+                    + " cs_return.carrier as carrierReturn, cs_return.easypost_carrier_id as carrierReturnId, " 
+                    + " cs_return.carrier_account_number as carrierReturnAccountNumber, " 
+                    + " cs_return.service as serviceReturn FROM(SELECT kt.kit_type_name, ddp_site.instance_name, " 
+                    + " ddp_site.ddp_instance_id, ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, " 
+                    + " ddp_site.collaborator_id_prefix, ddp_site.es_participant_index ,req.bsp_collaborator_participant_id, " 
+                    + " req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, req.dsm_kit_request_id, " 
+                    + " req.kit_type_id FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site " 
+                    + " where req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) " 
+                    + " as request LEFT JOIN (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, " 
+                    + " kit.label_url_to, kit.label_url_return, kit.tracking_to_id, kit.tracking_return_id, " 
+                    + " kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id, kit.scan_date, " 
+                    + " kit.label_date, kit.error, kit.message, kit.receive_date, kit.deactivated_date, " 
+                    + " kit.easypost_address_id_to, kit.deactivation_reason, tracking.tracking_id, kit.kit_label, kit.express" 
+                    + "  FROM ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id " 
+                    + " FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id " 
+                    + " AND kit.dsm_kit_id = groupedKit.kit_id " 
+                    + " LEFT JOIN ddp_kit_tracking tracking ON (kit.kit_label = tracking.kit_label))as wtf) as kit " 
+                    + " on kit.dsm_kit_request_id = request.dsm_kit_request_id " 
+                    + " LEFT JOIN ddp_participant_exit ex on (ex.ddp_instance_id = request.ddp_instance_id " 
+                    + " AND ex.ddp_participant_id = request.ddp_participant_id) " 
+                    + " LEFT JOIN sub_kits_settings subK ON (subK.kit_type_id = request.kit_type_id) " 
+                    + " LEFT JOIN ddp_kit_request_settings dkc on (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) " 
+                    + " LEFT JOIN kit_dimension dim on (dkc.kit_dimension_id = dim.kit_dimension_id) " 
+                    + " LEFT JOIN carrier_service cs_to on (dkc.carrier_service_to_id=cs_to.carrier_service_id) " 
+                    + " LEFT JOIN carrier_service cs_return on (dkc.carrier_service_return_id=cs_return.carrier_service_id) " 
+                    + " LEFT JOIN kit_return_information ret on (dkc.kit_return_id=ret.kit_return_id) " 
+                    + " LEFT JOIN kit_type t ON (subK.kit_type_id = t.kit_type_id) " 
+                    + " where ex.ddp_participant_exit_id is null and not subK.hide_on_sample_pages <=> 1 ";
     private static final String SQL_SELECT_COLLABORATOR_ID_KIT =
             "SELECT req.bsp_collaborator_participant_id FROM ddp_kit_request req WHERE req.ddp_participant_id = ? "
                     + "AND req.ddp_instance_id = ? LIMIT 1";
@@ -135,17 +168,6 @@ public class KitUtil {
         DDPInstanceDto ddpInstanceDto = null;
 
         for (KitRequestCreateLabel kitLabelTriggered : kitsLabelTriggered) {
-            if (kitRequestSettingsNotFound(kitLabelTriggered.getKitRequestSettings())) {
-                int kitTypeId = kitLabelTriggered.getKitTyp().getKitTypeId();
-                Map<Integer, KitRequestSettings> kitRequestSettingsMap = KitRequestSettings.getKitRequestSettingsForSubKit(kitLabelTriggered.getInstanceID(), kitTypeId);
-                if (kitRequestSettingsMap.containsKey(kitTypeId)) {
-                    kitLabelTriggered.setKitRequestSettings(kitRequestSettingsMap.get(kitLabelTriggered.getKitTyp().getKitTypeId()));
-                } else {
-                    logger.error("No kit request settings was found for kit with dsm_kit_request_id {} and kit_type {} for realm {}, "
-                            + " label creation for this one will be skipped", kitLabelTriggered.getDsmKitRequestId(), kitLabelTriggered.getKitType(), kitLabelTriggered.getInstanceName());
-                    continue;
-                }
-            }
             if (easyPostUtil == null) {
                 easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
             }
@@ -235,17 +257,6 @@ public class KitUtil {
         DBUtil.updateBookmark(0, BOOKMARK_LABEL_CREATION_RUNNING);
     }
 
-    public static boolean kitRequestSettingsNotFound(KitRequestSettings kitRequestSettings) {
-        return (kitRequestSettings == null || (kitRequestSettings.getCarrierTo() == null && kitRequestSettings.getServiceTo() == null
-                && kitRequestSettings.getCarrierToId() == null && kitRequestSettings.getCarrierToAccountNumber() == null && kitRequestSettings.getCarrierReturnId() == null
-                && kitRequestSettings.getCarrierReturn() == null && kitRequestSettings.getServiceReturn() == null && kitRequestSettings.getCarrierRetrunAccountNumber() == null
-                && kitRequestSettings.getWeight() == null && kitRequestSettings.getLength() == null && kitRequestSettings.getHeight() == null && kitRequestSettings.getWeight() == null
-                && kitRequestSettings.getCollaboratorSampleTypeOverwrite() == null && kitRequestSettings.getCollaboratorParticipantLengthOverwrite() == null && kitRequestSettings.getReturnName() == null
-                && kitRequestSettings.getReturnStreet1() == null && kitRequestSettings.getReturnStreet2() == null && kitRequestSettings.getReturnCity() == null && kitRequestSettings.getReturnZip() == null
-                && kitRequestSettings.getReturnState() == null && kitRequestSettings.getReturnCountry() == null && kitRequestSettings.getPhone() == null && kitRequestSettings.getDisplayName() == null
-                && kitRequestSettings.getExternalShipper() == null && kitRequestSettings.getExternalShipperKitName() == null));
-    }
-
     public static List<KitRequestCreateLabel> getListOfKitsLabelTriggered() {
         List<KitRequestCreateLabel> kitsLabelTriggered = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -254,38 +265,7 @@ public class KitUtil {
                     SQL_SELECT_KIT_REQUESTS_ALL_INFO.concat(QueryExtension.KIT_LABEL_TRIGGERED))) {
                 try (ResultSet rs = bspStatement.executeQuery()) {
                     while (rs.next()) {
-                        kitsLabelTriggered.add(new KitRequestCreateLabel(rs.getString(DBConstants.DSM_KIT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID),
-                                rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), rs.getString(DBConstants.KIT_TYPE_NAME),
-                                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                rs.getString(DBConstants.COLLABORATOR_ID_PREFIX), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                                new KitRequestSettings(rs.getString(DBConstants.DSM_CARRIER_TO),
-                                        rs.getString(DBConstants.DSM_CARRIER_TO_ID), rs.getString(DBConstants.DSM_SERVICE_TO),
-                                        rs.getString(DBConstants.DSM_CARRIER_TO_ACCOUNT_NUMBER),
-                                        rs.getString(DBConstants.DSM_CARRIER_RETURN), rs.getString(DBConstants.DSM_CARRIER_RETURN_ID),
-                                        rs.getString(DBConstants.DSM_SERVICE_RETURN),
-                                        rs.getString(DBConstants.DSM_CARRIER_RETURN_ACCOUNT_NUMBER),
-                                        rs.getString(DBConstants.KIT_DIMENSIONS_LENGTH), rs.getString(DBConstants.KIT_DIMENSIONS_HEIGHT),
-                                        rs.getString(DBConstants.KIT_DIMENSIONS_WIDTH), rs.getString(DBConstants.KIT_DIMENSIONS_WEIGHT),
-                                        rs.getString(DBConstants.COLLABORATOR_SAMPLE_TYPE_OVERWRITE),
-                                        rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_LENGTH_OVERWRITE),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_NAME),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STREET1),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STREET2),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_CITY),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_ZIP),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STATE),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_COUNTRY),
-                                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
-                                        rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
-                                        rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME), 0, null,
-                                        rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                        rs.getInt(DBConstants.HAS_CARE_OF)),
-                                new KitType(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                        rs.getString(DBConstants.KIT_TYPE_NAME), rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME),
-                                        rs.getString(DBConstants.EXTERNAL_SHIPPER), rs.getString(DBConstants.CUSTOMS_JSON)),
-                                rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX)));
+                        kitsLabelTriggered.add(KitRequestCreateLabel.createKitRequestCreateLabelFromResultSet(rs));
                     }
                 }
             } catch (SQLException ex) {
@@ -295,11 +275,42 @@ public class KitUtil {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of kit requests which are triggered for label creation ",
+            throw new DsmInternalError("Error getting list of kit requests which are triggered for label creation ",
                     results.resultException);
         }
-        logger.info("Found " + kitsLabelTriggered.size() + " kit requests which should get a label");
+        logger.info("Found {} kit requests which should get a label", kitsLabelTriggered.size());
         return kitsLabelTriggered;
+    }
+
+    /**
+     * Returns a list of KitRequestCreateLabel for sub kits that are in queue ,
+     * the difference here is the kit type id of the sub kit is not directly found in the ddp_kit_request_settings table
+     * so the query has to look it up through sub_kits_settings
+     * */
+
+    public static Collection<? extends KitRequestCreateLabel> getListOfSubKitsThatNeedLabels() {
+        List<KitRequestCreateLabel> subKitsLabelTriggered = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement statement = conn.prepareStatement(
+                    SQL_SELECT_SUB_KITS_LABEL_TRIGGERED.concat(QueryExtension.KIT_LABEL_TRIGGERED))) {
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        subKitsLabelTriggered.add(KitRequestCreateLabel.createKitRequestCreateLabelFromResultSet(rs));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error getting list of sub kit requests which are triggered for label creation ",
+                    results.resultException);
+        }
+        logger.info("Found {} kit requests which should get a label", subKitsLabelTriggered.size());
+        return subKitsLabelTriggered;
     }
 
     private static void buyShipmentForKit(@NonNull EasyPostUtil easyPostUtil, @NonNull String dsmKitId,

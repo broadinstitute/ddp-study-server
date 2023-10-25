@@ -11,6 +11,7 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -194,69 +195,9 @@ public class KitRequestSettings {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error looking up carrier service  ", results.resultException);
+            throw new DsmInternalError("Error looking up carrier service  ", results.resultException);
         }
-        logger.info("Found " + carrierService.size() + " carrier/service for realm w/ id " + realmId);
-        return carrierService;
-    }
-    /**
-     * Returns KitRequestSettings for a sub kit, the difference here is the kit type id of the sub kit is not directly found in the ddp_kit_request_settings table
-     * */
-    public static HashMap<Integer, KitRequestSettings> getKitRequestSettingsForSubKit(@NonNull String realmId,
-                                                                                      @NonNull Integer subKitTypeId) {
-        HashMap<Integer, KitRequestSettings> carrierService = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    SQL_SELECT_KIT_REQUEST_SETTINGS_FOR_SUB_KIT + QueryExtension.WHERE_INSTANCE_ID + QueryExtension.AND_SUB_KIT_TYPE_ID)) {
-                stmt.setString(1, realmId);
-                stmt.setInt(2, subKitTypeId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        // we can refactor here and the code in getKitRequestSettings()
-                        KitSubKits subKit = new KitSubKits(rs.getInt(DBConstants.KIT_TYPE_SUB_KIT), rs.getString(DBConstants.SUB_KIT_NAME),
-                                rs.getInt(DBConstants.KIT_COUNT), rs.getBoolean(DBConstants.HIDE_ON_SAMPLE_PAGES));
-                        int key = rs.getInt(DBConstants.KIT_TYPE_ID);
-                        if (carrierService.containsKey(key)) {
-                            KitRequestSettings settings = carrierService.get(key);
-                            settings.addSubKit(subKit);
-                        } else {
-                            List<KitSubKits> subKits = new ArrayList<>();
-                            subKits.add(subKit);
-                            carrierService.put(key, new KitRequestSettings(rs.getString(DBConstants.DSM_CARRIER_TO),
-                                    rs.getString(DBConstants.DSM_CARRIER_TO_ID), rs.getString(DBConstants.DSM_SERVICE_TO),
-                                    rs.getString(DBConstants.DSM_CARRIER_TO_ACCOUNT_NUMBER), rs.getString(DBConstants.DSM_CARRIER_RETURN),
-                                    rs.getString(DBConstants.DSM_CARRIER_RETURN_ID), rs.getString(DBConstants.DSM_SERVICE_RETURN),
-                                    rs.getString(DBConstants.DSM_CARRIER_RETURN_ACCOUNT_NUMBER),
-                                    rs.getString(DBConstants.KIT_DIMENSIONS_LENGTH), rs.getString(DBConstants.KIT_DIMENSIONS_HEIGHT),
-                                    rs.getString(DBConstants.KIT_DIMENSIONS_WIDTH), rs.getString(DBConstants.KIT_DIMENSIONS_WEIGHT),
-                                    rs.getString(DBConstants.COLLABORATOR_SAMPLE_TYPE_OVERWRITE),
-                                    rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_LENGTH_OVERWRITE),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_NAME),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STREET1),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STREET2),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_CITY),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_ZIP),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STATE),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_COUNTRY),
-                                    rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
-                                    rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
-                                    rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME),
-                                    rs.getInt(DBConstants.HAS_SUB_KITS), subKits, rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                    rs.getInt("dkc." + DBConstants.HAS_CARE_OF)));
-                        }
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error looking up kit request setting  ", results.resultException);
-        }
-        logger.info("Found kit request setting for realm w/ id {} with kit type id {}", realmId, subKitTypeId);
+        logger.info("Found {} carrier/service for realm w/ id {}" , carrierService.size(), realmId);
         return carrierService;
     }
 
