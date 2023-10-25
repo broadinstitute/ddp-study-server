@@ -22,7 +22,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
             + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
             + "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? "
             + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
-    private final String getBspResponseInformationForKit =
+    private final String SQL_SELECT_METADATA_FOR_KIT =
             "select realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, collection_date, "
                     + "request.bsp_collaborator_participant_id,  realm.bsp_group,  realm.bsp_collection, "
                     + "realm.bsp_organism,  realm.notification_recipients,  request.ddp_participant_id, "
@@ -59,7 +59,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
-                try (PreparedStatement stmt = conn.prepareStatement(getBspResponseInformationForKit)) {
+                try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_METADATA_FOR_KIT)) {
                     stmt.setString(1, DBConstants.KIT_PARTICIPANT_NOTIFICATIONS_ACTIVATED);
                     stmt.setString(2, kitLabel);
                     try (ResultSet rs = stmt.executeQuery()) {

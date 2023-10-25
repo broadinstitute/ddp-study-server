@@ -19,6 +19,7 @@ public class QueryExtension {
     public static final String BY_REALM = " and request.instance_name = ?";
 
     public static final String BY_REALM_AND_TYPE = " and request.instance_name = ? and request.kit_type_name = ?";
+    public static final String BY_REALM_AND_TYPE_ID = " and request.instance_name = ? and request.kit_type_id = ?";
 
     public static final String KIT_NOT_COMPLETE_NO_ERROR =
             " and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and kit.label_url_to is not null and kit.deactivated_date is null";
