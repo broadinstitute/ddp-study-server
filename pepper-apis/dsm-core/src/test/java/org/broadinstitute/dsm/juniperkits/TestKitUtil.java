@@ -480,21 +480,4 @@ public class TestKitUtil {
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }
 
-    public static void changeKitToQueue(JuniperKitRequest juniperKitRequest, String kitTypeName, boolean createLabel) {
-        KitRequestShipping[] kitRequests =
-                KitRequestShipping.getKitRequestsByRealm(instanceName, "uploaded", kitTypeName).toArray(new KitRequestShipping[1]);
-        Optional<KitRequestShipping> kitWeWantToChange = Arrays.stream(kitRequests)
-                .filter(kitRequestShipping -> kitRequestShipping.getParticipantId().equals(juniperKitRequest.getJuniperParticipantID()))
-                .findFirst();
-        if (kitWeWantToChange.isPresent()) {
-            KitRequestCreateLabel.updateKitLabelRequested(new KitRequestShipping[] {kitWeWantToChange.get()}, userWithKitShippingAccess,
-                    new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow());
-            List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
-            if (createLabel && !kitsLabelTriggered.isEmpty()) {
-                KitUtil.createLabel(kitsLabelTriggered, mockEasyPostUtil);
-            }
-        }
-
-    }
-
 }
