@@ -42,12 +42,12 @@ public class ElasticTestUtil {
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
         String indexName = createIndex(realm);
         try {
-            String mappingsJson = TestUtil.readFile(mappingsFile);
-            updateMapping(indexName, mappingsJson);
             if (StringUtils.isNotBlank(settingsFile)) {
                 String settingsJson = TestUtil.readFile(settingsFile);
                 updateSettings(indexName, settingsJson);
             }
+            String mappingsJson = TestUtil.readFile(mappingsFile);
+            updateMapping(indexName, mappingsJson);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception updating index " + realm + ":" + e.getMessage());
