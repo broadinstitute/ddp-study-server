@@ -140,4 +140,39 @@ public class KitRequestCreateLabel {
         }
         return stmt;
     }
+
+    public static KitRequestCreateLabel createKitRequestCreateLabelFromResultSet(ResultSet rs) throws SQLException{
+        return new KitRequestCreateLabel(rs.getString(DBConstants.DSM_KIT_ID),
+                rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID),
+                rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), rs.getString(DBConstants.KIT_TYPE_NAME),
+                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
+                rs.getString(DBConstants.COLLABORATOR_ID_PREFIX), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
+                new KitRequestSettings(rs.getString(DBConstants.DSM_CARRIER_TO),
+                        rs.getString(DBConstants.DSM_CARRIER_TO_ID), rs.getString(DBConstants.DSM_SERVICE_TO),
+                        rs.getString(DBConstants.DSM_CARRIER_TO_ACCOUNT_NUMBER),
+                        rs.getString(DBConstants.DSM_CARRIER_RETURN), rs.getString(DBConstants.DSM_CARRIER_RETURN_ID),
+                        rs.getString(DBConstants.DSM_SERVICE_RETURN),
+                        rs.getString(DBConstants.DSM_CARRIER_RETURN_ACCOUNT_NUMBER),
+                        rs.getString(DBConstants.KIT_DIMENSIONS_LENGTH), rs.getString(DBConstants.KIT_DIMENSIONS_HEIGHT),
+                        rs.getString(DBConstants.KIT_DIMENSIONS_WIDTH), rs.getString(DBConstants.KIT_DIMENSIONS_WEIGHT),
+                        rs.getString(DBConstants.COLLABORATOR_SAMPLE_TYPE_OVERWRITE),
+                        rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_LENGTH_OVERWRITE),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_NAME),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STREET1),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STREET2),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_CITY),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_ZIP),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_STATE),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_COUNTRY),
+                        rs.getString(DBConstants.KIT_TYPE_RETURN_ADDRESS_PHONE),
+                        rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME), rs.getString(DBConstants.EXTERNAL_SHIPPER),
+                        rs.getString(DBConstants.EXTERNAL_CLIENT_ID), rs.getString(DBConstants.EXTERNAL_KIT_NAME), 0, null,
+                        rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                        rs.getInt(DBConstants.HAS_CARE_OF)),
+                new KitType(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                        rs.getString(DBConstants.KIT_TYPE_NAME), rs.getString(DBConstants.KIT_TYPE_DISPLAY_NAME),
+                        rs.getString(DBConstants.EXTERNAL_SHIPPER), rs.getString(DBConstants.CUSTOMS_JSON)),
+                rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX));
+    }
 }
