@@ -56,6 +56,10 @@ public class KitUtil {
     //easypost end statuses
     private static final String EASYPOST_DELIVERED_STATUS = "delivered";
     private static final Logger logger = LoggerFactory.getLogger(KitUtil.class);
+
+    // there is a check for condition `and ddp_kit_request_settings_id is not null` in this query to make sure we are not
+    // getting a value both in here and by selecting subkits in SQL_SELECT_SUB_KITS_LABEL_TRIGGERED
+    // overall, there is no value in trying to create labels for a kit without settings, it will fail
     private static final String SQL_SELECT_KIT_REQUESTS_ALL_INFO =
             "SELECT *, cs_to.carrier as carrierTo, cs_to.easypost_carrier_id as carrierToId, "
                     + "cs_to.carrier_account_number as carrierToAccountNumber, cs_to.service as serviceTo, "
