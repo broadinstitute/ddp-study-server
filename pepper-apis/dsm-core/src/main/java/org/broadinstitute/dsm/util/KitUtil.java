@@ -288,7 +288,7 @@ public class KitUtil {
         Map<String, KitRequestCreateLabel> subKitsLabelTriggered = KitUtil.getListOfSubKitsThatNeedLabels();
         for (Map.Entry<String, KitRequestCreateLabel> subKitEntry : subKitsLabelTriggered.entrySet()) {
             if (!kitsLabelTriggered.containsKey(subKitEntry.getKey()) ||
-                    kitsLabelTriggered.get(subKitEntry.getKey()).getKitRequestSettings().getReturnCountry() == null) {
+                    kitsLabelTriggered.get(subKitEntry.getKey()).getKitRequestSettings().getReturnName() == null) {
                 kitsLabelTriggered.put(subKitEntry.getKey(), subKitEntry.getValue());
             }
         }
