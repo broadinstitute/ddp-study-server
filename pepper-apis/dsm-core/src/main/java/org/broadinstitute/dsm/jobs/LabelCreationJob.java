@@ -21,7 +21,6 @@ public class LabelCreationJob implements Job {
             Long labelCreationStarted = DBUtil.getBookmark(KitUtil.BOOKMARK_LABEL_CREATION_RUNNING);
             if (labelCreationStarted == 0) {
                 List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
-                kitsLabelTriggered.addAll(KitUtil.getListOfSubKitsThatNeedLabels());
                 if (!kitsLabelTriggered.isEmpty()) {
                     KitUtil.createLabel(kitsLabelTriggered, null);
                 }
