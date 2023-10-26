@@ -135,7 +135,6 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 if (StringUtils.isNotEmpty(rgpBloodKit.getKitLabel()) && kitLabel.equals(rgpBloodKit.getKitLabel())
                         || StringUtils.isEmpty(rgpBloodKit.getKitLabel())) {
                     rgpBloodKit.setKitLabel(kitLabel);
-                    rgpBloodKit.setDdpLabel(ddpLabel);
                     rgpBloodKit.setScanDate(System.currentTimeMillis());
                     result = updateKitRequest(rgpBloodKit);
                     trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, rgpBloodKit);
@@ -162,7 +161,6 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 //successfully scanned and going to update db and ES
                 if (StringUtils.isEmpty(rgpRnaKit.getKitLabel())) {
                     rgpRnaKit.setKitLabel(RNA);
-                    rgpRnaKit.setDdpLabel(rgpRnaKit.getDdpLabel());
                     rgpRnaKit.setScanDate(System.currentTimeMillis());
                     result = updateKitRequest(rgpRnaKit);
                     trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, rgpRnaKit);
