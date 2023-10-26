@@ -42,9 +42,11 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     private Dao dataAccess;
 
     @Override
-    protected boolean setDefaultData() {
+    boolean setDefaultData() {
         if (isParticipantDataNotInES()) {
-            throw new ESMissingParticipantDataException("Participant does not yet have profile and activities in ES");
+            throw new ESMissingParticipantDataException(
+                    String.format("Participant %s does not yet have profile and activities in ES",
+                    elasticSearchParticipantDto.getParticipantId()));
         }
 
         boolean inserted = insertExitStatusForParticipant() && insertGenomicIdForParticipant();

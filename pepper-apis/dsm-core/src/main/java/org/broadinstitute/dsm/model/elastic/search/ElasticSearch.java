@@ -60,6 +60,9 @@ import org.slf4j.LoggerFactory;
 @Setter
 public class ElasticSearch implements ElasticSearchable {
 
+    // todo arz review https://github.com/broadinstitute/ddp-study-server/pull/2699#discussion_r1355940446
+    // and add links
+
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearch.class);
     private Deserializer deserializer;
     private SortBuilder sortBy;
@@ -108,14 +111,23 @@ public class ElasticSearch implements ElasticSearchable {
         return totalCount;
     }
 
-    public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap) {
+    /**
+     * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
+     * @param sourceMap the source map
+     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the
+     *                             {@link ElasticSearchParticipantDto#queriedParticipantId}
+     * @return
+     */
+    public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
         if (sourceMap != null) {
             Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
             if (deserializedSourceMap.isPresent()) {
+                var participantDto = deserializedSourceMap.get();
+                participantDto.setQueriedParticipantId(queriedParticipantId);
                 return deserializedSourceMap.get();
             }
         }
-        return new ElasticSearchParticipantDto.Builder().build();
+        return new ElasticSearchParticipantDto.Builder().withQueriedParticipantId(queriedParticipantId).build();
     }
 
     public List<ElasticSearchParticipantDto> parseSourceMaps(SearchHit[] searchHits) {
@@ -125,7 +137,7 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> result = new ArrayList<>();
         String ddp = getDdpFromSearchHit(Arrays.stream(searchHits).findFirst().orElse(null));
         for (SearchHit searchHit : searchHits) {
-            ElasticSearchParticipantDto participantDto = parseSourceMap(searchHit.getSourceAsMap());
+            ElasticSearchParticipantDto participantDto = parseSourceMap(searchHit.getSourceAsMap(), null);
             participantDto.setDdp(ddp);
             result.add(participantDto);
         }
@@ -307,7 +319,7 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by id: " + participantId,
                     e);
         }
-        return parseSourceMap(sourceAsMap);
+        return parseSourceMap(sourceAsMap, id);
     }
 
     @Override

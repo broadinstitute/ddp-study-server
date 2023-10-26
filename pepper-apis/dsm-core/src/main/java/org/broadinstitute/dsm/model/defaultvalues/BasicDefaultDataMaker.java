@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.Optional;
+import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -28,7 +28,8 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
     protected ElasticSearchParticipantDto elasticSearchParticipantDto;
 
 
-    protected abstract boolean setDefaultData();
+    @VisibleForTesting
+    abstract boolean setDefaultData();
 
     @Override
     public boolean generateDefaults(String studyGuid, String participantId) {

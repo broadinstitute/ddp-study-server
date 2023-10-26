@@ -10,6 +10,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -20,9 +21,11 @@ import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
 import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -36,14 +39,18 @@ import org.junit.Assert;
 @Slf4j
 public class ElasticTestUtil {
 
-    public static String createIndexWithMappings(String realm, String mappingsFile) {
+    public static String createIndex(String realm, String mappingsFile, String settingsFile) {
         String indexName = createIndex(realm);
         try {
             String mappingsJson = TestUtil.readFile(mappingsFile);
             updateMapping(indexName, mappingsJson);
+            if (StringUtils.isNotBlank(settingsFile)) {
+                String settingsJson = TestUtil.readFile(settingsFile);
+                updateSettings(indexName, settingsJson);
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception reading mappings: " + e);
+            Assert.fail("Unexpected exception updating index " + realm + ":" + e.getMessage());
         }
         return indexName;
     }
@@ -59,7 +66,7 @@ public class ElasticTestUtil {
             log.info("CreateIndexResponse: {}", createIndexResponse);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception creating index: " + e);
+            Assert.fail("Unexpected exception creating index " + realm + ":" + e.getMessage());
         }
         return indexName;
     }
@@ -76,14 +83,37 @@ public class ElasticTestUtil {
         }
     }
 
+    /**
+     * Updates the mappings for the index.  When creating an index for the first time,
+     * query it from an existing elastic instance by running a command like this
+     */
     public static void updateMapping(String esIndex, String mappingJson) {
         PutMappingRequest putMappingRequest = new PutMappingRequest(esIndex);
         putMappingRequest.source(mappingJson, XContentType.JSON);
+
         try {
-            ElasticSearchUtil.getClientInstance().indices().putMapping(putMappingRequest, RequestOptions.DEFAULT);
+            IndicesClient indicesClient = ElasticSearchUtil.getClientInstance().indices();
+            indicesClient.putMapping(putMappingRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception updating ES mappings for index " + esIndex);
+            Assert.fail(String.format("Unexpected exception updating ES mappings for index %s: %s", esIndex, e));
+        }
+    }
+
+    /**
+     * Updates the mappings for the index.  When creating an index for the first time,
+     * query it from an existing elastic instance by running a command like this
+     */
+    public static void updateSettings(String esIndex, String settingsJson) {
+       UpdateSettingsRequest putSettingsRequest = new UpdateSettingsRequest(esIndex);
+        putSettingsRequest.settings(settingsJson, XContentType.JSON);
+
+        try {
+            IndicesClient indicesClient = ElasticSearchUtil.getClientInstance().indices();
+            indicesClient.putSettings(putSettingsRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception updating ES settings for index " + esIndex);
         }
     }
 
