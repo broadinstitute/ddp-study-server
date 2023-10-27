@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.kits;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.util.KitUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -40,5 +42,6 @@ public class KitRequestShippingTest {
         Assert.assertEquals(kitWithDisplayName.getDisplayName(), BLOOD_RNA_KIT_TYPE_DISPLAY_NAME);
         Assert.assertEquals(kitWithDisplayName.getKitTypeName(), BLOOD_RNA_KIT_TYPE_NAME);
     }
+
 
 }
