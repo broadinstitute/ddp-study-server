@@ -66,6 +66,10 @@ public class ElasticSearchParticipantDto {
         return medicalProviders == null ? Collections.emptyList() : medicalProviders;
     }
 
+    /**
+     * When not null, this is the participantId used to query
+     * elastic search when this object was created.
+     */
     public String getQueriedParticipantId() {
         return queriedParticipantId;
     }

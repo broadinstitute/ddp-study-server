@@ -46,7 +46,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         if (isParticipantDataNotInES()) {
             throw new ESMissingParticipantDataException(
                     String.format("Participant %s does not yet have profile and activities in ES",
-                    elasticSearchParticipantDto.getParticipantId()));
+                    elasticSearchParticipantDto.getQueriedParticipantId()));
         }
 
         boolean inserted = insertExitStatusForParticipant() && insertGenomicIdForParticipant();

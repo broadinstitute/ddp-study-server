@@ -75,7 +75,9 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         try {
             atDefaultValues.generateDefaults(instanceName, nonexistentParticipantId);
         } catch (ESMissingParticipantDataException e) {
-            Assert.assertTrue(e.getMessage().toUpperCase().contains("PARTICIPANT " + nonexistentParticipantId));
+            Assert.assertTrue(String.format("Error message should include the queried participant id %s.  The "
+                    + "message given is %s", nonexistentParticipantId, e.getMessage()),
+                    e.getMessage().toUpperCase().contains("PARTICIPANT " + nonexistentParticipantId));
         }
     }
 }

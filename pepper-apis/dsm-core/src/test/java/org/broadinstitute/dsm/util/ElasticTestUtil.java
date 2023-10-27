@@ -39,6 +39,15 @@ import org.junit.Assert;
 @Slf4j
 public class ElasticTestUtil {
 
+    /**
+     * When creating an index for testing, it's best to start by extracting the mappings
+     * and settings files from a known good ES instance and storing these files
+     * in resources/elastic
+     * @param mappingsFile curl -u -XGET --header 'Content-Type: application/json'
+     *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_mapping
+     * @param settingsFile curl -u -XGET --header 'Content-Type: application/json'
+     *      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
+     */
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
         String indexName = createIndex(realm);
         try {
