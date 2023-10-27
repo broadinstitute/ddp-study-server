@@ -62,7 +62,7 @@ public abstract class BaseParser implements Parser {
                 || Integer.class.isAssignableFrom(fieldType);
     }
 
-    protected abstract Object forNumeric(String value);
+    abstract Object forNumeric(String value);
 
     protected abstract Object forBoolean(String value);
 
