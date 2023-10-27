@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 
 public class ValueParser extends BaseParser {
 
@@ -9,12 +10,15 @@ public class ValueParser extends BaseParser {
     public static final String N_A_SYMBOLIC_DATE = "1000-01-01";
 
     @Override
-    protected Object forNumeric(String value) {
+    public Object forNumeric(String value) {
         if (isEmptyOrNullString(value)) {
-            //returning null if numeric value is deleted
             return null;
         }
-        return Long.valueOf(value);
+        if (Double.valueOf(value) % 1 == 0) {
+            return Double.valueOf(value).longValue(); // allows for robust parsing of decimals
+        } else {
+            throw new DsmInternalError(String.format("Could not convert %s to a long", value));
+        }
     }
 
     @Override
