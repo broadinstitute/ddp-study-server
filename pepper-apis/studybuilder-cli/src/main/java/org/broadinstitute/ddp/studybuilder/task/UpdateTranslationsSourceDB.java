@@ -7,6 +7,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
@@ -187,9 +188,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
             log.info("#activity : {}  .. version: {}", activityDto.getActivityCode(), versionDto.getVersionTag());
 
             //tailored to osteo for now
-            if (!activityDto.getActivityCode().startsWith("FAMILY_HISTORY")
-                    && !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY")
-                    && !activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")) {
+            if (activityDto.getActivityCode().equalsIgnoreCase("LOVEDONE")) {
 
                 traverseActivity(handle, activity);
 
@@ -232,9 +231,10 @@ public class UpdateTranslationsSourceDB implements CustomTask {
 
     public void compareNamingDetails(Handle handle, String activityCode, long activityId, ActivityVersionDto versionDto) {
         //osteo specific .. cleanup later
-        if (activityCode.equalsIgnoreCase("LOVEDONE") || activityCode.equalsIgnoreCase("prequal")) {
+        if (activityCode.equalsIgnoreCase("prequal")) {
             return;
         }
+        log.info("comparing naming details for activity : {}", activityCode);
         var activityI18nDao = handle.attach(ActivityI18nDao.class);
         Map<String, ActivityI18nDetail> currentDetails = activityI18nDao
                 .findDetailsByActivityIdAndTimestamp(activityId, versionDto.getRevStart())
@@ -242,20 +242,25 @@ public class UpdateTranslationsSourceDB implements CustomTask {
                 .collect(Collectors.toMap(ActivityI18nDetail::getIsoLangCode, Functions.identity()));
 
         ActivityI18nDetail currentES = currentDetails.get("es");
+        ActivityI18nDetail currentEN = currentDetails.get("en");
+        //todo if no es .. get en details and
         ActivityI18nDetail latestDetails =
-                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES);
+                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES != null ? currentES : currentEN );
         if (latestDetails == null) {
             log.warn("NO Latest Details null for activity: {}", activityCode);
             return;
         }
 
         if (currentES == null) {
+            log.info("inserting new naming details for activity : {}", activityCode);
             //insert new
             List<ActivityI18nDetail> newDetails = Collections.singletonList(latestDetails);
             activityI18nDao.insertDetails(newDetails);
             log.info("NEW: Inserted naming details for activity {} .. language: {}", activityCode, "es");
         } else {
+            log.info("comparing to update naming details for activity : {}", activityCode);
             if (!currentES.equals(latestDetails)) {
+                log.info("updating naming details for activity : {}", activityCode);
                 activityI18nDao.updateDetails(Collections.singletonList(latestDetails));
                 log.info("Updated naming details for activity {} .. language: {}", activityCode, "es");
             }
@@ -314,7 +319,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         ActivityI18nDetail latest = new ActivityI18nDetail(
                 current.getId(),
                 activityId,
-                current.getLangCodeId(),
+                LanguageStore.get("es").getId(),
                 "es",
                 name,
                 secondName,
@@ -582,6 +587,10 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
         String variableName = current.getName();
         long variableId = current.getId().get();
+        if (variableName.equalsIgnoreCase("prompt") && activityCode.equalsIgnoreCase("LOVEDONE")) {
+            //skip
+            return;
+        }
 
         //todo: handle all diff languages.. for now concentrate on adding es
         var enTranslation = current.getTranslation("en").get();
