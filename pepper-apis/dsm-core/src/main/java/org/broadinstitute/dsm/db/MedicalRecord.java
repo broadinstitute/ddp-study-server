@@ -20,10 +20,12 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -64,6 +66,12 @@ public class MedicalRecord implements HasDdpInstanceId {
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) WHERE p.participant_id = ?";
+    public static final String SQL_SELECT_PARTICIPANT_MEDICAL_RECORDS = "SELECT med.*, dp.ddp_participant_id, dp.ddp_instance_id, "
+            + "inst.institution_id, inst.ddp_institution_id, inst.type "
+            + "FROM ddp_medical_record med "
+            + "JOIN ddp_institution inst ON inst.institution_id = med.institution_id "
+            + "JOIN ddp_participant dp ON dp.participant_id = inst.participant_id "
+            + "WHERE dp.participant_id = ?";
     public static final String SQL_ORDER_BY = " ORDER BY p.ddp_participant_id, inst.ddp_institution_id ASC";
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecord.class);
     public static final String AND_DDP_PARTICIPANT_ID = " AND p.ddp_participant_id = '%s'";
@@ -269,9 +277,8 @@ public class MedicalRecord implements HasDdpInstanceId {
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm, String queryAddition) {
-        logger.info("Collection mr information");
         Map<String, List<MedicalRecord>> medicalRecords = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     DBUtil.getFinalQuery(SQL_SELECT_MEDICAL_RECORD, queryAddition) + SQL_ORDER_BY)) {
@@ -295,15 +302,34 @@ public class MedicalRecord implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of medicalRecords ", results.resultException);
+            throw new DsmInternalError("Error getting list of medical records for realm " + realm, results.resultException);
         }
-        logger.info("Got " + medicalRecords.size() + " participants medicalRecords in DSM DB for " + realm);
+        logger.info("Got {} participant medical records for realm {}", medicalRecords.size(), realm);
         return medicalRecords;
     }
 
     public static List<MedicalRecord> getMedicalRecordsByInstanceNameAndDdpParticipantId(String instanceName, String ddpParticipantId) {
         return getMedicalRecords(instanceName, String.format(AND_DDP_PARTICIPANT_ID, ddpParticipantId))
                 .getOrDefault(ddpParticipantId, new ArrayList<>());
+    }
+
+    public static List<MedicalRecord> getMedicalRecordsForParticipant(int participantId) {
+        return inTransaction(conn -> {
+            List<MedicalRecord> medicalRecords = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_PARTICIPANT_MEDICAL_RECORDS)) {
+                stmt.setInt(1, participantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    MedicalRecordDao.BuildMedicalRecord builder = new MedicalRecordDao.BuildMedicalRecord();
+                    while (rs.next()) {
+                        medicalRecords.add(builder.build(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting list of medical records for participant " + participantId, e);
+            }
+            logger.info("Got {} medical records for participant {}", medicalRecords.size(), participantId);
+            return medicalRecords;
+        });
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {

@@ -21,6 +21,7 @@ public class DBConstants {
     public static final String DDP_PARTICIPANT_ID = "ddp_participant_id";
     public static final String DDP_KIT_REQUEST = "ddp_kit_request";
     public static final String DDP_KIT = "ddp_kit";
+    public static final String LANGUAGE = "iso_language_code";
 
     public static final String REQUIRES_INSERT_KIT_TRACKING = "requires_insert_in_kit_tracking";
 
@@ -124,6 +125,7 @@ public class DBConstants {
     public static final String LABEL_TRIGGERED_DATE = "label_date";
     public static final String CREATED_BY = "created_by";
     public static final String KIT_TYPE_DISPLAY_NAME = "kit_type_display_name";
+    public static final String KIT_DISPLAY_NAME = "display_name";
     public static final String EXTERNAL_SHIPPER = "external_shipper";
     public static final String EXTERNAL_KIT_NAME = "external_name";
     public static final String EXTERNAL_CLIENT_ID = "external_client_id";

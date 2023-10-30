@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
@@ -101,40 +102,44 @@ public class ClinicalKitDto {
     }
 
     public void setNecessaryParticipantDataToClinicalKit(String ddpParticipantId, DDPInstance ddpInstance) {
-        Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
+        logger.info("Setting PHI to clinical kit's accessioning data for {} in study {}", ddpParticipantId, ddpInstance.getName());
+
+        ElasticSearchParticipantDto esParticipantDto =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-        if (maybeParticipantESDataByParticipantId.isEmpty()) {
-            throw new RuntimeException("Participant ES Data is not found for " + ddpParticipantId);
-        }
 
         try {
-            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(Dsm::getDateOfBirth).orElse(""));
-            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getFirstName).orElse(""));
-            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getLastName).orElse(""));
-            this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
-            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getHruid).orElse("");
+            this.setDateOfBirth(esParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(""));
+            this.setFirstName(esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
+            this.setLastName(esParticipantDto.getProfile().map(Profile::getLastName).orElse(""));
+            this.setGender(getParticipantGender(esParticipantDto, ddpInstance.getName(), ddpParticipantId));
+            String shortId = esParticipantDto.getProfile().map(Profile::getHruid).orElse("");
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                             ddpInstance.isMigratedDDP(),
                             ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
-            throw new RuntimeException("Participant doesn't exist / is not valid for kit " + e.getMessage());
+            throw new DsmInternalError(String.format("Error getting participant data for %s", ddpParticipantId), e);
         }
     }
 
-    private String getParticipantGender(ElasticSearchParticipantDto participantByShortId, String realm) {
+    private String getParticipantGender(ElasticSearchParticipantDto participantByShortId, String realm, String ddpParticipantId) {
+        String participantId = participantByShortId.getParticipantId();
+        if(StringUtils.isBlank(participantId)){
+            throw new DsmInternalError(String.format("The participant %s is missing participant id", ddpParticipantId));
+        }
         // if gender is set on tissue page use that
         List<String> list = new ArrayList();
-        list.add(participantByShortId.getParticipantId());
+        list.add(participantId);
         Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetailsByParticipantIds(realm, list);
         if (!oncHistoryDetails.isEmpty()) {
-            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantByShortId.getParticipantId()).stream()
+            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantId).stream()
                     .filter(o -> StringUtils.isNotBlank(o.getGender())).findFirst();
             if (oncHistoryWithGender.isPresent()) {
                 return oncHistoryWithGender.get().getGender();
             }
         }
+        logger.info("Participant {} did not have gender on tissue pages, will look into activities", participantByShortId.getParticipantId());
         //if gender is not set on tissue page get answer from "ABOUT_YOU.ASSIGNED_SEX"
         return getGenderFromActivities(participantByShortId.getActivities());
     }

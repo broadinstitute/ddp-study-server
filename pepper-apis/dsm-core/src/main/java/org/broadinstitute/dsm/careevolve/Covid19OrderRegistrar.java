@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.careevolve;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -254,13 +253,10 @@ public class Covid19OrderRegistrar {
         if (kitPickupTime == null) {
             throw new CareEvolveException("Cannot place order for " + kitLabel + " without a pickup time");
         }
-        try {
-            esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(cfg.getString(ApplicationConfigConstants.ES_URL),
-                    cfg.getString(ApplicationConfigConstants.ES_USERNAME), cfg.getString(ApplicationConfigConstants.ES_PASSWORD),
-                    cfg.getString(ApplicationConfigConstants.ES_PROXY));
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not initialize es client", e);
-        }
+        esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(cfg.getString(ApplicationConfigConstants.ES_URL),
+                cfg.getString(ApplicationConfigConstants.ES_USERNAME), cfg.getString(ApplicationConfigConstants.ES_PASSWORD),
+                cfg.getString(ApplicationConfigConstants.ES_PROXY));
+
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
         Map<String, Map<String, Object>> esData =
                 ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,

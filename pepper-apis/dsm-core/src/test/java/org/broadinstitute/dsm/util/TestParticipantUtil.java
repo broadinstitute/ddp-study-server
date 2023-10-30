@@ -29,7 +29,7 @@ public class TestParticipantUtil {
     }
 
     public static String genDDPParticipantId(String baseName) {
-        return String.format("%s_%d", baseName, Instant.now().toEpochMilli());
+        return String.format("%s_%d_ABCDEFGHIJKLMNOP", baseName, Instant.now().toEpochMilli()).substring(0, 20);
     }
 
     public static void deleteParticipantData(int participantDataId) {

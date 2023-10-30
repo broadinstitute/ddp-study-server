@@ -22,6 +22,8 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -79,6 +81,9 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
             + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
+
+    public static final String SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD =
+            "SELECT onc.* FROM ddp_onc_history_detail onc WHERE medical_record_id = ?";
 
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
@@ -426,7 +431,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of oncHistories ", results.resultException);
+            throw new DsmInternalError(String.format("Couldn't get list of oncHistories with queryAddition '%s' and for realm %s", queryAddition, realm), results.resultException);
         }
 
         logger.info("Got " + oncHistory.size() + " participants oncHistories in DSM DB for " + realm);
@@ -435,15 +440,33 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm,
                                                                                            List<String> participantIds) {
+        logger.info("Getting onc histories for participants {}", String.join(", ", participantIds));
         String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
         return getOncHistoryDetails(realm, queryAddition);
     }
 
-    public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+    public static List<OncHistoryDetailDto> getOncHistoryDetailByMedicalRecord(int medicalRecordId) {
+        return inTransaction(conn -> {
+            List<OncHistoryDetailDto> records = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD)) {
+                stmt.setInt(1, medicalRecordId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto builder = new OncHistoryDetailDaoImpl.BuildOncHistoryDetailDto();
+                    while (rs.next()) {
+                        records.add(builder.build(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting onc history detail for medical record ID=" + medicalRecordId, e);
+            }
+            return records;
+        });
+    }
+
+    public static int createOncHistoryDetail(@NonNull int medicalRecordId, @NonNull String changedBy) {
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, medicalRecordId);
+                stmt.setInt(1, medicalRecordId);
                 stmt.setString(2, OncHistoryDetail.STATUS_REVIEW);
                 stmt.setLong(3, System.currentTimeMillis());
                 stmt.setString(4, changedBy);
@@ -451,30 +474,18 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            String oncHistoryDetailId = rs.getString(1);
-                            logger.info("Added new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId);
-                            dbVals.resultValue = oncHistoryDetailId;
+                            int id = rs.getInt(1);
+                            logger.info("Added new oncHistoryDetail (ID={}) for medicalRecord {}", id, medicalRecordId);
+                            return id;
                         }
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new institution ", e);
                     }
-                } else {
-                    throw new RuntimeException(
-                            "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result
-                                    + " rows");
                 }
+                throw new DsmInternalError(String.format("Error creating ddp_onc_history_detail for medical record %d: "
+                        + "result key not present", medicalRecordId));
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError("Error creating ddp_onc_history_detail for medical record " + medicalRecordId);
             }
-            return dbVals;
         });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
-                    results.resultException);
-        } else {
-            return (String) results.resultValue;
-        }
     }
 
     /**
@@ -559,14 +570,8 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         return mrId.intValue();
     }
 
-    // TODO: temporary hack until ES test containers are available
     public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
                                                @NonNull String user) {
-        updateDestructionPolicy(policy, facility, realm, user, true);
-    }
-
-    public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
-                                               @NonNull String user, boolean updateElastic) {
         DDPInstanceDto ddpInstance = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm).orElseThrow(() ->
                 new DSMBadRequestException("Invalid realm : " + realm));
 
@@ -583,9 +588,9 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             }
         });
 
-        if (updateElastic && updateCnt > 0) {
+        if (updateCnt > 0) {
             String index = ddpInstance.getEsParticipantIndex();
-            
+
             String scriptText = String.format("if (ctx._source.dsm.oncHistoryDetail != null) "
                     + "{for (a in ctx._source.dsm.oncHistoryDetail) "
                     + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}}", facility, policy);

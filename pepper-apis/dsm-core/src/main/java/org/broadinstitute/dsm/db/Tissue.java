@@ -25,6 +25,7 @@ import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.db.structure.UniqueField;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -322,8 +323,8 @@ public class Tissue {
                 default:
                     logger.error("Unknown type");
             }
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException e) {
+            throw new DsmInternalError("Error setting type for smId with id: " + tissueSmId.getSmIdPk(), e);
         }
     }
 

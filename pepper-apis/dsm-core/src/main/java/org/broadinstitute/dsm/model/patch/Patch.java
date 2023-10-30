@@ -159,7 +159,7 @@ public class Patch {
                 stmt.setString(4, id);
                 int result = stmt.executeUpdate();
                 if (result == 1) {
-                    logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
+                    logger.info("Updated {} value in table {}, record ID={}", nameValue.getName(), dbElement.getTableName(), id);
                 } else {
                     throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
                             nameValue.getValue(), dbElement.getPrimaryKey(), id) + ": " + result + " rows updated");

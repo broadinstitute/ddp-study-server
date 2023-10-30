@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.gbf;
 
-import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -85,7 +84,6 @@ public class GBFOrderFinder {
 
     // Prints out orders, but does not order them
     public static void main(String[] args) {
-        RestHighLevelClient esClient = null;
         String dbUrl = args[0];
         String esUser = args[1];
         String esPassword = args[2];
@@ -95,14 +93,9 @@ public class GBFOrderFinder {
         int maxConnections = cfg.getInt("portal.maxConnections");
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
-        try {
-            esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUser, esPassword);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not initialize es client", e);
-        }
+        RestHighLevelClient esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUser, esPassword);
         GBFOrderFinder orderFinder = new GBFOrderFinder(numDays, 10000, esClient,
                 "participants_structured.testboston.testboston");
-
 
         TransactionWrapper.inTransaction(conn -> {
             Collection<SimpleKitOrder> kits = orderFinder.findKitsToOrder("testboston", conn);

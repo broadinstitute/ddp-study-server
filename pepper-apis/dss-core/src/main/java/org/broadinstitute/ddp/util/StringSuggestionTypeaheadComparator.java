@@ -28,14 +28,14 @@ public class StringSuggestionTypeaheadComparator implements Comparator<String> {
         String string1Name = string1.toUpperCase();
         String string2Name = string2.toUpperCase();
         boolean string1StartsWithSearchTerm = string1Name.startsWith(searchTerm);
-        boolean string2StartsWithSearchTearm = string2Name.startsWith(searchTerm);
+        boolean string2StartsWithSearchTerm = string2Name.startsWith(searchTerm);
 
         // bias search results so that matches at the start of the name are favored
-        if (string1StartsWithSearchTerm && string2StartsWithSearchTearm) {
+        if (string1StartsWithSearchTerm && string2StartsWithSearchTerm) {
             return string1Name.compareTo(string2Name);
         } else if (string1StartsWithSearchTerm) {
             return -1;
-        } else if (string2StartsWithSearchTearm) {
+        } else if (string2StartsWithSearchTerm) {
             return 1;
         } else {
             // if the search is not at the start of the term, prefer hits that are at start of words

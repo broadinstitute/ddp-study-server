@@ -185,6 +185,7 @@ public class ParticipantWrapper {
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.MEDICAL_RECORD, ddpInstanceId);
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.ONC_HISTORY_DETAIL, ddpInstanceId);
             filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.SOMATIC_RESULT_UPLOAD, ddpInstanceId);
+            filterData((Map<String, List<Map<String, Object>>>) dsmObject, ESObjectConstants.CLINICAL_ORDER, ddpInstanceId);
         }
         dataAsMap.size();
     }
@@ -341,7 +342,7 @@ public class ParticipantWrapper {
 
     private void mapTissueToProperOncHistoryDetail(List<OncHistoryDetail> oncHistoryDetails, List<Tissue> tissues) {
         for (Tissue tissue : tissues) {
-            long oncHistoryDetailId = tissue.getOncHistoryDetailId();
+            int oncHistoryDetailId = tissue.getOncHistoryDetailId();
             oncHistoryDetails.stream().filter(oncHistoryDetail -> oncHistoryDetail.getOncHistoryDetailId() == oncHistoryDetailId)
                     .findFirst().ifPresent(oncHistoryDetail -> oncHistoryDetail.getTissues().add(tissue));
         }
