@@ -60,9 +60,6 @@ import org.slf4j.LoggerFactory;
 @Setter
 public class ElasticSearch implements ElasticSearchable {
 
-    // todo arz review https://github.com/broadinstitute/ddp-study-server/pull/2699#discussion_r1355940446
-    // and add links
-
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearch.class);
     private Deserializer deserializer;
     private SortBuilder sortBy;
