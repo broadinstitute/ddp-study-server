@@ -29,7 +29,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
 
 
     @VisibleForTesting
-    abstract boolean setDefaultData();
+    protected abstract boolean setDefaultData();
 
     @Override
     public boolean generateDefaults(String studyGuid, String participantId) {

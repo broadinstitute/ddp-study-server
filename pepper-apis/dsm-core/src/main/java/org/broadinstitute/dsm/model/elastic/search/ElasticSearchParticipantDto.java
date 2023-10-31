@@ -34,8 +34,7 @@ public class ElasticSearchParticipantDto {
     private List<Map<String, Object>> workflows;
     private String status;
     private Dsm dsm;
-    private String queriedParticipantId; // optional, used for troubleshooting to report
-    // the participant id that was queried
+    private String queriedParticipantId;
     @Getter
     private String ddp;
 

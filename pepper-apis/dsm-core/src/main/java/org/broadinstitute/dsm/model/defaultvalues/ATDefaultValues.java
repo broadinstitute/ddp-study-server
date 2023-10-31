@@ -42,7 +42,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     private Dao dataAccess;
 
     @Override
-    boolean setDefaultData() {
+    protected boolean setDefaultData() {
         if (isParticipantDataNotInES()) {
             throw new ESMissingParticipantDataException(
                     String.format("Participant %s does not yet have profile and activities in ES",

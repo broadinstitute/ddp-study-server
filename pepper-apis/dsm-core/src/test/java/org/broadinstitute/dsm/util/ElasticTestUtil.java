@@ -93,8 +93,8 @@ public class ElasticTestUtil {
     }
 
     /**
-     * Updates the mappings for the index.  When creating an index for the first time,
-     * query it from an existing elastic instance by running a command like this
+     * Updates the mappings for the index.  See {@link #createIndex(String, String, String)}
+     * for guidance on how to create a test index.
      */
     public static void updateMapping(String esIndex, String mappingJson) {
         PutMappingRequest putMappingRequest = new PutMappingRequest(esIndex);
