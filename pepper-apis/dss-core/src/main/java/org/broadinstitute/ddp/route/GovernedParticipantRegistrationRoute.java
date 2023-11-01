@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import java.time.ZoneId;
+import java.util.Optional;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,7 @@ import org.jdbi.v3.core.Handle;
 import spark.Request;
 import spark.Response;
 
+
 @Slf4j
 @AllArgsConstructor
 public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRoute<GovernedUserRegistrationPayload> {
@@ -70,6 +72,15 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
                     .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
             log.info("Created governed user with guid {} and granted access to study {} for proxy {}",
                     governedUser.getGuid(), studyGuid, operatorUser.getGuid());
+
+            String preferredLanguageCode = payload.getLanguageCode();
+            if (preferredLanguageCode == null) {
+                var profileDao = handle.attach(UserProfileDao.class);
+                //try to get Operator/Proxy users preferred language code
+                UserProfile userProfile = profileDao.findProfileByUserGuid(operatorUser.getGuid()).orElse(null);
+                preferredLanguageCode = userProfile != null ? userProfile.getPreferredLangCode() : preferredLanguageCode;
+                payload.setLanguageCode(preferredLanguageCode);
+            }
 
             initializeProfile(handle, governedUser, studyGuid, payload);
 
