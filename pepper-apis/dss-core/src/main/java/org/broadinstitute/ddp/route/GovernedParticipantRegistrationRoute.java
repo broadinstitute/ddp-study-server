@@ -75,6 +75,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
 
             String preferredLanguageCode = payload.getLanguageCode();
             if (preferredLanguageCode == null) {
+                log.info("setting operator: {} preferred language for governed user: {}", operatorUser.getHruid(), governedUser.getHruid());
                 var profileDao = handle.attach(UserProfileDao.class);
                 //try to get Operator/Proxy users preferred language code
                 UserProfile userProfile = profileDao.findProfileByUserGuid(operatorUser.getGuid()).orElse(null);
