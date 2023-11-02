@@ -1,8 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import java.time.ZoneId;
-import java.util.Optional;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +37,8 @@ import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import spark.Request;
 import spark.Response;
+
+import java.time.ZoneId;
 
 
 @Slf4j
