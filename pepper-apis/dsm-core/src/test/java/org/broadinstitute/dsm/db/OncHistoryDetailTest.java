@@ -36,7 +36,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void setup() throws Exception {
         instanceName = "onchistorydetailtest";
-        esIndex = ElasticTestUtil.createIndexWithMappings(instanceName, "elastic/lmsMappings.json");
+        esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, instanceName, esIndex);
     }
 
