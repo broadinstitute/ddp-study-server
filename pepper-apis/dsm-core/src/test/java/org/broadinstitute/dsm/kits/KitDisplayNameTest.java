@@ -34,8 +34,8 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     public void testKitWithDisplayName(){
         NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("kit_test_instance", DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
-        JuniperKitRequest juniperTestKit = TestKitUtil.generateKitRequestJson();
-        TestKitUtil.createNonPepperTestKit(juniperTestKit, nonPepperKitCreationService, ddpInstance);
+        JuniperKitRequest juniperTestKit = testKitUtil.generateKitRequestJson();
+        testKitUtil.createNonPepperTestKit(juniperTestKit, nonPepperKitCreationService, ddpInstance);
         List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm("kit_test_instance", "overview", KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME);
         Assert.assertEquals(1, kits.size());
         Assert.assertEquals(KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kits.get(0).getKitTypeName());

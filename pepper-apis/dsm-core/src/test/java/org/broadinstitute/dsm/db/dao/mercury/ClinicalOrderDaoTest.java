@@ -97,7 +97,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         userId = TestKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
         ParticipantDto participantDto =
-                new ParticipantDto.Builder(Integer.parseInt(TestKitUtil.ddpInstanceId), System.currentTimeMillis())
+                new ParticipantDto.Builder(Integer.parseInt(testKitUtil.ddpInstanceId), System.currentTimeMillis())
                         .withDdpParticipantId(ddpParticipantId)
                         .withLastVersion(0)
                         .withLastVersionDate("")
@@ -165,7 +165,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String order1Barcode = "testtestBarcode";
 
         MercuryOrderDto orderDto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order1Barcode,
-                Integer.parseInt(TestKitUtil.kitTypeId),
+                Integer.parseInt(testKitUtil.kitTypeId),
                 TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueId), null);
         orderDto.setOrderId(order1Barcode);
         int createdOrderId = mercuryOrderDao.create(orderDto, null);
@@ -194,7 +194,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
         String order1Barcode = "TestBarcode1";
         MercuryOrderDto orderDto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order1Barcode,
-                Integer.parseInt(TestKitUtil.kitTypeId),
+                Integer.parseInt(testKitUtil.kitTypeId),
                 TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
         orderDto.setOrderId(order1Barcode);
         int createdOrderId = mercuryOrderDao.create(orderDto, null);
@@ -204,7 +204,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
         String order2Barcode = "TestBarcode2";
         MercuryOrderDto order2Dto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order2Barcode,
-                Integer.parseInt(TestKitUtil.kitTypeId),
+                Integer.parseInt(testKitUtil.kitTypeId),
                 TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
         order2Dto.setOrderId(order2Barcode);
         int createdOrderId2 = mercuryOrderDao.create(orderDto, null);
@@ -262,6 +262,6 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         participantDao.delete(participantId);
         log.info("Deleted participant {}", participantId);
 
-        TestKitUtil.deleteInstanceAndSettings();
+        testKitUtil.deleteInstanceAndSettings();
     }
 }

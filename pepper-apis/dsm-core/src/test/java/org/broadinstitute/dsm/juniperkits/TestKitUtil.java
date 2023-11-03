@@ -79,35 +79,35 @@ public class TestKitUtil {
                     + " VALUES (?, ?, 1, ?, '') ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
     public static final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
-    public static String ddpGroupId;
-    public static String ddpInstanceId;
-    public static String ddpInstanceGroupId;
-    public static String instanceRoleId;
-    public static String ddpInstanceRoleId;
-    static List<String> createdKitIds = new ArrayList<>();
-    public static String kitTypeId;
-    private static String kitDimensionId;
-    private static String kitReturnId;
-    private static String carrierId;
-    private static String ddpKitRequestSettingsId;
-    private static String instanceName;
-    private static String groupName;
-    private static String kitTypeName;
-    private static String studyGuid;
-    private static String collaboratorPrefix;
-    private static String userWithKitShippingAccess;
+    public String ddpGroupId;
+    public String ddpInstanceId;
+    public String ddpInstanceGroupId;
+    public String instanceRoleId;
+    public String ddpInstanceRoleId;
+    List<String> createdKitIds = new ArrayList<>();
+    public String kitTypeId;
+    private String kitDimensionId;
+    private String kitReturnId;
+    private String carrierId;
+    private String ddpKitRequestSettingsId;
+    private String instanceName;
+    private  String groupName;
+    private String kitTypeName;
+    private  String studyGuid;
+    private String collaboratorPrefix;
+    private String userWithKitShippingAccess;
     @Getter
     @Mock
-    static EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
+    EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
     @Mock
-    static Address mockEasyPostAddress = mock(Address.class);
+    Address mockEasyPostAddress = mock(Address.class);
     @Mock static  Shipment mockEasyPostShipment = mock(Shipment.class);
     @Mock
-    static Parcel mockEasyPostParcel = mock(Parcel.class);
+    Parcel mockEasyPostParcel = mock(Parcel.class);
     @Mock
-    static PostageLabel mockParticipantLabel = mock(PostageLabel.class);
+    PostageLabel mockParticipantLabel = mock(PostageLabel.class);
     @Mock
-    static Tracker mockShipmentTracker = mock(Tracker.class);
+    Tracker mockShipmentTracker = mock(Tracker.class);
 
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
                                   String kitTypeName) {
@@ -118,7 +118,7 @@ public class TestKitUtil {
         this.kitTypeName = kitTypeName;
     }
 
-    public static void deleteInstanceAndSettings() {
+    public void deleteInstanceAndSettings() {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
@@ -139,7 +139,7 @@ public class TestKitUtil {
 
     }
 
-    public static void deleteSubKitSettings(String[] subKitSettingIds) {
+    public void deleteSubKitSettings(String[] subKitSettingIds) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             for (String subkitSettingId : subKitSettingIds) {
@@ -154,7 +154,7 @@ public class TestKitUtil {
         });
     }
 
-    private static void delete(Connection conn, String tableName, String primaryColumn, String id) {
+    private void delete(Connection conn, String tableName, String primaryColumn, String id) {
         try (PreparedStatement stmt = conn.prepareStatement("DELETE from " + tableName + " WHERE " + primaryColumn + " = ? ;")) {
             stmt.setString(1, id);
             try {
@@ -166,14 +166,14 @@ public class TestKitUtil {
             throw new RuntimeException("Error deleting ", ex);
         }
     }
-    private static void delete(Connection conn, String tableName, String primaryColumn, List<String> ids) {
+    private void delete(Connection conn, String tableName, String primaryColumn, List<String> ids) {
         for(String id: ids){
             delete(conn, tableName, primaryColumn, id);
         }
 
     }
 
-    public static void deleteKit(String ddpKitRequestId) {
+    public void deleteKit(String ddpKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             List<String> dsmKitRequestId = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
@@ -202,7 +202,7 @@ public class TestKitUtil {
         });
     }
 
-    public static void deleteKitsArray() {
+    public void deleteKitsArray() {
         for (String kitId : createdKitIds) {
             try {
                 deleteKit(kitId);
@@ -215,7 +215,7 @@ public class TestKitUtil {
 
     }
 
-    private static String getPrimaryKey(ResultSet rs, String table) throws SQLException {
+    private String getPrimaryKey(ResultSet rs, String table) throws SQLException {
         if (rs.next()) {
             return rs.getString(1);
         } else {
@@ -224,7 +224,7 @@ public class TestKitUtil {
         }
     }
 
-    private static String generateUserEmail() {
+    private String generateUserEmail() {
         return "Test-" + System.currentTimeMillis() + "@broad.dev";
     }
     public void setupInstanceAndSettings() {
@@ -414,7 +414,7 @@ public class TestKitUtil {
      * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
      ***/
 
-    public static void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
+    public void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
                                        DDPInstance ddpInstance) {
         createdKitIds.add(juniperTestKitRequest.getJuniperKitId());
         when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
@@ -456,7 +456,7 @@ public class TestKitUtil {
                 collaboratorPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID() + "_" + kitTypeName);
     }
 
-    public static JuniperKitRequest generateKitRequestJson(){
+    public JuniperKitRequest generateKitRequestJson(){
         String participantId = "TEST_PARTICIPANT";
 
         String json = "{ \"firstName\":\"P\","
