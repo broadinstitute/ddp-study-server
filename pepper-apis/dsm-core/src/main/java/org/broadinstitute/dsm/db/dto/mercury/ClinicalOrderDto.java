@@ -37,6 +37,8 @@ public class ClinicalOrderDto {
     @SerializedName("sampleType")
     String sampleType;
 
+    int mercurySequencingId;
+
     /**
      * Create a new one from the given result set
      */
@@ -46,7 +48,8 @@ public class ClinicalOrderDto {
                 rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID),
                         rs.getString(DBConstants.MERCURY_ORDER_ID), rs.getString(DBConstants.MERCURY_ORDER_STATUS),
                 rs.getLong(DBConstants.MERCURY_ORDER_DATE), rs.getLong(DBConstants.MERCURY_STATUS_DATE),
-                rs.getString(DBConstants.MERCURY_STATUS_DETAIL), rs.getString(DBConstants.MERCURY_SAMPLE_TYPE));
+                rs.getString(DBConstants.MERCURY_STATUS_DETAIL), rs.getString(DBConstants.MERCURY_SAMPLE_TYPE),
+                rs.getInt(DBConstants.MERCURY_SEQUENCING_ID));
     }
 
 }

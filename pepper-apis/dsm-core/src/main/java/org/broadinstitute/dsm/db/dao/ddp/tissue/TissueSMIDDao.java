@@ -13,6 +13,8 @@ import java.util.Map;
 
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -48,6 +50,10 @@ public class TissueSMIDDao {
                     + "LEFT JOIN ddp_participant as p ON (p.participant_id = ins.participant_id) "
                     + "LEFT JOIN ddp_instance as realm ON (realm.ddp_instance_id = p.ddp_instance_id) "
                     + "WHERE realm.instance_name = ?";
+
+    private static final String DELETE_SM_ID = "delete from sm_id where tissue_id = ?";
+
+    private static final String DELETE_TISSUE = "delete from ddp_tissue where tissue_id = ?";
 
     public String getTypeForName(String type) {
         SimpleResult results = inTransaction((conn) -> {
@@ -107,6 +113,22 @@ public class TissueSMIDDao {
             throw new RuntimeException("Error adding new sm id for tissue w/ id " + tissueId, results.resultException);
         } else {
             return (String) results.resultValue;
+        }
+    }
+
+    /**
+     * Deletes the tissue and smid
+     */
+    public void deleteTissueAndSmId(int tissueId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            DaoUtil.deleteSingleRowById(tissueId, DELETE_SM_ID);
+            DaoUtil.deleteSingleRowById(tissueId, DELETE_TISSUE);
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Could not delete tissue/smid " + tissueId, results.resultException);
         }
     }
 

@@ -23,12 +23,12 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
 
     public static final String GET_ORDERS_BY_TISSUE_IDS =
             "SELECT t.collaborator_sample_id,m.order_id,m.order_status,m.order_date,m.status_date,m.status_detail,"
-            + "st.sm_id_type,t.tissue_id,st.sm_id_type as sample_type\n"
+            + "st.sm_id_type,t.tissue_id,st.sm_id_type as sample_type,m.mercury_sequencing_id\n"
             + "FROM ddp_mercury_sequencing m, ddp_tissue t , sm_id s, sm_id_type st\n"
             + "where t.tissue_id = m.tissue_id\n"
             + "and s.tissue_id = t.tissue_id\n"
             + "and s.sm_id_type_id = st.sm_id_type_id\n"
-            + "and t.tissue_id in (:list:)";
+            + "and t.tissue_id in (:list:)"; // will be replaced with actual params
 
     public static String SQL_GET_ALL_ORDERS_FOR_CLINICAL_KIT_PAGE = "select ms.order_id, ms.ddp_participant_id, "
             + "IFNULL(t.collaborator_sample_id, kit.bsp_collaborator_sample_id) as collaborator_sample_id, order_date, order_status, "
@@ -80,7 +80,8 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                                     rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.MERCURY_ORDER_ID),
                                     rs.getString(DBConstants.MERCURY_ORDER_STATUS), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
                                     rs.getLong(DBConstants.MERCURY_STATUS_DATE), rs.getString(DBConstants.MERCURY_STATUS_DETAIL),
-                                    rs.getString(DBConstants.MERCURY_SAMPLE_TYPE)
+                                    rs.getString(DBConstants.MERCURY_SAMPLE_TYPE),
+                                    rs.getInt(DBConstants.MERCURY_SEQUENCING_ID)
                             );
                             map.put(key, clinicalOrderDto);
                             if (!COMPLETED_ORDER_STATUS.equals(clinicalOrderDto.getStatusDetail())) {
@@ -179,10 +180,10 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult result = new SimpleResult();
-            String query = GET_ORDERS_BY_TISSUE_IDS.replace(":list:", StringUtils.repeat("?", (tissueIds.size())));
+            String query = GET_ORDERS_BY_TISSUE_IDS.replace(":list:", StringUtils.repeat("?,", (tissueIds.size())));
+            query = query.replace("?,)", "?)");
 
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    GET_ORDERS_BY_TISSUE_IDS.replace(":list:", StringUtils.repeat("?", (tissueIds.size()))))) {
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 for (int inListIndex = 0; inListIndex < tissueIds.size(); inListIndex++) {
                     stmt.setInt(inListIndex + 1, tissueIds.get(inListIndex));
                 }
@@ -204,7 +205,8 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                     }
                 }
                 for (Map.Entry<Integer, Collection<ClinicalOrderDto>> ordersForTissue : ordersByTissueId.entrySet()) {
-                    log.info("Found {} orders for tissue {}", ordersForTissue.getValue(), ordersForTissue.getValue());
+                    log.info("Found {} orders for tissue {}",
+                            ordersForTissue.getValue().size(), ordersForTissue.getKey());
                 }
                 result.resultValue = ordersByTissueId;
             } catch (SQLException e) {

@@ -260,8 +260,9 @@ public class Tissue {
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            logger.info("Created new tissue for oncHistoryDetail w/ id " + oncHistoryId);
-                            dbVals.resultValue = rs.getString(1);
+                            int createdTissueId = rs.getInt(1);
+                            logger.info("Created new tissue {} for oncHistoryDetail {}", createdTissueId, oncHistoryId);
+                            dbVals.resultValue = Integer.toString(createdTissueId);
                         }
                     } catch (Exception e) {
                         throw new RuntimeException("Error getting id of new tissue ", e);

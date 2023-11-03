@@ -24,9 +24,9 @@ public class ComparisonTest {
 
         ArrayList<ClinicalOrderDto> clinicalOrderDtoArrayList = new ArrayList<>();
         clinicalOrderDtoArrayList.add(new ClinicalOrderDto("FAKE_SHORT_ID", "FAKE_SAMPLE", "FAKE_ORDER", "FAKE_STATUS",
-                1L, 1L, null, "FAKE_TYPE"));
+                1L, 1L, null, "FAKE_TYPE", 1));
         clinicalOrderDtoArrayList.add(new ClinicalOrderDto("FAKE_SHORT_ID_2", "FAKE_SAMPLE_2", "FAKE_ORDER_2", "FAKE_STATUS",
-                2L, 2L, null, "FAKE_TYPE"));
+                2L, 2L, null, "FAKE_TYPE", 2));
 
         List<ClinicalOrderDto> clinicalOrderDtoList = clinicalOrderDtoArrayList.stream()
                 .sorted(Comparator.comparingLong(ClinicalOrderDto::getOrderDate).reversed()).collect(Collectors.toList());
