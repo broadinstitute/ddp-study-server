@@ -217,4 +217,8 @@ public class ExistingRecordPatch extends BasePatch {
     protected String getIdForES() {
         return patch.getId();
     }
+
+    protected NotificationUtil getNotificationUtil() {
+        return this.notificationUtil;
+    }
 }

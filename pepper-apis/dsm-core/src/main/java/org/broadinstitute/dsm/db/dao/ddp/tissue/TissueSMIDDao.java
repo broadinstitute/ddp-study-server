@@ -13,6 +13,7 @@ import java.util.Map;
 
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ public class TissueSMIDDao {
                     + "LEFT JOIN ddp_participant as p ON (p.participant_id = ins.participant_id) "
                     + "LEFT JOIN ddp_instance as realm ON (realm.ddp_instance_id = p.ddp_instance_id) "
                     + "WHERE realm.instance_name = ?";
+
 
     public String getTypeForName(String type) {
         SimpleResult results = inTransaction((conn) -> {
@@ -249,9 +251,33 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
+            throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
         }
         logger.info("Got " + smIds.size() + " sequencing smIds in DSM DB for " + tissueId);
+        return smIds;
+    }
+
+    public static List<String> getSmIdPksForTissue(String tissueId) {
+        List<String> smIds = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SM_ID_BASED_ON_TISSUE_ID)) {
+                stmt.setString(1, tissueId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        smIds.add(rs.getString(DBConstants.SM_ID_PK));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
+        }
+        logger.info("Got %d smId pks in DSM DB for tissue with id %s", smIds.size() , tissueId);
         return smIds;
     }
 }

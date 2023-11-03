@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="PEPPER-1204_dsm_deleted_object_table" author="pegah">
+        <createTable tableName="deleted_object">
+            <column name="deleted_object_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="original_table" type="VARCHAR(200)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="original_primary_key" type="INT">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="data" type="text"></column>
+            <column name="deleted_by_email" type="VARCHAR(400)"></column>
+            <column name="deleted_by_user_id" type="INT">
+                <constraints nullable="false" foreignKeyName="deleted_object_deleted_by_user_id_fk"
+                             referencedTableName="access_user" referencedColumnNames="user_id"></constraints>
+            </column>
+            <column name="deleted_date" type="BIGINT"></column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

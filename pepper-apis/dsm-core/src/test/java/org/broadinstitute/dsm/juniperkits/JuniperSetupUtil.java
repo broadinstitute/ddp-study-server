@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.juniperkits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.TestHelper.notificationUtil;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
 
@@ -35,6 +34,7 @@ import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 /**
@@ -52,13 +52,6 @@ import org.broadinstitute.lddp.db.SimpleResult;
  */
 @Slf4j
 public class JuniperSetupUtil {
-    private static final String INSERT_JUNIPER_GROUP =
-            "INSERT INTO ddp_group (name) VALUES (?) ON DUPLICATE KEY UPDATE name = 'juniper test';";
-    private static final String INSERT_JUNIPER_INSTANCE =
-            "INSERT INTO ddp_instance (instance_name, study_guid, display_name, is_active, bsp_organism, "
-                    + " collaborator_id_prefix, auth0_token) VALUES (?, ?, ?, 1, 1, ?, 0) ON DUPLICATE KEY UPDATE auth0_token = 0;";
-    private static final String INSERT_DDP_INSTANCE_GROUP = "INSERT INTO ddp_instance_group (ddp_instance_id, ddp_group_id) "
-            + " VALUES (?, ?) ON DUPLICATE KEY UPDATE ddp_group_id = ?;";
     private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE instance_role_id = ?;";
@@ -73,7 +66,7 @@ public class JuniperSetupUtil {
             "INSERT INTO ddp_kit_request_settings (ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id) "
                     + " VALUES (?, ?, ?, ?, ?) ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id = ?";
-    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
+    private static final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     public static String ddpGroupId;
     public static String ddpInstanceId;
     public static String ddpInstanceGroupId;
@@ -91,6 +84,7 @@ public class JuniperSetupUtil {
     private static String collaboratorPrefix;
     private static String userWithKitShippingAccess;
 
+    private static NotificationUtil notificationUtil;
     public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix, String groupName) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
@@ -104,9 +98,9 @@ public class JuniperSetupUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                cmiAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
-                ddpInstanceId = String.valueOf(cmiAdminUtil.getDdpInstanceId());
-                ddpGroupId = String.valueOf(cmiAdminUtil.getStudyGroupId());
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
+                ddpInstanceId = String.valueOf(adminUtil.getDdpInstanceId());
+                ddpGroupId = String.valueOf(adminUtil.getStudyGroupId());
                 instanceRoleId = getInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
                 kitTypeId = getKitTypeId(conn);
@@ -114,10 +108,10 @@ public class JuniperSetupUtil {
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
                 ddpKitRequestSettingsId = createKitRequestSettingsInformation(conn);
-                cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
+                adminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
                         Arrays.asList(KIT_SHIPPING));
 
-                userWithKitShippingAccess = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                userWithKitShippingAccess = Integer.toString(adminUtil.createTestUser(generateUserEmail(),
                         Collections.singletonList(KIT_SHIPPING)));
             } catch (SQLException e) {
                 simpleResult.resultException = e;
@@ -142,7 +136,7 @@ public class JuniperSetupUtil {
                 delete(conn, "ddp_instance_group", "instance_group_id", ddpInstanceGroupId);
                 delete(conn, "ddp_instance", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "ddp_group", "group_id", ddpGroupId);
-                cmiAdminUtil.deleteGeneratedData();
+                adminUtil.deleteGeneratedData();
             } catch (Exception e) {
                 dbVals.resultException = e;
             }
@@ -338,33 +332,6 @@ public class JuniperSetupUtil {
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
         return getPrimaryKey(rs, "ddp_instance_role");
-    }
-
-    private String createDdpInstanceGroup(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(ddpInstanceGroupId)) {
-            return ddpInstanceGroupId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, ddpInstanceId);
-        stmt.setString(2, ddpGroupId);
-        stmt.setString(3, ddpGroupId);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "ddp_instance_group");
-    }
-
-    public String createDdpInstanceForJuniper(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(ddpInstanceId)) {
-            return ddpGroupId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_JUNIPER_INSTANCE, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, instanceName);
-        stmt.setString(2, studyGuid);
-        stmt.setString(3, displayName);
-        stmt.setString(4, collaboratorPrefix);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "ddp_instance");
     }
 
 }

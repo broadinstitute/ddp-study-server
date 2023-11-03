@@ -57,6 +57,7 @@ import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.UnsafeDeleteError;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -1082,6 +1083,13 @@ public class DSMServer {
         });
         exception(DsmInternalError.class, (exception, request, response) -> {
             logger.error("Internal error while processing request: {}: {}", request.url(), exception.toString());
+            exception.printStackTrace();
+            response.status(500);
+            response.body(exception.getMessage());
+        });
+        // todo not sure if this will remain in this ticket or not
+        exception(UnsafeDeleteError.class, (exception, request, response) -> {
+            logger.error("DSM is unable to delete the object {}",  exception.toString());
             exception.printStackTrace();
             response.status(500);
             response.body(exception.getMessage());

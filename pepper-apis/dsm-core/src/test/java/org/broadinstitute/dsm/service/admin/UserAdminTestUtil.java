@@ -5,7 +5,6 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.junit.Assert;
 
 /**
@@ -54,17 +53,7 @@ public class UserAdminTestUtil {
 
     private boolean initialized = false;
 
-    private static final String SQL_INSERT_DDP_INSTANCE =
-            "INSERT INTO ddp_instance SET instance_name = ?, study_guid=?, collaborator_id_prefix = ?, bsp_organism=1, is_active = 1, auth0_token = 1, migrated_ddp = 0";
-
-    private static final String SQL_INSERT_DDP_INSTANCE_GROUP =
-            "INSERT INTO ddp_instance_group SET ddp_instance_id = ?, ddp_group_id = ?";
-
-    private static final String SQL_DELETE_DDP_INSTANCE_GROUP =
-            "DELETE FROM ddp_instance_group WHERE ddp_instance_id = ?";
-
-    private static final String SQL_DELETE_DDP_INSTANCE =
-            "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
+    DdpInstanceGroupTestUtil ddpInstanceGroupTestUtil = new DdpInstanceGroupTestUtil();
 
 
     public UserAdminTestUtil() {}
@@ -74,9 +63,9 @@ public class UserAdminTestUtil {
      */
     public void deleteGeneratedData() {
         deleteStudyAdminAndRoles();
-        deleteInstanceGroup(ddpInstanceId);
+        ddpInstanceGroupTestUtil.deleteInstanceGroup(ddpInstanceId);
         ddpInstanceId = -1;
-        UserAdminService.deleteStudyGroup(studyGroupId);
+        ddpInstanceGroupTestUtil.deleteStudyGroup(studyGroupId);
         studyGroupId = -1;
     }
 
@@ -94,7 +83,8 @@ public class UserAdminTestUtil {
     }
 
     /**
-     * Initialize class and create a test DDP realm/instance and study group
+     * Checks if the instance is already initialized, if not
+     * initialize class and create a test DDP realm/instance and study group
      *
      * @param realmName          name of study realm that is not already in use
      * @param studyGuid          study guid of the new realm we are creating
@@ -102,12 +92,14 @@ public class UserAdminTestUtil {
      * @param studyGroup         name of study group that is not already in use to associate with realm
      */
     public void createRealmAndStudyGroup(@NonNull String realmName, String studyGuid, String collaboratorPrefix, String studyGroup) {
-        if (ddpInstanceId != -1 || studyGroupId != -1) {
-            throw new DsmInternalError("Realm and study group already initialized");
+        int ddpInstanceIdByRealm = ddpInstanceGroupTestUtil.getDdpInstanceId(realmName);
+        if (ddpInstanceIdByRealm != -1 || studyGroupId != -1) {
+           log.warn("Realm and/or study group already initialized, the realm id is {} and group id is {}", ddpInstanceIdByRealm, studyGroupId);
+           return;
         }
         initialize();
-        studyGroupId = UserAdminService.addStudyGroup(studyGroup);
-        ddpInstanceId = createInstanceGroup(realmName, studyGuid, collaboratorPrefix, studyGroupId);
+        studyGroupId = ddpInstanceGroupTestUtil.addStudyGroup(studyGroup);
+        ddpInstanceId = ddpInstanceGroupTestUtil.createInstanceGroup(realmName, studyGuid, collaboratorPrefix, studyGroupId);
     }
 
     /**
@@ -325,93 +317,6 @@ public class UserAdminTestUtil {
         });
     }
 
-    private static int createInstanceGroup(String instanceName, String studyGuid, String collaboratorPrefix, int studyGroupId) {
-        int instanceId = createInstance(instanceName, studyGuid, collaboratorPrefix);
-        SimpleResult res = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setInt(1, instanceId);
-                stmt.setInt(2, studyGroupId);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    dbVals.resultException = new DsmInternalError("Result count was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (res.resultException != null) {
-            try {
-                deleteInstance(instanceId);
-            } catch (Exception e) {
-                log.error("Failed to delete DDP instance {}", instanceId);
-            }
-            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
-        }
-        return instanceId;
-    }
-
-    private static int createInstance(String instanceName, String studyGuid, String collaboratorPrefix) {
-        SimpleResult res = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, instanceName);
-                stmt.setString(2, studyGuid);
-                stmt.setString(3, collaboratorPrefix);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    dbVals.resultException = new DsmInternalError("Result count was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (res.resultException != null) {
-            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
-        }
-        return (int) res.resultValue;
-    }
-
-    private static void deleteInstanceGroup(int instanceId) {
-        inTransaction(conn -> {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE_GROUP)) {
-                stmt.setInt(1, instanceId);
-                return stmt.executeUpdate();
-            } catch (SQLException ex) {
-                String msg = String.format("Error deleting DDP instance group: ddpInstanceId=%d", instanceId);
-                throw new DsmInternalError(msg, ex);
-            }
-        });
-
-        deleteInstance(instanceId);
-    }
-
-    private static void deleteInstance(int instanceId) {
-        inTransaction(conn -> {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE)) {
-                stmt.setInt(1, instanceId);
-                return stmt.executeUpdate();
-            } catch (SQLException ex) {
-                String msg = String.format("Error deleting DDP instance: ddpInstanceId=%d", instanceId);
-                throw new DsmInternalError(msg, ex);
-            }
-        });
-    }
-
     public int getStudyGroupId() {
         return studyGroupId;
     }
@@ -419,5 +324,6 @@ public class UserAdminTestUtil {
     public int getDdpInstanceId() {
         return ddpInstanceId;
     }
+
 
 }
