@@ -94,7 +94,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup, "SALIVA");
         testKitUtil.setupInstanceAndSettings();
 
-        userId = TestKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
+        userId = testKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
         ParticipantDto participantDto =
                 new ParticipantDto.Builder(Integer.parseInt(testKitUtil.ddpInstanceId), System.currentTimeMillis())
@@ -166,7 +166,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
         MercuryOrderDto orderDto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order1Barcode,
                 Integer.parseInt(testKitUtil.kitTypeId),
-                TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueId), null);
+                testKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueId), null);
         orderDto.setOrderId(order1Barcode);
         int createdOrderId = mercuryOrderDao.create(orderDto, null);
         ordersToDelete.add(createdOrderId);
@@ -195,7 +195,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String order1Barcode = "TestBarcode1";
         MercuryOrderDto orderDto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order1Barcode,
                 Integer.parseInt(testKitUtil.kitTypeId),
-                TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
+                testKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
         orderDto.setOrderId(order1Barcode);
         int createdOrderId = mercuryOrderDao.create(orderDto, null);
         orderDto.setMercurySequencingId(createdOrderId);
@@ -205,7 +205,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String order2Barcode = "TestBarcode2";
         MercuryOrderDto order2Dto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order2Barcode,
                 Integer.parseInt(testKitUtil.kitTypeId),
-                TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
+                testKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
         order2Dto.setOrderId(order2Barcode);
         int createdOrderId2 = mercuryOrderDao.create(orderDto, null);
         order2Dto.setMercurySequencingId(createdOrderId2);

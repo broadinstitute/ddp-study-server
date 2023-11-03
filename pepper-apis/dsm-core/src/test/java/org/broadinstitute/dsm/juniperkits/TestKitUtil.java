@@ -78,7 +78,7 @@ public class TestKitUtil {
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
-    public static final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
+    public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     public String ddpGroupId;
     public String ddpInstanceId;
     public String ddpInstanceGroupId;
