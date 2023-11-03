@@ -97,6 +97,12 @@ public class UserAdminService {
     private static final String SQL_DELETE_USER_ROLE =
             "DELETE FROM access_user_role_group WHERE user_id = ? AND role_id = ? AND group_id = ?";
 
+    private static final String SQL_INSERT_GROUP =
+            "INSERT INTO ddp_group SET name = ?";
+
+    private static final String SQL_DELETE_GROUP =
+            "DELETE FROM ddp_group WHERE group_id = ?";
+
     private static final String SQL_INSERT_GROUP_ROLE =
             "INSERT INTO ddp_group_role SET group_id = ?, role_id = ?, admin_role_id = ?";
 
@@ -913,6 +919,32 @@ public class UserAdminService {
         return res;
     }
 
+    protected static int addStudyGroup(String groupName) {
+        SimpleResult res = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_GROUP, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, groupName);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    dbVals.resultException = new DsmInternalError("Result count for addStudyGroup was " + result);
+                }
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (res.resultException != null) {
+            throw new DsmInternalError("Error adding study group " + groupName, res.resultException);
+        }
+        return (int) res.resultValue;
+    }
+
     protected static int deleteUserRole(int userId, int roleId, int groupId) {
         return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_ROLE)) {
@@ -947,6 +979,18 @@ public class UserAdminService {
                 return stmt.executeUpdate();
             } catch (SQLException ex) {
                 String msg = String.format("Error deleting group role: groupRoleId=%d", groupRoleId);
+                throw new DsmInternalError(msg, ex);
+            }
+        });
+    }
+
+    protected static int deleteStudyGroup(int groupId) {
+        return inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_GROUP)) {
+                stmt.setInt(1, groupId);
+                return stmt.executeUpdate();
+            } catch (SQLException ex) {
+                String msg = String.format("Error deleting study group: groupId=%d", groupId);
                 throw new DsmInternalError(msg, ex);
             }
         });
