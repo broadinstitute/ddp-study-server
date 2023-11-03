@@ -379,7 +379,7 @@ public class ElasticSearchUtil {
         if (totalHits != null && totalHits.value > 0) {
             sourceMap = hits.getAt(0).getSourceAsMap();
         }
-        return new ElasticSearch().parseSourceMap(sourceMap);
+        return new ElasticSearch().parseSourceMap(sourceMap, id);
     }
 
     public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstance instance, @NonNull String filter) {
@@ -810,7 +810,7 @@ public class ElasticSearchUtil {
             Profile profile = null;
             if (response.getHits().getTotalHits().value > 0) {
                 Map<String, Object> source = response.getHits().getAt(0).getSourceAsMap();
-                profile = new ElasticSearch().parseSourceMap(source).getProfile().orElse(null);
+                profile = new ElasticSearch().parseSourceMap(source, guidOrAltPid).getProfile().orElse(null);
                 if (profile != null) {
                     logger.info("Found ES profile for participant, guid: {} altpid: {}", profile.getGuid(), profile.getLegacyAltPid());
                 }
