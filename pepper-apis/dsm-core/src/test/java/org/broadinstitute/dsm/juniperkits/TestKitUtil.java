@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
@@ -30,16 +29,13 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
-import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.junit.Assert;
 import org.mockito.Mock;
@@ -82,14 +78,14 @@ public class TestKitUtil {
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
-    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
+    public static final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     public static String ddpGroupId;
     public static String ddpInstanceId;
     public static String ddpInstanceGroupId;
     public static String instanceRoleId;
     public static String ddpInstanceRoleId;
     static List<String> createdKitIds = new ArrayList<>();
-    private static String kitTypeId;
+    public static String kitTypeId;
     private static String kitDimensionId;
     private static String kitReturnId;
     private static String carrierId;
@@ -134,7 +130,7 @@ public class TestKitUtil {
                 delete(conn, "ddp_instance_group", "instance_group_id", ddpInstanceGroupId);
                 delete(conn, "ddp_instance", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "ddp_group", "group_id", ddpGroupId);
-                cmiAdminUtil.deleteGeneratedData();
+                adminUtil.deleteGeneratedData();
             } catch (Exception e) {
                 dbVals.resultException = e;
             }
@@ -236,9 +232,9 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                cmiAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
-                ddpInstanceId = String.valueOf(cmiAdminUtil.getDdpInstanceId());
-                ddpGroupId = String.valueOf(cmiAdminUtil.getStudyGroupId());
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
+                ddpInstanceId = String.valueOf(adminUtil.getDdpInstanceId());
+                ddpGroupId = String.valueOf(adminUtil.getStudyGroupId());
                 instanceRoleId = getInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
                 kitTypeId = getKitTypeId(conn, kitTypeName, null, true);
@@ -246,10 +242,10 @@ public class TestKitUtil {
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
                 ddpKitRequestSettingsId = createKitRequestSettingsInformation(conn);
-                cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
+                adminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
                         Arrays.asList(KIT_SHIPPING));
 
-                userWithKitShippingAccess = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+                userWithKitShippingAccess = Integer.toString(adminUtil.createTestUser(generateUserEmail(),
                         Collections.singletonList(KIT_SHIPPING)));
             } catch (SQLException e) {
                 simpleResult.resultException = e;

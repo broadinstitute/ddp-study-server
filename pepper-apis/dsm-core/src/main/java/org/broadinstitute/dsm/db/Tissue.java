@@ -253,7 +253,7 @@ public class Tissue {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_TISSUE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, oncHistoryId);
+                stmt.setInt(1, Integer.parseInt(oncHistoryId));
                 stmt.setLong(2, System.currentTimeMillis());
                 stmt.setString(3, user);
                 int result = stmt.executeUpdate();
@@ -264,7 +264,7 @@ public class Tissue {
                             dbVals.resultValue = rs.getString(1);
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new institution ", e);
+                        throw new RuntimeException("Error getting id of new tissue ", e);
                     }
                 } else {
                     throw new RuntimeException(

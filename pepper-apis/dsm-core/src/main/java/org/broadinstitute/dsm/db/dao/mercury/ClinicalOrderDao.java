@@ -5,12 +5,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +13,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
 public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
+
+
+    public static final String GET_ORDERS_BY_TISSUE_IDS =
+            "SELECT t.collaborator_sample_id,m.order_id,m.order_status,m.order_date,m.status_date,m.status_detail,"
+            + "st.sm_id_type,t.tissue_id,st.sm_id_type as sample_type\n"
+            + "FROM ddp_mercury_sequencing m, ddp_tissue t , sm_id s, sm_id_type st\n"
+            + "where t.tissue_id = m.tissue_id\n"
+            + "and s.tissue_id = t.tissue_id\n"
+            + "and s.sm_id_type_id = st.sm_id_type_id\n"
+            + "and t.tissue_id in (:list:)";
 
     public static String SQL_GET_ALL_ORDERS_FOR_CLINICAL_KIT_PAGE = "select ms.order_id, ms.ddp_participant_id, "
             + "IFNULL(t.collaborator_sample_id, kit.bsp_collaborator_sample_id) as collaborator_sample_id, order_date, order_status, "
@@ -107,7 +113,6 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
 
     public Map<String, ArrayList<ClinicalOrder>> getOrdersForRealmMap(String realm) {
         HashMap<String, ArrayList<ClinicalOrder>> map = new HashMap<>();
-        ArrayList<ClinicalOrderDto> noStatusOrders = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_ALL_ORDERS_FOR_REALM)) {
@@ -146,7 +151,7 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
         return map;
     }
 
-    private String createShortIdFromCollaboratorSampleId(String collabSampleId) {
+    public static String createShortIdFromCollaboratorSampleId(String collabSampleId) {
         if (StringUtils.isBlank(collabSampleId)) {
             return "";
         }
@@ -157,5 +162,60 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
             return "";
         }
         return collabSampleId.substring(index1 + 1, index2);
+    }
+
+    /**
+     * Looks up all clinical orders for a list of tissue ids
+     * @param tissueIds a list of tissue primary key ids
+     * @return a map where the tissue id is the key and the value is a list of orders for that tissue
+     */
+    public Map<Integer, Collection<ClinicalOrderDto>> getClinicalOrdersForTissueIds(List<Integer> tissueIds) {
+        Map<Integer, Collection<ClinicalOrderDto>> ordersByTissueId = new HashMap<>();
+        // initialize the map to be returned
+        for (Integer tissueId : tissueIds) {
+            ordersByTissueId.put(tissueId, new ArrayList<>());
+        }
+        log.info("Looking up clinical orders for {}", StringUtils.join(tissueIds, ","));
+
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult result = new SimpleResult();
+            String query = GET_ORDERS_BY_TISSUE_IDS.replace(":list:", StringUtils.repeat("?", (tissueIds.size())));
+
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    GET_ORDERS_BY_TISSUE_IDS.replace(":list:", StringUtils.repeat("?", (tissueIds.size()))))) {
+                for (int inListIndex = 0; inListIndex < tissueIds.size(); inListIndex++) {
+                    stmt.setInt(inListIndex + 1, tissueIds.get(inListIndex));
+                }
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Integer existingTissueId = rs.getInt(DBConstants.TISSUE_ID);
+                        String existingOrderId = rs.getString(DBConstants.MERCURY_ORDER_ID);
+                        Collection<ClinicalOrderDto> ordersForTissue = ordersByTissueId.get(existingTissueId);
+                        boolean doesOrderForTissueExistAlready = false;
+                        for (ClinicalOrderDto existingOrderForTissue : ordersForTissue) {
+                            if (existingOrderForTissue.getOrderId().equals(existingOrderId)) {
+                                doesOrderForTissueExistAlready = true;
+                                break;
+                            }
+                        }
+                        if (!doesOrderForTissueExistAlready) {
+                            ordersForTissue.add(ClinicalOrderDto.fromResultSet(rs));
+                        }
+                    }
+                }
+                for (Map.Entry<Integer, Collection<ClinicalOrderDto>> ordersForTissue : ordersByTissueId.entrySet()) {
+                    log.info("Found {} orders for tissue {}", ordersForTissue.getValue(), ordersForTissue.getValue());
+                }
+                result.resultValue = ordersByTissueId;
+            } catch (SQLException e) {
+                result.resultException = e;
+            }
+            return result;
+        });
+        if (results.resultException != null) {
+            throw new DsmInternalError(String.format("Could not lookup orders for tissues %s",
+                    StringUtils.join(tissueIds, ",")), results.resultException);
+        }
+        return ordersByTissueId;
     }
 }
