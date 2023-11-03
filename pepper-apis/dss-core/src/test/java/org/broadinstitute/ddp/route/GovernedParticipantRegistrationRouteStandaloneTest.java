@@ -119,7 +119,7 @@ public class GovernedParticipantRegistrationRouteStandaloneTest extends Integrat
                 "Europe/Moscow");
 
         //no payload
-        GovernedUserRegistrationPayload payload3 = new GovernedUserRegistrationPayload(null, null, null, null);
+        GovernedUserRegistrationPayload payload3 = new GovernedUserRegistrationPayload(null, null, null, "Europe/Amsterdam");
 
         List<String> governedUserGuids = new ArrayList<>();
         String governedUser1Guid = postRequest(testData.getStudyGuid(), payload1)
@@ -174,7 +174,7 @@ public class GovernedParticipantRegistrationRouteStandaloneTest extends Integrat
         }
         assertTrue("Governed user is not found in the governances list", governedUserGuids.isEmpty());
 
-        verify(mockPublisher, times(2)).publish(any());
+        verify(mockPublisher, times(3)).publish(any());
     }
 
     private Response postRequest(String studyGuid, GovernedUserRegistrationPayload payload) {
