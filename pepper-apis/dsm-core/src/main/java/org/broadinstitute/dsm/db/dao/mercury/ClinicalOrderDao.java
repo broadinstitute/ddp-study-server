@@ -190,11 +190,11 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Integer existingTissueId = rs.getInt(DBConstants.TISSUE_ID);
-                        String existingOrderId = rs.getString(DBConstants.MERCURY_ORDER_ID);
+                        int existingOrderId = rs.getInt(DBConstants.MERCURY_SEQUENCING_ID);
                         Collection<ClinicalOrderDto> ordersForTissue = ordersByTissueId.get(existingTissueId);
                         boolean doesOrderForTissueExistAlready = false;
                         for (ClinicalOrderDto existingOrderForTissue : ordersForTissue) {
-                            if (existingOrderForTissue.getOrderId().equals(existingOrderId)) {
+                            if (existingOrderForTissue.getMercurySequencingId() == existingOrderId) {
                                 doesOrderForTissueExistAlready = true;
                                 break;
                             }

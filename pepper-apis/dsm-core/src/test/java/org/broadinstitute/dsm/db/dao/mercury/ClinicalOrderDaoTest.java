@@ -153,7 +153,6 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
     @Test
     public void testGetClinicalOrdersForTissuesWhenATissueHasOrders() {
         List<Integer> tissueIds = new ArrayList<>();
-        // todo arz why do we pass in a string for onc history id when it's an int?
         Integer tissueId = Integer.parseInt(tissueDao.createNewTissue(Integer.toString(oncHistoryDetailId), TEST_USER));
         tissueIds.add(tissueId);
         tissuesToDelete.add(tissueId);
@@ -178,7 +177,6 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         Assert.assertEquals(1, ordersByTissue.size());
         Assert.assertEquals(1, ordersByTissue.get(tissueId).size());
         Assert.assertEquals(orderDto.getOrderId(), ordersByTissue.get(tissueId).iterator().next().getOrderId());
-        // todo arz more assertions and check order state
 
     }
 
@@ -200,8 +198,9 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
                 TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
         orderDto.setOrderId(order1Barcode);
         int createdOrderId = mercuryOrderDao.create(orderDto, null);
+        orderDto.setMercurySequencingId(createdOrderId);
         ordersToDelete.add(createdOrderId);
-        log.info("Created order {} for tissue {} and sample {]", createdOrderId, tissueWithOrder, sampleWithOrder);
+        log.info("Created order {} for tissue {} and sample {}", createdOrderId, tissueWithOrder, sampleWithOrder);
 
         String order2Barcode = "TestBarcode2";
         MercuryOrderDto order2Dto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order2Barcode,
@@ -209,8 +208,9 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
                 TestKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
         order2Dto.setOrderId(order2Barcode);
         int createdOrderId2 = mercuryOrderDao.create(orderDto, null);
+        order2Dto.setMercurySequencingId(createdOrderId2);
         ordersToDelete.add(createdOrderId2);
-        log.info("Created order {} for tissue {} and sample {]", createdOrderId2, tissueWithOrder, sampleWithOrder);
+        log.info("Created order {} for tissue {} and sample {}", createdOrderId2, tissueWithOrder, sampleWithOrder);
 
         Integer tissueWithoutOrder = Integer.parseInt(tissueDao.createNewTissue(Integer.toString(oncHistoryDetailId), TEST_USER));
         tissueIds.add(tissueWithoutOrder);
@@ -230,10 +230,10 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         boolean foundOrder1 = false;
         boolean foundOrder2 = false;
         for (ClinicalOrderDto order : ordersByTissue.get(tissueWithOrder)) {
-            if (order.getOrderId().equals(order1Barcode)) {
+            if (order.getMercurySequencingId() == createdOrderId) {
                 foundOrder1 = true;
             }
-            if (order.getOrderId().equals(order2Barcode)) {
+            if (order.getMercurySequencingId() == createdOrderId2) {
                 foundOrder2 = true;
             }
         }
