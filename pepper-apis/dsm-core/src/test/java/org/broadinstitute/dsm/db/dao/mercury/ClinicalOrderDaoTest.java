@@ -88,8 +88,8 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
      */
     public static void setup() {
         String nameAppend = "." + System.currentTimeMillis();
-        studyInstanceName = "instance" + nameAppend;
-        String studyGroup = "ClinOrder" + nameAppend;
+        studyInstanceName = "ClinOrdTest" + nameAppend;
+        String studyGroup = "ClinOrdTest" + nameAppend;
 
         testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup, "SALIVA");
         testKitUtil.setupInstanceAndSettings();

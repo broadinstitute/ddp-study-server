@@ -127,7 +127,6 @@ public class RoutePath {
     public static final String ONC_HISTORY_ROUTE = "oncHistory";
     public static final String ONC_HISTORY_TEMPLATE_ROUTE = "oncHistory/template";
     public static final String SOMATIC_DOCUMENT_ROUTE = "somaticResults";
-    public static final String GET_CLINICAL_ORDERS_FOR_TISSUE_ROUTE = "getClinicalOrdersForTissue";
 
     public static final String SOMATIC_DOCUMENT_ID = "somaticDocumentId";
 
