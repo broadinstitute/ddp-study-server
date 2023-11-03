@@ -83,6 +83,11 @@ public class TissueDao implements Dao<Tissue> {
         return tissues;
     }
 
+    /***
+     *
+     * @param oncHistoryDetailId
+     * @return List of tissue Ids that all belong to the onc history with oncHistoryDetailId
+     */
     public static List<String> getTissuesByOncHistoryDetailId(String oncHistoryDetailId) {
         List<String> tissueIds = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {

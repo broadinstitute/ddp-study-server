@@ -257,6 +257,11 @@ public class TissueSMIDDao {
         return smIds;
     }
 
+    /** finds sm ids that belong to a tissue,
+     *
+      * @param tissueId
+     * @return a list of sm id primary keys
+     */
     public static List<String> getSmIdPksForTissue(String tissueId) {
         List<String> smIds = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {

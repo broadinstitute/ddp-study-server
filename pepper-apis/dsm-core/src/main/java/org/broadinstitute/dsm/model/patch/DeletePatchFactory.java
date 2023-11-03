@@ -56,6 +56,7 @@ public class DeletePatchFactory {
                 originalPatch.getTableAlias().equals(DBConstants.DDP_TISSUE_ALIAS);
     }
 
+    //creates a list of patches for deleting tissues that belong to an onc history
     private static List<Patch> getPatchForTissues(Patch oncHistoryPatch) {
         List<String> tissueIds = TissueDao.getTissuesByOncHistoryDetailId(oncHistoryPatch.getId());
         List<Patch> deletePatches = new ArrayList<>();
@@ -70,6 +71,7 @@ public class DeletePatchFactory {
         return deletePatches;
     }
 
+    //creates a list of patches for deleting the sm ids that belong to a tissue
     private static List<Patch> getPatchForSmIds(Patch tissuePatch) {
         List<String> smIds = TissueSMIDDao.getSmIdPksForTissue(tissuePatch.getId());
         List<Patch> deletePatches = new ArrayList<>();

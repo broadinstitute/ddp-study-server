@@ -14,7 +14,7 @@ public class DeletePatch extends ExistingRecordPatch {
     public DeletePatch(Patch patch, NotificationUtil notificationUtil, DeleteType deleteType) {
         super(patch, notificationUtil);
         this.dbElementBuilder = new DefaultDBElementBuilder();
-        // todo delete type can be used later instead of DBElement, since this is a delete and we want to make sure we only delete from specific tables
+        // todo deleteType can be used later instead of DBElement, since this is a delete and we want to make sure we only delete from specific tables
         this.deleteType = deleteType;
     }
 
@@ -24,7 +24,7 @@ public class DeletePatch extends ExistingRecordPatch {
         if (!isSafeToDelete() || !patch.isDeleteAnyway()) {
             throw new UnsafeDeleteError("This object is used in a clinical order");
         }
-        //recursively start by creating patches for children and
+        //recursively start by creating patches for "children" of the current
         DeletePatchFactory.deleteChildrenFields(this.patch, this.getNotificationUtil());
         return super.doPatch();
     }
