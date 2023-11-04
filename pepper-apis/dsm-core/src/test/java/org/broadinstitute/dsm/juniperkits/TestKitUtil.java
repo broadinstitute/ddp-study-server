@@ -79,6 +79,7 @@ public class TestKitUtil {
                     + " VALUES (?, ?, 1, ?, '') ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
     public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
+    private String kitTypeDisplayName;
     public Integer ddpGroupId;
     public Integer ddpInstanceId;
     public Integer ddpInstanceGroupId;
@@ -110,12 +111,13 @@ public class TestKitUtil {
     Tracker mockShipmentTracker = mock(Tracker.class);
 
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                                  String kitTypeName) {
+                                  String kitTypeName, String kitTypeDisplayName) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.collaboratorPrefix = collaboratorPrefix;
         this.groupName = groupName;
         this.kitTypeName = kitTypeName;
+        this.kitTypeDisplayName = kitTypeDisplayName;
     }
 
     public void deleteInstanceAndSettings() {
@@ -228,6 +230,7 @@ public class TestKitUtil {
     private String generateUserEmail() {
         return "Test-" + System.currentTimeMillis() + "@broad.dev";
     }
+
     public void setupInstanceAndSettings() {
         //everything should get inserted in one transaction
         SimpleResult results = inTransaction((conn) -> {
@@ -238,7 +241,7 @@ public class TestKitUtil {
                 ddpGroupId = adminUtil.getStudyGroupId();
                 instanceRoleId = getInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
-                kitTypeId = getKitTypeId(conn, kitTypeName, null, true);
+                kitTypeId = getKitTypeId(conn, kitTypeName, kitTypeDisplayName, true);
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
@@ -304,7 +307,8 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "kit_dimension");
     }
 
-    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit) throws SQLException {
+    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
+            throws SQLException {
         if (kitTypeId != null && isExistingKit) {
             return kitTypeId;
         }
@@ -319,7 +323,7 @@ public class TestKitUtil {
         }
         ResultSet rs = stmt.executeQuery();
         Integer kitTypeId = getPrimaryKey(rs, "kit_type");
-        if (kitTypeId != null) {
+        if (kitTypeId == null) {
             kitTypeId = createKitType(conn, kitTypeName, displayName);
         }
         return kitTypeId;
@@ -453,7 +457,7 @@ public class TestKitUtil {
                 collaboratorPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID() + "_" + kitTypeName);
     }
 
-    public JuniperKitRequest generateKitRequestJson(){
+    public JuniperKitRequest generateKitRequestJson() {
         String participantId = "TEST_PARTICIPANT";
 
         String json = "{ \"firstName\":\"P\","

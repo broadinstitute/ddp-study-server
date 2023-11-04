@@ -82,7 +82,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String studyGroup = "ClinOrdTest" + nameAppend;
 
         testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup,
-                "SALIVA");
+                "SALIVA", null);
         testKitUtil.setupInstanceAndSettings();
         userId = testKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
