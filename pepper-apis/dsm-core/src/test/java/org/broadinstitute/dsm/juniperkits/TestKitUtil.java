@@ -79,21 +79,21 @@ public class TestKitUtil {
                     + " VALUES (?, ?, 1, ?, '') ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
     public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
-    public String ddpGroupId;
-    public String ddpInstanceId;
-    public String ddpInstanceGroupId;
-    public String instanceRoleId;
-    public String ddpInstanceRoleId;
+    public Integer ddpGroupId;
+    public Integer ddpInstanceId;
+    public Integer ddpInstanceGroupId;
+    public Integer instanceRoleId;
+    public Integer ddpInstanceRoleId;
     List<String> createdKitIds = new ArrayList<>();
-    public String kitTypeId;
-    private String kitDimensionId;
-    private String kitReturnId;
-    private String carrierId;
-    private String ddpKitRequestSettingsId;
+    public Integer kitTypeId;
+    private Integer kitDimensionId;
+    private Integer kitReturnId;
+    private Integer carrierId;
+    private Integer ddpKitRequestSettingsId;
     private String instanceName;
-    private  String groupName;
+    private String groupName;
     private String kitTypeName;
-    private  String studyGuid;
+    private String studyGuid;
     private String collaboratorPrefix;
     private String userWithKitShippingAccess;
     @Getter
@@ -139,10 +139,10 @@ public class TestKitUtil {
 
     }
 
-    public void deleteSubKitSettings(String[] subKitSettingIds) {
+    public void deleteSubKitSettings(Integer[] subKitSettingIds) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            for (String subkitSettingId : subKitSettingIds) {
+            for (int subkitSettingId : subKitSettingIds) {
                 try {
                     delete(conn, "sub_kits_settings", "sub_kits_settings_id", subkitSettingId);
                 } catch (Exception e) {
@@ -154,9 +154,9 @@ public class TestKitUtil {
         });
     }
 
-    private void delete(Connection conn, String tableName, String primaryColumn, String id) {
+    private void delete(Connection conn, String tableName, String primaryColumn, int id) {
         try (PreparedStatement stmt = conn.prepareStatement("DELETE from " + tableName + " WHERE " + primaryColumn + " = ? ;")) {
-            stmt.setString(1, id);
+            stmt.setInt(1, id);
             try {
                 stmt.executeUpdate();
             } catch (SQLException e) {
@@ -166,8 +166,9 @@ public class TestKitUtil {
             throw new RuntimeException("Error deleting ", ex);
         }
     }
-    private void delete(Connection conn, String tableName, String primaryColumn, List<String> ids) {
-        for(String id: ids){
+
+    private void delete(Connection conn, String tableName, String primaryColumn, List<Integer> ids) {
+        for (int id: ids) {
             delete(conn, tableName, primaryColumn, id);
         }
 
@@ -175,12 +176,12 @@ public class TestKitUtil {
 
     public void deleteKit(String ddpKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
-            List<String> dsmKitRequestId = new ArrayList<>();
+            List<Integer> dsmKitRequestId = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
                 stmt.setString(1, ddpKitRequestId.concat("\\_%"));
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        dsmKitRequestId.add(rs.getString("dsm_kit_request_id"));
+                        dsmKitRequestId.add(rs.getInt("dsm_kit_request_id"));
                     }
                     if (dsmKitRequestId.isEmpty()) {
                         log.warn("Kit Not Found " + ddpKitRequestId);
@@ -215,9 +216,9 @@ public class TestKitUtil {
 
     }
 
-    private String getPrimaryKey(ResultSet rs, String table) throws SQLException {
+    private Integer getPrimaryKey(ResultSet rs, String table) throws SQLException {
         if (rs.next()) {
-            return rs.getString(1);
+            return rs.getInt(1);
         } else {
             log.error("Unable to set up data in {} , going to role back transaction", table);
             return null;
@@ -233,8 +234,8 @@ public class TestKitUtil {
             SimpleResult simpleResult = new SimpleResult();
             try {
                 adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
-                ddpInstanceId = String.valueOf(adminUtil.getDdpInstanceId());
-                ddpGroupId = String.valueOf(adminUtil.getStudyGroupId());
+                ddpInstanceId = adminUtil.getDdpInstanceId();
+                ddpGroupId = adminUtil.getStudyGroupId();
                 instanceRoleId = getInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
                 kitTypeId = getKitTypeId(conn, kitTypeName, null, true);
@@ -258,23 +259,23 @@ public class TestKitUtil {
         }
     }
 
-    private String createKitRequestSettingsInformation(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(ddpKitRequestSettingsId)) {
+    private Integer createKitRequestSettingsInformation(Connection conn) throws SQLException {
+        if (ddpKitRequestSettingsId != null) {
             return ddpKitRequestSettingsId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, ddpInstanceId);
-        stmt.setString(2, kitTypeId);
-        stmt.setString(3, kitReturnId);
-        stmt.setString(4, carrierId);
-        stmt.setString(5, kitDimensionId);
+        stmt.setInt(1, ddpInstanceId);
+        stmt.setInt(2, kitTypeId);
+        stmt.setInt(3, kitReturnId);
+        stmt.setInt(4, carrierId);
+        stmt.setInt(5, kitDimensionId);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
         return getPrimaryKey(rs, "ddp_kit_request_settings");
     }
 
-    private String createCarrierInformation(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(carrierId)) {
+    private Integer createCarrierInformation(Connection conn) throws SQLException {
+        if (carrierId != null) {
             return carrierId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_CARRIER, Statement.RETURN_GENERATED_KEYS);
@@ -283,8 +284,8 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "carrier_service");
     }
 
-    private String createKitReturnInformation(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(kitReturnId)) {
+    private Integer createKitReturnInformation(Connection conn) throws SQLException {
+        if (kitReturnId != null) {
             return kitReturnId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_RETURN, Statement.RETURN_GENERATED_KEYS);
@@ -293,8 +294,8 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "kit_return_information");
     }
 
-    private String createKitDimension(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(kitDimensionId)) {
+    private Integer createKitDimension(Connection conn) throws SQLException {
+        if (kitDimensionId != null) {
             return kitDimensionId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_DIMENSION, Statement.RETURN_GENERATED_KEYS);
@@ -303,12 +304,12 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "kit_dimension");
     }
 
-    private String getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit) throws SQLException {
-        if (StringUtils.isNotBlank(kitTypeId)&& isExistingKit) {
+    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit) throws SQLException {
+        if (kitTypeId != null && isExistingKit) {
             return kitTypeId;
         }
         String query = SELECT_KIT_TYPE_ID;
-        if (StringUtils.isNotBlank(displayName)){
+        if (StringUtils.isNotBlank(displayName)) {
             query = query.concat(SELECT_BY_DISPLAY_NAME);
         }
         PreparedStatement stmt = conn.prepareStatement(query);
@@ -317,14 +318,14 @@ public class TestKitUtil {
             stmt.setString(2, displayName);
         }
         ResultSet rs = stmt.executeQuery();
-        String kitTypeId = getPrimaryKey(rs, "kit_type");
-        if (StringUtils.isBlank(kitTypeId)) {
+        Integer kitTypeId = getPrimaryKey(rs, "kit_type");
+        if (kitTypeId != null) {
             kitTypeId = createKitType(conn, kitTypeName, displayName);
         }
         return kitTypeId;
     }
 
-    private String createKitType(Connection conn, String kitTypeName, String displayName) throws SQLException {
+    private Integer createKitType(Connection conn, String kitTypeName, String displayName) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TYPE_ID, Statement.RETURN_GENERATED_KEYS);
         stmt.setString(1, kitTypeName);
         if (displayName == null) {
@@ -334,11 +335,11 @@ public class TestKitUtil {
         }
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "instance_role");
+        return getPrimaryKey(rs, "kit_type");
     }
 
-    private String getInstanceRole(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(instanceRoleId)) {
+    private Integer getInstanceRole(Connection conn) throws SQLException {
+        if (instanceRoleId != null) {
             return instanceRoleId;
         }
         PreparedStatement stmt = conn.prepareStatement(SELECT_INSTANCE_ROLE);
@@ -346,35 +347,32 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "instance_role");
     }
 
-    private String createDdpInstanceRole(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(ddpInstanceRoleId)) {
+    private Integer createDdpInstanceRole(Connection conn) throws SQLException {
+        if (ddpInstanceRoleId != null) {
             return ddpInstanceRoleId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, ddpInstanceId);
-        stmt.setString(2, instanceRoleId);
-        stmt.setString(3, instanceRoleId);
+        stmt.setInt(1, ddpInstanceId);
+        stmt.setInt(2, instanceRoleId);
+        stmt.setInt(3, instanceRoleId);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
         return getPrimaryKey(rs, "ddp_instance_role");
     }
 
-    public String[] createSubKitsForTheStudy(String subkitName1, String subkitDisplayName1, int hideSample1, String subkitName2,
+    public Integer[] createSubKitsForTheStudy(String subkitName1, String subkitDisplayName1, int hideSample1, String subkitName2,
                                              String subkitDisplayName2, int hideSample2) {
-        String[] ids = new String[2];
-        String[] subKitIds = new String[2];
-        String subKitId2;
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult simpleResult = new SimpleResult();
+        Integer[] ids = new Integer[2];
+        Integer[] subKitIds = new Integer[2];
+        inTransaction((conn) -> {
             try {
                 subKitIds[0] = getKitTypeId(conn, subkitName1, subkitDisplayName1, false);
-            }catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             return null;
         });
-         results = inTransaction((conn) -> {
-            SimpleResult simpleResult = new SimpleResult();
+        inTransaction((conn) -> {
             try {
                 subKitIds[1] = getKitTypeId(conn, subkitName2, subkitDisplayName2, false);
 
@@ -383,8 +381,7 @@ public class TestKitUtil {
             }
             return null;
         });
-         results = inTransaction((conn) -> {
-            SimpleResult simpleResult = new SimpleResult();
+        inTransaction((conn) -> {
             try {
                 ids[0] = insertSubKitsSettingsForStudy(ddpKitRequestSettingsId, subKitIds[0], hideSample1, conn);
                 ids[1] = insertSubKitsSettingsForStudy(ddpKitRequestSettingsId, subKitIds[1], hideSample2, conn);
@@ -396,11 +393,11 @@ public class TestKitUtil {
         return ids;
     }
 
-    public String insertSubKitsSettingsForStudy(String ddpKitRequestSettingsId, String subKitTypeId, int hideSample, Connection conn)
+    public Integer insertSubKitsSettingsForStudy(int ddpKitRequestSettingsId, int subKitTypeId, int hideSample, Connection conn)
             throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(INSERT_SUB_KITS_SETTINGS, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, ddpKitRequestSettingsId);
-        stmt.setString(2, subKitTypeId);
+        stmt.setInt(1, ddpKitRequestSettingsId);
+        stmt.setInt(2, subKitTypeId);
         stmt.setInt(3, hideSample);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();

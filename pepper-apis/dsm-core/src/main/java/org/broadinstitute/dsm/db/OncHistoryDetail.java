@@ -348,12 +348,12 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     // TODO: there should be no need for the realm parameter -DC
-    public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
+    public static OncHistoryDetail getOncHistoryDetail(@NonNull int oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
                 stmt.setString(1, realm);
-                stmt.setString(2, oncHistoryDetailId);
+                stmt.setInt(2, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = getOncHistoryDetail(rs);

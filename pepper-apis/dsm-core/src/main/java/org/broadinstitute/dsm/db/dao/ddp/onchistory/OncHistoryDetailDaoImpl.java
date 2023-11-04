@@ -106,14 +106,14 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
         return (Boolean) results.resultValue;
     }
 
-    public OncHistoryDetail getRandomOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
+    public OncHistoryDetail getRandomOncHistoryDetail(int oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             OncHistoryDetail oncHistoryDetail = null;
             try (PreparedStatement stmt = conn.prepareStatement(
                     OncHistoryDetail.SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
                 stmt.setString(1, realm);
-                stmt.setString(2, oncHistoryDetailId);
+                stmt.setInt(2, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         oncHistoryDetail = new OncHistoryDetail(rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID),
@@ -153,7 +153,7 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
                 if (oncHistoryDetail != null) {
                     ArrayList<Tissue> tissues = new ArrayList<>();
                     try (PreparedStatement statementTissue = conn.prepareStatement(SQL_SELECT_TISSUES_FOR_ONC_HISTORY)) {
-                        statementTissue.setString(1, oncHistoryDetailId);
+                        statementTissue.setInt(1, oncHistoryDetailId);
                         try (ResultSet rsTissue = stmt.executeQuery()) {
                             while (rsTissue.next()) {
                                 tissues.add(Tissue.getTissue(rsTissue));

@@ -1,39 +1,35 @@
 package org.broadinstitute.dsm.db.dao.mercury;
 
-import liquibase.pro.packaged.M;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
-import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.SmId;
-import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
-import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
-import org.broadinstitute.dsm.db.dao.kit.KitTypeDao;
-import org.broadinstitute.dsm.db.dao.kit.KitTypeImpl;
 import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.juniperkits.TestKitUtil;
-import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
-import org.broadinstitute.lddp.util.JsonTransformer;
+
+import org.broadinstitute.dsm.util.MercuryOrderTestUtil;
+import org.broadinstitute.dsm.util.SampleIdTestUtil;
+import org.broadinstitute.dsm.util.TissueTestUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
 import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
 
@@ -42,17 +38,15 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
     private static final String TEST_USER = "testuser";
 
-    private static final MedicalRecordDao mrDao = new MedicalRecordDao();
+    private static final TissueTestUtil tissueTestUtil = new TissueTestUtil();
 
-    private static final OncHistoryDao oncHistoryDao = new OncHistoryDao();
+    private static final SampleIdTestUtil sampleIdTestUtil = new SampleIdTestUtil();
+
+    private static final MercuryOrderTestUtil mercuryOrderTestUtil = new MercuryOrderTestUtil();
 
     private static final DDPInstitutionDao institutionDao = new DDPInstitutionDao();
 
-    private static final Tissue tissueDao = new Tissue();
-
     private static int medicalRecordId = -1;
-
-    private static final MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
 
     private static final ClinicalOrderDao clinicalOrderDao = new ClinicalOrderDao();
 
@@ -72,11 +66,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
     public static TestKitUtil testKitUtil;
 
-    private static TissueSMIDDao smIdDao = new TissueSMIDDao();
-
-    private static final List<Integer> tissuesToDelete = new ArrayList<>();
-
-    private static final List<Integer> ordersToDelete = new ArrayList<>();
+    private static int ddpInstanceId = -1;
 
     private static String generateUserEmail() {
         return "ClinicalOrderDaoTest-" + System.currentTimeMillis() + "@broad.dev";
@@ -91,13 +81,13 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         studyInstanceName = "ClinOrdTest" + nameAppend;
         String studyGroup = "ClinOrdTest" + nameAppend;
 
-        testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup, "SALIVA");
+        testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup,
+                "SALIVA");
         testKitUtil.setupInstanceAndSettings();
-
         userId = testKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
         ParticipantDto participantDto =
-                new ParticipantDto.Builder(Integer.parseInt(testKitUtil.ddpInstanceId), System.currentTimeMillis())
+                new ParticipantDto.Builder(testKitUtil.ddpInstanceId, System.currentTimeMillis())
                         .withDdpParticipantId(ddpParticipantId)
                         .withLastVersion(0)
                         .withLastVersionDate("")
@@ -128,48 +118,42 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         });
         oncHistoryDetailId = OncHistoryDetail.createOncHistoryDetail(medicalRecordId, "tester");
         log.info("Created onc history detail {}", oncHistoryDetailId);
+        ddpInstanceId = testKitUtil.adminUtil.getDdpInstanceId();
     }
 
     @Test
     public void testGetClinicalOrdersForTissuesWhenThereAreNoOrders() {
         List<Integer> tissueIds = new ArrayList<>();
-        Integer tissueId = Integer.parseInt(tissueDao.createNewTissue(Integer.toString(oncHistoryDetailId), TEST_USER));
+        int tissueId = tissueTestUtil.createTissue(oncHistoryDetailId, TEST_USER);
         tissueIds.add(tissueId);
-        tissuesToDelete.add(tissueId);
 
         String sample1Id = "NO_ORDERS";
-        Integer smId = Integer.parseInt(
-                smIdDao.createNewSMIDForTissue(tissueId.toString(), ddpParticipantId, SmId.USS, sample1Id));
+        int smId = sampleIdTestUtil.createSampleForTissue(tissueId, ddpParticipantId, SmId.USS, sample1Id);
         log.info("Created testing sample {} with id {}", sample1Id, smId);
 
         Map<Integer, Collection<ClinicalOrderDto>> ordersByTissue =
                 clinicalOrderDao.getClinicalOrdersForTissueIds(tissueIds);
 
         Assert.assertEquals(1, ordersByTissue.size());
-        Assert.assertEquals(tissueId, ordersByTissue.keySet().iterator().next());
+        Assert.assertEquals(tissueId, ordersByTissue.keySet().iterator().next().intValue());
         Assert.assertTrue(ordersByTissue.values().iterator().next().isEmpty());
     }
 
     @Test
     public void testGetClinicalOrdersForTissuesWhenATissueHasOrders() {
         List<Integer> tissueIds = new ArrayList<>();
-        Integer tissueId = Integer.parseInt(tissueDao.createNewTissue(Integer.toString(oncHistoryDetailId), TEST_USER));
+        int tissueId = tissueTestUtil.createTissue(oncHistoryDetailId, TEST_USER);
         tissueIds.add(tissueId);
-        tissuesToDelete.add(tissueId);
 
         String sample1Id = "SM-BLAHBLAH";
-        Integer smId = Integer.parseInt(
-                smIdDao.createNewSMIDForTissue(tissueId.toString(), ddpParticipantId, SmId.USS, sample1Id));
+        int smId = sampleIdTestUtil.createSampleForTissue(tissueId, ddpParticipantId, SmId.USS, sample1Id);
+
         log.info("Created testing sample {} with id {}", sample1Id, smId);
 
         String order1Barcode = "testtestBarcode";
 
-        MercuryOrderDto orderDto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order1Barcode,
-                Integer.parseInt(testKitUtil.kitTypeId),
-                testKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueId), null);
-        orderDto.setOrderId(order1Barcode);
-        int createdOrderId = mercuryOrderDao.create(orderDto, null);
-        ordersToDelete.add(createdOrderId);
+        MercuryOrderDto orderDto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order1Barcode,
+                testKitUtil.kitTypeId, ddpInstanceId, tissueId);
 
         Map<Integer, Collection<ClinicalOrderDto>> ordersByTissue =
                 clinicalOrderDao.getClinicalOrdersForTissueIds(tissueIds);
@@ -183,42 +167,34 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
     @Test
     public void testGetClinicalOrdersForTissuesWhenSomeTissuesHaveOrdersAndSomeDoNot() {
         List<Integer> tissueIds = new ArrayList<>();
-        Integer tissueWithOrder = Integer.parseInt(tissueDao.createNewTissue(Integer.toString(oncHistoryDetailId), TEST_USER));
+        int tissueWithOrder = tissueTestUtil.createTissue(oncHistoryDetailId, TEST_USER);
         tissueIds.add(tissueWithOrder);
-        tissuesToDelete.add(tissueWithOrder);
 
         String sampleWithOrder = "SM_ORDER1";
-        Integer smId = Integer.parseInt(
-                smIdDao.createNewSMIDForTissue(tissueWithOrder.toString(), ddpParticipantId, SmId.USS, sampleWithOrder));
+        int smId = sampleIdTestUtil.createSampleForTissue(tissueWithOrder, ddpParticipantId, SmId.USS, sampleWithOrder);
         log.info("Created testing sample {} with id {}", sampleWithOrder, smId);
 
         String order1Barcode = "TestBarcode1";
-        MercuryOrderDto orderDto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order1Barcode,
-                Integer.parseInt(testKitUtil.kitTypeId),
-                testKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
-        orderDto.setOrderId(order1Barcode);
-        int createdOrderId = mercuryOrderDao.create(orderDto, null);
-        orderDto.setMercurySequencingId(createdOrderId);
-        ordersToDelete.add(createdOrderId);
-        log.info("Created order {} for tissue {} and sample {}", createdOrderId, tissueWithOrder, sampleWithOrder);
+
+        ddpInstanceId = testKitUtil.adminUtil.getDdpInstanceId();
+        MercuryOrderDto orderDto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order1Barcode,
+                testKitUtil.kitTypeId, ddpInstanceId, tissueWithOrder);
+
+        log.info("Created order {} for tissue {} and sample {}", orderDto.getMercurySequencingId(), tissueWithOrder,
+                sampleWithOrder);
 
         String order2Barcode = "TestBarcode2";
-        MercuryOrderDto order2Dto = new MercuryOrderDto(ddpParticipantId, ddpParticipantId, order2Barcode,
-                Integer.parseInt(testKitUtil.kitTypeId),
-                testKitUtil.adminUtil.getDdpInstanceId(), Long.valueOf(tissueWithOrder), null);
-        order2Dto.setOrderId(order2Barcode);
-        int createdOrderId2 = mercuryOrderDao.create(orderDto, null);
-        order2Dto.setMercurySequencingId(createdOrderId2);
-        ordersToDelete.add(createdOrderId2);
-        log.info("Created order {} for tissue {} and sample {}", createdOrderId2, tissueWithOrder, sampleWithOrder);
+        MercuryOrderDto order2Dto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order2Barcode,
+                testKitUtil.kitTypeId, ddpInstanceId, tissueWithOrder);
+        log.info("Created order {} for tissue {} and sample {}", order2Dto.getMercurySequencingId(), tissueWithOrder,
+                sampleWithOrder);
 
-        Integer tissueWithoutOrder = Integer.parseInt(tissueDao.createNewTissue(Integer.toString(oncHistoryDetailId), TEST_USER));
+        int tissueWithoutOrder = tissueTestUtil.createTissue(oncHistoryDetailId, TEST_USER);
         tissueIds.add(tissueWithoutOrder);
-        tissuesToDelete.add(tissueWithoutOrder);
 
         String sampleWithoutOrder = "SM_NO_ORDER";
-        Integer smIdWithoutOrder = Integer.parseInt(
-                smIdDao.createNewSMIDForTissue(tissueWithoutOrder.toString(), ddpParticipantId, SmId.USS, sampleWithoutOrder));
+        int smIdWithoutOrder = sampleIdTestUtil.createSampleForTissue(tissueWithoutOrder, ddpParticipantId, SmId.USS,
+                sampleWithoutOrder);
         log.info("Created testing sample {} with id {}", smIdWithoutOrder, smIdWithoutOrder);
 
         Map<Integer, Collection<ClinicalOrderDto>> ordersByTissue =
@@ -230,10 +206,10 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         boolean foundOrder1 = false;
         boolean foundOrder2 = false;
         for (ClinicalOrderDto order : ordersByTissue.get(tissueWithOrder)) {
-            if (order.getMercurySequencingId() == createdOrderId) {
+            if (order.getMercurySequencingId() == orderDto.getMercurySequencingId()) {
                 foundOrder1 = true;
             }
-            if (order.getMercurySequencingId() == createdOrderId2) {
+            if (order.getMercurySequencingId() == order2Dto.getMercurySequencingId()) {
                 foundOrder2 = true;
             }
         }
@@ -245,13 +221,9 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
     @AfterClass
     public static void deleteTestingData() {
-        for (Integer orderToDelete : ordersToDelete) {
-            mercuryOrderDao.delete(orderToDelete);
-        }
-        for (Integer tissueId : tissuesToDelete) {
-            smIdDao.deleteTissueAndSmId(tissueId);
-            log.info("Deleted tissue {} and related smid", tissueId);
-        }
+        mercuryOrderTestUtil.deleteCreatedOrders();
+        sampleIdTestUtil.deleteCreatedSamples();
+        tissueTestUtil.deleteCreatedTissues();
         OncHistoryDetail.delete(oncHistoryDetailId);
         log.info("Deleted onc history detail {} for medical record {}", oncHistoryDetailId, medicalRecordId);
         log.info("Deleting medical record {}", medicalRecordId);
@@ -261,7 +233,6 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         log.info("Deleted institution {}", institutionDto.getInstitutionId());
         participantDao.delete(participantId);
         log.info("Deleted participant {}", participantId);
-
         testKitUtil.deleteInstanceAndSettings();
     }
 }
