@@ -27,7 +27,7 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     @AfterClass
     public static void cleanUpAfterClass() {
         testKitUtil.deleteKitsArray();
-        testKitUtil.deleteInstanceAndSettings();
+        testKitUtil.deleteGeneratedData();
     }
 
     @Test

@@ -83,7 +83,6 @@ public class TestKitUtil {
     private String kitTypeDisplayName;
     public Integer ddpGroupId;
     public Integer ddpInstanceId;
-    public Integer ddpInstanceGroupId;
     public Integer instanceRoleId;
     public Integer ddpInstanceRoleId;
     List<String> createdKitIds = new ArrayList<>();
@@ -121,18 +120,15 @@ public class TestKitUtil {
         this.kitTypeDisplayName = kitTypeDisplayName;
     }
 
-    public void deleteInstanceAndSettings() {
+    public void deleteGeneratedData() {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
-                delete(conn, "kit_dimension", "kit_dimension_id", kitDimensionId);
                 delete(conn, "kit_return_information", "kit_return_id", kitReturnId);
-                delete(conn, "carrier_service", "carrier_service_id", carrierId);
                 delete(conn, "ddp_kit_request_settings", "ddp_kit_request_settings_id", ddpKitRequestSettingsId);
+                delete(conn, "carrier_service", "carrier_service_id", carrierId);
+                delete(conn, "kit_dimension", "kit_dimension_id", kitDimensionId);
                 delete(conn, "ddp_instance_role", "ddp_instance_role_id", ddpInstanceRoleId);
-                delete(conn, "ddp_instance_group", "instance_group_id", ddpInstanceGroupId);
-                delete(conn, "ddp_instance", "ddp_instance_id", ddpInstanceId);
-                delete(conn, "ddp_group", "group_id", ddpGroupId);
                 adminUtil.deleteGeneratedData();
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -177,33 +173,32 @@ public class TestKitUtil {
         for (int id: ids) {
             delete(conn, tableName, primaryColumn, id);
         }
-
     }
 
     public void deleteKit(String ddpKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             List<Integer> dsmKitRequestId = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
-                stmt.setString(1, ddpKitRequestId.concat("\\_%"));
+                stmt.setString(1, ddpKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         dsmKitRequestId.add(rs.getInt("dsm_kit_request_id"));
                     }
                     if (dsmKitRequestId.isEmpty()) {
-                        log.warn("Kit Not Found " + ddpKitRequestId);
-                        return null;
+                        throw new DsmInternalError(
+                                String.format("Could not find kit %s to delete", ddpKitRequestId));
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException("Error selecting dsm_kit_request_id", e);
                 }
             } catch (SQLException ex) {
-                throw new RuntimeException("Error deleting ", ex);
+                throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
             }
             try {
                 delete(conn, "ddp_kit", "dsm_kit_request_id", dsmKitRequestId);
                 delete(conn, "ddp_kit_request", "dsm_kit_request_id", dsmKitRequestId);
             } catch (Exception ex) {
-                throw new RuntimeException("Error deleting kits", ex);
+                throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
             }
             return null;
         });
@@ -214,20 +209,16 @@ public class TestKitUtil {
             try {
                 deleteKit(kitId);
             } catch (Exception e) {
-                log.error("unable to delete kitId {}", kitId, e);
-            } finally {
-                continue;
+                throw new DsmInternalError("Could not delete kit " + kitId, e);
             }
         }
-
     }
 
     private Integer getPrimaryKey(ResultSet rs, String table) throws SQLException {
         if (rs.next()) {
             return rs.getInt(1);
         } else {
-            log.error("Unable to set up data in {} , going to role back transaction", table);
-            return null;
+            throw new DsmInternalError(String.format("Unable to get primary key for %s", table));
         }
     }
 
@@ -262,7 +253,7 @@ public class TestKitUtil {
         });
         if (results.resultException != null) {
             log.error("Error creating  data ", results.resultException);
-            deleteInstanceAndSettings();
+            deleteGeneratedData();
         }
     }
 

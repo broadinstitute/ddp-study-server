@@ -233,6 +233,6 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         log.info("Deleted institution {}", institutionDto.getInstitutionId());
         participantDao.delete(participantId);
         log.info("Deleted participant {}", participantId);
-        testKitUtil.deleteInstanceAndSettings();
+        testKitUtil.deleteGeneratedData();
     }
 }
