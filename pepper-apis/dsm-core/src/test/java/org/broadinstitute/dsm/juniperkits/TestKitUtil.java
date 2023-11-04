@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
@@ -138,6 +139,9 @@ public class TestKitUtil {
             }
             return dbVals;
         });
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error deleting instance and settings", results.resultException);
+        }
 
     }
 
