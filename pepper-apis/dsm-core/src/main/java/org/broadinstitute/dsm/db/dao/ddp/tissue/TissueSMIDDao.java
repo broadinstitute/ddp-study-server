@@ -51,7 +51,7 @@ public class TissueSMIDDao {
                     + "LEFT JOIN ddp_instance as realm ON (realm.ddp_instance_id = p.ddp_instance_id) "
                     + "WHERE realm.instance_name = ?";
 
-    private static final String DELETE_SM_ID = "delete from sm_id where tissue_id = ?";
+    private static final String DELETE_SM_ID = "delete from sm_id where sm_id_pk = ?";
 
     private static final String DELETE_TISSUE = "delete from ddp_tissue where tissue_id = ?";
 
@@ -123,6 +123,7 @@ public class TissueSMIDDao {
     public void deleteSampleById(int sampleId) {
         DaoUtil.deleteSingleRowById(sampleId, DELETE_SM_ID);
     }
+
     // todo arz check all spots where params have gone string -> int and verify return types are queried with getInt
     public int createNewSMIDForTissue(int tissueId, String userId, @NonNull String smIdType, @NonNull String smIdValue) {
         Integer smIdtypeId = getTypeForName(smIdType);
