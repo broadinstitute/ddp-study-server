@@ -49,7 +49,6 @@ public class ElasticSearchTest {
 
     @Test
     public void getParticipantIdFromProfileIfEmpty() {
-        Profile esProfile = new Profile();
         ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder().build();
         String participantId = elasticSearchParticipantDto.getParticipantId();
         Assert.assertEquals("", participantId);
@@ -74,6 +73,7 @@ public class ElasticSearchTest {
 
     @Test
     public void parseSourceMap() {
+        String queriedParticipantId = "PTPID123";
         Profile esProfile = new Profile();
         esProfile.setFirstName("Tommy");
         Address esAddress = new Address();
@@ -82,11 +82,19 @@ public class ElasticSearchTest {
                 new ElasticSearchParticipantDto.Builder().withStatusTimeStamp(1_000_000L).withProfile(esProfile).withStatus("TESTING")
                         .withAddress(esAddress).build();
         Map<String, Object> esMap = GSON.fromJson(GSON.toJson(elasticSearchParticipantDto), Map.class);
-        ElasticSearchParticipantDto esParticipantDto = new ElasticSearch().parseSourceMap(esMap);
+        ElasticSearchParticipantDto esParticipantDto = new ElasticSearch().parseSourceMap(esMap, null);
         try {
             Assert.assertEquals("Tommy", esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
             Assert.assertEquals("Barsum", esParticipantDto.getAddress().map(Address::getCountry).orElse(""));
             Assert.assertEquals("TESTING", esParticipantDto.getStatus().orElse(""));
+        } catch (Exception e) {
+            Assert.fail();
+        }
+
+        // now check that the queried participant id comes back when passed in
+        esParticipantDto = new ElasticSearch().parseSourceMap(esMap, queriedParticipantId);
+        try {
+            Assert.assertEquals(queriedParticipantId, esParticipantDto.getQueriedParticipantId());
         } catch (Exception e) {
             Assert.fail();
         }

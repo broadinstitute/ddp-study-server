@@ -158,7 +158,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public static void setup() throws Exception {
         gson = new Gson();
         TransactionWrapper.useTxn(handle -> {
-            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            testData = TestDataSetupUtil.generateBasicUserTestData(handle, true);
             token = testData.getTestingUser().getToken();
             userGuid = testData.getUserGuid();
             setupActivityAndInstance(handle);
