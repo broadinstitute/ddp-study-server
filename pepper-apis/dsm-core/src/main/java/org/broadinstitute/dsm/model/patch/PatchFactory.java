@@ -34,7 +34,7 @@ public class PatchFactory {
                 patcher = new ParticipantRecordPatch(patch);
             }
         } else if (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
-                && StringUtils.isNotBlank(patch.getDdpParticipantId())) {
+                && Patch.hasDDPParticipantId(patch)) {
             patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
@@ -89,8 +89,7 @@ public class PatchFactory {
 
     protected static boolean isOncHistoryDetailPatch(Patch patch) {
         return (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
-                && StringUtils.isNotBlank(patch.getDdpParticipantId()))
-                || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias());
+                && Patch.hasDDPParticipantId(patch)) || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias());
     }
 
     public static boolean isDeletePatch(Patch patch) {
