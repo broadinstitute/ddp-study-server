@@ -21,7 +21,6 @@ import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -45,8 +44,8 @@ public class DSMOncHistoryCreatorUtil {
 
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final DeletedObjectDao deletedObjectDao = new DeletedObjectDao();
-    private static List<Integer> medicalRecordIds = new ArrayList<Integer>();
-    ParticipantDao participantDao = new ParticipantDao();
+    private List<Integer> medicalRecordIds = new ArrayList<Integer>();
+    List<Integer> participantIds = new ArrayList<>();
     DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
     MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
     DdpInstanceGroupTestUtil ddpInstanceGroupTestUtil = new DdpInstanceGroupTestUtil();
@@ -82,8 +81,9 @@ public class DSMOncHistoryCreatorUtil {
 
     public void deleteEverything() {
         //this bit is failing now for foreign keys
-        //delete participant and onc histories
-//        deleteParticipant();
+        //delete participants, medical records and institutions
+        deleteParticipants();
+        //delete everything else
         userAdminUtil.deleteStudyAdminAndRoles();
         userAdminUtil.deleteGeneratedData();
     }
@@ -97,17 +97,15 @@ public class DSMOncHistoryCreatorUtil {
         ParticipantDto testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
-
+        participantIds.add(testParticipant.getParticipantId().get());
         log.debug("ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         return testParticipant;
     }
 
-    public void deleteParticipant(int participantId) {
-
+    public void deleteParticipants() {
         medicalRecordIds.forEach(integer -> medicalRecordDao.delete(integer));
-        ddpInstitutionDao.deleteByParticipant(participantId);
-        TestParticipantUtil.deleteParticipant(participantId);
+        participantIds.forEach(id -> TestParticipantUtil.deleteParticipantAndInstitution(id));
     }
 
     public Object createOncHistory(String guid, int participantId, String realm, String userEmail) throws Exception {
@@ -118,7 +116,12 @@ public class DSMOncHistoryCreatorUtil {
                 .replace("<instanceName>", realm);
         Patch newOncHistoryPatch = new Gson().fromJson(newOncHistoryPatchJson, Patch.class);
         BasePatch patcher = PatchFactory.makePatch(newOncHistoryPatch, notificationUtil);
-        return patcher.doPatch();
+        Map<String, Object> response = (Map<String, Object>) patcher.doPatch();
+        int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
+        OncHistoryDetail oncHistoryDetail =
+                OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId), realm);
+        medicalRecordIds.add(oncHistoryDetail.getMedicalRecordId());
+        return response;
     }
 
     public Object createTissue(String guid, int onHistoryDetailId, String realm, String userEmail) throws Exception {
@@ -161,8 +164,7 @@ public class DSMOncHistoryCreatorUtil {
      *                           deleting the onc history we expect there to be no more
      */
     public void assertOncHistoryIsDeleted(String participantGuid, OncHistoryDetail oncHistoryDetail, int oncHistoryDetailId,
-                                          DDPInstanceDto ddpInstanceDto,
-                                          boolean expectZeroTissue, boolean expectZeroSmId) {
+                                          DDPInstanceDto ddpInstanceDto, boolean expectZeroTissue, boolean expectZeroSmId) {
         try {
             OncHistoryDetail deletedOncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId),
                     ddpInstanceDto.getInstanceName());
@@ -179,20 +181,20 @@ public class DSMOncHistoryCreatorUtil {
             Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), participantGuid,
                     ESObjectConstants.DSM);
             List<Map<String, Object>> oncHistoryDetails =
-                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).get("oncHistoryDetail");
+                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(ESObjectConstants.ONC_HISTORY_DETAIL);
             long countNumberOfOncHistoriesInEs = oncHistoryDetails.stream().filter(stringObjectMap ->
                     (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
             Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);
 
-            List<Map<String, Object>> tissuesFromES = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).
-                    getOrDefault("tissues", null);
+            List<Map<String, Object>> tissuesFromES = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
+                    getOrDefault(ESObjectConstants.TISSUE, null);
             if (tissuesFromES != null) {
                 Assert.assertFalse(expectZeroTissue);
                 long countNumberOfTissues = tissuesFromES.stream().filter(tissueMap ->
                         (int) tissueMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
                 Assert.assertEquals(0L, countNumberOfTissues);
-                List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).
-                        getOrDefault("smId", null);
+                List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
+                        getOrDefault(ESObjectConstants.SMID, null);
                 if (smIdsFromEs != null) {
                     Assert.assertFalse(expectZeroSmId);
                     long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
@@ -211,8 +213,8 @@ public class DSMOncHistoryCreatorUtil {
     }
 
     /**
-     * Call this method to check if an oncHistoryDeleted was deleted propery
-     *
+     * Call this method to check if a deleted oncHistory was deleted propery
+     * checks both DB and ES index
      * @param participantGuid  the ddpParticipantId
      * @param tissue           the OncHistoryDetail object of the OncHistory before getting deleted
      * @param tissueId         the id of the OncHistoryDetail
@@ -229,8 +231,8 @@ public class DSMOncHistoryCreatorUtil {
             Assert.assertNotNull(deletedData);
             Assert.assertFalse(StringUtils.isBlank(deletedData));
             JSONObject tissueFromData = new Gson().fromJson(deletedData, JSONObject.class);
-            Assert.assertEquals((tissueFromData.get(DBConstants.TISSUE_ID)), tissue.getTissueId());
-            Assert.assertEquals(tissueFromData.get(DBConstants.ONC_HISTORY_DETAIL_ID), tissue.getOncHistoryDetailId());
+            Assert.assertEquals((int)((Double) tissueFromData.get(DBConstants.TISSUE_ID)).doubleValue(), (int) tissue.getTissueId());
+            Assert.assertEquals((int)((Double)tissueFromData.get(DBConstants.ONC_HISTORY_DETAIL_ID)).doubleValue(), (int) tissue.getOncHistoryDetailId());
             Assert.assertEquals(tissueFromData.get(DBConstants.NOTES), tissue.getNotes());
             Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), participantGuid,
                     ESObjectConstants.DSM);

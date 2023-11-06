@@ -22,7 +22,6 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     private static final String instanceName = "patch_instance";
     private static final String groupName = "patch_group";
     static DSMOncHistoryCreatorUtil dsmOncHistoryCreatorUtil;
-    static int participantId;
     static String userEmail = "patchTestUser1@unittest.dev";
     static String guid = "PATCH_TEST_PARTICIPANT";
     static String guid2 = "PATCH_PARTICIPANT";
@@ -40,7 +39,6 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
 
     @AfterClass
     public static void cleanUpAfter() {
-        dsmOncHistoryCreatorUtil.deleteParticipant(participantId);
         dsmOncHistoryCreatorUtil.deleteEverything();
         try {
             ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
@@ -94,8 +92,9 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
             Tissue createdTissue = maybeCreatedTissue.get();
             dsmOncHistoryCreatorUtil.deleteOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(), participantId, instanceName, userEmail,
                     oncHistoryDetailId);
-            dsmOncHistoryCreatorUtil.assertOncHistoryIsDeleted(guid2, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, true);
             dsmOncHistoryCreatorUtil.assertTissueIsDeleted(guid2, createdTissue, tissueId, ddpInstanceDto, true);
+            dsmOncHistoryCreatorUtil.assertOncHistoryIsDeleted(guid2, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, true);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

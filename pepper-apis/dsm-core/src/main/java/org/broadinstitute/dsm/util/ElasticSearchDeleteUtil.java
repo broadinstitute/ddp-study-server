@@ -39,10 +39,11 @@ public class ElasticSearchDeleteUtil {
         List<Map<String, Object>> tissues =
                 (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(ESObjectConstants.TISSUE);
         tissues.removeIf(stringObjectMap -> (int) stringObjectMap.get("tissueId") == tissueId);
-        esDsmMap.put(ESObjectConstants.TISSUE, tissues);
+        ((HashMap<String,List<Map<String, Object>>>) esDsmMap.get(ESObjectConstants.DSM)).put(ESObjectConstants.TISSUE, tissues);
 
         ElasticSearchUtil.updateRequest(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex(), new HashMap<>(
-                Map.of(ESObjectConstants.DSM, esDsmMap)));
+                Map.of(ESObjectConstants.DSM, esDsmMap.get(ESObjectConstants.DSM))));
+
     }
 
     public static void deleteOncHistoryDetailById(String ddpParticipantId, int oncHistoryDetailId, DDPInstanceDto ddpInstanceDto)
@@ -54,10 +55,10 @@ public class ElasticSearchDeleteUtil {
                 (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(
                         ESObjectConstants.ONC_HISTORY_DETAIL);
         oncHistoryDetails.removeIf(stringObjectMap -> (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId);
-        esDsmMap.put(ESObjectConstants.ONC_HISTORY_DETAIL, oncHistoryDetails);
-
+        ((HashMap<String,List<Map<String, Object>>>) esDsmMap.get(ESObjectConstants.DSM)).put(ESObjectConstants.ONC_HISTORY_DETAIL,
+                oncHistoryDetails);
         ElasticSearchUtil.updateRequest(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex(), new HashMap<>(
-                Map.of(ESObjectConstants.DSM, esDsmMap)));
+                Map.of(ESObjectConstants.DSM, esDsmMap.get(ESObjectConstants.DSM))));
 
     }
 }
