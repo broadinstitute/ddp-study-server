@@ -32,7 +32,7 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
 
     @BeforeClass
     public static void doFirst() {
-        esIndex = ElasticTestUtil.createIndexWithMappings(instanceName, "elastic/lmsMappings.json");
+        esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         dsmOncHistoryCreatorUtil = new DSMOncHistoryCreatorUtil(instanceName, instanceName, userEmail, groupName, "lmsPrefix", esIndex);
         dsmOncHistoryCreatorUtil.initialize();
         ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
