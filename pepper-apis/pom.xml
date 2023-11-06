@@ -24,7 +24,7 @@
         <liquibase.version>4.8.0</liquibase.version>
         <elasticsearch.version>7.17.10</elasticsearch.version>
         <velocity.version>2.3</velocity.version>
-        <jackson.version>2.12.1</jackson.version>
+        <jackson.version>2.13.1</jackson.version>
         <redisson.version>3.24.2</redisson.version>
     </properties>
 
@@ -580,6 +580,12 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson</artifactId>
                 <version>${redisson.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.dataformat</groupId>
+                        <artifactId>jackson-dataformat-yaml</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>redis.clients</groupId>
