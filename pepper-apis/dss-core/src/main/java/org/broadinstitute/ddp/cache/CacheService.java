@@ -73,7 +73,9 @@ public class CacheService {
                 Config redissonConfig = Config.fromYAML(redissonConfigPathUri.toURL());
                 redissonClient = Redisson.create(redissonConfig);
             } catch (IOException e) {
-                throw new DDPException("Path for configuration file: " + ConfigFile.JCACHE_CONFIGURATION_FILE + " could not be read");
+                throw new DDPException(String.format("Path for configuration file %s from field %s could not be read.",
+                        redissonConfigPathUri,
+                        ConfigFile.JCACHE_CONFIGURATION_FILE), e);
             }
         } else {
             log.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
