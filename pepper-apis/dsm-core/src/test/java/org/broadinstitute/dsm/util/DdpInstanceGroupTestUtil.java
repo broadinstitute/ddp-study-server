@@ -79,6 +79,7 @@ public class DdpInstanceGroupTestUtil {
         ddpInstanceDto.setIsActive(true);
         ddpInstanceDto.setAuth0Token(false);
         ddpInstanceDto.setMigratedDdp(false);
+        ddpInstanceDto.setBspOrganism("1");
         int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
         ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
         log.info("Created test DDP instance {} with ID={}", instanceName, testCreatedInstanceId);

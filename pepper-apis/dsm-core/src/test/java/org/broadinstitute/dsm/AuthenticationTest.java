@@ -25,7 +25,7 @@ public class AuthenticationTest extends DbTxnBaseTest {
 
     private static String cmiKitShippingOnlyUserId;
 
-    private static final UserAdminTestUtil cmiAdminUtil = new UserAdminTestUtil();
+    private static final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
 
     private static String studyInstanceName;
 
@@ -43,13 +43,13 @@ public class AuthenticationTest extends DbTxnBaseTest {
         studyInstanceName = "instance" + nameAppend;
         String cmiStudyGroup = "cmi" + nameAppend;
 
-        cmiAdminUtil.createRealmAndStudyGroup(studyInstanceName, null, null, cmiStudyGroup, null);
-        cmiAdminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
+        adminUtil.createRealmAndStudyGroup(studyInstanceName, null, null, cmiStudyGroup, null);
+        adminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
                 Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
-        morePermissionsUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+        morePermissionsUserId = Integer.toString(adminUtil.createTestUser(generateUserEmail(),
                 Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW)));
-        cmiKitShippingOnlyUserId = Integer.toString(cmiAdminUtil.createTestUser(generateUserEmail(),
+        cmiKitShippingOnlyUserId = Integer.toString(adminUtil.createTestUser(generateUserEmail(),
                 Collections.singletonList(KIT_SHIPPING)));
     }
 
@@ -135,6 +135,6 @@ public class AuthenticationTest extends DbTxnBaseTest {
 
     @AfterClass
     public static void teardown() {
-        cmiAdminUtil.deleteGeneratedData();
+        adminUtil.deleteGeneratedData();
     }
 }

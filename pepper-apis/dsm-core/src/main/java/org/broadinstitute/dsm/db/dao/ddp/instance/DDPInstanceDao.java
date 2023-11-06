@@ -413,6 +413,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 try (ResultSet instanceIdRs = stmt.executeQuery()) {
                     if (instanceIdRs.next()) {
                         dbVals.resultValue = instanceIdRs.getInt(DBConstants.DDP_INSTANCE_ID);
+                    } else {
+                        dbVals.resultValue = -1;
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException("Error getting information for " + instanceName, e);
