@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -58,6 +59,9 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "AND NOT sm.sm_id_value IS NULL";
 
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from ddp_mercury_sequencing where order_id = ?";
+
+    public static String SQL_DELETE_ORDER = "delete from ddp_mercury_sequencing where mercury_sequencing_id = ?";
+
     public static String SQL_SELECT_LAST_UPDATED_ORDER =
             "Select min(mercury_sequencing_id) as mercury_sequencing_id, min(ddp_instance_id) as ddp_instance_id, min(ddp_participant_id) "
                     + "  as ddp_participant_id, min(order_date) as order_date, order_id, tissue_id, dsm_kit_request_id "
@@ -190,12 +194,13 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     @Override
     public int create(MercuryOrderDto mercuryOrderDto) {
-        throw new IllegalStateException("This method should not be used");
+        throw new IllegalStateException("Call the version of this method that includes the raw json payload");
     }
 
     @Override
     public int delete(int id) {
-        return 0;
+        DaoUtil.deleteSingleRowById(id, SQL_DELETE_ORDER);
+        return 1;
     }
 
     @Override

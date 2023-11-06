@@ -249,22 +249,23 @@ public class Tissue {
         return SmId.getSMIdsForTissueId(rs);
     }
 
-    public static String createNewTissue(@NonNull String oncHistoryId, @NonNull String user) {
+    public static int createNewTissue(int oncHistoryId, @NonNull String user) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_TISSUE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, oncHistoryId);
+                stmt.setInt(1, oncHistoryId);
                 stmt.setLong(2, System.currentTimeMillis());
                 stmt.setString(3, user);
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
-                            logger.info("Created new tissue for oncHistoryDetail w/ id " + oncHistoryId);
-                            dbVals.resultValue = rs.getString(1);
+                            int createdTissueId = rs.getInt(1);
+                            logger.info("Created new tissue {} for oncHistoryDetail {}", createdTissueId, oncHistoryId);
+                            dbVals.resultValue = createdTissueId;
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Error getting id of new institution ", e);
+                        throw new RuntimeException("Error getting id of new tissue ", e);
                     }
                 } else {
                     throw new RuntimeException(
@@ -279,8 +280,17 @@ public class Tissue {
         if (results.resultException != null) {
             throw new RuntimeException("Error adding new tissue for oncHistoryDetail w/ id " + oncHistoryId, results.resultException);
         } else {
-            return (String) results.resultValue;
+            return (Integer) results.resultValue;
         }
+    }
+
+    /**
+     * Please use {@link #createNewTissue(int, String)} because oncHistoryId
+     * is an int, not a string.
+     */
+    @Deprecated
+    public static int createNewTissue(@NonNull String oncHistoryId, @NonNull String user) {
+        return createNewTissue(Integer.parseInt(oncHistoryId), user);
     }
 
     @JsonProperty ("dynamicFields")

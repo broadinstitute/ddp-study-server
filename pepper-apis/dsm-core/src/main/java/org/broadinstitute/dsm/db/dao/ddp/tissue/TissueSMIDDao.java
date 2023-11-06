@@ -14,6 +14,7 @@ import java.util.Map;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -50,15 +51,18 @@ public class TissueSMIDDao {
                     + "LEFT JOIN ddp_instance as realm ON (realm.ddp_instance_id = p.ddp_instance_id) "
                     + "WHERE realm.instance_name = ?";
 
+    private static final String DELETE_SM_ID = "delete from sm_id where sm_id_pk = ?";
 
-    public String getTypeForName(String type) {
+    private static final String DELETE_TISSUE = "delete from ddp_tissue where tissue_id = ?";
+
+    public Integer getTypeForName(String type) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_TYPE_ID_FOR_TYPE)) {
                 stmt.setString(1, type);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getString(DBConstants.SM_ID_TYPE_ID);
+                        dbVals.resultValue = rs.getInt(DBConstants.SM_ID_TYPE_ID);
                     }
                 }
             } catch (SQLException ex) {
@@ -71,16 +75,16 @@ public class TissueSMIDDao {
             throw new RuntimeException("Error getting type ids for sm id " + type, results.resultException);
         }
 
-        return (String) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
-    public String createNewSMIDForTissueWithValue(String tissueId, String userId, String smIdType, String smIdValue) {
-        String smIdtypeId = getTypeForName(smIdType);
+    public String createNewSMIDForTissueWithValue(int tissueId, String userId, String smIdType, String smIdValue) {
+        Integer smIdtypeId = getTypeForName(smIdType);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_SM_ID_WITH_VALUE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, tissueId);
-                stmt.setString(2, smIdtypeId);
+                stmt.setInt(1, tissueId);
+                stmt.setInt(2, smIdtypeId);
                 stmt.setLong(3, System.currentTimeMillis());
                 stmt.setString(4, userId);
                 stmt.setString(5, smIdValue);
@@ -112,13 +116,21 @@ public class TissueSMIDDao {
         }
     }
 
-    public String createNewSMIDForTissue(String tissueId, String userId, @NonNull String smIdType, @NonNull String smIdValue) {
-        String smIdtypeId = getTypeForName(smIdType);
+    public void deleteTissueById(int tissueId) {
+        DaoUtil.deleteSingleRowById(tissueId, DELETE_TISSUE);
+    }
+
+    public void deleteSampleById(int sampleId) {
+        DaoUtil.deleteSingleRowById(sampleId, DELETE_SM_ID);
+    }
+
+    public int createNewSMIDForTissue(int tissueId, String userId, @NonNull String smIdType, @NonNull String smIdValue) {
+        Integer smIdtypeId = getTypeForName(smIdType);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_SM_ID, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, tissueId);
-                stmt.setString(2, smIdtypeId);
+                stmt.setInt(1, tissueId);
+                stmt.setInt(2, smIdtypeId);
                 stmt.setString(3, smIdValue);
                 stmt.setLong(4, System.currentTimeMillis());
                 stmt.setString(5, userId);
@@ -127,7 +139,7 @@ public class TissueSMIDDao {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
                             logger.info("Created new sm id for tissue w/ id " + tissueId);
-                            dbVals.resultValue = rs.getString(1);
+                            dbVals.resultValue = rs.getInt(1);
                         }
                     } catch (Exception e) {
                         throw new RuntimeException("Error getting id of new sm id ", e);
@@ -145,7 +157,7 @@ public class TissueSMIDDao {
         if (results.resultException != null) {
             throw new RuntimeException("Error adding new sm id for tissue w/ id " + tissueId, results.resultException);
         } else {
-            return (String) results.resultValue;
+            return (Integer) results.resultValue;
         }
     }
 

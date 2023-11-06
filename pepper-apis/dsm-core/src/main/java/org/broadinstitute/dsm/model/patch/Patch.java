@@ -225,4 +225,8 @@ public class Patch {
     public static boolean hasDDPParticipantId(Patch patch) {
         return StringUtils.isNotBlank(patch.getDdpParticipantId());
     }
+
+    public int getParentIdAsInt() {
+        return Integer.parseInt(parentId);
+    }
 }
