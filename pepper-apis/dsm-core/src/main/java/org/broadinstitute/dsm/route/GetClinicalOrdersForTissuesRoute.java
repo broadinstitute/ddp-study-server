@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
-import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import spark.Request;
 import spark.Response;

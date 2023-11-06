@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;

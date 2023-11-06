@@ -14,7 +14,6 @@ import java.util.Map;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.dao.util.DaoUtil;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -124,7 +123,6 @@ public class TissueSMIDDao {
         DaoUtil.deleteSingleRowById(sampleId, DELETE_SM_ID);
     }
 
-    // todo arz check all spots where params have gone string -> int and verify return types are queried with getInt
     public int createNewSMIDForTissue(int tissueId, String userId, @NonNull String smIdType, @NonNull String smIdValue) {
         Integer smIdtypeId = getTypeForName(smIdType);
         SimpleResult results = inTransaction((conn) -> {
