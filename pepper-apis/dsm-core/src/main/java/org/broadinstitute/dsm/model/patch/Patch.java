@@ -187,4 +187,8 @@ public class Patch {
         });
         return (Boolean) results.resultValue;
     }
+
+    public int getParentIdAsInt() {
+        return Integer.parseInt(parentId);
+    }
 }
