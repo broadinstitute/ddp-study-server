@@ -6,7 +6,7 @@ import org.junit.Test;
 public class CacheServiceTest {
 
     @Test
-    public void testCacheStartupDoesNotThrowNoSuchMethodError() {
+    public void testGetInstanceDoesNotThrowNoSuchMethodError() {
         try {
             CacheService.getInstance();
         } catch (NoSuchMethodError e) {
