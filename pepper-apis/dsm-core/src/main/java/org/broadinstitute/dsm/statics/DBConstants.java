@@ -470,6 +470,8 @@ public class DBConstants {
     public static final String DEFAULT_USERS = "default_users";
     public static final String FILTER_REALM_ID = "ddp_realm_id";
     public static final String DDP_GROUP_ID = "ddp_group_id";
+    public static final String GROUP_ID = "group_id";
+    public static final String DDP_GROUP_NAME = "name";
 
     public static final String MR_COVER_PDF = "mr_cover_pdf";
     public static final String KIT_BEHAVIOR_CHANGE = "kit_behavior_change";

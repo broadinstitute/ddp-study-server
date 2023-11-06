@@ -16,11 +16,7 @@
                 <constraints nullable="false"></constraints>
             </column>
             <column name="data" type="text"></column>
-            <column name="deleted_by_email" type="VARCHAR(400)"></column>
-            <column name="deleted_by_user_id" type="INT">
-                <constraints nullable="false" foreignKeyName="deleted_object_deleted_by_user_id_fk"
-                             referencedTableName="access_user" referencedColumnNames="user_id"></constraints>
-            </column>
+            <column name="deleted_by" type="VARCHAR(400)"></column>
             <column name="deleted_date" type="BIGINT"></column>
         </createTable>
     </changeSet>

@@ -9,15 +9,14 @@ import java.sql.Statement;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.instance.GroupDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
 //todo add comments and java docs
 
 @Slf4j
 public class DdpInstanceGroupTestUtil {
-    private static final String SQL_INSERT_DDP_INSTANCE =
-            "INSERT INTO ddp_instance SET instance_name = ?, study_guid=?, collaborator_id_prefix = ?, bsp_organism=1, is_active = 1, auth0_token = 1, migrated_ddp = 0";
-
     private static final String SQL_INSERT_DDP_INSTANCE_GROUP =
             "INSERT INTO ddp_instance_group SET ddp_instance_id = ?, ddp_group_id = ?";
 
@@ -27,15 +26,16 @@ public class DdpInstanceGroupTestUtil {
     private static final String SQL_DELETE_DDP_INSTANCE =
             "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
 
-    private static final String SQL_INSERT_GROUP =
-            "INSERT INTO ddp_group SET name = ?";
-
     private static final String SQL_DELETE_GROUP =
             "DELETE FROM ddp_group WHERE group_id = ?";
 
+    static DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+    static GroupDao groupDao = new GroupDao();
 
-    public static int createInstanceGroup(String instanceName, String studyGuid, String collaboratorPrefix, int studyGroupId) {
-        int instanceId = createInstance(instanceName, studyGuid, collaboratorPrefix);
+
+    public static int createInstanceGroup(String instanceName, String studyGroup) {
+        int instanceId = getDdpInstanceId(instanceName);
+        int studyGroupId = getGroupId(studyGroup);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE_GROUP, Statement.RETURN_GENERATED_KEYS)) {
@@ -67,32 +67,22 @@ public class DdpInstanceGroupTestUtil {
         return instanceId;
     }
 
-    private static int createInstance(String instanceName, String studyGuid, String collaboratorPrefix) {
-        SimpleResult res = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DDP_INSTANCE, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, instanceName);
-                stmt.setString(2, studyGuid);
-                stmt.setString(3, collaboratorPrefix);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    dbVals.resultException = new DsmInternalError("Result count was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (res.resultException != null) {
-            throw new DsmInternalError("Error adding DDP instance group " + instanceName, res.resultException);
+    public static DDPInstanceDto createInstance(String instanceName, String studyGuid, String collaboratorPrefix, String esIndex) {
+        if (ddpInstanceDao.getDDPInstanceIdByInstanceName(instanceName) != -1) {
+            return ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).get();
         }
-        return (int) res.resultValue;
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
+        ddpInstanceDto.setInstanceName(instanceName);
+        ddpInstanceDto.setStudyGuid(studyGuid);
+        ddpInstanceDto.setEsParticipantIndex(esIndex);
+        ddpInstanceDto.setCollaboratorIdPrefix(collaboratorPrefix);
+        ddpInstanceDto.setIsActive(true);
+        ddpInstanceDto.setAuth0Token(false);
+        ddpInstanceDto.setMigratedDdp(false);
+        int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
+        ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
+        log.info("Created test DDP instance {} with ID={}", instanceName, testCreatedInstanceId);
+        return ddpInstanceDto;
     }
 
     public static void deleteInstanceGroup(int instanceId) {
@@ -121,34 +111,10 @@ public class DdpInstanceGroupTestUtil {
         });
     }
 
-    public static int addStudyGroup(String groupName) {
-        SimpleResult res = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_GROUP, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, groupName);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    dbVals.resultException = new DsmInternalError("Result count for addStudyGroup was " + result);
-                }
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (res.resultException != null) {
-            throw new DsmInternalError("Error adding study group " + groupName, res.resultException);
-        }
-        return (int) res.resultValue;
-    }
-
-    public int getDdpInstanceId(String instanceName) {
-        return new DDPInstanceDao().getDDPInstanceIdByInstanceName(instanceName);
+    public static int getDdpInstanceId(String instanceName) {
+        int id = ddpInstanceDao.getDDPInstanceIdByInstanceName(instanceName);
+        if (id != -1) return id;
+        return createTestDdpInstance(instanceName, null).getDdpInstanceId();
     }
 
     public static int deleteStudyGroup(int groupId) {
@@ -161,6 +127,36 @@ public class DdpInstanceGroupTestUtil {
                 throw new DsmInternalError(msg, ex);
             }
         });
+    }
+
+    public static DDPInstanceDto createTestDdpInstance(String ddpInstanceName) {
+        return createTestDdpInstance(ddpInstanceName, null);
+    }
+
+    public static DDPInstanceDto createTestDdpInstance(String ddpInstanceName, String esIndex) {
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
+        ddpInstanceDto.setInstanceName(ddpInstanceName);
+        ddpInstanceDto.setStudyGuid(ddpInstanceName);
+        ddpInstanceDto.setEsParticipantIndex(esIndex);
+        ddpInstanceDto.setIsActive(true);
+        ddpInstanceDto.setAuth0Token(false);
+        ddpInstanceDto.setMigratedDdp(false);
+        int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
+        ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
+        log.info("Created test DDP instance {} with ID={}", ddpInstanceName, testCreatedInstanceId);
+        return ddpInstanceDto;
+    }
+
+    public static int getGroupId(String studyGroup) {
+        return groupDao.getGroupIdByName(studyGroup);
+    }
+
+
+    public static int createGroup(String studyGroup) {
+        if (getGroupId(studyGroup) != -1) {
+            return getGroupId(studyGroup);
+        }
+        return groupDao.create(studyGroup);
     }
 
 }

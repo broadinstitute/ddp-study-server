@@ -34,15 +34,7 @@ public class Patch {
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
     private static final Logger logger = LoggerFactory.getLogger(Patch.class);
     private static final String SQL_UPDATE_VALUES = "UPDATE $table SET $colName = ?, last_changed = ?, changed_by = ? WHERE $pk = ?";
-    private static final String SQL_GET_JSON_OBJECT = "select concat('select json_object(', "
-            + "    group_concat(concat(quote(column_name), ', ', column_name)), "
-            + "    ') from ? where ? = ?;') into @sql "
-            + "  from information_schema.columns "
-            + "  where table_name = ?;";
 
-    private static final String SQL_DELETE_VALUES = "DELETE FROM ? WHERE ? = ?";
-    private static final String SQL_INSERT_DELETED_VALUES = "INSERT INTO deleted_object SET original_table = ?, original_primary_key = ? ,"
-            + "data =?, deleted_by_email = ?,  deleted_by_user_id = ?, deleted_date = ? ";
     private String id;
     private String parent; //for new added rows at oncHistoryDetails/tissue
     private String parentId; //for new added rows at oncHistoryDetails/tissue
@@ -56,7 +48,7 @@ public class Patch {
     private String realm;
     private List<Value> actions;
     private String ddpParticipantId;
-    private boolean deleteAnyway;
+    private boolean deleteAnyway = true;
 
     public Patch() {
 
@@ -185,64 +177,6 @@ public class Patch {
         return true;
     }
 
-    /****/
-
-    public static boolean deletePatch(@NonNull String id, @NonNull String user, @NonNull NameValue nameValue,
-                                      @NonNull DBElement dbElement, Patch patch) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            //Select everything in the db as the current state of the object into a json string , this is better than creating a Dto because
-            // this can be done independent of class
-            String currentData = null;
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_JSON_OBJECT)) {
-                stmt.setString(1, dbElement.getTableName());
-                stmt.setString(2, dbElement.getTableName());
-                stmt.setString(3, dbElement.getPrimaryKey());
-                stmt.setString(4, id);
-                ResultSet rs = stmt.executeQuery();
-                String sql = rs.getString("@sql");
-                PreparedStatement stmt2 = conn.prepareStatement(sql);
-                ResultSet rs2 = stmt2.executeQuery();
-                if(rs2.next()){
-                    logger.info("*************{}************", rs2.getString(1));
-                    currentData = rs2.getString(1);
-
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            //insert the values of what is being deleted into the deleted_object table
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DELETED_VALUES)) {
-                stmt.setString(1, dbElement.getTableName());
-                stmt.setString(2, id);
-                stmt.setString(3, currentData);
-                stmt.setString(4, user);
-                stmt.setString(5, patch.getUser());//todo pegah get userId
-                stmt.setLong(6, System.currentTimeMillis());
-                stmt.executeUpdate();
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            //now delete from the table by primary key
-            try (PreparedStatement deleteStmt = conn.prepareStatement(SQL_DELETE_VALUES)) {
-                deleteStmt.setString(1, dbElement.getTableName());
-                deleteStmt.setString(2, dbElement.getPrimaryKey());
-                deleteStmt.setString(3, id);
-                deleteStmt.executeUpdate();
-
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
-                    nameValue.getValue(), dbElement.getPrimaryKey(), id), results.resultException);
-        }
-        return true;
-
-    }
 
     private static String toErrorMessage(String table, String column, Object value, String primaryKey, String id) {
         return String.format("Error updating %s.%s with value %s for %s=%s", table, column, value, primaryKey, id);

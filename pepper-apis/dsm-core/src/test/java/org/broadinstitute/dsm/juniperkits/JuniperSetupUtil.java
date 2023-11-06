@@ -98,7 +98,7 @@ public class JuniperSetupUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
                 ddpInstanceId = String.valueOf(adminUtil.getDdpInstanceId());
                 ddpGroupId = String.valueOf(adminUtil.getStudyGroupId());
                 instanceRoleId = getInstanceRole(conn);

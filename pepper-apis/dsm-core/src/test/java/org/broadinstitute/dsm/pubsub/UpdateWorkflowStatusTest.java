@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,7 +48,7 @@ public class UpdateWorkflowStatusTest extends DbTxnBaseTest {
         gson = new Gson();
 
         instanceName = String.format("%s_%d", UPDATE_WORKFLOW_TEST, Instant.now().toEpochMilli());
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, instanceName);
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName);
         userDto = DBTestUtil.createTestDsmUser("UpdateWorkflowUser", "UpdateWorkflow@status.com", userDao, userDto);
 
         createFieldSettings();

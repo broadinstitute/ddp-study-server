@@ -236,7 +236,7 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                cmiAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
+                cmiAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
                 ddpInstanceId = String.valueOf(cmiAdminUtil.getDdpInstanceId());
                 ddpGroupId = String.valueOf(cmiAdminUtil.getStudyGroupId());
                 instanceRoleId = getInstanceRole(conn);

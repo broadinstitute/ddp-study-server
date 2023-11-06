@@ -1,42 +1,77 @@
 package org.broadinstitute.dsm.model.patch;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.util.ElasticSearchDeleteUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 @Slf4j
 public class DeletePatch extends ExistingRecordPatch {
-    public DeleteType deleteType;
+    DeleteType deleteType;
+
     public DeletePatch(Patch patch, NotificationUtil notificationUtil, DeleteType deleteType) {
         super(patch, notificationUtil);
         this.dbElementBuilder = new DefaultDBElementBuilder();
-        // todo deleteType can be used later instead of DBElement, since this is a delete and we want to make sure we only delete from specific tables
         this.deleteType = deleteType;
     }
 
     @Override
     public Object doPatch() {
-        //todo pegah not sure where I have to check the isSafeToDelete (related to PEPEPR-1209) but leave it here for now
+        //todo this should get changed after 1209 is merged
         if (!isSafeToDelete() || !patch.isDeleteAnyway()) {
             throw new UnsafeDeleteError("This object is used in a clinical order");
         }
         //recursively start by creating patches for "children" of the current
         DeletePatchFactory.deleteChildrenFields(this.patch, this.getNotificationUtil());
-        return super.doPatch();
+        if (isNameValuePairs()) {
+            throw new DsmInternalError(String.format("Patch is invalid for NameValues {}, delete patch should have only one name value",
+                    patch.getNameValues()));
+        }
+        return patchNameValuePair();
+    }
+
+    @Override
+    public Object patchNameValuePair() {
+        Optional<Object> maybeNameValue = processSingleNameValue();
+        return maybeNameValue.orElse(null);
     }
 
     @Override
     Object handleSingleNameValue() {
         List<NameValue> nameValues = new ArrayList<>();
-        if (Patch.deletePatch(patch.getId(), patch.getUser(), patch.getNameValue(), dbElement, patch)) {
-// todo pegah add remove and export to ES here
+        if (DeletedObjectDao.deletePatch(patch.getId(), patch.getUser(), dbElement, deleteType)) {
+            DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(patch.getRealm()).orElseThrow();
+            try {
+                ElasticSearchDeleteUtil.deleteFromIndexById(patch.getDdpParticipantId(), Integer.parseInt(patch.getId()), ddpInstanceDto, deleteType);
+            } catch (Exception e) {
+                throw new DsmInternalError("Unable to delete from ES for patch with id "+patch.getId() +" for NameValue: "+patch.getNameValue().toString(),e);
+            }
             return nameValues;
         }
         return nameValues;
+    }
+
+    @Override
+    Optional<Object> processSingleNameValue() {
+        Optional<Object> result;
+        dbElement = dbElementBuilder.fromName(patch.getNameValue().getName());
+        if (dbElement != null) {
+            result = Optional.of(handleSingleNameValue());
+        } else {
+            throw new DsmInternalError("DBElement not found in ColumnNameMap: " + patch.getNameValue().getName());
+        }
+        return result;
     }
 
     //TODO this is supposed to get handled by PEPPER-1209
