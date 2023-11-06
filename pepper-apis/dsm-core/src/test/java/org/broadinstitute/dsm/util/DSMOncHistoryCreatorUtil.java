@@ -119,7 +119,7 @@ public class DSMOncHistoryCreatorUtil {
         Map<String, Object> response = (Map<String, Object>) patcher.doPatch();
         int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
         OncHistoryDetail oncHistoryDetail =
-                OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId), realm);
+                OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, realm);
         medicalRecordIds.add(oncHistoryDetail.getMedicalRecordId());
         return response;
     }
@@ -138,7 +138,7 @@ public class DSMOncHistoryCreatorUtil {
     public void deleteOncHistory(String guid, int participantId, String realm, String userEmail, int oncHistoryDetailId) throws Exception {
         List<String> guids = new ArrayList<>();
         guids.add(guid);
-        OncHistoryDetail oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId), realm);
+        OncHistoryDetail oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, realm);
         Assert.assertNotNull(oncHistoryDetail);
         String deleteOncHistoryPatchJson = TestUtil.readFile("patchRequests/deleteOncHistoryPlaceHolderPatch.json");
         deleteOncHistoryPatchJson = deleteOncHistoryPatchJson.replace("<userEmail>", userEmail)
@@ -166,7 +166,7 @@ public class DSMOncHistoryCreatorUtil {
     public void assertOncHistoryIsDeleted(String participantGuid, OncHistoryDetail oncHistoryDetail, int oncHistoryDetailId,
                                           DDPInstanceDto ddpInstanceDto, boolean expectZeroTissue, boolean expectZeroSmId) {
         try {
-            OncHistoryDetail deletedOncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId),
+            OncHistoryDetail deletedOncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId,
                     ddpInstanceDto.getInstanceName());
             Assert.assertNull(deletedOncHistoryDetail);
             String deletedData = deletedObjectDao.getDeletedDataByPKAndTable(oncHistoryDetailId, DBConstants.DDP_ONC_HISTORY_DETAIL);

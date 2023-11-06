@@ -60,7 +60,7 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
                             participantId, instanceName, userEmail);
             int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
             OncHistoryDetail oncHistoryDetail =
-                    OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId), ddpInstanceDto.getInstanceName());
+                    OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
             Assert.assertNotNull(oncHistoryDetail);
             dsmOncHistoryCreatorUtil.deleteOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(), participantId, instanceName, userEmail,
                     oncHistoryDetailId);
@@ -82,7 +82,7 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
                             participantId, instanceName, userEmail);
             int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
             OncHistoryDetail oncHistoryDetail =
-                    OncHistoryDetail.getOncHistoryDetail(String.valueOf(oncHistoryDetailId), ddpInstanceDto.getInstanceName());
+                    OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
             Assert.assertNotNull(oncHistoryDetail);
             response = (Map<String, Object>) dsmOncHistoryCreatorUtil.createTissue(guid2, oncHistoryDetailId, instanceName, userEmail);
 
