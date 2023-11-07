@@ -30,7 +30,7 @@ public class DeletePatch extends ExistingRecordPatch {
 
     @Override
     public Object doPatch() {
-        if (!isSafeToDelete(this.patch) && patch.isDeleteAnyway()) {
+        if (!isSafeToDelete() && patch.isDeleteAnyway()) {
             throw new UnsafeDeleteError("This object is used in a clinical order");
         }
         //recursively start by creating patches for "children" of the current
@@ -83,7 +83,7 @@ public class DeletePatch extends ExistingRecordPatch {
                 .isEmpty();
     }
 
-    public boolean isSafeToDelete(Patch patch) {
+    public boolean isSafeToDelete() {
         List<Integer> tissueIds = new ArrayList<>();
         if (patch.isTissueDeletePatch()) {
             tissueIds.add(patch.getIdAsInt());

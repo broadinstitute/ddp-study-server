@@ -228,8 +228,8 @@ public class Patch {
     }
 
     public boolean isSmIdDeletePatch() {
-        return (this.getNameValue().getName().contains(".deleted")) &&
-                DBConstants.SM_ID_TABLE_ALIAS.equals(this.getTableAlias()) && TissuePatch.TISSUE_ID.equals(this.getParent());
+        return (nameValue.getName().contains(".deleted")) &&
+                DBConstants.SM_ID_TABLE_ALIAS.equals(tableAlias) && TissuePatch.TISSUE_ID.equals(parent);
     }
 
     boolean isTissueRelatedOncHistoryId() {
