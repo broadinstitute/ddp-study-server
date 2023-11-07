@@ -14,9 +14,9 @@ public class DeletePatchFactory {
         BasePatch patcher;
         if (PatchFactory.isOncHistoryDetailPatch(patch)) {
             patcher = new DeletePatch(patch, notificationUtil, DeleteType.ONC_HISTORY_DETAIL);
-        } else if (PatchFactory.isTissueRelatedOncHistoryId(patch)) {
+        } else if (patch.isTissueRelatedOncHistoryId()) {
             patcher = new DeletePatch(patch, notificationUtil, DeleteType.TISSUE);
-        }  else if (Patch.isSmIdDeletePatch(patch)) {
+        }  else if (patch.isSmIdDeletePatch()) {
             patcher = new DeletePatch(patch, notificationUtil, DeleteType.SM_ID);
         } else {
             throw new DsmInternalError("No support for deleting patch for nameValue: "+ patch.getNameValue());
@@ -26,9 +26,9 @@ public class DeletePatchFactory {
 
     public static void deleteChildrenFields(@NonNull Patch originalPatch, NotificationUtil notificationUtil) {
         List<Patch> deletePatches = new ArrayList<>();
-        if (Patch.isTissueDeletePatch(originalPatch)) {
+        if (originalPatch.isTissueDeletePatch()) {
             deletePatches = Patch.getPatchForSmIds(originalPatch);
-        } else if (Patch.isOncHistoryDeletePatch(originalPatch)) {
+        } else if (originalPatch.isOncHistoryDeletePatch()) {
             deletePatches = Patch.getPatchForTissues(originalPatch);
         }
         for (Patch childPatch : deletePatches) {

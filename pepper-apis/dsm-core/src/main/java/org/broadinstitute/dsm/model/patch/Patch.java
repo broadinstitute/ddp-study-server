@@ -185,19 +185,18 @@ public class Patch {
         return String.format("Error updating %s.%s with value %s for %s=%s", table, column, value, primaryKey, id);
     }
 
-    static boolean isOncHistoryDeletePatch(Patch originalPatch) {
-        return originalPatch.getNameValue().getName().equals(ONC_HISTORY_DELETED_FIELD) &&
-                originalPatch.getTableAlias().equals(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS);
+    boolean isOncHistoryDeletePatch() {
+        return getNameValue().getName().equals(ONC_HISTORY_DELETED_FIELD) &&
+                getTableAlias().equals(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS);
     }
 
-    static boolean isTissueDeletePatch(Patch originalPatch) {
-        return originalPatch.getNameValue().getName().equals(TISSUE_DELETED_FIELD) &&
-                originalPatch.getTableAlias().equals(DBConstants.DDP_TISSUE_ALIAS);
+     boolean isTissueDeletePatch() {
+        return getNameValue().getName().equals(TISSUE_DELETED_FIELD) && getTableAlias().equals(DBConstants.DDP_TISSUE_ALIAS);
     }
 
     //creates a list of patches for deleting tissues that belong to an onc history
     protected static List<Patch> getPatchForTissues(Patch oncHistoryPatch) {
-        List<Integer> tissueIds = TissueDao.getTissuesByOncHistoryDetailId(Integer.parseInt(oncHistoryPatch.getId()));
+        List<Integer> tissueIds = TissueDao.getTissuesByOncHistoryDetailId(oncHistoryPatch.getIdAsInt());
         List<Patch> deletePatches = new ArrayList<>();
         for (Integer tissueId : tissueIds) {
             NameValue nameValue = new NameValue(TISSUE_DELETED_FIELD, TRUE_FLAG);
@@ -224,17 +223,23 @@ public class Patch {
         return deletePatches;
     }
 
-    public static boolean hasDDPParticipantId(Patch patch) {
-        return StringUtils.isNotBlank(patch.getDdpParticipantId());
+    public boolean hasDDPParticipantId() {
+        return StringUtils.isNotBlank(this.ddpParticipantId);
     }
 
-    public static boolean isSmIdDeletePatch(Patch originalPatch) {
-        return (originalPatch.getNameValue().getName().contains(".deleted")) &&
-                DBConstants.SM_ID_TABLE_ALIAS.equals(originalPatch.getTableAlias()) &&
-                TissuePatch.TISSUE_ID.equals(originalPatch.getParent());
+    public boolean isSmIdDeletePatch() {
+        return (this.getNameValue().getName().contains(".deleted")) &&
+                DBConstants.SM_ID_TABLE_ALIAS.equals(this.getTableAlias()) && TissuePatch.TISSUE_ID.equals(this.getParent());
+    }
+
+    boolean isTissueRelatedOncHistoryId() {
+        return OncHistoryDetail.ONC_HISTORY_DETAIL_ID.equals(getParent());
     }
 
     public int getParentIdAsInt() {
         return Integer.parseInt(parentId);
+    }
+    public int getIdAsInt() {
+        return Integer.parseInt(this.id);
     }
 }

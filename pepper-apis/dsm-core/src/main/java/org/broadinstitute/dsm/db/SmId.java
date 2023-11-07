@@ -28,9 +28,9 @@ public class SmId {
     @ColumnName(DBConstants.SM_ID_TYPE)
     private String smIdType;
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
-    private Integer tissueId;
+    private int tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
-    private Integer smIdPk;
+    private int smIdPk;
     @ColumnName(DBConstants.DELETED)
     private Boolean deleted;
 
@@ -44,13 +44,13 @@ public class SmId {
         this.tissueId = tissueId;
     }
 
-    public SmId(Integer smIdPk, String smIdValue, Integer tissueId) {
+    public SmId(int smIdPk, String smIdValue, int tissueId) {
         this.smIdPk = smIdPk;
         this.smIdValue = smIdValue;
         this.tissueId = tissueId;
     }
 
-    public SmId(Integer smIdPk, String smType, String smIdValue, Integer tissueId, Boolean deleted) {
+    public SmId(int smIdPk, String smType, String smIdValue, int tissueId, Boolean deleted) {
         this(smIdPk, smType, smIdValue, tissueId);
         this.deleted = deleted;
     }

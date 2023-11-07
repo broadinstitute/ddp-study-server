@@ -119,7 +119,7 @@ public class ExistingRecordPatch extends BasePatch {
                     nameValue.getName())) {
                 Map<String, String> participantDataMap = GSON.fromJson(nameValue.getValue().toString(), Map.class);
                 org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
-                        new org.broadinstitute.dsm.model.participant.data.ParticipantData(Integer.parseInt(patch.getId()),
+                        new org.broadinstitute.dsm.model.participant.data.ParticipantData(patch.getIdAsInt(),
                                 patch.getParentId(), Integer.parseInt(ddpInstance.getDdpInstanceId()), patch.getFieldId(),
                                 participantDataMap);
                 if (participantData.hasFamilyMemberApplicantEmail(profile)) {

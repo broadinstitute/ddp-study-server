@@ -20,7 +20,7 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 @Slf4j
 public class DeletePatch extends ExistingRecordPatch {
     DeleteType deleteType;
-    static ClinicalOrderDao clinicalOrderDao = new ClinicalOrderDao();
+    ClinicalOrderDao clinicalOrderDao = new ClinicalOrderDao();
 
     public DeletePatch(Patch patch, NotificationUtil notificationUtil, DeleteType deleteType) {
         super(patch, notificationUtil);
@@ -51,12 +51,13 @@ public class DeletePatch extends ExistingRecordPatch {
     @Override
     Object handleSingleNameValue() {
         List<NameValue> nameValues = new ArrayList<>();
-        if (DeletedObjectDao.deletePatch(patch.getId(), patch.getUser(), dbElement, deleteType)) {
+        if (DeletedObjectDao.deletePatch(patch.getIdAsInt(), patch.getUser(), dbElement, deleteType)) {
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(patch.getRealm()).orElseThrow();
             try {
-                ElasticSearchDeleteUtil.deleteFromIndexById(patch.getDdpParticipantId(), Integer.parseInt(patch.getId()), ddpInstanceDto, deleteType);
+                ElasticSearchDeleteUtil.deleteFromIndexById(patch.getDdpParticipantId(), patch.getIdAsInt(), ddpInstanceDto, deleteType);
             } catch (Exception e) {
-                throw new DsmInternalError("Unable to delete from ES for patch with id "+patch.getId() +" for NameValue: "+patch.getNameValue().toString(),e);
+                throw new DsmInternalError("Unable to delete from ES for patch with id " + patch.getId() +" for NameValue: " +
+                        patch.getNameValue().toString(), e);
             }
             return nameValues;
         }
@@ -75,22 +76,22 @@ public class DeletePatch extends ExistingRecordPatch {
         return result;
     }
 
-    public static boolean isSafeToDelete(List<Integer> tissueIds) {
+    public boolean isSafeToDelete(List<Integer> tissueIds) {
         if (tissueIds == null || tissueIds.isEmpty())
             return true;
         return clinicalOrderDao.getClinicalOrdersForTissueIds(tissueIds).values().stream().filter(list -> !list.isEmpty()).findAny()
                 .isEmpty();
     }
 
-    public static boolean isSafeToDelete(Patch patch) {
+    public boolean isSafeToDelete(Patch patch) {
         List<Integer> tissueIds = new ArrayList<>();
-        if (Patch.isTissueDeletePatch(patch)) {
-            tissueIds.add(Integer.parseInt(patch.getId()));
-        } else if(Patch.isSmIdDeletePatch(patch)) {
-            int tissueId = new TissueSMIDDao().get(Integer.parseInt(patch.getId())).getTissueId();
+        if (patch.isTissueDeletePatch()) {
+            tissueIds.add(patch.getIdAsInt());
+        } else if(patch.isSmIdDeletePatch()) {
+            int tissueId = new TissueSMIDDao().get(patch.getIdAsInt()).getTissueId();
             tissueIds.add(tissueId);
-        } else if (Patch.isOncHistoryDeletePatch(patch)){
-            tissueIds = TissueDao.getTissuesByOncHistoryDetailId(Integer.parseInt(patch.getId()));
+        } else if (patch.isOncHistoryDeletePatch()){
+            tissueIds = TissueDao.getTissuesByOncHistoryDetailId(patch.getIdAsInt());
         }
         return isSafeToDelete(tissueIds);
 

@@ -13,8 +13,10 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.GroupDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.lddp.db.SimpleResult;
-//todo add comments and java docs
 
+/**
+ * This test util creates teh study in ddp_instance and ddp_group tables and
+ */
 @Slf4j
 public class DdpInstanceGroupTestUtil {
     private static final String SQL_INSERT_DDP_INSTANCE_GROUP =

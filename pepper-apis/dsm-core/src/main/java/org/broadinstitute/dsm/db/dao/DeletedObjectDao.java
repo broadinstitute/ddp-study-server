@@ -41,9 +41,11 @@ public class DeletedObjectDao {
     private static final String SQL_GET_DELETED_OBJECT_BY_ORIGINAL_ID_TABLE = "SELECT data FROM deleted_object WHERE original_table = ? "
             + " AND original_primary_key = ? ";
 
-    public static boolean deletePatch(@NonNull String id, @NonNull String user,
+    public static boolean deletePatch(@NonNull int id, @NonNull String user,
                                       @NonNull DBElement dbElement, DeleteType deleteType) {
         SimpleResult results = inTransaction((conn) -> {
+            //this one transaction should handle all the calls to the DB needed for deleting, first getting the json blob of the data in
+            // currentData, then inserting currentData into deleted_object and then removing the data from its original table
             SimpleResult dbVals = new SimpleResult();
             //Select everything in the db as the current state of the object into a json string , this is better than creating a Dto because
             // this can be done independent of class
@@ -51,23 +53,26 @@ public class DeletedObjectDao {
             //insert the values of what is being deleted into the deleted_object table
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DELETED_VALUES)) {
                 stmt.setString(1, dbElement.getTableName());
-                stmt.setString(2, id);
+                stmt.setInt(2, id);
                 stmt.setString(3, currentData);
                 stmt.setString(4, user);
                 stmt.setLong(5, System.currentTimeMillis());
                 int result = stmt.executeUpdate();
                 if (result != 1) {
-                    log.error("Inserted more than 1 row for deleted object with id {}, type {}, number of rows updated was {}", id,
-                            deleteType, result);
+                    // this will throw exception and so roll back the changes
+                    throw new DsmInternalError(String.format("Inserted more than 1 row for deleted object with id %d, type %s, number of rows updated was %d", id,
+                            deleteType, result));
+
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             //now delete from the table by primary key
             try (PreparedStatement deleteStmt = conn.prepareStatement(getDeleteQuery(deleteType))) {
-                deleteStmt.setString(1, id);
+                deleteStmt.setInt(1, id);
                 int result = deleteStmt.executeUpdate();
                 if (result > 1) {
+                    // this should throw exception and roll back the changes
                     throw new DsmInternalError("Deleting more than one row at a time is not allowed!");
                 } else {
                     log.info("Deleted from {} row with id {}", deleteType, id);
@@ -92,7 +97,9 @@ public class DeletedObjectDao {
      * @param deleteType DeleteType
      * @return
      */
-    private static String getJsonRepOfDeletedObject(Connection conn, String id, DeleteType deleteType) {
+    private static String getJsonRepOfDeletedObject(final @NonNull Connection conn, int id, DeleteType deleteType) {
+        //It's important that this method is called to work with the same transaction that is deleting the object,
+        // so `conn` should not be ignored or reinitialized
         //This method is to choose the right query, so we can avoid having dynamic queries with table names and risk SQL injection
         String query;
         if (deleteType.equals(DeleteType.ONC_HISTORY_DETAIL)) {
@@ -143,7 +150,9 @@ public class DeletedObjectDao {
      * @return JSON representation of the object that will be deleted later
      */
 
-    private static String getJsonObject(Connection conn, String query, String id, DeleteType deleteType) {
+    private static String getJsonObject(final @NonNull Connection conn, String query, int id, DeleteType deleteType) {
+        //It's important that this method is called to work with the same transaction that is deleting the object,
+        // so `conn` should not be ignored or reinitialized
         //Select everything in the db as the current state of the object into a json string , this is better than creating a Dto because
         // this can be done independent of class and changes to the schema
         String data = null;
@@ -154,7 +163,7 @@ public class DeletedObjectDao {
             if (rs.next()) {
                 String finalQuery = rs.getString(1);
                 PreparedStatement stmt2 = conn.prepareStatement(finalQuery);
-                stmt2.setString(1, id);
+                stmt2.setInt(1, id);
                 ResultSet rs2 = stmt2.executeQuery();
                 if (rs2.next()) {
                     data = rs2.getString(1);

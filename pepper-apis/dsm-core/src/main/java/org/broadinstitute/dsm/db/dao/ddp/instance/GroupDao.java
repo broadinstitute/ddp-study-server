@@ -27,7 +27,10 @@ public class GroupDao implements Dao<String> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_GROUP, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, groupName);
-                stmt.executeUpdate();
+                int r = stmt.executeUpdate();
+                if (r != 1) {
+                    throw new DsmInternalError("Group inserted more than one row, the updated number was " + r);
+                }
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getInt(1);

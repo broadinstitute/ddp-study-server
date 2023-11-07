@@ -1089,8 +1089,7 @@ public class DSMServer {
         });
         // todo not sure if this will remain in this ticket or not
         exception(UnsafeDeleteError.class, (exception, request, response) -> {
-            logger.error("DSM is unable to delete the object {}",  exception.toString());
-            exception.printStackTrace();
+            logger.warn("DSM is unable to delete the object {}",  exception.toString());
             response.status(500);
             response.body(exception.getMessage());
         });

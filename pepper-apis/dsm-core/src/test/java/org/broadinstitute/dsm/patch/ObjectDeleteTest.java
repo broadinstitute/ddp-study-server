@@ -12,7 +12,7 @@ import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.util.DSMOncHistoryCreatorUtil;
+import org.broadinstitute.dsm.util.OncHistoryTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -23,11 +23,12 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final String instanceName = "patch_instance";
     private static final String groupName = "patch_group";
-    static DSMOncHistoryCreatorUtil dsmOncHistoryCreatorUtil;
+    static OncHistoryTestUtil oncHistoryTestUtil;
     static String userEmail = "patchTestUser1@unittest.dev";
-    static String guid = "PATCH_TEST_PARTICIPANT";
-    static String guid2 = "PATCH_PARTICIPANT";
-    static String guid3 = "PATCH2_PARTICIPANT";
+    static String guid = "PATCH1_PARTICIPANT";
+    static String guid2 = "PATCH2_PARTICIPANT";
+    static String guid3 = "PATCH3_PARTICIPANT";
+    static String guid4 = "PATCH4_PARTICIPANT";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
     private static ParticipantDto testParticipant = null;
@@ -35,14 +36,14 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        dsmOncHistoryCreatorUtil = new DSMOncHistoryCreatorUtil(instanceName, instanceName, userEmail, groupName, "lmsPrefix", esIndex);
-        dsmOncHistoryCreatorUtil.initialize();
+        oncHistoryTestUtil = new OncHistoryTestUtil(instanceName, instanceName, userEmail, groupName, "lmsPrefix", esIndex);
+        oncHistoryTestUtil.initialize();
         ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
     }
 
     @AfterClass
     public static void cleanUpAfter() {
-        dsmOncHistoryCreatorUtil.deleteEverything();
+        oncHistoryTestUtil.deleteEverything();
         try {
             ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         } catch (Exception e) {
@@ -55,21 +56,20 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     @Test
     public void deleteObject() {
         try {
-            ParticipantDto ParticipantDto = dsmOncHistoryCreatorUtil.createParticipant(guid, ddpInstanceDto);
-            guid = ParticipantDto.getDdpParticipantIdOrThrow();
-            int participantId = ParticipantDto.getParticipantIdOrThrow();
+            ParticipantDto participantDto = oncHistoryTestUtil.createParticipant(guid, ddpInstanceDto);
+            guid = participantDto.getDdpParticipantIdOrThrow();
+            int participantId = participantDto.getParticipantIdOrThrow();
             Map<String, Object> response =
-                    (Map<String, Object>) dsmOncHistoryCreatorUtil.createOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(),
-                            participantId, instanceName, userEmail);
+                    (Map<String, Object>) oncHistoryTestUtil.createOncHistory(guid, participantId, instanceName, userEmail);
             int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
             OncHistoryDetail oncHistoryDetail =
                     OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
             Assert.assertNotNull(oncHistoryDetail);
-            dsmOncHistoryCreatorUtil.deleteOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(), participantId, instanceName, userEmail,
+            oncHistoryTestUtil.deleteOncHistory(guid, participantId, instanceName, userEmail,
                     oncHistoryDetailId);
-            dsmOncHistoryCreatorUtil.assertOncHistoryIsDeleted(guid, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, true, true);
+            oncHistoryTestUtil.assertOncHistoryIsDeleted(guid, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, true, true);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unexpected exception ", e);
         }
 
     }
@@ -77,29 +77,27 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     @Test
     public void deleteOncHistoryWithTissue() {
         try {
-            ParticipantDto ParticipantDto = dsmOncHistoryCreatorUtil.createParticipant(guid2, ddpInstanceDto);
-            guid2 = ParticipantDto.getDdpParticipantIdOrThrow();
-            int participantId = ParticipantDto.getParticipantIdOrThrow();
+            ParticipantDto participantDto = oncHistoryTestUtil.createParticipant(guid2, ddpInstanceDto);
+            guid2 = participantDto.getDdpParticipantIdOrThrow();
+            int participantId = participantDto.getParticipantIdOrThrow();
             Map<String, Object> response =
-                    (Map<String, Object>) dsmOncHistoryCreatorUtil.createOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(),
-                            participantId, instanceName, userEmail);
+                    (Map<String, Object>) oncHistoryTestUtil.createOncHistory(guid2, participantId, instanceName, userEmail);
             int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
             OncHistoryDetail oncHistoryDetail =
                     OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
             Assert.assertNotNull(oncHistoryDetail);
-            response = (Map<String, Object>) dsmOncHistoryCreatorUtil.createTissue(guid2, oncHistoryDetailId, instanceName, userEmail);
+            response = (Map<String, Object>) oncHistoryTestUtil.createTissue(guid2, oncHistoryDetailId, instanceName, userEmail);
 
             int tissueId = Integer.parseInt((String) response.get("tissueId"));
-            Optional<Tissue> maybeCreatedTissue = new TissueDao().get((long)tissueId);
+            Optional<Tissue> maybeCreatedTissue = new TissueDao().get((long) tissueId);
             Assert.assertTrue(maybeCreatedTissue.isPresent());
             Tissue createdTissue = maybeCreatedTissue.get();
-            dsmOncHistoryCreatorUtil.deleteOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(), participantId, instanceName, userEmail,
-                    oncHistoryDetailId);
-            dsmOncHistoryCreatorUtil.assertTissueIsDeleted(guid2, createdTissue, tissueId, ddpInstanceDto, true);
-            dsmOncHistoryCreatorUtil.assertOncHistoryIsDeleted(guid2, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, true);
+            oncHistoryTestUtil.deleteOncHistory(guid2, participantId, instanceName, userEmail, oncHistoryDetailId);
+            oncHistoryTestUtil.assertTissueIsDeleted(guid2, createdTissue, tissueId, ddpInstanceDto, true);
+            oncHistoryTestUtil.assertOncHistoryIsDeleted(guid2, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, true);
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unexpected exception ", e);
         }
 
     }
@@ -107,36 +105,79 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     @Test
     public void deleteOncHistoryWithTissueAndSmId() {
         try {
-            ParticipantDto ParticipantDto = dsmOncHistoryCreatorUtil.createParticipant(guid3, ddpInstanceDto);
-            guid3 = ParticipantDto.getDdpParticipantIdOrThrow();
-            int participantId = ParticipantDto.getParticipantIdOrThrow();
+            ParticipantDto participantDto = oncHistoryTestUtil.createParticipant(guid3, ddpInstanceDto);
+            guid3 = participantDto.getDdpParticipantIdOrThrow();
+            int participantId = participantDto.getParticipantIdOrThrow();
             Map<String, Object> response =
-                    (Map<String, Object>) dsmOncHistoryCreatorUtil.createOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(),
-                            participantId, instanceName, userEmail);
+                    (Map<String, Object>) oncHistoryTestUtil.createOncHistory(guid3, participantId, instanceName, userEmail);
             int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
             OncHistoryDetail oncHistoryDetail =
                     OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
             Assert.assertNotNull(oncHistoryDetail);
-            response = (Map<String, Object>) dsmOncHistoryCreatorUtil.createTissue(guid3, oncHistoryDetailId, instanceName, userEmail);
+            response = (Map<String, Object>) oncHistoryTestUtil.createTissue(guid3, oncHistoryDetailId, instanceName, userEmail);
             int tissueId = Integer.parseInt((String) response.get("tissueId"));
 
-            response = (Map<String, Object>) dsmOncHistoryCreatorUtil.createSmId(guid3, tissueId, instanceName, userEmail);
+            response = (Map<String, Object>) oncHistoryTestUtil.createSmId(guid3, tissueId, instanceName, userEmail, "value-test1");
             int smIdPk = (int) response.get("smIdPk");
             SmId smId = new TissueSMIDDao().get(smIdPk);
-            Optional<Tissue> maybeCreatedTissue = new TissueDao().get((long)tissueId);
+            Optional<Tissue> maybeCreatedTissue = new TissueDao().get((long) tissueId);
             Assert.assertTrue(maybeCreatedTissue.isPresent());
             Tissue createdTissue = maybeCreatedTissue.get();
 
-            dsmOncHistoryCreatorUtil.deleteOncHistory(ParticipantDto.getDdpParticipantIdOrThrow(), participantId, instanceName, userEmail,
-                    oncHistoryDetailId);
-            dsmOncHistoryCreatorUtil.assertSmIdIsDeleted(guid3, tissueId, smIdPk, ddpInstanceDto, smId);
-            dsmOncHistoryCreatorUtil.assertTissueIsDeleted(guid3, createdTissue, tissueId, ddpInstanceDto, false);
-            dsmOncHistoryCreatorUtil.assertOncHistoryIsDeleted(guid3, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, false);
+            oncHistoryTestUtil.deleteOncHistory(guid3, participantId, instanceName, userEmail, oncHistoryDetailId);
+            oncHistoryTestUtil.assertSmIdIsDeleted(guid3, tissueId, smIdPk, ddpInstanceDto, smId);
+            oncHistoryTestUtil.assertTissueIsDeleted(guid3, createdTissue, tissueId, ddpInstanceDto, false);
+            oncHistoryTestUtil.assertOncHistoryIsDeleted(guid3, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, false);
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unexpected exception ", e);
         }
 
+    }
+
+    @Test
+    public void deleteJustTheSmId() {
+        try {
+            //create participant
+            ParticipantDto participantDto = oncHistoryTestUtil.createParticipant(guid3, ddpInstanceDto);
+            guid4 = participantDto.getDdpParticipantIdOrThrow();
+            int participantId = participantDto.getParticipantIdOrThrow();
+            //create oncHistoryDetailId
+            Map<String, Object> response =
+                    (Map<String, Object>) oncHistoryTestUtil.createOncHistory(guid4, participantId, instanceName, userEmail);
+            int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
+            OncHistoryDetail oncHistoryDetail =
+                    OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
+            Assert.assertNotNull(oncHistoryDetail);
+            // create Tissue for Onc History
+            response = (Map<String, Object>) oncHistoryTestUtil.createTissue(guid4, oncHistoryDetailId, instanceName, userEmail);
+            int tissueId = Integer.parseInt((String) response.get("tissueId"));
+            // create SM ID for the tissue
+            response = (Map<String, Object>) oncHistoryTestUtil.createSmId(guid4, tissueId, instanceName, userEmail, "value1");
+            int smIdPk = (int) response.get("smIdPk");
+            SmId smId = new TissueSMIDDao().get(smIdPk);
+            response = (Map<String, Object>) oncHistoryTestUtil.createSmId(guid4, tissueId, instanceName, userEmail, "value2");
+            int smIdPk2 = (int) response.get("smIdPk");
+            SmId smId2 = new TissueSMIDDao().get(smIdPk2);
+            //delete only the first SMID
+            oncHistoryTestUtil.deleteSMId(guid4, instanceName, userEmail, smIdPk, tissueId);
+            //making sure only sm id got deleted
+            oncHistoryTestUtil.assertSmIdIsDeleted(guid4, tissueId, smIdPk, ddpInstanceDto, smId);
+            //make sure everything else is not deleted
+            oncHistoryTestUtil.assertSmIdIsNOTDeleted(guid4, tissueId, smIdPk2, ddpInstanceDto, smId2);
+            oncHistoryTestUtil.assertTissueIsNOTDeleted(guid4, tissueId, ddpInstanceDto, false);
+            oncHistoryTestUtil.assertOncHistoryIsNOTDeleted(guid4, oncHistoryDetailId, ddpInstanceDto, false, false);
+            //for the sake of clean up as well as testing delete, delete the rest and make sure they got deleted
+            Optional<Tissue> maybeCreatedTissue = new TissueDao().get((long) tissueId);
+            Assert.assertTrue(maybeCreatedTissue.isPresent());
+            Tissue createdTissue = maybeCreatedTissue.get();
+            oncHistoryTestUtil.deleteOncHistory(guid4, participantId, instanceName, userEmail, oncHistoryDetailId);
+            oncHistoryTestUtil.assertSmIdIsDeleted(guid4, tissueId, smIdPk, ddpInstanceDto, smId);
+            oncHistoryTestUtil.assertTissueIsDeleted(guid4, createdTissue, tissueId, ddpInstanceDto, false);
+            oncHistoryTestUtil.assertOncHistoryIsDeleted(guid4, oncHistoryDetail, oncHistoryDetailId, ddpInstanceDto, false, false);
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected exception ", e);
+        }
     }
 
 }

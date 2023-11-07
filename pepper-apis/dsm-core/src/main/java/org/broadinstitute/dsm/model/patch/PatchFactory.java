@@ -23,7 +23,7 @@ public class PatchFactory {
                 } else {
                     patcher = new OncHistoryDetailPatch(patch);
                 }
-            } else if (isTissueRelatedOncHistoryId(patch)) {
+            } else if (patch.isTissueRelatedOncHistoryId()) {
                 patcher = new TissuePatch(patch);
             } else if (isSmIdCreation(patch)) {
                 patcher = new SMIDPatch(patch);
@@ -33,7 +33,7 @@ public class PatchFactory {
                 patcher = new ParticipantRecordPatch(patch);
             }
         } else if (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
-                && Patch.hasDDPParticipantId(patch)) {
+                && patch.hasDDPParticipantId()) {
             patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
@@ -70,10 +70,6 @@ public class PatchFactory {
         return StringUtils.isNotBlank(patch.getFieldId());
     }
 
-    static boolean isTissueRelatedOncHistoryId(Patch patch) {
-        return OncHistoryDetail.ONC_HISTORY_DETAIL_ID.equals(patch.getParent());
-    }
-
     static boolean isSmIdPatch(Patch patch) {
         return DBConstants.SM_ID_TABLE_ALIAS.equals(patch.getTableAlias());
     }
@@ -88,13 +84,13 @@ public class PatchFactory {
 
     protected static boolean isOncHistoryDetailPatch(Patch patch) {
         return (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
-                && Patch.hasDDPParticipantId(patch)) || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias());
+                && patch.hasDDPParticipantId()) || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias());
     }
 
     public static boolean isDeletePatch(Patch patch) {
         // check that the patch is for updating a `deleted` flags, and it's for either onchistory , tissue or sm Id requests
         return patch.getNameValue().getName().contains(".deleted") &&
-                (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch)
-                        || Patch.isSmIdDeletePatch(patch));
+                (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || patch.isTissueRelatedOncHistoryId()
+                        || patch.isSmIdDeletePatch());
     }
 }
