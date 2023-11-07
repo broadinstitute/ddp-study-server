@@ -1,9 +1,13 @@
 package org.broadinstitute.ddp.cache;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 
+@Slf4j
 public class CacheServiceTest {
+
+    private static final String AARCH64 = "aarch64";
 
     @Test
     public void testGetInstanceDoesNotThrowNoSuchMethodError() {
@@ -12,6 +16,17 @@ public class CacheServiceTest {
         } catch (NoSuchMethodError e) {
             e.printStackTrace();
             Assert.fail("Transitive dependency error with redisson: " + e.getMessage());
+        } catch (NoSuchFieldError e) {
+            if ("NETWORK_INTERFACES".equals(e.getMessage())) {
+                if (AARCH64.equals(System.getProperty("os.arch"))) {
+                    // this is okay because the test is just asserting that we didn't
+                    // hit NoSuchMethodError, and the network interfaces issue
+                    // is an osx specific problem
+                    return;
+                } else {
+                    Assert.fail("Could not get CacheService instance: " + e.getMessage());
+                }
+            }
         } catch (Throwable e) {
             boolean hasConfigFileError = false;
             if (e.getCause() != null) {
@@ -25,5 +40,6 @@ public class CacheServiceTest {
             e.printStackTrace();
             Assert.assertTrue(hasConfigFileError);
         }
+        Assert.fail("Should have caught a config file issue");
     }
 }
