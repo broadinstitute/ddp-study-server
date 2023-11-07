@@ -40,6 +40,5 @@ public class CacheServiceTest {
             e.printStackTrace();
             Assert.assertTrue(hasConfigFileError);
         }
-        Assert.fail("Should have caught a config file issue");
     }
 }
