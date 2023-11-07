@@ -161,6 +161,20 @@ public class OncHistoryTestUtil {
         patcher.doPatch();
     }
 
+    public void deleteTissue(String guid, String realm, String userEmail, int tissueId, int oncHistoryDetailId) throws Exception {
+        List<String> guids = new ArrayList<>();
+        guids.add(guid);
+        String deleteTissueJson = TestUtil.readFile("patchRequests/tissueDeletePatchPlaceholder.json");
+        deleteTissueJson = deleteTissueJson.replace("<userEmail>", userEmail)
+                .replace("<GUID>", guid)
+                .replace("<tissueId>", String.valueOf(tissueId))
+                .replace("<instanceName>", realm)
+                .replace("<oncHistoryDetailId>", String.valueOf(oncHistoryDetailId));
+        Patch deleteTissuePatch = new Gson().fromJson(deleteTissueJson, Patch.class);
+        BasePatch patcher = PatchFactory.makePatch(deleteTissuePatch, notificationUtil);
+        patcher.doPatch();
+    }
+
     public void deleteSMId(String guid, String realm, String userEmail, int smIdPk, int tissueId) throws Exception {
         List<String> guids = new ArrayList<>();
         guids.add(guid);
@@ -247,8 +261,9 @@ public class OncHistoryTestUtil {
      * @param expectZeroSmId     mark this as true if the participant originally only had sm ids belonging to this onchistory, and so after
      *                           deleting the onc history we expect there to be no more
      */
-    public void assertOncHistoryIsNOTDeleted(String participantGuid, int oncHistoryDetailId,
-                                          DDPInstanceDto ddpInstanceDto, boolean expectZeroTissue, boolean expectZeroSmId) {
+    public void assertOncHistoryIsNOTDeleted(String participantGuid, int oncHistoryDetailId, long numberOfRemainingTissue,
+                                             long numberOfRemainingSmIds, DDPInstanceDto ddpInstanceDto, boolean expectZeroTissue,
+                                             boolean expectZeroSmId) {
         try {
             String deletedData = deletedObjectDao.getDeletedDataByPKAndTable(oncHistoryDetailId, DBConstants.DDP_ONC_HISTORY_DETAIL);
             Assert.assertNull(deletedData);
@@ -266,14 +281,14 @@ public class OncHistoryTestUtil {
                 Assert.assertFalse(expectZeroTissue);
                 long countNumberOfTissues = tissuesFromES.stream().filter(tissueMap ->
                         Integer.parseInt((String) tissueMap.get("oncHistoryDetailId")) == oncHistoryDetailId).count();
-                Assert.assertEquals(1L, countNumberOfTissues);
+                Assert.assertEquals(numberOfRemainingTissue, countNumberOfTissues);
                 List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
                         getOrDefault(ESObjectConstants.SMID, null);
                 if (smIdsFromEs != null) {
                     Assert.assertFalse(expectZeroSmId);
                     long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
                             tissuesFromES.stream().noneMatch(tissue -> tissue.get("tissueId") == smIdMap.get("tissueId"))).count();
-                    Assert.assertNotEquals(0L, countSmIds);
+                    Assert.assertEquals(numberOfRemainingSmIds, countSmIds);
                 } else {
                     Assert.assertTrue(expectZeroSmId);
                 }
@@ -404,7 +419,7 @@ public class OncHistoryTestUtil {
     }
 
     /**
-     * Call this method to check the SMID that was not supposed to get deleted did NOT
+     * Call this method to check the SMID that was not supposed to get deleted did NOT, the method
      * checks both DB and ES index
      * @param participantGuid  the ddpParticipantId
      * @param tissueId         the id of the tissue
