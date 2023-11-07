@@ -85,21 +85,4 @@ public class SmId {
         return new TissueSMIDDao().isUnique(smIdValue);
     }
 
-    public String createNewSmId(@NonNull String tissueId, String userId, @NonNull List<NameValue> smIdDetails) {
-        String smIdType = null;
-        String smIdValue = null;
-        for (NameValue nameValue : smIdDetails) {
-            if (nameValue.getName().equals("smIdType")) {
-                smIdType = String.valueOf(nameValue.getValue());
-            } else if (nameValue.getName().equals("smIdValue")) {
-                smIdValue = String.valueOf(nameValue.getValue());
-            }
-        }
-        if (StringUtils.isNotBlank(smIdValue) && this.isUniqueSmId(smIdValue)) {
-            String smIdId = new TissueSMIDDao().createNewSMIDForTissue(tissueId, userId, smIdType, smIdValue);
-            return smIdId;
-        } else {
-            throw new DsmInternalError("Duplicate or blank value for sm id value " + smIdValue);
-        }
-    }
 }

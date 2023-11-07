@@ -183,6 +183,7 @@ public class UserAdminTestUtil {
         for (int groupRoleId: createdGroupRoles) {
             UserAdminService.deleteGroupRole(groupRoleId);
         }
+
     }
 
     /**

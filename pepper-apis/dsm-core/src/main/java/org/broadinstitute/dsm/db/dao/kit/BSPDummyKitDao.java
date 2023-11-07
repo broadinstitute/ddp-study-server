@@ -115,7 +115,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         return Optional.ofNullable((String) results.resultValue);
     }
 
-    public String getRandomOncHistoryForStudy(String ddpInstanceName) {
+    public Integer getRandomOncHistoryIdForStudy(String ddpInstanceName) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -138,10 +138,10 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Problem getting a random participant id for instance " + ddpInstanceName, results.resultException);
         }
-        return (String) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
-    public String getRandomOncHistoryForParticipant(String ddpInstanceName, String ddpParticipantId) {
+    public Integer getRandomOncHistoryForParticipant(String ddpInstanceName, String ddpParticipantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -166,7 +166,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Problem getting a random participant id for instance " + ddpInstanceName, results.resultException);
         }
-        return (String) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
     @Override
