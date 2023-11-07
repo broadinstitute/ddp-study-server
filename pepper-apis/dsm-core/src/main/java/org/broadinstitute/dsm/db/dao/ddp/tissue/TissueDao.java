@@ -45,15 +45,15 @@ public class TissueDao implements Dao<Tissue> {
      * @param oncHistoryDetailId
      * @return List of tissue Ids that all belong to the onc history with oncHistoryDetailId
      */
-    public static List<String> getTissuesByOncHistoryDetailId(String oncHistoryDetailId) {
-        List<String> tissueIds = new ArrayList<>();
+    public static List<Integer> getTissuesByOncHistoryDetailId(int oncHistoryDetailId) {
+        List<Integer> tissueIds = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_TISSUES_BY_ONC_HISTORY_ID)) {
-                stmt.setString(1, oncHistoryDetailId);
+                stmt.setInt(1, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        tissueIds.add(rs.getString(DBConstants.TISSUE_ID));
+                        tissueIds.add(rs.getInt(DBConstants.TISSUE_ID));
                     }
                 }
             } catch (SQLException ex) {

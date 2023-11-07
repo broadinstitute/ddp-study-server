@@ -16,19 +16,19 @@ public class DeletePatchFactory {
             patcher = new DeletePatch(patch, notificationUtil, DeleteType.ONC_HISTORY_DETAIL);
         } else if (PatchFactory.isTissueRelatedOncHistoryId(patch)) {
             patcher = new DeletePatch(patch, notificationUtil, DeleteType.TISSUE);
-        }  else if (PatchFactory.isSmIdPatch(patch)) {
+        }  else if (Patch.isSmIdDeletePatch(patch)) {
             patcher = new DeletePatch(patch, notificationUtil, DeleteType.SM_ID);
         } else {
-            throw new DsmInternalError("This method should not reach here");
+            throw new DsmInternalError("No support for deleting patch for nameValue: "+ patch.getNameValue());
         }
         return patcher;
     }
 
-    protected static void deleteChildrenFields(@NonNull Patch originalPatch, NotificationUtil notificationUtil) {
+    public static void deleteChildrenFields(@NonNull Patch originalPatch, NotificationUtil notificationUtil) {
         List<Patch> deletePatches = new ArrayList<>();
-        if (Patch.isTissuePatch(originalPatch)) {
+        if (Patch.isTissueDeletePatch(originalPatch)) {
             deletePatches = Patch.getPatchForSmIds(originalPatch);
-        } else if (Patch.isOncHistoryPatch(originalPatch)) {
+        } else if (Patch.isOncHistoryDeletePatch(originalPatch)) {
             deletePatches = Patch.getPatchForTissues(originalPatch);
         }
         for (Patch childPatch : deletePatches) {

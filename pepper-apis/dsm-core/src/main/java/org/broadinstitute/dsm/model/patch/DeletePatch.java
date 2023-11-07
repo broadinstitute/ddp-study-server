@@ -7,6 +7,9 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
+import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
@@ -17,6 +20,7 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 @Slf4j
 public class DeletePatch extends ExistingRecordPatch {
     DeleteType deleteType;
+    static ClinicalOrderDao clinicalOrderDao = new ClinicalOrderDao();
 
     public DeletePatch(Patch patch, NotificationUtil notificationUtil, DeleteType deleteType) {
         super(patch, notificationUtil);
@@ -26,15 +30,14 @@ public class DeletePatch extends ExistingRecordPatch {
 
     @Override
     public Object doPatch() {
-        //todo this should get changed after 1209 is merged
-        if (!isSafeToDelete() || !patch.isDeleteAnyway()) {
+        if (!isSafeToDelete(this.patch) && patch.isDeleteAnyway()) {
             throw new UnsafeDeleteError("This object is used in a clinical order");
         }
         //recursively start by creating patches for "children" of the current
         DeletePatchFactory.deleteChildrenFields(this.patch, this.getNotificationUtil());
         if (isNameValuePairs()) {
-            throw new DsmInternalError(String.format("Patch is invalid for NameValues {}, delete patch should have only one name value",
-                    patch.getNameValues()));
+            throw new DsmInternalError(String.format("Patch is invalid for NameValues %s, delete patch should have only one name value",
+                    patch.getNameValues().toString()));
         }
         return patchNameValuePair();
     }
@@ -72,9 +75,25 @@ public class DeletePatch extends ExistingRecordPatch {
         return result;
     }
 
-    //TODO this is supposed to get handled by PEPPER-1209
-    private boolean isSafeToDelete() {
-        return true;
+    public static boolean isSafeToDelete(List<Integer> tissueIds) {
+        if (tissueIds == null || tissueIds.isEmpty())
+            return true;
+        return clinicalOrderDao.getClinicalOrdersForTissueIds(tissueIds).values().stream().filter(list -> !list.isEmpty()).findAny()
+                .isEmpty();
+    }
+
+    public static boolean isSafeToDelete(Patch patch) {
+        List<Integer> tissueIds = new ArrayList<>();
+        if (Patch.isTissueDeletePatch(patch)) {
+            tissueIds.add(Integer.parseInt(patch.getId()));
+        } else if(Patch.isSmIdDeletePatch(patch)) {
+            int tissueId = new TissueSMIDDao().get(Integer.parseInt(patch.getId())).getTissueId();
+            tissueIds.add(tissueId);
+        } else if (Patch.isOncHistoryDeletePatch(patch)){
+            tissueIds = TissueDao.getTissuesByOncHistoryDetailId(Integer.parseInt(patch.getId()));
+        }
+        return isSafeToDelete(tissueIds);
+
     }
 
 

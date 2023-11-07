@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -96,6 +95,6 @@ public class PatchFactory {
         // check that the patch is for updating a `deleted` flags, and it's for either onchistory , tissue or sm Id requests
         return patch.getNameValue().getName().contains(".deleted") &&
                 (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || PatchFactory.isTissueRelatedOncHistoryId(patch)
-                        || PatchFactory.isSmIdPatch(patch));
+                        || Patch.isSmIdDeletePatch(patch));
     }
 }

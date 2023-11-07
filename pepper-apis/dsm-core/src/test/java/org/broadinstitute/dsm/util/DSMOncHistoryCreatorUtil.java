@@ -16,12 +16,14 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.patch.BasePatch;
@@ -42,11 +44,9 @@ import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 @Slf4j
 public class DSMOncHistoryCreatorUtil {
 
-    private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final DeletedObjectDao deletedObjectDao = new DeletedObjectDao();
     private List<Integer> medicalRecordIds = new ArrayList<Integer>();
     List<Integer> participantIds = new ArrayList<>();
-    DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
     MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
     DdpInstanceGroupTestUtil ddpInstanceGroupTestUtil = new DdpInstanceGroupTestUtil();
     private UserAdminTestUtil userAdminUtil;
@@ -135,6 +135,17 @@ public class DSMOncHistoryCreatorUtil {
         return patcher.doPatch();
     }
 
+    public Object createSmId(String guid, int tissueId, String realm, String userEmail) throws Exception {
+        String newSmIdPatchJson = TestUtil.readFile("patchRequests/newSmIdPatchPlaceholder.json");
+        newSmIdPatchJson = newSmIdPatchJson.replace("<userEmail>", userEmail)
+                .replace("<GUID>", guid)
+                .replace("<tissueId>", String.valueOf(tissueId))
+                .replace("<instanceName>", realm);
+        Patch smIdPatch = new Gson().fromJson(newSmIdPatchJson, Patch.class);
+        BasePatch patcher = PatchFactory.makePatch(smIdPatch, notificationUtil);
+        return patcher.doPatch();
+    }
+
     public void deleteOncHistory(String guid, int participantId, String realm, String userEmail, int oncHistoryDetailId) throws Exception {
         List<String> guids = new ArrayList<>();
         guids.add(guid);
@@ -152,7 +163,7 @@ public class DSMOncHistoryCreatorUtil {
     }
 
     /**
-     * Call this method to check if an oncHistoryDeleted was deleted propery
+     * Call this method to check if an oncHistoryDeleted was deleted properly
      *
      * @param participantGuid    the ddpParticipantId
      * @param oncHistoryDetail   the OncHistoryDetail object of the OncHistory before getting deleted
@@ -198,7 +209,7 @@ public class DSMOncHistoryCreatorUtil {
                 if (smIdsFromEs != null) {
                     Assert.assertFalse(expectZeroSmId);
                     long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
-                            !tissuesFromES.stream().anyMatch(tissue -> tissue.get("tissueId") == smIdMap.get("tissueId"))).count();
+                            tissuesFromES.stream().noneMatch(tissue -> tissue.get("tissueId") == smIdMap.get("tissueId"))).count();
                     Assert.assertEquals(0L, countSmIds);
                 } else {
                     Assert.assertTrue(expectZeroSmId);
@@ -213,11 +224,11 @@ public class DSMOncHistoryCreatorUtil {
     }
 
     /**
-     * Call this method to check if a deleted oncHistory was deleted propery
+     * Call this method to check if a deleted tissue was deleted properly
      * checks both DB and ES index
      * @param participantGuid  the ddpParticipantId
      * @param tissue           the OncHistoryDetail object of the OncHistory before getting deleted
-     * @param tissueId         the id of the OncHistoryDetail
+     * @param tissueId         the id of the Tissue
      * @param ddpInstanceDto   the instance where the onc history belonged
      * @param expectZeroSmId   mark this as true if the participant originally only had sm ids belonging to this onchistory, and so after
      *                         deleting the onc history we expect there to be no more
@@ -246,11 +257,44 @@ public class DSMOncHistoryCreatorUtil {
             if (smIdsFromEs != null) {
                 Assert.assertFalse(expectZeroSmId);
                 long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
-                        !tissues.stream().anyMatch(tissue1 -> tissue1.get("tissueId") == smIdMap.get("tissueId"))).count();
+                        tissues.stream().noneMatch(tissue1 -> tissue1.get("tissueId") == smIdMap.get("tissueId"))).count();
                 Assert.assertEquals(0L, countSmIds);
             } else {
                 Assert.assertTrue(expectZeroSmId);
             }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected exception ", e);
+        }
+
+    }
+
+    /**
+     * Call this method to check if a deleted smId was deleted properly
+     * checks both DB and ES index
+     * @param participantGuid  the ddpParticipantId
+     * @param tissueId         the id of the tissue
+     * @param smIdPk            the id of the smId
+     * @param ddpInstanceDto   the instance where the onc history belonged
+     */
+    public void assertSmIdIsDeleted(String participantGuid,  int tissueId, int smIdPk,  DDPInstanceDto ddpInstanceDto, SmId smId) {
+        try {
+            SmId deletedSmId = new TissueSMIDDao().get(smIdPk);
+            Assert.assertNull(deletedSmId);
+            String deletedData = deletedObjectDao.getDeletedDataByPKAndTable(smIdPk, DBConstants.SM_ID_TABLE);
+            Assert.assertNotNull(deletedData);
+            Assert.assertFalse(StringUtils.isBlank(deletedData));
+            JSONObject smIdFromData = new Gson().fromJson(deletedData, JSONObject.class);
+            Assert.assertEquals((int)((Double) smIdFromData.get(DBConstants.TISSUE_ID)).doubleValue(), tissueId);
+            Assert.assertEquals(smIdFromData.get(DBConstants.SM_ID_VALUE), smId.getSmIdValue());
+            Assert.assertEquals(smIdFromData.get(DBConstants.SM_ID_TYPE),  smId.getSmIdType());
+            Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), participantGuid,
+                    ESObjectConstants.DSM);
+            List<Map<String, Object>> smIds =
+                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).get(ESObjectConstants.SMID);
+            long countNumberOfsmIdsInEs = smIds.stream().filter(stringObjectMap ->
+                    (int) stringObjectMap.get(ESObjectConstants.SMID_PK) == smIdPk).count();
+            Assert.assertEquals(0L, countNumberOfsmIdsInEs);
 
         } catch (Exception e) {
             throw new RuntimeException("Unexpected exception ", e);

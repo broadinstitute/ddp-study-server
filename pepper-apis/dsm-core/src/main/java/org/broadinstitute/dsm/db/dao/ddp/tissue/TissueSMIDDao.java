@@ -37,6 +37,9 @@ public class TissueSMIDDao {
             "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, last_changed = ?, changed_by = ?, sm_id_value = ?";
     public static final String SQL_SELECT_SM_ID_VALUE_WITH_ID =
             "SELECT sm_id_value from sm_id where sm_id_value = ? and NOT sm_id_pk = ? and Not deleted <=> 1";
+
+    public static final String SQL_SELECT_SM_ID_BY_ID =
+            "SELECT * from sm_id where  sm_id_pk = ? ";
     public static final String SQL_SELECT_SM_ID_VALUE = "SELECT sm_id_value from sm_id where sm_id_value = ?  and Not deleted <=> 1";
 
     public static final String SQL_SELECT_ALL_SMIDS_BY_INSTANCE_NAME =
@@ -296,5 +299,29 @@ public class TissueSMIDDao {
         }
         logger.info("Got %d smId pks in DSM DB for tissue with id %s", smIds.size() , tissueId);
         return smIds;
+    }
+
+    public SmId get(int id) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_SM_ID_BY_ID)) {
+                stmt.setInt(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                       dbVals.resultValue = new SmId(rs.getInt(DBConstants.SM_ID_PK), rs.getString(DBConstants.SM_ID_VALUE),
+                               rs.getInt(DBConstants.TISSUE_ID));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Couldn't get SmId with Id " + id, results.resultException);
+        }
+        logger.info("Got smId with id "+ id);
+        return (SmId) results.resultValue;
     }
 }

@@ -117,14 +117,17 @@ public class DeletedObjectDao {
         String query = SQL_DELETE_VALUES;
         if (deleteType.equals(DeleteType.ONC_HISTORY_DETAIL)) {
             query = query.replace(TABLE_PLACE_HOLDER, DBConstants.DDP_ONC_HISTORY_DETAIL).replace(PK_PLACE_HOLDER, DBConstants.ONC_HISTORY_DETAIL_ID);
+            log.info("Created delete query for table {} with primary key {}", DBConstants.DDP_ONC_HISTORY_DETAIL, DBConstants.ONC_HISTORY_DETAIL_ID);
         } else if (deleteType.equals(DeleteType.TISSUE)) {
             query = query.replace(TABLE_PLACE_HOLDER, DBConstants.DDP_TISSUE).replace(PK_PLACE_HOLDER, DBConstants.TISSUE_ID);
+            log.info("Created delete query for table {} with primary key {}", DBConstants.DDP_TISSUE, DBConstants.TISSUE_ID);
         } else if (deleteType.equals(DeleteType.SM_ID)) {
             query = query.replace(TABLE_PLACE_HOLDER, DBConstants.SM_ID_TABLE).replace(PK_PLACE_HOLDER, DBConstants.SM_ID_PK);
+            log.info("Created delete query for table {} with primary key {}", DBConstants.SM_ID_TABLE, DBConstants.SM_ID_PK);
         } else {
             throw new DsmInternalError(String.format("DeleteType %s is not configured", deleteType));
         }
-        log.info("Created delete query for table {} with primary key {}");
+
         return query;
     }
 
