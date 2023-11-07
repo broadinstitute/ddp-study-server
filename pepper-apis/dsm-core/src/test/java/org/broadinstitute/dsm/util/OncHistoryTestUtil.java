@@ -380,7 +380,7 @@ public class OncHistoryTestUtil {
      */
     public void assertSmIdIsDeleted(String participantGuid,  int tissueId, int smIdPk,  DDPInstanceDto ddpInstanceDto, SmId smId) {
         try {
-            SmId deletedSmId = new TissueSMIDDao().get(smIdPk);
+            SmId deletedSmId = new TissueSMIDDao().getBySmIdPk(smIdPk);
             Assert.assertNull(deletedSmId);
             String deletedData = deletedObjectDao.getDeletedDataByPKAndTable(smIdPk, DBConstants.SM_ID_TABLE);
             Assert.assertNotNull(deletedData);
@@ -413,7 +413,7 @@ public class OncHistoryTestUtil {
      */
     public void assertSmIdIsNOTDeleted(String participantGuid,  int tissueId, int smIdPk,  DDPInstanceDto ddpInstanceDto, SmId smId) {
         try {
-            SmId deletedSmId = new TissueSMIDDao().get(smIdPk);
+            SmId deletedSmId = new TissueSMIDDao().getBySmIdPk(smIdPk);
             Assert.assertNotNull(deletedSmId);
             String deletedData = deletedObjectDao.getDeletedDataByPKAndTable(smIdPk, DBConstants.SM_ID_TABLE);
             Assert.assertNull(deletedData);

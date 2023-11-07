@@ -301,11 +301,11 @@ public class TissueSMIDDao {
         return smIds;
     }
 
-    public SmId get(int id) {
+    public SmId getBySmIdPk(int smIdPk) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_SM_ID_BY_ID)) {
-                stmt.setInt(1, id);
+                stmt.setInt(1, smIdPk);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                        dbVals.resultValue = new SmId(rs.getInt(DBConstants.SM_ID_PK), rs.getString(DBConstants.SM_ID_VALUE),
@@ -319,9 +319,9 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError("Couldn't get SmId with Id " + id, results.resultException);
+            throw new DsmInternalError("Couldn't get SmId with Id " + smIdPk, results.resultException);
         }
-        logger.info("Got smId with id "+ id);
+        logger.info("Got smId with id "+ smIdPk);
         return (SmId) results.resultValue;
     }
 }

@@ -88,7 +88,7 @@ public class DeletePatch extends ExistingRecordPatch {
         if (patch.isTissueDeletePatch()) {
             tissueIds.add(patch.getIdAsInt());
         } else if(patch.isSmIdDeletePatch()) {
-            int tissueId = new TissueSMIDDao().get(patch.getIdAsInt()).getTissueId();
+            int tissueId = new TissueSMIDDao().getBySmIdPk(patch.getIdAsInt()).getTissueId();
             tissueIds.add(tissueId);
         } else if (patch.isOncHistoryDeletePatch()){
             tissueIds = TissueDao.getTissuesByOncHistoryDetailId(patch.getIdAsInt());

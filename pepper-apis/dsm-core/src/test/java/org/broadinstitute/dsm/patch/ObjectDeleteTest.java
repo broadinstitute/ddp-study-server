@@ -119,7 +119,7 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
 
             response = (Map<String, Object>) oncHistoryTestUtil.createSmId(guid3, tissueId, instanceName, userEmail, "value-test1");
             int smIdPk = (int) response.get("smIdPk");
-            SmId smId = new TissueSMIDDao().get(smIdPk);
+            SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
             Optional<Tissue> maybeCreatedTissue = new TissueDao().get((long) tissueId);
             Assert.assertTrue(maybeCreatedTissue.isPresent());
             Tissue createdTissue = maybeCreatedTissue.get();
@@ -155,10 +155,10 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
             // create SM ID for the tissue
             response = (Map<String, Object>) oncHistoryTestUtil.createSmId(guid4, tissueId, instanceName, userEmail, "value1");
             int smIdPk = (int) response.get("smIdPk");
-            SmId smId = new TissueSMIDDao().get(smIdPk);
+            SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
             response = (Map<String, Object>) oncHistoryTestUtil.createSmId(guid4, tissueId, instanceName, userEmail, "value2");
             int smIdPk2 = (int) response.get("smIdPk");
-            SmId smId2 = new TissueSMIDDao().get(smIdPk2);
+            SmId smId2 = new TissueSMIDDao().getBySmIdPk(smIdPk2);
             //delete only the first SMID
             oncHistoryTestUtil.deleteSMId(guid4, instanceName, userEmail, smIdPk, tissueId);
             //making sure only sm id got deleted
