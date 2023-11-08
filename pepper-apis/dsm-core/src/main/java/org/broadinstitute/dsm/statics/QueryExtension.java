@@ -19,6 +19,7 @@ public class QueryExtension {
     public static final String BY_REALM = " and request.instance_name = ?";
 
     public static final String BY_REALM_AND_TYPE = " and request.instance_name = ? and request.kit_type_name = ?";
+    public static final String BY_REALM_AND_TYPE_ID = " and request.instance_name = ? and request.kit_type_id = ?";
 
     public static final String KIT_NOT_COMPLETE_NO_ERROR =
             " and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and kit.label_url_to is not null and kit.deactivated_date is null";
@@ -49,6 +50,7 @@ public class QueryExtension {
     public static final String DISCARD_KIT_BY_DISCARD_ID = " and kit_discard_id = ?";
 
     public static final String WHERE_INSTANCE_ID = " where ddp_instance_id = ?";
+    public static final String AND_SUB_KIT_TYPE_ID = "  and subK.kit_type_id = ? ";
     public static final String WHERE_REALM_INSTANCE_ID = " where realm.ddp_instance_id = ?";
     public static final String AND_REALM_INSTANCE_ID = " and realm.ddp_instance_id = ?";
 

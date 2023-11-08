@@ -24,6 +24,7 @@ import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -115,6 +116,9 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     private static final String SQL_CREATE_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, date_px = ?, type_px = ?, location_px = ?, facility = ?, "
                     + "request = ?, destruction_policy = ?, last_changed = ?, changed_by = ?";
+
+    private static final String SQL_DELETE_ONC_HISTORY_DETAIL =
+            "delete from ddp_onc_history_detail where onc_history_detail_id = ?";
 
     private static final String SQL_UPDATE_DESTRUCTION_POLICY =
             "UPDATE ddp_onc_history_detail onc "
@@ -344,12 +348,12 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     // TODO: there should be no need for the realm parameter -DC
-    public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
+    public static OncHistoryDetail getOncHistoryDetail(@NonNull int oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
                 stmt.setString(1, realm);
-                stmt.setString(2, oncHistoryDetailId);
+                stmt.setInt(2, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = getOncHistoryDetail(rs);
@@ -407,7 +411,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     }
                     //add tissues to their onc history
                     for (Tissue tissue : tissues.values()) {
-                        long tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        int tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
                         OncHistoryDetail oncHistoryDetail = oncHistoryMap.get(tissueOncHistoryDetailId);
                         oncHistoryDetail.getTissues().add(tissue);
                     } //  add onchistories to their particiapnt
@@ -429,7 +433,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of oncHistories ", results.resultException);
+            throw new DsmInternalError(String.format("Couldn't get list of oncHistories with queryAddition '%s' and for realm %s", queryAddition, realm), results.resultException);
         }
 
         logger.info("Got " + oncHistory.size() + " participants oncHistories in DSM DB for " + realm);
@@ -438,6 +442,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm,
                                                                                            List<String> participantIds) {
+        logger.info("Getting onc histories for participants {}", String.join(", ", participantIds));
         String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
         return getOncHistoryDetails(realm, queryAddition);
     }
@@ -515,6 +520,10 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                 throw new DsmInternalError("Error creating ddp_onc_history_detail for medical record " + medicalRecordId);
             }
         });
+    }
+
+    public static void delete(int oncHistoryDetailId) {
+        DaoUtil.deleteSingleRowById(oncHistoryDetailId, SQL_DELETE_ONC_HISTORY_DETAIL);
     }
 
     @JsonProperty("dynamicFields")

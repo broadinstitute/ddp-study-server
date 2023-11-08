@@ -31,6 +31,11 @@ public interface JdbiBlockContent extends SqlObject {
     @RegisterConstructorMapper(BlockContentDto.class)
     Optional<BlockContentDto> findActiveDtoByBlockId(@Bind("blockId") long blockId);
 
+    @SqlQuery("select bc.* from block_content as bc join template as t on t.template_id = bc.body_template_id "
+            + " where bc.body_template_id = :templateId")
+    @RegisterConstructorMapper(BlockContentDto.class)
+    Optional<BlockContentDto> findDtoByBodyTemplateId(@Bind("templateId") long templateId);
+
     @SqlQuery("select bt.* from block_content as bt "
             + "join revision as r on r.revision_id = bt.revision_id "
             + "join activity_instance as ai on ai.activity_instance_guid = :instanceGuid "

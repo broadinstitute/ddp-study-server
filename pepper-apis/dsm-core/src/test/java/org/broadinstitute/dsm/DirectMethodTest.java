@@ -255,9 +255,10 @@ public class DirectMethodTest extends TestHelper {
         //get oncHistoryDetailId
         ArrayList strings = new ArrayList<>();
         strings.add(medicalRecordId);
-        String oncHistoryDetailId =
-                DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?", strings,
-                        "onc_history_detail_id");
+        int oncHistoryDetailId =
+                Integer.parseInt(DBTestUtil.getStringFromQuery(
+                        "select * from ddp_onc_history_detail where medical_record_id = ?", strings,
+                        "onc_history_detail_id"));
 
 
         SimpleResult results = inTransaction((conn) -> {

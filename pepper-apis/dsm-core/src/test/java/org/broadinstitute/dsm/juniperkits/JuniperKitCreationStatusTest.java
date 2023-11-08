@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitCurrentStatus;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
@@ -295,30 +296,32 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         String participantId = "OHSALK_";
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         String kitType = "BLOOD";
-        List<KitRequestShipping> oldkits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
-        String json = "{ \"firstName\":\"P\","
-                + "\"lastName\":\"T\","
-                + "\"street1\":\"415 Main st\","
-                + "\"street2\":null,"
-                + "\"city\":\"Cambridge\","
-                + "\"state\":\"MA\","
-                + "\"postalCode\":\"02142\","
-                + "\"country\":\"USA\","
-                + "\"phoneNumber\":\" 111 - 222 - 3344\","
-                + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
-                + "\"juniperParticipantID\":\"" + participantId + rand + "\","
-                + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
+        try {
+            KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
+            Assert.fail();
+        } catch (DsmInternalError e) {
+            Assert.assertTrue(e.getMessage().contains(String.format("No kit type was found for study %s with kit type name %s", instanceName, kitType)));
+            String json = "{ \"firstName\":\"P\","
+                    + "\"lastName\":\"T\","
+                    + "\"street1\":\"415 Main st\","
+                    + "\"street2\":null,"
+                    + "\"city\":\"Cambridge\","
+                    + "\"state\":\"MA\","
+                    + "\"postalCode\":\"02142\","
+                    + "\"country\":\"USA\","
+                    + "\"phoneNumber\":\" 111 - 222 - 3344\","
+                    + "\"juniperKitId\":\"JuniperTestKitId_" + rand + "\","
+                    + "\"juniperParticipantID\":\"" + participantId + rand + "\","
+                    + "\"skipAddressValidation\":false,"
+                    + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
-        JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
-        createdKitIds.add(juniperTestKit.getJuniperKitId());
-        KitResponse kitResponse =
-                nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType, mockEasyPostUtil, ddpInstance);
-        Assert.assertEquals(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE, kitResponse.getErrorMessage());
-        Assert.assertEquals(kitResponse.getValue(), kitType);
-        List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
-        Assert.assertEquals(newKits.size(), oldkits.size());
-
+            JuniperKitRequest juniperTestKit = new Gson().fromJson(json, JuniperKitRequest.class);
+            createdKitIds.add(juniperTestKit.getJuniperKitId());
+            KitResponse kitResponse =
+                    nonPepperKitCreationService.createNonPepperKit(juniperTestKit, kitType, mockEasyPostUtil, ddpInstance);
+            Assert.assertEquals(KitResponse.ErrorMessage.UNKNOWN_KIT_TYPE, kitResponse.getErrorMessage());
+            Assert.assertEquals(kitResponse.getValue(), kitType);
+        }
     }
 
 }
