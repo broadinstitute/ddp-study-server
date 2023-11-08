@@ -266,9 +266,6 @@ public class DBConstants {
     public static final String SCROLLS_COUNT = "scrolls_count";
     public static final String H_E_COUNT = "h_e_count";
     public static final String BLOCKS_COUNT = "blocks_count";
-    public static final String USS_SMIDS = "uss_sm_ids";
-    public static final String SCROLL_SMIDS = "scrolls_sm_ids";
-    public static final String HE_SMIDS = "he_sm_ids";
 
     //field_settings
     public static final String FIELD_SETTING_ID = "field_settings_id";

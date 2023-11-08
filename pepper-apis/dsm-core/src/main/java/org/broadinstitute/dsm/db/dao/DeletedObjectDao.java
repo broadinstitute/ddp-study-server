@@ -20,8 +20,8 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class DeletedObjectDao {
 
     private static final String SQL_GET_JSON_OBJECT_FOR_TISSUE = "select concat('select json_object(', group_concat( "
-            + " concat(quote(column_name), ', ', column_name)), ') from ddp_tissue where tissue_id = ? ;') into @sql "
-            + " from information_schema.columns where table_name = 'ddp_tissue'";
+            + " concat(quote(column_name), ', ', column_name)),') from ddp_tissue where tissue_id = ? ;')"
+            + " into @sql from information_schema.columns where table_name = 'ddp_tissue'";
 
     private static final String SQL_GET_JSON_OBJECT_FOR_SM_ID = "select concat('select json_object(', group_concat( "
             + " concat(quote(column_name), ', ', column_name)), ') from sm_id where sm_id_pk = ? ;') into @sql "
