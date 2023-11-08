@@ -18,11 +18,11 @@ public class CacheServiceTest {
             Assert.fail("Transitive dependency error with redisson: " + e.getMessage());
         } catch (NoSuchFieldError e) {
             if ("NETWORK_INTERFACES".equals(e.getMessage())) {
+                //noinspection StatementWithEmptyBody
                 if (AARCH64.equals(System.getProperty("os.arch"))) {
                     // this is okay because the test is just asserting that we didn't
                     // hit NoSuchMethodError, and the network interfaces issue
                     // is an osx specific problem
-                    return;
                 } else {
                     Assert.fail("Could not get CacheService instance: " + e.getMessage());
                 }
