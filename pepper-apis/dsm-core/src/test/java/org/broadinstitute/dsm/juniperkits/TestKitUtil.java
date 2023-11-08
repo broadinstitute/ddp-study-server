@@ -231,7 +231,7 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName);
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
                 ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = adminUtil.getStudyGroupId();
                 instanceRoleId = getInstanceRole(conn);

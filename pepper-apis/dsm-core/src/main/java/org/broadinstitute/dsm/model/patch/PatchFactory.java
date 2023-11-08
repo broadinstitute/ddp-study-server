@@ -5,13 +5,16 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class PatchFactory {
 
     public static BasePatch makePatch(Patch patch, NotificationUtil notificationUtil) {
         BasePatch patcher = new NullPatch();
-        if (isExistingRecord(patch)) {
+        if (isDeletePatch(patch)) {
+            patcher = DeletePatchFactory.produce(patch, notificationUtil);
+        } else if (isExistingRecord(patch)) {
             patcher = ExistingRecordPatchFactory.produce(patch, notificationUtil);
         } else if (isParentWithExistingKey(patch)) {
             if (isParentParticipantId(patch)) {
@@ -20,17 +23,17 @@ public class PatchFactory {
                 } else {
                     patcher = new OncHistoryDetailPatch(patch);
                 }
-            } else if (isTissueRelatedOncHistoryId(patch)) {
+            } else if (patch.isTissueRelatedOncHistoryId()) {
                 patcher = new TissuePatch(patch);
             } else if (isSmIdCreation(patch)) {
                 patcher = new SMIDPatch(patch);
-            } else if (isParentParticipandDataId(patch)) {
+            } else if (isParentParticipantDataId(patch)) {
                 patcher = new ParticipantDataPatch(patch);
             } else if (isParticipantIdForRecord(patch)) {
                 patcher = new ParticipantRecordPatch(patch);
             }
         } else if (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
-                    && StringUtils.isNotBlank(patch.getDdpParticipantId())) {
+                && patch.hasDDPParticipantId()) {
             patcher = new OncHistoryDetailPatch(patch);
         }
         if (patcher instanceof NullPatch) {
@@ -67,15 +70,27 @@ public class PatchFactory {
         return StringUtils.isNotBlank(patch.getFieldId());
     }
 
-    private static boolean isTissueRelatedOncHistoryId(Patch patch) {
-        return OncHistoryDetail.ONC_HISTORY_DETAIL_ID.equals(patch.getParent());
+    static boolean isSmIdPatch(Patch patch) {
+        return DBConstants.SM_ID_TABLE_ALIAS.equals(patch.getTableAlias());
     }
 
-    private static boolean isParentParticipandDataId(Patch patch) {
+    private static boolean isParentParticipantDataId(Patch patch) {
         return Patch.PARTICIPANT_DATA_ID.equals(patch.getParent());
     }
 
     private static boolean isParticipantIdForRecord(Patch patch) {
         return Patch.DDP_PARTICIPANT_ID.equals(patch.getParent());
+    }
+
+    protected static boolean isOncHistoryDetailPatch(Patch patch) {
+        return (isParentParticipantId(patch) && !isMedicalRecordAbstractionFieldId(patch)
+                && patch.hasDDPParticipantId()) || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias());
+    }
+
+    public static boolean isDeletePatch(Patch patch) {
+        // check that the patch is for updating a `deleted` flags, and it's for either onchistory , tissue or sm Id requests
+        return patch.getNameValue().getName().contains(".deleted") &&
+                (DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(patch.getTableAlias()) || patch.isTissueRelatedOncHistoryId()
+                        || patch.isSmIdDeletePatch());
     }
 }

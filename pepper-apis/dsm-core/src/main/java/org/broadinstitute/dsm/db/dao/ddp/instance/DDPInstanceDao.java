@@ -12,6 +12,8 @@ import java.util.Optional;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -249,9 +251,11 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = getDdpInstanceDtoFromResultSet(rs);
+                    } else {
+                        throw new DSMBadRequestException("There was no entry in ddp_instance table for realm with name " + instanceName);
                     }
                 } catch (SQLException e) {
-                    throw new RuntimeException("Error getting ddp instance for " + instanceName, e);
+                    throw new DsmInternalError("Error getting ddp instance for " + instanceName, e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -260,7 +264,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get ddp instance for " + instanceName, results.resultException);
+            throw new DsmInternalError("Couldn't get ddp instance for " + instanceName, results.resultException);
         }
         return Optional.ofNullable((DDPInstanceDto) results.resultValue);
     }
@@ -409,6 +413,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 try (ResultSet instanceIdRs = stmt.executeQuery()) {
                     if (instanceIdRs.next()) {
                         dbVals.resultValue = instanceIdRs.getInt(DBConstants.DDP_INSTANCE_ID);
+                    } else {
+                        dbVals.resultValue = -1;
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException("Error getting information for " + instanceName, e);
