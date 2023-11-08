@@ -22,6 +22,10 @@ public class DeletePatchTest {
         String smIdDeletePatchJson = TestUtil.readFile("patchRequests/smIdDeletePatchRequest.json");
         Patch smIdPatch = new Gson().fromJson(smIdDeletePatchJson, Patch.class);
         Assert.assertTrue(PatchFactory.isDeletePatch(smIdPatch));
+
+        String institutionPatchJson = TestUtil.readFile("patchRequests/institutionPatch.json");
+        Patch institutionPatch = new Gson().fromJson(institutionPatchJson, Patch.class);
+        Assert.assertFalse(PatchFactory.isDeletePatch(institutionPatch));
     }
 
     @Test
