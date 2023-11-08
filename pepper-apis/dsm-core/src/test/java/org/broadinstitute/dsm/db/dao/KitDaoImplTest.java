@@ -104,10 +104,10 @@ public class KitDaoImplTest extends DbTxnBaseTest {
         userAdminTestUtil.deleteGeneratedData();
     }
 
-    private void insertKitTrackingAndRunAssertions(boolean shouldTrackingRowExist) {
-        Assert.assertEquals(shouldTrackingRowExist, kitDao.hasTrackingScan(KIT_NAME));
+    private void insertKitTrackingAndRunAssertions(boolean shouldTrackingRowExistAndScanErrorShouldExist) {
+        Assert.assertEquals(shouldTrackingRowExistAndScanErrorShouldExist, kitDao.hasTrackingScan(KIT_NAME));
         Optional<ScanError> scanError = kitDao.insertKitTrackingIfNotExists(KIT_NAME, TRACKING_RETURN_ID, userId);
-        Assert.assertTrue(scanError.isEmpty());
+        Assert.assertEquals(shouldTrackingRowExistAndScanErrorShouldExist, !scanError.isEmpty());
         Assert.assertTrue(kitDao.hasTrackingScan(KIT_NAME));
     }
 
@@ -118,22 +118,16 @@ public class KitDaoImplTest extends DbTxnBaseTest {
 
     @Test
     public void testInsertNewKitTrackingForKitThatHasNoTracking() {
+        // new kit, no existing data or scan error expecting
         insertKitTrackingAndRunAssertions(false);
     }
 
     @Test
     public void testInsertNewKitTrackingForKitThatAlreadyHasTracking() {
+        // first time around, no existing data should exist and no scan error should be returned
         insertKitTrackingAndRunAssertions(false);
+        // attempting the same thing again should result in an existing row and a scan error
         insertKitTrackingAndRunAssertions(true);
     }
 
-    @Test
-    public void testAttemptToInsertDuplicateKitTrackingRowReturnsScanError() {
-        Assert.fail("not written yet");
-    }
-
-    @Test
-    public void testAttemptToInsertDuplicateKitScanInfoReturnsScanError() {
-        Assert.fail("not written yet");
-    }
 }

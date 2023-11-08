@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -598,7 +597,7 @@ public class KitDaoImpl implements KitDao {
                         String scannedAt = rs.getString(DBConstants.DSM_SCAN_DATE);
                         String scannedBy = rs.getString(DBConstants.SCAN_BY);
                         dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
-                                String.format("Kit % was already associated with tracking id %s by %s at %s",
+                                String.format("Kit %s was already associated with tracking id %s by %s at %s",
                                         kitLabel, trackingId, scannedBy, scannedAt));
                         return dbVals;
                     }
@@ -618,9 +617,8 @@ public class KitDaoImpl implements KitDao {
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
                     // todo arz PR comment with insert query change, what was a unique key violation
-                    // becomes 0 rows affected, triggering this error
+                    // becomes 0 rows affected, triggering this  scan error but not an alert
                     dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
-                    logger.error(String.format(errorMessage + " %s rows affected", rowsAffected));
                 } else {
                     logger.info("Added tracking id {} for kit {}", kitRequestShipping.getTrackingId(),
                             kitRequestShipping.getKitLabel());
