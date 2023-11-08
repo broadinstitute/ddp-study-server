@@ -101,11 +101,6 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-resolver-dns-native-macos</artifactId>
-                <version>4.1.73.Final</version>
-            </dependency>
-            <dependency>
                 <groupId>org.broadinstitute.ddp</groupId>
                 <artifactId>ddp-common</artifactId>
                 <version>${project.version}</version>
@@ -585,12 +580,6 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson</artifactId>
                 <version>${redisson.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.fasterxml.jackson.dataformat</groupId>
-                        <artifactId>jackson-dataformat-yaml</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>redis.clients</groupId>

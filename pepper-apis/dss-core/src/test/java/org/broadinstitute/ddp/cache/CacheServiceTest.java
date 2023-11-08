@@ -37,7 +37,9 @@ public class CacheServiceTest {
                     }
                 }
             }
-            e.printStackTrace();
+            if (hasConfigFileError) {
+                e.printStackTrace();
+            }
             Assert.assertTrue(hasConfigFileError);
         }
     }
