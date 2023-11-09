@@ -67,6 +67,7 @@ import org.jdbi.v3.core.Handle;
 import java.lang.reflect.Type;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -108,7 +110,7 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
     private JdbiRevision jdbiRevision;
     private TemplateDao templateDao;
 
-    private Set<TemplateUpdateInfo> templateUpdateList;
+    private List<TemplateUpdateInfo> templateUpdateList;
     private boolean revision = true;
 
     private static final String TEMPLATE_UPDATES = "template-updates";
@@ -146,7 +148,7 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
         i18nCfgEn = ConfigFactory.parseFile(Paths.get(enFilePath).toFile());
         i18nCfgEs = ConfigFactory.parseFile(Paths.get(esFilePath).toFile());
 
-        templateUpdateList = new HashSet<>();
+        templateUpdateList = new ArrayList<>();
 
         //template with multiple substitutions
         //should we group ?
@@ -156,6 +158,7 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
             TemplateUpdateInfo tmplUpdInfo = gson.fromJson(ConfigUtil.toJson(tmplUpdateCfg), TemplateUpdateInfo.class);
             templateUpdateList.add(tmplUpdInfo);
         }
+        log.info("Updates list: {} ", templateUpdateList);
 
         //Maps to save ALL translations for any verification
         allActTransMapEN = new TreeMap<String, Map>();
@@ -184,7 +187,7 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
     }
 
     private void revisionTemplate(Template template, RevisionMetadata meta, ActivityVersionDto newVersionDto,
-                                  Set<TemplateUpdateInfo> updateInfos) {
+                                  List<TemplateUpdateInfo> updateInfos) {
 
         //for now considering as body_template and not title_template
         //todo .. query DB and act accordingly
@@ -222,7 +225,7 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
         log.info("revisioning and updating template variable: {}", variable.getName());
         Long tmplVarId = variable.getId().get();
         //todo handle scenario where search and replace text is different by language. PI names/address can be same though
-        //read from a patch config file whic has replace text by language
+        //read from a patch config file which has replace text by language
 
         for (Translation currTranslation : variable.getTranslations()) {
             String currentText = currTranslation.getText();
@@ -232,7 +235,8 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
             long[] revIds = {newRevId};
             jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
             jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newVersionDto.getRevId(), variable.getId().get());
-            log.info("revisioned and updated template variable: {}", variable.getId().get());
+            log.info("revisioned and updated template variable: {} .. translationId: {}", variable.getId().get(), currTranslation.getId().get());
+            log.info("current variable translation text: {} \nnew variable translation text    : {}", currentText, newTemplateText);
         }
     }
 
@@ -328,12 +332,21 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
 
                     //apply template translation variable text changes
                     if (tmplVarsSet != null) {
+                        Set<Long> tmplVarsRevisioned = new HashSet<>();
                         for (TemplateVariable tmplVar : interestedTransVarsMapEN.get(activityDto.getActivityCode())) {
-                            //try all possible updates ?
+                            //try all possible updates ? order matters and same variable is NOT revisioned twice
+                            log.info("Tmpl vars revisioned: {} ", tmplVarsRevisioned);
                             for (TemplateUpdateInfo updateInfo : templateUpdateList) {
                                 if (tmplVar.getTranslation("en").get().getText().contains(updateInfo.getSearchString())) {
+                                    if (!tmplVarsRevisioned.contains(tmplVar.getId().get())) {
                                     //revision this var
                                     revisionVariableTranslation(tmplVar, metaData, newVersionDto, updateInfo);
+                                        tmplVarsRevisioned.add(tmplVar.getId().get());
+                                    } else {
+                                        log.warn("This template variable already revisioned .. skipping.. check out: {} .. id: {} .. " +
+                                                        "search str: {} .. repl str: {} ",
+                                                tmplVar.getName(), tmplVar.getId().get(), updateInfo.getSearchString(), updateInfo.replaceString);
+                                    }
                                 }
                             }
                         }
@@ -671,9 +684,9 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
                         interestedTransVarsMapEN.put(activityCode, new HashSet<>());
                     }
                     interestedTransVarsMapEN.get(activityCode).add(currentVar);
-                    log.info("MATCH: Template Variable: {} ", currentVar.getName());
+                    log.info("MATCH: Template Variable: {} ..varID: {} ", currentVar.getName(), currentVar.getId());
                 }
-                //todo hadle multiple changes.. need to track which change to apply ?
+                //todo handle multiple changes.. need to track which change to apply ?
             }
         }
     }
