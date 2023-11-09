@@ -13,28 +13,20 @@ import java.sql.SQLException;
 @Getter
 public class ClinicalOrderDto {
 
-    @SerializedName("shortId")
     String shortId;
 
-    @SerializedName("smId")
     String sample;
 
-    @SerializedName("orderId")
     String orderId;
 
-    @SerializedName("orderStatus")
     String orderStatus;
 
-    @SerializedName("orderedAtMillis")
     public long orderDate;
 
-    @SerializedName("statusDateMillis")
     long statusDate;
 
-    @SerializedName("statusDetail")
     String statusDetail;
 
-    @SerializedName("sampleType")
     String sampleType;
 
     int mercurySequencingId;
