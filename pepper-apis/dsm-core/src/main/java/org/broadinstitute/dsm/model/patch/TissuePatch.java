@@ -15,7 +15,7 @@ public class TissuePatch extends BasePatch {
     }
 
     private void prepare() {
-        tissueId = Tissue.createNewTissue(patch.getParentId(), patch.getUser());
+        tissueId = Integer.toString(Tissue.createNewTissue(patch.getParentIdAsInt(), patch.getUser()));
     }
 
     @Override

@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.model.patch;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Types;
@@ -14,10 +13,14 @@ import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +37,11 @@ public class Patch {
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
     private static final Logger logger = LoggerFactory.getLogger(Patch.class);
     private static final String SQL_UPDATE_VALUES = "UPDATE $table SET $colName = ?, last_changed = ?, changed_by = ? WHERE $pk = ?";
+    private static final String ONC_HISTORY_DELETED_FIELD = "oD.deleted";
+    private static final String TISSUE_DELETED_FIELD = "t.deleted";
+    private static final String SM_ID_DELETED_FIELD = "sm.deleted";
+    private static final String TRUE_FLAG = "1";
+
     private String id;
     private String parent; //for new added rows at oncHistoryDetails/tissue
     private String parentId; //for new added rows at oncHistoryDetails/tissue
@@ -47,6 +55,7 @@ public class Patch {
     private String realm;
     private List<Value> actions;
     private String ddpParticipantId;
+    private boolean deleteAnyway = true;
 
     public Patch() {
 
@@ -105,9 +114,19 @@ public class Patch {
         this.ddpParticipantId = ddpParticipantId;
     }
 
-    // for testing purposes
-    public static Patch fromNameValue(NameValue nameValue) {
-        return new Patch(null, null, null, null, null, null, nameValue, null, null);
+    // Patch for deleting tissues and sm ids in a deleted oncHistory or tissue
+    public Patch(String id, String parent, String parentId, String user, NameValue nameValue, List<NameValue> nameValues, Boolean isUnique,
+                 String ddpParticipantId, String realm, String tableAlias) {
+        this.id = id;
+        this.parent = parent;
+        this.parentId = parentId;
+        this.user = user;
+        this.nameValue = nameValue;
+        this.nameValues = nameValues;
+        this.isUnique = isUnique;
+        this.ddpParticipantId = ddpParticipantId;
+        this.realm = realm;
+        this.tableAlias = tableAlias;
     }
 
     /**
@@ -161,30 +180,66 @@ public class Patch {
         return true;
     }
 
+
     private static String toErrorMessage(String table, String column, Object value, String primaryKey, String id) {
         return String.format("Error updating %s.%s with value %s for %s=%s", table, column, value, primaryKey, id);
     }
 
-    public static Boolean isValueUnique(@NonNull DBElement dbElement) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    SQL_CHECK_UNIQUE.replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName()))) {
-                try {
-                    ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        dbVals.resultValue = false;
-                    } else {
-                        dbVals.resultValue = true;
-                    }
-                } catch (Exception e) {
-                    dbVals.resultException = e;
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-        return (Boolean) results.resultValue;
+    boolean isOncHistoryDeletePatch() {
+        return getNameValue().getName().equals(ONC_HISTORY_DELETED_FIELD) &&
+                getTableAlias().equals(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS);
+    }
+
+     boolean isTissueDeletePatch() {
+        return getNameValue().getName().equals(TISSUE_DELETED_FIELD) && getTableAlias().equals(DBConstants.DDP_TISSUE_ALIAS);
+    }
+
+    //creates a list of patches for deleting tissues that belong to an onc history
+    protected static List<Patch> getPatchForTissues(Patch oncHistoryPatch) {
+        List<Integer> tissueIds = TissueDao.getTissuesByOncHistoryDetailId(oncHistoryPatch.getIdAsInt());
+        List<Patch> deletePatches = new ArrayList<>();
+        for (Integer tissueId : tissueIds) {
+            NameValue nameValue = new NameValue(TISSUE_DELETED_FIELD, TRUE_FLAG);
+            Patch patch =
+                    new Patch(String.valueOf(tissueId), OncHistoryDetail.ONC_HISTORY_DETAIL_ID, oncHistoryPatch.getId(),
+                            oncHistoryPatch.getUser(), nameValue, null, true,
+                            oncHistoryPatch.getDdpParticipantId(), oncHistoryPatch.getRealm(), DBConstants.DDP_TISSUE_ALIAS);
+            patch.setTableAlias(DBConstants.DDP_TISSUE_ALIAS);
+            deletePatches.add(patch);
+        }
+        return deletePatches;
+    }
+
+    //creates a list of patches for deleting the sm ids that belong to a tissue
+    protected static List<Patch> getPatchForSmIds(Patch tissuePatch) {
+        List<String> smIds = TissueSMIDDao.getSmIdPksForTissue(tissuePatch.getId());
+        List<Patch> deletePatches = new ArrayList<>();
+        for (String smIdPk : smIds) {
+            NameValue nameValue = new NameValue(SM_ID_DELETED_FIELD, TRUE_FLAG);
+            deletePatches.add(
+                    new Patch(smIdPk, TissuePatch.TISSUE_ID, tissuePatch.getId(), tissuePatch.getUser(), nameValue, null, true,
+                            tissuePatch.getDdpParticipantId(), tissuePatch.getRealm(), DBConstants.SM_ID_TABLE_ALIAS));
+        }
+        return deletePatches;
+    }
+
+    public boolean hasDDPParticipantId() {
+        return StringUtils.isNotBlank(this.ddpParticipantId);
+    }
+
+    public boolean isSmIdDeletePatch() {
+        return (nameValue.getName().contains(".deleted")) &&
+                DBConstants.SM_ID_TABLE_ALIAS.equals(tableAlias) && TissuePatch.TISSUE_ID.equals(parent);
+    }
+
+    boolean isTissueRelatedOncHistoryId() {
+        return OncHistoryDetail.ONC_HISTORY_DETAIL_ID.equals(getParent());
+    }
+
+    public int getParentIdAsInt() {
+        return Integer.parseInt(parentId);
+    }
+    public int getIdAsInt() {
+        return Integer.parseInt(this.id);
     }
 }

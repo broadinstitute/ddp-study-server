@@ -40,13 +40,13 @@ public class SMIDPatch extends BasePatch {
     @Override
     protected Object patchNameValuePair() {
         if (StringUtils.isNotBlank(getSMIDValue()) && SmId.isUniqueSmId(getSMIDValue())) {
-            String smIdPk = new TissueSMIDDao().createNewSMIDForTissue(patch.getParentId(), patch.getUser(), getSMIDType(), getSMIDValue());
-            if (Integer.parseInt(smIdPk) > 0) {
+            int smIdPk = new TissueSMIDDao().createNewSMIDForTissue(patch.getParentIdAsInt(), patch.getUser(), getSMIDType(), getSMIDValue());
+            if (smIdPk > 0) {
                 resultMap.put(SM_ID_PK, smIdPk);
                 NameValue nameValue =
                         new SMIDNameValue(String.join(DBConstants.ALIAS_DELIMITER, DBConstants.SM_ID_ALIAS, SM_ID_VALUE), getSMIDValue(),
                                 getSMIDType());
-                exportToESWithId(smIdPk, nameValue);
+                exportToESWithId(Integer.toString(smIdPk), nameValue);
             }
             return resultMap;
         } else {
