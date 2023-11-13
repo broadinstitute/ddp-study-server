@@ -76,7 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -235,7 +234,8 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
             long[] revIds = {newRevId};
             jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
             jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newVersionDto.getRevId(), variable.getId().get());
-            log.info("revisioned and updated template variable: {} .. translationId: {}", variable.getId().get(), currTranslation.getId().get());
+            log.info("revisioned and updated template variable: {} .. translationId: {}", variable.getId().get(),
+                    currTranslation.getId().get());
             log.info("current variable translation text: {} \nnew variable translation text    : {}", currentText, newTemplateText);
         }
     }
@@ -339,13 +339,13 @@ public class UpdateActivityContentSourceDB extends SimpleRevisionTask {
                             for (TemplateUpdateInfo updateInfo : templateUpdateList) {
                                 if (tmplVar.getTranslation("en").get().getText().contains(updateInfo.getSearchString())) {
                                     if (!tmplVarsRevisioned.contains(tmplVar.getId().get())) {
-                                    //revision this var
-                                    revisionVariableTranslation(tmplVar, metaData, newVersionDto, updateInfo);
+                                        //revision this var
+                                        revisionVariableTranslation(tmplVar, metaData, newVersionDto, updateInfo);
                                         tmplVarsRevisioned.add(tmplVar.getId().get());
                                     } else {
-                                        log.warn("This template variable already revisioned .. skipping.. check out: {} .. id: {} .. " +
-                                                        "search str: {} .. repl str: {} ",
-                                                tmplVar.getName(), tmplVar.getId().get(), updateInfo.getSearchString(), updateInfo.replaceString);
+                                        log.warn("This template variable already revisioned .. skipping.. check out: {} .. id: {} .. "
+                                                        + "search str: {} .. repl str: {} ", tmplVar.getName(), tmplVar.getId().get(),
+                                                updateInfo.getSearchString(), updateInfo.replaceString);
                                     }
                                 }
                             }
