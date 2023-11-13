@@ -25,7 +25,7 @@ public class TissueSMIDDao {
     private static final Logger logger = LoggerFactory.getLogger(TissueSMIDDao.class);
 
     public static final String SQL_GET_SM_ID_BASED_ON_TISSUE_ID =
-            " SELECT * from sm_id sm where sm.tissue_id= ?   and NOT sm.deleted <=> 1";
+            " SELECT * from sm_id sm where sm.tissue_id= ? ";
     public static final String SQL_GET_SEQUENCING_SM_ID_BASED_ON_TISSUE_ID = " SELECT * from sm_id sm "
             + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
             + "where sm.tissue_id = ? and (smtype.sm_id_type = \"uss\" or smtype.sm_id_type = \"scrolls\") "
