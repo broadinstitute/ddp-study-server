@@ -1128,23 +1128,7 @@ public class DBTestUtil {
         }
     }
 
-    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDao ddpInstanceDao, String ddpInstanceName) {
-        return createTestDdpInstance(ddpInstanceDao, ddpInstanceName, null);
-    }
 
-    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDao ddpInstanceDao, String ddpInstanceName, String esIndex) {
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
-        ddpInstanceDto.setInstanceName(ddpInstanceName);
-        ddpInstanceDto.setStudyGuid(ddpInstanceName);
-        ddpInstanceDto.setEsParticipantIndex(esIndex);
-        ddpInstanceDto.setIsActive(true);
-        ddpInstanceDto.setAuth0Token(false);
-        ddpInstanceDto.setMigratedDdp(false);
-        int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
-        ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
-        log.info("Created test DDP instance {} with ID={}", ddpInstanceName, testCreatedInstanceId);
-        return ddpInstanceDto;
-    }
 
     public static UserDto createTestDsmUser(String name, String email, UserDao userDao, UserDto userDto) {
         userDto = new UserDto(name, email, "");

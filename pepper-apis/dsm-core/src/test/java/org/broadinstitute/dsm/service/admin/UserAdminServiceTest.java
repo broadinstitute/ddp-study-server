@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -36,7 +37,7 @@ public class UserAdminServiceTest extends DbTxnBaseTest {
     @BeforeClass
     public static void setup() {
         testUsers = new UserAdminTestUtil();
-        testUsers.createRealmAndStudyGroup(TEST_INSTANCE, null, null, TEST_GROUP);
+        testUsers.createRealmAndStudyGroup(TEST_INSTANCE, null, null, TEST_GROUP, null);
         userAdminRole = USER_ADMIN_ROLE;
         Assert.assertNotEquals(-1, UserAdminService.getRoleId(PEPPER_ADMIN_ROLE));
         Assert.assertNotEquals(-1, UserAdminService.getRoleId(USER_ADMIN_ROLE));

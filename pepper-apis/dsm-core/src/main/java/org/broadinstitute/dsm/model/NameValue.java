@@ -22,4 +22,9 @@ public class NameValue {
     public String getCamelCaseFieldName() {
         return CamelCaseConverter.of(Util.getDBElement(this.name).getColumnName()).convert();
     }
+
+    @Override
+    public String toString() {
+        return "NameValue[name:" + name + ", value:" + value + "]";
+    }
 }
