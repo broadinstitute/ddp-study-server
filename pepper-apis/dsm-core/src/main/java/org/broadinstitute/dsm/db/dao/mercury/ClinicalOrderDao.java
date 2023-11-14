@@ -29,15 +29,15 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
 
 
     public static final String GET_ORDERS_BY_TISSUE_IDS =
-            "SELECT t.collaborator_sample_id,m.order_id,m.order_status,m.order_date,m.status_date,m.status_detail,"
-            + "st.sm_id_type,t.tissue_id,st.sm_id_type as sample_type,m.mercury_sequencing_id\n"
-            + "FROM ddp_mercury_sequencing m, ddp_tissue t , sm_id s, sm_id_type st\n"
-            + "where t.tissue_id = m.tissue_id\n"
-            + "and s.tissue_id = t.tissue_id\n"
-            + "and s.sm_id_type_id = st.sm_id_type_id\n"
+            "SELECT t.collaborator_sample_id, m.order_id, m.order_status, m.order_date, m.status_date, m.status_detail,"
+            + "st.sm_id_type, t.tissue_id, st.sm_id_type as sample_type, m.mercury_sequencing_id "
+            + "FROM ddp_mercury_sequencing m, ddp_tissue t , sm_id s, sm_id_type st "
+            + "where t.tissue_id = m.tissue_id "
+            + "and s.tissue_id = t.tissue_id "
+            + "and s.sm_id_type_id = st.sm_id_type_id "
             + "and t.tissue_id in (:list:)"; // will be replaced with actual params
 
-    public static String SQL_GET_ALL_ORDERS_FOR_CLINICAL_KIT_PAGE = "select ms.order_id, ms.ddp_participant_id, "
+    public static String SQL_GET_ALL_ORDERS_FOR_CLINICAL_KIT_PAGE = "select ms.mercury_sequencing_id, ms.order_id, ms.ddp_participant_id, "
             + "IFNULL(t.collaborator_sample_id, kit.bsp_collaborator_sample_id) as collaborator_sample_id, order_date, order_status, "
             + "status_date, status_detail,  IF(ms.tissue_id is null, \"Normal\", \"Tumor\") as sample_type "
             + "FROM ddp_mercury_sequencing ms "

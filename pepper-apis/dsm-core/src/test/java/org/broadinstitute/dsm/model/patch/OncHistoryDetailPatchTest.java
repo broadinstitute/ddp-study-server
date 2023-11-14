@@ -26,7 +26,7 @@ import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -49,7 +49,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void setup() throws Exception {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, instanceName, esIndex);
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
     }
 
     @AfterClass

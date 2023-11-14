@@ -2,16 +2,11 @@ package org.broadinstitute.dsm.db;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import lombok.Data;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +28,9 @@ public class SmId {
     @ColumnName(DBConstants.SM_ID_TYPE)
     private String smIdType;
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
-    private Integer tissueId;
+    private int tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
-    private Integer smIdPk;
+    private int smIdPk;
     @ColumnName(DBConstants.DELETED)
     private Boolean deleted;
 
@@ -49,7 +44,13 @@ public class SmId {
         this.tissueId = tissueId;
     }
 
-    public SmId(Integer smIdPk, String smType, String smIdValue, Integer tissueId, Boolean deleted) {
+    public SmId(int smIdPk, String smIdValue, int tissueId) {
+        this.smIdPk = smIdPk;
+        this.smIdValue = smIdValue;
+        this.tissueId = tissueId;
+    }
+
+    public SmId(int smIdPk, String smType, String smIdValue, int tissueId, Boolean deleted) {
         this(smIdPk, smType, smIdValue, tissueId);
         this.deleted = deleted;
     }
@@ -75,10 +76,6 @@ public class SmId {
             logger.error("problem getting tissue sm ids", e);
         }
         return tissueSmId;
-    }
-
-    public static boolean isUniqueSmId(String smIdValue, String id) {
-        return new TissueSMIDDao().isUnique(smIdValue, id);
     }
 
     public static boolean isUniqueSmId(String smIdValue) {
