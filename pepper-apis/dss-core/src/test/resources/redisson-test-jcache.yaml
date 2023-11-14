@@ -18,5 +18,5 @@ singleServerConfig:
   pingConnectionInterval: 3000
 threads: 16
 nettyThreads: 64
-codec: !<org.redisson.codec.Kryo5Codec> {}
+codec: !<org.redisson.codec.FstCodec> {}
 transportMode: "NIO"
