@@ -24,8 +24,8 @@
         <liquibase.version>4.8.0</liquibase.version>
         <elasticsearch.version>7.17.10</elasticsearch.version>
         <velocity.version>2.3</velocity.version>
-        <jackson.version>2.15.1</jackson.version>
-        <redisson.version>3.24.2</redisson.version>
+        <jackson.version>2.12.1</jackson.version>
+        <redisson.version>3.13.4</redisson.version>
     </properties>
 
     <modules>
