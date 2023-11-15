@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -28,7 +29,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
     public static void setup() throws Exception {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/atcpMappings.json",
         "elastic/atcpSettings.json");
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, instanceName, esIndex);
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
     }
 
     @AfterClass

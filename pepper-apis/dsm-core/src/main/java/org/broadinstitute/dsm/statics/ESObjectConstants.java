@@ -82,6 +82,7 @@ public class ESObjectConstants {
     public static final String HAS_CONSENTED_TO_TISSUE_SAMPLE = "hasConsentedToTissueSample";
     public static final String DIAGNOSIS_YEAR = "diagnosisYear";
     public static final String ONC_HISTORY_DETAIL = "oncHistoryDetail";
+    public static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
     public static final String ONC_HISTORY = "oncHistory";
     public static final String ONC_HISTORY_ID = "oncHistoryId";
     public static final String ONC_HISTORY_CREATED = "created";
@@ -96,6 +97,7 @@ public class ESObjectConstants {
     public static final String ADDITIONAL_VALUE = "ADDITIONALVALUE";
     public static final String DOC_ID = "_id";
     public static final String SMID = "smId";
+    public static final String SMID_PK = "smIdPk";
     public static final String CLINICAL_ORDER = "clinicalOrder";
 
     //question
@@ -163,4 +165,5 @@ public class ESObjectConstants {
 
     // participant
     public static final String PARTICIPANT_ID = "participantId";
+    public static final String TISSUE_ID = "tissueId";
 }

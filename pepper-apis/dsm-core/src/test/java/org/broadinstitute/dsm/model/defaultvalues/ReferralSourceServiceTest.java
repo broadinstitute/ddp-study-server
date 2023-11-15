@@ -30,6 +30,7 @@ import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.After;
@@ -61,7 +62,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         mockDao = new MockFieldSettingsDao();
         FieldSettingsDao.setInstance(mockDao);
         String instanceName = String.format("ReferralSourceServiceTest_%d", Instant.now().toEpochMilli());
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, instanceName);
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName);
         participantDataDao = new ParticipantDataDao();
     }
 

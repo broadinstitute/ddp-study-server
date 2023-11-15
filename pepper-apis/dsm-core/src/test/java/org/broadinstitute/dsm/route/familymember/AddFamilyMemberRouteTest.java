@@ -17,6 +17,7 @@ import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.participant.data.AddFamilyMemberPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -45,7 +46,7 @@ public class AddFamilyMemberRouteTest {
         setupDB();
         gson = new Gson();
         String suffix = System.currentTimeMillis() + "";
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDao, "AddFamilyMemberInstance" + suffix);
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance("AddFamilyMemberInstance" + suffix);
 
         userDto = DBTestUtil.createTestDsmUser("AddFamilyMemberUser", "addfamilymember" + suffix + "@family.com", userDao, userDto);
 
