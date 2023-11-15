@@ -20,20 +20,20 @@ public interface KitDao extends Dao<KitRequestShipping> {
     /**
      * Inserts a new ddp_kit using kit fields from the given {@link KitRequestShipping}
      */
-    Long insertKit(KitRequestShipping kitRequestShipping);
+    Integer insertKit(KitRequestShipping kitRequestShipping);
 
     /**
      * Inserts a new ddp_kit_request and returns the generated primary key
      */
-    Long insertKitRequest(KitRequestShipping kitRequestShipping);
+    Integer insertKitRequest(KitRequestShipping kitRequestShipping);
 
     Optional<KitRequestShipping> getKitRequest(Long kitRequestId);
 
     Optional<KitRequestShipping> getKit(Long kitId);
 
-    Integer deleteKitRequest(Long kitRequestId);
+    Integer deleteKitRequest(Integer kitRequestId);
 
-    Integer deleteKit(Long kitId);
+    Integer deleteKit(Integer kitId);
 
     Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel);
 

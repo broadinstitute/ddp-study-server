@@ -200,9 +200,7 @@ public class KitDaoImpl implements KitDao {
                 stmt.setString(5, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-                    // todo arz PR comment: with the new insert query, instead of a key violation,
-                    // rowsAffected will be 0 and this error will be returned to the user
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "ddp_label "
+                   dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "ddp_label "
                             + kitRequestShipping.getDdpLabel() + " does not exist or already has a kit Label");
                 } else {
                     logger.info("Updated ddp_kit.kit_label to {} for kit request  {}.",
@@ -255,7 +253,7 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Long insertKit(KitRequestShipping kitRequestShipping) {
+    public Integer insertKit(KitRequestShipping kitRequestShipping) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
@@ -275,7 +273,7 @@ public class KitDaoImpl implements KitDao {
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getLong(1);
+                        dbVals.resultValue = rs.getInt(1);
                     }
                 }
             } catch (SQLException ex) {
@@ -287,11 +285,11 @@ public class KitDaoImpl implements KitDao {
             throw new DsmInternalError(String.format("Error inserting kit with dsm_kit_request_id: %s"
                     , kitRequestShipping.getDsmKitRequestId()) , results.resultException);
         }
-        return (long) results.resultValue;
+        return (int) results.resultValue;
     }
 
     @Override
-    public Long insertKitRequest(KitRequestShipping kitRequestShipping) {
+    public Integer insertKitRequest(KitRequestShipping kitRequestShipping) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_REQUEST, Statement.RETURN_GENERATED_KEYS)) {
@@ -309,7 +307,7 @@ public class KitDaoImpl implements KitDao {
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getLong(1);
+                        dbVals.resultValue = rs.getInt(1);
                     }
                 }
             } catch (SQLException ex) {
@@ -321,7 +319,7 @@ public class KitDaoImpl implements KitDao {
             throw new DsmInternalError(String.format("Error inserting kit request for participant id: %s"
                     , kitRequestShipping.getDdpParticipantId()), results.resultException);
         }
-        return (long) results.resultValue;
+        return (int) results.resultValue;
     }
 
     @Override
@@ -383,7 +381,7 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Integer deleteKitRequest(Long kitRequestId) {
+    public Integer deleteKitRequest(Integer kitRequestId) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_REQUEST)) {
@@ -420,7 +418,7 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Integer deleteKit(Long kitId) {
+    public Integer deleteKit(Integer kitId) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
@@ -616,8 +614,6 @@ public class KitDaoImpl implements KitDao {
                 stmt.setString(6, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-                    // todo arz PR comment with insert query change, what was a unique key violation
-                    // becomes 0 rows affected, triggering this  scan error but not an alert
                     dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
                 } else {
                     logger.info("Added tracking id {} for kit {}", kitRequestShipping.getTrackingId(),

@@ -41,11 +41,11 @@ public class KitDaoImplTest extends DbTxnBaseTest {
 
     private static final String TRACKING_RETURN_ID = KIT_NAME + "TRACKINGID";
 
-    private static Long kitId;
+    private static Integer kitId;
 
     private static Integer participantId;
 
-    private static Long kitRequestId;
+    private static Integer kitRequestId;
 
     private static Integer kitTypeId;
 
@@ -53,7 +53,7 @@ public class KitDaoImplTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void insertTestKit() {
-        userAdminTestUtil.createRealmAndStudyGroup(KIT_NAME, KIT_NAME, KIT_NAME, KIT_NAME);
+        userAdminTestUtil.createRealmAndStudyGroup(KIT_NAME, KIT_NAME, KIT_NAME, KIT_NAME, KIT_NAME);
         userId = userAdminTestUtil.setStudyAdminAndRoles("kit_tester@datadonationplaform.org", USER_ADMIN_ROLE,
                 List.of(USER_ADMIN_ROLE));
         KitTypeDto kitTypeDto = KitTypeDto.builder()
@@ -82,7 +82,7 @@ public class KitDaoImplTest extends DbTxnBaseTest {
         kitReq.setDdpKitRequestId(KIT_NAME);
         kitReq.setKitTypeId(Long.toString(kitTypeId));
         kitRequestId = kitDao.insertKitRequest(kitReq);
-        kitReq.setDsmKitRequestId(kitRequestId);
+        kitReq.setDsmKitRequestId(Long.valueOf(kitRequestId));
         kitId = kitDao.insertKit(kitReq);
     }
 
