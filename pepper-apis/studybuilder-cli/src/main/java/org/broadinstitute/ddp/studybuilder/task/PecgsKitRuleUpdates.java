@@ -47,7 +47,8 @@ public class PecgsKitRuleUpdates implements CustomTask {
                 == salivaKitTypeid).findFirst().get();
 
         KitConfiguration kitConfig = kitConfigDao.getKitConfigurationForDto(kitConfigDto);
-        KitRule kitRule = kitConfig.getRules().stream().filter(thisRule -> thisRule.getType().equals(KitRuleType.PEX)).findFirst().get(); //only 1 rule exists
+        //get the pex rule. only 1 pex rule exists.
+        KitRule kitRule = kitConfig.getRules().stream().filter(thisRule -> thisRule.getType().equals(KitRuleType.PEX)).findFirst().get();
         KitPexRuleDto kitPexRuleDto = kitConfigDao.getJdbiKitRules().getKitPexRuleById(kitRule.getId()).get();
         long expressionId = kitPexRuleDto.getExpressionId();
         //update the expression
