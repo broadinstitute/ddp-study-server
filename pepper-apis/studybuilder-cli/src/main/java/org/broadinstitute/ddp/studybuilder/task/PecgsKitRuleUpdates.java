@@ -19,9 +19,12 @@ import java.util.List;
 @Slf4j
 public class PecgsKitRuleUpdates implements CustomTask {
 
-    public static String PEX_RULE_EXPR = " (user.studies[\"cmi-lms\"].forms[\"CONSENT\"].hasInstance() && user.studies[\"cmi-lms\"].forms[\"CONSENT\"].isStatus(\"COMPLETE\")) "
-            + " || (user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance() && user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].isStatus(\"COMPLETE\")) "
-            + " || (user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].isStatus(\"COMPLETE\"))";
+    public static String PEX_RULE_EXPR = " (user.studies[\"cmi-lms\"].forms[\"CONSENT\"].hasInstance() "
+            + " && user.studies[\"cmi-lms\"].forms[\"CONSENT\"].isStatus(\"COMPLETE\")) "
+            + " || (user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance() "
+            + " && user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].isStatus(\"COMPLETE\")) "
+            + " || (user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() "
+            + " && user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].isStatus(\"COMPLETE\"))";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
