@@ -27,7 +27,7 @@ import org.redisson.Redisson;
 import org.redisson.api.LocalCachedMapOptions;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.api.RedissonClient;
-import org.redisson.codec.FstCodec;
+import org.redisson.codec.Kryo5Codec;
 import org.redisson.config.Config;
 import org.redisson.jcache.JCacheManager;
 
@@ -157,7 +157,7 @@ public class CacheService {
                     .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
                     .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
                     .cacheSize(size);
-            return redissonClient.getLocalCachedMap(LOCAL_CACHE_PREFIX + name, new FstCodec(), cacheOptions);
+            return redissonClient.getLocalCachedMap(LOCAL_CACHE_PREFIX + name, new Kryo5Codec(), cacheOptions);
         }
     }
 
@@ -170,7 +170,7 @@ public class CacheService {
         }
         if (!(cacheManager instanceof NullCacheManager)) {
             redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey -> {
-                redissonClient.getLocalCachedMap(cacheKey, new FstCodec(), LocalCachedMapOptions.defaults()).delete();
+                redissonClient.getLocalCachedMap(cacheKey, new Kryo5Codec(), LocalCachedMapOptions.defaults()).delete();
                 log.info("Cleared local redis cache {}", cacheKey);
             });
         }
