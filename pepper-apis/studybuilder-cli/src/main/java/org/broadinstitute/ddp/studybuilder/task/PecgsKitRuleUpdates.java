@@ -19,12 +19,19 @@ import java.util.List;
 @Slf4j
 public class PecgsKitRuleUpdates implements CustomTask {
 
-    public static String PEX_RULE_EXPR = " (user.studies[\"cmi-lms\"].forms[\"CONSENT\"].hasInstance() "
+    public static String PEX_RULE_EXPR_LMS = " (user.studies[\"cmi-lms\"].forms[\"CONSENT\"].hasInstance() "
             + " && user.studies[\"cmi-lms\"].forms[\"CONSENT\"].isStatus(\"COMPLETE\")) "
             + " || (user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance() "
             + " && user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].isStatus(\"COMPLETE\")) "
             + " || (user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() "
             + " && user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].isStatus(\"COMPLETE\"))";
+
+    public static String PEX_RULE_EXPR_OS = " (user.studies[\"CMI-OSTEO\"].forms[\"CONSENT\"].hasInstance() "
+            + " && user.studies[\"CMI-OSTEO\"].forms[\"CONSENT\"].isStatus(\"COMPLETE\")) "
+            + " || (user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].hasInstance() "
+            + " && user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].isStatus(\"COMPLETE\")) "
+            + " || (user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].hasInstance() "
+            + " && user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].isStatus(\"COMPLETE\"))";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -33,11 +40,11 @@ public class PecgsKitRuleUpdates implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        updateExistingSalivaKitConfig(handle, "cmi-osteo");
-        updateExistingSalivaKitConfig(handle, "cmi-lms");
+        updateExistingSalivaKitConfig(handle, "CMI-OSTEO", PEX_RULE_EXPR_OS);
+        updateExistingSalivaKitConfig(handle, "cmi-lms", PEX_RULE_EXPR_LMS);
     }
 
-    private void updateExistingSalivaKitConfig(final Handle handle, String studyGuid) {
+    private void updateExistingSalivaKitConfig(final Handle handle, String studyGuid, String pexExpr) {
         KitConfigurationDao kitConfigDao = handle.attach(KitConfigurationDao.class);
         List<KitConfigurationDto> kitConfigs = kitConfigDao.getKitConfigurationDtosByStudyId(handle.attach(JdbiUmbrellaStudy.class)
                 .findByStudyGuid(studyGuid).getId());
@@ -52,7 +59,7 @@ public class PecgsKitRuleUpdates implements CustomTask {
         KitPexRuleDto kitPexRuleDto = kitConfigDao.getJdbiKitRules().getKitPexRuleById(kitRule.getId()).get();
         long expressionId = kitPexRuleDto.getExpressionId();
         //update the expression
-        int udpCount = kitConfigDao.getJdbiExpression().updateById(expressionId, PEX_RULE_EXPR);
+        int udpCount = kitConfigDao.getJdbiExpression().updateById(expressionId, pexExpr);
         DBUtils.checkUpdate(1, udpCount);
         log.info("Successfully updated {} Saliva Kit Config {} of {}.", 1, kitConfigDto.getId(), studyGuid);
     }
