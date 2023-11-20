@@ -1,10 +1,13 @@
 package org.broadinstitute.dsm.util;
 
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.MR_VIEW;
 import static org.mockito.Mockito.mock;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +33,7 @@ import org.broadinstitute.dsm.model.patch.PatchFactory;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.junit.Assert;
 import org.mockito.Mock;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
@@ -56,6 +60,8 @@ public class OncHistoryTestUtil {
     private String userEmail;
     private String userId;
     private String collabPrefix;
+
+    private static final String SQL_DELETE_BY_ONC_HISTORY_DETAIL_ID = "DELETE FROM ddp_onc_history_detail where onc_history_detail_id = ? ";
     @Mock
     private NotificationUtil notificationUtil = mock(NotificationUtil.class);
 
@@ -444,5 +450,25 @@ public class OncHistoryTestUtil {
             throw new RuntimeException("Unexpected exception ", e);
         }
 
+    }
+
+    public void deleteOncHistoryDirectlyFromDB(int oncHistoryDetailId){
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_BY_ONC_HISTORY_DETAIL_ID)) {
+                stmt.setInt(1, oncHistoryDetailId);
+                int result = stmt.executeUpdate();
+                if(result != 1){
+                    throw new RuntimeException(String.format("Deleted %d values for id %d", result, oncHistoryDetailId));
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error deleting from ddp_onc_history_detail with id " + oncHistoryDetailId, results.resultException);
+        }
     }
 }
