@@ -7,13 +7,14 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.model.kit.ScanError;
 
+// todo arz remove useless interface
 public interface KitDao extends Dao<KitRequestShipping> {
 
     Boolean isBloodKit(String kitLabel);
 
     Boolean hasTrackingScan(String kitLabel);
 
-    Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping, String userId);
+    Optional<ScanError> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId);
 
     Optional<ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
 

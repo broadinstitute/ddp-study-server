@@ -25,6 +25,8 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
+
 public class KitDaoImpl implements KitDao {
 
     public static final String SQL_SELECT_KIT_REQUEST =
@@ -67,6 +69,11 @@ public class KitDaoImpl implements KitDao {
             + "ddp_kit_tracking tracking "
             + "WHERE tracking.kit_label = ?) AS existing_rows";
 
+    private static final String UPDATE_KIT_REQUEST_DDP_LABEL = "update ddp_kit_request set ddp_label = ? where "
+            + "dsm_kit_request_id = ?";
+
+    private static final String UPDATE_KIT_COMPLETE = "update ddp_kit set kit_complete = ? where dsm_kit_id = ?";
+
     // update various ddp_kit scan fields if they have not been set already.  If
     // they have already been set, do nothing.
     private static final String SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY = "UPDATE ddp_kit SET "
@@ -75,7 +82,8 @@ public class KitDaoImpl implements KitDao {
             + "dsm_kit_request_id = (SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) "
             + "AND not kit_complete <=> 1 "
             + "AND deactivated_date is null "
-            + "AND not exists (select 1 from ddp_kit where kit_label = ?)";
+            // sub-sub selected required in order to avoid mysql ERROR 1093 specifying target table in select
+            + "AND not exists (select * from (select 1 from ddp_kit k2 where k2.kit_label = ?) as subq)";
 
     private static final String UPDATE_KIT_LABEL = "UPDATE ddp_kit SET "
             + "kit_label = ? "
@@ -141,6 +149,9 @@ public class KitDaoImpl implements KitDao {
 
     private static final String SQL_DELETE_KIT = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
 
+    private static final String SQL_NUM_KITS_BY_LABEL = "select count(1) from ddp_kit WHERE dsm_kit_request_id = "
+            + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?)";
+
     private static final String SQL_DELETE_KIT_TRACKING = "DELETE FROM ddp_kit_tracking WHERE kit_label = ?";
 
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
@@ -185,13 +196,68 @@ public class KitDaoImpl implements KitDao {
         return booleanCheckFoundAsName(kitLabel, SQL_HAS_KIT_TRACKING);
     }
 
+    /**
+     * Updates scan related information for the kit request.  See
+     * {@link #SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY} for exact details
+     * of what gets updated.
+     */
     @Override
-    public Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping, String userId) {
+    public Optional<ScanError> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId) {
         Optional<ScanError> result = Optional.empty();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
 
-            // todo arz test that attempts to update kit to break uk to reproduce
+            // check to make sure the kit request for the label exists
+            try (PreparedStatement stmt = conn.prepareStatement(KitRequestShipping.SELECT_1_FROM_KIT_REQUEST_WITH_DDP_LABEL)) {
+                stmt.setString(1, kitRequestShipping.getDdpLabel());
+                ResultSet rs = stmt.executeQuery();
+                int numRows = 0;
+                while (rs.next()) {
+                    numRows++;
+                }
+                if (numRows == 0) {
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                            "kit request with ddp_label " + kitRequestShipping.getDdpLabel() + " not found.");
+                    return dbVals;
+                } else if (numRows > 1) {
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                            String.format("Found %s matching kit request rows for ddp_label %s.",
+                                    numRows, kitRequestShipping.getDdpLabel()));
+                    return dbVals;
+                } // else one row found, as expected
+            } catch (SQLException ex) {
+                logger.error("Not able to query the kit request for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
+                dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                        "An unexpected error has occurred");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_NUM_KITS_BY_LABEL)) {
+                stmt.setString(1, kitRequestShipping.getDdpLabel());
+                ResultSet rs = stmt.executeQuery();
+                if (!rs.next()) {
+                    String errorMessage =
+                            "No rowcount when querying kits with label " + kitRequestShipping.getDdpLabel();
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), errorMessage);
+                    return dbVals;
+                }
+                int numKitsWithLabel = rs.getInt(1);
+
+                if (numKitsWithLabel == 0) {
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                            "kit " + kitRequestShipping.getDdpLabel() + " not found.");
+                    return dbVals;
+                } else if (numKitsWithLabel > 1) {
+                    // todo arz is this an error?  Expected to have multiple kits with the same label?
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                            "Found " + numKitsWithLabel + " kits with label " + kitRequestShipping.getDdpLabel());
+                    return dbVals;
+                } // else 1 kit, which is what we expect
+            } catch (SQLException ex) {
+                logger.error("Not able to query kits for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
+                dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                        "An unexpected error has occurred");
+            }
+
             try (PreparedStatement stmt = conn.prepareStatement(SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setString(2, userId);
@@ -199,16 +265,24 @@ public class KitDaoImpl implements KitDao {
                 stmt.setString(4, kitRequestShipping.getDdpLabel());
                 stmt.setString(5, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
-                if (rowsAffected != 1) {
-                   dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "ddp_label "
-                            + kitRequestShipping.getDdpLabel() + " does not exist or already has a kit Label");
-                } else {
+                if (rowsAffected == 1) {
                     logger.info("Updated ddp_kit.kit_label to {} for kit request  {}.",
                             kitRequestShipping.getKitLabel(), kitRequestShipping.getDdpLabel());
-                    if (StringUtils.isNotBlank(kitRequestShipping.getBspCollaboratorParticipantId())) {
+                    if (kitRequestShipping.hasBSPCollaboratorParticipantId()) {
+                        // todo arz how does this work?  A scan error with no error?
                         dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), null,
                                 kitRequestShipping.getBspCollaboratorParticipantId());
                     }
+                } else if (rowsAffected > 1) {
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                            String.format("Found %s matching kit rows for ddp_label %s.",
+                                    rowsAffected, kitRequestShipping.getDdpLabel()));
+                    return dbVals;
+                } else if (rowsAffected == 0) {
+                    // there is already a kit with the given label so an error should be returned
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                            String.format("%s has already been scanned", kitRequestShipping.getDdpLabel()));
+                    return dbVals;
                 }
             } catch (SQLException ex) {
                 logger.error("Not able to update the kit for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
@@ -282,8 +356,8 @@ public class KitDaoImpl implements KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultException)) {
-            throw new DsmInternalError(String.format("Error inserting kit with dsm_kit_request_id: %s"
-                    , kitRequestShipping.getDsmKitRequestId()) , results.resultException);
+            throw new DsmInternalError(String.format("Error inserting kit with dsm_kit_request_id: %s",
+                    kitRequestShipping.getDsmKitRequestId()), results.resultException);
         }
         return (int) results.resultValue;
     }
@@ -576,6 +650,7 @@ public class KitDaoImpl implements KitDao {
      * Inserts a row into the kit tracking table as long as no row exists in the table
      * with the given kit label or tracking id.  If a row exists with either of these values,
      * no row is inserted and a scan error is returned with information about the existing row.
+     * If a row is inserted successfully, an empty optional is returned.
      */
     private Optional<ScanError> insertKitTrackingIfNotExists(KitRequestShipping kitRequestShipping, int userId) {
         Optional<ScanError> result = Optional.empty();
@@ -603,6 +678,7 @@ public class KitDaoImpl implements KitDao {
             } catch (SQLException ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
                 logger.error(errorMessage, ex);
+                return dbVals;
             }
 
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TRACKING)) {
@@ -618,6 +694,7 @@ public class KitDaoImpl implements KitDao {
                 } else {
                     logger.info("Added tracking id {} for kit {}", kitRequestShipping.getTrackingId(),
                             kitRequestShipping.getKitLabel());
+                    return dbVals;
                 }
             } catch (SQLException ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
@@ -680,6 +757,39 @@ public class KitDaoImpl implements KitDao {
         return kitRequestList;
     }
 
+    public void updateKitRequestDDPLabel(int dsmKitRequestId, String ddpLabel) {
+        useTxn(conn -> {
+            try (PreparedStatement stmt = conn.getConnection().prepareStatement(UPDATE_KIT_REQUEST_DDP_LABEL)) {
+                stmt.setString(1, ddpLabel);
+                stmt.setInt(2, dsmKitRequestId);
+                int numRows = stmt.executeUpdate();
+                if (numRows != 1) {
+                    throw new DsmInternalError(String.format("Updated %s rows when setting ddp_label to %s for "
+                            + "dsm kit request id %s", numRows, ddpLabel, dsmKitRequestId));
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError(String.format("Could not update ddp_label to %s for dsm kit request id%s",
+                        ddpLabel, dsmKitRequestId), e);
+            }
+        });
+    }
+
+    public void updateKitComplete(long dsmKitId, boolean isKitComplete) {
+        useTxn(conn -> {
+            try (PreparedStatement stmt = conn.getConnection().prepareStatement(UPDATE_KIT_COMPLETE)) {
+                stmt.setInt(1, isKitComplete ? 1 : 0);
+                stmt.setLong(2, dsmKitId);
+                int numRows = stmt.executeUpdate();
+                if (numRows != 1) {
+                    throw new DsmInternalError(String.format("Updated %s rows when setting kit_complete=%s for kit %s",
+                            numRows, isKitComplete, dsmKitId));
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError(String.format("Could not update kit_complete for kit %s", dsmKitId), e);
+            }
+        });
+    }
+
     @Override
     public Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping) {
         Optional<ScanError> result = Optional.empty();
@@ -693,12 +803,12 @@ public class KitDaoImpl implements KitDao {
                     dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "dsm_kit_id "
                             + kitRequestShipping.getDsmKitId() + " does not exist or already has a Kit Label");
                 } else {
-                    logger.info("Updated kitRequests for pt w/ shortId {}", kitRequestShipping.getHruid());
+                    logger.info("Updated label for kit {} to {}", kitRequestShipping.getDsmKitId(),
+                            kitRequestShipping.getKitLabel());
                 }
             } catch (Exception ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
-                        "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" was already scanned.\n"
-                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+                        "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" was already scanned.\n");
             }
             return dbVals;
         });

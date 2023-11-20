@@ -21,7 +21,7 @@ public class KitSentUseCase extends KitFinalSentBaseUseCase {
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel(kitLabel);
         Optional<ScanError> result =
-                kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
+                kitDao.updateKitScanInfo(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         trigerEventsIfSuccessfulKitUpdate(result, kitLabel, kitRequestShipping);
         return result;
     }

@@ -107,7 +107,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
         List<ScanError> scanErrorList = JuniperSetupUtil.changeKitToSent(juniperTestKit);
         Assert.assertFalse(
-                scanErrorList.stream().filter(scanError -> StringUtils.isNotBlank(scanError.getError())).findAny().isPresent());
+                scanErrorList.stream().filter(scanError -> scanError.hasError()).findAny().isPresent());
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
         JuniperSetupUtil.changeKitToReceived();

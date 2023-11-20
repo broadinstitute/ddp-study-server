@@ -85,7 +85,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
     }
 
     private Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping) {
-        return kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
+        return kitDao.updateKitScanInfo(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
     }
 
     private void writeSampleSentToES(KitRequestShipping kitRequest) {

@@ -46,7 +46,6 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitShippingIds;
@@ -191,7 +190,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE =
             " SELECT count(*) kitRequestCount from ddp_kit_request where bsp_collaborator_sample_id REGEXP \"^%1\" and kit_type_id = ?";
 
-    private static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS =
+    public static final String SELECT_1_FROM_KIT_REQUEST_WITH_DDP_LABEL =
             " select 1 from ddp_kit_request req  where req.ddp_label = ? ";
 
     private static final String QUEUE = "queue";
@@ -667,7 +666,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                     || (
                                     (UPLOADED.equals(target) || DEACTIVATED.equals(target) || TRIGGERED.equals(target) || OVERVIEW.equals(
                                             target) || WAITING.equals(target))
-                                            && StringUtils.isBlank(kit.getBspCollaboratorParticipantId()))) {
+                                            && !kit.hasBSPCollaboratorParticipantId())) {
                                 String apiKey = DSMServer.getDDPEasypostApiKey(ddpInstance.getName());
                                 if (StringUtils.isNotBlank(apiKey) && kit.getEasypostAddressId() != null && StringUtils.isNotBlank(
                                         kit.getEasypostAddressId())) {
@@ -1244,7 +1243,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
      * and checking it against db if unique
      */
     public static String generateDdpLabelID() {
-        return generateDdpLabelID(15, GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS);
+        return generateDdpLabelID(15, SELECT_1_FROM_KIT_REQUEST_WITH_DDP_LABEL);
     }
 
     public static String generateDdpLabelID(int length, String query) {
@@ -1748,5 +1747,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public boolean hasTrackingScan() {
         return StringUtils.isNotBlank(trackingId);
+    }
+
+    // todo arz test me
+    public boolean hasBSPCollaboratorParticipantId() {
+        return StringUtils.isNotBlank(bspCollaboratorParticipantId);
     }
 }

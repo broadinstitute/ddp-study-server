@@ -16,11 +16,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
 import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 @Slf4j
 public class KitDaoImplTest extends DbTxnBaseTest {
@@ -51,6 +47,8 @@ public class KitDaoImplTest extends DbTxnBaseTest {
 
     private static Integer userId;
 
+    private static KitRequestShipping kitReq;
+
     @BeforeClass
     public static void insertTestKit() {
         userAdminTestUtil.createRealmAndStudyGroup(KIT_NAME, KIT_NAME, KIT_NAME, KIT_NAME, KIT_NAME);
@@ -74,10 +72,11 @@ public class KitDaoImplTest extends DbTxnBaseTest {
                         .build();
         participantId = new ParticipantDao().create(participantDto);
 
-        KitRequestShipping kitReq = new KitRequestShipping(ddpInstanceId);
+        kitReq = new KitRequestShipping(ddpInstanceId);
         kitReq.setDdpParticipantId(participantDto.getDdpParticipantId().orElse(""));
         kitReq.setParticipantId(PARTICIPANT_ID);
         kitReq.setKitLabel(KIT_NAME);
+        kitReq.setDdpLabel(KIT_NAME);
         kitReq.setCreatedDate(System.currentTimeMillis());
         kitReq.setDdpKitRequestId(KIT_NAME);
         kitReq.setKitTypeId(Long.toString(kitTypeId));
@@ -108,6 +107,9 @@ public class KitDaoImplTest extends DbTxnBaseTest {
         Assert.assertEquals(shouldTrackingRowExistAndScanErrorShouldExist, kitDao.hasTrackingScan(KIT_NAME));
         Optional<ScanError> scanError = kitDao.insertKitTrackingIfNotExists(KIT_NAME, TRACKING_RETURN_ID, userId);
         Assert.assertEquals(shouldTrackingRowExistAndScanErrorShouldExist, !scanError.isEmpty());
+        if (shouldTrackingRowExistAndScanErrorShouldExist) {
+            Assert.assertTrue(scanError.get().hasError());
+        }
         Assert.assertTrue(kitDao.hasTrackingScan(KIT_NAME));
     }
 
@@ -128,6 +130,44 @@ public class KitDaoImplTest extends DbTxnBaseTest {
         insertKitTrackingAndRunAssertions(false);
         // attempting the same thing again should result in an existing row and a scan error
         insertKitTrackingAndRunAssertions(true);
+    }
+
+    @Test
+    public void testKitScanInfoUpdateWithAndWithoutExistingScanInfo() {
+        // create a kit
+        Optional<ScanError> kitInsertScanResult = kitDao.insertKitTrackingIfNotExists(KIT_NAME, TRACKING_RETURN_ID,
+                userId);
+        Assert.assertTrue(kitInsertScanResult.isEmpty());
+
+        // now try to update scan information that is already present
+        KitRequestShipping scanUpdate = new KitRequestShipping();
+        scanUpdate.setKitLabel(KIT_NAME);
+        scanUpdate.setTrackingReturnId(null);
+        scanUpdate.setScanDate(null);
+        scanUpdate.setDdpLabel(KIT_NAME);
+        scanUpdate.setDsmKitId(Long.valueOf(kitId));
+
+        Optional<ScanError> scanError = kitDao.updateKitScanInfo(scanUpdate, "tester");
+        Assert.assertTrue("Updating an existing kit that already has scan information should result in an error.",
+                scanError.get().hasError());
+
+        // reset some ddp_kit fields and confirm that you can update the scan fields
+        kitDao.updateKitComplete(kitId, false);
+        scanUpdate.setKitLabel(KIT_NAME + ".ignore");
+        Assert.assertTrue(kitDao.updateKitLabel(scanUpdate).isEmpty());
+        scanUpdate.setKitLabel(KIT_NAME);
+
+        Optional<ScanError> hasScanError = kitDao.updateKitScanInfo(scanUpdate, "tester");
+        Assert.assertTrue("Updating an existing kit with no scan information should not result in a scan error.",
+                hasScanError.isEmpty());
+        kitDao.updateKitLabel(scanUpdate);
+
+        // change the kit label and confirm that there is an error because there's no ddp_kit with the given label
+        scanUpdate.setDdpLabel(KIT_NAME + System.currentTimeMillis());
+        scanError = kitDao.updateKitScanInfo(scanUpdate, "tester");
+        Assert.assertTrue("Updating an existing kit request that has no ddp_kit row should result in a scan error.",
+                scanError.get().hasError());
+        scanUpdate.setDdpLabel(KIT_NAME);
     }
 
 }
