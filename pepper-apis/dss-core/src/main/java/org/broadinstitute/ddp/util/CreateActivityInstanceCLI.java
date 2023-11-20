@@ -44,7 +44,7 @@ public class CreateActivityInstanceCLI {
         options.addRequiredOption(ACTIVITY_CODE_OPTION, "code", true, "activity code");
         options.addRequiredOption(FILE_OF_PARTICIPANT_GUIDS_OPTION, "file", true,
                 "absolute path to file of participant guids, one per line");
-        options.addOption(null, "dry-run", false, "run sActivity Instance creation without saving");
+        options.addOption(null, "dry-run", false, "runs Activity Instance creation without saving");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = null;
