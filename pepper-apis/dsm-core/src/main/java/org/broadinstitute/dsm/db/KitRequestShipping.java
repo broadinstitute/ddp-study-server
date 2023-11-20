@@ -1749,7 +1749,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return StringUtils.isNotBlank(trackingId);
     }
 
-    // todo arz test me
     public boolean hasBSPCollaboratorParticipantId() {
         return StringUtils.isNotBlank(bspCollaboratorParticipantId);
     }
