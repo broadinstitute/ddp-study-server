@@ -16,7 +16,12 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
 import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
-import org.junit.*;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 @Slf4j
 public class KitDaoImplTest extends DbTxnBaseTest {
