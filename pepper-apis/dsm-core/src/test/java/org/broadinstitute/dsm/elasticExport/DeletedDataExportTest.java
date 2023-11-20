@@ -29,6 +29,7 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
     static OncHistoryTestUtil oncHistoryTestUtil;
     static String userEmail = "deleteTestUser1@unittest.dev";
     String guid = "DELETE1_PARTICIPANT";
+
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
@@ -68,13 +69,14 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
         ExportToES.ExportPayload exportPayload = new ExportToES.ExportPayload();
         exportPayload.setStudy(instanceName);
         exportPayload.setIsMigration(true);
-        DSMtasksSubscription.migrateToES(exportPayload);
-        Thread.sleep(10000);//wait 5 minutes
+        boolean hasExportCompleted = false;
+        hasExportCompleted = DSMtasksSubscription.migrateToES(exportPayload);
+        Assert.assertTrue(hasExportCompleted);
         Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), guid, ESObjectConstants.DSM);
         List<Map<String, Object>> oncHistoryDetails =
                 (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(ESObjectConstants.ONC_HISTORY_DETAIL);
         long countNumberOfOncHistoriesInEs = oncHistoryDetails.stream().filter(stringObjectMap ->
                 (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
-        Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);
+        Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);// Currently the test is failing here because the value is still in ES
     }
 }
