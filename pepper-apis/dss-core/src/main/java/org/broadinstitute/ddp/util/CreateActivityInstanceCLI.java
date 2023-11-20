@@ -35,6 +35,7 @@ public class CreateActivityInstanceCLI {
     public static final String STUDY_OPTION = "s";
     public static final String ACTIVITY_CODE_OPTION = "a";
     public static final String FILE_OF_PARTICIPANT_GUIDS_OPTION = "f";
+    public static boolean isDryRun;
 
     public static void main(String[] args) {
         Options options = new Options();
@@ -43,12 +44,14 @@ public class CreateActivityInstanceCLI {
         options.addRequiredOption(ACTIVITY_CODE_OPTION, "code", true, "activity code");
         options.addRequiredOption(FILE_OF_PARTICIPANT_GUIDS_OPTION, "file", true,
                 "absolute path to file of participant guids, one per line");
+        options.addOption(null, "dry-run", false, "run sActivity Instance creation without saving");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = null;
 
         try {
             cmd = parser.parse(options, args);
+            isDryRun = cmd.hasOption("dry-run");
         } catch (ParseException e) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(80, USAGE, "", options, "Also requires a -Dconfig.file");
@@ -126,6 +129,11 @@ public class CreateActivityInstanceCLI {
                 // the terminal window
                 log.error("There were errors creating activity instances!");
             }
+            if (isDryRun) {
+                log.info("In dry-run mode: rolling back execution...");
+                handle.rollback();
+            }
+
         });
 
     }
