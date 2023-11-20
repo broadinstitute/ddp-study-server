@@ -13,7 +13,7 @@ import java.util.List;
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.KitRequestRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -62,7 +62,7 @@ public class DDPRequestRouteTest extends TestHelper {
         kitRequests = new ArrayList<>();
         inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(
-                    KitDaoImpl.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE)
+                    KitDao.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE)
                             .concat(" and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and label_date is null"))) {
                 stmt.setString(1, TEST_DDP);
                 stmt.setString(2, "SALIVA");
