@@ -41,11 +41,11 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     protected void fillBulkRequestWithTransformedMapAndExport(Map<String, Object> participantRecords) {
         if (participantRecords == null || participantRecords.isEmpty()) {
-            logger.info("Found nothing to export for " + object + " to ES for study: " + realm + " with index: " + index);
+            logger.info("Found nothing to export for {} to ES for study: {} with index: {} ", object, realm, index);
             return;
         }
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
-        logger.info("filling bulk request for participants, for " + object + " for study: " + realm + " with index: " + index);
+        logger.info("filling bulk request for participants, for {} for study: {} with index: {}", object, realm, index);
         long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
