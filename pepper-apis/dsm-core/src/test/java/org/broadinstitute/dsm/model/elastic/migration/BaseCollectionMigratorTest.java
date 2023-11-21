@@ -15,7 +15,7 @@ public class BaseCollectionMigratorTest {
 
     @Test
     public void transformObject() {
-        BaseCollectionMigrator baseCollectionMigrator = new MockBaseCollectionMigrator("index", "realm", "object");
+        BaseCollectionMigrator baseCollectionMigrator = new MockBaseCollectionMigrator(null, "realm", "object");
         baseCollectionMigrator.transformObject(mockOncHistoryDetail());
         Map<String, Object> objectMap = baseCollectionMigrator.transformedList.get(0);
         Object primaryId = objectMap.get("oncHistoryDetailId");

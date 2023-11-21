@@ -20,6 +20,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
@@ -175,24 +176,22 @@ public class ElasticSearch implements ElasticSearchable {
 
             SearchResponse searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
             scrollId = searchResponse.getScrollId();
-            try {
-                while (searchResponse.getHits().getHits().length > 0) {
-                    for (SearchHit hit : searchResponse.getHits().getHits()) {
-                        participantIds.add(
-                                ((Map) hit.getSourceAsMap().get(ElasticSearchUtil.PROFILE)).get(ElasticSearchUtil.GUID).toString());
-                    }
-                    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                    scrollRequest.scroll(scrollTimeout);
-                    searchResponse = ElasticSearchUtil.getClientInstance().scroll(scrollRequest, RequestOptions.DEFAULT);
-                    scrollId = searchResponse.getScrollId();
+            while (searchResponse.getHits().getHits().length > 0) {
+                for (SearchHit hit : searchResponse.getHits().getHits()) {
+                    participantIds.add(
+                            ((Map) hit.getSourceAsMap().get(ElasticSearchUtil.PROFILE)).get(ElasticSearchUtil.GUID).toString());
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+                scrollRequest.scroll(scrollTimeout);
+                searchResponse = ElasticSearchUtil.getClientInstance().scroll(scrollRequest, RequestOptions.DEFAULT);
+                scrollId = searchResponse.getScrollId();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
+            throw new DsmInternalError("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         } finally {
-            clearScroll(scrollId, esParticipantsIndex);
+            if (scrollId != null) {
+                clearScroll(scrollId, esParticipantsIndex);
+            }
         }
 
         return participantIds;
