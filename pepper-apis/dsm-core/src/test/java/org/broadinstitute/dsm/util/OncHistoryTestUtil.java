@@ -1,13 +1,10 @@
 package org.broadinstitute.dsm.util;
 
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.MR_VIEW;
 import static org.mockito.Mockito.mock;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +20,7 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -33,7 +31,6 @@ import org.broadinstitute.dsm.model.patch.PatchFactory;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.junit.Assert;
 import org.mockito.Mock;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
@@ -48,6 +45,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 public class OncHistoryTestUtil {
 
     private static final DeletedObjectDao deletedObjectDao = new DeletedObjectDao();
+    private static final OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
     private List<Integer> medicalRecordIds = new ArrayList<>();
     List<Integer> participantIds = new ArrayList<>();
     MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
@@ -61,7 +59,6 @@ public class OncHistoryTestUtil {
     private String userId;
     private String collabPrefix;
 
-    private static final String SQL_DELETE_BY_ONC_HISTORY_DETAIL_ID = "DELETE FROM ddp_onc_history_detail where onc_history_detail_id = ? ";
     @Mock
     private NotificationUtil notificationUtil = mock(NotificationUtil.class);
 
@@ -101,7 +98,7 @@ public class OncHistoryTestUtil {
         ParticipantDto testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
-        participantIds.add(testParticipant.getParticipantId().get());
+        participantIds.add(testParticipant.getParticipantId().orElseThrow());
         log.debug("ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         return testParticipant;
@@ -311,7 +308,7 @@ public class OncHistoryTestUtil {
      * Call this method to check if a deleted tissue was deleted properly
      * checks both DB and ES index
      * @param participantGuid  the ddpParticipantId
-     * @param tissue           the OncHistoryDetail object of the OncHistory before getting deleted
+     * @param tissue           the tissue object of the OncHistory before getting deleted
      * @param tissueId         the id of the Tissue
      * @param ddpInstanceDto   the instance where the onc history belonged
      * @param expectZeroSmId   mark this as true if the participant originally only had sm ids belonging to this onchistory, and so after
@@ -452,23 +449,7 @@ public class OncHistoryTestUtil {
 
     }
 
-    public void deleteOncHistoryDirectlyFromDB(int oncHistoryDetailId){
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_BY_ONC_HISTORY_DETAIL_ID)) {
-                stmt.setInt(1, oncHistoryDetailId);
-                int result = stmt.executeUpdate();
-                if(result != 1){
-                    throw new RuntimeException(String.format("Deleted %d values for id %d", result, oncHistoryDetailId));
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error deleting from ddp_onc_history_detail with id " + oncHistoryDetailId, results.resultException);
-        }
+    public void deleteOncHistoryDirectlyFromDB(int oncHistoryDetailId) {
+        oncHistoryDetailDao.delete(oncHistoryDetailId);
     }
 }
