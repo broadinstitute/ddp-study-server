@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     protected final String index;
     protected String object;
     protected ObjectTransformer objectTransformer;
-    private ElasticSearch elasticSearch;
+    protected ElasticSearch elasticSearch;
+    List<String> participantsInTheStudy;
 
     public BaseMigrator(String index, String realm, String object) {
         bulkExportFacade = new BulkExportFacade(index);
@@ -32,9 +34,16 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         this.object = object;
         elasticSearch = new ElasticSearch();
         objectTransformer = new ObjectTransformer(realm);
+        if (index != null) {
+            participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
+        }
     }
 
     protected void fillBulkRequestWithTransformedMapAndExport(Map<String, Object> participantRecords) {
+        if (participantRecords == null || participantRecords.isEmpty()) {
+            logger.info("Found nothing to export for " + object + " to ES for study: " + realm + " with index: " + index);
+            return;
+        }
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
         logger.info("filling bulk request for participants, for " + object + " for study: " + realm + " with index: " + index);
         long totalExported = 0;
@@ -90,6 +99,11 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
+        for (String ddpParticipantId : participantsInTheStudy) {
+            if (!dataByRealm.containsKey(ddpParticipantId)) {
+                dataByRealm.put(ddpParticipantId, new ArrayList<>());
+            }
+        }
         if (dataByRealm.isEmpty()) {
             return;
         }

@@ -13,4 +13,13 @@ public class NullAdditionalParticipantMigrator extends ParticipantMigrator {
     protected Map<String, Object> getDataByRealm() {
         return new HashMap<>();
     }
+
+    @Override
+    public void export() {
+        Map<String, Object> dataByRealm = getDataByRealm();
+        if (dataByRealm.isEmpty()) {
+            return;
+        }
+        fillBulkRequestWithTransformedMapAndExport(dataByRealm);
+    }
 }

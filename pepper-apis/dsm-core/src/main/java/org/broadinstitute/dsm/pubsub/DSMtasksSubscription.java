@@ -120,7 +120,7 @@ public class DSMtasksSubscription {
         }
     }
 
-    public static boolean migrateToES(ExportToES.ExportPayload exportPayload) {
+    public static void migrateToES(ExportToES.ExportPayload exportPayload) {
         String study = exportPayload.getStudy();
         Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
         maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {
@@ -139,7 +139,6 @@ public class DSMtasksSubscription {
             exportables.forEach(Exportable::export);
             logger.info("Successfully finished migration of DSM data to ES for study {} with index {}", study, index);
         });
-        return true;
     }
 
     private static void generateStudyDefaultValues(AckReplyConsumer consumer, Map<String, String> attributesMap) {

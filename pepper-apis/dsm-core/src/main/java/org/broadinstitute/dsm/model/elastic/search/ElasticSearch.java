@@ -31,14 +31,17 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
@@ -154,6 +157,55 @@ public class ElasticSearch implements ElasticSearchable {
         }
         int dotIndex = searchHitIndex.lastIndexOf('.');
         return searchHitIndex.substring(dotIndex + 1);
+    }
+
+    public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
+        logger.info("Getting all participant ids from index " + esParticipantsIndex);
+        List<String> participantIds = new ArrayList<>();
+        SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
+        TimeValue scrollTimeout = TimeValue.timeValueMillis(100000L);
+        String scrollId = null;
+        try {
+            searchRequest.scroll(scrollTimeout);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+            searchSourceBuilder.size(100);
+            searchSourceBuilder.sort("_doc", SortOrder.ASC); // Efficient scrolling
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+            scrollId = searchResponse.getScrollId();
+            try {
+                while (searchResponse.getHits().getHits().length > 0) {
+                    for (SearchHit hit : searchResponse.getHits().getHits()) {
+                        participantIds.add(
+                                ((Map) hit.getSourceAsMap().get(ElasticSearchUtil.PROFILE)).get(ElasticSearchUtil.GUID).toString());
+                    }
+                    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+                    scrollRequest.scroll(scrollTimeout);
+                    searchResponse = ElasticSearchUtil.getClientInstance().scroll(scrollRequest, RequestOptions.DEFAULT);
+                    scrollId = searchResponse.getScrollId();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
+        } finally {
+            clearScroll(scrollId, esParticipantsIndex);
+        }
+
+        return participantIds;
+    }
+
+    private void clearScroll(String scrollId, String index) {
+        try {
+            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+            clearScrollRequest.addScrollId(scrollId);
+            ElasticSearchUtil.getClientInstance().clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        } catch (IOException e){
+            logger.error("Unable to clear the scroll in the connection to index: "+index, e);
+        }
     }
 
     @Override
@@ -347,7 +399,6 @@ public class ElasticSearch implements ElasticSearchable {
                 QueryBuilders.termsQuery(booleanId ? ElasticSearchUtil.PROFILE_GUID : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
         return boolQuery;
     }
-
 
     @Override
     public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
