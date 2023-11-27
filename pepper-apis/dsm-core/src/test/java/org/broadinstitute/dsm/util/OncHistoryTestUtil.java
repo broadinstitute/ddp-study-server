@@ -222,20 +222,22 @@ public class OncHistoryTestUtil {
             Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), participantGuid,
                     ESObjectConstants.DSM);
             List<Map<String, Object>> oncHistoryDetails =
-                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(ESObjectConstants.ONC_HISTORY_DETAIL);
+                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM))
+                            .get(ESObjectConstants.ONC_HISTORY_DETAIL);
             long countNumberOfOncHistoriesInEs = oncHistoryDetails.stream().filter(stringObjectMap ->
                     (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
             Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);
 
-            List<Map<String, Object>> tissuesFromES = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
-                    getOrDefault(ESObjectConstants.TISSUE, null);
+            List<Map<String, Object>> tissuesFromES =
+                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).getOrDefault(
+                            ESObjectConstants.TISSUE, null);
             if (tissuesFromES != null) {
                 Assert.assertFalse(expectZeroTissue);
                 long countNumberOfTissues = tissuesFromES.stream().filter(tissueMap ->
                         (int) tissueMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
                 Assert.assertEquals(0L, countNumberOfTissues);
-                List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
-                        getOrDefault(ESObjectConstants.SMID, null);
+                List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(
+                        ESObjectConstants.DSM)).getOrDefault(ESObjectConstants.SMID, null);
                 if (smIdsFromEs != null) {
                     Assert.assertFalse(expectZeroSmId);
                     long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
@@ -273,20 +275,21 @@ public class OncHistoryTestUtil {
             Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), participantGuid,
                     ESObjectConstants.DSM);
             List<Map<String, Object>> oncHistoryDetails =
-                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(ESObjectConstants.ONC_HISTORY_DETAIL);
+                    (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM))
+                            .get(ESObjectConstants.ONC_HISTORY_DETAIL);
             long countNumberOfOncHistoriesInEs = oncHistoryDetails.stream().filter(stringObjectMap ->
                     (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
             Assert.assertEquals(1L, countNumberOfOncHistoriesInEs);
 
-            List<Map<String, Object>> tissuesFromES = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
-                    getOrDefault(ESObjectConstants.TISSUE, null);
+            List<Map<String, Object>> tissuesFromES = (List<Map<String, Object>>) ((Map<String, Object>)
+                    esDsmMap.get(ESObjectConstants.DSM)).getOrDefault(ESObjectConstants.TISSUE, null);
             if (tissuesFromES != null) {
                 Assert.assertFalse(expectZeroTissue);
                 long countNumberOfTissues = tissuesFromES.stream().filter(tissueMap ->
                         Integer.parseInt((String) tissueMap.get("oncHistoryDetailId")) == oncHistoryDetailId).count();
                 Assert.assertEquals(numberOfRemainingTissue, countNumberOfTissues);
-                List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).
-                        getOrDefault(ESObjectConstants.SMID, null);
+                List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>)
+                        esDsmMap.get(ESObjectConstants.DSM)).getOrDefault(ESObjectConstants.SMID, null);
                 if (smIdsFromEs != null) {
                     Assert.assertFalse(expectZeroSmId);
                     long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
@@ -334,8 +337,8 @@ public class OncHistoryTestUtil {
             long countNumberOfOncHistoriesInEs = tissues.stream().filter(stringObjectMap ->
                     (int) stringObjectMap.get("tissueId") == tissueId).count();
             Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);
-            List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).
-                    getOrDefault(ESObjectConstants.SMID, null);
+            List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).getOrDefault(
+                    ESObjectConstants.SMID, null);
             if (smIdsFromEs != null) {
                 Assert.assertFalse(expectZeroSmId);
                 long countSmIds = smIdsFromEs.stream().filter(smIdMap ->
@@ -357,8 +360,8 @@ public class OncHistoryTestUtil {
      * @param participantGuid  the ddpParticipantId
      * @param tissueId         the id of the Tissue
      * @param ddpInstanceDto   the instance where the onc history belonged
-     * @param expectZeroSmId   mark this as true if the participant originally only had one sm ids belonging to this oncHistory, and so after
-     *                         deleting the onc history we expect there to be no more
+     * @param expectZeroSmId   mark this as true if the participant originally only had one sm ids belonging to this oncHistory,
+     *                        and so after deleting the onc history we expect there to be no more
      */
     public void assertTissueIsNOTDeleted(String participantGuid, int tissueId, DDPInstanceDto ddpInstanceDto, boolean expectZeroSmId) {
         try {
@@ -371,8 +374,8 @@ public class OncHistoryTestUtil {
             long countNumberOfOncHistoriesInEs = tissues.stream().filter(stringObjectMap ->
                     (int) stringObjectMap.get("tissueId") == tissueId).count();
             Assert.assertEquals(1L, countNumberOfOncHistoriesInEs);
-            List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm")).
-                    getOrDefault(ESObjectConstants.SMID, null);
+            List<Map<String, Object>> smIdsFromEs = (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get("dsm"))
+                    .getOrDefault(ESObjectConstants.SMID, null);
             if (smIdsFromEs != null) {
                 Assert.assertFalse(expectZeroSmId);
                 long countSmIds = smIdsFromEs.stream().filter(smIdMap ->

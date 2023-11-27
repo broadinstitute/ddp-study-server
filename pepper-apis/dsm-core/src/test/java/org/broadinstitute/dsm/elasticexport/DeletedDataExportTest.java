@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.elasticExport;
+package org.broadinstitute.dsm.elasticexport;
 
 import java.util.List;
 import java.util.Map;
@@ -76,10 +76,11 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
         DSMtasksSubscription.migrateToES(exportPayload);
         Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), guid, ESObjectConstants.DSM);
         List<Map<String, Object>> oncHistoryDetails =
-                (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM)).get(ESObjectConstants.ONC_HISTORY_DETAIL);
+                (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM))
+                        .get(ESObjectConstants.ONC_HISTORY_DETAIL);
         long countNumberOfOncHistoriesInEs = oncHistoryDetails.stream().filter(stringObjectMap ->
                 (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
-        Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);// Currently the test is failing here because the value is still in ES
+        Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);
     }
 
     @Test
