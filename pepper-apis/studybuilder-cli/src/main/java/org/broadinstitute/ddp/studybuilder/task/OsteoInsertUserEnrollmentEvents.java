@@ -37,12 +37,12 @@ public class OsteoInsertUserEnrollmentEvents extends InsertStudyEvents {
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
         //Disable All existing enrolled status events
-        List<EventConfiguration> enrollEVents = events.stream()
+        List<EventConfiguration> enrollEvents = events.stream()
                 .filter(event -> event.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS)
                 .filter(event -> event.getEventActionType() == EventActionType.USER_ENROLLED)
                 .collect(Collectors.toList());
 
-        for (EventConfiguration eventConf : events) {
+        for (EventConfiguration eventConf : enrollEvents) {
             DBUtils.checkUpdate(1, handle.attach(JdbiEventConfiguration.class)
                     .updateIsActiveById(eventConf.getEventConfigurationId(), false));
             log.info("Disabled USER_ENROLLED event with id {}", eventConf.getEventConfigurationId());
