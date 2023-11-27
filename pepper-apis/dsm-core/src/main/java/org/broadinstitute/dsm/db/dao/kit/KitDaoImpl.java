@@ -757,23 +757,6 @@ public class KitDaoImpl implements KitDao {
         return kitRequestList;
     }
 
-    public void updateKitRequestDDPLabel(int dsmKitRequestId, String ddpLabel) {
-        useTxn(conn -> {
-            try (PreparedStatement stmt = conn.getConnection().prepareStatement(UPDATE_KIT_REQUEST_DDP_LABEL)) {
-                stmt.setString(1, ddpLabel);
-                stmt.setInt(2, dsmKitRequestId);
-                int numRows = stmt.executeUpdate();
-                if (numRows != 1) {
-                    throw new DsmInternalError(String.format("Updated %s rows when setting ddp_label to %s for "
-                            + "dsm kit request id %s", numRows, ddpLabel, dsmKitRequestId));
-                }
-            } catch (SQLException e) {
-                throw new DsmInternalError(String.format("Could not update ddp_label to %s for dsm kit request id%s",
-                        ddpLabel, dsmKitRequestId), e);
-            }
-        });
-    }
-
     public void updateKitComplete(long dsmKitId, boolean isKitComplete) {
         useTxn(conn -> {
             try (PreparedStatement stmt = conn.getConnection().prepareStatement(UPDATE_KIT_COMPLETE)) {
