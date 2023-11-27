@@ -25,8 +25,8 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
     }
 
     @Override
-    protected Optional<ScanError> process(ScanPayload scanPayload) {
-        Optional<ScanError> result;
+    protected Optional<ScanResult> process(ScanPayload scanPayload) {
+        Optional<ScanResult> result;
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
 
@@ -37,19 +37,19 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     && !kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
                     && StringUtils.isBlank(kitRequestShipping.getMessage())) {
                 //prefix is configured and doesn't match kit label and kit error message was not PECGS_RESEARCH
-                result = Optional.of((new ScanError(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
+                result = Optional.of((new ScanResult(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
                         + "Please check to see if this is the correct kit for this project before proceeding.")));
             } else if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
                     && kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
                     && StringUtils.isNotBlank(kitRequestShipping.getMessage())
                     && KitUtil.PECGS_RESEARCH.equals(kitRequestShipping.getMessage())) {
                 //prefix is configured and match kit label and kit error message was PECGS_RESEARCH
-                result = Optional.of((new ScanError(ddpLabel,
+                result = Optional.of((new ScanResult(ddpLabel,
                         "Please check to see if this is the correct kit for this participant before proceeding.")));
             } else if (kitRequestShipping.getKitLabelLength() != null && kitRequestShipping.getKitLabelLength() != 0
                     && kitLabel.length() != kitRequestShipping.getKitLabelLength()) {
                 //barcode length doesn't fit configured length
-                result = Optional.of(new ScanError(ddpLabel,
+                result = Optional.of(new ScanResult(ddpLabel,
                         "Barcode doesn't contain " + kitRequestShipping.getKitLabelLength() + " digits. You can manually enter any"
                                 + " missing digits above."));
             } else if ((kitRequestShipping.isKitRequiringTrackingScan() && kitRequestShipping.hasTrackingScan())
@@ -68,23 +68,23 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     }
                 } else {
                     result = Optional.of(
-                            new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
+                            new ScanResult(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
                 }
             } else if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
                 //tracking scan required and missing
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
+                result = Optional.of(new ScanResult(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
             } else {
                 //wasn't saved
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
+                result = Optional.of(new ScanResult(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
             }
         } else {
             //DSM label doesn't exist
-            result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
+            result = Optional.of(new ScanResult(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
         }
         return result;
     }
 
-    private Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping) {
+    private Optional<ScanResult> updateKitRequest(KitRequestShipping kitRequestShipping) {
         return kitDao.updateKitScanInfo(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
     }
 
@@ -104,8 +104,8 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
 
 
     @Override
-    public Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
-        Optional<ScanError> result;
+    public Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload) {
+        Optional<ScanResult> result;
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
         String RNA = scanPayload.getRNA();
@@ -114,11 +114,11 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         if (kitsByDdpLabel.isPresent()) {
             List<KitRequestShipping> subkits = kitsByDdpLabel.get();
             if (subkits == null || subkits.size() == 0) {
-                result = Optional.of(new ScanError(ddpLabel, "Kits with DDP Label " + ddpLabel + " does not exist"));
+                result = Optional.of(new ScanResult(ddpLabel, "Kits with DDP Label " + ddpLabel + " does not exist"));
                 return result;
             }
             if (subkits.size() > 2) {
-                result = Optional.of(new ScanError(ddpLabel, "More than one kit with DDP Label " + ddpLabel + "was found"));
+                result = Optional.of(new ScanResult(ddpLabel, "More than one kit with DDP Label " + ddpLabel + "was found"));
                 return result;
             }
 
@@ -141,12 +141,12 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     this.writeSampleSentToES(rgpBloodKit);
                 } else {
                     result = Optional.of(
-                            new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
+                            new ScanResult(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
                     return result;
                 }
             } else {
                  result = Optional.of(
-                         new ScanError(ddpLabel, "DDP Label " + rgpBloodKit.getDdpLabel() + " requires tracking scan"));
+                         new ScanResult(ddpLabel, "DDP Label " + rgpBloodKit.getDdpLabel() + " requires tracking scan"));
                  return result;
              }
             KitRequestShipping rgpRnaKit =
@@ -167,40 +167,40 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     this.writeSampleSentToES(rgpRnaKit);
                 } else {
                     result = Optional.of(
-                            new ScanError(rgpRnaKit.getDdpLabel(),
+                            new ScanResult(rgpRnaKit.getDdpLabel(),
                                     "Designated RNA kit with Kit Label " + rgpRnaKit.getKitLabel() + " was scanned on Initial Scan page "));
                 }
             } else {
                 result = Optional.of(
-                        new ScanError(ddpLabel, "DDP Label " + rgpRnaKit.getDdpLabel() + " requires tracking scan"));
+                        new ScanResult(ddpLabel, "DDP Label " + rgpRnaKit.getDdpLabel() + " requires tracking scan"));
                 return result;
             }
         } else {
             //DSM label doesn't exist
-            result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
+            result = Optional.of(new ScanResult(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
         }
         return result;
     }
 
-    public Optional<ScanError> checkForKitErrors(KitRequestShipping kitRequestShipping, String kitLabel, String ddpLabel) {
-        Optional<ScanError> result = Optional.empty();
+    public Optional<ScanResult> checkForKitErrors(KitRequestShipping kitRequestShipping, String kitLabel, String ddpLabel) {
+        Optional<ScanResult> result = Optional.empty();
         if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
                 && !kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
                 && StringUtils.isBlank(kitRequestShipping.getMessage())) {
             //prefix is configured and doesn't match kit label and kit error message was not PECGS_RESEARCH
-            result = Optional.of((new ScanError(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
+            result = Optional.of((new ScanResult(ddpLabel, "No " + kitRequestShipping.getKitLabelPrefix() + " prefix found. "
                     + "Please check to see if this is the correct kit for this project before proceeding.")));
         } else if (StringUtils.isNotBlank(kitRequestShipping.getKitLabelPrefix())
                 && kitLabel.startsWith(kitRequestShipping.getKitLabelPrefix())
                 && StringUtils.isNotBlank(kitRequestShipping.getMessage())
                 && KitUtil.PECGS_RESEARCH.equals(kitRequestShipping.getMessage())) {
             //prefix is configured and match kit label and kit error message was PECGS_RESEARCH
-            result = Optional.of((new ScanError(ddpLabel,
+            result = Optional.of((new ScanResult(ddpLabel,
                     "Please check to see if this is the correct kit for this participant before proceeding.")));
         } else if (kitRequestShipping.getKitLabelLength() != null && kitRequestShipping.getKitLabelLength() != 0
                 && kitLabel.length() != kitRequestShipping.getKitLabelLength()) {
             //barcode length doesn't fit configured length
-            result = Optional.of(new ScanError(ddpLabel,
+            result = Optional.of(new ScanResult(ddpLabel,
                     "Barcode doesn't contain " + kitRequestShipping.getKitLabelLength() + " digits. You can manually enter any"
                             + " missing digits above."));
 
@@ -208,10 +208,10 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 || (!kitRequestShipping.isKitRequiringTrackingScan()))) { // something is wrong about tracking scan
             if (kitRequestShipping.isKitRequiringTrackingScan() && !kitRequestShipping.hasTrackingScan()) {
                 //tracking scan required and missing
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
+                result = Optional.of(new ScanResult(ddpLabel, "Kit with DSM Label " + kitLabel + " does not have a Tracking Label"));
             } else {
                 //wasn't saved
-                result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
+                result = Optional.of(new ScanResult(ddpLabel, "Kit with DSM Label " + ddpLabel + " was not saved successfully"));
             }
         }
         return result;

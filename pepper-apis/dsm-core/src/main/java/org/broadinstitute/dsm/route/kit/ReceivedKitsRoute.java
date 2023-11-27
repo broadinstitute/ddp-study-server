@@ -17,7 +17,7 @@ public class ReceivedKitsRoute extends KitStatusChangeRoute {
     @Override
     protected void processRequest() {
         KitReceivedUseCase kitReceivedUseCase = new KitReceivedUseCase(kitPayload, new KitDaoImpl(), notificationUtil);
-        scanErrorList.addAll(kitReceivedUseCase.get());
+        scanResultList.addAll(kitReceivedUseCase.get());
     }
 
     @Override

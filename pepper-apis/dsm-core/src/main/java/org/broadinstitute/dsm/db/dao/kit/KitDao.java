@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 
 // todo arz remove useless interface
 public interface KitDao extends Dao<KitRequestShipping> {
@@ -14,9 +14,9 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     Boolean hasTrackingScan(String kitLabel);
 
-    Optional<ScanError> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId);
+    Optional<ScanResult> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId);
 
-    Optional<ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
+    Optional<ScanResult> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
 
     /**
      * Inserts a new ddp_kit using kit fields from the given {@link KitRequestShipping}
@@ -42,11 +42,11 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     List<KitRequestShipping> getKitsByHruid(String hruid);
 
-    Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping);
+    Optional<ScanResult> updateKitLabel(KitRequestShipping kitRequestShipping);
 
     /**
      * Inserts a new row in ddp_kit_tracking if there is no row for the given kitLabel
      */
-    Optional<ScanError> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId,
-                                                     int userId);
+    Optional<ScanResult> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId,
+                                                      int userId);
 }

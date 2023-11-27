@@ -12,12 +12,12 @@ public class NullObjectDecorator extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanResult> process(ScanPayload scanPayload) {
         return Optional.empty();
     }
 
     @Override
-    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+    protected Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload) {
         throw new NotImplementedException();
     }
 }

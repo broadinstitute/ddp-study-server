@@ -18,13 +18,13 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanResult> process(ScanPayload scanPayload) {
         return kitDao.insertKitTrackingIfNotExists(scanPayload.getKitLabel(), scanPayload.getTrackingReturnId(),
                 kitPayload.getUserId());
     }
 
     @Override
-    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+    protected Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload) {
         throw new NotImplementedException();
     }
 
