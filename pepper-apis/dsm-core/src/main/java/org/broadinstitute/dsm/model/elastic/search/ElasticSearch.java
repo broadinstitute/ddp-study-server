@@ -202,8 +202,8 @@ public class ElasticSearch implements ElasticSearchable {
             ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
             clearScrollRequest.addScrollId(scrollId);
             ElasticSearchUtil.getClientInstance().clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-        } catch (IOException e){
-            logger.error("Unable to clear the scroll in the connection to index: "+index, e);
+        } catch (IOException e) {
+            logger.error("Unable to clear the scroll in the connection to index: " + index, e);
         }
     }
 
