@@ -88,7 +88,8 @@ public class EmailBlasterCLI {
         System.exit(0);
     }
 
-    public void sendEmail(String fromName, String fromEmail, String sendgridTemplateId, String studyGuid, Collection<String> recipientGuids) {
+    public void sendEmail(String fromName, String fromEmail, String sendgridTemplateId, String studyGuid,
+                          Collection<String> recipientGuids) {
 
         final Set<String> auth0UserIds = new TreeSet<>();
         final Map<String, Map<String, String>> personalizationByAuth0Id = new HashMap<>();
@@ -107,11 +108,11 @@ public class EmailBlasterCLI {
                 UserDto userDto = userDao.findByUserGuid(recipientGuid);
                 UserProfile userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userDto.getUserGuid()).get();
                 // todo add other template vars
-                personalizationByAuth0Id.put(userDto.getAuth0UserId(), new HashMap<>());
-                personalizationByAuth0Id.get(userDto.getAuth0UserId()).put(DDP_PARTICIPANT_FIRST_NAME, userProfile.getFirstName());
-
-                if (StringUtils.isNotBlank(userDto.getAuth0UserId())) {
-                    auth0UserIds.add(userDto.getAuth0UserId());
+                String userAuth = userDto.getAuth0UserId().orElse(null);
+                if (StringUtils.isNotBlank(userAuth)) {
+                    auth0UserIds.add(userAuth);
+                    personalizationByAuth0Id.put(userAuth, new HashMap<>());
+                    personalizationByAuth0Id.get(userAuth).put(DDP_PARTICIPANT_FIRST_NAME, userProfile.getFirstName());
                 }
             }
 

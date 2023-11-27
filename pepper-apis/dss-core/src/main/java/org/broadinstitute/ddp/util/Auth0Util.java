@@ -365,7 +365,7 @@ public class Auth0Util {
                     results.put(user.getEmail(), user.getId());
                 }
             } catch (Auth0Exception e) {
-                LOG.error("Error while retrieving auth0 user ids via email lookup, continuing pagination", e);
+                log.error("Error while retrieving auth0 user ids via email lookup, continuing pagination", e);
             }
         }
 
