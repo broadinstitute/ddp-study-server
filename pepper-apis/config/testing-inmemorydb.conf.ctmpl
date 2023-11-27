@@ -4,10 +4,10 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
 {{with $gae := env "GAE"}}
-{{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
+{{with $testingConf := secret (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $auth0 := index $testingConf.Data "auth0"}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $conf := secret (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 {{with $fileUploads := index $conf.Data "fileUploads"}}
 
 {
@@ -32,6 +32,9 @@
     "dbInstanceId": "ddp-dev",
     "restrictRegisterRoute": false,
     "restrictAuth0LogEventRoute": false,
+    "emailPatternDenyList": [
+        "@test.firecloud.org"
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",
@@ -51,6 +54,7 @@
         "testAdminPassword": "{{$testingAuth.testAdminPassword}}",
         "testAdminUserAuth0Id": "{{$testingAuth.testAdminUserAuth0Id}}",
         "dsmApiAudience": "https://dsm.datadonationplatform.org",
+        "dsmDomain": "{{$auth0.dsmDomain}}",
         "dsmClientId": "{{$testingAuth.dsmClientId}}",
         "dsmClientSecret": "{{$testingAuth.dsmClientSecret}}",
         "backendTestClientId": "{{$testingAuth.backendTestClientId}}",
@@ -96,7 +100,7 @@
         "uploadsBucket": "ddp-local-file-uploads",
         "scannedBucket": "ddp-local-file-scanned",
         "quarantineBucket": "ddp-local-file-quarantine",
-        "maxFileSizeBytes": 2000000,
+        "maxFileSizeBytes": 52428800,
         "maxSignedUrlMins": 5,
         "removalExpireTime": 1,
         "removalExpireUnit": "DAYS",
@@ -105,6 +109,12 @@
         "scanResultSubscription": "cf-file-scan-result-local-hkeep-sub",
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
+    "fileDownload":{
+        "credentials": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}},
+        "signerServiceAccount": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
+        "maxSignedUrlMins": 5,
+        "defaultDownloadBucket": "{{$conf.Data.fileDownload.defaultDownloadBucket}}"
+    },
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
@@ -112,6 +122,8 @@
         "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
         "pubSubTasksSubscription": "local-dsm-to-dss-tasks-sub",
         "pubSubTasksResultTopic": "local-dss-to-dsm-results",
+        "pubSubDsmTasksTopic": " local-dsm-tasks",
+        "antivirus_to_dsm_subscription":"local-antivirus-to-dsm-sub",
         "pubSubTaskSubscriberAwaitRunningTimeout": 30
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
@@ -123,7 +135,9 @@
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
         "fileUploadCleanup": "0 0 5 ? * * *",
-        "tempUserCleanup": "0 30 5 ? * * *"
+        "fileUploadNotification": "*/10 * * * * *",
+        "tempUserCleanup": "0 30 5 ? * * *",
+        "customExport": "0 10 5 ? * * *"
     },
     "housekeepingMaxConnections": 50,
     "sendgrid": {
@@ -198,6 +212,12 @@
               "template": "bfb0d8c1-f127-4ebf-a2fd-faef23b36a1f"
           }
       {{end}}
+    }
+    "somatic": {
+        "realmToBucketMappings": [
+            {"realm": "osteo2", "uploadBucket":"cmi-osteo2-uploaded-files"},
+            {"realm": "cmi-lms", "uploadBucket":"cmi-lms-uploaded-files"}
+        ]
     }
 }
 

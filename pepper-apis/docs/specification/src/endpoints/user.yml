@@ -8,6 +8,7 @@ parameters:
 
 delete:
   operationId: deleteUser
+  summary: Delete a user
   description: |
     Remove user.
 

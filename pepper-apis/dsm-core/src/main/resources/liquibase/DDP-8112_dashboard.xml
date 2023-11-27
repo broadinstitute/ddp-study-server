@@ -1,0 +1,55 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="gmakhara" id="DDP-8112_dashboard">
+        <createTable tableName="dashboard">
+            <column autoIncrement="true" name="dashboard_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false" foreignKeyName="dashboard_ddp_instance_id_fk"
+                             referencedTableName="ddp_instance" referencedColumnNames="ddp_instance_id"/>
+            </column>
+            <column name="display_text" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="size" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ordering" type="INT">
+            </column>
+            <column name="display_type" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="dashboard_label">
+            <column autoIncrement="true" name="label_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="label_name" type="VARCHAR(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="color" type="VARCHAR(124)"/>
+            <column name="dashboard_id" type="INT">
+                <constraints nullable="false" foreignKeyName="label_dashboard_id_fk"
+                             referencedTableName="dashboard" referencedColumnNames="dashboard_id"/>
+            </column>
+        </createTable>
+        <createTable tableName="dashboard_label_filter">
+            <column autoIncrement="true" name="label_filter_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="es_filter_path" type="VARCHAR(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="es_filter_path_value" type="VARCHAR(256)"/>
+            <column name="es_nested_path" type="VARCHAR(256)"/>
+            <column name="additional_filter" type="VARCHAR(512)"/>
+            <column name="label_id" type="INT">
+                <constraints nullable="false" foreignKeyName="filter_label_id_fk"
+                             referencedTableName="dashboard_label" referencedColumnNames="label_id"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

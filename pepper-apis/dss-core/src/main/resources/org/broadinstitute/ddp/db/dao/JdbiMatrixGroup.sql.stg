@@ -1,0 +1,61 @@
+group JdbiMatrixGroup;
+
+queryMatrixGroupsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
+select mg.matrix_group_id   as matrix_group_id,
+       mg.group_stable_id   as group_stable_id,
+       mg.name_template_id  as name_template_id,
+       mg.display_order     as display_order,
+       mg.revision_id       as revision_id,
+       rev.start_date       as revision_start_timestamp,
+       rev.end_date         as revision_end_timestamp
+  from matrix_group as mg
+  join revision as rev on mg.revision_id = rev.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where mg.matrix_question_id = :questionId
+   and mg.group_stable_id in (<stableIds>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+queryMatrixGroupsByIdsQuestionIdAndRevision(ids) ::= <<
+select mg.matrix_group_id   as matrix_group_id,
+       mg.group_stable_id   as group_stable_id,
+       mg.name_template_id  as name_template_id,
+       mg.display_order     as display_order,
+       mg.revision_id       as revision_id,
+       rev.start_date       as revision_start_timestamp,
+       rev.end_date         as revision_end_timestamp
+  from matrix_group as mg
+  join revision as rev on mg.revision_id = rev.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where mg.matrix_question_id = :questionId
+   and mg.matrix_group_id in (<ids>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+queryAllActiveOrderedMatrixGroupsQuestionId() ::= <<
+select mg.matrix_group_id   as matrix_group_id,
+       mg.group_stable_id   as group_stable_id,
+       mg.name_template_id  as name_template_id,
+       mg.display_order     as display_order,
+       mg.revision_id       as revision_id,
+       rev.start_date       as revision_start_timestamp,
+       rev.end_date         as revision_end_timestamp
+  from matrix_group as mg
+  join revision as rev on rev.revision_id = mg.revision_id
+ where mg.matrix_question_id = :questionId
+   and rev.end_date is null
+ order by mg.display_order asc, mg.matrix_group_id asc
+>>
+
+isMatrixGroupStableIdCurrentlyActive() ::= <<
+select 1
+from
+    matrix_group as mg,
+    revision as rev
+where mg.matrix_question_id = :questionId
+and mg.group_stable_id = :stableId
+and mg.revision_id = rev.revision_id
+and rev.end_date is null
+>>

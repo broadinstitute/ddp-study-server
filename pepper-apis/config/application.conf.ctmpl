@@ -3,13 +3,12 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
 {{with $app := env "APP"}}
-{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
-{{with $dsm_conf := vault (printf "secret/pepper/%s/%s/dsm/config" $environment $version)}}
+{{with $conf := secret (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $dsm_conf := secret (printf "secret/pepper/%s/%s/dsm/config" $environment $version)}}
 {{with $auth0 := index $conf.Data "auth0"}}
-{{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
+{{with $testingConf := secret (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $slack := index $conf.Data "slack"}}
-{{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
+{{with $elasticsearchConf := secret (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 {
     "dbUrl": "{{$conf.Data.dbUrl}}",
     "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
@@ -19,11 +18,17 @@
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
+    "emailPatternDenyList": [
+            {{range $i, $email := $conf.Data.emailPatternDenyList}}
+                {{if $i}},{{end}}"{{ $email }}"
+            {{end}}
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
         "managementApiClientId": "{{$auth0.managementApiClientId}}",
         "encryptionSecret": "{{$auth0.encryptionSecret}}",
+        "dsmDomain": "{{$auth0.dsmDomain}}",
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}",
         "ipAllowList": [
@@ -37,12 +42,6 @@
 		"token" : "{{$conf.Data.auth0LogEvents.token}}"
     {{end}}
 	},
-    "slack": {
-        "hook": "{{$slack.hook}}",
-        "channel": "{{$slack.channel}}",
-        "queueSize": 10,
-        "intervalInMillis": 60000
-    },
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
     "healthcheckPassword": "{{$conf.Data.healthcheckPassword}}",
@@ -66,6 +65,12 @@
         "scanResultSubscription": "{{$conf.Data.fileUploads.scanResultSubscription}}",
         "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}
     },
+    "fileDownload":{
+        "signerServiceAccount": {{$conf.Data.fileDownload.signerServiceAccount | toJSONPretty}}
+        "maxSignedUrlMins": 5,
+        "defaultDownloadBucket": "{{$conf.Data.fileDownload.defaultDownloadBucket}}"
+    },
+
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
@@ -73,6 +78,7 @@
         "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
         "pubSubTasksSubscription": "{{$conf.Data.pubsub.pubSubTasksSubscription}}",
         "pubSubTasksResultTopic": "{{$conf.Data.pubsub.pubSubTasksResultTopic}}",
+        "pubSubDsmTasksTopic": "{{$conf.Data.pubsub.pubSubDsmTasksTopic}}"
         "pubSubTaskSubscriberAwaitRunningTimeout": "{{$conf.Data.pubsub.pubSubTaskSubscriberAwaitRunningTimeout}}"
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
@@ -84,7 +90,9 @@
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
         "fileUploadCleanup": "{{$conf.Data.schedules.fileUploadCleanup}}",
-        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
+        "fileUploadNotification": "{{$conf.Data.schedules.fileUploadNotification}}",
+        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}",
+        "customExport": "{{$conf.Data.schedules.customExport}}"
     },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",
     "nginx": {
@@ -169,7 +177,6 @@
         "dsmBaseUrl": "https://dsm.datadonationplatform.org:443"
     {{end}}
 }
-{{end}}
 {{end}}
 {{end}}
 {{end}}

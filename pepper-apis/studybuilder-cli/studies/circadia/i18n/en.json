@@ -1,0 +1,896 @@
+{
+  "prequal_name": "Prequalifier Survey",
+  "prequal_title": "Prequalifier",
+  "prequal_header": "Prequalifier",
+  "prequal_self_describe": "The following questions will determine if you are eligible to participate in the study. ",
+
+  "prequal_atypical_circadian_rhythm_question": "Have you been diagnosed with an atypical circadian rhythm?",
+  "prequal_aspd_answer": "Advanced Sleep Phase Disorder (ASPD)",
+  "prequal_dspd_answer": "Delayed Sleep Phase Disorder (DSPD)",
+  "prequal_non_24_answer": "Non-24",
+  "prequal_other_ansawer": "Other",
+  "prequal_none_answer": "None",
+
+  "prequal_crd_symptoms_present_question": "Have the symptoms of your circadian rhythm disorder been present for at least three months?",
+  "prequal_yes_answer": "Yes",
+  "prequal_no_answer": "No",
+  "prequal_unsure_answer": "Unsure",
+  "prequal_not_applicable_answer": "Not Applicable, I don’t have a circadian rhythm disorder",
+
+  "prequal_age_and_education_question": "Please indicate if you are any of the following: ",
+  "prequal_22_and_under_answer": "Aged 22 and under",
+  "prequal_current_student_answer": "Current student (includes part-time and full-time higher education)",
+  "prequal_none_of_the_above_answer": "None of the above",
+
+  "prequal_probable_medical_problems_1_question": "Please check any statements that apply to you: ",
+  "prequal_tbi_answer": "I have a traumatic brain injury (TBI)",
+  "prequal_stroke_answer": "I have had a stroke(s)",
+  "prequal_brain_surgery_answer": "I have undergone brain surgery",
+  "prequal_seizure_disorder_answer": "I have a diagnosed seizure disorder ",
+
+  "prequal_child_and_pregnancy_question": "Please check any statements that apply to you: ",
+  "prequal_child_lives_with_self_answer": "A child under age 2 lives with me (whether or not I am the parent/guardian)",
+  "prequal_child_lives_with_self_part_time_answer": "A child under age 2 lives with me part-time (whether or not I am the parent/guardian)",
+  "prequal_self_given_birth_past_year_answer": "I have given birth in the past year (whether or not the child now lives with me)",
+  "prequal_self_currently_pregnant_anaswer": "I am currently pregnant",
+  "prequal_self_breastfeeding_answer": "I am currently breastfeeding/pumping",
+
+  "prequal_probable_medical_problems_2_question": "Do you have any of the following (check all that apply) ",
+  "prequal_gingivitis_answer": "Gingivitis",
+  "prequal_xerostomia_answer": "Xerostomia",
+  "prequal_periodontitis_answer": "Periodontitis",
+
+  "prequal_travel_question": "Have you traveled across more than one time zone in the last month?",
+
+  "prequal_8th_grade_english_question": "Are you comfortable reading and writing at an 8th grade level in English? ",
+
+  "prequal_visual_problem_question_1": "Are you visually impaired or blind or color blind? ",
+  "prequal_visual_problem_question_1_paragraph": "Visual impairments are not fixed with usual means, such as glasses or contacts.",
+
+  "prequal_visual_problem_question_2": "please select all that apply:",
+  "prequal_visually_impaired": "Visually Impaired",
+  "prequal_color_blind": "Color Blind",
+  "prequal_blind": "Blind",
+
+  "prequal_dim_melatonin_before_question": "Have you completed a dim light melatonin onset saliva collection before?",
+
+  "prequal_study_requirements": "In order for the study to be successful, this study requires participants to log their sleep daily for approximately 5-6 weeks, wear an activity watch for approximately 4-5 weeks, and participate in 2 dim-light melatonin assays by providing saliva samples. Are you willing to complete these tasks?",
+
+  "prequal_ineligible_participant_message": "Thank you for your interest in the Circadia Research Study! We appreciate your completion of our screening questionnaire. At this time, you are not eligible to participate. However, we invite you to stay up to date with our research efforts by signing up for our newsletter. We value our community and your efforts in contributing to research. Thank you.",
+
+
+
+  "consent_name": "Consent",
+  "consent_title": "Consent",
+  "consent_header": "Consent",
+
+  "consent_created_summary": "Please review and sign the Research Consent Form, which will allow you to enroll in the Circadia research study.",
+  "consent_in_progress_summary": "Please finish reviewing and signing the Research Consent Form.",
+  "consent_complete_summary": "Thank you for signing the Research Consent Form.",
+
+  "consent_intro_title": "About this consent form",
+  "consent_intro_p1": "Please read this form carefully.  It tells you important information about a research study.  A member of our research team will also talk to you about taking part in this research study.  People who agree to take part in research studies are called “subjects.”  This term will be used throughout this consent form.",
+  "consent_intro_p2": "Partners HealthCare System is made up of Partners hospitals, health care providers, and researchers. Massachusetts General Hospital is the main site for the Circadia study and is a part of the Partners HealthCare System. In the rest of this consent form, we refer to the Partners system simply as “Partners.”",
+  "consent_intro_p3": "If you decide to take part in this research study, you must sign this form to show that you want to take part.  We will give you a signed copy of this form to keep.",
+
+  "consent_key_information_title": "Key Information",
+  "consent_key_information_p1": "Taking part in this research study is up to you.  You can decide not to take part.  If you decide to take part now, you can change your mind and drop out later.  Your decision won’t change the medical care you get within Partners now or in the future.  ",
+  "consent_key_information_p2": "The following key information is to help you decide whether or not to take part in this research study.  We have included more details about the research in the Detailed Information section that follows the key information.",
+
+  "consent_study_reason_title": "Why is this research study being done?",
+  "consent_study_reason_title_p1": "In this study we will test at home collections of dim light melatonin onset (DLMO) saliva samples. DLMO collections help assess your circadian rhythms. DLMO samples are usually collected on site at a circadian clinic, or at home with an assistant. This study will test DLMO samples completed self-directed by a participant collected at home.",
+
+  "consent_participation_duration_title": "How long will you take part in this research study?",
+  "consent_participation_duration_p1": "You must be eligible to participate in this study. You completed a screen for study eligibility online. If you are interested, you may choose to participate in this study. To participate in this study, you must provide consent. You may provide consent by signing this form. Once you do, you are enrolled in the study. ",
+  "consent_participation_duration_p2": "From enrollment, it will take approximately 4 weeks to complete the study. During the 4 weeks, we ask for the following: ",
+  "consent_participation_duration_p3_list_item_1": "Provide saliva samples collected in dim light",
+  "consent_participation_duration_p3_list_item_2": "Keep a daily sleep log",
+  "consent_participation_duration_p3_list_item_3": "Provide at-home activity tracking using wearable devices that we will provide",
+  "consent_participation_duration_p3_list_item_4": "Fill out questionnaires",
+
+  "consent_participation_duration_p4": "More specifically, study duration can be broken down to the following approximate uninterrupted time commitments, including time to read instructions and prepare:",
+  "consent_participation_duration_p5_table_key_1": "Activity",
+  "consent_participation_duration_p5_table_value_1": "Approximate Time Commitment ",
+  "consent_participation_duration_p5_table_key_2": "Questionnaires",
+  "consent_participation_duration_p5_table_value_2": "2 questionnaires, approximately 30 minutes ",
+  "consent_participation_duration_p5_table_key_3": "Daily sleep log",
+  "consent_participation_duration_p5_table_value_3": "15 minutes, daily ",
+  "consent_participation_duration_p5_table_key_4": "Dim light saliva samples",
+  "consent_participation_duration_p5_table_value_4": "8 hours, twice (approximately 16 hours), on separate days overlapping bedtime ",
+  "consent_participation_duration_p6": "The study is a self-directed, home-based study. This study doesn’t require in-person visits. If enrolled in this research study, we ask that you avoid traveling across time zones while you are in the study. ",
+
+  "v2_consent_participation_duration_p5_table_key_5": "Dim Light Melatonin Onsent Collection",
+  "v2_consent_participation_duration_p5_table_value_5": "8 hours in the evening, twice (approximately 16 hours), on separate days ",
+  "v2_consent_participation_duration_p2": "From enrollment, it will take approximately 4-6 weeks to complete the study – with daily tasks requiring 5-15 minutes to complete and two dim light melatonin collections during the course of the study requiring 8 hours for each collection.",
+  "v2_consent_participation_duration_p5_table_value_2": "2 questionnaires, approximately 10 minutes each ",
+  "v2_consent_participation_duration_p5_table_value_3": "5-10 minutes, daily ",
+  "v2_consent_participation_duration_p5_table_key_4": "Wear Actiwatch",
+  "v2_consent_participation_duration_p5_table_value_4": "4-5 weeks ",
+  "v2_consent_research_reason_p1": "This research study is investigating the role of genetics in circadian rhythms.  One way to measure our circadian rhythms is to look at levels of the hormone melatonin.  Our bodies produce melatonin at night.  The time of day when melatonin production begins is an indicator of the our circadian rhythm (called melatonin onset).  To determine when melatonin production begins, we measure melatonin onset in a series of saliva samples collected from people before, during, and after bedtime in dim light conditions.  We are doing this research to test at-home, self-directed instructions and collections of dim light melatonin onset (DLMO) samples.",
+  "v2_consent_research_reason_p2": "Dim Light Melatonin Onset (DLMO) collections help assess your circadian rhythms; the samples are usually collected on site at a circadian clinic or at home with an assistant. In this study, however, we are testing DLMO collections completed at-home and self-directed by you, the participant.",
+  "v2_consent_research_reason_p3": "We will use what we learn from this study to improve our work and future research, which we hope will lead to better diagnostic tools and overall medical care for people with atypical circadian rhythms.",
+
+  "v2_consent_what_will_happen_in_the_study_p1": "The study procedures require 4 parts to be completed remotely: ",
+  "v2_consent_what_will_happen_in_the_study_p2_l1": "Complete about 4-6 weeks of daily sleep logs through our website.",
+  "v2_consent_what_will_happen_in_the_study_p2_l2": "Complete 2 brief (~10 minutes) questionnaires through our website. ",
+  "v2_consent_what_will_happen_in_the_study_p2_l3": "Wear a device called an Actiwatch, similar to a fitbit, that tracks your motion for approximately 4-5 weeks. We will send you an Actiwatch.",
+  "v2_consent_what_will_happen_in_the_study_p2_l4": "Completion of 2 dim light melatonin onset (DLMO) Collections a week apart from each other. These will require you to provide hourly saliva samples over an 8 hour period with an hour for set up. We will send you everything you need to complete these DLMO Collections.",
+  "v2_consent_what_will_happen_in_the_study_p3": "  The study is a self-directed, home-based study. This study doesn’t require any in-person visits. If enrolled in this research study, we ask that you avoid traveling across time zones while you are participating in the study.",
+  "v2_consent_what_will_happen_in_the_study_p4": "To participate in this study you will need to receive an at-home study kit, mailed to your address on behalf of the study. It will contain DLMO collection materials, an Actiwatch, and materials for return shipping. You will need to provide an address where you prefer to receive the at-home study kit.",
+
+  "v2_consent_study_communication_via_email_unsecured_title": "Study Communication via Unsecured Email",
+  "v2_consent_study_communication_via_email_unsecured_p1": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
+  "v2_consent_study_communication_via_email_unsecured_p2": "However, this study uses “unencrypted” email that is not secure and could result in the unauthorized use or disclosure of your information. If you want to receive communications by unencrypted email despite these risks, Partners HealthCare will not be held responsible. Your preference to receive unencrypted email will apply to emails sent from this research group/study only. ",
+  "v2_consent_study_communication_via_email_unsecured_p3_italic": "I have had the chance to ask questions about the use of unencrypted email with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted email communications associated with this research study.",
+
+  "v2_consent_study_communication_via_email_title": "Study Communication via Mail",
+  "v2_consent_study_communication_via_email_p1": "For you to participate in this study, our team will need to send materials to your preferred mailing address, including materials you will need to complete the study, study-themed gifts, and your compensation at the conclusion of the study. ",
+
+  "v2_consent_receive_email_communications_title": "Please select one of the following options",
+  "v2_consent_receive_email_communications_yes_answer": "YES, I consent to receive mail shipped to my preferred address.",
+  "v2_consent_receive_email_communications_no_answer": "NO, I do not consent to receive mail shipped to my provided address.",
+  "v2_consent_receive_email_communications_hint": "Please select one of the following options",
+
+  "v2_con_your_phone": "Please input your phone number here:",
+  "v2_address_title": "Your Mailing Address",
+
+  "v2_pcq_confident_set_material_question": "What material, if any, did you use to block light from your windows during the DLMO Collections? <br/> (Please choose all that apply):",
+
+  "v2_pcq_confident_set_material_prompt": "What material, if any, did you use to block light from your windows during the DLMO Collections? (Please choose all that apply):",
+  "v2_pcq_confident_set_material_aluminum": "Aluminum Foil",
+  "v2_pcq_confident_set_material_garbage": "Black Garbage Bags",
+  "v2_pcq_confident_set_material_tape": "Tape",
+  "v2_pcq_confident_set_material_other": "Other",
+
+  "v2_pcq_confident_sleep_question": "How easy was it to remember to complete your daily sleep log?",
+  "v2_pcq_confident_sleep_not_easy": "Not at all easy",
+  "v2_pcq_confident_sleep_slightly_easy": "Slightly easy",
+  "v2_pcq_confident_sleep_moderately_easy": "Moderately easy",
+  "v2_pcq_confident_sleep_very_easy": "Very easy",
+  "v2_pcq_confident_sleep_extremely_easy": "Extremely easy",
+  "v2_pcq_confident_dlmo_collections_question": "I felt confident preparing my environment for the DLMO Collections.",
+
+  "consent_what_will_happen_in_study_title": "What will happen if you take part in this research study?",
+  "consent_what_will_happen_in_study_p1": "You must provide consent to participate in this study. If you do, you will receive: ",
+  "consent_what_will_happen_in_study_p2_l1": "Access to an online site for sample collection scheduling",
+  "consent_what_will_happen_in_study_p2_l2": "Access to online study material",
+  "consent_what_will_happen_in_study_p2_l3": "A study kit mailed to your home address",
+  "consent_what_will_happen_in_study_p3": "You will need to send the study kit material and samples back to us at the end of the study. We will provide shipping instructions and prepaid shipping labels at no cost to you. ",
+
+  "consent_why_might_you_choose_study_title": "Why might you choose to take part in this study?",
+  "consent_why_might_you_choose_study_p1":"You will not directly benefit from taking part in this research study. Others may benefit in the future from what we learn in this study. ",
+
+  "consent_why_might_you_choose_not_title": "Why might you choose NOT to take part in this study?",
+  "consent_why_might_you_choose_not_p1": "Taking part in this research study has some risks.  Please take time to consider them.  Risks and possible discomforts include the following: ",
+  "consent_why_might_you_choose_not_p2_l1": "Sleep loss",
+  "consent_why_might_you_choose_not_p2_l2": "Acute increased gum sensitivity, risk of minor gum bleeding from hourly dim light melatonin saliva sample collection",
+  "consent_why_might_you_choose_not_p2_l3": "Skin irritation from wearable technology",
+  "consent_why_might_you_choose_not_p2_l4": "Side effects from refraining from alcohol, caffeine, nicotine, recreational drugs, specific foods, and/or melatonin",
+  "consent_why_might_you_choose_not_p2_l5": "Loss of confidentiality",
+  "consent_why_might_you_choose_not_p2_l6": "Length and time commitment required for study participation ",
+  "consent_why_might_you_choose_not_p3": "Please see section “What are the risks and possible discomforts from being in this research study?”. This section includes detailed information on risks and possible discomforts. ",
+  "consent_why_might_you_choose_not_p4": "When considering study participation, keep in mind study length. Including time to ship the study kit, the total study length is approximately four weeks. This requires some commitment to following and maintaining study protocol.  ",
+
+  "consent_questions_concerns_title": "If you have questions or concerns about this research study, whom can you call?",
+  "consent_questions_concerns_p1": "You can call us with your questions or concerns.  Our telephone numbers are listed below.  Ask questions as often as you want.  ",
+  "consent_questions_concerns_p2": "Dr. Jacqueline Lane, PhD, is the person in charge of this research study.  You can call her at 617-643-3067, Monday through Friday, 9AM-5PM or by email at lane@chgr.mgh.harvard.edu. ",
+  "consent_questions_concerns_p3": "If you have questions about the scheduling of appointments or study visits, call a study coordinator at +1 (857) 265-6742 or email at circadiastudy@mgh.harvard.edu",
+  "consent_questions_concerns_p4": "If you want to speak with someone not directly involved in this research study, please contact the Partners Human Research Committee office.  You can call them at 857-282-1900.",
+  "consent_questions_concerns_p5": "You can talk to them about:",
+  "consent_questions_concerns_p6_l1": "Your rights as a research subject",
+  "consent_questions_concerns_p6_l2": "Your concerns about the research",
+  "consent_questions_concerns_p6_l3": "A complaint about the research",
+  "consent_questions_concerns_p6_l4": "Any pressure to take part in, or to continue in the research study",
+
+  "consent_detailed_information": "Detailed Information",
+  "consent_research_reason_title": "Why is this research study being done?",
+  "consent_research_reason_p1": "We are doing this research to test at-home, self-directed instructions and collections of dim light melatonin onset (DLMO) samples. We will use this information to improve our work and future research. ",
+
+  "consent_participants_title": "Who will take part in this research?",
+  "consent_participants_p1": "Adults with suspected or confirmed atypical circadian rhythms, healthy adults. ",
+  "consent_participants_p2": "We will recruit approximately 10 adults to take part in this research study. The research study will be self-directed, and home based.  It will not require in person clinic visits.  ",
+
+  "consent_what_will_happen_in_the_study_title": "What will happen in this research study?",
+  "consent_what_will_happen_in_the_study_p1": "You were screened and found eligible for consent. To participate in this study, you need to sign this consent form. No study procedures will occur until you have signed this consent form. The study procedures require 4 parts to be completed remotely: ",
+  "consent_what_will_happen_in_the_study_p2_l1": "Dim light melatonin saliva sample collections",
+  "consent_what_will_happen_in_the_study_p2_l2": "Completion of about 4 weeks of daily sleep logs ",
+  "consent_what_will_happen_in_the_study_p2_l3": "Activity tracking",
+  "consent_what_will_happen_in_the_study_p2_l4": "Two study questionnaires",
+  "consent_what_will_happen_in_the_study_p3": "Additionally, to participate in this study you will need to receive an at-home study kit, mailed to your address on behalf of the study. It will contain study collection materials, wearable technology, and material for return shipping",
+
+  "consent_part_1_dim_light_melatonin_title": "PART 1: Dim Light Melatonin Saliva Sample Collection",
+  "consent_part_1_dim_light_melatonin_p1": "We will also ask you to collect dim light melatonin onset (DLMO) saliva samples. These samples will be collected on two separate days, separated by about 3-7 days.  Samples will be collected over 8 consecutive hours. A total of 9 samples will be collected per DLMO collection. The collection will start about 6 hours before your usual bedtime. The collection will end about two hours after your usual bedtime. We will ask you to schedule your collection dates at the beginning of the study using our secure study scheduling site. We will provide you instructions and a link to our scheduling site. You will need to schedule your sample collection dates before we ship a study kit to you. ",
+  "consent_part_1_dim_light_melatonin_p2": "You will need to collect DLMO samples in dim light conditions. Dim light conditions are dark with very little light. During this protocol, you will need to dim any electronics present in the room, such as a smartphone or television, to the dimmest possible setting. Certain electronics, such as laptops and tablets, will not be allowed during the collection. We provide instructions and tools for monitoring your light exposure. ",
+  "consent_part_1_dim_light_melatonin_p3": "The dim light melatonin saliva sample collection will be assessing your naturally occurring melatonin levels. Since melatonin levels can be altered by certain products, we ask you to refrain from using alcohol, caffeine, recreational drugs, nicotine and tobacco products,  melatonin supplements, and to avoid certain foods for about 24 hours around your collection start time. We will also ask you to refrain from using certain products, like lip balm and toothpaste, during the saliva sample collections in an effort to protect sample integrity. We provide a comprehensive list in our instructions to aid you in preparation for sample collection. ",
+  "consent_part_1_dim_light_melatonin_p4": "We require tracking of the dim light melatonin saliva sample collection time. To make this easy, we will provide you  a bottle with a time stamp lid containing collection swabs. We will send you timed reminders for sample collection through text, if you consent to receiving text. At each reminder, opening the tracker vial will record the time a collection swab is removed. We provide instructions on how the timed reminders will work. You may contact study staff if you need immediate help during your dim light melatonin saliva sample collection. ",
+
+  "consent_part_2_daily_sleep_log_title": "PART 2: Daily Sleep Log",
+  "consent_part_2_daily_sleep_log_p1": "You will need to keep a daily sleep log. This daily log will include questions about your sleep and sleep/wake timing.  You will complete this daily log for the duration of the study, approximately 4 weeks. ",
+
+  "consent_part_3_activity_tracking_title": "PART 3: Activity Tracking",
+  "consent_part_3_activity_tracking_p1": "You will need to wear an activity tracker (Actiwatch) on your wrist. You will need to wear this for the duration of the at home portion of the study, approximately 4 weeks. The Actiwatch tracks your activity, light exposure, and sleep. ",
+
+  "consent_participant_data_usage_title": "How may we use and share your samples and health information for other research?",
+  "consent_participant_data_usage_p1": "The information we collect in this study may help advance other research.  If you join this study, we may remove all information that identifies you (for example, your name, medical record number, and date of birth) and use these de-identified samples and data in other research.  It won’t be possible to link the information or samples back to you.  Information and/or samples may be shared with investigators at our hospitals, at other academic institutions or at for-profit, commercial entities.  You will not be asked to provide additional informed consent for these uses.",
+  "consent_participant_data_usage_p2": "At the completion of this research study, we would like to store and be able to use and share your identifiable samples and health information with researchers at Partners for other research related.  If we share your samples and/or health information with other researchers outside of Partners, we will label the samples and information with a code instead of your name or other directly identifying information.  The key to the code connects your name or other identifiers to your sample and/or information.  We will keep the code in a password protected file. ",
+  "consent_participant_data_usage_p3": "Because these samples and/or health information are identifiable, we are asking your permission to store, use and share them for other research.  You can still take part in the research study whether or not you give permission for the storage, use, and sharing of the samples and health information for other research.",
+  "consent_participant_data_usage_question": "Do you agree to let us store and use your samples and health information for other research?",
+
+  "consent_will_you_get_results_question": "Will you get the results of this research study?",
+  "consent_will_you_get_results_p1": "You should not expect to get information about the results of the research study or the results of your individual participation in the research study.  We and the researchers involved in the study will study samples and information from many people.  It could take many years before anyone knows whether the results have any meaning.  There is a small chance that we or the researcher could find out something from the study that might be important to your health.  If this happens, we may contact you to find out if you would like to learn more.  However, even if we find something important to your health, we cannot guarantee that you will be contacted.",
+
+  "consent_study_communication_via_text_title": "Study Communication via Text Message (Short Message Service)",
+  "consent_study_communication_via_text_p1": "Text messages by mobile/cell phones are a common form of communication. This study involves sending you text messages that are relevant to the research study. This study will use text messaging service to communicate with study participants.  ",
+  "consent_study_communication_via_text_p2": "Texting over mobile/cell phones carries security risks because text messages to mobile/cell phones are not encrypted. This means that information you send or receive by text message could be intercepted or viewed by an unintended recipient, or by your mobile/cell phone provider or carrier.  If you want to receive communications by unencrypted texts despite these risks, MGB/Partners HealthCare will not be held responsible for any interception of messages sent through unencrypted text message communications.",
+
+  "consent_important_points_about_study_title": "Below are some important points about texting in this research study: ",
+  "consent_important_points_about_study_p1_l1": "Please do not text us any information about your health.  This is to protect your privacy.  If you need to tell us anything related to your health, please call us instead.",
+  "consent_important_points_about_study_p1_l2": "Should you opt to receive text messages to your personal mobile phone number, you will be responsible for all fees charged by your carrier’s service plan for text messaging. This research study and MGB/Partners Healthcare are not responsible for any increased charges, data usage against plan limits or changes to data fees from the research texts. Participants will not be responsible for text message fees sent to the provided study smart-phone. ",
+  "consent_important_points_about_study_p1_l3": "Text messages will only be read during regular business hours or during scheduled at-home procedures, to provide additional support to participants. Texts sent on nights or weekends will not be read until the next business day, unless to provide support or guidance to participants completed an at-home study procedure. ",
+  "consent_important_points_about_study_p1_l4": "Text messaging should not be used in case of an emergency. If you experience a medical emergency, call 911 or go to the nearest hospital emergency department.",
+  "consent_important_points_about_study_p1_l5": "You may decide to not send or receive text messages with staff associated with this research study at any time. You can do this in person or by sending the research number a text message that says “Stop Research Text.”",
+  "consent_important_points_about_study_p1_l6": "Your agreement applies to this research study only. Agreeing to other texts from MGB/Partners Healthcare, for example appointment reminders, is a separate process. Opting out of other texts from MGB/Partners Healthcare is a separate process as well.",
+  "consent_important_points_about_study_p1_l7": "It is your responsibility to update your personal mobile/cell phone number with this research study in the event of a change. ",
+  "consent_important_points_about_study_p2": "I have had the chance to ask questions about texting with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted text communications associated with this research study.",
+
+  "consent_receive_text_messages_about_study_title": "Please select one of the following options",
+  "consent_receive_text_messages_about_study_yes_answer": "I consent to receive text messages related to this study to both my personal mobile/cell phone number.",
+  "consent_receive_text_messages_about_study_no_answer": "I do not consent to receiving any text messages related to this study to my personal mobile/cell phone number for text messages.",
+  "consent_receive_text_messages_about_study_hint": "Please select one of the following options",
+
+  "consent_study_communication_via_email_title": "Study Communication via Unsecured Email",
+  "consent_study_communication_via_email_p1": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
+  "consent_study_communication_via_email_p2": "However, this study uses “unencrypted” email that is not secure and could result in the unauthorized use or disclosure of your information. If you want to receive communications by unencrypted email despite these risks, Partners HealthCare will not be held responsible. Your preference to receive unencrypted email will apply to emails sent from this research group/study only. ",
+  "consent_study_communication_via_email_p3_italic": "I have had the chance to ask questions about the use of unencrypted email with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted email communications associated with this research study.",
+
+  "consent_receive_unencrypted_email_communications_title": "Please select one of the following options",
+  "consent_receive_unencrypted_email_communications_yes_answer": "I consent to receive unencrypted email communications.",
+  "consent_receive_unencrypted_email_communications_no_answer": "I do not consent to receive unencrypted email communications.",
+  "consent_receive_unencrypted_email_communications_hint": "Please select one of the following options",
+
+  "consent_risks_and_possible_discomforts_title": "What are the risks and possible discomforts from being in this research study?",
+  "consent_risks_and_possible_discomforts_p1": "Risks are minor in this research study, and are limited to the following:",
+  "consent_risks_and_possible_discomforts_p2_l1": "Sleep loss",
+  "consent_risks_and_possible_discomforts_p2_l2": "Acute increased gum sensitivity, risk of minor gum bleeding from hourly dim light melatonin saliva sample collection",
+  "consent_risks_and_possible_discomforts_p2_l3": "Skin irritation from wearable technology",
+  "consent_risks_and_possible_discomforts_p2_l4": "Side effects from refraining from alcohol, coffee, or melatonin",
+  "consent_risks_and_possible_discomforts_p2_l5": "Loss of confidentiality",
+  "consent_risks_and_possible_discomforts_p3": "The outlined risks and possible discomforts are further outlined below: ",
+
+  "consent_sleep_loss_title": "1) Sleep Loss",
+  "consent_sleep_loss_p1": "You will complete dim light melatonin saliva collections. During this you may experience slight sleep deprivation. This is because the collection continues for about two hours past your bedtime. However, collection dates are based on your schedule. We do not foresee long-term effects from the dim light melatonin saliva collection. ",
+
+  "consent_gum_sensitivity_title": "2) Risk of Gum Sensitivity and Bleeding",
+  "consent_gum_sensitivity_p1": "The dim light melatonin saliva collection requires you to provide multiple saliva samples. These samples are provided within an 8-hour window. During this collection, you may experience increased gum sensitivity. You may experience slight gum bleeding. This may be from providing saliva collections within a short time frame. If you experience either, we anticipate that the effects will not be long-lasting.",
+
+  "consent_wearable_technology_title": "Risks of Wearable Technology",
+  "consent_wearable_technology_p1": "The wristbands of the activity tracker may cause skin irritation. This may be from wearing the wristband too tightly. It may also be from skin that is not completely dry under the wristband. Soft medical tape may be worn under the wristband. This is provided in the at-home kit. If irritation persists or worsens, we advise you to remove the device and contact the study team. ",
+
+  "consent_refraining_from_title": "4) Side Effects of Refraining from Alcohol, Caffeine, Recreational drugs, Nicotine and Tobacco products, Melatonin Supplements",
+  "consent_refraining_from_p1": "For the dim light melatonin saliva sample collections, we ask that you refrain from consuming alcohol, caffeine, recreational drugs, nicotine/tobacco products, and certain foods that alter melatonin levels, and/or melatonin supplements for approximately 24 hours prior to the start of your collection protocol. We will supply a list of foods to refrain from consuming as part of the dim light melatonin saliva sample collection instructions. There are no expected side effects from refraining from these foods, however, it may require some planning depending on how often you consume the food items we specify. If you use alcohol, caffeine, recreational drugs, nicotine/tobacco products, and/or melatonin supplements regularly, this may cause some side effects from withdrawing your consumption. These side effects may include but are not limited to the following: headache, fatigue, sleep loss, low mood, irritability, fatigue. However, you may consume these products after study collection, thereby minimizing the length in time in which you may experience these side effects.",
+
+  "consent_loss_of_confidentiality_title": "5) Loss of Confidentiality",
+  "consent_loss_of_confidentiality_p1": "It is possible that a mistake could lead to a loss of confidentiality. The study doctors and staff will make every effort to make sure that your private information is protected. However, a gap in security due to human error may make that information available to others.  We will do our best to ensure none of your results from this study become part of your medical record. ",
+  "consent_loss_of_confidentiality_p2": "We will also make sure no results shared with other investigators contain personal identifying information. However, much like fingerprints, it is possible to identify someone if certain data are put together. While we use very strict data security measures to protect your privacy, there is always a small risk that your data may lead to you being re-identified. As technology advances, there may be new ways of linking data back to you that we cannot foresee today. Like other medical information, this may one day affect your insurability or employment. While this risk is very small we cannot guarantee that it does not exist.",
+  "consent_loss_of_confidentiality_p3": "There may be other risks that are not known at this time.",
+
+  "consent_possible_benefits_question": "What are the possible benefits from being in this research study?",
+  "consent_possible_benefits_p1": "There are no benefits from being in this study.",
+
+  "consent_medical_care_question": "Can you still get medical care within Partners if you don’t take part in this research study, or if you stop taking part? ",
+  "consent_medical_care_p1": "Yes.  Your decision won’t change the medical care you get within Partners now or in the future.  There will be no penalty, and you won’t lose any benefits you receive now or have a right to receive. We will tell you if we learn new information that could make you change your mind about taking part in this research study.",
+
+  "consent_stop_taking_part_question": "What should you do if you want to stop taking part in the study?",
+  "consent_stop_taking_part_p1": "If you take part in this research study, and want to drop out, you should tell us.  We will make sure that you stop the study safely. We will provide information on returning study materials, if applicable. ",
+  "consent_stop_taking_part_p2": "It is possible that we will ask you to drop out of the study before you finish it.  If this happens, we will tell you why.  We will also help arrange other care for you, if needed.",
+
+  "consent_will_you_get_paid_for_participating_question": "Will you be paid to take part in this research study?",
+  "consent_will_you_get_paid_for_participating_p1": "Yes. You may receive up to $270 for participating in the study. You will receive $270 as follows: ",
+  "consent_will_you_get_paid_for_participating_p2_l1": "$90 for each completed dim light melatonin saliva sample collection ($10 per collected sample, up to $180)",
+  "consent_will_you_get_paid_for_participating_p2_l2": "$15 per week of activity tracking and daily logging (up to $60)",
+  "consent_will_you_get_paid_for_participating_p2_l3": "$20 dollars for return shipping completed kit within 5 business days of sample collections",
+  "consent_will_you_get_paid_for_participating_p2_l4": "$10 for questionnaire completion",
+  "consent_will_you_get_paid_for_participating_p3": "Your compensation is dependent upon returning study materials. Additionally, compensation will be withheld if the wearable activity monitor is not returned. If the wearable activity monitor is lost or stolen, a Lost or Stolen Study Device Report will need to be completed. The form may be accessed through the study portal. Once the form is reviewed and accepted by study staff, compensation will be released. Once you complete the study and returned study materials are received by study staff, we will mail checks to your home address. We will use the home address you provided us during recruitment. It may take 6-8 weeks after study completion for checks to be mailed. We require your social security number or tax ID number for compensation. ",
+
+  "consent_pay_for_research_study_title": "What will you have to pay for if you take part in this research study?",
+  "consent_pay_for_research_study_p1": "Study funds will pay for certain study-related items and services.You may have questions about costs to you that may result from taking part in the research. In that case, please speak with the study doctors and study staff.If necessary, we will arrange for you to speak with someone in Patient Financial Services about these costs.",
+
+  "consent_what_happens_if_injured_title": "What happens if you are injured as a result of taking part in this research study?",
+  "consent_what_happens_if_injured_p1": "We will offer you the care needed to treat any injury that directly results from taking part in this research study.We reserve the right to bill your insurance company or other third parties, if appropriate, for the care you get for the injury. We will try to have these costs paid for, but you may be responsible for some of them.  For example, if the care is billed to your insurer, you will be responsible for payment of any deductibles and co-payments required by your insurer.",
+  "consent_what_happens_if_injured_p2": "Injuries sometimes happen in research even when no one is at fault. There are no plans to pay you or give you other compensation for an injury, should one occur. However, you are not giving up any of your legal rights by signing this form.",
+  "consent_what_happens_if_injured_p3": "If you think you have been injured or have experienced a medical problem as a result of taking part in this research study, tell the person in charge of this study as soon as possible.The researcher's name and phone number are listed in the next section of this consent form.",
+
+  "consent_protect_privacy_question": "If you take part in this research study, how will we protect your privacy?",
+  "consent_protect_privacy_p1": "Federal law requires Partners to protect the privacy of health information and related information that identifies you.  We refer to this information as “identifiable information.”",
+
+  "consent_collect_identifiable_information_title": "In this study, we may collect identifiable information about you from:",
+  "consent_collect_identifiable_information_p1_l1": "Past, present, and future medical records",
+  "consent_collect_identifiable_information_p1_l2": "Research procedures, including research office visits, tests, interviews, and questionnaires",
+
+  "consent_who_can_use_participant_data_title": "Who may see, use, and share your identifiable information and why they may need to do so:",
+  "consent_who_can_use_participant_data_p1_l1": "Partners researchers and staff involved in this study",
+  "consent_who_can_use_participant_data_p1_l2": "The sponsor(s) of the study, and people or groups it hires to help perform this research or to audit the research",
+  "consent_who_can_use_participant_data_p1_l3": "Other researchers, such as the Broad Institute, and medical centers that are part of this study",
+  "consent_who_can_use_participant_data_p1_l4": "The Partners ethics board or an ethics board outside Partners that oversees the research",
+  "consent_who_can_use_participant_data_p1_l5": "A group that oversees the data (study information) and safety of this study",
+  "consent_who_can_use_participant_data_p1_l6": "Non-research staff within Partners who need identifiable information to do their jobs, such as for treatment, payment (billing), or hospital operations (such as assessing the quality of care or research)",
+  "consent_who_can_use_participant_data_p1_l7": "People or groups that we hire to do certain work for us, such as data storage companies, accreditors, insurers, and lawyers",
+  "consent_who_can_use_participant_data_p1_l8": "Federal agencies (such as the U.S. Department of Health and Human Services (DHHS) and agencies within DHHS like the Food and Drug Administration, the National Institutes of Health, and the Office for Human Research Protections), state agencies, and foreign government bodies that oversee, evaluate, and audit research, which may include inspection of your records",
+  "consent_who_can_use_participant_data_p1_l9": "Public health and safety authorities, if we learn information that could mean harm to you or others (such as to make required reports about communicable diseases or about child or elder abuse)",
+  "consent_who_can_use_participant_data_p2": "The results of this research study may be published in a medical book or journal or used to teach others.  However, your name or other identifiable information will not be used for these purposes without your specific permission.",
+
+  "consent_privacy_rights_title": "Your Privacy Rights",
+  "consent_privacy_rights_p1": "You have the right not to sign this form that allows us to use and share your identifiable information for research; however, if you don’t sign it, you can’t take part in this research study.",
+  "consent_privacy_rights_p2": "You have the right to withdraw your permission for us to use or share your identifiable information for this research study.  If you want to withdraw your permission, you must notify the person in charge of this research study in writing.  Once permission is withdrawn, you cannot continue to take part in the study.",
+  "consent_privacy_rights_p3": "If you withdraw your permission, we will not be able to take back information that has already been used or shared with others, and such information may continue to be used for certain purposes, such as to comply with the law or maintain the reliability of the study.",
+  "consent_privacy_rights_p4": "You have the right to see and get a copy of your identifiable information that is used or shared for treatment or for payment.  To ask for this information, please contact the person in charge of this research study.  You may only get such information after the research is finished.",
+
+  "consent_informed_consent_and_authorization_title": "Informed Consent and Authorization",
+
+  "consent_statement_of_person_title": "Statement of Person Giving Informed Consent and Authorization",
+  "consent_statement_of_person_p1_l1": "I have read this consent form.",
+  "consent_statement_of_person_p1_l2": "This research study has been explained to me, including risks and possible benefits (if any), other possible treatments or procedures, and other important things about the study.",
+  "consent_statement_of_person_p1_l3": "I have had the opportunity to ask questions.",
+  "consent_statement_of_person_p1_l4": "I understand the information given to me.",
+
+  "consent_signature_of_subject_title": "Signature of Subject:",
+  "consent_signature_of_subject_p1": "I give my consent to take part in this research study and agree that my data may be used for different types of health, medical, or biomedical research, as outlined and explained in this consent form. ",
+  "consent_fullname_text": "Full name",
+  "consent_date_text": "Date",
+
+  "dlmo_scheduling_instructions_summary": "Please schedule the DLMO collections and follow the provided instructions on how to appropriately schedule your collection dates",
+
+  "dlmo_instructions_name": "Circadia Instructions",
+  "dlmo_instructions_title": "Dim Light Melatonin Saliva Sample Collection: Scheduling Collection Dates",
+
+  "dlmo_instructions_summary": "Please watch the Circadia At-Home Kit Unboxing video when you receive your kit and the DLMO Collection video prior to starting your DLMO collections.",
+
+  "dlmo_instructions_overview_title": "Overview",
+  "dlmo_instructions_overview_paragraph_1": "One of our study goals is to better understand your biological bedtime. To do so, we require two 8-hour melatonin sample collections, consisting of 8 hourly saliva sample collections. We will analyze your hourly melatonin levels from the saliva sample collections you provide.",
+  "dlmo_instructions_overview_paragraph_2": "The two 8-hour saliva sample collections will occur on <span class=\"bold\">two separate dates</span>, scheduled about one week apart. To ensure that these collections work with your personal schedule, we ask you to select your first collection date using the following guidance. We will automatically schedule your second collection date one week after your first collection date.",
+  "dlmo_instructions_overview_paragraph_3": "Please consider the following questions when scheduling your Dim Light Melatonin Saliva Sample Collection dates:",
+  "dlmo_instructions_overview_item_1": "Do I have least 8 hours of time where I will be uninterrupted by others?",
+  "dlmo_instructions_overview_item_2": "I will have to stay up a bit after my bedtime for the sample collection, will this be a challenge for me?",
+  "dlmo_instructions_overview_item_3": "Do I have the same availability the week after my first collection date for the second collection?",
+  "dlmo_instructions_overview_item_4": "Can I go without coffee, alcohol, or melatonin for at least 24 hours prior to the date I select?",
+  "dlmo_instructions_overview_item_5": "Can I go without coffee, alcohol, or melatonin for at least 24 hours prior to the same day one week after the date I select?",
+  "dlmo_instructions_overview_paragraph_4": "Once you have considered these questions, please use the following instructions to schedule your first collection date. If you have any questions regarding scheduling your collection date, please contact us:",
+  "dlmo_instructions_overview_email_link": "<a class=\"link\" href=\"mailto:circadiastudy@mgh.harvard.edu\">circadiastudy@mgh.harvard.edu</a>",
+  "dlmo_instructions_overview_phone_link": "<a class=\"link\" href=\"tel:+18572656742\">+1 (857) 265-6742</a>",
+
+  "dlmo_instructions_guide_title": "Scheduling Dim Light Melatonin Saliva Sample Collection",
+  "dlmo_instructions_guide_item_1": "1. Click on this link: <a class=\"link\" href=\"https://circadiastudy.youcanbook.me/\" target=\"_blank\">Circadia Study Scheduling</a>. You will be taken to the following web page:",
+  "dlmo_instructions_guide_item_2": "2. Select a date that works best for your sample collection. Please choose a time that is approximately 8 hours prior to your usual bedtime.",
+  "dlmo_instructions_guide_item_3": "3. Once you have selected your date, you will be taken to the following confirmation page:",
+  "dlmo_instructions_guide_item_4": "4. Please enter the same first name, last initial, and email address that you used to register for the study, then confirm booking. You have successfully scheduled your first collection date, thank you!",
+
+  "dlmo_instructions_video_guide_title": "Video Instructions",
+
+  "health_and_lifestyle_questionnaire_name": "Health and Lifestyle Questionnaire",
+  "health_and_lifestyle_questionnaire_title": "Health and Lifestyle Questionnaire",
+
+  "halq_created_summary": "Please complete the Health and Lifestyle Questionnaire.",
+  "halq_in_progress_summary": "Please finish answering the Health and Lifestyle Questionnaire.",
+  "halq_complete_summary": "Thank you for completing the Health and Lifestyle Questionnaire.",
+
+  "halq_self_describe": "This Health and Lifestyle Questionnaire aims to better understand your health history and further assess your eligibility for the Circadia research study. You may choose to skip any questions you are not comfortable answering. Skipping questions may affect your eligibility for the study.",
+  "halq_dob_question": "What is your date of birth?",
+
+  "halq_character_length_hint": "Please provide no more than 100 characters.",
+
+  "halq_sex_at_birth_question": "What is/was your assigned sex at birth?",
+  "halq_sex_at_birth_male": "Male",
+  "halq_sex_at_birth_female": "Female",
+  "halq_sex_at_birth_intersex_ambiguous": "Intersex/Ambiguous",
+
+  "halq_current_gender_question": "What is your current gender identity?",
+  "halq_current_gender_man": "Man",
+  "halq_current_gender_woman": "Woman",
+  "halq_current_gender_nonbinary": "Nonbinary",
+  "halq_current_gender_transgender": "Transgender",
+  "halq_current_gender_none": "None of these describe me, and I’d like to describe myself",
+  "halq_current_gender_prefer_not_to_answer": "Prefer not to answer",
+  "halq_specify_your_gender": "Please specify your gender",
+
+  "halq_pronouns_question": "What are your pronouns?",
+  "halq_pronouns_she_her_hers": "She/Her/Hers",
+  "halq_pronouns_he_him_his": "He/Him/His",
+  "halq_pronouns_they_them_theirs": "They/Them/Theirs",
+  "halq_pronouns_other": "Other",
+  "halq_height_question": "How tall are you?",
+  "halq_specify_pronouns": "Please specify your pronouns",
+
+  "halq_height_feet": "Feet",
+  "halq_height_inches": "Inches",
+
+  "halq_estimated_weight_question": "What is your estimated weight?",
+  "halq_estimated_weight_pounds": "Pounds",
+
+  "halq_race_ethnicity_question": "What is your race/ethnic background? Select all that apply.",
+  "halq_race_ethnicity_american_alaska": "Indigenous American and/or Alaska Native",
+  "halq_race_ethnicity_american_alaska_explanation": "A person having origins in any of the original peoples of North and South America (including Central America) who maintains cultural identification through tribal affiliation or community attachment.",
+  "halq_race_ethnicity_asian": "Asian",
+  "halq_race_ethnicity_asian_explanation": "A person having origins in any of the original peoples of East Asia, Southeast Asia, or the Indian Subcontinent, including, for example, Cambodia, China, India, Japan, Korea, Malaysia, Pakistan, the Philippine Islands, Thailand, and Vietnam. ",
+  "halq_race_ethnicity_black_african_american": "Black or African American",
+  "halq_race_ethnicity_black_african_american_explanation": "A person having origins in any of the black racial groups of Africa.",
+  "halq_race_ethnicity_hispanic_or_latin": "Hispanic or Latin",
+  "halq_race_ethnicity_hispanic_or_latin_explanation": "A person of Latin American origin or descent, or a person of Spanish origin, regardless of race.",
+  "halq_race_ethnicity_hawaiian_pacific_islander": "Native Hawaiian or Other Pacific Islander",
+  "halq_race_ethnicity_hawaiian_pacific_islander_explanation": "A person having origins in any of the original peoples of Hawaii, Guam, Samoa, or other Pacific Islands.",
+  "halq_race_ethnicity_middle_eastern_north_african": "Middle Eastern or North African",
+  "halq_race_ethnicity_middle_eastern_north_african_explanation": "A person having origins in any of the original peoples of the Middle East, or North Africa.",
+  "halq_race_ethnicity_white_or_european_american": "White or European American",
+  "halq_race_ethnicity_white_or_european_american_explanation": "A person having origins in any of the original peoples of Europe.",
+  "halq_race_ethnicity_other": "Other",
+  "halq_race_ethnicity_other_explanation": "Please specify",
+  "halq_race_ethnicity_decline_to_answer": "Decline to answer",
+
+  "halq_diagnosed_acr_question": "What is your diagnosed atypical circadian rhythm?",
+  "halq_aspd": "Advanced Sleep Phase Disorder (ASPD)",
+  "halq_dspd": "Delayed Sleep Phase Disorder (DSPD)",
+  "halq_non_24": "Non-24 Hour",
+  "halq_other_explanation": "Please specify",
+  "halq_none": "None",
+
+  "halq_when_diagnosed_with_acr_question": "When were you diagnosed with your atypical circadian rhythm?",
+
+  "halq_where_diagnosed_with_acr_question": "Where were you diagnosed with your atypical circadian rhythm? ",
+
+  "halq_name_of_medical_professional_question": "What is the name of the medical professional that diagnosed your atypical circadian rhythm?",
+
+  "halq_acr_diagnosed_any_completed": "For your atypical circadian rhythm diagnosis, please indicate if any of the following were completed: ",
+  "halq_acr_diagnosed_dim_light": "Dim Light Melatonin Onset",
+  "halq_acr_diagnosed_actigraphy": "Actigraphy/Wearable activity device",
+  "halq_acr_sleep_log": "Sleep Log",
+  "halq_acr_none": "None of the Above",
+  "halq_acr_other": "Other",
+  "halq_acr_other_explanation": "Please specify",
+
+  "halq_live_with_how_many_people_question": "Not counting yourself, how many people do you live with in your household?",
+  "halq_live_with_how_many_people_0": "0",
+  "halq_live_with_how_many_people_1": "1",
+  "halq_live_with_how_many_people_2": "2",
+  "halq_live_with_how_many_people_3": "3",
+  "halq_live_with_how_many_people_4": "4",
+  "halq_live_with_how_many_people_5": "5",
+  "halq_live_with_how_many_people_6": "6+",
+
+  "halq_how_many_under_2_question": "Thinking about your household, how many are under the age of 2?",
+  "halq_how_many_under_2_0": "0",
+  "halq_how_many_under_2_1": "1",
+  "halq_how_many_under_2_2": "2",
+  "halq_how_many_under_2_3": "3",
+  "halq_how_many_under_2_4": "4",
+  "halq_how_many_under_2_5": "5",
+  "halq_how_many_under_2_6": "6+",
+
+  "halq_employment_question": "Are you currently employed? Employment includes self-employment, homemaking, consulting, etc.",
+  "halq_employement_yes": "Yes",
+  "halq_employement_no": "No",
+
+  "halq_schedule_self_describe": "Set schedules are defined as work schedules where you expect to work and get paid for the same times every week (i.e working 9AM-5PM Monday through Friday). A Rotating Shift Schedule is defined as work schedules where you may work a certain shift some days followed by a different shift other days, with a schedule that may change frequently (i.e 7AM-3PM Monday-Wednesday, 3PM-11 PM Saturday, Sunday).",
+  "halq_schedule_question": "What kind of schedule do you work?",
+  "halq_schedule_set_schedule": "Set Schedule",
+  "halq_schedule_rotating_shift_schedule": "Rotating Shift Schedule",
+
+  "halq_how_many_days_shift_question": "Thinking about a typical work month, on average how many day shifts do you work?",
+  "halq_0": "0",
+  "halq_1-3": "1-3",
+  "helq_1-week": "1 per week",
+  "helq_2-4-week": "2-4 per week",
+  "helq_5-6-week": "5-6 per week",
+
+  "helq_night_shifts_question": "Thinking about a typical work month, on average how many night shifts do you work? Night shifts are defined as shifts that start after 6:00 PM.",
+
+  "halq_start_work_time_question": "What time do you typically start work?",
+  "halq_start_work_answer_prompt": "Time (HH:MM, AM/PM)",
+
+  "halq_end_work_time_question": "What time do you typically end work?",
+  "halq_end_work_answer_prompt": "Time (HH:MM, AM/PM)",
+  "time_format_hint": "Please enter time in the correct format",
+
+  "halq_flexible_hours_question": "Are you work hours flexible?",
+  "halq_flexible_hours_yes": "Yes",
+  "halq_flexible_hours_no": "No",
+
+  "halq_been_diagnosed_with_psychiatric_disorders_question": "Have you ever been diagnosed with one of the following psychiatric disorders? Please select all that apply. ",
+  "halq_clinical_depression": "Clinical Depression",
+  "halq_anxiety": "Anxiety Disorder",
+  "halq_bipolar_affective_disorder": "Bipolar Affective Disorder",
+  "halq_dementia": "Dementia",
+  "halq_attention_deficit_disorder": "Attention-deficit/hyperactivity Disorder",
+  "halq_schizophrenia": "Schizophrenia",
+  "halq_obsessive_compulsive_disorder": "Obsessive Compulsive Disorder",
+  "halq_autism": "Autism",
+  "halq_post_traumatic_disorder": "Post-Traumatic Stress Disorder",
+  "halq_specify_psychiatric_disorder": "Please specify Psychiatric Disorder",
+
+  "halq_sleep_disorders_question": "Aside from your diagnosed atypical circadian rhythm, have you ever been diagnosed with one of the following sleep disorders? Please select all that apply. ",
+  "halq_restless_leg_syndrome": "Restless Leg Syndrome",
+  "halq_narcolepsy": "Narcolepsy",
+  "halq_sleep_apnea": "Obstructive Sleep Apnea",
+  "halq_insomnia": "Insomnia",
+  "halq_other": "Other",
+  "halq_specify_sleep_disorder": "Please specify Sleep Disorder",
+
+  "halq_caffeinated_beverages_question": "Do you typically consume caffeinated beverages at least 1x a day?",
+  "halq_caffeinated_beverages_yes": "Yes",
+  "halq_caffeinated_beverages_no": "No",
+
+  "halq_withhold_caffein_consumption_question": "As part of the study you will be required to withhold consuming caffeine for up to 48 hours for sample collection purposes. Please select an option regarding your caffeine consumption during the study collection:",
+  "halq_withhold_caffein_consumption_yes": "Yes – I will be able to withhold consumption of caffeine for up to 48 hours for the duration of the study.",
+  "halq_withhold_caffein_consumption_no": "No – I will not be able to withhold consumption of caffeine for up to 48 hours for the duration of the study.",
+
+  "halq_alcoholic_beverages_question": "Do you typically consume alcoholic beverages at least 1x a day?",
+  "halq_alcoholic_beverages_yes": "Yes",
+  "halq_alcoholic_beverages_no": "No",
+
+  "halq_past_year_alcoholic_question": "Reflecting on the past year, on average how many alcoholic drinks did you usually drink in a typical week? We define one alcoholic drink as one half ounce of alcohol (e.g 12 ounce can/glass of beer or cooler, a 5 ounce glass of wine, 1 shot of liquor).",
+  "halq_past_year_alcoholic_none_or_less": "None, or less than 1 drink a month",
+  "halq_past_year_alcoholic_1_3": "1-3 per month",
+  "halq_past_year_alcoholic_1_per_week": "1 per week",
+  "halq_past_year_alcoholic_2_4_per_week": "2-4 per week",
+  "halq_past_year_alcoholic_5_6_per_week": "5-6 per week",
+  "halq_past_year_alcoholic_more_than_6_per_day": "More than 6 per day",
+
+  "halq_withhold_alcohol_consumption_question": "As part of the study you will be required to withhold consuming alcohol for up to 48 hours for sample collection purposes. Please select an option regarding your alcohol consumption during the study collection:",
+  "halq_withhold_alcohol_consumption_yes": "Yes – I will be able to withhold consumption of alcohol for up to 48 hours for the duration of the study.",
+  "halq_withhold_alcohol_consumption_no": "No – I will not be able to withhold consumption of alcohol for up to 48 hours for the duration of the study.",
+
+  "halq_consume_tobacco_question": "Do you typically consume any nicotine or tobacco products such as cigarettes, e-cigarettes, chewing tobacco, cigars, hookah, nicotine gum, or pipes, at least 1x a day?",
+  "halq_consume_tobacco_yes": "Yes",
+  "halq_consume_tobacco_no": "No",
+
+  "halq_withhold_consuming_tobacco_question": "As part of the study you will be required to withhold consumption of nicotine and tobacco products for up to 48 hours for sample collection purposes. Please select an option regarding your nicotine and tobacco consumption during the study collection:",
+  "halq_withhold_consuming_tobacco_yes": "Yes – I will be able to withhold consumption of nicotine and tobacco for up to 48 hours for the duration of the study. ",
+  "halq_withhold_consuming_tobacco_no": "No – I will not be able to withhold consumption of nicotine and tobacco for up to 48 hours for the duration of the study.",
+
+  "halq_consume_drugs_question": "Do you currently consume any drugs such as cocaine, heroin, lysergic acid diethlamide (LSD), or marijuana? ",
+  "halq_consume_drugs_yes": "Yes",
+  "halq_consume_drugs_no": "No",
+
+  "halq_withhold_consuming_drugs_question": "As part of the study you will be required to withhold consumption of drugs listed above for up to 48 hours for sample collection purposes. Please select an option regarding your drug consumption during the study collection:",
+  "halq_withhold_consuming_drugs_yes": "Yes – I will be able to withhold consumption of drugs listed above for up to 48 hours for the duration of the study.",
+  "halq_withhold_consuming_drugs_no": "No – I will not be able to withhold consumption of drugs listed above for up to 48 hours for the duration of the study.",
+
+  "halq_melatonin_question": "Do you take melatonin to help you fall asleep and/or for other reasons?",
+  "halq_melatonin_yes": "Yes",
+  "halq_melatonin_no": "No",
+
+  "halq_withhold_melatonin_question": "As part of the study you will be required to withhold using melatonin for up to 48 hours for sample collection purposes. Please select an option regarding your melatonin use during the study collection:",
+  "halq_withhold_melatonin_yes": "Yes – I will be able to withhold use of melatonin for up to 48 hours for the duration of the study.",
+  "halq_withhold_melatonin_no": "No – I will not be able to withhold use of melatonin for up to 48 hours for the duration of the study.",
+
+  "halq_cbd_or_thc_question": "Do you use CBD or THC to help you fall asleep? CBD refers to cannabidiol, the non-intoxicating component found in cannabis. THC refers to tetrahydrocannabinol, the psycho-active component found in cannabis. ",
+  "halq_cbd_or_thc_yes": "Yes",
+  "halq_cbd_or_thc_no": "No",
+
+  "halq_past_month_used_medications_question": "Please select all of the following medications that you used within the past month:",
+  "halq_nsaids": "Over the Counter Nonsteroidal Anti-inflammatory drugs (NSAIDS)",
+  "halq_birth_control": "Birth Control (pill, IUD, vaginal ring, implant, hormone shot, etc)",
+  "halq_lithium": "Lithium",
+  "halq_ramelteon": "Ramelteon",
+  "halq_provigil": "Provigil",
+  "halq_zolpidem": "Zolpidem (Ambien)",
+  "halq_zalepion": "Zalepion (Sonata)",
+  "halq_eszopicione": "Eszopicione (Lunesta)",
+  "halq_aderrall": "Adderall",
+  "halq_dextroamphetamine": "Dextroamphetamine (Dexidrine)",
+  "halq_methylphenidate": "Methylphenidate (Ritalin, Concerta)",
+  "halq_metaprolol": "Metaprolol (Lopressor, Toprol XL)",
+  "halq_mexiletine": "Mexiletine (Mexitil)",
+  "halq_propranolo": "Propranolo (Hemangeol, Inderal LA, Inderal XL, InnoPran XL, Inderal)",
+  "halq_verapamil": "Verapamil (Calan, Isoptin SR, Verelan, Isoptin, Calan SR, Isoptin I.V., Covera-H-S, Verelan PM)",
+  "halq_flucortisone": "Flucortisone (Florinef)",
+  "halq_midodrine": "Midodrine (Orvaten, ProAmatine)",
+  "halq_fluvoxamine": "Fluvoxamine",
+  "halq_luvox": "Luvox",
+  "halq_moxiflaxin": "Moxiflaxin",
+  "halq_delafloxacin": "Delafloxacin",
+  "halq_ciproflaxin": "Ciproflaxin",
+  "halq_gemifloxacin": "Gemifloxacin",
+  "halq_levofloxacin": "Levofloxacin",
+  "halq_ofloxacin": "Ofloxacin",
+  "halq_diazepam": "Diazepam (Valium)",
+  "halq_lorazepam": "Lorazepam (Ativan)",
+  "halq_alprazolam": "Alprazolam (Xanax)",
+  "halq_coedine": "Coedine",
+  "halq_hydrocodone": "Hydrocodone (Vicodin, Hycodan)",
+  "halq_morphine": "Morphine (MS Contin, Kadian)",
+  "halq_oxycodone": "Oxycodone (Oxycontin, Percoset)",
+  "halq_hydromorphone": "Hydromorphone (Dilaudid)",
+  "halq_fentanyl": "Fentanyl (Duragesic)",
+  "halq_otca": "Over the Counter Antihistamines ",
+
+  "halq_specify_pasth_month_medications": "Please specify",
+
+
+  "mini_sleep_log_name": "Mini Sleep Log",
+  "mini_sleep_log_title": "Mini Sleep Log",
+  "mini_sleep_log_header": "Mini Sleep Log",
+
+  "mini_sleep_log_created_summary": "Please complete your daily sleep logging.",
+  "mini_sleep_log_in_progress_summary": "You're almost done! Please complete today's daily sleep log.",
+  "mini_sleep_log_complete_summary": "Thank you for completing today's sleep log.",
+
+  "dlmo_name": "Dim Light Melatonin Onset",
+  "dlmo_title": "Dim Light Melatonin Onset",
+  "dlmo_header": "Dim Light Melatonin Onset",
+
+  "pcq_name": "Post Collection Questionnaire",
+  "pcq_title": "Post Collection Questionnaire",
+  "pcq_header": "Genetic Info Release Request",
+
+  "pcq_created_summary": "Please fill out the Post-collection Questionnaire.",
+  "pcq_in_progress_summary": "Almost done. Please complete the Post-collection Questionnaire.",
+  "pcq_complete_summary": "Thank you for answering the Post-collection Questionnaire.",
+
+  "pcq_bedtime_sleep_earlier_or_later_question": "For your bedtime during the study, did you ever go to sleep earlier/later than the time you entered on the Mini Sleep Log for that night? ",
+  "pcq_bedtime_sleep_earlier_yes": "Yes (I went to sleep earlier)",
+  "pqc_bedtime_sleep_later_yes": "Yes (I went to sleep later)",
+  "pcq_bedtime_sleep_earlier_no": "No",
+  "pcq_bedtime_sleep_earlier_text_field": "If yes, please provide details that you best remember",
+
+  "pcq_waketime_earlier_or_later_question": "For your waketime during the study, did you ever wake up earlier/later than the time you entered on the Mini Sleep Log for that day?",
+  "pcq_waketime_earlier_yes": "Yes (I woke up earlier)",
+  "pcq_waketime_later_yes": "Yes (I woke up later)",
+  "pcq_waketime_no": "No",
+  "pcq_waketime_earlier_or_later_text_field": "If yes, please provide details that you best remember",
+
+  "pcq_activity_tracker_off_question": "Did you ever take your activity tracker off and not report it?",
+  "pcq_activity_tracker_yes": "Yes",
+  "pcq_activity_tracker_no": "No",
+  "pcq_specify_activity_tracker": "If yes, please provide details:",
+
+
+  "pqc_activity_tracker_problems_question": "Did you have any problems wearing the activity tracker?",
+  "pcq_activity_tracker_problems_yes": "Yes",
+  "pcq_activity_tracker_problems_no": "No",
+  "pcq_activity_tracker_problems_text_field": "If yes, please provide details:",
+
+  "pcq_recreational_drugs_question": "Did you use any recreational drugs during the study? ",
+  "pcq_recreational_drugs_yes": "Yes",
+  "pcq_recreational_drugs_no": "No",
+
+  "pcq_consume_alcohol_question": "Did you consume any alcohol in the 48 hours prior to completing either or both of your DLMO collections? ",
+  "pcq_consume_alcohol_yes": "Yes",
+  "pcq_consume_alcohol_no": "No",
+  "pcq_specify_alcohol_consumption": "If yes, please provide details:",
+
+  "pcq_consume_caffeine_question": "Did you consume any caffeine in the 24 hours prior to completing either or both of your DLMO collections?",
+  "pcq_consume_caffeine_yes": "Yes",
+  "pcq_consume_caffeine_no": "No",
+  "pcq_specify_caffeine_consumption": "If yes, please provide details:",
+
+
+  "pcq_consume_nicotine_question": "Did you consume any nicotine products in the 3 hours prior to completing either or both of your DLMO collections?",
+  "pcq_consume_nicotine_yes": "Yes",
+  "pcq_consume_nicotine_no": "No",
+
+  "pcq_protocol_question": "Were there any ways you did not follow the protocol for the study? (This question does not affect your study payment)",
+  "pcq_protocol_yes": "Yes",
+  "pcq_protocol_no": "No",
+  "pcq_protocol_text_field": "If yes, please provide details:",
+
+  "pcq_most_difficult_part_of_study_question": "What was the most difficult part of the study?",
+
+  "pcq_improve_study_question": "How could we improve the study? Please provide any additional comments or feedback here.",
+
+  "pcq_confident_alone_question": "I felt confident completing the dim light melatonin onset collection from the written instructions alone",
+  "pcq_strongly_agree": "Strongly Agree",
+  "pcq_agree": "Agree",
+  "pcq_neither_agree_nor_disagree": "Neither agree nor disagree",
+  "pcq_disagree": "Disagree",
+  "pcq_strongly_disagree": "Strongly Disagree",
+
+  "pcq_confident_instructional_videos_question": "I felt confident completing the dim light melatonin onset collection from the written instructions and instructional videos together",
+
+  "pcq_confident_access_to_research_question": "I felt I had enough resources to successfully complete the dim light melatonin collection (i.e. written instructions, video instructions, access to research coordinators)",
+
+  "pcq_confident_set_one_question": "I felt confident completing the first dim light melatonin collection set (set one of two collections) ",
+
+  "pcq_confident_set_two_question": "I felt confident completing the second dim light melatonin collection set (set two of two collections)",
+
+  "meq_name": "Morning Evening Questionnaire",
+  "meq_title": "Morning Evening Questionnaire",
+
+  "meq_created_summary": "Please complete the Morning-Evening Questionnaire.",
+  "meq_in_progress_summary": "Please finish answering the Morning-Evening Questionnaire.",
+  "meq_complete_summary": "Thank you for completing the Morning-Evening Questionnaire.",
+
+  "meq_what_time_get_up_early_question": "Approximately what time would you get up if you were entirely free to plan your day?",
+  "meq_wake_up_interval_1": "5:00 AM–6:30 AM (05:00–06:30 h)",
+  "meq_wake_up_interval_2": "6:30 AM–7:45 AM (06:30–07:45 h)",
+  "meq_wake_up_interval_3": "7:45 AM–9:45 AM (07:45–09:45 h)",
+  "meq_wake_up_interval_4": "9:45 AM–11:00 AM (09:45–11:00 h)",
+  "meq_wake_up_interval_5": "11:00 AM–12 noon (11:00–12:00 h)",
+
+  "meq_what_time_go_to_bed_question": "Approximately what time would you go to bed if you were entirely free to plan your evening?",
+  "meq_go_to_bed_interval_1": "8:00 PM–9:00 PM (20:00–21:00 h)",
+  "meq_go_to_bed_interval_2": "9:00 PM–10:15 PM (21:00–22:15 h)",
+  "meq_go_to_bed_interval_3": "10:15 PM–12:30 AM (22:15–00:30 h)",
+  "meq_go_to_bed_interval_4": "12:30 AM–1:45 AM (00:30–01:45 h)",
+  "meq_go_to_bed_interval_5": "1:45 AM–3:00 AM (01:45–03:00 h)",
+
+  "meq_depend_on_alarm_clock_question": "If you usually have to get up at a specific time in the morning, how much do you depend on an alarm clock?",
+  "meq_not_at_all": "Not at all",
+  "meq_slightly": "Slightly",
+  "meq_somewhat": "Somewhat",
+  "meq_very_much": "Very much",
+
+  "meq_how_easy_waking_up_question": "How easy do you find it to get up in the morning (when you are not awakened unexpectedly)?",
+  "meq_very_difficult": "Very difficult",
+  "meq_somewhat_difficult": "Somewhat difficult",
+  "meq_fairly_easy": "Fairly easy",
+  "meq_very_easy": "Very easy",
+
+  "meq_alert_question": "How alert do you feel during the first half hour after you wake up in the morning?",
+  "meq_not_at_all_alert": "Not at all alert",
+  "meq_slightly_alert": "Slightly alert",
+  "meq_fairly_alert": "Fairly alert",
+  "meq_very_alert": "Very alert",
+
+  "meq_hungry_question": "How hungry do you feel during the first half hour after you wake up?",
+  "meq_not_at_all_hungry": "Not at all hungry",
+  "meq_slightly_hungry": "Slightly hungry",
+  "meq_fairly_hungry": "Fairly hungry",
+  "meq_very_hungry": "Very hungry",
+
+  "meq_first_half_feeling_qustion": "During the first half hour after you wake up in the morning, how do you feel?",
+  "meq_very_tired": "Very tired",
+  "meq_fairly_tired": "Fairly tired",
+  "meq_fairly_refreshed": "Fairly refreshed",
+  "meq_very_refreshed": "Very refreshed",
+
+  "meq_no_commitments_question": "If you had no commitments the next day, what time would you go to bed compared to your usual bedtime?",
+  "meq_seldom_or_never_later": "Seldom or never later",
+  "meq_less_than_1_hour_later": "Less than 1 hour later",
+  "meq_1_2_hours_later": "1-2 hours later",
+  "meq_more_than_2_hours_later": "More than 2 hours later",
+
+  "meq_physical_exercise_7_8_am_question": "You have decided to do physical exercise. A friend suggests that you do this for one hour twice a week, and the best time for him is between 7-8 AM (07-08 h). Bearing in mind nothing but your own internal “clock,” how do you think you would perform?",
+  "meq_good_form": "Would be in good form",
+  "meq_reasonable_form": "Would be in reasonable form",
+  "meq_difficult": "Would find it difficult",
+  "meq_would_find_very_difficult": "Would find it very difficult",
+
+  "meq_at_what_time_feel_tired_question": "At approximately what time in the evening do you feel tired, and, as a result, in need of sleep?",
+  "meq_feel_tired_interval_1": "8:00 PM–9:00 PM (20:00–21:00 h)",
+  "meq_feel_tired_interval_2": "9:00 PM–10:15 PM (21:00–22:15 h)",
+  "meq_feel_tired_interval_3": "10:15 PM–12:45 AM (22:15–00:45 h)",
+  "meq_feel_tired_interval_4": "12:45 AM–2:00 AM (00:45–02:00 h)",
+  "meq_feel_tired_interval_5": "2:00 AM–3:00 AM (02:00–03:00 h)",
+
+  "meq_performance_at_test_question": "You want to be at your peak performance for a test that you know is going to be mentally exhausting and will last two hours. You are entirely free to plan your day. Considering only your “internal clock,” which one of the four testing times would you choose?",
+  "meq_performance_interval_1": "8 AM–10 AM (08–10 h)",
+  "meq_performance_interval_2": "11 AM–1 PM (11–13 h)",
+  "meq_performance_interval_3": "3 PM–5 PM (15–17 h)",
+  "meq_performance_interval_4": "7 PM–9 PM (19–21 h)",
+
+  "meq_go_to_bed_at_11_pm_question": "If you got into bed at 11 PM (23 h), how tired would you be?",
+  "meq_not_at_all_tired": "Not at all tired",
+  "meq_a_little_tired": "A little tired",
+
+  "meq_go_to_bed_later_than_usual_question": "For some reason you have gone to bed several hours later than usual, but there is no need to get up at any particular time the next morning. Which one of the following are you most likely to do?",
+  "meq_wake_up_usual_not_fall_asleep": "Will wake up at usual time, but will not fall back asleep",
+  "meq_wake_up_usual_doze_thereafter": "Will wake up at usual time and will doze thereafter",
+  "meq_wake_up_usual_fall_asleep": "Will wake up at usual time, but will fall asleep again",
+  "meq_later_than_usual": "Will not wake up until later than usual",
+
+  "meq_remain_awake_question": "One night you have to remain awake between 4-6 AM (04-06 h) in order to carry out a night watch. You have no time commitments the next day. Which one of the alternatives would suit you best?",
+  "meq_not_go_to_bed": "Would not go to bed until the watch is over",
+  "meq_take_a_nap": "Would take a nap before and sleep after",
+  "meq_take_a_good_sleep": "Would take a good sleep before and nap after",
+  "meq_sleep_before_watch": "Would sleep only before the watch",
+
+  "meq_physical_work_question": "You have two hours of hard physical work. You are entirely free to plan your day. Considering only your internal “clock,” which of the following times would you choose?",
+  "meq_physical_work_interval_1": "8 AM–10 AM (08–10 h)",
+  "meq_physical_work_interval_2": "11 AM–1 PM (11–13 h)",
+  "meq_physical_work_interval_3": "3 PM–5 PM (15–17 h)",
+  "meq_physical_work_interval_4": "7 PM–9 PM (19–21 h)",
+
+  "meq_physical_exercise_10_11_pm_question": "You have decided to do physical exercise. A friend suggests that you do this for one hour twice a week. The best time for her is between 10-11 PM (22-23 h). Bearing in mind only your internal “clock,” how well do you think you would perform?",
+
+  "meq_work_hours_question": "Suppose you can choose your own work hours. Assume that you work a five-hour day (including breaks), your job is interesting, and you are paid based on your performance. At approximately what time would you choose to begin?",
+  "meq_work_hours_interval_1": "5 hours starting between 4–8 AM (04–08 h)",
+  "meq_work_hours_interval_2": "5 hours starting between 8–9 AM (08–09 h)",
+  "meq_work_hours_interval_3": "5 hours starting between 9 AM–2 PM (09–14 h)",
+  "meq_work_hours_interval_4": "5 hours starting between 2–5 PM (14–17 h)",
+  "meq_work_hours_interval_5": "5 hours starting between 5 PM–4 AM (17–04 h)",
+
+  "meq_feel_best_question": "At approximately what time of day do you usually feel your best?",
+  "meq_feel_best_interval_1": "5–8 AM (05–08 h)",
+  "meq_feel_best_interval_2": "8–10 AM (08–10 h)",
+  "meq_feel_best_interval_3": "10 AM–5 PM (10–17 h)",
+  "meq_feel_best_interval_4": "5–10 PM (17–22 h)",
+  "meq_feel_best_interval_5": "10 PM–5 AM (22–05 h)",
+
+  "meq_morning_evening_types_question": "One hears about “morning types” and “evening types.” Which one of these types do you consider yourself to be?",
+  "meq_morning_type": "Definitely a morning type",
+  "meq_more_morning_type": "Rather more a morning type than an evening type",
+  "meq_more_evening_type": "Rather more an evening type than a morning type",
+  "meq_evening_type": "Definitely an evening type",
+
+  "provide_additional_comments": "Provide additional comments in the text box below",
+
+  "kit_return_attestation_name": "Kit Return Attestation",
+  "kit_return_attestation_title": "Kit Return Attestation",
+  "kit_return_attestation_header": "Kit Return Attestation",
+
+  "kit_return_attestation_created_summary": "Please complete the Kit Return checklist.",
+  "kit_return_attestation_in_progress_summary": "Please complete and submit your Kit Return checklist.",
+  "kit_return_attestation_complete_summary": "Thank you for returning your kit.",
+
+  "kit_return_attestation_question": "Mark below to attest to return shipping your At-Home Kit: ",
+  "kit_return_attestation_answer": "I have packaged my At-Home Kit appropriately and return shipped it through FedEx.",
+
+  "kit_receipt_attestation_name": "Kit Receipt Attestation",
+  "kit_receipt_attestation_title": "Kit Receipt Attestation",
+  "kit_receipt_attestation_header": "Kit Receipt Attestation",
+
+  "kit_receipt_attestation_created_summary": "Please check your kit once you have received it and complete this checklist.",
+  "kit_receipt_attestation_in_progress_summary": "You have started your kit checklist, please submit it prior to any study collections.",
+  "kit_receipt_attestation_complete_summary": "Thank you for checking your kit and submitting the kit checklist.",
+
+  "kit_receipt_attestation_question": "I have received my At-Home Kit and done the following",
+  "kit_receipt_attestation_checked_instructions": "Checked that all components are present using the provided checklist",
+  "kit_receipt_attestation_icepacks": "Placed both icepacks in the freezer",
+
+  "pre_collection_attestation_1_name": "Pre-Collection DLMO Attestation #1",
+  "pre_collection_attestation_1_title": "Pre-Collection DLMO Attestation #1",
+  "pre_collection_attestation_1_header": "Pre-Collection DLMO Attestation #1",
+
+  "pre_collection_attestation_1_created_summary": "Please complete the DLMO colllection checklist prior to starting your first collection.",
+  "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
+  "pre_collection_attestation_1_complete_summary": "Thank you for completing the DLMO collection checklist.",
+
+  "pre_collection_attestation_1_question_title": "Select an option below prior to beginning DLMO Collection 1:",
+  "pre_collection_attestation_1_question_text": "I have not consumed caffeine, melatonin, alcohol, or nicotine in the 24 hours prior to sample collection.",
+  "pre_collection_attestation_1_yes": "Yes",
+  "pre_collection_attestation_1_no": "No",
+  "pre_collection_attestation_1_yes_message": "You may begin DLMO Collection 1 at your scheduled collection time. Thank you.",
+  "pre_collection_attestation_1_no_message": "You will need to reschedule DLMO Collection 1. You have indicated that you have consumed one or more of the previously listed items. We request that you DO NOT proceed with DLMO Collection 1 at this moment. A study team member will be in contact with you to reschedule your DLMO Collection 1. Thank you.",
+
+  "pre_collection_attestation_2_name": "Pre-Collection DLMO Attestation #2",
+  "pre_collection_attestation_2_title": "Pre-Collection DLMO Attestation #2",
+  "pre_collection_attestation_2_header": "Pre-Collection DLMO Attestation #2",
+
+  "pre_collection_attestation_2_created_summary": "Please complete the DLMO collection checklist prior to starting your second collection.",
+  "pre_collection_attestation_2_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
+  "pre_collection_attestation_2_complete_summary": "Thank you for completing the DLMO collection checklist.",
+
+  "pre_collection_attestation_2_question_title": "Select an option below prior to beginning DLMO Collection 2:",
+  "pre_collection_attestation_2_question_text": "I have not consumed caffeine, melatonin, alcohol, or nicotine in the 24 hours prior to sample collection.",
+  "pre_collection_attestation_2_yes": "Yes",
+  "pre_collection_attestation_2_no": "No",
+  "pre_collection_attestation_2_yes_message": "You may begin DLMO Collection 2 at your scheduled collection time. Thank you.",
+  "pre_collection_attestation_2_no_message": "You will need to reschedule DLMO Collection 2. You have indicated that you have consumed one or more of the previously listed items. We request that you DO NOT proceed with DLMO Collection 2 at this moment. A study team member will be in contact with you to reschedule your DLMO Collection 2. Thank you.",
+
+  "post_collection_attestation_1_name": "Post-Collection DLMO Attestation #1",
+  "post_collection_attestation_1_title": "Post-Collection DLMO Attestation #1",
+  "post_collection_attestation_1_header": "Post-Collection DLMO Attestation #1",
+
+  "post_collection_attestation_1_created_summary": "Please complete the Post-Collection Attestation after your first collection.",
+  "post_collection_attestation_1_in_progress_summary": "Please finish the Post-Collection Attestation",
+  "post_collection_attestation_1_complete_summary": "Thank you for completing the Post-Collection Attestation",
+
+  "post_collection_attestation_1_question_title": "Select an option below to attest to your completed DLMO Collection 1:",
+  "post_collection_attestation_1_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
+  "post_collection_attestation_1_yes": "Yes",
+  "post_collection_attestation_1_no": "No",
+
+  "post_collection_attestation_2_name": "Post-Collection DLMO Attestation #2",
+  "post_collection_attestation_2_title": "Post-Collection DLMO Attestation #2",
+  "post_collection_attestation_2_header": "Post-Collection DLMO Attestation #2",
+
+  "post_collection_attestation_2_created_summary": "Please complete the Post-Collection Attestation after your second collection.",
+  "post_collection_attestation_2_in_progress_summary": "Please finish the Post-Collection Attestation",
+  "post_collection_attestation_2_complete_summary": "Thank you for completing the Post-Collection Attestation",
+
+  "post_collection_attestation_2_question_title": "Select an option below to attest to your completed DLMO Collection 2:",
+  "post_collection_attestation_2_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
+  "post_collection_attestation_2_yes": "Yes",
+  "post_collection_attestation_2_no": "No"
+
+
+}

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="2022-05-19-user-registration-endpoint">
+        <createTable tableName="center_profile">
+            <column name="center_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="center_profile_pk"/>
+            </column>
+            <column name="name" type="VARCHAR(1000)" />
+            <column name="address" type="TEXT" />
+        </createTable>
+
+        <createTable tableName="center_study">
+            <column name="center_study_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="center_study_pk"/>
+            </column>
+            <column name="center_id" type="bigint">
+                <constraints references="center_profile(center_id)" foreignKeyName="center_study_center_fk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints references="umbrella_study(umbrella_study_id)" foreignKeyName="center_study_study_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="center_user">
+            <column name="center_user_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="center_user_pk"/>
+            </column>
+            <column name="center_id" type="bigint">
+                <constraints references="center_profile(center_id)" foreignKeyName="center_user_center_fk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints references="user(user_id)" foreignKeyName="center_user_user_fk"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="center_user" columnNames="center_id, user_id" constraintName="center_user_unique" />
+    </changeSet>
+</databaseChangeLog>

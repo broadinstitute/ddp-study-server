@@ -1,0 +1,357 @@
+package org.broadinstitute.dsm.util;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.patch.Patch;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.QueryExtension;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spark.QueryParamsMap;
+import spark.Request;
+
+public class UserUtil {
+
+    public static final String SQL_USER_ROLES_PER_REALM = "SELECT role.name FROM  access_user_role_group roleGroup "
+            + "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) "
+            + "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) "
+            + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) "
+            + "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " + "WHERE roleGroup.user_id = ? and instance_name = ?";
+    public static final String USER_ID = "userId";
+    public static final String SHIPPING_MENU = "shipping";
+    private static final Logger logger = LoggerFactory.getLogger(UserUtil.class);
+    private static final String SQL_SELECT_USER = "SELECT user_id, name FROM access_user";
+    private static final String SQL_SELECT_USER_ACCESS_ROLE =
+            "SELECT role.name FROM access_user_role_group roleGroup, access_user user, access_role role "
+                    + "WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND user.is_active = 1";
+    private static final String SQL_USER_ROLES = "SELECT DISTINCT role.name FROM  access_user_role_group roleGroup "
+            + "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) "
+            + "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) "
+            + "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " + "WHERE roleGroup.user_id = ? ";
+    private static final String SQL_SELECT_USER_REALMS =
+            "SELECT DISTINCT realm.instance_name, realm.display_name, (SELECT count(role.name) "
+                    + "FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? "
+                    + "AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' FROM access_user_role_group roleGroup, "
+                    + "access_user user, ddp_group, ddp_instance_group realmGroup, ddp_instance realm, access_role role "
+                    + "WHERE realm.ddp_instance_id = realmGroup.ddp_instance_id AND realmGroup.ddp_group_id = ddp_group.group_id "
+                    + "AND ddp_group.group_id = roleGroup.group_id "
+                    + "AND roleGroup.user_id = user.user_id AND role.role_id = roleGroup.role_id AND realm.is_active = 1 "
+                    + "AND user.is_active = 1 AND user.user_id = ? ";
+    private static final String NO_USER_ROLE = "NO_USER_ROLE";
+    private static final String MAILINGLIST_MENU = "mailingList";
+    private static final String MEDICALRECORD_MENU = "medicalRecord";
+    private static final String PARTICIPANT_EXIT_MENU = "participantExit";
+    private static final String EMAIL_EVENT_MENU = "emailEvent";
+    private static final String SURVEY_CREATION_MENU = "surveyCreation";
+    private static final String PARTICIPANT_EVENT_MENU = "participantEvent";
+    private static final String DISCARD_SAMPLE_MENU = "discardSamples";
+    private static final String PDF_DOWNLOAD_MENU = "pdfDownload";
+
+    public static Map<Integer, String> getUserMap() {
+        Map<Integer, String> users = new HashMap<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        users.put(rs.getInt(DBConstants.USER_ID), rs.getString(DBConstants.NAME));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting map of users ", results.resultException);
+        }
+        return users;
+    }
+
+    public static String getUserId(Request request) {
+        return getUserId(request.queryMap());
+    }
+
+    public static String getUserId(QueryParamsMap queryParams) {
+        String userId = "";
+        if (queryParams.value(USER_ID) != null) {
+            userId = queryParams.get(USER_ID).value();
+        }
+
+        if (StringUtils.isBlank(userId)) {
+            logger.warn("No userId query param was sent");
+        }
+        return userId;
+    }
+
+    public static Collection<String> getListOfAllowedRealms(@NonNull String userId) {
+        List<String> listOfRealms = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try {
+                getList(conn, SQL_SELECT_USER_REALMS, NO_USER_ROLE, userId, listOfRealms);
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get lists of allowed realms ", results.resultException);
+        }
+        logger.info("Found " + listOfRealms.size() + " realm for user w/ id " + userId);
+        return listOfRealms;
+    }
+
+    public static Collection<String> getListOfAllowedRealms(@NonNull String userId, @NonNull String menu) {
+        List<String> listOfRealms = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try {
+                String query = SQL_SELECT_USER_REALMS;
+                String instanceRole = NO_USER_ROLE;
+                if (MAILINGLIST_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAME;
+                    query = query.replace("%1", DBConstants.MAILINGLIST_VIEW);
+                    instanceRole = DBConstants.HAS_MAILING_LIST_ENDPOINT;
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (MEDICALRECORD_MENU.equals(menu)) {
+                    //                    query = query + QueryExtension.BY_ROLE_NAME;
+                    //                    query = query.replace("%1", DBConstants.MR_VIEW);
+                    //                    getList(conn, query, instanceRole, userId, listOfRealms);
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (SHIPPING_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAME_START_WITH;
+                    query = query.replace("%1", DBConstants.KIT_SHIPPING);
+                    instanceRole = DBConstants.KIT_REQUEST_ACTIVATED;
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (PARTICIPANT_EXIT_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAME;
+                    query = query.replace("%1", DBConstants.PARTICIPANT_EXIT);
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (EMAIL_EVENT_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAME;
+                    query = query.replace("%1", DBConstants.EMAIL_EVENT);
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (SURVEY_CREATION_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAME;
+                    query = query.replace("%1", DBConstants.SURVEY_CREATION);
+                    instanceRole = DBConstants.SURVEY_CREATION_ENDPOINTS;
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (PARTICIPANT_EVENT_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAME;
+                    query = query.replace("%1", DBConstants.PARTICIPANT_EVENT);
+                    instanceRole = DBConstants.KIT_PARTICIPANT_NOTIFICATIONS_ACTIVATED;
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (DISCARD_SAMPLE_MENU.equals(menu)) {
+                    query = query + QueryExtension.BY_ROLE_NAMES;
+                    query = query.replace("%1", DBConstants.DISCARD_SAMPLE);
+                    query = query.replace("%2", DBConstants.PARTICIPANT_EXIT);
+                    instanceRole = DBConstants.KIT_REQUEST_ACTIVATED;
+                    getList(conn, query, instanceRole, userId, listOfRealms);
+                } else if (PDF_DOWNLOAD_MENU.equals(menu)) {
+                    query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
+                    query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
+                    query = query + QueryExtension.BY_ROLE_NAME;
+                    query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
+                    getList(conn, query, userId, listOfRealms);
+                } else {
+                    throw new RuntimeException("Menu (" + menu + ") not found");
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get allowed realms ", results.resultException);
+        }
+        logger.info("Found " + listOfRealms.size() + " realm for " + menu);
+        return listOfRealms;
+    }
+
+    public static List<NameValue> getAllowedStudies(@NonNull String userId) {
+        List<NameValue> studies = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_REALMS)) {
+                stmt.setString(1, NO_USER_ROLE);
+                stmt.setString(2, userId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
+                        String displayName = rs.getString(DBConstants.DISPLAY_NAME);
+                        if (StringUtils.isNotBlank(displayName)) {
+                            studies.add(new NameValue(instanceName, displayName));
+                        } else {
+                            studies.add(new NameValue(instanceName, instanceName));
+                        }
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of studies ", results.resultException);
+        }
+        return studies;
+
+    }
+
+    private static void getList(Connection conn, String query, String userId, List<String> listOfRealms) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    if (rs.getBoolean(DBConstants.HAS_ROLE)) {
+                        listOfRealms.add(rs.getString(DBConstants.INSTANCE_NAME));
+                    }
+                }
+            }
+        }
+    }
+
+    private static void getList(Connection conn, String query, String role, String userId, List<String> listOfRealms) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, role);
+            stmt.setString(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    if (NO_USER_ROLE.equals(role)) {
+                        listOfRealms.add(rs.getString(DBConstants.INSTANCE_NAME));
+                    } else {
+                        if (rs.getBoolean(DBConstants.HAS_ROLE)) {
+                            listOfRealms.add(rs.getString(DBConstants.INSTANCE_NAME));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static boolean checkUserAccess(String realm, String userId, String role, String userIdRequest) {
+        if (StringUtils.isNotBlank(userIdRequest) && !userId.equals(userIdRequest)) {
+            String msg = "User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest;
+            logger.warn(msg);
+            throw new RuntimeException(msg);
+        }
+        List<String> roles;
+        if (StringUtils.isBlank(realm)) {
+            roles = getUserRolesPerRealm(SQL_USER_ROLES, userId, null);
+        } else {
+            roles = getUserRolesPerRealm(SQL_USER_ROLES_PER_REALM, userId, realm);
+        }
+        if (roles != null && !roles.isEmpty()) {
+            return roles.contains(role);
+        }
+        return false;
+    }
+
+    public static boolean checkUserAccessForPatch(String realm, String userId, String role, String userIdRequest, Patch patch) {
+        String userEmailOrIdInPatch = patch.getUser();
+        String userIdFromPatch;
+        if (userEmailOrIdInPatch.contains("@")) {
+            // patches come with both user id or email in them, this is to find the id in case it was an email
+            UserDto user = new UserDao().getUserByEmail(userEmailOrIdInPatch).orElseThrow();
+            userIdFromPatch = Integer.toString(user.getId());
+        } else if (StringUtils.isNumeric(userEmailOrIdInPatch)) {
+            userIdFromPatch = userEmailOrIdInPatch;
+        } else {
+            // for now, let's do what DSM did previously and let them change the data.
+            // Still we need to log this and fix the patch from frontend
+            logger.error("The id in patch is not a number and also not an email, id in patch is " + userEmailOrIdInPatch +
+                    "and id in token is " + userId);
+            return checkUserAccess(realm, userId, role, userIdRequest);
+        }
+        if (!userId.equals(userIdFromPatch)) {
+            String msg = "User id in patch did not match the one in token, user Id in patch is " + userIdFromPatch + " user Id in token " +
+                    userIdRequest;
+            logger.warn(msg);
+            throw new RuntimeException(msg);
+        }
+        return checkUserAccess(realm, userId, role, userIdRequest);
+    }
+
+    public static boolean checkUserAccess(String realm, String userId, String role) {
+        return checkUserAccess(realm, userId, role, null);
+    }
+
+    public static List<String> getUserRolesPerRealm(@NonNull String query, @NonNull String userId, String realm) {
+        List<String> roles = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, userId);
+                if (StringUtils.isNotBlank(realm)) {
+                    stmt.setString(2, realm);
+                }
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        roles.add(rs.getString(DBConstants.NAME));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of user roles ", results.resultException);
+        }
+        return roles;
+    }
+
+    public static boolean checkKitShippingAccessForPatch(String realm, String userId, String userIdRequest, Patch patch) {
+        return UserUtil.checkUserAccessForPatch(realm, userId, DBConstants.KIT_SHIPPING, userIdRequest, patch)
+                && DBConstants.DDP_KIT_ALIAS.equals(patch.getTableAlias());
+    }
+
+    public static List<String> getUserAccessRoles(@NonNull String email) {
+        ArrayList<String> roles = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_ACCESS_ROLE + QueryExtension.BY_USER_EMAIL)) {
+                stmt.setString(1, email);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        roles.add(rs.getString(DBConstants.NAME));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error getting roles for " + email, results.resultException);
+        }
+        return roles;
+    }
+}

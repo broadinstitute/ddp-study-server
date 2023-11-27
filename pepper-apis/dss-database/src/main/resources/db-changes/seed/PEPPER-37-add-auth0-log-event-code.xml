@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20221013-add-auth0-log-event-code-table">
+        <sql>
+        insert into auth0_log_event_code (code, title, description)
+        values ('signup_pwd_leak', 'Breached password', 'A login was attempted with a leaked password.');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

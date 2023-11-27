@@ -4,6 +4,16 @@
     "index": {
       "number_of_shards": "1",
       "auto_expand_replicas": "0-1"
+    },
+    "analysis": {
+      "normalizer": {
+        "my_normalizer": {
+          "type": "custom",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
     }
   },
   "mappings": {
@@ -24,10 +34,28 @@
               "type": "keyword"
             },
             "firstName": {
-              "type": "text"
+              "type": "text",
+              "fields": {
+                "normalize": {
+                  "type": "keyword",
+                  "normalizer": "my_normalizer"
+                },
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
             },
             "lastName": {
-              "type": "text"
+              "type": "text",
+              "fields": {
+                "normalize": {
+                  "type": "keyword",
+                  "normalizer": "my_normalizer"
+                },
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
             },
             "email": {
               "type": "keyword",

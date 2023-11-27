@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>Project Singular</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Spartan:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="##BASE_URL##/favicon.ico" />
+  </head>
+  <body>
+    <style>
+      /* header */
+      body {
+        padding: 0;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      html {
+        height: 100%;
+      }
+      *, a {
+        font-family: 'Spartan', sans-serif;
+      }
+      a {
+        text-decoration: none;
+      }
+      .header {
+        font-family: Spartan-Bold,sans-serif;
+        color: #521b93;
+        background: #fff;
+        padding-top: 20px;
+        height: 133px;
+        box-sizing: border-box;
+      }
+      @media (max-width: 1200px) {
+        .header {
+          height: 113px;
+        }
+      }
+      @media (max-width: 680px) {
+        .header {
+          height: 89px;
+        }
+      }
+      @media (max-width: 450px) {
+        .header {
+          height: 72px;
+        }
+      }
+
+      .container {
+        width: auto!important;
+        max-width: 1300px;
+        margin: 0 auto!important;
+        padding: 0 24px!important;
+      }
+      @media (min-width: 1200px) {
+        .container {
+          width: 1170px;
+        }
+      }
+      @media (min-width: 992px) {
+        .container {
+          width: 970px;
+        }
+      }
+      @media (min-width: 768px) {
+        .container {
+          width: 750px;
+        }
+      }
+      .header .container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1400px;
+        box-sizing: border-box;
+        height: 100%;
+      }
+      .header__logo {
+        height: 100px;
+        align-self: flex-start;
+      }
+      a {
+        font-weight: bold;
+        color: #521b93!important;
+        text-decoration: none!important;
+        padding-bottom: 1px;
+      }
+      .header__logo-img {
+        height: 100%;
+      }
+      img {
+        vertical-align: middle;
+      }
+      .header, .header button {
+        font-weight: bold;
+        color: #521b93;
+      }
+      .toggle {
+        display: none;
+        position: relative;
+        width: 32px;
+        height: 20px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+      }
+      .toggle__bar {
+        display: block;
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #521b93;
+        transform-origin: left;
+        transition: transform .3s ease,opacity .3s ease;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+      .toggle__bar:first-of-type {
+        top: 0;
+      }
+      .toggle__bar:nth-of-type(2) {
+        top: 50%;
+        margin-top: -1px;
+      }
+      .toggle__bar:nth-of-type(3) {
+        bottom: 0;
+      }
+      .header__nav {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+      }
+      .link-list {
+        display: flex;
+        align-items: center;
+        list-style: none;
+      }
+      ol, ul {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      .link-list {
+        display: flex;
+        align-items: center;
+        list-style: none;
+      }
+      .header .link-list__item + .link-list__item {
+        margin-left: 25px;
+      }
+      .link-list__item .link {
+        display: inline-block;
+        text-align: center;
+      }
+      .header .SimpleButton {
+        width: 140px;
+      }
+      .header .SimpleButton:hover {
+        background: #521b93;
+        color: #fff;
+        transition: .3s;
+      }
+      .SimpleButton {
+        display: inline-block;
+        padding: 6px 14px 5px;
+        padding-top: 9px;
+        padding-bottom: 6px;
+        font-family: Spartan,sans-serif;
+        font-weight: bold;
+        font-size: 18px;
+        text-align: center;
+        text-decoration: none;
+        background: transparent;
+        border: 2px solid #521b93;
+        border-radius: 8px;
+        transition: background-color .2s ease,border-color .2s ease,color .2s ease;
+        cursor: pointer;
+        color: #521b93;
+      }
+      .header, .header button {
+        font-family: Spartan,sans-serif;
+        color: #521b93;
+      }
+      .header .button--wide {
+        width: 160px;
+        box-sizing: border-box;
+      }
+      .button--wide {
+        width: 120px;
+      }
+      .button--primary {
+        background: #521b93!important;
+        border-color: #521b93!important;
+        color: #fff!important;
+      }
+      .button {
+        font-weight: bold;
+        display: inline-block;
+        padding: 6px 13px 5px;
+        padding-top: 9px;
+        padding-bottom: 6px;
+        font-family: Spartan,sans-serif;
+        font-size: 18px;
+        text-align: center;
+        text-decoration: none;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        transition: background-color .2s ease,border-color .2s ease,color .2s ease;
+        cursor: pointer;
+      }
+      @media (max-width: 28.125em) {
+        .header__logo {
+          height: 2.8rem;
+        }
+      }
+      @media (max-width: 42.5em) {
+        .header__logo {
+          height: 3.2rem;
+        }
+      }
+      @media (max-width: 1280px) {
+        .header__logo {
+          height: 80px;
+        }
+      }
+      @media (max-width: 64em) and (max-width: 28.125em) {
+        .header__nav {
+          height: calc(100vh - 68px);
+        }
+      }
+      @media (max-width: 1280px) {
+        .header__logo {
+          height: 80px;
+        }
+      }
+      @media (max-width: 42.5em) {
+        .header__logo {
+          height: 3.2rem;
+        }
+      }
+      @media (max-width: 28.125em) {
+        .header__logo {
+          height: 2.8rem;
+        }
+      }
+      .header__nav--shown {
+        width: 100%;
+        background: #fff;
+        padding-left: 0;
+        transform: translate3d(0, 0, 0);
+      }
+      .toggle--shown .toggle__bar:nth-of-type(1) {
+        transform: rotate(45deg) translate3d(0, -3px, 0);
+      }
+      .toggle--shown .toggle__bar:nth-of-type(2) {
+        opacity: 0;
+      }
+      .toggle--shown .toggle__bar:nth-of-type(3) {
+        transform: rotate(-45deg) translate3d(0, 3px, 0);
+      }
+
+      @media (max-width: 64em) and (max-width: 28.125em) {
+        .header__nav {
+          height: calc(100vh - 168px);
+        }
+      }
+      @media (max-width: 64em) and (max-width: 42.5em) {
+        .header__nav {
+          height: calc(100vh - 174px);
+        }
+      }
+      @media (max-width: 64em) {
+        .header__logo {
+          margin-right: auto;
+        }
+        .toggle {
+          display: block;
+        }
+        .header .link-list__item + .link-list__item {
+          margin-top: 1.6rem;
+          margin-left: 0;
+        }
+        .header__nav .link-list .auth-item {
+          margin-top: 100px;
+        }
+        .header__nav--shown {
+          width: 100%;
+          background: #fff!important;
+          padding-left: 0!important;
+          transform: translateZ(0)!important;
+        }
+        .header .container {
+          position: relative;
+        }
+        .link-list {
+          flex-flow: column nowrap;
+          padding-left: 0;
+        }
+        .header__nav .link-list {
+          height: 100%;
+        }
+        .header__nav {
+          flex-flow: column nowrap;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          height: calc(100vh - 110px);
+          padding: 2.4rem;
+          background: #fff;
+          box-shadow: 0 2.4rem 2.4rem rgb(0 0 0 / 5%);
+          transform: translate3d(-120%,0,0);
+          transition: transform .3s ease;
+          z-index: 10;
+        }
+        .header__logo {
+          margin-right: auto;
+        }
+      }
+
+      /* footer */
+      .footer {
+        padding: 48px 0 60px;
+        background: #521b93;
+        color: #fff;
+        line-height: 1.5rem;
+      }
+      @media (max-width: 450px) {
+        .footer {
+          padding-bottom: 12px !important;
+        }
+      }
+      .footer .container {
+        display: flex;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      @media (max-width: 450px) {
+        .footer .container {
+          flex-direction: column-reverse;
+          gap: 24px;
+        }
+      }
+      .footer-logo img {
+        width: 215px;
+      }
+      img {
+        vertical-align: middle;
+      }
+      .footer-contacts {
+        font-size: 16px;
+        margin-top: 30px;
+      }
+      .footer-social {
+        margin: 40px 0;
+        display: flex;
+      }
+      @media (max-width: 450px) {
+        .footer-social {
+          justify-content: center;
+        }
+      }
+      .footer-social-item {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+        position: relative;
+        border-radius: 100px;
+        border: 2px solid #fff;
+      }
+      .footer-social-item img {
+        filter: invert(1);
+        position: absolute;
+        top: 13px;
+        left: 13px;
+      }
+      .footer-social-item.twitter img {
+        top: 13px;
+        left: 13px;
+      }
+      .footer-social-item.instagram img {
+        top: 14px;
+        width: 21px;
+        left: 14px;
+      }
+      .footer-social-item.facebook img {
+        top: 8px;
+        left: 8px;
+      }
+      .footer-copyright {
+        font-size: 16px;
+        opacity: .7;
+      }
+      .footer .link-list {
+        display: flex;
+        align-items: center;
+        list-style: none;
+        padding: 0;
+      }
+      .footer-meta {
+        max-width: 30%;
+      }
+      @media (max-width: 1024px) {
+        .footer-meta {
+          max-width: unset;
+        }
+      }
+      @media (max-width: 700px) {
+        .footer-meta {
+          max-width: 80%;
+        }
+      }
+      @media (max-width: 450px) {
+        .footer-meta {
+          max-width: 100%;
+          text-align: center;
+        }
+      }
+      .footer-menu {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .footer-menu .link-list {
+        margin-top: 0;
+      }
+      @media (max-width: 450px) {
+        .footer-menu .link-list {
+          width: 100%;
+          flex-direction: row !important;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 5px;
+        }
+      }
+      .footer a {
+        color: #fff!important;
+      }
+      .footer .link-list__item:not(:last-of-type) {
+        margin-right: 20px;
+      }
+      .footer .SimpleButton, .footer .button {
+        width: 112px;
+        box-sizing: border-box;
+      }
+      @media (max-width: 1200px) {
+        .footer .SimpleButton, .footer .button {
+          padding: 7px 12px 4px;
+          font-size: 16px;
+          line-height: 21px;
+        }
+      }
+      .footer .SimpleButton {
+        color: #fff;
+        border: 2px solid #fff;
+        font-weight: bold;
+      }
+      .footer .button--white {
+        background: #fff!important;
+        border-color: #fff!important;
+        color: #521b93!important;
+      }
+      @media (max-width: 64em) {
+        .footer-copyright {
+          margin-bottom: 30px;
+        }
+        .footer .link-list {
+          flex-direction: column;
+          align-items: unset;
+          padding-left: 0;
+        }
+        .footer .link-list__item:not(:last-of-type) {
+          margin-bottom: 14px;
+        }
+      }
+      .footer .SimpleButton:hover {
+        color: #521b93;
+        background: #fff;
+        transition: .3s;
+      }
+
+      /* Auth0 */
+      .auth0-lock.auth0-lock {
+        position: unset;
+      }
+      .auth0-lock.auth0-lock .auth0-lock-submit {
+        background-color: #521b93!important;
+      }
+      .auth0-lock-center {
+        margin-bottom: 70px;
+      }
+      .auth0-lock-name {
+        font-weight: bold;
+        padding: 10px 0;
+        margin-top: 30px;
+      }
+      section, header, footer {
+        display: block!important;
+      }
+      @media screen and (max-width: 480px) {
+        .auth0-lock.auth0-lock.auth0-lock-opened {
+          position: unset!important;
+        }
+      }
+      .auth0-lock-widget {
+        position: unset!important;
+      }
+      .auth0-lock-cred-pane-internal-wrapper, .auth0-lock-widget-container {
+        height: auto!important;
+      }
+      .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
+        box-shadow: 0 0 40px 4px #ccc!important;
+      }
+      .auth0-lock-center {
+        margin-top: 50px;
+      }
+    </style>
+    <!--[if IE 8]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+    <![endif]-->
+
+    <!--[if lte IE 9]>
+      <script src="https://cdn.auth0.com/js/base64.js"></script>
+      <script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+    <![endif]-->
+
+    <header class="header">
+      <div class="container">
+        <a class="header__logo" href="##BASE_URL##">
+          <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="logo">
+        </a>
+    
+        <button class="toggle" id="header-toggle">
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
+        </button>
+    
+        <nav class="header__nav" id="header-nav">
+          <ul class="link-list">
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/about">
+                About Us
+              </a>
+            </li>
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a href="https://www.additionalventures.org/project-singular-study-updates" target="_blank" class="link">
+                Study Progress
+              </a>
+            </li>
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/faq">
+                FAQs
+              </a>
+            </li>
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/for-researchers">
+                For Researchers
+              </a>
+            </li>
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/for-clinicians">
+                For Clinicians
+              </a>
+            </li>
+            <!---->
+            <li routerlinkactive="link-list__item_active" class="link-list__item auth-item">
+              <ddp-sign-in-out>
+                <a href="##BASE_URL##/login">
+                  <button data-ddp-test="signInButton" class="SimpleButton">
+                    Log In
+                  </button><!---->
+                </a>
+        <!----></ddp-sign-in-out>
+            </li>
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="button button--primary button--wide" href="##BASE_URL##/pre-screening">
+                Sign me up!
+              </a>
+            </li><!---->
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <section class="content"></section>
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-meta">
+          <div class="footer-logo">
+            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png" alt="logo">
+          </div>
+          <div class="footer-contacts">
+            Contact Us: (650) 561-6750<br>
+            contact@projectsingular.org
+          </div>
+    
+          <div class="footer-social">
+            <div class="footer-social-item twitter">
+              <a href="https://twitter.com/proj_singular" target="_blank">
+                <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/twitter.svg" alt="twitter">
+              </a>
+            </div>
+            <div class="footer-social-item instagram">
+              <a href="https://www.instagram.com/project_singular/" target="_blank">
+                <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/inst.svg" alt="twitter">
+              </a>
+            </div>
+            <div class="footer-social-item facebook">
+              <a href="https://www.facebook.com/project.singular.study" target="_blank">
+                <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/facebook.svg" alt="twitter">
+              </a>
+            </div>
+          </div>
+          <div class="footer-copyright">Copyright © <span id="current-year"></span> Additional<br>Ventures. All rights reserved.</div>
+        </div>
+        <div class="footer-menu">
+          <nav>
+            <ul class="link-list">
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/about">
+                  About Us
+                </a>
+              </li>
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="https://www.additionalventures.org/project-singular-study-updates" target="_blank">
+                  Study Progress
+                </a>
+              </li>
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/faq">
+                  FAQs
+                </a>
+              </li>
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/for-researchers">
+                  For Researchers
+                </a>
+              </li>
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/for-clinicians">
+                  For Clinicians
+                </a>
+              </li>
+              <!---->
+              <li routerlinkactive="link-list__item_active" class="link-list__item link-list__item_highlight-stroke_invert">
+                <ddp-sign-in-out>
+                  <a href="##BASE_URL##/login">
+                    <button data-ddp-test="signInButton" class="SimpleButton">
+                      Log In
+                    </button><!---->
+                  </a>
+        <!----></ddp-sign-in-out>
+              </li>
+              <li routerlinkactive="link-list__item_active" class="link-list__item link-list__item_highlight link-list__item_highlight_invert">
+                <a class="button button--white" href="##BASE_URL##/pre-screening">
+                  Sign up
+                </a>
+              </li><!---->
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.auth0.com/js/lock/11.30/lock.min.js"></script>
+
+    <style type="text/css">
+      body {
+        font-family: 'Spartan', sans-serif;
+      }
+
+      .auth0-lock {
+        font-family: 'Spartan', sans-serif !important;
+      }
+
+      .auth0-lock.auth0-lock .auth0-lock-overlay {
+        background: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
+        background-image: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
+        background-color: #fff;
+      }
+
+      .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
+        box-shadow: 0 0 40px 4px #888888;
+      }
+      .auth0-lock-name {
+        font-size: 12pt !important;
+        text-align: left;
+      }
+
+      .auth0-lock-content {
+        padding-top: 10px !important;
+      }
+
+      .auth0-lock-header {
+        display: flex;
+        align-items: center;
+      }
+
+      .auth0-lock-header .auth0-lock-header-bg {
+        background-color: white !important;
+      }
+
+      .auth0-lock.auth0-lock .auth0-lock-form p {
+        text-align: left;
+      }
+
+      .auth0-lock-custom-icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      .auth0-lock-name {
+        text-align: center;
+      }
+
+      /* a:link {
+        text-decoration: underline !important;
+      } */
+
+      #ddp-header {
+        margin-top: 10px;
+      }
+
+      #ddp-header .auth0-lock-header-logo {
+        max-width: 100%;
+        height: 48px;
+        margin-bottom: 10px;
+      }
+
+      .additional-description {
+        color: rgba(0,0,0,0.54);
+        line-height: 1.8;
+        font-size: 13px;
+        margin-bottom: 10px;
+      }
+
+      .auth0-lock.auth0-lock .auth0-lock-form {
+        padding-top: 0
+      } 
+    </style>
+
+    <script>
+      // Decode utf8 characters properly
+      var config = JSON.parse(
+        decodeURIComponent(escape(window.atob('@@config@@'))),
+      );
+
+      config.extraParams = config.extraParams || {};
+
+      var inviteKey = 'invitationId';
+
+      // save the invitation in local storage to minimize breached password loss-of-invitation
+      if (config.extraParams.invitation_id) {
+        localStorage.setItem(inviteKey, config.extraParams.invitation_id);
+        console.log('Saving invitation ' + config.extraParams.invitation_id);
+      } else {
+        var invitation = localStorage.getItem(inviteKey);
+        if (invitation) {
+          // unsafe, but better than losing this value during breached password shield
+          config.internalOptions.invitation_id = invitation;
+          console.log(
+            'Using stored invitation ' + invitation + ' from local storage',
+          );
+        }
+      }
+
+      // set current year
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+
+      var mode = config.extraParams.mode;
+      var study_guid = config.extraParams.study_guid;
+      var headerLogo =
+        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/images/logo-black.png';
+      var headerText = '';
+      var studyColor = '#458484';
+      var studyHelpEmail = '##STUDY_EMAIL##';
+      var registerUrl = '##BASE_URL##/pre-screening';
+      var connection = config.connection;
+      var prompt = !prompt;
+      var showPasswordRecentText = false;
+      var language = config.extraParams.language || 'en';
+      var loginUrl = '##BASE_URL##/login-redirect';
+
+      // Hide registration link for admin client. Note that param values are passed as strings.
+      var doNotShowRegLink = config.extraParams.is_admin_client === 'true';
+
+      var i18n = {};
+
+      i18n['en'] = {
+        error: {
+          signUp: {
+            user_exists: "If you've already registered, sign in here. ",
+          },
+        },
+        // Login title
+        title: 'Log In',
+        // Sign up title
+        signUpTitle: 'Create your account',
+        emailInputPlaceholder: 'yours@example.com',
+        passwordInputPlaceholder: 'your password',
+        additionalFields: {
+          firstName: {
+            placeholder: 'First name',
+            nonBlankHint: "First name can't be blank",
+          },
+          lastName: {
+            placeholder: 'Last name',
+            nonBlankHint: "Last name can't be blank",
+          },
+        },
+        success: {
+          forgotPassword: "If you have previously registered, please check your email to reset your password.",
+        },
+        message: {
+          alreadyRegisteredText: "If you've already registered, sign in here.",
+          registerMessageHtml:
+            "If you haven't registered yet, please <a class='auth0-lock-alternative-link' href='" +
+            registerUrl +
+            "'>do so here</a>.",
+          helpHtml: '',
+          loginLinkText: 'Sign in with existing account.',
+          switchToLoginText: 'Already registered? ',
+          resetPasswordText:
+            'Password reset successfully.  Please sign in with your new password.',
+        },
+        additionalDescription: "You will use this information to later sign in to your Project Singular account. Project Singular will use the email address provided to communicate with you."
+      };
+
+      var languageDictionary = i18n[language];
+
+      var loginHint = config.extraParams.login_hint;
+
+      var realOptions = {
+        avatar: null,
+        auth: {
+          redirectUrl: config.callbackURL,
+          responseType:
+            (config.internalOptions || {}).response_type ||
+            config.callbackOnLocationHash
+              ? 'token'
+              : 'code',
+          params: config.internalOptions,
+        },
+        assetsUrl: config.assetsUrl,
+        allowedConnections: connection ? [connection] : null,
+        rememberLastLogin: false,
+        language: language,
+        languageDictionary: languageDictionary,
+        theme: {
+          logo: headerLogo,
+          primaryColor: studyColor,
+        },
+        prefill: loginHint ? { email: loginHint, username: loginHint } : null,
+        closable: false,
+        configurationBaseUrl: config.clientConfigurationBaseUrl,
+        overrides: {
+          __tenant: config.auth0Tenant,
+          __token_issuer: '##LOGIN_DOMAIN##',
+        },
+      };
+
+      var options = { allowForgotPassword: true };
+
+      if (mode === 'signup') {
+        options.allowSignUp = true;
+        options.allowLogin = false;
+      } else if (mode === 'login') {
+        options.allowSignUp = false;
+        options.allowLogin = true;
+      } else {
+        options.allowSignUp = true;
+        options.allowLogin = true;
+      }
+
+      if (config.extraParams.showPasswordReset) {
+        options.allowSignUp = false;
+        options.allowLogin = false;
+      }
+
+      if (config.extraParams.show_password_reset) {
+        options.initialScreen = 'forgotPassword';
+      }
+      if (config.extraParams.user_email) {
+        realOptions.prefill = {
+          email: config.extraParams.user_email,
+          username: config.extraParams.user_email,
+        };
+      }
+
+      if (config.extraParams.password_was_reset) {
+        showPasswordRecentText = true;
+      }
+
+      var lock = new Auth0Lock(
+        config.clientID,
+        config.auth0Domain,
+        realOptions,
+      );
+
+      function addHelp() {
+        // we use setInterval because auth0's on() methods for display
+        // do not account for all the display modes and they appear to fire
+        // before animations complete, not after
+        setInterval(function () {
+          if (
+            document.getElementsByClassName('auth0-global-message').length > 0
+          ) {
+            if (
+              languageDictionary.error.signUp.user_exists.toUpperCase() ===
+              document
+                .getElementsByClassName('auth0-global-message')[0]
+                .children[0].children[0].innerText.toUpperCase()
+            ) {
+              if (!document.getElementById('ddp-already-registered')) {
+                var auth0GlobalMessage = document.getElementsByClassName(
+                  'auth0-global-message',
+                )[0].children[0].children[0];
+
+                console.log('parent: ', auth0GlobalMessage.parentElement);
+                auth0GlobalMessage.parentElement.removeChild(
+                  auth0GlobalMessage,
+                );
+
+                var alreadyRegistered = document.createElement('a');
+                alreadyRegistered.setAttribute('href', loginUrl);
+                alreadyRegistered.setAttribute('style', 'color:black');
+                alreadyRegistered.setAttribute('id', 'ddp-already-registered');
+                alreadyRegistered.innerText =
+                  languageDictionary.message.alreadyRegisteredText;
+                document
+                  .getElementsByClassName('auth0-global-message')[0]
+                  .children[0].appendChild(alreadyRegistered);
+              }
+            }
+          }
+
+          if (!document.getElementById('ddp-header')) {
+            // tweak the header
+            var header = document.createElement('div');
+            header.innerHTML =
+              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" alt="logo" src="' +
+              headerLogo +
+              '"></div>';
+            var auth0LockHeader = document.getElementsByClassName(
+              'auth0-lock-header-logo',
+            )[0];
+
+            if (auth0LockHeader) {
+              console.log('header parent', auth0LockHeader.parentElement);
+
+              auth0LockHeader.parentElement.removeChild(auth0LockHeader);
+
+              var headerWelcome = document.getElementsByClassName(
+                'auth0-lock-header-welcome',
+              )[0];
+
+              headerWelcome.insertBefore(
+                header,
+                headerWelcome.hasChildNodes()
+                  ? headerWelcome.childNodes[0]
+                  : null,
+              );
+              //document.getElementsByClassName('auth0-lock-header-welcome')[0].prepend(header);
+            }
+          }
+
+          if (!document.getElementById('ddp-help')) {
+            var lockForm = document.getElementsByClassName('auth0-lock-form');
+            var showSignUpHelp =
+              document.getElementsByClassName('auth0-lock-last-login-pane')
+                .length === 0;
+
+            if (mode === 'login' && !doNotShowRegLink) {
+              // navigate back to registration
+              var registerMessageWrapper = document.createElement('p');
+              registerMessageWrapper.setAttribute(
+                'class',
+                'auth0-lock-alternative',
+              );
+              registerMessageWrapper.setAttribute('id', 'ddp-reg');
+              registerMessageWrapper.setAttribute(
+                'style',
+                'margin-top: 10px;font-size: small;text-align: left;',
+              );
+
+              if (showSignUpHelp) {
+                var registerMessage = document.createElement('p');
+                registerMessage.setAttribute('style', 'margin-bottom:0;');
+                registerMessage.innerHTML =
+                  languageDictionary.message.registerMessageHtml;
+                registerMessageWrapper.appendChild(registerMessage);
+
+                if (lockForm) {
+                  lockForm[0].appendChild(registerMessageWrapper);
+                }
+              }
+            }
+
+            var helpWrapper = document.createElement('div');
+            helpWrapper.setAttribute('id', 'ddp-help');
+            helpWrapper.setAttribute(
+              'style',
+              'display:flex;flex-direction:row;align-items:center;margin-top:10px;flex-wrap:nowrap;',
+            );
+            var help =
+              '<p style="text-align:left;margin-bottom:0;">' +
+              languageDictionary.message.helpHtml +
+              '</p>';
+            helpWrapper.innerHTML = help;
+            if (lockForm) {
+              lockForm[0].appendChild(helpWrapper);
+            }
+
+            if (mode === 'signup' || options.allowSignUp) {
+              console.log('appending sign in with existing account');
+              var loginLink = document.createElement('a');
+              loginLink.setAttribute('class', 'auth0-lock-alternative-link');
+              loginLink.setAttribute('href', loginUrl);
+              loginLink.innerText = languageDictionary.message.loginLinkText;
+              var switchToLogin = document.createElement('p');
+              switchToLogin.setAttribute('class', 'auth0-lock-alternative');
+              switchToLogin.setAttribute(
+                'style',
+                'text-align:left;margin-top:5px;',
+              );
+              switchToLogin.innerText =
+                languageDictionary.message.switchToLoginText;
+              switchToLogin.appendChild(loginLink);
+              helpWrapper.parentElement.appendChild(switchToLogin);
+            }
+
+            if (showPasswordRecentText) {
+              if (!document.getElementById('ddp-pwd')) {
+                var resetPasswordWrapper = document.createElement('p');
+                resetPasswordWrapper.setAttribute(
+                  'class',
+                  'auth0-lock-alternative',
+                );
+                resetPasswordWrapper.setAttribute('id', 'ddp-pwd');
+                resetPasswordWrapper.setAttribute('style', 'margin-top:0px;');
+
+                var resetPasswordText = document.createElement('div');
+                resetPasswordText.innerText =
+                  languageDictionary.message.resetPasswordText;
+
+                resetPasswordWrapper.appendChild(resetPasswordText);
+                document
+                  .getElementsByClassName('auth0-lock-content')[0]
+                  .prepend(resetPasswordWrapper);
+              }
+            }
+          }
+        }, 200);
+      }
+
+      function addSignUpInstruction() {
+        if (mode === 'signup' && languageDictionary.additionalDescription) {
+          const interval = setInterval(function () {
+            const lockFormEl = document.querySelector('.auth0-lock-form');
+            if (lockFormEl) {
+              const div = document.createElement('div');
+              div.classList.add('additional-description');
+              div.textContent = languageDictionary.additionalDescription;
+              lockFormEl.prepend(div);
+              clearInterval(interval);
+            }
+          }, 2100);
+        }
+      }
+
+      lock.on('show', function () {
+        addHelp();
+
+        addSignUpInstruction();
+
+        if (realOptions.prefill && realOptions.prefill.email) {
+          var getInputElement = function (name) {
+            return document.getElementsByName(name)[0];
+          };
+          var setFocus = function (theElement) {
+            theElement.focus();
+            return true;
+          };
+          var getElementWithFocus = function () {
+            return document.querySelector(':focus');
+          };
+          var intervalId = setInterval(function () {
+            var pwdElement = getInputElement('password');
+            var emailElement = getInputElement('email');
+            if (pwdElement && emailElement && emailElement.value.trim()) {
+              setFocus(pwdElement);
+              var elementWithFocus = getElementWithFocus();
+              if (
+                elementWithFocus &&
+                elementWithFocus.name &&
+                pwdElement.name === elementWithFocus.name
+              ) {
+                clearInterval(intervalId);
+              }
+            }
+          }, 200);
+        }
+      });
+
+      console.log('auth mode: ' + mode);
+      console.log('study_guid: ' + study_guid);
+
+      lock.show(options);
+    </script>
+
+    <script>
+      /**
+       * Header scripts
+       */
+      const headerToggleBtnEl = document.getElementById('header-toggle');
+      const headerNavEl = document.getElementById('header-nav');
+
+      headerToggleBtnEl.addEventListener('click', () => {
+        document.body.classList.toggle('overflow-hidden');
+
+        headerToggleBtnEl.classList.toggle('toggle--shown');
+        headerNavEl.classList.toggle('header__nav--shown');
+      });
+
+      headerNavEl.addEventListener('click', e => {
+        const clickTargetEl = e.target;
+
+        if (['a', 'button'].includes(clickTargetEl.tagName.toLowerCase())) {
+          document.body.classList.remove('overflow-hidden');
+
+          headerToggleBtnEl.classList.remove('toggle--shown');
+          headerNavEl.classList.remove('header__nav--shown');
+        }
+      });
+
+      // Move auth0 block
+      const timer = setInterval(
+        () => {
+          const auth0ContainerEl = document.querySelector('.auth0-lock-container');
+          if (!auth0ContainerEl) {
+            return;
+          }
+
+          clearInterval(timer);
+
+          const contentEl = document.querySelector('.content');
+          contentEl.appendChild(auth0ContainerEl);
+        }, 
+        100
+      );
+    </script>
+  </body>
+</html>

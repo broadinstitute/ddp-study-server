@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-7322_singularForm_tab3">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="column_display" value="Genetic Testing"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="column_name" value="GROUP_GENETIC_TESTING"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="KARYOTYPE"/>
+            <column name="column_display" value="Karyotype"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;NORMAL&quot;,&quot;name&quot;:&quot;Yes, Normal&quot;},{&quot;value&quot;:&quot;ABNORMAL&quot;,&quot;name&quot;:&quot;Yes, Abnormal&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="KARYOTYPE_ABNORMAL"/>
+            <column name="column_display" value="If Abnormal, Result"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;TRISOMY_21&quot;,&quot;name&quot;:&quot;Down's syndrome (trisomy 21)&quot;},{&quot;value&quot;:&quot;TRISOMY_18&quot;,&quot;name&quot;:&quot;Edwards syndrome (trisomy 18)&quot;},{&quot;value&quot;:&quot;47XXY&quot;,&quot;name&quot;:&quot;Klinefelter syndrome (47XXY)&quot;},{&quot;value&quot;:&quot;TRISOMY_13&quot;,&quot;name&quot;:&quot;Patau syndrome (trisomy 13)&quot;},{&quot;value&quot;:&quot;TURNER&quot;,&quot;name&quot;:&quot;Turner syndrome (45X and variants)&quot;},{&quot;value&quot;:&quot;DEL5P&quot;,&quot;name&quot;:&quot;Cri-du-chat syndrome (del5p)&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="MICROARRAY"/>
+            <column name="column_display" value="Microarray"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;NORMAL&quot;,&quot;name&quot;:&quot;Yes, Normal&quot;},{&quot;value&quot;:&quot;ABNORMAL&quot;,&quot;name&quot;:&quot;Yes, Abnormal&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="MICROARRAY_ABNORMAL"/>
+            <column name="column_display" value="If Abnormal, Result"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;DEL22Q11&quot;,&quot;name&quot;:&quot;Velocardiofacial syndrome (del22q11)&quot;},{&quot;value&quot;:&quot;DEL11Q&quot;,&quot;name&quot;:&quot;Jacobsen syndrome (del 11q)&quot;},{&quot;value&quot;:&quot;DEL4P&quot;,&quot;name&quot;:&quot;Wolf-Hirschhorn syndrome (del 4p)&quot;},{&quot;value&quot;:&quot;DEL7Q11&quot;,&quot;name&quot;:&quot;Williams syndrome (del 7q11)&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="GENE_SYNDROMES"/>
+            <column name="column_display" value="Single Gene Syndromes"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;CORNELIA_LANGE&quot;,&quot;name&quot;:&quot;Cornelia de Lange&quot;},{&quot;value&quot;:&quot;ELLIS_CREVELD&quot;,&quot;name&quot;:&quot;Ellis-van Creveld&quot;},{&quot;value&quot;:&quot;HOLT_ORAM&quot;,&quot;name&quot;:&quot;Holt-Oram&quot;},{&quot;value&quot;:&quot;KABUKI&quot;,&quot;name&quot;:&quot;Kabuki&quot;},{&quot;value&quot;:&quot;RASOPATHY&quot;,&quot;name&quot;:&quot;Rasopathy&quot;},{&quot;value&quot;:&quot;HETEROTAXY&quot;,&quot;name&quot;:&quot;Heterotaxy&quot;},{&quot;value&quot;:&quot;RUBINSTEIN&quot;,&quot;name&quot;:&quot;Rubinstein-Taybi&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="MOLECULAR_CONFIRMATION"/>
+            <column name="column_display" value="Molecular Confirmation?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;}]"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
+            <column name="column_name" value="CLINICAL_SYNDROMES"/>
+            <column name="column_display" value="Clinical Syndromes"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;HEMIFACIAL&quot;,&quot;name&quot;:&quot;Oculoauriculovertebral (Hemifacial microsomia)&quot;},{&quot;value&quot;:&quot;VACTERL&quot;,&quot;name&quot;:&quot;VACTERL syndrome (VACTER/VATER/VATERR syndrome)&quot;},{&quot;value&quot;:&quot;EMBRYOPATHY&quot;,&quot;name&quot;:&quot;Diabetic Embryopathy&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="7"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-4717_instanceDisplayName">
+        <addColumn tableName="ddp_instance">
+            <column name="display_name" type="VARCHAR(100)" afterColumn="instance_name">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="DDP-4630_needsApproval">
+        <addColumn tableName="ddp_kit">
+            <column name="needs_approval" type="TINYINT(1)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="authorization" type="VARCHAR(45)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="authorization_date" type="BIGINT">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="denial_reason" type="VARCHAR(1500)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="authorized_by" type="VARCHAR(45)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="DDP-4631_approvalPage">
+        <insert tableName="access_role">
+            <column name="name" value="kit_authorization_view"></column>
+        </insert>
+        <insert tableName="access_role">
+            <column name="name" value="kit_authorization"></column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

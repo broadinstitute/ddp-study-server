@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-7556_mercury_sequencing" author="pegah">
+        <createTable tableName="mercury_sequencing">
+            <column name="mercury_sequencing_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true" nullable="false"></constraints>
+            </column>
+            <column name="order_id" type="VARCHAR(255)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="order_date" type="BIGINT"></column>
+            <column name="barcode" type="VARCHAR(255)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="kit_type_id" type="INT"></column>
+            <column name="order_status" type="VARCHAR(100)"></column>
+            <column name="status_date" type="BIGINT"></column>
+            <column name="mercury_pdo_id" type="VARCHAR(255)"></column>
+        </createTable>
+    </changeSet>
+    <changeSet id="DDP-7556_ddp_instance_changes" author="pegah">
+        <addColumn tableName="ddp_instance">
+            <column name="research_project" type="VARCHAR(200)"></column>
+        </addColumn>
+        <addColumn tableName="ddp_instance">
+            <column name="mercury_order_creator" type="VARCHAR(200)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-7556_additional_mercury_sequencing" author="pegah">
+        <addColumn tableName="mercury_sequencing">
+            <column name="created_by" type="VARCHAR(200)"></column>
+        </addColumn>
+        <addColumn tableName="mercury_sequencing">
+            <column name="ddp_instance_id" type="VARCHAR(20)" afterColumn="barcode"></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

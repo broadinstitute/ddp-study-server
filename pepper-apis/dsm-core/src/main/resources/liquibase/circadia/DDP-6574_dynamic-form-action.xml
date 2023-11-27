@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-6574_email-event-action" author="simone">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{&quot;name&quot;:&quot;CIRCADIA_SENT&quot;,&quot;type&quot;:&quot;PARTICIPANT_EVENT&quot;}]'
+            WHERE ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'KIT_SHIPPING_DATE'
+        </sql>
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{&quot;name&quot;:&quot;CIRCADIA_RECEIVED&quot;,&quot;type&quot;:&quot;PARTICIPANT_EVENT&quot;}]'
+            WHERE ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'KIT_RECEIVED_DATE'
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

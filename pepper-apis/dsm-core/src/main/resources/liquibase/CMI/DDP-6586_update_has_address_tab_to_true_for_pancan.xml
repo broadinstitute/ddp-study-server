@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-6586_has_address_tab_for_PanCan" author="nghurtch">
+        <update tableName="instance_settings">
+            <column name="has_address_tab" valueBoolean="true"/>
+            <where>ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = 'cmi-pancan')</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

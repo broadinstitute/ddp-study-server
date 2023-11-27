@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="instanceCircadia">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="Circadia"/>
+            <column name="study_guid" value="circadia"/>
+            <column name="display_name" value="Circadia"/>
+            <column name="is_active" value="0"/>
+            <column name="auth0_token" value="1"/>
+            <column name="migrated_ddp" value="0"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="simone" id="circadiaForm">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="CIRCADIA_KIT_MANAGEMENT"/>
+            <column name="column_display" value="Kit Management"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_KIT_MANAGEMENT"/>
+            <column name="column_name" value="KIT_ID"/>
+            <column name="column_display" value="Kit ID"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_KIT_MANAGEMENT"/>
+            <column name="column_name" value="TRACKING_NUMBER"/>
+            <column name="column_display" value="Kit Tracking number"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_KIT_MANAGEMENT"/>
+            <column name="column_name" value="KIT_SHIPPING_DATE"/>
+            <column name="column_display" value="Kit shipped date"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_KIT_MANAGEMENT"/>
+            <column name="column_name" value="KIT_RECEIVED_DATE"/>
+            <column name="column_display" value="Kit received date"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_KIT_MANAGEMENT"/>
+            <column name="column_name" value="KIT_COMMENTS"/>
+            <column name="column_display" value="Comments"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="5"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

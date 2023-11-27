@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-8113_INVITAE_TAB_OSTEO2">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="OSTEO2_INVITAE_TAB"/>
+            <column name="column_display" value="Invitae"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="field_type" value="OSTEO2_INVITAE_TAB"/>
+            <column name="column_name" value="OSTEO2_INVITAE_REPORT_RECEIVED"/>
+            <column name="column_display" value="Date Report received from Invitae"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="field_type" value="OSTEO2_INVITAE_TAB"/>
+            <column name="column_name" value="OSTEO2_INVITAE_BAM_OPTION"/>
+            <column name="column_display" value="BAM file received from Invitae"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;REQUESTED&quot;,&quot;name&quot;:&quot;Requested&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="field_type" value="OSTEO2_INVITAE_TAB"/>
+            <column name="column_name" value="OSTEO2_INVITAE_BAM_RECEIVED"/>
+            <column name="column_display" value="Date BAM file received from Invitae"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="field_type" value="OSTEO2_INVITAE_TAB"/>
+            <column name="column_name" value="OSTEO2_INVITAE_NOTES"/>
+            <column name="column_display" value="Germline return notes field"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="4"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-8113_INVITAE_TAB_LMS">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='cmi-lms')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="LMS_INVITAE_TAB"/>
+            <column name="column_display" value="Invitae"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='cmi-lms')"></column>
+            <column name="field_type" value="LMS_INVITAE_TAB"/>
+            <column name="column_name" value="LMS_INVITAE_REPORT_RECEIVED"/>
+            <column name="column_display" value="Date Report received from Invitae"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='cmi-lms')"></column>
+            <column name="field_type" value="LMS_INVITAE_TAB"/>
+            <column name="column_name" value="LMS_INVITAE_BAM_OPTION"/>
+            <column name="column_display" value="BAM file received from Invitae"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;REQUESTED&quot;,&quot;name&quot;:&quot;Requested&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='cmi-lms')"></column>
+            <column name="field_type" value="LMS_INVITAE_TAB"/>
+            <column name="column_name" value="LMS_INVITAE_BAM_RECEIVED"/>
+            <column name="column_display" value="Date BAM file received from Invitae"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='cmi-lms')"></column>
+            <column name="field_type" value="LMS_INVITAE_TAB"/>
+            <column name="column_name" value="LMS_INVITAE_NOTES"/>
+            <column name="column_display" value="Germline return notes field"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="4"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-8808-8810_action_size" author="pegah">
+        <modifyDataType tableName="field_settings" columnName="actions" newDataType="VARCHAR(2000)"></modifyDataType>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_2_D_TGA_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'D_TGA_OS_SPECIFY' AND field_type = 'CONOTRUNCAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"D_TGA_OS_SPECIFY","fieldType":"CONOTRUNCAL_GROUP","columnDisplay":"Specify (d-TGA os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'D_TGA_OS' AND field_type = 'CONOTRUNCAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_2_DORV_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'DORV_OS_SPECIFY' AND field_type = 'CONOTRUNCAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"DORV_OS_SPECIFY","fieldType":"CONOTRUNCAL_GROUP","columnDisplay":"Specify (DORV, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'DORV_OS' AND field_type = 'CONOTRUNCAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_3_AVSD_OS" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'AVSD_OS_SPECIFY' AND field_type = 'AVSD_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"AVSD_OS_SPECIFY","fieldType":"AVSD_GROUP","columnDisplay":"Specify (AVSD, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'AVSD_OS' AND field_type = 'AVSD_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_5_LVOTO_VALVE_MALFORMATIONS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'LVOTO_VALVE_MALFORMATIONS_SPECIFY' AND field_type = 'LVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"LVOTO_VALVE_MALFORMATIONS_SPECIFY","fieldType":"LVOTO_GROUP","columnDisplay":"Specify (Aortic Valve Malformations, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'LVOTO_VALVE_MALFORMATIONS' AND field_type = 'LVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_5_LVOTO_MITRAL_MALFORMATION_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'LVOTO_MITRAL_MALFORMATION_SPECIFY' AND field_type = 'LVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"LVOTO_MITRAL_MALFORMATION_SPECIFY","fieldType":"LVOTO_GROUP","columnDisplay":"Specify (Mitral malformation, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'LVOTO_MITRAL_MALFORMATION' AND field_type = 'LVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_6_RVOTO_TRICUSPID_MALFORMATION_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'RVOTO_TRICUSPID_MALFORMATION_SPECIFY' AND field_type = 'RVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"RVOTO_TRICUSPID_MALFORMATION_SPECIFY","fieldType":"RVOTO_GROUP","columnDisplay":"Specify (Tricuspid malformation, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'RVOTO_TRICUSPID_MALFORMATION' AND field_type = 'RVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_6_RVOTO_PUL_VALVE_MALFORMATION_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'RVOTO_PUL_VALVE_MALFORMATION_SPECIFY' AND field_type = 'RVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"RVOTO_PUL_VALVE_MALFORMATION_SPECIFY","fieldType":"RVOTO_GROUP","columnDisplay":"Specify (Pulmonary valve malformation, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'RVOTO_PUL_VALVE_MALFORMATION' AND field_type = 'RVOTO_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_7_SEPTAL_VSD_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'SEPTAL_VSD_OS_SPECIFY' AND field_type = 'SEPTAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"SEPTAL_VSD_OS_SPECIFY","fieldType":"SEPTAL_GROUP","columnDisplay":"Specify (VSD os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'SEPTAL_VSD_OS' AND field_type = 'SEPTAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_7_SEPTAL_ASD_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'SEPTAL_ASD_OS_SPECIFY' AND field_type = 'SEPTAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"SEPTAL_ASD_OS_SPECIFY","fieldType":"SEPTAL_GROUP","columnDisplay":"Specify (ASD, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'SEPTAL_ASD_OS' AND field_type = 'SEPTAL_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_9_SINGLE_VENTRICLE_SV_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'SINGLE_VENTRICLE_SV_OS_SPECIFY' AND field_type = 'SINGLE_VENTRICLE_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"SINGLE_VENTRICLE_SV_OS_SPECIFY","fieldType":"SINGLE_VENTRICLE_GROUP","columnDisplay":"Specify (SV, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'SINGLE_VENTRICLE_SV_OS' AND field_type = 'SINGLE_VENTRICLE_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_10_AORTOPATHY_PULMONARY_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'AORTOPATHY_PULMONARY_OS_SPECIFY' AND field_type = 'AORTOPATHY_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"AORTOPATHY_PULMONARY_OS_SPECIFY","fieldType":"AORTOPATHY_GROUP","columnDisplay":"Specify (Pulmonary Artery Anomaly, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'AORTOPATHY_PULMONARY_OS' AND field_type = 'AORTOPATHY_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_11_CORONARY_ANOMALY_ANOMALY_OS_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET deleted = 1
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as temp  WHERE column_name = 'CORONARY_ANOMALY_ANOMALY_OS_SPECIFY' AND field_type = 'CORONARY_ANOMALY_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+
+
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"true","conditionalFieldSetting":{"columnName":"CORONARY_ANOMALY_ANOMALY_OS_SPECIFY","fieldType":"CORONARY_ANOMALY_GROUP","columnDisplay":"Specify (Coronary Anomaly, os)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'CORONARY_ANOMALY_ANOMALY_OS' AND field_type = 'CORONARY_ANOMALY_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CARDIAC_MALFORMATION_1_OTHER_AND_OTHER_HYPOPLASTIC_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER_HYPOPLASTIC","conditionalFieldSetting":{"columnName":"DIAGNOSIS_OTHER_HYPOPLASTIC_SPECIFY","fieldType":"DIAGNOSIS_GROUP","columnDisplay":"Specify (Other hypoplastic right ventricle or small right-sided structures)","displayType":"TEXTAREA","details":{"size":100}}},{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"DIAGNOSIS_OTHER_SPECIFY","fieldType":"DIAGNOSIS_GROUP","columnDisplay":"Specify (Other)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt;     0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'DIAGNOSIS' AND field_type = 'DIAGNOSIS_GROUP'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CLINICAL_NOTES_14_SURGICAL_HISTORY_OTHER_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"SURGICAL_HISTORY_OTHER_SPECIFY","fieldType":"GROUP_CLINICAL_NOTES","columnDisplay":"Specify (Other)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'SURGICAL_HISTORY' AND field_type = 'GROUP_CLINICAL_NOTES'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_CLINICAL_NOTES_16_FONTAN_TYPE_OTHER_SPECIFY" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"FONTAN_TYPE_OTHER_SPECIFY","fieldType":"GROUP_CLINICAL_NOTES","columnDisplay":"Specify (Other Fontan Type)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'FONTAN_TYPE' AND field_type = 'GROUP_CLINICAL_NOTES'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_2_KARYOTYPE_ABNORMAL" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"KARYOTYPE_ABNORMAL_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Karyotype Abnormal)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'KARYOTYPE_ABNORMAL' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_4_MICROARRAY_ABNORMAL" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"MICROARRAY_ABNORMAL_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Microarray Abnormal)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'MICROARRAY_ABNORMAL' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_5_GENE_SYNDROMES" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"GENE_SYNDROMES_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Single Gene Syndromes)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'GENE_SYNDROMES' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-8808_8810_CONDITIONAL_TEXT_GROUP_GENETIC_TESTING_7_CLINICAL_SYNDROMES" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{"type":"conditionalDisplay","condition":"OTHER","conditionalFieldSetting":{"columnName":"CLINICAL_SYNDROMES_OTHER_SPECIFY","fieldType":"GROUP_GENETIC_TESTING","columnDisplay":"Specify (Other Clinical Syndromes)","displayType":"TEXTAREA","details":{"size":100}}}]'
+            WHERE field_settings_id &lt;&gt; 0 AND field_settings_id IN
+            ( SELECT field_settings_id FROM (SELECT * FROM field_settings ) as tmp WHERE column_name = 'CLINICAL_SYNDROMES' AND field_type = 'GROUP_GENETIC_TESTING'
+            AND ddp_instance_id in (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = "singular"));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,30 @@
+get:
+  operationId: participantLookupByGuid
+  tags:
+    - Study Admin
+  summary: ParticipantLookup
+  description: |
+    Lookup a participant by participant guid (user guid).
+
+    It should return a single record with a participant info.
+    If nothing is found then error 404 is returned.
+
+    Note: requires study admin ID token.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+    - $ref: '../pepper.yml#/components/parameters/userGuid'
+  responses:
+    200:
+      description: an object with participant info
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/ParticipantsLookupResultItem'
+    404:
+      description: participant not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

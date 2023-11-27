@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="kit_label_prefix">
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="kit_label_prefix" type="VARCHAR(10)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="kit_label_length">
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="kit_label_length" type="INT">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

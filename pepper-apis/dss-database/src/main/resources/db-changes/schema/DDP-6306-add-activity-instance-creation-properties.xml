@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="evgeniipr" id="20210629-add-activity-instance-creation-properties">
+        <addColumn tableName="activity_instance_creation_action">
+            <column name="create_from_answer" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_question_stable_id" type="varchar(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="target_question_stable_id" type="varchar(100)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

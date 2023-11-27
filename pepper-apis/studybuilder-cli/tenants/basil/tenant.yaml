@@ -1,0 +1,108 @@
+tenant:
+  default_directory: Username-Password-Authentication
+
+roles:
+  - name: Basil Prism Admin
+    description: Basil Prism Admin
+    permissions: []
+
+rules:
+  - name: Check Admin Role
+    script: ./rules/check-admin-role.js
+    stage: login_success
+    enabled: true
+    order: 1
+#  - name: Force Email Verification
+#    script: ../force-email-verification.js
+#    enabled: true
+#    order: 2
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 3
+
+pages:
+  - name: login
+    html: ./pages/login.html
+    enabled: true
+  - name: password_reset
+    html: ./pages/password-reset.html
+    enabled: true
+
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
+
+emailTemplates:
+  - template: verify_email
+    body: ./emails/verify-email.html
+    from: Basil <basil@datadonationplatform.org>
+    subject: >-
+      {% if user.user_metadata.language == "es" %} [es] Basil Project: Confirm Your Email
+      {% else %} Basil Project: Confirm Your Email
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+  - template: reset_email
+    body: ./emails/change-password.html
+    from: Basil <basil@datadonationplatform.org>
+    resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
+    subject: >-
+      {% if user.user_metadata.language == 'es' %} [es] Basil Project: Password Reset
+      {% else %} Basil Project: Password Reset
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+
+clients:
+  - name: basil-app-client
+    app_type: spa
+    callbacks: [
+      '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/error',
+      '##BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    ]
+    web_origins: [
+      '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: basil
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
+  - name: basil-admin-client
+    app_type: spa
+    callbacks: [
+      '##BASE_URL##/admin-login-landing'
+      ##LOCALHOST_ADMIN_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/error',
+      '##BASE_URL##/admin-session-expired'
+      ##LOCALHOST_ADMIN_LOGOUTS##
+    ]
+    web_origins: [
+      '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: basil
+      isAdminClient: 'true'
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true

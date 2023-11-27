@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20221208-create-kit-action-table">
+        <createTable tableName="create_kit_event_action">
+            <column name="event_action_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="create_kit_event_action_pk"
+                             foreignKeyName="create_kit_event_action_fk"
+                             references="event_action(event_action_id)"/>
+            </column>
+            <column name="kit_type_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="create_kit_event_action_kit_type_fk"
+                             references="kit_type(kit_type_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

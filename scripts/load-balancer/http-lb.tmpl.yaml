@@ -1,0 +1,30 @@
+# This is the initial config for a http-to-https LB. To allow for simple
+# substituting of name, we have a placeholder here. Simply `cat` this through
+# `sed` to replace it. And load this config using the `--source` flag when
+# creating the LB.
+
+kind: compute#urlMap
+name: {{name}}
+defaultUrlRedirect:
+  redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
+  httpsRedirect: true
+  stripQuery: false
+
+# Tests help make sure the config behaves correctly. They are not part of the
+# actual LB. Run these tests using `gcloud compute url-maps validate`.
+#
+# This is commented out for now because the gcloud console doesn't yet support
+# editing these, so if we add these we'll be unable to edit the LB through the
+# UI. You can uncomment and validate locally to ensure configs work.
+#
+#tests:
+#- description: Test with no query parameters
+#  host: foobar
+#  path: /test/
+#  expectedOutputUrl: https://foobar/test/
+#  expectedRedirectResponseCode: 301
+#- description: Test with query parameters
+#  host: foobar
+#  path: /test/?parameter1=value1&parameter2=value2
+#  expectedOutputUrl: https://foobar/test/?parameter1=value1&parameter2=value2
+#  expectedRedirectResponseCode: 301

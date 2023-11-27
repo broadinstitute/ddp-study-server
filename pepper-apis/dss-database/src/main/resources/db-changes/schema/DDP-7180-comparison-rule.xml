@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="20220211-add-comparison-validation-type-table">
+        <createTable tableName="comparison_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="comparison_validation_pk"/>
+            </column>
+
+            <column name="reference_question_id" type="bigint" />
+
+            <column name="comparison_validation_type"
+                    type="enum('EQUAL', 'NOT_EQUAL', 'LESS', 'GREATER', 'LESS_OR_EQUAL', 'GREATER_OR_EQUAL')" />
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comparison_validation" baseColumnNames="validation_id"
+                                 referencedTableName="validation" referencedColumnNames="validation_id"
+                                 constraintName="comparison_validation_fk" onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseTableName="comparison_validation" baseColumnNames="reference_question_id"
+                                 referencedTableName="question" referencedColumnNames="question_id"
+                                 constraintName="comparison_validation_reference_question_id_fk" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220211-add-comparison-validation-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="COMPARISON"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPARISON')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Comparison requirement is not met."/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

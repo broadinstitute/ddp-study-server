@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-7746_singularParticipantFields">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_SECONDARY_RESULT"/>
+            <column name="column_display" value="Secondary Results Status"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;FOUND&quot;,&quot;name&quot;:&quot;Results found&quot;},{&quot;value&quot;:&quot;REFERRED&quot;,&quot;name&quot;:&quot;Patient referred to Genome Medical&quot;},{&quot;value&quot;:&quot;DECLINED&quot;,&quot;name&quot;:&quot;Patient declined results&quot;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_MR_STATUS"/>
+            <column name="column_display" value="Medical Record Status"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;INCOMPLETE&quot;,&quot;name&quot;:&quot;Incomplete&quot;},{&quot;value&quot;:&quot;COMPLETE&quot;,&quot;name&quot;:&quot;Complete&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_ENROLLMENT_STATUS"/>
+            <column name="column_display" value="Patient Enrollment Status"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;ENROLLED&quot;,&quot;name&quot;:&quot;Enrolled&quot;,&quot;default&quot;:true},{&quot;value&quot;:&quot;NOT_ENROLLED&quot;,&quot;name&quot;:&quot;No longer enrolled&quot;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_NOTES"/>
+            <column name="column_display" value="Patient Notes"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="4"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

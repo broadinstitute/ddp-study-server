@@ -1,0 +1,195 @@
+group AnswerDao;
+
+all_answers_select() ::= <<
+select ans.answer_id,
+       ans.answer_guid,
+       (select question_type_code from question_type where question_type_id = q.question_type_id) as question_type,
+       qsc.stable_id as question_stable_id,
+       aa.answer as aa_value,
+       ba.answer as ba_value,
+       ta.answer as ta_value,
+       aia.instance_guid as aia_instance_guid,
+       da.year   as da_year,
+       da.month  as da_month,
+       da.day    as da_day,
+       fd.file_upload_id as fa_upload_id,
+       fd.file_upload_guid as fa_upload_guid,
+       fd.file_name      as fa_file_name,
+       fd.file_size      as fa_file_size,
+       na.int_value      as na_int_value,
+       deca.decimal_value  as da_decimal_value,
+       na.int_value         as na_int_value,
+       po.picklist_option_stable_id as pa_option_stable_id,
+       po.value as po_value,
+       (select ppo.picklist_option_stable_id from picklist_nested_option as pno join picklist_option as ppo
+         on ppo.picklist_option_id = pno.parent_option_id
+         where pno.nested_option_id = po.picklist_option_id
+       ) as pa_parent_option_stable_id,
+       (select plg.group_stable_id from picklist_grouped_option pgo join picklist_group plg
+         on pgo.picklist_group_id = plg.picklist_group_id
+         where pgo.picklist_option_id = po.picklist_option_id
+       ) as pa_group_stable_id,
+       pa.detail_text                as pa_detail_text,
+       mo.matrix_option_stable_id as matrix_option_stable_id,
+       mg.group_stable_id         as matrix_group_stable_id,
+       mr.matrix_row_stable_id    as matrix_row_stable_id,
+       cq.allow_multiple   as ca_allow_multiple,
+       cq.unwrap_on_export as ca_unwrap_on_export,
+       ca.child_answer_id  as ca_child_answer_id,
+       ca.response_order   as ca_child_row,
+       cai.response_order,
+       (select display_order from composite_question__question
+         where parent_question_id = ans.question_id
+           and child_question_id = (select question_id from answer where answer_id = ca.child_answer_id)
+       ) as ca_child_col,
+       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0) as is_child_answer,
+       ai.activity_instance_guid
+  from answer as ans
+  join activity_instance as ai on ans.activity_instance_id = ai.activity_instance_id
+  join user as u on u.user_id = ai.participant_id
+  join question as q on q.question_id = ans.question_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  left join composite_question as cq on cq.question_id = q.question_id
+  left join numeric_question as nq on nq.question_id = q.question_id
+  left join decimal_question as dq on dq.question_id = q.question_id
+  left join agreement_answer as aa on aa.answer_id = ans.answer_id
+  left join boolean_answer as ba on ba.answer_id = ans.answer_id
+  left join text_answer as ta on ta.answer_id = ans.answer_id
+  left join activity_instance_select_answer as aia on aia.answer_id = ans.answer_id
+  left join date_answer as da on da.answer_id = ans.answer_id
+  left join file_answer as fa on fa.answer_id = ans.answer_id
+  left join file_upload as fd on fd.file_upload_id = fa.file_upload_id
+  left join numeric_answer as na on na.answer_id = ans.answer_id
+  left join decimal_answer as deca on deca.answer_id = ans.answer_id
+  left join picklist_option__answer as pa on pa.answer_id = ans.answer_id
+  left join picklist_option as po on po.picklist_option_id = pa.picklist_option_id
+  left join picklist_nested_option as npo on npo.nested_option_id = pa.picklist_option_id
+  left join picklist_option as ppo on ppo.picklist_option_id = npo.parent_option_id
+  left join matrix_answer as ma on ma.answer_id = ans.answer_id
+  left join matrix_option as mo on mo.matrix_option_id = ma.matrix_option_id
+  left join matrix_group as mg on mg.matrix_group_id = mo.matrix_group_id
+  left join matrix_row as mr on mr.matrix_row_id = ma.matrix_row_id
+  left join composite_answer_item as ca on ca.parent_answer_id = ans.answer_id
+  left join composite_answer_item as cai ON cai.child_answer_id = ans.answer_id
+>>
+
+// Important: sort the child answers first so we have them in memory when we get to the composite parent answers.
+all_answers_order_by() ::= <<
+order by is_child_answer desc, po.display_order asc, mr.display_order asc, mo.display_order asc, ca_child_row asc, ca_child_col asc
+>>
+
+findAnswerById() ::= <<
+<all_answers_select()>
+where ans.answer_id = :id
+   or ans.answer_id in (
+      select child_answer_id from composite_answer_item where parent_answer_id = :id)
+<all_answers_order_by()>
+>>
+
+findAnswerByGuid() ::= <<
+<all_answers_select()>
+where ans.answer_guid = :guid
+   or ans.answer_id in (
+      select child_answer_id from composite_answer_item where parent_answer_id = (
+             select answer_id from answer where answer_guid = :guid))
+<all_answers_order_by()>
+>>
+
+findAnswerByInstanceIdAndQuestionStableId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.activity_instance_id = :instanceId
+  and ((qsc.stable_id = :questionStableId and qsc.umbrella_study_id = act.study_id)
+      or ans.question_id in (
+         select cqq.child_question_id
+           from composite_question__question as cqq
+           join question as pq on pq.question_id = cqq.parent_question_id
+           join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
+          where pqsc.stable_id = :questionStableId
+            and pqsc.umbrella_study_id = act.study_id))
+<all_answers_order_by()>
+>>
+
+findAnswerByInstanceGuidAndQuestionStableId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.activity_instance_guid = :instanceGuid
+  and ((qsc.stable_id = :questionStableId and qsc.umbrella_study_id = act.study_id)
+      or ans.question_id in (
+         select cqq.child_question_id
+           from composite_question__question as cqq
+           join question as pq on pq.question_id = cqq.parent_question_id
+           join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
+          where pqsc.stable_id = :questionStableId
+            and pqsc.umbrella_study_id = act.study_id))
+<all_answers_order_by()>
+>>
+
+findAnswersByInstanceGuidAndQuestionStableId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.activity_instance_guid = :instanceGuid
+  and ((qsc.stable_id = :questionStableId and qsc.umbrella_study_id = act.study_id)
+      or ans.question_id in (
+         select cqq.child_question_id
+           from composite_question__question as cqq
+           join question as pq on pq.question_id = cqq.parent_question_id
+           join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
+          where pqsc.stable_id = :questionStableId
+            and pqsc.umbrella_study_id = act.study_id))
+order by cai.response_order
+>>
+
+findAnswerByInstanceGuidAndQuestionId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.activity_instance_guid = :instanceGuid
+  and ((q.question_id = :questionId and qsc.umbrella_study_id = act.study_id)
+      or ans.question_id in (
+         select cqq.child_question_id
+           from composite_question__question as cqq
+           join question as pq on pq.question_id = cqq.parent_question_id
+           join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
+          where pq.question_id = :questionId
+            and pqsc.umbrella_study_id = act.study_id))
+<all_answers_order_by()>
+>>
+
+findAnswerByUserIdLatestInstanceAndQuestionStableId() ::= <<
+<all_answers_select()>
+where ai.participant_id = :userId
+  and qsc.umbrella_study_id = :studyId
+  and qsc.stable_id = :questionStableId
+  and ai.created_at = (
+      select max(created_at)
+        from activity_instance
+       where participant_id = ai.participant_id
+         and study_activity_id = ai.study_activity_id)
+<all_answers_order_by()>
+>>
+
+findAnswerByUserGuidLatestInstanceAndQuestionStableId() ::= <<
+<all_answers_select()>
+where u.guid = :userGuid
+  and qsc.umbrella_study_id = :studyId
+  and qsc.stable_id = :questionStableId
+  and ai.created_at = (
+      select max(created_at)
+        from activity_instance
+       where participant_id = ai.participant_id
+         and study_activity_id = ai.study_activity_id)
+<all_answers_order_by()>
+>>
+
+findAnswerByUserIdLatestInstanceAndQuestionId() ::= <<
+<all_answers_select()>
+where ai.participant_id = :userId
+  and qsc.umbrella_study_id = :studyId
+  and q.question_id = :questionId
+  and ai.created_at = (
+      select max(created_at)
+        from activity_instance
+       where participant_id = ai.participant_id
+         and study_activity_id = ai.study_activity_id)
+<all_answers_order_by()>
+>>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="Dmitrii Eliseev" id="20220427-audit-table">
+        <createTable tableName="audit_trail">
+            <column name="audit_trail_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="audit_trail_pk"/>
+            </column>
+
+            <column name="study_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="operator_id" type="bigint" />
+            <column name="subject_user_id" type="bigint" />
+            <column name="activity_instance_id" type="bigint" />
+            <column name="answer_id" type="bigint" />
+
+            <column name="entity_type" type="enum('USER', 'ACTIVITY_INSTANCE', 'ANSWER', 'REPORT')" />
+            <column name="action_type" type="enum('CREATE', 'READ', 'UPDATE', 'DELETE', 'EXPORT')" />
+
+            <column name="time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+            <column name="operator_guid" type="varchar(50)" />
+            <column name="subject_user_guid" type="varchar(50)" />
+
+            <column name="description" type="text" />
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="study_id"
+                                 referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id"
+                                 constraintName="audit_trail_study_id_fk" />
+
+        <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="operator_id"
+                                 referencedTableName="user" referencedColumnNames="user_id"
+                                 constraintName="audit_trail_user_id_fk" onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="subject_user_id"
+                                 referencedTableName="user" referencedColumnNames="user_id"
+                                 constraintName="audit_trail_subject_user_id_fk" onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="activity_instance_id"
+                                 referencedTableName="activity_instance" referencedColumnNames="activity_instance_id"
+                                 constraintName="audit_trail_activity_instance_id_fk" onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="audit_trail_answer_id_fk" onDelete="SET NULL"/>
+    </changeSet>
+</databaseChangeLog>

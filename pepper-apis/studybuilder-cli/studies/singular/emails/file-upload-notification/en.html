@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+    <style>
+        table {
+            border-collapse: collapse;
+            max-width: 900px;
+            border: 1px solid #c3c3c3;
+            font-size: 17px;
+            margin: 0 auto;
+        }
+
+        td, th {
+            border: 1px solid #c3c3c3;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #f7f7f7;
+            font-weight: 600;
+        }
+    </style>
+    <title>Project Singular: File Upload Notification</title>
+</head>
+<body>
+<p>Dear Project Singular Study Staff,<br />
+    A Project Singular study participant recently uploaded a file or files. Please log in to DSM and access the participant's profile page to review and download the file(s) indicated below.<br /><br />
+</p>
+<table>
+    <tr>
+        <th>Participant ID</th>
+        <th>File Name</th>
+        <th>File Size</th>
+        <th>Date Uploaded</th>
+        <th>Time Uploaded</th>
+    </tr>
+
+    ${FILE_UPLOAD_RECORD}
+</table>
+</body>
+</html>

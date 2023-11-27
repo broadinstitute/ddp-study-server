@@ -1,0 +1,51 @@
+group MatrixQuestionDao;
+
+selectAllGroupOptionsRows() ::= <<
+select mo.matrix_option_id           as mo_matrix_option_id,
+       mo.matrix_option_stable_id    as mo_matrix_option_stable_id,
+       mo.option_label_template_id   as mo_option_label_template_id,
+       mo.tooltip_template_id        as mo_tooltip_template_id,
+       mo.matrix_group_id            as mo_matrix_group_id,
+       mo.is_exclusive               as mo_is_exclusive,
+       mo.display_order              as mo_display_order,
+       mo.revision_id                as mo_revision_id,
+       option_rev.start_date         as mo_revision_start_timestamp,
+       option_rev.end_date           as mo_revision_end_timestamp,
+       mg.matrix_group_id            as mg_matrix_group_id,
+       mg.group_stable_id            as mg_group_stable_id,
+       mg.name_template_id           as mg_name_template_id,
+       mg.display_order              as mg_display_order,
+       mg.revision_id                as mg_revision_id,
+       group_rev.start_date          as mg_revision_start_timestamp,
+       group_rev.end_date            as mg_revision_end_timestamp,
+       mr.matrix_row_id              as mr_matrix_row_id,
+       mr.matrix_row_stable_id       as mr_matrix_row_stable_id,
+       mr.row_label_template_id as mr_row_label_template_id,
+       mr.tooltip_template_id        as mr_tooltip_template_id,
+       mr.display_order              as mr_display_order,
+       mr.revision_id                as mr_revision_id,
+       row_rev.start_date            as mr_revision_start_timestamp,
+       row_rev.end_date              as mr_revision_end_timestamp,
+       mo.matrix_question_id         as question_id
+  from matrix_question mq
+  join question q on q.question_id = mq.question_id
+  left join matrix_option as mo on mo.matrix_question_id = mq.question_id
+  left join revision as option_rev on option_rev.revision_id = mo.revision_id
+  left join matrix_group as mg on mg.matrix_group_id = mo.matrix_group_id
+  left join revision as group_rev on group_rev.revision_id = mg.revision_id
+  left join matrix_row as mr on mr.matrix_question_id = mo.matrix_question_id
+  left join revision as row_rev on row_rev.revision_id = mr.revision_id
+>>
+
+queryAllOrderedGroupsOptionsRowsByQuestionIdsAndTimestamp() ::= <<
+<selectAllGroupOptionsRows()>
+ where mq.question_id in (\<questionIds>)
+   and option_rev.start_date \<= :timestamp
+   and (option_rev.end_date is null or :timestamp \< option_rev.end_date)
+   and row_rev.start_date \<= :timestamp
+   and (row_rev.end_date is null or :timestamp \< row_rev.end_date)
+   and (group_rev.revision_id is null or
+       (group_rev.start_date \<= :timestamp
+       and (group_rev.end_date is null or :timestamp \< group_rev.end_date)))
+ order by mr.display_order asc, mo.display_order, mg.display_order asc
+>>

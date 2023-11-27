@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20210401-new-enrollment-event-types">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="USER_STATUS_CHANGED"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="UPDATE_USER_STATUS"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210519-user-status-changed-trigger-table">
+        <createTable tableName="user_status_changed_trigger">
+            <column name="event_trigger_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="user_status_changed_trigger_pk"
+                             foreignKeyName="usct_event_trigger_fk"
+                             references="event_trigger(event_trigger_id)"/>
+            </column>
+            <column name="target_status_type_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="usct_enrollment_status_type_fk"
+                             references="enrollment_status_type(enrollment_status_type_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210521-update-user-status-action-table">
+        <createTable tableName="update_user_status_action">
+            <column name="event_action_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="update_user_status_action_pk"
+                             foreignKeyName="uusa_event_action_fk"
+                             references="event_action(event_action_id)"/>
+            </column>
+            <column name="target_status_type_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="uusa_enrollment_status_type_fk"
+                             references="enrollment_status_type(enrollment_status_type_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

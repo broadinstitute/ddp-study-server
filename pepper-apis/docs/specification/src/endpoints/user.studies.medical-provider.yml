@@ -30,7 +30,7 @@ parameters:
 
 patch:
   operationId: updateMedicalProvider
-  description: Updates the specified medical provider
+  summary: Update the specified medical provider
   tags:
     - Medical Providers
   requestBody:
@@ -43,7 +43,7 @@ patch:
 
 delete:
   operationId: deleteMedicalProvider
-  description: Deletes the specified saved medical provider for a participant
+  summary: Delete the specified medical provider for a participant
   tags:
     - Medical Providers
   responses:

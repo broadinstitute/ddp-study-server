@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Basil Project</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+</head>
+<body>
+
+<!--[if IE 8]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+<![endif]-->
+
+<!--[if lte IE 9]>
+<script src="https://cdn.auth0.com/js/base64.js"></script>
+<script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+<![endif]-->
+
+<script src="https://cdn.auth0.com/js/lock/11.30/lock.min.js"></script>
+
+<script>
+  var i18n = {};
+  i18n['en'] = {
+    fields: {
+      firstNamePlaceholder: "Your first name",
+      lastNamePlaceholder: "Your last name",
+      nonBlankHint: "Can't be blank"
+    },
+    success: {
+      forgotPassword: "If you have previously registered, please check your email to reset your password."
+    },
+    title: 'Welcome!',
+    titleLogin: 'Please Sign In',
+    titleSignUp: 'Create your account'
+  };
+  i18n['es'] = {
+    fields: {
+      firstNamePlaceholder: "[es] Your first name",
+      lastNamePlaceholder: "[es] Your last name",
+      nonBlankHint: "[es] Can't be blank"
+    },
+    success: {
+      forgotPassword: "[es] If you have previously registered, please check your email to reset your password."
+    },
+    title: '[es] Welcome!',
+    titleLogin: '[es] Please Sign In',
+    titleSignUp: '[es] Create your account'
+  };
+</script>
+
+<script>
+  // Decode utf8 characters properly
+  var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+  config.extraParams = config.extraParams || {};
+
+  var mode = config.extraParams.mode;
+  var connection = config.connection;
+  var loginHint = config.extraParams.login_hint;
+  var language = config.extraParams.language || 'en';
+
+  var title = i18n[language].title;
+  if (mode === 'login') {
+    title = i18n[language].titleLogin;
+  } else if (mode === 'signup') {
+    title = i18n[language].titleSignUp;
+  }
+
+  // See: https://auth0.com/docs/libraries/lock/v11/i18n
+  var dictionary = {
+    signupTitle: title,
+    success: {
+      forgotPassword: i18n[language].success.forgotPassword
+    },
+    title: title
+  };
+
+  // See: https://auth0.com/docs/libraries/lock/v11/configuration
+  var options = {
+    allowedConnections: connection ? [connection] : null,
+    allowForgotPassword: true,
+    allowLogin: true,
+    allowSignUp: true,
+    assetsUrl: config.assetsUrl,
+    auth: {
+      redirectUrl: config.callbackURL,
+      responseType: (config.internalOptions || {}).response_type ||
+        (config.callbackOnLocationHash ? 'token' : 'code'),
+      params: config.internalOptions
+    },
+    avatar: null,
+    closable: false,
+    configurationBaseUrl: config.clientConfigurationBaseUrl,
+    language: language,
+    languageDictionary: dictionary,
+    overrides: {
+      __tenant: config.auth0Tenant,
+      __token_issuer: '##LOGIN_DOMAIN##'
+    },
+    prefill: loginHint ? { email: loginHint, username: loginHint } : null,
+    rememberLastLogin: false,
+    theme: {
+      //logo:            'YOUR LOGO HERE',
+      //primaryColor:    colors.primary ? colors.primary : 'green'
+    }
+  };
+
+  if (mode === 'login') {
+    options.allowLogin = true;
+    options.allowSignUp = false;
+  } else if (mode === 'signup') {
+    options.allowLogin = false;
+    options.allowSignUp = true;
+  } else if (config.extraParams.showPasswordReset) {
+    options.allowSignUp = false;
+    options.allowLogin = false;
+  }
+
+  if (config.extraParams.show_password_reset) {
+    options.initialScreen = 'forgotPassword';
+  }
+
+  if (config.extraParams.user_email) {
+    options.prefill = {email: config.extraParams.user_email, username: config.extraParams.user_email};
+  }
+
+  if (mode === 'signup') {
+    options.additionalSignUpFields = [
+      {
+        name: "first_name",
+        placeholder: i18n[language].fields.firstNamePlaceholder,
+        validator: function(input) {
+          return {
+            valid: input != null && input.trim().length > 0,
+            hint: i18n[language].fields.nonBlankHint
+          };
+        }
+      },
+      {
+        name: "last_name",
+        placeholder: i18n[language].fields.lastNamePlaceholder,
+        validator: function(input) {
+          return {
+            valid: input != null && input.trim().length > 0,
+            hint: i18n[language].fields.nonBlankHint
+          }
+        }
+      }
+    ];
+  }
+
+  var lock = new Auth0Lock(config.clientID, config.auth0Domain, options);
+  lock.show();
+</script>
+</body>
+</html>

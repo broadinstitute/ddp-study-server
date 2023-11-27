@@ -1,5 +1,6 @@
 squid:
   image: broadinstitute/pepper-squid:latest
+  restart: unless-stopped
   volumes:
     - /app/squid.conf:/app/squid.conf
     - /var/log/squid:/var/log/squid

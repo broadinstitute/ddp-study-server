@@ -1,0 +1,85 @@
+tenant:
+  default_directory: ##DB_NAME##
+
+rules:
+  - name: Force email verification
+    script: ../force-email-verification.js
+    enabled: true
+    order: 1
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 2
+
+pages:
+  - name: login
+    html: ./pages/login.html
+    enabled: true
+  - name: password_reset
+    html: ./pages/password_reset.html
+    enabled: true
+
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
+
+emailTemplates:
+  - template: reset_email
+    body: ./emails/change_password.html
+    from: Rare Genomes Project <##STUDY_EMAIL##>
+    subject: >-
+      {% if user.user_metadata.language == "es" %}
+      Cambie su contraseña
+      {% else %}
+      Reset Your Password
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+  - template: verify_email
+    body: ./emails/verify_email.html
+    from: Rare Genomes Project <##STUDY_EMAIL##>
+    resultUrl: '{{ application.callback_domain }}/email-verified-callback'
+    subject: >-
+      {% if user.user_metadata.language == "es" %}
+      Confirme su cuenta en el Proyecto Genomas Raros
+      {% else %}
+      Confirm your Rare Genomes Project Account
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+
+# NOTE: client names must match what's in Auth0's dashboard, otherwise deploy
+# will create new clients. Everytime deploy happens, client configurations here
+# will overwrite what's in Auth0. If there are additional urls not in here then
+# those need to be added back manually. Other settings not configured here will
+# also need to be configured manually.
+clients:
+  - name: rgp-angular-client
+    app_type: spa
+    callbacks: [
+      '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/error',
+      '##BASE_URL##/session-expired',
+      '##BASE_URL##/email-verification-required'
+      ##LOCALHOST_LOGOUTS##
+    ]
+    web_origins: [
+      '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: RGP
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true

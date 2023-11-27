@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-6574_addColumn-EVENT_QUEUE" author="simone">
+        <addColumn tableName="EVENT_QUEUE">
+            <column name="DDP_PARTICIPANT_ID" type="VARCHAR(200)" afterColumn="DSM_KIT_REQUEST_ID">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-6574_dropNotNull-EVENT_QUEUE">
+        <dropNotNullConstraint columnDataType="INT(11)"
+                               columnName="DSM_KIT_REQUEST_ID"
+                               tableName="EVENT_QUEUE"/>
+    </changeSet>
+</databaseChangeLog>

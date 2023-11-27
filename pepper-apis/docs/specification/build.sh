@@ -10,7 +10,7 @@ usage() {
 
 Usage: $0 COMMAND [OPTIONS]
 
-Builds the Pepper API documentation
+Builds the DSS API documentation
 
 Commands:
     help              Print usage
@@ -18,6 +18,7 @@ Commands:
     docker            Builds the docker image for serving the documentation
 EOM
 }
+
 
 usage_docker() {
   cat <<-EOM
@@ -40,10 +41,10 @@ build_docs() {
     rm -rf "${BUILD}" || true
     mkdir -p "${BUILD}"
 
-    $(npm bin)/swagger-cli bundle --type json --outfile "${BUILD}/pepper.json" "${SRC}/pepper.yml"
-    $(npm bin)/swagger-cli bundle --type yaml --outfile ${BUILD}/pepper.yaml  "${SRC}/pepper.yml"
-    $(npm bin)/speccy lint --rules="rules.yml" "${BUILD}/pepper.json"
-    $(npm bin)/redoc-cli bundle --output "${BUILD}/pepper.html" "${SRC}/pepper.yml"
+    npm run lint
+    npm run generate-bundle
+    npm run generate-json-bundle
+    npm run generate-docs
 }
 
 build_docker() {

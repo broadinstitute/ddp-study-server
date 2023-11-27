@@ -1,0 +1,161 @@
+{
+  "description": "Calculates score for Circadia study",
+  "processors": [
+    {
+      "script": {
+        "id": "calculate-score",
+        "params": {
+          "points": {
+            "WHAT_TIME_GET_UP_EARLY_QUESTION": {
+              "INTERVAL_1": 5,
+              "INTERVAL_2": 4,
+              "INTERVAL_3": 3,
+              "INTERVAL_4": 2,
+              "INTERVAL_5": 1
+            },
+            "WHAT_TIME_GO_TO_BED_QUESTION": {
+              "INTERVAL_1": 5,
+              "INTERVAL_2": 4,
+              "INTERVAL_3": 3,
+              "INTERVAL_4": 2,
+              "INTERVAL_5": 1
+            },
+            "DEPEND_ON_ALARM_CLOCK_QUESTION": {
+              "NOT_AT_ALL": 4,
+              "SLIGHTLY": 3,
+              "SOMEWHAT": 2,
+              "VERY_MUCH": 1
+            },
+            "HOW_EASY_WAKING_UP_QUESTION": {
+              "VERY_EASY": 4,
+              "FAIRLY_EASY": 3,
+              "SOMEWHAT_DIFFICULT": 2,
+              "VERY_DIFFICULT": 1
+            },
+            "ALERT_QUESTION": {
+              "VERY": 4,
+              "FAIRLY": 3,
+              "SLIGHTLY": 2,
+              "NOT_AT_ALL": 1
+            },
+            "HUNGRY_QUESTION": {
+              "VERY": 4,
+              "FAIRLY": 3,
+              "SLIGHTLY": 2,
+              "NOT_AT_ALL": 1
+            },
+            "FIRST_HALF_FEELING_QUESTION": {
+              "VERY_REFRESHED": 4,
+              "FAIRLY_REFRESHED": 3,
+              "FAIRLY_TIRED": 2,
+              "VERY_TIRED": 1
+            },
+            "NO_COMMITMENTS_QUESTION": {
+              "SELDOM_OR_NEVER_LATER": 4,
+              "LESS_THAN_ONE_HOUR_LATER": 3,
+              "ONE_TWO_HOURS_LATER": 2,
+              "MORE_THAN_TWO_HOURS_LATER": 1
+            },
+            "PHYSICAL_EXERCISE_7_8_AM_QUESTION": {
+              "GOOD_FORM": 4,
+              "REASONABLE_FORM": 3,
+              "DIFFICULT": 2,
+              "VERY_DIFFICULT": 1
+            },
+            "AT_WHAT_TIME_FEEL_TIRED_QUESTION": {
+              "INTERVAL_1": 5,
+              "INTERVAL_2": 4,
+              "INTERVAL_3": 3,
+              "INTERVAL_4": 2,
+              "INTERVAL_5": 1
+            },
+            "PERFORMANCE_AT_TEST_QUESTION": {
+              "INTERVAL_1": 6,
+              "INTERVAL_2": 4,
+              "INTERVAL_3": 2,
+              "INTERVAL_4": 0
+            },
+            "GO_TO_BED_AT_11_PM_QUESTION": {
+              "VERY_TIRED": 5,
+              "FAIRLY_TIRED": 3,
+              "A_LITTLE_TIRED": 2,
+              "NOT_AT_ALL_TIRED": 0
+            },
+            "GO_TO_BED_LATER_THAN_USUAL": {
+              "USUAL_NOT_FALL_ASLEEP": 4,
+              "USUAL_DOZE_THEREAFTER": 3,
+              "USUAL_FALL_ASLEEP": 2,
+              "LATER_THAN_USUAL": 1
+            },
+            "REMAIN_AWAKE_QUESTION": {
+              "SLEEP_BEFORE_WATCH": 4,
+              "TAKE_A_GOOD_SLEEP": 3,
+              "TAKE_A_NAP": 2,
+              "NOT_GO_TO_BED": 1
+            },
+            "PHYSICAL_WORK_QUESTION": {
+              "INTERVAL_1": 4,
+              "INTERVAL_2": 3,
+              "INTERVAL_3": 2,
+              "INTERVAL_4": 1
+            },
+            "PHYSICAL_EXERCISE_10_11_PM_QUESTION": {
+              "VERY_DIFFICULT": 4,
+              "DIFFICULT": 3,
+              "REASONABLE_FORM": 2,
+              "GOOD_FORM": 1
+            },
+            "WORK_HOURS_QUESTION": {
+              "INTERVAL_1": 5,
+              "INTERVAL_2": 4,
+              "INTERVAL_3": 3,
+              "INTERVAL_4": 2,
+              "INTERVAL_5": 1
+            },
+            "AT_WHAT_TIME_FEEL_BEST_QUESTION": {
+              "INTERVAL_1": 5,
+              "INTERVAL_2": 4,
+              "INTERVAL_3": 3,
+              "INTERVAL_4": 2,
+              "INTERVAL_5": 1
+            },
+            "MORNING_EVENING_TYPES_QUESTION": {
+              "MORNING_TYPE": 6,
+              "MORE_MORNING_TYPE": 4,
+              "MORE_EVENING_TYPE": 2,
+              "EVENING_TYPE": 1
+            }
+          },
+          "scoreKey": "meqScore",
+          "resultsKey": "meqChronotype",
+          "results": [
+            {
+              "upTo": 15,
+              "result": "unknown"
+            },
+            {
+              "upTo": 30,
+              "result": "definitely evening type"
+            },
+            {
+              "upTo": 41,
+              "result": "moderately evening type"
+            },
+            {
+              "upTo": 58,
+              "result": "intermediate (neither) type"
+            },
+            {
+              "upTo": 69,
+              "result": "moderately morning type"
+            },
+            {
+              "upTo": 86,
+              "result": "definitely morning type"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="nghurtch" id="AT_MISSING_MIGRATED_FIELDS">
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_DATE_CONSENTED"/>
+            <column name="column_display" value="GENOME_STUDY_DATE_CONSENTED"/>
+            <column name="display_type" value="DATE"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_CONSENT"/>
+            <column name="column_display" value="GENOME_STUDY_CONSENT"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+
+    </changeSet>
+</databaseChangeLog>

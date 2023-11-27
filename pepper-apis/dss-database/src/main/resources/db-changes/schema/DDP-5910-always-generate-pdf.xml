@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20210702-add-always-generate-column-to-notification-attachment">
+        <addColumn tableName="user_notification_pdf">
+            <column name="always_generate" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+
+        <dropColumn tableName="user_notification_pdf"
+                    columnName="generate_if_missing"/>
+
+        <addNotNullConstraint tableName="user_notification_pdf" columnName="always_generate" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,53 @@
+post:
+  operationId: participantsLookup
+  tags:
+    - Study Admin
+  summary: ParticipantsLookup
+  description: |
+    Given query with a single search term, lookup participants that matches
+    this search term. The term will be used to match against information such
+    as participant's identifiers, name, email, invitations, and proxy (if
+    any). If the query is empty, then no results will be returned.
+
+    Currently, this endpoint limits the max number of results it will return.
+    If not all matches are returned, then the `totalCount` will indicate how
+    many matches was actually found. In this case, clients should recommend
+    that the user refine their search to be more specify.
+
+    Note: requires study admin ID token.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - query
+          properties:
+            query:
+              description: The search term
+              type: string
+  responses:
+    200:
+      description: The matching participant results
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - totalCount
+              - results
+            properties:
+              totalCount:
+                description: Total number of results found
+                type: integer
+                minimum: 0
+              results:
+                description: List of participants
+                type: array
+                items:
+                  $ref: '../pepper.yml#/components/schemas/ParticipantsLookupResultItem'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

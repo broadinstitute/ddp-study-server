@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="bskinner" id="add-boolean-render-mode-type">
+        <createTable tableName="boolean_render_mode">
+            <column name="boolean_render_mode_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="boolean_render_mode_pk"/>
+            </column>
+            <column name="boolean_render_mode_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="boolean_render_mode_code_uk"/>
+            </column>
+        </createTable>
+
+        <insert tableName="boolean_render_mode">
+            <column name="boolean_render_mode_code" value="RADIO_BUTTONS"/>
+        </insert>
+        
+        <insert tableName="boolean_render_mode">
+            <column name="boolean_render_mode_code" value="CHECKBOX"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

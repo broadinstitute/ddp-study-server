@@ -1,11 +1,18 @@
-openapi: 3.0.0
-servers: []
+openapi: 3.0.3
+servers:
+  - url: https://pepper-dev.datadonationplatform.org/pepper/v1
+    description: Development server (uses test data)
+  - url: https://pepper.datadonationplatform.org/pepper/v1
+    description: Production server (uses real data)
 info:
   description: 'Pepper API specification'
-  version: 1.9.8
+  version: 'v1.27-709-g45148cd87'
   title: Pepper
   contact:
     email: info@datadonationplatform.org
+  license:
+    name: BSD 3-Clause (Revised)
+    url: https://raw.githubusercontent.com/broadinstitute/ddp-study-server/develop/LICENSE
 tags:
   - name: Admin
     description: administrative & internal calls
@@ -64,10 +71,16 @@ paths:
     $ref: 'endpoints/admin.studies.invitation-lookup.yml'
   /admin/studies/{study}/participants:
     $ref: 'endpoints/admin.studies.participants.yml'
+  /admin/studies/{study}/participants/{user}:
+    $ref: 'endpoints/admin.studies.participant.yml'
+  /admin/studies/{study}/participants-lookup:
+    $ref: 'endpoints/admin.studies.participants-lookup.yml'
   /admin/studies/{study}/user/{user}/login-account:
     $ref: 'endpoints/admin.studies.user.login-account.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
+  /studies/{study}/audit:
+    $ref: 'endpoints/studies.audit.yml'
   /studies/{study}/invitation-check:
     $ref: 'endpoints/studies.invitation-check.yml'
   /studies/{study}/invitation-verify:
@@ -78,8 +91,14 @@ paths:
     $ref: 'endpoints/studies.suggestions.drugs.yml'
   /studies/{study}/suggestions/cancers:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
+  /user/{user}/studies/{study}/activity-instance-select/{stableId}:
+    $ref: 'endpoints/user.studies.activity-instance-select.yml'
+  /user/{user}/studies/{study}/activities/{instance}/questions/{questionStableId}/options:
+     $ref: 'endpoints/user.studies.activity.instance.question-options.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
+  /user:
+    $ref: 'endpoints/users.yml'
   /user/{user}:
     $ref: 'endpoints/user.yml'
   /user/{user}/profile:
@@ -108,6 +127,8 @@ paths:
     $ref: 'endpoints/user.studies.activity.answers.yml'
   /user/{user}/studies/{study}/activities/{instance}/uploads:
     $ref: 'endpoints/user.studies.activity.uploads.yml'
+  /user/{user}/studies/{study}/activities/{instance}/questions/{questionStableId}/download:
+    $ref: 'endpoints/user.studies.activity.download.yml'
   /user/{user}/studies/{study}/consents:
     $ref: 'endpoints/user.studies.consents.yml'
   /user/{user}/studies/{study}/consents/{instance}:

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20210711-workflow-study-redirect-state-table">
+        <createTable tableName="workflow_study_redirect_state">
+            <column name="workflow_state_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="workflow_study_redirect_state_pk"
+                             references="workflow_state(workflow_state_id)" foreignKeyName="workflow_study_redirect_state_workflow_state_fk"/>
+            </column>
+            <column name="study_guid" type="varchar(10)">
+            </column>
+            <column name="study_name" type="varchar(100)">
+            </column>
+            <column name="redirect_url" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="workflow_study_redirect_state" columnNames="study_guid, redirect_url"
+                             constraintName="workflow_study_redirect_state_uk"/>
+    </changeSet>
+
+    <changeSet author="sampath" id="20210711-add-study-redirect-workflow">
+        <insert tableName="workflow_state_type">
+            <column name="workflow_state_type_code" value="STUDY_REDIRECT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

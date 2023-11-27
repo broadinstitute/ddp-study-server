@@ -14,6 +14,7 @@ ActivityAnswersPatchResponse:
         type: object
         required:
           - answers
+          - equations
           - blockVisibility
           - validationFailures
         properties:
@@ -32,21 +33,35 @@ ActivityAnswersPatchResponse:
                 answerGuid:
                   type: string
                   description: identifier for the answer
+          equations:
+            type: array
+            description: list of computed equation values
+            items:
+              type: object
+              required:
+                - stableId
+                - values
+              properties:
+                stableId:
+                  type: string
+                  description: equation question identifier that the answer is for (in case of composite, this is a child question id)
+                values:
+                  type: array
+                  description: the real computed values (in case of composite can have multiple values)
+                  items:
+                    $ref: 'schemas.yml#/DecimalNumber'
           blockVisibility:
             type: array
             description: list of updated block visibilities
             items:
-              type: object
-              required:
-                - blockGuid
-                - shown
-              properties:
-                blockGuid:
-                  type: string
-                  description: identifier for the block
-                shown:
-                  type: boolean
-                  description: whether block is shown or not
+              $ref: '../pepper.yml#/components/schemas/Block.Visibility'
+          compositeVisibility:
+            type: array
+            nullable: true
+            description: |
+              list of visibility updates for composite questions
+            items:
+              $ref: '../pepper.yml#/components/schemas/Composite.Visibility'
           validationFailures:
             type: array
             items:
@@ -111,6 +126,20 @@ ActivitySummaryResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Activity.Summary'
+ActivityInstanceDeletionResponse:
+  description: The activity was successfully deleted and return list of updated parent instance block visibilities
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - blockVisibility
+        properties:
+          blockVisibility:
+            type: array
+            description: list of updated parent instance block visibilities
+            items:
+              $ref: '../pepper.yml#/components/schemas/Block.Visibility'
 ActivityInstanceNotFoundResponse:
   description: the requested activity instance for user and study does not exist
   content:
@@ -202,12 +231,6 @@ CancerSuggestionResponse:
             description: a list of `Cancer` suggestions with a possible list of substring matches of the query within the cancer name
             items:
               $ref: '../pepper.yml#/components/schemas/Suggestion.Cancer'
-ConsentErrorResponse:
-  description: failed to
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.Consent'
 ErrorResponse:
   description: general server error
   content:
@@ -316,14 +339,14 @@ StudyDetailResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Study.Detail'
-StudyWorkflowsResponse:
-  description: workflows and allowed statuses for a study
+StudyAuditResponse:
+  description: audit information for a study
   content:
     application/json:
       schema:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Study.Workflow'
+          $ref: '../pepper.yml#/components/schemas/Study.Audit'
 StudySummaryResponse:
   description: summary information for a list of studies
   content:
@@ -480,3 +503,59 @@ StatisticsResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Statistics'
+ActivityInstanceSelectAnswersResponse:
+  description: a list of activity instance suggestions
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - results
+        properties:
+          results:
+            description: A list of Activity Instances available for selection for the given Activity Instance Select question
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/Suggestion.ActivityInstance'
+RemoteAutoCompleteOptionsResponse:
+  description: a list of pick list options for a given query string
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - results
+        properties:
+          results:
+            description: A list of of pick list options
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/PicklistOption'
+UserCreationResponse:
+  description: details about the created user
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - guid
+          - hruid
+          - email
+          - center
+          - profile
+        properties:
+          guid:
+            type: string
+            format: guid
+          hruid:
+            type: string
+            format: guid
+          email:
+            type: string
+            format: email
+          center:
+            type: string
+            format: guid
+            nullable: true
+          profile:
+            $ref: 'schemas.yml#/ProfileModel'

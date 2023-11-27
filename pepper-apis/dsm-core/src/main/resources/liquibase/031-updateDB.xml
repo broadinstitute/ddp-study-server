@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-4318_coverPDF">
+        <createTable tableName="instance_settings">
+            <column autoIncrement="true" name="instance_settings_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mr_cover_pdf" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone" id="DDP-4374_pdfDownloadRole">
+        <insert tableName="instance_role">
+            <column name="name" value="pdf_download"></column>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="DDP-4374_pediatricConsent">
+        <addColumn tableName="instance_settings">
+            <column name="kit_behavior_change" type="VARCHAR(1000)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="diane" id="12122019">
+        <insert tableName="access_role">
+            <column name="name" value="drug_list_edit"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="03062020">
+        <addColumn tableName="drug_list">
+            <column name="changed_by" type="VARCHAR(45)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="03092020">
+        <renameColumn columnDataType="BIGINT(20)"
+                      newColumnName="last_changed"
+                      oldColumnName="date_updated"
+                      tableName="drug_list"/>
+    </changeSet>
+    <changeSet author="simone" id="03182020">
+        <insert tableName="bookmark">
+            <column name="instance" value="mbc_hospital_migration"/>
+            <column name="value" value="0"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

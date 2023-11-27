@@ -8,6 +8,7 @@ parameters:
 
 post:
   operationId: verifyMailingAddress
+  summary: Check a mailing address for deliverability
   description: verify address for a participant to ensure deliverability
   tags:
     - Mailing Address

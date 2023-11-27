@@ -32,7 +32,7 @@ Desktop.ini
 # Misc
 *.log
 *.logs
-
+*.csv
 pepper-angular/ddp-angio/src/assets/config/ddpConfig\.js
 
 # Xcode
@@ -102,7 +102,17 @@ tcell/logs/
 /cloud-functions/cf-emailer/target/
 /cloud-functions/cf-study-contact/target/
 
+
 # ignore any potential config files with secrets,
 # except study-builder configuration files
 *.conf
-!study-builder/**/*.conf
+!pepper-apis/studybuilder-cli/**/*.conf
+!cloud-functions/cf-dsm-file-scanner/src/main/resources/container/*
+
+/appengine/deploy/
+
+# Output and target directories
+output/
+target/
+output-config/
+output-build-config/

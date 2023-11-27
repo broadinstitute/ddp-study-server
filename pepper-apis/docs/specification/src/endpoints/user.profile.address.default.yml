@@ -8,7 +8,7 @@ parameters:
 
 get:
   operationId: getDefaultMailingAddress
-  description: fetch the default mailing address for a participant 
+  summary: Get the default mailing address for a participant
   tags:
     - Mailing Address
   responses:
@@ -19,7 +19,7 @@ get:
 
 post:
   operationId: setDefaultMailingAddress
-  description: set the new default mailing address for a participant
+  summary: Set the default mailing address for a participant
   tags:
     - Mailing Address
   requestBody:

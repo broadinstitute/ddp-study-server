@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-8249_singularParticipantFields">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_MR_UPLOADED"/>
+            <column name="column_display" value="Medical Record Uploaded"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_DATE_MR_UPLOADED"/>
+            <column name="column_display" value="Date Record Uploaded"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SINGULAR_MR_AUDIT"/>
+            <column name="column_display" value="Medical Release Audit"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;VERIFIED&quot;,&quot;name&quot;:&quot;Verified&quot;},{&quot;value&quot;:&quot;IN_PROGRESS&quot;,&quot;name&quot;:&quot;In Progress&quot;},{&quot;value&quot;:&quot;DOES_NOT_CONSENT&quot;,&quot;name&quot;:&quot;Does Not Consent&quot;},{&quot;value&quot;:&quot;UNABLE_TO_VERIFY&quot;,&quot;name&quot;:&quot;Unable to Verify&quot;}]"/>
+            <column name="order_number" value="7"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="DDP-8249_updateOrder_SINGULAR_MR_STATUS" author="Simone">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 4
+            WHERE column_name = 'SINGULAR_MR_STATUS'
+        </sql>
+    </changeSet>
+
+    <changeSet id="DDP-8249_updateOrder_SINGULAR_ENROLLMENT_STATUS" author="Simone">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 5
+            WHERE column_name = 'SINGULAR_ENROLLMENT_STATUS'
+        </sql>
+    </changeSet>
+
+    <changeSet id="DDP-8249_updateOrder_SINGULAR_NOTES" author="Simone">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 6
+            WHERE column_name = 'SINGULAR_NOTES'
+        </sql>
+    </changeSet>
+
+    <changeSet id="DDP-8249_updateOrder_SINGULAR_CONSENT_AUDIT" author="Simone">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 8
+            WHERE column_name = 'SINGULAR_CONSENT_AUDIT'
+        </sql>
+    </changeSet>
+</databaseChangeLog>

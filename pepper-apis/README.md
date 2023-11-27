@@ -20,7 +20,7 @@ install the `google-cloud-sdk` cask. Otherwise, follow the instructions
 [here][gcloud-install]. Once the SDK is installed, we can install the emulator:
 
 ```bash
-gcloud components install beta --quiet
+gcloud components install --quiet
 gcloud components install pubsub-emulator --quiet
 gcloud components update --quiet
 ```
@@ -92,11 +92,11 @@ database, which is the default.
 2. Render the configuration file (if you're on Linux, prepend `sudo` because this invokes docker)
     * `./api-build.sh v1 dev . --config`
 3. Build the project
-    * `mvn -DskipTests clean install`
-    * `mvn -DskipTests -f parent-pom.xml install`
+    * `mvn -DskipTests clean install -pl dss-server -am`
+   
 4. Copy the command-line flags from `output-build-config/local-java-props.txt`
 5. Run the JAR
-    * `java [the copied cmd line flags] -jar ./target/DataDonationPlatform.jar`
+    * `java [the copied cmd line flags] -jar ./dss-server/target/DataDonationPlatform.jar`
 6. Make sure the server has started
     * `curl -i http://localhost:5555`
     * You'll get a `404` but at least it verifies the server is responding
@@ -109,26 +109,21 @@ The `api-build.sh` script helps with a few automation steps. Try the `--help` fl
 
 ### Options when building backend container
 * `DEBUG` when set to `true`, will open up port 9786 and launch the backend with debugging enabled
-* `NGINX_PROXIED_HOST` controls the IP that nginx will proxy to.  Use this to run nginx locally
-via docker and have nginx proxy your non-dockered locally running instance of the backend.  Use
-this in conjunction with `ifconfig` magic to reserve a fixed IP
-address locally and have nginx proxy to your locally deployed java app.  For example:
-```sh
-$ sudo ifconfig lo0 alias 192.168.1.100/24
-$ export NGINX_PROXIED_HOST=192.168.1.100
-```
 
 ### Running tests and main apps (DataDonationPlatform.java and Housekeeping.java) in intellij and mvn
 After running `api-build.sh` (you ran that already, right?), take a look at the `output-build-config/local-java-props.txt`
 file.  This file contains a bunch of `-D` vars that you'll need to put into either your
-intellij run/debug profiles or your command-line `mvn` command.
+intellij run/debug profiles or your command-line `mvn` command.  When you use file paths from the `local-java-props.txt` file,
+replace any relative paths with absolute paths.  Otherwise you may see errors about `java.lang.NoClassDefFoundError: Could not initialize class org.broadinstitute.ddp.util.ConfigManager`
+due to static initializers failing to find necessary config values.
 
 Before starting the tests or running the apps, you need to setup the coordinates for the pubsub emulator:
 ```
 $ export PUBSUB_EMULATOR_HOST=localhost:8442
 ```
 
-The you can run the tests:
+The you can run the tests on the command line.  Copy the `-D` vars from `output-build-config/local-java-props.txt` into the shell command,
+replacing relative paths with the full paths on your machine.
 ```sh
 $ mvn test [pile of -D vars copy-pasted from output-build-config/local-java-props.txt]
 ```
@@ -159,16 +154,9 @@ In order to send a request to the service, you must obtain an `idToken` first
 
 ## Databases
 We track schema changes via liquibase, use mysql for local database, and google
-cloudsql/mysql for our CI dev/test/staging/prod environments. We used to use
-hsql for local in-memory database. If you're using that and want to connect to
-hsqldb locally, see [docs/hsqldb-on-cli.md](docs/hsqldb-on-cli.md).
+cloudsql/mysql for our CI dev/test/staging/prod environments. 
 
 ### Setting up a local mysql database
-Local mysql databases have some advantages over hsqldb:
-
-1. They more closely resemble what you'll find in dev/test/staging/prod
-2. You can connect to them with sql clients, which you can't do easily with disposable hsqldb
-
 Beware that our cloudSQL databases require SSL, and if you don't enable SSL on your local mysql instance, you may
 end up with surprises during CI builds. If you still want to disable SSL locally, append the following parameter to the
 JDBC connection string (see the details on how to set it below):
@@ -381,4 +369,21 @@ added to the JWT without requiring a live connection between auth0 and a deploye
 instance of pepper.
 
 # Housekeeping
-TBD...
+You would need to run Housekeeping to send out emails and create the PDFs. 
+
+You need to create th schema first (name does not matter)
+```sql
+ CREATE DATABASE housekeepinglocal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+Grant access to your user
+```sql
+GRANT ALL ON housekeepinglocal.* TO '[your user]'@'%';
+```
+Add the following line to your `testing-inmemorydb.conf` config
+```
+"housekeepingDbUrl": "jdbc:mysql://127.0.0.1:3306/housekeepinglocal?user=[your user]&password=[your password]&serverTimezone=UTC",
+```
+Run Housekeeping.java with the following vm environment
+```shell
+-Dconfig.file=output-build-config/testing-inmemorydb.conf
+```

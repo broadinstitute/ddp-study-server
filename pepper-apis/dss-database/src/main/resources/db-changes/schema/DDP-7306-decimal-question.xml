@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-question-table">
+        <createTable tableName="decimal_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="decimal_question_pk"/>
+            </column>
+            <column name="fractional_digits" type="bigint" />
+            <column name="placeholder_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="decimal_question_placeholder_template_fk"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="decimal_question" baseColumnNames="question_id"
+                                 referencedTableName="question" referencedColumnNames="question_id"
+                                 constraintName="decimal_question_question_fk" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-answer-table">
+        <createTable tableName="decimal_answer">
+            <column name="answer_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="decimal_answer_pk"/>
+            </column>
+            <column name="decimal_value" type="decimal(65,15)"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="decimal_answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="decimal_answer_answer_fk" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-range-validation-table">
+        <createTable tableName="decimal_range_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="decimal_range_validation_pk"/>
+            </column>
+            <column name="min" type="decimal(65,15)"/>
+            <column name="max" type="decimal(65,15)"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="decimal_range_validation" baseColumnNames="validation_id"
+                                 referencedTableName="validation" referencedColumnNames="validation_id"
+                                 constraintName="decimal_range_validation_fk" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-question-type">
+        <insert tableName="question_type">
+            <column name="question_type_code" value="DECIMAL"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-range-validation-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="DECIMAL_RANGE"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DECIMAL_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Minimum or maximum number requirement is not met."/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -14,7 +14,7 @@ parameters:
 
 get:
   operationId: getTemporaryMailingAddress
-  summary: fetch the temporary mailing address for a participant
+  summary: Get a participant's temporary mailing address
   description: Fetches the current temporary mailing address for a given participant and study, if one exists.
   tags:
     - Mailing Address
@@ -26,7 +26,7 @@ get:
 
 put:
   operationId: updateTemporaryMailingAddress
-  description: update a participant's temporary mailing address
+  summary: Update a participant's temporary mailing address
   tags:
     - Mailing Address
   requestBody:
@@ -39,7 +39,7 @@ put:
 
 delete:
   operationId: deleteTemporaryMailingAddress
-  description: removed the temporary mailing address for a participant
+  summary: Delete a participant's temporary mailing address
   tags:
     - Mailing Address
   responses:

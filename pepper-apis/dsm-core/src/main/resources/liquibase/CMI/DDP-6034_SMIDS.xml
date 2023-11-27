@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="sm_id_type_table" author="pegah">
+        <createTable tableName="sm_id_type">
+            <column name="sm_id_type_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"></constraints>
+            </column>
+            <column name="sm_id_type" type="VARCHAR(100)"></column>
+        </createTable>
+    </changeSet>
+    <changeSet id="sm_id_table" author="pegah">
+        <createTable tableName="sm_id">
+            <column name="sm_id_pk" autoIncrement="true" type="INT">
+                <constraints primaryKey="true" nullable="false"></constraints>
+            </column>
+            <column name="sm_id_type_id" type="INT">
+                <constraints nullable="false" foreignKeyName="sm_id_type_id_fk"
+                             referencedTableName="sm_id_type" referencedColumnNames="sm_id_type_id"></constraints>
+            </column>
+            <column name="tissue_id" type="INT">
+                <constraints nullable="false" foreignKeyName="sm_id_tissue_id_fk"
+                             referencedTableName="ddp_tissue" referencedColumnNames="tissue_id"></constraints>
+            </column>
+            <column name="sm_id_value" type="VARCHAR(100)">
+                <constraints nullable="true" unique="true"></constraints>
+            </column>
+            <column name="deleted" type="TINYINT(1)"></column>
+            <column name="changed_by" type="VARCHAR(100)"></column>
+            <column name="last_changed" type="BIGINT"></column>
+        </createTable>
+    </changeSet>
+    <changeSet id="insert_smids" author="pegah">
+        <insert tableName="sm_id_type">
+            <column name="sm_id_type" value="scrolls"></column>
+        </insert>
+        <insert tableName="sm_id_type">
+            <column name="sm_id_type" value="he"></column>
+        </insert>
+        <insert tableName="sm_id_type">
+            <column name="sm_id_type" value="uss"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="sm_id_type_fk_kit_type" author="pegah">
+        <addColumn tableName="sm_id_type">
+            <column name="kit_type_id" type="INT(11)">
+                <constraints foreignKeyName="kit_type_id_sm_id_fk" referencedTableName="kit_type"
+                             referencedColumnNames="kit_type_id"></constraints>
+            </column>
+        </addColumn>
+    </changeSet>
+
+
+</databaseChangeLog>

@@ -24,7 +24,7 @@ parameters:
 
 get:
   operationId: fetchAllMedicalProviders
-  description: fetches all of a participant's saved medical providers
+  summary: Fetch all a participant's saved medical providers
   tags:
     - Medical Providers
   responses:
@@ -35,7 +35,7 @@ get:
 
 post:
   operationId: createMedicalProvider
-  description: saves a new medical provider for a participant
+  summary: Create a new medical provider for a participant
   tags:
     - Medical Providers
   requestBody:

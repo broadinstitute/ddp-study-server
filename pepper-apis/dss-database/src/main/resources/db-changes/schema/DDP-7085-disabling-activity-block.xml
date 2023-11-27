@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20211012-disabling-activity-block">
+        <createTable tableName="block_enabled_expression">
+            <column name="block_enabled_expression_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_enabled_expression_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_enabled_expression_block_fk"/>
+            </column>
+            <column name="expression_id" type="bigint">
+                <constraints nullable="false" references="expression(expression_id)" foreignKeyName="block_enabled_expression_expression_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="block_enabled_expression_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

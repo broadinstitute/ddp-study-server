@@ -2,7 +2,7 @@ get:
   operationId: getInstitutionSuggestions
   tags:
     - Suggestion
-  description: fetches a list of medical institution suggestions
+  summary: fetches a list of medical institution suggestions
   parameters:
     - in: query
       name: namePattern

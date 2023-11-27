@@ -1,0 +1,226 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style type="text/css">
+      .ExternalClass,
+      .ExternalClass div,
+      .ExternalClass font,
+      .ExternalClass p,
+      .ExternalClass span,
+      .ExternalClass td,
+      img {
+        line-height: 100%;
+      }
+      #outlook a {
+        padding: 0;
+      }
+      .ExternalClass,
+      .ReadMsgBody {
+        width: 100%;
+      }
+      a,
+      blockquote,
+      body,
+      li,
+      p,
+      table,
+      td {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table,
+      td {
+        mso-table-lspace: 0;
+        mso-table-rspace: 0;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+        border: 0;
+        height: auto;
+        outline: 0;
+        text-decoration: none;
+      }
+      table {
+        border-collapse: collapse !important;
+      }
+      #bodyCell,
+      #bodyTable,
+      body {
+        height: 100% !important;
+        margin: 0;
+        padding: 0;
+        font-family: Roboto, sans-serif;
+      }
+      #bodyCell {
+        padding: 20px;
+      }
+      #bodyTable {
+        width: 600px;
+      }
+
+      @media only screen and (max-width: 480px) {
+        #bodyTable,
+        body {
+          width: 100% !important;
+        }
+        a,
+        blockquote,
+        body,
+        li,
+        p,
+        table,
+        td {
+          -webkit-text-size-adjust: none !important;
+        }
+        body {
+          min-width: 100% !important;
+        }
+        #bodyTable {
+          max-width: 600px !important;
+        }
+        #signIn {
+          max-width: 280px !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <center>
+      <table
+        style="
+          width: 600px !important;
+          border-collapse: collapse !important;
+          border-radius: 3px !important;
+          background-color: #ffffff !important;
+          margin-top: 20px;
+        "
+      >
+        <tbody>
+          <tr>
+            <td
+              style="
+                border-collapse: collapse;
+                text-align: right;
+                float: right;
+                padding: 30px 40px 15px 0;
+              "
+            >
+              <img
+                src="https://storage.googleapis.com/##ASSETS_BUCKET##/email-logo.png"
+                alt="Global A-T Family Data Platform Logo"
+                style="width: 200px"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td style="width: 100%">
+              <hr
+                style="
+                  margin: 5px 40px 15px 40px;
+                  border: #ffffff;
+                  border-bottom: 1px solid #eeeeee !important;
+                "
+              />
+            </td>
+          </tr>
+
+          <tr>
+            <td style="border-collapse: collapse">
+              <h2
+                style="
+                  margin: 10px 40px 10px 40px;
+                  font-size: 23px;
+                  font-weight: 700;
+                  font-family: 'Roboto', sans-serif;
+                  color: #4274bc;
+                "
+              >
+                Hello {{ user.user_metadata.first_name }} {{ user.user_metadata.last_name }},
+              </h2>
+            </td>
+          </tr>
+          <tr>
+            <td
+              style="
+                border-collapse: collapse;
+                font-size: 18px;
+                color: #777777;
+                text-align: left;
+                line-height: 25px;
+                display: block;
+                padding: 0px 40px 10px 40px;
+                font-weight: 300;
+              "
+            >
+              <span style="font-weight: 500"
+                >Thanks for creating an account in the Global A-T Family Data
+                Platform!</span
+              >
+              Please click on the following button to activate your account:
+            </td>
+          </tr>
+          <tr>
+            <td style="border-collapse: collapse; text-align: center">
+              <a
+                href="{{ url }}"
+                style="
+                  padding: 8px 20px 10px 20px;
+                  border-radius: 3px;
+                  font-size: 18px;
+                  text-align: center;
+                  text-decoration: none;
+                  display: inline-block;
+                  color: #ffffff !important;
+                  background-color: #7ba946;
+                  margin-bottom: 40px;
+                "
+                target="_blank"
+              >
+                Activate your account
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table
+        style="
+          width: 600px !important;
+          border-collapse: collapse !important;
+          margin-top: 20px;
+          text-align: center;
+        "
+      >
+        <tbody>
+          <tr>
+            <td
+              style="border-collapse: collapse"
+              align="center"
+              valign="middle"
+            >
+              <a
+                href="##BASE_URL##"
+                style="
+                  font-size: 14px;
+                  color: #777777 !important;
+                  text-align: center;
+                  text-decoration: none;
+                  line-height: 21px;
+                  display: inline-block;
+                  vertical-align: middle;
+                  font-weight: 500 !important;
+                "
+                target="_blank"
+                >© Global A-T Data Platform</a
+              >
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </center>
+  </body>
+</html>

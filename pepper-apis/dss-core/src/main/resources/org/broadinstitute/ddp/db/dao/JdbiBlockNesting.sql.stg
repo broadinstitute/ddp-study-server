@@ -1,0 +1,72 @@
+group JdbiBlockNesting;
+
+queryOrderedNestedFormBlockDtosByBlockIdAndInstanceGuid() ::= <<
+SELECT
+    null AS section_id,
+    bn.parent_block_id AS parent_block_id,
+    bt.block_type_code AS block_meta_block_type_code,
+    nested.block_id AS block_meta_block_id,
+    nested.block_guid AS block_meta_block_guid,
+    ev.expression_id AS sh_expr_expression_id,
+    ev.expression_guid AS sh_expr_expression_guid,
+    ev.expression_text AS sh_expr_expression_text,
+    ee.expression_id AS en_expr_expression_id,
+    ee.expression_guid AS en_expr_expression_guid,
+    ee.expression_text AS en_expr_expression_text
+FROM block_nesting AS bn
+    JOIN block AS nested ON nested.block_id = bn.nested_block_id
+    JOIN block_type AS bt ON bt.block_type_id = nested.block_type_id
+    JOIN revision AS rev ON rev.revision_id = bn.revision_id
+    LEFT JOIN block__expression AS bev ON bev.block_id = nested.block_id
+    LEFT JOIN expression AS ev ON ev.expression_id = bev.expression_id
+    LEFT JOIN revision AS bev_rev ON bev_rev.revision_id = bev.revision_id
+    LEFT JOIN block_enabled_expression AS bee ON bee.block_id = nested.block_id
+    LEFT JOIN expression AS ee ON ee.expression_id = bee.expression_id
+    LEFT JOIN revision AS bee_rev ON bee_rev.revision_id = bee.revision_id
+    JOIN activity_instance AS ai ON ai.activity_instance_guid = :instanceGuid
+WHERE bn.parent_block_id = :blockId
+    AND rev.start_date \<= ai.created_at
+    AND (rev.end_date IS null OR ai.created_at \< rev.end_date)
+    AND (bev.block__expression_id IS null
+        OR (bev_rev.start_date \<= ai.created_at
+            AND (bev_rev.end_date IS null OR ai.created_at \< bev_rev.end_date)))
+    AND (bee.block_enabled_expression_id IS null
+        OR (bee_rev.start_date \<= ai.created_at
+            AND (bee_rev.end_date IS null OR ai.created_at \< bee_rev.end_date)))
+ORDER BY bn.display_order asc
+>>
+
+queryOrderedNestedDtosByParentIdsAndTimestamp(blockIds) ::= <<
+SELECT
+    null AS section_id,
+    bn.parent_block_id AS parent_block_id,
+    bt.block_type_code AS block_meta_block_type_code,
+    nested.block_id AS block_meta_block_id,
+    nested.block_guid AS block_meta_block_guid,
+    ev.expression_id AS sh_expr_expression_id,
+    ev.expression_guid AS sh_expr_expression_guid,
+    ev.expression_text AS sh_expr_expression_text,
+    ee.expression_id AS en_expr_expression_id,
+    ee.expression_guid AS en_expr_expression_guid,
+    ee.expression_text AS en_expr_expression_text
+FROM block_nesting AS bn
+    JOIN block AS nested ON nested.block_id = bn.nested_block_id
+    JOIN block_type AS bt ON bt.block_type_id = nested.block_type_id
+    JOIN revision AS rev ON rev.revision_id = bn.revision_id
+    LEFT JOIN block__expression AS bev ON bev.block_id = nested.block_id
+    LEFT JOIN expression AS ev ON ev.expression_id = bev.expression_id
+    LEFT JOIN revision AS bev_rev ON bev_rev.revision_id = bev.revision_id
+    LEFT JOIN block_enabled_expression AS bee ON bee.block_id = nested.block_id
+    LEFT JOIN expression AS ee ON ee.expression_id = bee.expression_id
+    LEFT JOIN revision AS bee_rev ON bee_rev.revision_id = bee.revision_id
+WHERE bn.parent_block_id in (<blockIds>)
+    AND rev.start_date \<= :timestamp
+    AND (rev.end_date IS null OR :timestamp \< rev.end_date)
+    AND (bev.block__expression_id IS null
+        OR (bev_rev.start_date \<= :timestamp
+            AND (bev_rev.end_date IS null OR :timestamp \< bev_rev.end_date)))
+    AND (bee.block_enabled_expression_id IS null
+        OR (bee_rev.start_date \<= :timestamp
+            AND (bee_rev.end_date IS null OR :timestamp \< bee_rev.end_date)))
+ORDER BY bn.parent_block_id asc, bn.display_order asc
+>>

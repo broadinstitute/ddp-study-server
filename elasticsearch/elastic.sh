@@ -32,6 +32,12 @@ COMMANDS:
   create-index <INDEX_FILE>
     create the index pointed to by the given file
 
+  create-script <SCRIPT-FILE>
+    create the script pointed to by the given file
+
+  create-ingest-pipeline <PIPELINE-FILE>
+    create the pipeline pointed to by the given file
+
   upload-role <ROLE_FILE>
     create/update the role pointed to by the given file
 
@@ -80,6 +86,34 @@ create_index() {
     -d "@$index_file"
 }
 
+create_script() {
+  local script_file="$1"
+  local script_name="${script_file##*/}"
+  script_name="${script_name%.painless}"
+
+  local script_content='{"script": {"lang": "painless", "source": "'
+  while read line; do
+    script_content="$script_content$line"
+  done < $1
+  script_content="$script_content\" } }'"
+
+  curl -s -X PUT "$BASE_URL/_scripts/$script_name" \
+    -H "Authorization: Basic $CREDENTIALS" \
+    -H 'Content-Type: application/json' \
+    -d "$script_content"
+}
+
+create_ingest_pipeline() {
+  local pipeline_file="$1"
+  local pipeline_name="${pipeline_file##*/}"
+  pipeline_name="${pipeline_name%.json}"
+
+  curl -s -X PUT "$BASE_URL/_ingest/pipeline/$pipeline_name" \
+    -H "Authorization: Basic $CREDENTIALS" \
+    -H 'Content-Type: application/json' \
+    -d "@$pipeline_file"
+}
+
 upload_template() {
   local template_file="$1"
   local template_name="${template_file##*/}"
@@ -89,6 +123,28 @@ upload_template() {
     -H "Authorization: Basic $CREDENTIALS" \
     -H 'Content-Type: application/json' \
     -d "@$template_file"
+}
+
+update_mapping() {
+  payload="`python3 participants_structured_reader.py`"
+  indexes=`curl -s -X GET "$BASE_URL/_aliases" \
+                -H "Authorization: Basic $CREDENTIALS" \
+                -H 'Content-Type: application/json'`
+  participants_structured=`python3 participants_structured_extractor.py "$indexes"`
+
+  all_indices=""
+  for index in $participants_structured
+  do
+    index_setting=`curl -s -X GET "$BASE_URL/$index/_settings" \
+        -H "Authorization: Basic $CREDENTIALS" \
+        -H 'Content-Type: application/json'`
+    all_indices+="`python3 participants_structured_filter.py "$index_setting" "$index"`"
+  done
+
+  curl -s -X PUT "$BASE_URL/$all_indices/_mapping/_doc" \
+      -H "Authorization: Basic $CREDENTIALS" \
+      -H 'Content-Type: application/json' \
+      -d "$payload"
 }
 
 upload_user() {
@@ -132,8 +188,17 @@ main() {
     create-index)
       create_index "$4"
       ;;
+    create-script)
+      create_script "$4"
+      ;;
+    create-ingest-pipeline)
+      create_ingest_pipeline "$4"
+      ;;
     upload-template)
       upload_template "$4"
+      ;;
+    update_mapping)
+      update_mapping
       ;;
     upload-user)
       upload_user "$4" "$5"

@@ -1,0 +1,256 @@
+group EventDao;
+
+/**
+ * Returns all event configurations for study/activity and event type
+ */
+eventConfigurationLookup() ::= <<
+SELECT
+     ec.event_configuration_id,
+     ec.label,
+     ett.event_trigger_type_code event_trigger_type,
+     eat.event_action_type_code event_action_type,
+     ec.post_delay_seconds,
+     ec.dispatch_to_housekeeping,
+     (SELECT
+         e.expression_text from expression e
+     WHERE e.expression_id = ec.precondition_expression_id) as precondition_expression,
+     (SELECT
+         e.expression_text from expression e
+     WHERE e.expression_id = ec.cancel_expression_id) as cancel_expression,
+     ec.max_occurrences_per_user,
+     ec.execution_order,
+     md.gcp_topic,
+     aist.activity_instance_status_type_code as instance_status_type,
+     ast.study_activity_id as activity_status_trigger_study_activity_id,
+     wst.workflow_state_id,
+     wst.trigger_automatically,
+     dnet.dsm_notification_event_type_code as dsm_notification_event_type,
+     (select enrollment_status_type_code from enrollment_status_type
+       where enrollment_status_type_id = usct.target_status_type_id
+     ) as user_status_changed_target_status_type,
+     (select enrollment_status_type_code from enrollment_status_type
+       where enrollment_status_type_id = uusa.target_status_type_id
+     ) as update_user_status_target_status_type,
+     ann_act.message_template_id as announcement_msg_template_id,
+     ann_act.is_permanent as announcement_is_permanent,
+     ann_act.create_for_proxies as announcement_create_for_proxies,
+     nt.notification_type_code as notification_type,
+     ns.service_code as notification_service_type,
+     unea.linked_activity_id,
+     unpdf.pdf_document_configuration_id as user_notification_document_configuration_id,
+     unpdf.always_generate,
+     pea.pdf_document_configuration_id as pdf_generation_document_configuration_id,
+     aica.study_activity_id as activity_instance_creation_study_activity_id,
+     cp_answer.copy_configuration_id as copy_action_copy_configuration_id,
+     ciea.contact_email_question_stable_code_id as contact_email_question_stable_code_id,
+     (select stable_id from question_stable_code
+       where question_stable_code_id = ciea.contact_email_question_stable_code_id
+     ) as contact_email_question_stable_id,
+     ciea.mark_existing_as_voided as mark_existing_invitations_as_voided,
+     eata.activity_id as target_activity_id,
+     ucwea.custom_workflow_name,
+     ucwea.custom_workflow_status,
+     aica.create_from_answer,
+     aica.source_question_stable_id,
+     aica.target_question_stable_id,
+     ckea.kit_type_id
+FROM
+     event_configuration ec
+JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
+JOIN event_trigger_type ett ON et.event_trigger_type_id = ett.event_trigger_type_id
+JOIN event_action ea ON ec.event_action_id = ea.event_action_id
+JOIN event_action_type eat ON ea.event_action_type_id = eat.event_action_type_id
+JOIN umbrella_study study on ec.umbrella_study_id = study.umbrella_study_id
+LEFT JOIN message_destination md on ea.message_destination_id = md.message_destination_id
+LEFT JOIN activity_status_trigger ast ON ast.activity_status_trigger_id = ec.event_trigger_id
+LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_type_id = aist.activity_instance_status_type_id
+LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
+LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_id
+LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
+LEFT JOIN user_status_changed_trigger as usct on usct.event_trigger_id = et.event_trigger_id
+LEFT JOIN update_user_status_action as uusa on uusa.event_action_id = ea.event_action_id
+LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
+LEFT JOIN user_notification_event_action unea on unea.user_notification_event_action_id = ea.event_action_id
+LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id
+LEFT JOIN notification_type nt on nt.notification_type_id = unea.notification_type_id
+LEFT JOIN notification_service ns on ns.notification_service_id = unea.notification_service_id
+LEFT JOIN pdf_generation_event_action as pea on pea.event_action_id = ea.event_action_id
+LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creation_action_id = ea.event_action_id
+LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
+LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.event_action_id
+LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
+LEFT JOIN update_custom_workflow_event_action as ucwea on ucwea.event_action_id = ea.event_action_id
+LEFT JOIN create_kit_event_action as ckea on ckea.event_action_id = ea.event_action_id
+
+>>
+
+getEventConfigurationByEventConfigurationId() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.event_configuration_id = :eventConfigurationId
+        and ec.is_active = 1
+>>
+
+getEventConfigurationsByStudyId() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.umbrella_study_id = :studyId
+    order by ec.execution_order asc
+>>
+
+getEventConfigurationsForStudyIdAndTriggerType() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.umbrella_study_id = :studyId
+        and ett.event_trigger_type_code = :eventTriggerType
+        and ec.is_active = 1
+    order by ec.execution_order asc, ec.event_configuration_id asc
+>>
+
+getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.umbrella_study_id = :studyId
+        and ett.event_trigger_type_code = :eventTriggerType
+        and ec.is_active = 1
+        and ec.dispatch_to_housekeeping = 1
+    order by ec.execution_order asc
+>>
+
+getActivityStatusEventConfigurations() ::= <<
+<eventConfigurationLookup()>
+    LEFT JOIN activity_instance ai ON ai.study_activity_id = ast.study_activity_id
+    where
+        ai.activity_instance_id = :activityInstanceId
+        and aist.activity_instance_status_type_code = :status
+        and ec.is_active = 1
+    order by ec.execution_order asc
+>>
+
+getNotificationAttachmentDetails() ::= <<
+select
+    pdf_cfg.pdf_document_configuration_id,
+    notification_pdf.always_generate
+	from
+    event_configuration evt_config
+    join event_action act on evt_config.event_action_id = act.event_action_id
+    join user_notification_event_action notification_action on notification_action.user_notification_event_action_id = act.event_action_id
+    join user_notification_pdf notification_pdf on notification_action.user_notification_event_action_id = notification_pdf.user_notification_event_action_id
+    join pdf_document_configuration pdf_cfg on notification_pdf.pdf_document_configuration_id = pdf_cfg.pdf_document_configuration_id
+    where
+    evt_config.event_configuration_id = :eventConfigId
+>>
+
+// Use inner-joins since notification event should have at least one template.
+getNotificationTemplatesForEvent() ::= <<
+select nt.notification_template_id,
+       nt.template_key,
+       nt.is_dynamic,
+       lc.language_code_id,
+       lc.iso_language_code
+  from event_configuration as cfg
+  join event_action act on act.event_action_id = cfg.event_action_id
+  join user_notification_event_action as unea on unea.user_notification_event_action_id = act.event_action_id
+  join user_notification_template as unt on unt.user_notification_event_action_id = unea.user_notification_event_action_id
+  join notification_template as nt on nt.notification_template_id = unt.notification_template_id
+  join language_code as lc on lc.language_code_id = nt.language_code_id
+ where cfg.event_configuration_id = :eventConfigId
+>>
+
+/**
+ * Returns notification events related to workflow states
+*/
+getNotificationConfigsForWorkflowState() ::= <<
+<eventConfigurationLookup()>
+    where
+    study.guid = :studyGuid
+    and wst.workflow_state_id = :workflowStateId
+    and ec.is_active = 1
+    and eat.event_action_type_code = 'NOTIFICATION'
+    order by ec.execution_order asc
+>>
+
+/**
+ * Returns notification events related to workflow states
+*/
+getNotificationConfigsForMailingListByEventType() ::= <<
+<eventConfigurationLookup()>
+    where
+    study.guid = :studyGuid
+    and ec.is_active = 1
+    and eat.event_action_type_code = 'NOTIFICATION'
+    and ett.event_trigger_type_code = :eventTriggerType
+    order by ec.execution_order asc
+>>
+
+/**
+ * Select all queued events, joined with minimal set of event action information required for
+ * publishing the event to pubsub. Each row in result set is either a standalone queued event,
+ * or in the case of notification action, the event joined with one of its template substitutions.
+ */
+select_all_queued_events() ::= <<
+select q.queued_event_id,
+       q.operator_user_id as operator_id,
+       ptp.guid           as participant_guid,
+       ptp.hruid          as participant_hruid,
+       op.guid            as operator_guid,
+       prf.first_name     as participant_first_name,
+       prf.last_name      as participant_last_name,
+       cfg.event_configuration_id,
+       ett.event_trigger_type_code as event_trigger_type,
+       eat.event_action_type_code  as event_action_type,
+       cfg.post_delay_seconds,
+       cfg.max_occurrences_per_user,
+       (select gcp_topic from message_destination where message_destination_id = ea.message_destination_id) as gcp_topic,
+       (select e.expression_text from expression e where e.expression_id = cfg.precondition_expression_id)  as precondition,
+       (select e.expression_text from expression e where e.expression_id = cfg.cancel_expression_id)        as cancel_condition,
+       study.guid            as study_guid,
+       study.web_base_url    as study_web_base_url,
+       sg.api_key            as sendgrid_api_key,
+       sg.from_name          as sendgrid_from_name,
+       sg.from_email         as sendgrid_from_email,
+       sg.default_salutation as sendgrid_default_salutation,
+       (select notification_type_code from notification_type where notification_type_id = n.notification_type_id)   as notification_type,
+       (select service_code from notification_service where notification_service_id = n.notification_service_id)    as service_type,
+       n.linked_activity_id,
+       qn.email_address  as to_email_address,
+       sub.variable_name as substitution_variable_name,
+       sub.value         as substitution_value,
+       (select pdf_document_configuration_id
+          from pdf_generation_event_action
+         where event_action_id = cfg.event_action_id
+       ) as pdf_document_configuration_id
+  from queued_event as q
+  join event_configuration as cfg on cfg.event_configuration_id = q.event_configuration_id
+  join event_trigger as et on et.event_trigger_id = cfg.event_trigger_id
+  join event_trigger_type ett on ett.event_trigger_type_id = et.event_trigger_type_id
+  join event_action as ea on ea.event_action_id = cfg.event_action_id
+  join event_action_type eat on eat.event_action_type_id = ea.event_action_type_id
+  join umbrella_study as study on study.umbrella_study_id = cfg.umbrella_study_id
+  join sendgrid_configuration as sg on sg.umbrella_study_id = study.umbrella_study_id
+  left join user as ptp on ptp.user_id = q.participant_user_id
+  left join user_profile prf on prf.user_id = ptp.user_id
+  left join user as op on op.user_id = q.operator_user_id
+  left join queued_notification as qn on qn.queued_event_id = q.queued_event_id
+  left join queued_notification_template_substitution as sub on sub.queued_event_id = q.queued_event_id
+  left join user_notification_event_action as n on n.user_notification_event_action_id = ea.event_action_id
+>>
+
+/**
+ * Returns all queued events that need to be posted to pubsub.
+ */
+findPublishableQueuedEvents() ::= <<
+<select_all_queued_events()>
+where (q.post_after \< unix_timestamp() or q.post_after is null)
+  and q.status_type_id is null
+  and cfg.is_active = 1
+>>
+
+findAllQueuedEvents() ::= <<
+<select_all_queued_events()>
+>>
+
+findQueuedEventById() ::= <<
+<select_all_queued_events()>
+where q.queued_event_id = :id
+>>

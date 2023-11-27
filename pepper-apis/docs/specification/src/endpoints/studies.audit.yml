@@ -1,0 +1,96 @@
+post:
+  operationId: studyAudit
+  tags:
+    - Audit
+  summary: StudyAudit
+  description: |
+    Search and filter the log of the study.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            actionType:
+              description: the action
+              nullable: true
+              type: array
+              items:
+                type: string
+                enum:
+                  - CREATE
+                  - READ
+                  - UPDATE
+                  - DELETE
+                  - EXPORT
+            entityType:
+              description: the entity
+              nullable: true
+              type: array
+              items:
+                type: string
+                enum:
+                  - USER
+                  - ACTIVITY
+                  - INSTANCE
+                  - ANSWER
+            dateRange:
+              description: the date range to filter the log
+              nullable: true
+              type: object
+              $ref: '../pepper.yml#/components/schemas/DateRange'
+            userEmail:
+              description: the subject user's e-mails
+              nullable: true
+              type: array
+              items:
+                type: string
+            userGuid:
+              description: the subject user's GUIDs (must be specified in case entity type was set to User)
+              nullable: true
+              type: array
+              items:
+                type: string
+            activityCode:
+              description: the activity code (must be specified in case entity type was set to Activity)
+              nullable: true
+              type: array
+              items:
+                type: string
+            questionStableId:
+              description: the question stable id (must be specified in case entity type was set to Answer)
+              nullable: true
+              type: array
+              items:
+                type: string
+            pagination:
+              description: the pagination constraint (specifies the first and the last row of the range to be fetched)
+              nullable: true
+              type: object
+              $ref: '../pepper.yml#/components/schemas/Pagination'
+            sorting:
+              description: the sorting options
+              nullable: true
+              type: object
+              $ref: '../pepper.yml#/components/schemas/Sorting'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/StudyAuditResponse'
+    400:
+      description: the study not found
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_STUDY
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

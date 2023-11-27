@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-8019_cohort-tagging" author="gmakhara">
+        <createTable tableName="cohort_tag">
+            <column name="cohort_tag_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true" nullable="false"></constraints>
+            </column>
+            <column name="cohort_tag_name" type="VARCHAR(255)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(20)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false" foreignKeyName="ddp_instance_id_id_fk"
+                             referencedTableName="ddp_instance" referencedColumnNames="ddp_instance_id"></constraints>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

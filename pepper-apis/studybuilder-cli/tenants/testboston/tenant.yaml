@@ -1,0 +1,114 @@
+tenant:
+  default_directory: Username-Password-Authentication
+
+databases:
+  - name: study-admin-authentication
+    strategy: auth0
+    # Idea is to NOT enable this database for any client, so that clients can't add users to it.
+    # However, you need to enable database for AT LEAST one client, otherwise Auth0 will mark it as
+    # inactive and you can't even manually add users. Auth0 Management client is an arbitrary choice,
+    # but seems fine for now.
+    enabled_clients:
+      - Auth0 Management API
+    is_domain_connection: false
+    options:
+      # Don't allow any clients to add users, so it must be done manually so we have finer control.
+      disable_signup: true
+    realms:
+      - study-admin-authentication
+
+# Order of rules is important here. link-admin should go before registration rule so that admin
+# accounts are sorted out before we run "registration/login" rule.
+rules:
+  - name: Link Admin Accounts
+    script: ./rules/link-admin-accounts.js
+    stage: login_success
+    enabled: true
+    order: 1
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 2
+
+pages:
+  - name: login
+    html: ./pages/login.html
+    enabled: true
+  - name: password_reset
+    html: ./pages/password_reset.html
+    enabled: true
+
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
+
+emailTemplates:
+  - template: reset_email
+    body: ./emails/change_password.html
+    from: TestBoston <##STUDY_EMAIL##>
+    resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
+    subject: >
+      {% if user.user_metadata.language == 'es' %}Restablecimiento de la contraseña de TestBoston
+      {% elsif user.user_metadata.language == 'ht' %}Repwograme modpas la pou TestBoston
+      {% elsif user.user_metadata.language == 'ar' %}إعادة تعيين كلمة المرور الخاصة بدراسة TestBoston
+      {% elsif user.user_metadata.language == 'fr' %}Réinitialisation du mot de passe TestBoston
+      {% elsif user.user_metadata.language == 'pt' %}Reposição de palavra-passe TestBoston
+      {% elsif user.user_metadata.language == 'ru' %}Смена пароля TestBoston
+      {% elsif user.user_metadata.language == 'vi' %}Đặt lại mật khẩu TestBoston
+      {% elsif user.user_metadata.language == 'zh' %}TestBoston 密码重置
+      {% else %}TestBoston password reset
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+
+clients:
+  - name: testboston-app-client
+    app_type: spa
+    callbacks: [
+      '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/error',
+      '##BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    ]
+    web_origins: [
+      '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: testboston
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
+  - name: testboston-crc-client
+    app_type: spa
+    callbacks: [
+      '##BASE_URL##/admin-login-landing'
+      ##LOCALHOST_ADMIN_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/error',
+      '##BASE_URL##/admin-session-expired'
+      ##LOCALHOST_ADMIN_LOGOUTS##
+    ]
+    web_origins: [
+      '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: testboston
+      isAdminClient: 'true'
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true

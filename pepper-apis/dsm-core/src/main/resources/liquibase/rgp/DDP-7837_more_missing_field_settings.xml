@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="nghurtch" id="RGP_MISSING_MIGRATED_FIELDS">
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DDP_ADDRESS_VALID"/>
+            <column name="column_display" value="DDP_ADDRESS_VALID"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="FAMILY_CONTACT_ALTPID"/>
+            <column name="column_display" value="Alt PID for Contact Member"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DDP_CURRENT_STATUS"/>
+            <column name="column_display" value="DDP_CURRENT_STATUS"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_MOBILEPHONEISPRIMARY"/>
+            <column name="column_display" value="DATSTAT_MOBILEPHONEISPRIMARY"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_WORKPHONEISPRIMARY"/>
+            <column name="column_display" value="DATSTAT_WORKPHONEISPRIMARY"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_HOMEPHONEISPRIMARY"/>
+            <column name="column_display" value="DATSTAT_HOMEPHONEISPRIMARY"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_CREATEDBY"/>
+            <column name="column_display" value="DATSTAT_CREATEDBY"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_TEST"/>
+            <column name="column_display" value="DATSTAT_TEST"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_ALTPID"/>
+            <column name="column_display" value="DATSTAT_ALTPID"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="COMPLETION_STATUS"/>
+            <column name="column_display" value="COMPLETION_STATUS"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_CREATED"/>
+            <column name="column_display" value="DATSTAT_CREATED"/>
+            <column name="display_type" value="DATE"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DDP_PARTICIPANT_SHORTID"/>
+            <column name="column_display" value="DDP_PARTICIPANT_SHORTID"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATE_LAST_UPDATED"/>
+            <column name="column_display" value="DATE_LAST_UPDATED"/>
+            <column name="display_type" value="DATE"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_LASTMODIFIEDBY"/>
+            <column name="column_display" value="DATSTAT_LASTMODIFIEDBY"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DDP_ADDRESS_CHECKED"/>
+            <column name="column_display" value="DDP_ADDRESS_CHECKED"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_MASTERPID"/>
+            <column name="column_display" value="DATSTAT_MASTERPID"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="IS_APPLICANT"/>
+            <column name="column_display" value="IS_APPLICANT"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+
+
+
+    </changeSet>
+</databaseChangeLog>

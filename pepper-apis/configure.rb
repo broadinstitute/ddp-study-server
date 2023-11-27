@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -w
 # Docker Image used to call out to generate config files
-$dsde_toolbox_image_name = "broadinstitute/dsde-toolbox:latest"
-
+$dsde_toolbox_image_name = "broadinstitute/study-server-build:java-2022-06-01A"
 # If USE_DOCKER evaluates to false, script will try to call consul-template directly
 # instead of using Docker image built in scripts
 $use_docker = ENV.fetch("USE_DOCKER", "true") == "true"
@@ -128,7 +127,7 @@ def read_secret_from_path(path, field = nil)
   end
 
   # Not sure why Vault requires the -1 flag, but it does.
-  curl_cmd = ["curl","-1", "-H", "X-Vault-Token: #{$vault_token}", "#{$vault_url_root}/#{path}"]
+  curl_cmd = ["curl","-1", "--retry", "5", "-H", "X-Vault-Token: #{$vault_token}", "#{$vault_url_root}/#{path}"]
   Open3.popen3(*curl_cmd) { |stdin, stdout, stderr, wait_thread|
     if wait_thread.value.success?
       json = JSON.load(stdout)
@@ -200,11 +199,12 @@ def render_from_path(path, output_file_name = nil)
                   $dsde_toolbox_image_name,
                   "consul-template", "-config=/etc/consul-template/config/config.json",
                   "-template=#{file_name}:#{output_file_name}",
+                  "-retry=30s",
                   "-once"
     ]
   else
     vault_cmd = ["consul-template", "-config=/etc/consul-template/config/config.json",
-                              "-template=#{file_name}:#{output_file_name}", "-once"]
+                 "-template=#{file_name}:#{output_file_name}", "-once", "-retry=30s"]
   end
 
   Open3.popen3(*vault_cmd) { |stdin, stdout, stderr, wait_thread|

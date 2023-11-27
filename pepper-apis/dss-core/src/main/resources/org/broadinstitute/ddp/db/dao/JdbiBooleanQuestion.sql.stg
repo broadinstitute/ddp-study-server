@@ -1,0 +1,16 @@
+group JdbiBooleanQuestion;
+
+insertByRenderModeId() ::= <<
+insert into boolean_question
+       (question_id,true_template_id,false_template_id, boolean_render_mode_id)
+values (:questionId,:trueTemplateId,:falseTemplateId,:renderMode)
+>>
+
+insertByRenderModeCode() ::= <<
+insert into boolean_question
+       (question_id,true_template_id,false_template_id, boolean_render_mode_id)
+values (:questionId,
+       :trueTemplateId,
+       :falseTemplateId,
+       (select boolean_render_mode_id from boolean_render_mode where boolean_render_mode_code = :renderMode))
+>>

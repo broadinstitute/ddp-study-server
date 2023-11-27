@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20220704-add-composite-tabular-separator-column">
+        <addColumn tableName="composite_question">
+            <column name="tabular_separator" type="varchar(30)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

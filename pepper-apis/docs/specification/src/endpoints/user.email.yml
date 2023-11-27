@@ -2,8 +2,8 @@ patch:
   operationId: updateUserEmail
   tags:
     - Operator & Participant
-  summary: update email for a user
-  description: updates user email in Auth0
+  summary: Update a user's email address
+  description: Update a user's Auth0 email address.
   parameters:
     - in: path
       name: user

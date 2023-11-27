@@ -82,6 +82,9 @@ CreateTempUserRequestBody:
           auth0Domain:
             type: string
             description: the domain of the client making the request
+          languageCode:
+            type: string
+            description: the languageCode of the user
 MailingAddress:
   description: payload for setting a participant's address
   required: true
@@ -191,3 +194,34 @@ RegisterGovernedRequestBody:
             type: string
             description: user's time zone, as an IANA time zone region identifier
             example: America/New_York
+ParticipantCreateRequest:
+  description: request body representing the details needed to register a participant into a study
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - email
+          - centerId
+          - studyGuid
+          - firstName
+          - lastName
+          - birthDate
+        properties:
+          email:
+            type: string
+            format: email
+          centerId:
+            type: string
+            format: guid
+            nullable: true
+          studyGuid:
+            type: string
+            format: guid
+          firstName:
+            type: string
+          lastName:
+            type: string
+          birthDate:
+            type: string
+            format: iso8601-date

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="matrix-select-mode-table">
+        <createTable tableName="matrix_select_mode">
+            <column name="matrix_select_mode_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="matrix_select_mode_pk"/>
+            </column>
+            <column name="matrix_select_mode_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="matrix_select_mode_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-question-table">
+        <createTable tableName="matrix_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="matrix_question_pk"
+                             references="question(question_id)" foreignKeyName="matrix_question_question_fk"/>
+            </column>
+            <column name="matrix_select_mode_id" type="bigint">
+                <constraints nullable="false" references="matrix_select_mode(matrix_select_mode_id)"
+                             foreignKeyName="matrix_question_matrix_select_mode_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-group-table">
+        <createTable tableName="matrix_group">
+            <column name="matrix_group_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="matrix_group_pk"/>
+            </column>
+            <column name="matrix_question_id" type="bigint">
+                <constraints nullable="false" references="matrix_question(question_id)"
+                             foreignKeyName="matrix_group_matrix_question_fk"/>
+            </column>
+            <column name="group_stable_id" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name_template_id" type="bigint">
+                <constraints nullable="true" references="template(template_id)"
+                             foreignKeyName="matrix_group_name_template_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="matrix_group_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-group-uk">
+        <addUniqueConstraint tableName="matrix_group"
+                             columnNames="matrix_question_id, group_stable_id, revision_id"
+                             constraintName="matrix_group_question_group_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-option-table">
+        <createTable tableName="matrix_option">
+            <column name="matrix_option_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="matrix_option_pk"/>
+            </column>
+            <column name="matrix_question_id" type="bigint">
+                <constraints nullable="false" references="matrix_question(question_id)"
+                             foreignKeyName="matrix_option_matrix_question_fk"/>
+            </column>
+            <column name="matrix_option_stable_id" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="option_label_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)"
+                             foreignKeyName="matrix_option_option_label_template_fk"/>
+            </column>
+            <column name="tooltip_template_id" type="bigint">
+                <constraints nullable="true" references="template(template_id)"
+                             foreignKeyName="matrix_option_tooltip_template_fk"/>
+            </column>
+            <column name="is_exclusive" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="matrix_group_id" type="bigint">
+                <constraints nullable="false" references="matrix_group(matrix_group_id)"
+                             foreignKeyName="matrix_option_matrix_group_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="matrix_option_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-option-uk">
+        <addUniqueConstraint tableName="matrix_option"
+                             columnNames="matrix_question_id, matrix_option_stable_id, revision_id"
+                             constraintName="matrix_option_question_option_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-row-table">
+        <createTable tableName="matrix_row">
+            <column name="matrix_row_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="matrix_row_pk"/>
+            </column>
+            <column name="matrix_question_id" type="bigint">
+                <constraints nullable="false" references="matrix_question(question_id)"
+                             foreignKeyName="matrix_row_matrix_question_fk"/>
+            </column>
+            <column name="matrix_row_stable_id" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="row_label_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)"
+                             foreignKeyName="matrix_row_row_label_template_fk"/>
+            </column>
+            <column name="tooltip_template_id" type="bigint">
+                <constraints nullable="true" references="template(template_id)"
+                             foreignKeyName="matrix_row_tooltip_label_template_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="matrix_row_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-row-uk">
+        <addUniqueConstraint tableName="matrix_row"
+                             columnNames="matrix_question_id, matrix_row_stable_id, revision_id"
+                             constraintName="matrix_row_question_row_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-selection-table">
+        <createTable tableName="matrix_answer">
+            <column name="answer_id" type="bigint">
+                <constraints nullable="false" references="answer(answer_id)"
+                             foreignKeyName="matrix_answer_answer_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="matrix_answer_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="matrix_answer_pk"/>
+            </column>
+            <column name="matrix_option_id" type="bigint">
+                <constraints nullable="false" references="matrix_option(matrix_option_id)"
+                             foreignKeyName="matrix_answer_option_fk"/>
+            </column>
+            <column name="matrix_row_id" type="bigint">
+                <constraints nullable="false" references="matrix_row(matrix_row_id)"
+                             foreignKeyName="matrix_answer_row_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-option-selection-uk">
+        <addUniqueConstraint tableName="matrix_answer" columnNames="answer_id, matrix_option_id, matrix_row_id"
+                             constraintName="matrix_answer_uk"/>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-question-type-insert">
+        <insert tableName="question_type">
+            <column name="question_type_code" value="MATRIX"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="matrix-matrix-select-mode-insert">
+        <insert tableName="matrix_select_mode">
+            <column name="matrix_select_mode_code" value="MULTIPLE"/>
+        </insert>
+        <insert tableName="matrix_select_mode">
+            <column name="matrix_select_mode_code" value="SINGLE"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

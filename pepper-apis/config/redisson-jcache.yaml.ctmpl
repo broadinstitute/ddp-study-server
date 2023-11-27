@@ -1,6 +1,6 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
-{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $conf := secret (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 ---
 singleServerConfig:
   idleConnectionTimeout: 10000
@@ -21,7 +21,7 @@ singleServerConfig:
   pingConnectionInterval: 15000
 threads: 16
 nettyThreads: 128
-codec: !<org.redisson.codec.FstCodec> {}
+codec: !<org.redisson.codec.Kryo5Codec> {}
 transportMode: "NIO"
 {{end}}
 {{end}}

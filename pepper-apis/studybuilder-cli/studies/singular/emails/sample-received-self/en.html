@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Spartan:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--[if !mso]><!-->
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <title>${i18n.en.emails.sample_received_self.subject}</title>
+    <!--<![endif]-->
+
+    <!--[if (gte mso 9)|(IE)]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG />
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+
+    <!--[if (gte mso 9)|(IE)]>
+      <style type="text/css">
+        body {
+          max-width: 648px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+
+        table {
+          border-collapse: collapse;
+        }
+
+        table,
+        td {
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+
+        img {
+          -ms-interpolation-mode: bicubic;
+        }
+      </style>
+    <![endif]-->
+
+    <style type="text/css">
+      body {
+        padding: 0 24px 0 24px !important;
+      }
+
+      body,
+      p,
+      div {
+        font-family: 'Spartan', sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        color: #000000;
+      }
+
+      p {
+        margin: 0 0 20px 0;
+        padding: 0;
+      }
+
+      ul {
+        margin: 0 0 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <center>
+      <table
+        style="
+          width: 100% !important;
+          max-width: 600px !important;
+          border-collapse: collapse !important;
+          background-color: #ffffff !important;
+        "
+      >
+        <tbody>
+          <tr>
+            <td style="text-align: center; padding: 42px">
+              <a href="{{ baseWebUrl }}" target="_blank">
+                <img
+                  src="https://storage.googleapis.com/${assetsBucketName}/images/logo-black.png"
+                  alt="${i18n.en.emails.common.logo_alt}"
+                  style="width: 320px"
+                />
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>${i18n.en.emails.common.greeting_participant}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>${i18n.en.emails.sample_received_self.p1}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>${i18n.en.emails.sample_received_self.p2}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>${i18n.en.emails.sample_received_self.p3}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>
+                ${i18n.en.emails.common.closing1}
+                <a
+                  href="mailto:contact@projectsingular.org"
+                  style="text-decoration: underline"
+                  >contact@projectsingular.org</a
+                >
+                ${i18n.en.emails.common.closing2}
+                <a href="tel:+16507616486">(650) 561-6750</a>.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>${i18n.en.emails.common.closing_thank_you}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>${i18n.en.emails.common.closing_team}</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </center>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="bskinner" id="2022-06-18-user-created-by-not-required">
+        <dropNotNullConstraint 
+            tableName="user"
+            columnName="created_by_client_id"
+            columnDataType="bigint" />
+    </changeSet>
+</databaseChangeLog>

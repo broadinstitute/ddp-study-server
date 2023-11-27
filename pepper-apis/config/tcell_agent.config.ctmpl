@@ -1,6 +1,6 @@
 
 {{with $environment := env "ENVIRONMENT"}}
-{{with $conf := vault (printf "secret/pepper/%s/tcell" $environment)}}
+{{with $conf := secret (printf "secret/pepper/%s/tcell" $environment)}}
 {{with $tcell := index $conf.Data}}
 
 {

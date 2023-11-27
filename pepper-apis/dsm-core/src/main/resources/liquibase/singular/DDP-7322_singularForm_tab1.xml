@@ -1,0 +1,1470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-7322_singularForm_tab1">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_display" value="Cardiac Malformation"/>
+            <column name="display_type" value="TAB_GROUPED"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="DIAGNOSIS_GROUP"/>
+            <column name="column_display" value="Fundamental Cardiac Diagnosis"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="DIAGNOSIS_GROUP"/>
+            <column name="column_name" value="DIAGNOSIS"/>
+            <column name="column_display" value="Fundamental Cardiac Diagnosis"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;ATRIOVENTRICULAR_CANAL_DEFECT&quot;,&quot;name&quot;:&quot;Atrioventricular canal defect&quot;},{&quot;value&quot;:&quot;DILV&quot;,&quot;name&quot;:&quot;DILV&quot;},{&quot;value&quot;:&quot;DIRV&quot;,&quot;name&quot;:&quot;DIRV&quot;},{&quot;value&quot;:&quot;DORV&quot;,&quot;name&quot;:&quot;DORV&quot;},{&quot;value&quot;:&quot;EBSTEINS&quot;,&quot;name&quot;:&quot;Ebsteins&quot;},{&quot;value&quot;:&quot;HLHS&quot;,&quot;name&quot;:&quot;HLHS&quot;},{&quot;value&quot;:&quot;MITRAL_ATRESIA&quot;,&quot;name&quot;:&quot;Mitral atresia&quot;},{&quot;value&quot;:&quot;PA_IVS&quot;,&quot;name&quot;:&quot;PA-IVS&quot;},{&quot;value&quot;:&quot;TA&quot;,&quot;name&quot;:&quot;TA&quot;},{&quot;value&quot;:&quot;OTHER_HYPOPLASTIC&quot;,&quot;name&quot;:&quot;Other hypoplastic right ventricle or small right-sided structures&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_display" value="Conotruncal"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="TRUNCUS"/>
+            <column name="column_display" value="Truncus"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="IAA_B"/>
+            <column name="column_display" value="IAA, B"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="IAA_NOS"/>
+            <column name="column_display" value="IAA, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_IVS"/>
+            <column name="column_display" value="d-TGA-IVS"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_IVS_LVOTO"/>
+            <column name="column_display" value="d-TGA-IVS + LVOTO (e.g. pulm stenosis)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_IVS_RVOTO"/>
+            <column name="column_display" value="d-TGA-IVS + RVOTO (e.g. aortic stenosis)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_NOS"/>
+            <column name="column_display" value="d-TGA nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_OS"/>
+            <column name="column_display" value="d-TGA os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (d-TGA os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_VSD"/>
+            <column name="column_display" value="d-TGA-VSD"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_VSD_LVOTO"/>
+            <column name="column_display" value="d-TGA-VSD + LVOTO (see above)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="D_TGA_VSD_RVOTO"/>
+            <column name="column_display" value="d-TGA-VSD + RVOTO (see above)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="TOF"/>
+            <column name="column_display" value="TOF"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="TOF_ABSENT_PULMONARY_VALVE"/>
+            <column name="column_display" value="TOF, absent pulmonary valve"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="PA_VSD"/>
+            <column name="column_display" value="PA-VSD (TOF anatomy)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="15"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="DORV_TOF"/>
+            <column name="column_display" value="DORV-TOF type"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="16"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="DORV_TGA"/>
+            <column name="column_display" value="DORV-TGA type"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="17"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="DORV_OS"/>
+            <column name="column_display" value="DORV, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="18"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="DORV_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (DORV, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="19"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="DORV_NOS"/>
+            <column name="column_display" value="DORV, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="20"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="VSD_CONOVENTRICULAR"/>
+            <column name="column_display" value="VSD, conoventricular"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="21"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="IAA_B_TRUNCUS"/>
+            <column name="column_display" value="IAA, B + truncus"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="22"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="HEMITRUNCUS"/>
+            <column name="column_display" value="Hemitruncus"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="23"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="AVSD_GROUP"/>
+            <column name="column_display" value="Atriovenctricular Septal Defect (AVSD)"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_NOS"/>
+            <column name="column_display" value="AVSD, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="ASD_PRIMUM"/>
+            <column name="column_display" value="ASD, primum"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="VSD"/>
+            <column name="column_display" value="VSD, inlet type"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_BALANCED"/>
+            <column name="column_display" value="AVSD, complete balanced"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_UNBALANCED_RV"/>
+            <column name="column_display" value="AVSD, complete unbalanced, RV dominant"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_UNBALANCED_LV"/>
+            <column name="column_display" value="AVSD, complete unbalanced, LV dominant"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_TRANSITIONAL"/>
+            <column name="column_display" value="AVSD, transitional"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_OS"/>
+            <column name="column_display" value="AVSD, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="AVSD_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (AVSD, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="VALVE"/>
+            <column name="column_display" value="Cleft mitral valve"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="APVR_GROUP"/>
+            <column name="column_display" value="Anomalous Pulmonary Venus Return (APVR)"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="TAPVR"/>
+            <column name="column_display" value="TAPVR"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="TAPVR_RVOTO"/>
+            <column name="column_display" value="TAPVR + RVOTO"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="TAPVR_LVOTO"/>
+            <column name="column_display" value="TAPVR + LVOTO"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="PAPVR"/>
+            <column name="column_display" value="PAPVR"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="PAPVR_RVOTO"/>
+            <column name="column_display" value="PAPVR-RVOTO"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="PAPVR_LVOTO"/>
+            <column name="column_display" value="PAPVR-LVOTO"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="COR_TRIATRIATUM"/>
+            <column name="column_display" value="Cor Triatriatum"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="LVOTO_GROUP"/>
+            <column name="column_display" value="Left Ventricular Outflow Tract Obstruction (LVOTO)"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_HLHS"/>
+            <column name="column_display" value="HLHS with intact ventricular septum (IVS)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_HLHS_VSD"/>
+            <column name="column_display" value="HLHS + VSD"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_HLHS_APVR"/>
+            <column name="column_display" value="HLHS + APVR"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_IAA_A"/>
+            <column name="column_display" value="IAA, A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_IAA_C"/>
+            <column name="column_display" value="IAA, C"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_COA_IVS"/>
+            <column name="column_display" value="COA-IVS"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_COA_VSD"/>
+            <column name="column_display" value="COA-VSD"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_AORTIC_VALVE"/>
+            <column name="column_display" value="Aortic valve stenosis or hypoplasia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_SUBAORTIC"/>
+            <column name="column_display" value="Subaortic stenosis/narrowing"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_BICUSPID"/>
+            <column name="column_display" value="Bicuspid aortic valve"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_VALVE_MALFORMATIONS"/>
+            <column name="column_display" value="Aortic Valve Malformations, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_VALVE_MALFORMATIONS_SPECIFY"/>
+            <column name="column_display" value="Specify (Aortic Valve Malformations, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_MITRAL"/>
+            <column name="column_display" value="Mitral stenosis or hypoplasia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_MITRAL_ATRESIA"/>
+            <column name="column_display" value="Mitral atresia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_MITRAL_MALFORMATION"/>
+            <column name="column_display" value="Mitral malformation, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="15"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_MITRAL_MALFORMATION_SPECIFY"/>
+            <column name="column_display" value="Specify (Mitral malformation, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="16"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_MITRAL_VALVE"/>
+            <column name="column_display" value="Mitral valve prolapse"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="17"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_LEFT"/>
+            <column name="column_display" value="Left ventricular hypoplasia (non-HLHS)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="18"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="LVOTO_AORTIC_ATRESIA"/>
+            <column name="column_display" value="Aortic Atresia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="19"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="RVOTO_GROUP"/>
+            <column name="column_display" value="Right Ventricular Outflow Tract Obstruction (RVOTO)"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_IVS"/>
+            <column name="column_display" value="Tricuspid atresia, IVS"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_VSD"/>
+            <column name="column_display" value="Tricuspid atresia + VSD"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_TRICUSPID"/>
+            <column name="column_display" value="Tricuspid stenosis or hypoplasia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_TRICUSPID_MALFORMATION"/>
+            <column name="column_display" value="Tricuspid malformation, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_TRICUSPID_MALFORMATION_SPECIFY"/>
+            <column name="column_display" value="Specify (Tricuspid malformation, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_EBSTEIN"/>
+            <column name="column_display" value="Ebstein"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_PUL_VALVE"/>
+            <column name="column_display" value="Pulmonary valve stenosis or hypoplasia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_PUL_VALVE_MALFORMATION"/>
+            <column name="column_display" value="Pulmonary valve malformation, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_PUL_VALVE_MALFORMATION_SPECIFY"/>
+            <column name="column_display" value="Specify (Pulmonary valve malformation, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_SUBPULMONARY"/>
+            <column name="column_display" value="Subpulmonary stenosis/narrowing"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_ANATOMIC"/>
+            <column name="column_display" value="Anatomic Peripheral PS or hypoplasia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_ATRESIA"/>
+            <column name="column_display" value="Pulmonary atresia with intact ventricular septum"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_ATRESIA_NOS"/>
+            <column name="column_display" value="Pulmonary atresia, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_ATRESIA_VSD"/>
+            <column name="column_display" value="Pulmonary atresia with VSD (not TOF anatomy)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_ATRESIA_VSD_NOS"/>
+            <column name="column_display" value="Pulmonary atresia with VSD, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="15"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="RVOTO_RIGHT"/>
+            <column name="column_display" value="Right ventricular hypoplasia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="16"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="SEPTAL_GROUP"/>
+            <column name="column_display" value="Septal"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_VSD_PERIMEMBRANOUS"/>
+            <column name="column_display" value="VSD perimembranous"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_VSD_MUSCULAR"/>
+            <column name="column_display" value="VSD muscular"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_VSD_SUPRACRISTAL"/>
+            <column name="column_display" value="VSD supracristal"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_VSD_NOS"/>
+            <column name="column_display" value="VSD nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_VSD_OS"/>
+            <column name="column_display" value="VSD os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_VSD_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (VSD os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_ASD_SECUNDUM"/>
+            <column name="column_display" value="ASD, secundum"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_ASD_SINUS"/>
+            <column name="column_display" value="ASD, sinus venosus defect"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_ASD_NOS"/>
+            <column name="column_display" value="ASD, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_ASD_OS"/>
+            <column name="column_display" value="ASD, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_ASD_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (ASD, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_COMMON"/>
+            <column name="column_display" value="Common atrium"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="SEPTAL_PATENT"/>
+            <column name="column_display" value="Patent ductus arteriosus, age > 1 yr"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="LATERALITY_GROUP"/>
+            <column name="column_display" value="Laterality defect"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_SITUS"/>
+            <column name="column_display" value="Situs inversus totalis, no CVM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_ATRIAL"/>
+            <column name="column_display" value="Atrial isomerism"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_DEXTROCARDIA"/>
+            <column name="column_display" value="Dextrocardia + normal intracardiac anatomy"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_DEXTROCARDIA_CVM"/>
+            <column name="column_display" value="Dextrocardia + CVM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_MESOCARDIA"/>
+            <column name="column_display" value="Mesocardia"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_LEVOCARDIA"/>
+            <column name="column_display" value="Levocardia + CVM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_VENTRICLES"/>
+            <column name="column_display" value="Superior-inferior ventricles"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_INVERSION"/>
+            <column name="column_display" value="Ventricular inversion (L-looped)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_VENA_CAVA"/>
+            <column name="column_display" value="L superior vena cava or bilateral SVC"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_IVC"/>
+            <column name="column_display" value="Interrupted IVC"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_L_VENA_CAVA"/>
+            <column name="column_display" value="L sided inferior vena cava"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_L_TGA"/>
+            <column name="column_display" value="L-TGA"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_L_TGA_RVOTO"/>
+            <column name="column_display" value="L-TGA + RVOTO (see above)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_L_TGA_LVOTO"/>
+            <column name="column_display" value="L-TGA + LVOTO (see above)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_ABDOMINAL_AORTA"/>
+            <column name="column_display" value="Right-sided abdominal aorta"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="15"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_SITUS_CVM"/>
+            <column name="column_display" value="Situs inversus totalis + CVM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="16"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="LATERALITY_ATRIAL_SITUS"/>
+            <column name="column_display" value="Atrial Situs Inversus"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="17"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_display" value="Single Ventricle"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_DILV_NOS"/>
+            <column name="column_display" value="DILV, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_DILV_L_MALPOSITION"/>
+            <column name="column_display" value="DILV, l-malposition"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_DILV_D_MALPOSITION"/>
+            <column name="column_display" value="DILV, d-malposition"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_DIRV"/>
+            <column name="column_display" value="DIRV"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_SV_OS"/>
+            <column name="column_display" value="SV, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_SV_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (SV, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_SV_NOS"/>
+            <column name="column_display" value="SV, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="SINGLE_VENTRICLE_DILV"/>
+            <column name="column_display" value="DILV, normally related great vessels"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="AORTOPATHY_GROUP"/>
+            <column name="column_display" value="Aortopathy"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_AORTIC"/>
+            <column name="column_display" value="Aortic root dilation (z >2)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_ASCENDING"/>
+            <column name="column_display" value="Ascending aorta dilation (z >2)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_SINOTUBULAR"/>
+            <column name="column_display" value="Aortic sinotubular junction dilation (z >2)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_RIGHT_AORTIC"/>
+            <column name="column_display" value="Right Aortic Arch"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_DOUBLE_AORTIC"/>
+            <column name="column_display" value="Double Aortic Arch"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_ABERRANT"/>
+            <column name="column_display" value="Aberrant Subclavian Artery"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_PULMONARY_NOS"/>
+            <column name="column_display" value="Pulmonary Artery Anomaly, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_PULMONARY_OS"/>
+            <column name="column_display" value="Pulmonary Artery Anomaly, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_PULMONARY_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (Pulmonary Artery Anomaly, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_VASCULAR"/>
+            <column name="column_display" value="Vascular Ring, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_AORTOPULMONARY"/>
+            <column name="column_display" value="Aortopulmonary Window"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="AORTOPATHY_SUPRAVALVAR"/>
+            <column name="column_display" value="Supravalvar AS"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="CORONARY_ANOMALY_GROUP"/>
+            <column name="column_display" value="Coronary Anomaly"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CORONARY_ANOMALY_GROUP"/>
+            <column name="column_name" value="CORONARY_ANOMALY_ALCAPA"/>
+            <column name="column_display" value="Anomalous left coronary artery arising from pulmonary artery (ALCAPA)"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CORONARY_ANOMALY_GROUP"/>
+            <column name="column_name" value="CORONARY_ANOMALY_ANOMALY_NOS"/>
+            <column name="column_display" value="Coronary Anomaly, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CORONARY_ANOMALY_GROUP"/>
+            <column name="column_name" value="CORONARY_ANOMALY_ANOMALY_OS"/>
+            <column name="column_display" value="Coronary Anomaly, os"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CORONARY_ANOMALY_GROUP"/>
+            <column name="column_name" value="CORONARY_ANOMALY_ANOMALY_OS_SPECIFY"/>
+            <column name="column_display" value="Specify (Coronary Anomaly, os)"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_display" value="Cardiomyopathy"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="CARDIOMYOPATHY_HCM"/>
+            <column name="column_display" value="HCM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="CARDIOMYOPATHY_DCM"/>
+            <column name="column_display" value="DCM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="CARDIOMYOPATHY_RCM"/>
+            <column name="column_display" value="RCM"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="CARDIOMYOPATHY_ARVC"/>
+            <column name="column_display" value="ARVC"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="CARDIOMYOPATHY_LVNC"/>
+            <column name="column_display" value="LVNC"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="CARDIOMYOPATHY_NOS"/>
+            <column name="column_display" value="Cardiomyopathy, nos"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CARDIAC_MALFORMATION"/>
+            <column name="column_name" value="MYOCARDIAL_GROUP"/>
+            <column name="column_display" value="Myocardial Dysfunction"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_L_TRABECULATIONS"/>
+            <column name="column_display" value="Left Ventricular Trabeculations"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_L_DYSFUNCTION"/>
+            <column name="column_display" value="Left Ventricular Systolic Dysfunction"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_R_DYSFUNCTION"/>
+            <column name="column_display" value="Right Ventricular Systolic Dysfunction"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_BI_DYSFUNCTION"/>
+            <column name="column_display" value="Biventricular Systolic Dysfunction"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_L_HYPERTROPHY"/>
+            <column name="column_display" value="Left Ventricular Hypertrophy"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_R_HYPERTROPHY"/>
+            <column name="column_display" value="Right Ventricular Hypertrophy"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_BI_HYPERTROPHY"/>
+            <column name="column_display" value="Biventricular Hypertrophy"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_SEPTAL_HYPERTROPHY"/>
+            <column name="column_display" value="Ventricular Septal Hypertrophy"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_L_DILATION"/>
+            <column name="column_display" value="Left Ventricular Dilation"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_R_DILATION"/>
+            <column name="column_display" value="Right Ventricular Dilation"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_BI_DILATION"/>
+            <column name="column_display" value="Biventricular Dilation"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="MYOCARDIAL_DIASTOLIC"/>
+            <column name="column_display" value="Left Ventricular Diastolic Dysfunction"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="12"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

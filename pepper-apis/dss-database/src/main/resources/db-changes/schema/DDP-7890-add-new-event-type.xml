@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="nika_sakandeldize" id="add-dsm-notification-event-type-for-stoolkit-29-04-22">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM dsm_notification_event_type WHERE dsm_notification_event_type_code='STOOL_RECEIVED';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="dsm_notification_event_type">
+            <column name="dsm_notification_event_type_code" value="STOOL_RECEIVED"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

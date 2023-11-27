@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="bskinner" id="2022-06-16-user-email">
+        <addColumn tableName="user">
+            <!-- Length is the maximum size of a useful email address,
+                per RFC 3696, erattum 1690. 
+                An email address may be up to 320 characters:
+                    - 64 for the local-part
+                    - 255 for the domain-part
+                But the MAIL and RCPT commands only accept an address up to
+                254 characters.
+            -->
+            <column name="email" type="VARCHAR(254)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
