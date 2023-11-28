@@ -26,7 +26,6 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     protected String object;
     protected ObjectTransformer objectTransformer;
     protected ElasticSearch elasticSearch;
-    List<String> participantsInTheStudy;
 
     protected BaseMigrator(String index, String realm, String object) {
         bulkExportFacade = new BulkExportFacade(index);
@@ -94,6 +93,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
+        List<String> participantsInTheStudy = null;
         if (index != null) {
             participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
         }

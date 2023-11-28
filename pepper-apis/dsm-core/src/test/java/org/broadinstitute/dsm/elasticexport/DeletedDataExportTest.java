@@ -26,12 +26,11 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
     private static final String groupName = "delete_group";
+    static OncHistoryTestUtil oncHistoryTestUtil;
+    static String userEmail = "deleteTestUser1@unittest.dev";
     private static String esIndex;
     private static int remainingOncHistoryDetailId;
     private static DDPInstanceDto ddpInstanceDto;
-    private static ParticipantDto testParticipant = null;
-    static OncHistoryTestUtil oncHistoryTestUtil;
-    static String userEmail = "deleteTestUser1@unittest.dev";
     String guid = "DELETE_PARTICIPANT";
     String guid0 = "DELETE0_PARTICIPANT";
     String guid1 = "DELETE1_PARTICIPANT";
@@ -124,7 +123,7 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
                 (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM))
                         .get(ESObjectConstants.ONC_HISTORY_DETAIL);
         Assert.assertEquals(1, oncHistoryDetails.size());
-        Assert.assertEquals(oncHistoryDetailId2,  oncHistoryDetails.get(0).get("oncHistoryDetailId"));
+        Assert.assertEquals(oncHistoryDetailId2, oncHistoryDetails.get(0).get("oncHistoryDetailId"));
 
 
     }
