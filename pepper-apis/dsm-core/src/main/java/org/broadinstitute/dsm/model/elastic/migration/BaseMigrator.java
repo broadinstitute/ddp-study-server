@@ -28,16 +28,13 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     protected ElasticSearch elasticSearch;
     List<String> participantsInTheStudy;
 
-    public BaseMigrator(String index, String realm, String object) {
+    protected BaseMigrator(String index, String realm, String object) {
         bulkExportFacade = new BulkExportFacade(index);
         this.realm = realm;
         this.index = index;
         this.object = object;
         elasticSearch = new ElasticSearch();
         objectTransformer = new ObjectTransformer(realm);
-        if (index != null) {
-            participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
-        }
     }
 
     protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords) {
@@ -60,8 +57,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
                 bulkExportFacade.clear();
             }
         }
-        logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with "
-                + "index: " + index);
+        logger.info("finished migrating data of {} participants for {} to ES for study: {} with index: {}", totalExported, object, realm,
+                index);
     }
 
     private boolean isReadyToExport(Iterator<Map.Entry<String, Object>> participantsIterator) {
@@ -97,6 +94,9 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
+        if (index != null) {
+            participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
+        }
         for (String ddpParticipantId : participantsInTheStudy) {
             if (!dataByRealm.containsKey(ddpParticipantId)) {
                 dataByRealm.put(ddpParticipantId, new ArrayList<>());
