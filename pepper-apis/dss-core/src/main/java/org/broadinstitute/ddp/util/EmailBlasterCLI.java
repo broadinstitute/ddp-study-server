@@ -82,9 +82,7 @@ public class EmailBlasterCLI {
         File guidsFile = new File(cmd.getOptionValue("g"));
 
         List<String> guids = IOUtils.readLines(new FileReader(guidsFile));
-
         new EmailBlasterCLI(sendgridApiKey).sendEmail(fromName, fromEmail, templateId, studyGuid, guids);
-
         System.exit(0);
     }
 
@@ -117,19 +115,13 @@ public class EmailBlasterCLI {
             }
 
             Map<String, String> userEmailsById = auth0Util.getAuth0UsersByAuth0UserIds(auth0UserIds, mgmtClient.getToken());
-
             LOG.info("Found {} emails", userEmailsById.size());
-
             try {
                 for (Map.Entry<String, String> emailByAuth0Id : userEmailsById.entrySet()) {
                     String recipient = emailByAuth0Id.getKey();
-
                     String auth0Id = emailByAuth0Id.getValue();
-
                     LOG.info("Sending to " + recipient);
-
                     Map<String, String> templateSubstitutions = personalizationByAuth0Id.get(auth0Id);
-
                     SendGridMailUtil.sendEmailMessage(fromName, fromEmail, null, recipient, null, sendgridTemplateId,
                             templateSubstitutions, sendgridApiKey);
                     LOG.info("Sent to " + recipient);
