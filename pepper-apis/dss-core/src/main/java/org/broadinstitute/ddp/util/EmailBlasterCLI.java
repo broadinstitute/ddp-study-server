@@ -1,16 +1,5 @@
 package org.broadinstitute.ddp.util;
 
-import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
-
-import java.io.File;
-import java.io.FileReader;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.cli.CommandLine;
@@ -34,6 +23,18 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
 
 /**
  * CLI for sending an email template from sendgrid
@@ -81,7 +82,13 @@ public class EmailBlasterCLI {
         String templateId = cmd.getOptionValue("t");
         File guidsFile = new File(cmd.getOptionValue("g"));
 
-        List<String> guids = IOUtils.readLines(new FileReader(guidsFile));
+        List<String> guids = null;
+        try {
+            guids = IOUtils.readLines(new FileReader(guidsFile));
+        } catch (IOException e) {
+            LOG.error("Could not read " + guidsFile.getAbsolutePath(), e);
+            System.exit(-1);
+        }
         new EmailBlasterCLI(sendgridApiKey).sendEmail(fromName, fromEmail, templateId, studyGuid, guids);
         System.exit(0);
     }
