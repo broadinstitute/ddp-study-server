@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 @Data
 public class Patch {
 
-    public static final String SQL_CHECK_UNIQUE = "SELECT * FROM $table WHERE ($colName = ? ) and deleted <=> 0 ";
     public static final String TABLE = "$table";
     public static final String PK = "$pk";
     public static final String COL_NAME = "$colName";

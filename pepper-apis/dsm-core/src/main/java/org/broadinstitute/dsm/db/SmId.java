@@ -31,8 +31,6 @@ public class SmId {
     private int tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
     private int smIdPk;
-    @ColumnName(DBConstants.DELETED)
-    private Boolean deleted;
 
     public SmId() {
     }
@@ -50,12 +48,6 @@ public class SmId {
         this.tissueId = tissueId;
     }
 
-    public SmId(int smIdPk, String smType, String smIdValue, int tissueId, Boolean deleted) {
-        this(smIdPk, smType, smIdValue, tissueId);
-        this.deleted = deleted;
-    }
-
-
     public static SmId getSMIdsForTissueId(ResultSet rs) {
         SmId tissueSmId = null;
 
@@ -69,9 +61,6 @@ public class SmId {
                     rs.getString(DBConstants.SM_ID_VALUE),
                     rs.getInt("sm." + DBConstants.TISSUE_ID)
             );
-            if (tissueSmId != null) {
-                tissueSmId.setDeleted(rs.getBoolean("sm." + DBConstants.DELETED));
-            }
         } catch (SQLException e) {
             logger.error("problem getting tissue sm ids", e);
         }

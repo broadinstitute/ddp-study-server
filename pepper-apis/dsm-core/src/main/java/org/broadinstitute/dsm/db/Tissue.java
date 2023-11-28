@@ -40,7 +40,7 @@ public class Tissue {
     public static final String SQL_SELECT_TISSUE_LAST_CHANGED = "SELECT t.last_changed FROM ddp_institution inst "
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
-            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
+            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) "
             + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
             + "LEFT JOIN ddp_tissue as t on (t.onc_history_detail_id = oD.onc_history_detail_id) WHERE p.participant_id = ?";
     private static final Logger logger = LoggerFactory.getLogger(Tissue.class);
@@ -50,10 +50,10 @@ public class Tissue {
                     + "scrolls_received, sk_id, sm_id, "
                     + "scrolls_count, uss_count, blocks_count, h_e_count, first_sm_id, sent_gp, last_changed, changed_by, "
                     + "additional_tissue_value_json, shl_work_number, block_id_shl, "
-                    + "tumor_percentage, tissue_sequence, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, sm.tissue_id "
+                    + "tumor_percentage, tissue_sequence, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.tissue_id "
                     + "FROM ddp_tissue t "
-                    + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id AND NOT sm.deleted <=> 1 AND NOT t.deleted <=> 1) "
-                    + "WHERE NOT (t.deleted <=> 1) AND onc_history_detail_id = ?";
+                    + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id) "
+                    + "WHERE onc_history_detail_id = ?";
     private static final String SQL_INSERT_TISSUE =
             "INSERT INTO ddp_tissue SET onc_history_detail_id = ?, last_changed = ?, changed_by = ?";
     @TableName (name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
@@ -109,9 +109,6 @@ public class Tissue {
     private String sentGp;
 
     private String changedBy;
-
-    @ColumnName (DBConstants.DELETED)
-    private Boolean deleted;
 
     @ColumnName (DBConstants.FIRST_SM_ID)
     private String firstSmId;
@@ -330,10 +327,6 @@ public class Tissue {
         } catch (SQLException e) {
             throw new DsmInternalError("Error setting type for smId with id: " + tissueSmId.getSmIdPk(), e);
         }
-    }
-
-    public Boolean isDeleted() {
-        return deleted;
     }
 
     public List<SmId> getScrollSMID() {

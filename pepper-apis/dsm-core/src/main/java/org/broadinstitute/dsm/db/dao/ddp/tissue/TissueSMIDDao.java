@@ -25,25 +25,30 @@ public class TissueSMIDDao {
     private static final Logger logger = LoggerFactory.getLogger(TissueSMIDDao.class);
 
     public static final String SQL_GET_SM_ID_BASED_ON_TISSUE_ID =
-            " SELECT * from sm_id sm where sm.tissue_id= ?   and NOT sm.deleted <=> 1";
+            " SELECT * from sm_id sm where sm.tissue_id= ?";
+
     public static final String SQL_GET_SEQUENCING_SM_ID_BASED_ON_TISSUE_ID = " SELECT * from sm_id sm "
             + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
             + "where sm.tissue_id = ? and (smtype.sm_id_type = \"uss\" or smtype.sm_id_type = \"scrolls\") "
             + "and sm.received_date is not null ";
+
     public static final String SQL_TYPE_ID_FOR_TYPE = "SELECT sm_id_type_id from sm_id_type where `sm_id_type` = ?";
+
     public static final String SQL_INSERT_SM_ID =
             "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, sm_id_value=?, last_changed = ?, changed_by = ?";
+
     public static final String SQL_INSERT_SM_ID_WITH_VALUE =
             "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, last_changed = ?, changed_by = ?, sm_id_value = ?";
-    public static final String SQL_SELECT_SM_ID_VALUE_WITH_ID =
-            "SELECT sm_id_value from sm_id where sm_id_value = ? and NOT sm_id_pk = ? and Not deleted <=> 1";
 
-    public static final String SQL_SELECT_SM_ID_BY_ID =
-            "SELECT * from sm_id where  sm_id_pk = ? ";
-    public static final String SQL_SELECT_SM_ID_VALUE = "SELECT sm_id_value from sm_id where sm_id_value = ?  and Not deleted <=> 1";
+    public static final String SQL_SELECT_SM_ID_VALUE_WITH_ID =
+            "SELECT sm_id_value from sm_id where sm_id_value = ? and NOT sm_id_pk = ?";
+
+    public static final String SQL_SELECT_SM_ID_BY_ID = "SELECT * from sm_id where  sm_id_pk = ? ";
+
+    public static final String SQL_SELECT_SM_ID_VALUE = "SELECT sm_id_value from sm_id where sm_id_value = ?";
 
     public static final String SQL_SELECT_ALL_SMIDS_BY_INSTANCE_NAME =
-            "SELECT p.ddp_participant_id, sm.tissue_id, sm.sm_id_pk, sm.sm_id_value, sm.deleted, sm_type.sm_id_type "
+            "SELECT p.ddp_participant_id, sm.tissue_id, sm.sm_id_pk, sm.sm_id_value, sm_type.sm_id_type "
                     + "FROM sm_id as sm "
                     + "LEFT JOIN sm_id_type as sm_type ON (sm.sm_id_type_id = sm_type.sm_id_type_id) "
                     + "LEFT JOIN ddp_tissue as t ON (sm.tissue_id = t.tissue_id) "
@@ -228,8 +233,7 @@ public class TissueSMIDDao {
                         Integer smIdPk = rs.getInt(DBConstants.SM_ID_PK);
                         String smIdValue = rs.getString(DBConstants.SM_ID_VALUE);
                         String smType = rs.getString(DBConstants.SM_ID_TYPE);
-                        Boolean deleted = rs.getBoolean(DBConstants.DELETED);
-                        SmId smId = new SmId(smIdPk, smType, smIdValue, tissueId, deleted);
+                        SmId smId = new SmId(smIdPk, smType, smIdValue, tissueId);
                         List<SmId> participantSmIds = smIds.getOrDefault(ddpParticipantId, new ArrayList<>());
                         participantSmIds.add(smId);
                         smIds.put(ddpParticipantId, participantSmIds);
@@ -242,7 +246,8 @@ public class TissueSMIDDao {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of smIds for instance " + instanceName, results.resultException);
+            throw new RuntimeException("Couldn't get list of smIds for instance " + instanceName,
+                    results.resultException);
         }
         logger.info("Got " + smIds.size() + " participants smIds in DSM DB for " + instanceName);
         return smIds;
@@ -272,9 +277,8 @@ public class TissueSMIDDao {
         return smIds;
     }
 
-    /** finds sm ids that belong to a tissue,
+    /** finds sm ids that belong to a tissue.
      *
-      * @param tissueId
      * @return a list of sm id primary keys
      */
     public static List<String> getSmIdPksForTissue(String tissueId) {
@@ -297,7 +301,7 @@ public class TissueSMIDDao {
         if (results.resultException != null) {
             throw new DsmInternalError("Couldn't get list of smIds for tissue " + tissueId, results.resultException);
         }
-        logger.info("Got %d smId pks in DSM DB for tissue with id %s", smIds.size() , tissueId);
+        logger.info("Got %d smId pks in DSM DB for tissue with id %s", smIds.size(), tissueId);
         return smIds;
     }
 
@@ -308,8 +312,8 @@ public class TissueSMIDDao {
                 stmt.setInt(1, smIdPk);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                       dbVals.resultValue = new SmId(rs.getInt(DBConstants.SM_ID_PK), rs.getString(DBConstants.SM_ID_VALUE),
-                               rs.getInt(DBConstants.TISSUE_ID));
+                        dbVals.resultValue = new SmId(rs.getInt(DBConstants.SM_ID_PK),
+                               rs.getString(DBConstants.SM_ID_VALUE), rs.getInt(DBConstants.TISSUE_ID));
                     }
                 }
             } catch (SQLException ex) {
@@ -321,7 +325,7 @@ public class TissueSMIDDao {
         if (results.resultException != null) {
             throw new DsmInternalError("Couldn't get SmId with Id " + smIdPk, results.resultException);
         }
-        logger.info("Got smId with id "+ smIdPk);
+        logger.info("Got smId with id " + smIdPk);
         return (SmId) results.resultValue;
     }
 }
