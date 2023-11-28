@@ -28,7 +28,7 @@ public class TissueDao implements Dao<Tissue> {
             + "return_date, return_fedex_id, shl_work_number, block_id_shl, tumor_percentage, tissue_sequence, scrolls_count, uss_count, "
             + "h_e_count, blocks_count "
             + "FROM ddp_onc_history_detail oD "
-            + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id "
+            + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id) "
             + "AND NOT m.deleted <=> 1) "
             + "LEFT JOIN ddp_institution inst on (inst.institution_id = m.institution_id) "
             + "LEFT JOIN ddp_participant p on (p.participant_id = inst.participant_id) "
