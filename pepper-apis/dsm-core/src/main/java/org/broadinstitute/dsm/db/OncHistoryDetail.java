@@ -79,7 +79,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     public static final String SQL_SELECT_ONC_HISTORY_LAST_CHANGED = "SELECT oD.last_changed FROM ddp_institution inst "
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
-            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) "
+            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
             + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
 
     public static final String SQL_SELECT_ONC_HISTORY_DETAIL_BY_MEDICAL_RECORD =
@@ -213,7 +213,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     @ColumnName(DBConstants.DESTRUCTION_POLICY)
     private String destructionPolicy;
     private String changedBy;
+
+    // although the database does not have this column, it is required as a field
+    // for proper processing of delete request from the frontend
     @ColumnName(DBConstants.DELETED)
+
     private boolean deleted;
     @ColumnName(DBConstants.UNABLE_OBTAIN_TISSUE)
     private boolean unableObtainTissue;

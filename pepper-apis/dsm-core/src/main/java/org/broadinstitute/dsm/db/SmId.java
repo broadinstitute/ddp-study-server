@@ -31,6 +31,9 @@ public class SmId {
     private int tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
     private int smIdPk;
+
+    // although the database does not have this column, it is required as a field
+    // for proper processing of delete request from the frontend
     @ColumnName(DBConstants.DELETED)
     private Boolean deleted;
 

@@ -40,7 +40,7 @@ public class Tissue {
     public static final String SQL_SELECT_TISSUE_LAST_CHANGED = "SELECT t.last_changed FROM ddp_institution inst "
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
-            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) "
+            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
             + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
             + "LEFT JOIN ddp_tissue as t on (t.onc_history_detail_id = oD.onc_history_detail_id) WHERE p.participant_id = ?";
     private static final Logger logger = LoggerFactory.getLogger(Tissue.class);
@@ -110,6 +110,8 @@ public class Tissue {
 
     private String changedBy;
 
+    // although the database does not have this column, it is required as a field
+    // for proper processing of delete request from the frontend
     @ColumnName (DBConstants.DELETED)
     private Boolean deleted;
 
