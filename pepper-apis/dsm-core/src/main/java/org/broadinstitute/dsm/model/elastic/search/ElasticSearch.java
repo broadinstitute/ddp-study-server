@@ -67,6 +67,8 @@ public class ElasticSearch implements ElasticSearchable {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearch.class);
     private Deserializer deserializer;
     private SortBuilder sortBy;
+    private static final int MAX_RETRIES = 5;
+    private static final int RETRY_DELAY_MILLIS = 2000;
 
     List<ElasticSearchParticipantDto> esParticipants;
     long totalCount;
@@ -115,8 +117,7 @@ public class ElasticSearch implements ElasticSearchable {
     /**
      * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
      * @param sourceMap the source map
-     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the
-     *                             {@link ElasticSearchParticipantDto#queriedParticipantId}
+     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the queriedParticipantId
      * @return
      */
     public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
@@ -198,13 +199,29 @@ public class ElasticSearch implements ElasticSearchable {
     }
 
     private void clearScroll(String scrollId, String index) {
-        try {
-            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-            clearScrollRequest.addScrollId(scrollId);
-            ElasticSearchUtil.getClientInstance().clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            logger.error("Unable to clear the scroll in the connection to index: " + index, e);
+        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+        clearScrollRequest.addScrollId(scrollId);
+
+        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                ElasticSearchUtil.getClientInstance().clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+                logger.info("Successfully cleared scroll context for index " + index);
+                return;
+            } catch (IOException e) {
+                logger.warn("Failed to clear scroll on attempt {} : {} ", (attempt + 1), e.getMessage());
+                if (attempt < MAX_RETRIES - 1) {
+                    try {
+                        Thread.sleep(RETRY_DELAY_MILLIS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt(); // Preserve interrupt status
+                        logger.warn("Retry sleep interrupted ", ie);
+                        return;
+                    }
+                }
+            }
         }
+
+        logger.error("Failed to clear scroll after {} attempts for export to index ", MAX_RETRIES, index);
     }
 
     @Override

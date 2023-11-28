@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import lombok.NonNull;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
@@ -39,13 +40,10 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         }
     }
 
-    protected void fillBulkRequestWithTransformedMapAndExport(Map<String, Object> participantRecords) {
-        if (participantRecords == null || participantRecords.isEmpty()) {
-            logger.info("Found nothing to export for {} to ES for study: {} with index: {} ", object, realm, index);
-            return;
-        }
+    protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords) {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
-        logger.info("filling bulk request for participants, for {} for study: {} with index: {}", object, realm, index);
+        logger.info("filling bulk request with participant size {} for participants, for {} for study: {} with index: {}",
+                participantRecords.size(), object, realm, index);
         long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
@@ -105,6 +103,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             }
         }
         if (dataByRealm.isEmpty()) {
+            logger.info("Found nothing to export for {} to ES for study: {} with index: {} ", object, realm, index);
             return;
         }
         fillBulkRequestWithTransformedMapAndExport(dataByRealm);

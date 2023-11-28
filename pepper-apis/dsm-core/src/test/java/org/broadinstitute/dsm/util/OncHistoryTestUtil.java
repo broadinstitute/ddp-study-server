@@ -452,7 +452,13 @@ public class OncHistoryTestUtil {
 
     }
 
-    public void deleteOncHistoryDirectlyFromDB(int oncHistoryDetailId) {
-        oncHistoryDetailDao.delete(oncHistoryDetailId);
+    public OncHistoryDetail createOncHistoryAndParseResponse(String guid, int participantId, DDPInstanceDto ddpInstanceDto)
+            throws Exception {
+        Map<String, Object> response = (Map<String, Object>) createOncHistory(guid, participantId, instanceName, userEmail);
+        int oncHistoryDetailId = Integer.parseInt((String) response.get("oncHistoryDetailId"));
+        OncHistoryDetail oncHistoryDetail =
+                OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
+        Assert.assertNotNull(oncHistoryDetail);
+        return oncHistoryDetail;
     }
 }

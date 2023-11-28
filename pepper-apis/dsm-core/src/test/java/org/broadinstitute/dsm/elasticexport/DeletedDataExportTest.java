@@ -6,6 +6,7 @@ import java.util.Map;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.export.ExportToES;
@@ -23,13 +24,16 @@ import org.junit.Test;
 public class DeletedDataExportTest extends DbAndElasticBaseTest {
     private static final String instanceName = "delete_instance";
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+    private static final OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
     private static final String groupName = "delete_group";
     private static String esIndex;
+    private static int remainingOncHistoryDetailId;
     private static DDPInstanceDto ddpInstanceDto;
     private static ParticipantDto testParticipant = null;
     static OncHistoryTestUtil oncHistoryTestUtil;
     static String userEmail = "deleteTestUser1@unittest.dev";
     String guid = "DELETE_PARTICIPANT";
+    String guid0 = "DELETE0_PARTICIPANT";
     String guid1 = "DELETE1_PARTICIPANT";
     String guid2 = "DELETE2_PARTICIPANT";
     String guid3 = "DELETE3_PARTICIPANT";
@@ -44,6 +48,7 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
 
     @AfterClass
     public static void cleanUpAfter() {
+        oncHistoryDetailDao.delete(remainingOncHistoryDetailId);
         oncHistoryTestUtil.deleteEverything();
         try {
             ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
@@ -55,8 +60,9 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
     }
 
 
+    //this test checks if a deleted record from database will also be removed from ES after running an export
     @Test
-    public void deleteFromDbAndRunExport() throws Exception {
+    public void deleteAllOncHistories() throws Exception {
         ParticipantDto participantDto = oncHistoryTestUtil.createParticipant(guid, ddpInstanceDto);
         guid = participantDto.getDdpParticipantIdOrThrow();
         int participantId = participantDto.getParticipantIdOrThrow();
@@ -66,10 +72,16 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
         OncHistoryDetail oncHistoryDetail =
                 OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
         Assert.assertNotNull(oncHistoryDetail);
-        oncHistoryTestUtil.deleteOncHistoryDirectlyFromDB(oncHistoryDetailId);
-        OncHistoryDetail deletedOncHistoryDetail =
+        Map<String, Object> response2 =
+                (Map<String, Object>) oncHistoryTestUtil.createOncHistory(guid, participantId, instanceName, userEmail);
+        int oncHistoryDetailId2 = Integer.parseInt((String) response2.get("oncHistoryDetailId"));
+        OncHistoryDetail oncHistoryDetail2 =
                 OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
-        Assert.assertNull(deletedOncHistoryDetail);
+        Assert.assertNotNull(oncHistoryDetail2);
+        oncHistoryDetailDao.delete(oncHistoryDetailId);
+        oncHistoryDetailDao.delete(oncHistoryDetailId2);
+        Assert.assertNull(OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName()));
+        Assert.assertNull(OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId2, ddpInstanceDto.getInstanceName()));
         ExportToES.ExportPayload exportPayload = new ExportToES.ExportPayload();
         exportPayload.setStudy(instanceName);
         exportPayload.setIsMigration(true);
@@ -78,9 +90,43 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
         List<Map<String, Object>> oncHistoryDetails =
                 (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM))
                         .get(ESObjectConstants.ONC_HISTORY_DETAIL);
-        long countNumberOfOncHistoriesInEs = oncHistoryDetails.stream().filter(stringObjectMap ->
-                (int) stringObjectMap.get("oncHistoryDetailId") == oncHistoryDetailId).count();
-        Assert.assertEquals(0L, countNumberOfOncHistoriesInEs);
+        Assert.assertTrue(oncHistoryDetails.isEmpty());
+    }
+
+    // This test is for making sure export still exports the undeleted data correctly
+    @Test
+    public void deleteOnlyOneOncHistory() throws Exception {
+        String participantGuid = guid0;
+        ParticipantDto participantDto = oncHistoryTestUtil.createParticipant(participantGuid, ddpInstanceDto);
+        participantGuid = participantDto.getDdpParticipantIdOrThrow();
+        int participantId = participantDto.getParticipantIdOrThrow();
+        OncHistoryDetail oncHistoryDetail = oncHistoryTestUtil.createOncHistoryAndParseResponse(participantGuid, participantId,
+                ddpInstanceDto);
+        int oncHistoryDetailId = oncHistoryDetail.getOncHistoryDetailId();
+        OncHistoryDetail oncHistoryDetail2 = oncHistoryTestUtil.createOncHistoryAndParseResponse(participantGuid, participantId,
+                ddpInstanceDto);
+        int oncHistoryDetailId2 = oncHistoryDetail2.getOncHistoryDetailId();
+        remainingOncHistoryDetailId = oncHistoryDetailId2;
+        Assert.assertNotEquals(oncHistoryDetailId2, oncHistoryDetailId);
+        Assert.assertNotNull(oncHistoryDetail2);
+        //only delete one of the onc histories first
+        oncHistoryDetailDao.delete(oncHistoryDetailId);
+        Assert.assertNull(OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName()));
+        //making sure second one is not deleted
+        Assert.assertNotNull(OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId2, ddpInstanceDto.getInstanceName()));
+        ExportToES.ExportPayload exportPayload = new ExportToES.ExportPayload();
+        exportPayload.setStudy(instanceName);
+        exportPayload.setIsMigration(true);
+        DSMtasksSubscription.migrateToES(exportPayload);
+        Map<String, Object> esDsmMap = ElasticSearchUtil.getObjectsMap(ddpInstanceDto.getEsParticipantIndex(), participantGuid,
+                ESObjectConstants.DSM);
+        List<Map<String, Object>> oncHistoryDetails =
+                (List<Map<String, Object>>) ((Map<String, Object>) esDsmMap.get(ESObjectConstants.DSM))
+                        .get(ESObjectConstants.ONC_HISTORY_DETAIL);
+        Assert.assertEquals(1, oncHistoryDetails.size());
+        Assert.assertEquals(oncHistoryDetailId2,  oncHistoryDetails.get(0).get("oncHistoryDetailId"));
+
+
     }
 
     @Test
