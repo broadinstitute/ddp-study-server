@@ -67,13 +67,13 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "shl_work_number, block_id_shl, tumor_percentage, tissue_sequence, "
                     + "scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, "
                     + "sm.tissue_id, smt.sm_id_type FROM ddp_onc_history_detail oD "
-                    + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id) AND NOT m.deleted <=> 1) "
+                    + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id AND NOT m.deleted <=> 1) "
                     + "LEFT JOIN ddp_institution inst on (inst.institution_id = m.institution_id) "
                     + "LEFT JOIN ddp_participant p on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
                     + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
                     + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id) "
-                    + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) " + "WHERE realm.instance_name = ? ";
+                    + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) WHERE realm.instance_name = ? ";
     public static final String SQL_ORDER_BY =
             " ORDER BY p.ddp_participant_id, inst.ddp_institution_id, oD.onc_history_detail_id, t.tissue_id ASC";
     public static final String SQL_SELECT_ONC_HISTORY_LAST_CHANGED = "SELECT oD.last_changed FROM ddp_institution inst "
