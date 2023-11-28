@@ -20,7 +20,6 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
@@ -32,17 +31,14 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
-import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
@@ -67,8 +63,6 @@ public class ElasticSearch implements ElasticSearchable {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearch.class);
     private Deserializer deserializer;
     private SortBuilder sortBy;
-    private static final int MAX_RETRIES = 5;
-    private static final int RETRY_DELAY_MILLIS = 2000;
 
     List<ElasticSearchParticipantDto> esParticipants;
     long totalCount;
@@ -161,67 +155,16 @@ public class ElasticSearch implements ElasticSearchable {
         return searchHitIndex.substring(dotIndex + 1);
     }
 
+    /** returns a list of all the guids in one ES index
+     * @param esParticipantsIndex the ES index to get all participants from
+     * */
     public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
         logger.info("Getting all participant ids from index " + esParticipantsIndex);
+        ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
         List<String> participantIds = new ArrayList<>();
-        SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
-        TimeValue scrollTimeout = TimeValue.timeValueMillis(100000L);
-        String scrollId = null;
-        try {
-            searchRequest.scroll(scrollTimeout);
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-            searchSourceBuilder.size(100);
-            searchSourceBuilder.sort("_doc", SortOrder.ASC); // Efficient scrolling
-            searchRequest.source(searchSourceBuilder);
-
-            SearchResponse searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
-            scrollId = searchResponse.getScrollId();
-            while (searchResponse.getHits().getHits().length > 0) {
-                for (SearchHit hit : searchResponse.getHits().getHits()) {
-                    participantIds.add(
-                            ((Map) hit.getSourceAsMap().get(ElasticSearchUtil.PROFILE)).get(ElasticSearchUtil.GUID).toString());
-                }
-                SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                scrollRequest.scroll(scrollTimeout);
-                searchResponse = ElasticSearchUtil.getClientInstance().scroll(scrollRequest, RequestOptions.DEFAULT);
-                scrollId = searchResponse.getScrollId();
-            }
-        } catch (IOException e) {
-            throw new DsmInternalError("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
-        } finally {
-            if (scrollId != null) {
-                clearScroll(scrollId, esParticipantsIndex);
-            }
-        }
-
+        es.esParticipants.forEach(elasticSearchParticipantDto ->
+                participantIds.add(elasticSearchParticipantDto.getProfile().orElseThrow().getGuid()));
         return participantIds;
-    }
-
-    private void clearScroll(String scrollId, String index) {
-        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-        clearScrollRequest.addScrollId(scrollId);
-
-        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
-            try {
-                ElasticSearchUtil.getClientInstance().clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-                logger.info("Successfully cleared scroll context for index " + index);
-                return;
-            } catch (IOException e) {
-                logger.warn("Failed to clear scroll on attempt {} : {} ", (attempt + 1), e.getMessage());
-                if (attempt < MAX_RETRIES - 1) {
-                    try {
-                        Thread.sleep(RETRY_DELAY_MILLIS);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt(); // Preserve interrupt status
-                        logger.warn("Retry sleep interrupted ", ie);
-                        return;
-                    }
-                }
-            }
-        }
-
-        logger.error("Failed to clear scroll after {} attempts for export to index ", MAX_RETRIES, index);
     }
 
     @Override
