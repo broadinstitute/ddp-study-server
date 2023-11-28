@@ -110,6 +110,9 @@ public class Tissue {
 
     private String changedBy;
 
+    @ColumnName (DBConstants.DELETED)
+    private Boolean deleted;
+
     @ColumnName (DBConstants.FIRST_SM_ID)
     private String firstSmId;
 

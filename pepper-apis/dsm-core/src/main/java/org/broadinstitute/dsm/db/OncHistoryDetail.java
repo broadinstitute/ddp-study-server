@@ -213,6 +213,8 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     @ColumnName(DBConstants.DESTRUCTION_POLICY)
     private String destructionPolicy;
     private String changedBy;
+    @ColumnName(DBConstants.DELETED)
+    private boolean deleted;
     @ColumnName(DBConstants.UNABLE_OBTAIN_TISSUE)
     private boolean unableObtainTissue;
     private String participantId;

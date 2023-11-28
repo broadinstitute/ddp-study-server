@@ -37,7 +37,7 @@ public class LookupRoute extends RequestHandler {
             + "LEFT JOIN  ddp_participant p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
             + "LEFT JOIN ddp_instance_group gr on (realm.ddp_instance_id = gr.ddp_instance_id) "
-            + "WHERE oD.type_px LIKE ? AND NOT (oD.deleted <=> 1) AND gr.ddp_group_id = ?";
+            + "WHERE oD.type_px LIKE ? AND gr.ddp_group_id = ?";
     private static final String SQL_SELECT_CONTACT = "SELECT DISTINCT name, contact, phone, fax FROM ddp_medical_record WHERE name LIKE ?";
     private static final String SQL_SELECT_FACILITY_IN_GROUP = "SELECT DISTINCT oD.facility, oD.phone, oD.fax, oD.destruction_policy "
             + "FROM ddp_onc_history_detail oD "

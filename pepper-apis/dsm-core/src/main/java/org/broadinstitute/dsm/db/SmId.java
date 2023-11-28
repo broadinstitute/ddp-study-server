@@ -31,6 +31,8 @@ public class SmId {
     private int tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
     private int smIdPk;
+    @ColumnName(DBConstants.DELETED)
+    private Boolean deleted;
 
     public SmId() {
     }
