@@ -95,17 +95,6 @@
             <artifactId>servo-core</artifactId>
         </dependency>
 
-        <!-- authorization and authentication-->
-        <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>auth0</artifactId>
-            <!-- <version>1.2.0</version> -->
-        </dependency>
-        <dependency>
-            <!-- jwt security token stuff -->
-            <groupId>com.auth0</groupId>
-            <artifactId>java-jwt</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
@@ -117,10 +106,6 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>jwks-rsa</artifactId>
         </dependency>
 
         <!-- autogenerates getters, setters, and other boilerplate code -->
