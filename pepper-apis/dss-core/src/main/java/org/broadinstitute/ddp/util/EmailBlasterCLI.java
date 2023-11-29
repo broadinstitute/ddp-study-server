@@ -125,8 +125,8 @@ public class EmailBlasterCLI {
             LOG.info("Found {} emails", userEmailsById.size());
             try {
                 for (Map.Entry<String, String> emailByAuth0Id : userEmailsById.entrySet()) {
-                    String recipient = emailByAuth0Id.getKey();
-                    String auth0Id = emailByAuth0Id.getValue();
+                    String recipient = emailByAuth0Id.getValue();
+                    String auth0Id = emailByAuth0Id.getKey();
                     LOG.info("Sending to " + recipient);
                     Map<String, String> templateSubstitutions = personalizationByAuth0Id.get(auth0Id);
                     SendGridMailUtil.sendEmailMessage(fromName, fromEmail, null, recipient, null, sendgridTemplateId,

@@ -362,7 +362,7 @@ public class Auth0Util {
             try {
                 UsersPage page = auth0Mgmt.users().list(filter).execute();
                 for (User user : page.getItems()) {
-                    results.put(user.getEmail(), user.getId());
+                    results.put(user.getId(), user.getEmail());
                 }
             } catch (Auth0Exception e) {
                 log.error("Error while retrieving auth0 user ids via email lookup, continuing pagination", e);
