@@ -96,10 +96,10 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         List<String> participantsInTheStudy = null;
         if (index != null) {
             participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
-        }
-        for (String ddpParticipantId : participantsInTheStudy) {
-            if (!dataByRealm.containsKey(ddpParticipantId)) {
-                dataByRealm.put(ddpParticipantId, new ArrayList<>());
+            for (String ddpParticipantId : participantsInTheStudy) {
+                if (!dataByRealm.containsKey(ddpParticipantId)) {
+                    dataByRealm.put(ddpParticipantId, new ArrayList<>());
+                }
             }
         }
         if (dataByRealm.isEmpty()) {
