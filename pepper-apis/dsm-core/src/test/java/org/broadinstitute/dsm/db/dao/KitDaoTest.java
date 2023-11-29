@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.kit.KitTypeDao;
 import org.broadinstitute.dsm.db.dao.kit.KitTypeImpl;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -24,9 +24,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 @Slf4j
-public class KitDaoImplTest extends DbTxnBaseTest {
+public class KitDaoTest extends DbTxnBaseTest {
 
-    private static final KitDaoImpl kitDao = new KitDaoImpl();
+    private static final KitDao kitDao = new KitDao();
 
     private static final UserAdminTestUtil userAdminTestUtil = new UserAdminTestUtil();
 
