@@ -69,9 +69,6 @@ public class KitDaoImpl implements KitDao {
             + "ddp_kit_tracking tracking "
             + "WHERE tracking.kit_label = ?) AS existing_rows";
 
-    private static final String UPDATE_KIT_REQUEST_DDP_LABEL = "update ddp_kit_request set ddp_label = ? where "
-            + "dsm_kit_request_id = ?";
-
     private static final String UPDATE_KIT_COMPLETE = "update ddp_kit set kit_complete = ? where dsm_kit_id = ?";
 
     // update various ddp_kit scan fields if they have not been set already.  If
