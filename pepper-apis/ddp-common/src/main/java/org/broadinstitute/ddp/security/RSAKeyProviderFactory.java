@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.security;
+package org.broadinstitute.ddp.security;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -6,6 +6,7 @@ import java.security.interfaces.RSAPublicKey;
 import com.auth0.jwk.JwkException;
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
+import org.broadinstitute.ddp.exception.DDPTokenException;
 
 /**
  * A factory class creating specific RSAKeyProvider instances.
@@ -23,7 +24,7 @@ public class RSAKeyProviderFactory {
                 try {
                     publicKey = (RSAPublicKey) provider.get(kid).getPublicKey();
                 } catch (JwkException e) {
-                    throw new RuntimeException("Error reading jwk", e);
+                    throw new DDPTokenException(e);
                 }
                 return publicKey;
             }
