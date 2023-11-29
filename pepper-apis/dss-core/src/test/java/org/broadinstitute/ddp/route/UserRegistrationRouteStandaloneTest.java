@@ -28,6 +28,7 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -412,6 +413,23 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
                 .body("code", equalTo(ErrorCodes.STUDY_NOT_FOUND))
                 .body("message", containsString(study.getGuid()));
     }
+
+    @Test
+    public void testAuth0_getEmail() {
+        String testAuth0UserId = TransactionWrapper.withTxn(handle -> {
+            // Have to create a completely new user that only exists in Auth0, so that email-lookup-by-user will not fail
+            var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
+            Auth0Util.TestingUser testAuth0User = Auth0Util.createTestingUser(mgmtClient);
+            Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
+            Map<String, String> emailMap = auth0Util.getAuth0UsersByAuth0UserIds(Set.of(testAuth0User.getAuth0Id()), mgmtClient.getToken());
+            assertEquals(1, emailMap.size());
+            assertEquals(testAuth0User.getEmail(), emailMap.get(testAuth0User.getAuth0Id()));
+            return testAuth0User.getAuth0Id();
+        });
+
+        auth0UserIdsToDelete.add(testAuth0UserId);
+    }
+
 
     @Test
     public void testRegister_newUser() {
