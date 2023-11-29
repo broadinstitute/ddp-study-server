@@ -6,7 +6,8 @@ manual_scaling:
   instances: 1
 
 vpc_access_connector:
-  name: "projects/{{project_id}}/locations/us-central1/connectors/appengine-default-connect"
+  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-connector"
+  egress_setting: all-traffic
 
 network:
   instance_tag: study-manager
