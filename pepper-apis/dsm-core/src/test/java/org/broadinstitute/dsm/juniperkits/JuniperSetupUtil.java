@@ -231,7 +231,7 @@ public class JuniperSetupUtil {
         scanPayloads.add(sentAndFinalScanPayload);
         List<ScanResult> scanResultList = new ArrayList<>();
         KitPayload kitPayload = new KitPayload(scanPayloads, Integer.parseInt(userWithKitShippingAccess), ddpInstanceDto);
-        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDaoImpl());
+        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
         scanResultList.addAll(kitFinalScanUseCase.get());
         return scanResultList;
     }
