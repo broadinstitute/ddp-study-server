@@ -25,7 +25,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.dsm.security.RSAKeyProviderFactory;
+import org.broadinstitute.ddp.security.RSAKeyProviderFactory;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.TestUtil;
