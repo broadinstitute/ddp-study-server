@@ -101,18 +101,4 @@ public interface JdbiUser extends SqlObject {
 
     @SqlUpdate("delete from user where guid in (<guid>)")
     int deleteAllByGuids(@BindList(value = "guid", onEmpty = BindList.EmptyHandling.NULL) Set<String> guids);
-
-    @SqlQuery("SELECT u.*"
-            + " FROM user_study_enrollment usen "
-            + " JOIN enrollment_status_type est on usen.enrollment_status_type_id = est.enrollment_status_type_id "
-            + " JOIN umbrella_study us ON us.umbrella_study_id = usen.study_id "
-            + " JOIN user u on u.user_id = usen.user_id "
-            + " WHERE "
-            + " us.guid = :studyGuid "
-            + " AND est.enrollment_status_type_code = 'ENROLLED'"
-            + " AND usen.valid_to is null"
-    )
-    @RegisterConstructorMapper(UserDto.class)
-    List<UserDto> findAllEnrolledParticipants(@Bind("studyGuid") String studyGuid);
-
 }
