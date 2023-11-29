@@ -69,9 +69,6 @@ public class KitDaoImpl implements KitDao {
             + "ddp_kit_tracking tracking "
             + "WHERE tracking.kit_label = ?) AS existing_rows";
 
-    private static final String UPDATE_KIT_REQUEST_DDP_LABEL = "update ddp_kit_request set ddp_label = ? where "
-            + "dsm_kit_request_id = ?";
-
     private static final String UPDATE_KIT_COMPLETE = "update ddp_kit set kit_complete = ? where dsm_kit_id = ?";
 
     // update various ddp_kit scan fields if they have not been set already.  If
@@ -229,8 +226,10 @@ public class KitDaoImpl implements KitDao {
                 logger.error("Not able to query the kit request for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
                 dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                         "An unexpected error has occurred");
+                return dbVals;
             }
 
+            /*
             try (PreparedStatement stmt = conn.prepareStatement(SQL_NUM_KITS_BY_LABEL)) {
                 stmt.setString(1, kitRequestShipping.getDdpLabel());
                 ResultSet rs = stmt.executeQuery();
@@ -257,6 +256,8 @@ public class KitDaoImpl implements KitDao {
                 dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                         "An unexpected error has occurred");
             }
+
+             */
 
             try (PreparedStatement stmt = conn.prepareStatement(SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY)) {
                 stmt.setLong(1, System.currentTimeMillis());
@@ -468,7 +469,8 @@ public class KitDaoImpl implements KitDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error deleting kit request with id: " + kitRequestId, simpleResult.resultException);
+            throw new DsmInternalError(String.format("Error deleting kit request with id: %d", kitRequestId),
+                    simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
