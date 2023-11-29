@@ -4,7 +4,7 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
-public class ScanError {
+public class ScanResult {
     private String kit;
     private String error;
     private String shortId;
@@ -13,16 +13,16 @@ public class ScanError {
      * Use this to construct a scan result when there is
      * no error.
      */
-    public ScanError(String kit) {
+    public ScanResult(String kit) {
         this.kit = kit;
     }
 
-    public ScanError(String kit, String error) {
+    public ScanResult(String kit, String error) {
         this(kit);
         this.error = error;
     }
 
-    public ScanError(String kit, String error, String shortId) {
+    public ScanResult(String kit, String error, String shortId) {
         this(kit, error);
         this.shortId = shortId;
     }

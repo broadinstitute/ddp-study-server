@@ -16,7 +16,7 @@ public class KitInitialScanRoute extends KitStatusChangeRoute {
     @Override
     protected void processRequest() {
         KitInitialScanUseCase kitInitialScanUseCase = new KitInitialScanUseCase(kitPayload, new KitDao());
-        scanErrorList.addAll(kitInitialScanUseCase.get());
+        scanResultList.addAll(kitInitialScanUseCase.get());
     }
 
     @Override

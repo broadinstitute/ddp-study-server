@@ -16,7 +16,7 @@ public class SentKitRoute extends KitStatusChangeRoute {
     @Override
     protected void processRequest() {
         KitSentUseCase kitSentUseCase = new KitSentUseCase(kitPayload, new KitDao());
-        scanErrorList.addAll(kitSentUseCase.get());
+        scanResultList.addAll(kitSentUseCase.get());
     }
 
     @Override

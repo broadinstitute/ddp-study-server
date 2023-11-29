@@ -11,7 +11,7 @@ import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 
 @Setter
-public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
+public abstract class BaseKitUseCase implements Supplier<List<ScanResult>> {
 
     protected KitPayload kitPayload;
     protected KitDao kitDao;
@@ -22,16 +22,16 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
     }
 
     @Override
-    public List<ScanError> get() {
-        List<ScanError> result = new ArrayList<>();
+    public List<ScanResult> get() {
+        List<ScanResult> result = new ArrayList<>();
         for (ScanPayload scanPayload : kitPayload.getScanPayloads()) {
             process(scanPayload).ifPresentOrElse(maybeScanError -> result.add(maybeScanError), () -> result.add(null));
         }
         return result;
     }
 
-    public List<ScanError> getRGPFinalScan() {
-        List<ScanError> result = new ArrayList<>();
+    public List<ScanResult> getRGPFinalScan() {
+        List<ScanResult> result = new ArrayList<>();
         for (ScanPayload scanPayload : kitPayload.getScanPayloads()) {
             processRGPFinalScan(scanPayload).ifPresentOrElse(maybeScanError ->
                     result.add(maybeScanError), () -> result.add(null));
@@ -39,11 +39,11 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
         return result;
     }
 
-    protected abstract Optional<ScanError> process(ScanPayload scanPayload);
+    protected abstract Optional<ScanResult> process(ScanPayload scanPayload);
 
-    protected abstract Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload);
+    protected abstract Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload);
 
-    protected boolean isKitUpdateSuccessful(Optional<ScanError> maybeScanError, String bspCollaboratorParticipantId) {
+    protected boolean isKitUpdateSuccessful(Optional<ScanResult> maybeScanError, String bspCollaboratorParticipantId) {
         return maybeScanError.isEmpty()
                 || maybeScanError.get().isScanErrorOnlyBspParticipantId(bspCollaboratorParticipantId);
     }

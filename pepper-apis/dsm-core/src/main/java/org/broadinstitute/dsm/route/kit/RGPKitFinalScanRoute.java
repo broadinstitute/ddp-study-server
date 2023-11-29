@@ -17,7 +17,7 @@ public class RGPKitFinalScanRoute  extends KitStatusChangeRoute {
     @Override
     protected void processRequest() {
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
-        scanErrorList.addAll(kitFinalScanUseCase.getRGPFinalScan());
+        scanResultList.addAll(kitFinalScanUseCase.getRGPFinalScan());
     }
 
     @Override

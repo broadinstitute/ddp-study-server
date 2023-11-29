@@ -27,7 +27,7 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.gp.BSPKit;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
@@ -224,16 +224,16 @@ public class JuniperSetupUtil {
 
     }
 
-    public static List<ScanError> changeKitToSent(JuniperKitRequest juniperTestKit) {
+    public static List<ScanResult> changeKitToSent(JuniperKitRequest juniperTestKit) {
         List<SentAndFinalScanPayload> scanPayloads = new ArrayList<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
         SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(juniperTestKit.getDdpLabel(), "SOME_RANDOM_KIT_LABEL");
         scanPayloads.add(sentAndFinalScanPayload);
-        List<ScanError> scanErrorList = new ArrayList<>();
+        List<ScanResult> scanResultList = new ArrayList<>();
         KitPayload kitPayload = new KitPayload(scanPayloads, Integer.parseInt(userWithKitShippingAccess), ddpInstanceDto);
-        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
-        scanErrorList.addAll(kitFinalScanUseCase.get());
-        return scanErrorList;
+        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDaoImpl());
+        scanResultList.addAll(kitFinalScanUseCase.get());
+        return scanResultList;
     }
 
     private static String generateUserEmail() {

@@ -16,7 +16,8 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -161,14 +162,14 @@ public class KitDao {
      */
     private static final String SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID =
             "select t.kit_label,\n" +
-            "       t.tracking_id,\n" +
-            "       (select email from access_user where user_id = t.scan_by) as scan_by,\n" +
-            "       case when t.scan_date is not null\n" +
-            "            then from_unixtime(t.scan_date/1000)\n" +
-            "            else null\n" +
-            "       end as scan_date\n" +
-            "from ddp_kit_tracking t\n" +
-            "        where t.kit_label = ? or t.tracking_id = ? limit 1";
+                    "       t.tracking_id,\n" +
+                    "       (select email from access_user where user_id = t.scan_by) as scan_by,\n" +
+                    "       case when t.scan_date is not null\n" +
+                    "            then from_unixtime(t.scan_date/1000)\n" +
+                    "            else null\n" +
+                    "       end as scan_date\n" +
+                    "from ddp_kit_tracking t\n" +
+                    "        where t.kit_label = ? or t.tracking_id = ? limit 1";
 
     public int create(KitRequestShipping kitRequestDto) {
         return 0;
@@ -195,8 +196,8 @@ public class KitDao {
      * {@link #SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY} for exact details
      * of what gets updated.
      */
-    public Optional<ScanError> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId) {
-        Optional<ScanError> result = Optional.empty();
+    public Optional<ScanResult> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId) {
+        Optional<ScanResult> result = Optional.empty();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
 
@@ -209,18 +210,18 @@ public class KitDao {
                     numRows++;
                 }
                 if (numRows == 0) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                             "kit request with ddp_label " + kitRequestShipping.getDdpLabel() + " not found.");
                     return dbVals;
                 } else if (numRows > 1) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                             String.format("Found %s matching kit request rows for ddp_label %s.",
                                     numRows, kitRequestShipping.getDdpLabel()));
                     return dbVals;
                 } // else one row found, as expected
             } catch (SQLException ex) {
                 logger.error("Not able to query the kit request for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
-                dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                         "An unexpected error has occurred");
             }
 
@@ -230,24 +231,24 @@ public class KitDao {
                 if (!rs.next()) {
                     String errorMessage =
                             "No rowcount when querying kits with label " + kitRequestShipping.getDdpLabel();
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), errorMessage);
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(), errorMessage);
                     return dbVals;
                 }
                 int numKitsWithLabel = rs.getInt(1);
 
                 if (numKitsWithLabel == 0) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                             "kit " + kitRequestShipping.getDdpLabel() + " not found.");
                     return dbVals;
                 } else if (numKitsWithLabel > 1) {
                     // todo arz is this an error?  Expected to have multiple kits with the same label?
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                             "Found " + numKitsWithLabel + " kits with label " + kitRequestShipping.getDdpLabel());
                     return dbVals;
                 } // else 1 kit, which is what we expect
             } catch (SQLException ex) {
                 logger.error("Not able to query kits for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
-                dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                         "An unexpected error has occurred");
             }
 
@@ -262,37 +263,36 @@ public class KitDao {
                     logger.info("Updated ddp_kit.kit_label to {} for kit request  {}.",
                             kitRequestShipping.getKitLabel(), kitRequestShipping.getDdpLabel());
                     if (kitRequestShipping.hasBSPCollaboratorParticipantId()) {
-                        // todo arz how does this work?  A scan error with no error?
-                        dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), null,
+                        dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(), null,
                                 kitRequestShipping.getBspCollaboratorParticipantId());
                     }
                 } else if (rowsAffected > 1) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                             String.format("Found %s matching kit rows for ddp_label %s.",
                                     rowsAffected, kitRequestShipping.getDdpLabel()));
                     return dbVals;
                 } else if (rowsAffected == 0) {
                     // there is already a kit with the given label so an error should be returned
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                             String.format("%s has already been scanned", kitRequestShipping.getDdpLabel()));
                     return dbVals;
                 }
             } catch (SQLException ex) {
                 logger.error("Not able to update the kit for ddpLabel " + kitRequestShipping.getDdpLabel(), ex);
-                dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                         "An unexpected error has occurred");
             }
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = Optional.ofNullable((ScanError) results.resultValue);
+            result = Optional.ofNullable((ScanResult) results.resultValue);
         }
         return result;
     }
 
-    public Optional<ScanError> updateKitReceived(KitRequestShipping kitRequestShipping,
+    public Optional<ScanResult> updateKitReceived(KitRequestShipping kitRequestShipping,
                                                  String userId) {
-        Optional<ScanError> result = Optional.empty();
+        Optional<ScanResult> result = Optional.empty();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_RECEIVED)) {
@@ -301,19 +301,19 @@ public class KitDao {
                 stmt.setString(3, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-                    dbVals.resultValue = Optional.of(new ScanError(kitRequestShipping.getKitLabel(),
+                    dbVals.resultValue = Optional.of(new ScanResult(kitRequestShipping.getKitLabel(),
                             "SM-ID \"" + kitRequestShipping.getKitLabel() + "\" does not exist or was already scanned as received.\n"
                                     + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
                 }
             } catch (Exception ex) {
-                dbVals.resultValue = Optional.of(new ScanError(kitRequestShipping.getKitLabel(),
+                dbVals.resultValue = Optional.of(new ScanResult(kitRequestShipping.getKitLabel(),
                         "SM-ID \"" + kitRequestShipping.getKitLabel() + "\" does not exist or was already scanned as received.\n"
                                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = (Optional<ScanError>) results.resultValue;
+            result = (Optional<ScanResult>) results.resultValue;
         }
         return result;
     }
@@ -636,8 +636,8 @@ public class KitDao {
      * no row is inserted and a scan error is returned with information about the existing row.
      * If a row is inserted successfully, an empty optional is returned.
      */
-    private Optional<ScanError> insertKitTrackingIfNotExists(KitRequestShipping kitRequestShipping, int userId) {
-        Optional<ScanError> result = Optional.empty();
+    private Optional<ScanResult> insertKitTrackingIfNotExists(KitRequestShipping kitRequestShipping, int userId) {
+        Optional<ScanResult> result = Optional.empty();
         String errorMessage = String.format("Unable to insert tracking %s for %s.", kitRequestShipping.getTrackingId(),
                 kitRequestShipping.getKitLabel());
         SimpleResult results = inTransaction((conn) -> {
@@ -653,14 +653,14 @@ public class KitDao {
                         String trackingId = rs.getString(DBConstants.TRACKING_ID);
                         String scannedAt = rs.getString(DBConstants.DSM_SCAN_DATE);
                         String scannedBy = rs.getString(DBConstants.SCAN_BY);
-                        dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(),
+                        dbVals.resultValue = new ScanResult(kitRequestShipping.getKitLabel(),
                                 String.format("Kit %s was already associated with tracking id %s by %s at %s",
                                         kitLabel, trackingId, scannedBy, scannedAt));
                         return dbVals;
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
+                dbVals.resultValue = new ScanResult(kitRequestShipping.getKitLabel(), errorMessage);
                 logger.error(errorMessage, ex);
                 return dbVals;
             }
@@ -674,20 +674,20 @@ public class KitDao {
                 stmt.setString(6, kitRequestShipping.getKitLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getKitLabel(), errorMessage);
                 } else {
                     logger.info("Added tracking id {} for kit {}", kitRequestShipping.getTrackingId(),
                             kitRequestShipping.getKitLabel());
                     return dbVals;
                 }
             } catch (SQLException ex) {
-                dbVals.resultValue = new ScanError(kitRequestShipping.getKitLabel(), errorMessage);
+                dbVals.resultValue = new ScanResult(kitRequestShipping.getKitLabel(), errorMessage);
                 logger.error(errorMessage, ex);
             }
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = Optional.ofNullable((ScanError) results.resultValue);
+            result = Optional.ofNullable((ScanResult) results.resultValue);
         }
         return result;
     }
@@ -773,8 +773,8 @@ public class KitDao {
         });
     }
 
-    public Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping) {
-        Optional<ScanError> result = Optional.empty();
+    public Optional<ScanResult> updateKitLabel(KitRequestShipping kitRequestShipping) {
+        Optional<ScanResult> result = Optional.empty();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_LABEL)) {
@@ -782,25 +782,25 @@ public class KitDao {
                 stmt.setLong(2, kitRequestShipping.getDsmKitId());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(), "dsm_kit_id "
+                    dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(), "dsm_kit_id "
                             + kitRequestShipping.getDsmKitId() + " does not exist or already has a Kit Label");
                 } else {
                     logger.info("Updated label for kit {} to {}", kitRequestShipping.getDsmKitId(),
                             kitRequestShipping.getKitLabel());
                 }
             } catch (Exception ex) {
-                dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),
+                dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(),
                         "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" was already scanned.\n");
             }
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = Optional.ofNullable((ScanError) results.resultValue);
+            result = Optional.ofNullable((ScanResult) results.resultValue);
         }
         return result;
     }
 
-    public Optional<ScanError> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId, int userId) {
+    public Optional<ScanResult> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId, int userId) {
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setTrackingId(trackingReturnId);
         kitRequestShipping.setKitLabel(kitLabel);

@@ -15,7 +15,7 @@ public class KitTrackingScanRoute extends KitStatusChangeRoute {
     @Override
     protected void processRequest() {
         KitTrackingScanUseCase kitTrackingScanUseCase = new KitTrackingScanUseCase(kitPayload, new KitDao());
-        scanErrorList.addAll(kitTrackingScanUseCase.get());
+        scanResultList.addAll(kitTrackingScanUseCase.get());
     }
 
     @Override

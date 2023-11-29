@@ -18,19 +18,19 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanResult> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         String hruid = scanPayload.getHruid();
-        Optional<ScanError> maybeScanError = updateKitRequest(hruid, kitLabel);
+        Optional<ScanResult> maybeScanError = updateKitRequest(hruid, kitLabel);
         // not writing into ES because same info will get written per final scan into ES
         return maybeScanError;
     }
 
-    private Optional<ScanError> updateKitRequest(String hruid, String kit) {
+    private Optional<ScanResult> updateKitRequest(String hruid, String kit) {
         List<KitRequestShipping> kitList = kitDao.getKitsByHruid(hruid);
         if (kitList != null && !kitList.isEmpty()) {
             if (kitList.size() > 2) {
-                return Optional.ofNullable(new ScanError(kit,
+                return Optional.ofNullable(new ScanResult(kit,
                         "Too many active kits found for \"" + hruid + "\".\n" + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
             Optional<KitRequestShipping> kitRequestWithPrefix =
@@ -52,7 +52,7 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
                 }
             }
         }
-        return Optional.ofNullable(new ScanError(kit, "Kit for participant with ShortId \"" + hruid + "\" was not found.\n"
+        return Optional.ofNullable(new ScanResult(kit, "Kit for participant with ShortId \"" + hruid + "\" was not found.\n"
                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
     }
 
@@ -62,7 +62,7 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+    protected Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload) {
         throw new NotImplementedException();
     }
 }
