@@ -422,8 +422,14 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
             Auth0Util.TestingUser testAuth0User = Auth0Util.createTestingUser(mgmtClient);
             assertNotNull(testAuth0User.getEmail());
+            try {
+                //delay to make sure no timings issue
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
             Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
-            //test auth0 email lookup
+            //test Auth0 email lookup
             Map<String, String> emailMap = auth0Util.getAuth0UsersByAuth0UserIds(Set.of(testAuth0User.getAuth0Id()), mgmtClient.getToken());
             assertEquals(1, emailMap.size());
             assertEquals(testAuth0User.getEmail(), emailMap.get(testAuth0User.getAuth0Id()));
