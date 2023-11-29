@@ -111,8 +111,7 @@ public class ElasticSearch implements ElasticSearchable {
     /**
      * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
      * @param sourceMap the source map
-     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the
-     *                             {@link ElasticSearchParticipantDto#queriedParticipantId}
+     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the queriedParticipantId
      * @return
      */
     public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
@@ -154,6 +153,18 @@ public class ElasticSearch implements ElasticSearchable {
         }
         int dotIndex = searchHitIndex.lastIndexOf('.');
         return searchHitIndex.substring(dotIndex + 1);
+    }
+
+    /** returns a list of all the guids in one ES index
+     * @param esParticipantsIndex the ES index to get all participants from
+     * */
+    public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
+        logger.info("Getting all participant ids from index " + esParticipantsIndex);
+        ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
+        List<String> participantIds = new ArrayList<>();
+        es.esParticipants.forEach(elasticSearchParticipantDto ->
+                participantIds.add(elasticSearchParticipantDto.getProfile().orElseThrow().getGuid()));
+        return participantIds;
     }
 
     @Override
@@ -347,7 +358,6 @@ public class ElasticSearch implements ElasticSearchable {
                 QueryBuilders.termsQuery(booleanId ? ElasticSearchUtil.PROFILE_GUID : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
         return boolQuery;
     }
-
 
     @Override
     public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {

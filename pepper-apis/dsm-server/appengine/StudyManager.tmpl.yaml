@@ -6,9 +6,11 @@ manual_scaling:
   instances: 1
 
 vpc_access_connector:
-  name: "projects/{{project_id}}/locations/us-central1/connectors/appengine-default-connect"
+  name: "projects/{{project_id}}/locations/us-central1/connectors/appengine-connector"
+  egress_setting: all-traffic
 
 network:
+  name: managed
   instance_tag: study-manager
 
 entrypoint: java -javaagent:tcell/tcellagent.jar -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=study-manager,-cprof_cpu_use_per_thread_timers=true,-logtostderr -Xmx1640m -Dlog4j.configurationFile=log4j.xml -jar DSMServer.jar
