@@ -152,7 +152,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
                 stmt.setString(2, ddpParticipantId);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
-                    dbVals.resultValue = rs.getString(DBConstants.ONC_HISTORY_DETAIL_ID);
+                    dbVals.resultValue = rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID);
                 } else {
                     throw new RuntimeException(
                             "Couldn't find a valid random onc history with accession number in realm " + ddpInstanceName);
