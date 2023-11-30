@@ -8,8 +8,6 @@ vpc_access_connector:
   name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-connector"
   egress_setting: all-traffic
 
-# this comment is here to test triggering a build
-
 network:
   name: managed
 
