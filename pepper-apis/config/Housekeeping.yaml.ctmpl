@@ -5,7 +5,11 @@ runtime: java11
 instance_class: B8
 
 vpc_access_connector:
-  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-default-connect"
+  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-connector"
+  egress_setting: all-traffic
+
+network:
+  name: managed
 
 manual_scaling:
   instances: 1
