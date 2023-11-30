@@ -12,7 +12,7 @@ import java.util.List;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
@@ -121,7 +121,7 @@ public class KitRequestCreateLabel {
 
     private static PreparedStatement getPreparedStatement(@NonNull Connection conn, String realm, String type) throws SQLException {
         PreparedStatement stmt = null;
-        String query = KitDaoImpl.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.KIT_NO_LABEL)
+        String query = KitDao.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.KIT_NO_LABEL)
                 .concat(QueryExtension.KIT_LABEL_NOT_TRIGGERED);
         if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(type)) {
             logger.info("Going to request label for all kits of realm " + realm + " and kit type " + type);

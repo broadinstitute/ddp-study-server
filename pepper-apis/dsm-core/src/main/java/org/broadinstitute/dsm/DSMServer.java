@@ -15,8 +15,6 @@ import static spark.Spark.put;
 import static spark.Spark.threadPool;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -50,7 +48,7 @@ import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
 import org.broadinstitute.dsm.exception.AuthenticationException;
@@ -1020,7 +1018,7 @@ public class DSMServer {
         post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
 
         GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(
-                new MercurySampleDao(), projectId, mercuryTopicId, new KitDaoImpl());
+                new MercurySampleDao(), projectId, mercuryTopicId, new KitDao());
         get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
 
         GetMercuryOrdersRoute getMercuryOrdersRoute = new GetMercuryOrdersRoute(
