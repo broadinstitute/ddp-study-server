@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EventUtil;
@@ -92,7 +94,9 @@ public class ClinicalKitDao {
     public ClinicalKitDto getClinicalKitBasedOnSmId(String smIdValue) {
         log.info("Checking the kit for SM Id value " + smIdValue);
         Optional<ClinicalKitWrapper> maybeClinicalKitWrapper = getClinicalKitFromSMId(smIdValue);
-        maybeClinicalKitWrapper.orElseThrow();
+        maybeClinicalKitWrapper.orElseThrow(() -> {
+            throw new NoSuchElementException("No kit found for " + smIdValue);
+        });
         ClinicalKitWrapper clinicalKitWrapper = maybeClinicalKitWrapper.get();
         ClinicalKitDto clinicalKitDto = clinicalKitWrapper.getClinicalKitDto();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(clinicalKitWrapper.getDdpInstanceId());
