@@ -337,6 +337,41 @@ public class Auth0Util {
         return results;
     }
 
+    public Map<String, String> getAuth0UsersByAuth0UserIds(Set<String> userIds, String mgmtApiToken) {
+        if (userIds == null || userIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        int maxPerPage = 100;
+        Map<String, String> results = new HashMap<>();
+        List<String> ids = new ArrayList<>(userIds);
+        ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
+
+        for (int i = 0; i < ids.size(); i += maxPerPage) {
+            int end = Math.min(i + maxPerPage, ids.size());
+            List<String> subset = ids.subList(i, end);
+
+            String query = String.format("user_id:(%s)", String.join(" ", subset));
+
+            UserFilter filter = new UserFilter()
+                    .withFields("user_id,email", true)
+                    .withPage(0, 100)
+                    .withQuery(query)
+                    .withSearchEngine("v3");
+
+            try {
+                UsersPage page = auth0Mgmt.users().list(filter).execute();
+                for (User user : page.getItems()) {
+                    results.put(user.getId(), user.getEmail());
+                }
+            } catch (Auth0Exception e) {
+                log.error("Error while retrieving auth0 user ids via email lookup, continuing pagination", e);
+            }
+        }
+
+        return results;
+    }
+
     /**
      * Finds email for each auth0UserId. Since Auth0 API is paginated, this will attempt to work through all given auth0UserIds but any
      * API errors during the process will be consumed. This means results might not contain all requested user emails and caller should

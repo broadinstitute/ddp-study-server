@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -19,7 +19,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
 
     protected NotificationUtil notificationUtil;
     protected KitPayload kitPayload;
-    protected List<ScanError> scanErrorList;
+    protected List<ScanResult> scanResultList;
 
     public KitStatusChangeRoute(NotificationUtil notificationUtil) {
         this.notificationUtil = notificationUtil;
@@ -34,14 +34,14 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving",
                 userIdRequest)) {
-            scanErrorList = new ArrayList<>();
+            scanResultList = new ArrayList<>();
             List<? extends ScanPayload> scanPayloads = getScanPayloads(requestBody);
             int labelCount = scanPayloads.size();
             if (labelCount > 0) {
                 kitPayload = new KitPayload(scanPayloads, Integer.valueOf(userIdRequest), ddpInstanceDto);
                 processRequest();
             }
-            return scanErrorList;
+            return scanResultList;
         } else {
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;

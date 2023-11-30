@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.route.kit;
 import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.kit.KitInitialScanUseCase;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -15,8 +15,8 @@ public class KitInitialScanRoute extends KitStatusChangeRoute {
 
     @Override
     protected void processRequest() {
-        KitInitialScanUseCase kitInitialScanUseCase = new KitInitialScanUseCase(kitPayload, new KitDaoImpl());
-        scanErrorList.addAll(kitInitialScanUseCase.get());
+        KitInitialScanUseCase kitInitialScanUseCase = new KitInitialScanUseCase(kitPayload, new KitDao());
+        scanResultList.addAll(kitInitialScanUseCase.get());
     }
 
     @Override
