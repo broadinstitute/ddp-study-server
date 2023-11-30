@@ -9,8 +9,6 @@ vpc_access_connector:
   name: "projects/{{project_id}}/locations/us-central1/connectors/appengine-connector"
   egress_setting: all-traffic
 
-# this comment is a test to trigger a dsm build
-
 network:
   name: managed
   instance_tag: study-manager
