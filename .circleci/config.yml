@@ -67,8 +67,7 @@ workflows:
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
-            pepper-apis/config/DataDonationPlatform.yaml.ctmpl dss true
-            pepper-apis/config/Housekeeping.yaml.ctmpl dss true
+            pepper-apis/config/.* dss true
             pepper-apis/dsm-server/appengine/StudyManager.tmpl.yaml dsm true
           filters:
             branches:
