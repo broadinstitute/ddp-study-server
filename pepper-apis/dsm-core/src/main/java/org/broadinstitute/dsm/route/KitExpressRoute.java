@@ -17,7 +17,7 @@ import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.EasypostLabelRate;
 import org.broadinstitute.dsm.model.KitRequestSettings;
@@ -124,7 +124,7 @@ public class KitExpressRoute extends RequestHandler {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + KitDaoImpl.KIT_BY_KIT_REQUEST_ID)) {
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + KitDao.KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setString(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
