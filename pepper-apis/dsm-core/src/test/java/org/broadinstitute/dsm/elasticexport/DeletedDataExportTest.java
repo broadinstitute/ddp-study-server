@@ -124,8 +124,6 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
                         .get(ESObjectConstants.ONC_HISTORY_DETAIL);
         Assert.assertEquals(1, oncHistoryDetails.size());
         Assert.assertEquals(oncHistoryDetailId2, oncHistoryDetails.get(0).get("oncHistoryDetailId"));
-
-
     }
 
     @Test

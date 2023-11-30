@@ -32,7 +32,7 @@ public class TissueDao implements Dao<Tissue> {
             + "LEFT JOIN ddp_institution inst on (inst.institution_id = m.institution_id) "
             + "LEFT JOIN ddp_participant p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
-            + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id "
+            + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
             + "WHERE realm.instance_name = ? ";
 
     private static final String SQL_SELECT_TISSUE_BY_TISSUE_ID = "SELECT * FROM ddp_tissue t WHERE tissue_id = ? ";
