@@ -155,15 +155,21 @@ public class ElasticSearch implements ElasticSearchable {
         return searchHitIndex.substring(dotIndex + 1);
     }
 
-    /** returns a list of all the guids in one ES index
+    /**
+     * returns a list of all the guids in one ES index
+     *
      * @param esParticipantsIndex the ES index to get all participants from
-     * */
+     */
     public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
         logger.info("Getting all participant ids from index " + esParticipantsIndex);
         ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
         List<String> participantIds = new ArrayList<>();
-        es.esParticipants.forEach(elasticSearchParticipantDto ->
-                participantIds.add(elasticSearchParticipantDto.getProfile().orElseThrow().getGuid()));
+        for (ElasticSearchParticipantDto elasticSearchParticipantDto : es.esParticipants) {
+            if (elasticSearchParticipantDto.getProfile().isPresent()
+                    && StringUtils.isNotBlank(elasticSearchParticipantDto.getProfile().get().getGuid())) {
+                participantIds.add(elasticSearchParticipantDto.getProfile().get().getGuid());
+            }
+        }
         return participantIds;
     }
 
@@ -369,7 +375,7 @@ public class ElasticSearch implements ElasticSearchable {
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
             searchSourceBuilder.size(legacyAltPids.size());
             searchSourceBuilder.fetchSource(
-                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+                    new String[] {ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES}, null
             );
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
