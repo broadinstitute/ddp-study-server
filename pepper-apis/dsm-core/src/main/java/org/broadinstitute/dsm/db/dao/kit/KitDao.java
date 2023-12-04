@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.kit.ScanResult;
-import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -76,7 +75,7 @@ public class KitDao {
     private static final String UPDATE_KIT_COMPLETE = "update ddp_kit set kit_complete = ? where dsm_kit_id = ?";
 
     // update various ddp_kit scan fields if they have not been set already.  If
-    // they have already been set, do nothing.
+    // kit_complete is set then the kit is considered sent, do nothing. L88 avoids errors for initial scanned kits
     private static final String SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY = "UPDATE ddp_kit SET "
             + "kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? "
             + "WHERE "
@@ -84,7 +83,8 @@ public class KitDao {
             + "AND not kit_complete <=> 1 "
             + "AND deactivated_date is null "
             // sub-sub selected required in order to avoid mysql ERROR 1093 specifying target table in select
-            + "AND not exists (select * from (select 1 from ddp_kit k2 where k2.kit_label = ?) as subq)";
+            + "AND not exists (select * from (select 1 from ddp_kit k2 where k2.kit_label = ? "
+            + "AND dsm_kit_request_id != (SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) ) as subq)";
 
     private static final String UPDATE_KIT_LABEL = "UPDATE ddp_kit SET "
             + "kit_label = ? "
@@ -161,15 +161,9 @@ public class KitDao {
      * Returns at most one ddp_kit_tracking row that has the given kit_label or tracking_id
      */
     private static final String SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID =
-            "select t.kit_label,\n" +
-                    "       t.tracking_id,\n" +
-                    "       (select email from access_user where user_id = t.scan_by) as scan_by,\n" +
-                    "       case when t.scan_date is not null\n" +
-                    "            then from_unixtime(t.scan_date/1000)\n" +
-                    "            else null\n" +
-                    "       end as scan_date\n" +
-                    "from ddp_kit_tracking t\n" +
-                    "        where t.kit_label = ? or t.tracking_id = ? limit 1";
+            "select t.kit_label, t.tracking_id, (select email from access_user where user_id = t.scan_by) as scan_by, case "
+            + " when t.scan_date is not null then from_unixtime(t.scan_date/1000) else null end as scan_date from ddp_kit_tracking "
+            + " t where t.kit_label = ? or t.tracking_id = ? limit 1";
 
     public int create(KitRequestShipping kitRequestDto) {
         return 0;
@@ -258,6 +252,7 @@ public class KitDao {
                 stmt.setString(3, kitRequestShipping.getKitLabel());
                 stmt.setString(4, kitRequestShipping.getDdpLabel());
                 stmt.setString(5, kitRequestShipping.getKitLabel());
+                stmt.setString(6, kitRequestShipping.getDdpLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected == 1) {
                     logger.info("Updated ddp_kit.kit_label to {} for kit request  {}.",
