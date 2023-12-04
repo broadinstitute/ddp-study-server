@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.eval.NotImplementedException;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.kit.ScanResult;
@@ -25,13 +27,11 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
-
 public class KitDao {
 
     public static final String SQL_SELECT_KIT_REQUEST =
-            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
-                    + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id,"
+                    + " ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
                     + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, "
                     + "req.dsm_kit_request_id, "
@@ -75,7 +75,7 @@ public class KitDao {
     private static final String UPDATE_KIT_COMPLETE = "update ddp_kit set kit_complete = ? where dsm_kit_id = ?";
 
     // update various ddp_kit scan fields if they have not been set already.  If
-    // kit_complete is set then the kit is considered sent, do nothing. L88 avoids errors for initial scanned kits
+    // kit_complete is set then the kit is considered sent, do nothing. condition on L87 avoids errors for initial scanned kits
     private static final String SET_DDP_KIT_SCAN_INFO_BY_DDP_LABEL_IF_NOT_SET_ALREADY = "UPDATE ddp_kit SET "
             + "kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? "
             + "WHERE "
@@ -120,8 +120,8 @@ public class KitDao {
                     + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
                     + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
                     +
-                    "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id AND ks.ddp_instance_id = req.ddp_instance_id "
-                    + "WHERE ( req.ddp_label = ? or ddp_label like ? )";
+                    "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id "
+                    + " AND ks.ddp_instance_id = req.ddp_instance_id WHERE ( req.ddp_label = ? or ddp_label like ? )";
 
     private static final String INSERT_KIT = "INSERT INTO ddp_kit "
             + "(dsm_kit_request_id, kit_label, label_url_to, label_url_return, easypost_to_id, easypost_return_id, tracking_to_id, "
@@ -166,15 +166,15 @@ public class KitDao {
             + " t where t.kit_label = ? or t.tracking_id = ? limit 1";
 
     public int create(KitRequestShipping kitRequestDto) {
-        return 0;
+        throw new NotImplementedException("This method is not implemented ");
     }
 
     public int delete(int id) {
-        return 0;
+        throw new NotImplementedException("This method is not implemented ");
     }
 
     public Optional<KitRequestShipping> get(long id) {
-        return Optional.empty();
+        throw new NotImplementedException("This method is not implemented ");
     }
 
     public Boolean isBloodKit(String ddpLabel) {
@@ -375,8 +375,8 @@ public class KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultException)) {
-            throw new DsmInternalError(String.format("Error inserting kit request for participant id: %s"
-                    , kitRequestShipping.getDdpParticipantId()), results.resultException);
+            throw new DsmInternalError(String.format("Error inserting kit request for participant id: %s",
+                    kitRequestShipping.getDdpParticipantId()), results.resultException);
         }
         return (int) results.resultValue;
     }
@@ -403,7 +403,7 @@ public class KitDao {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError(String.format("Error setting kitRequest to deactivated w/ dsm_kit_request_id %s" , kitRequestId),
+            throw new DsmInternalError(String.format("Error setting kitRequest to deactivated w/ dsm_kit_request_id %s", kitRequestId),
                     results.resultException);
         }
         return Optional.ofNullable((KitRequestShipping) results.resultValue);
@@ -625,6 +625,13 @@ public class KitDao {
         return kitRequestShipping;
     }
 
+    public Optional<ScanResult> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId, int userId) {
+        KitRequestShipping kitRequestShipping = new KitRequestShipping();
+        kitRequestShipping.setTrackingId(trackingReturnId);
+        kitRequestShipping.setKitLabel(kitLabel);
+        return insertKitTrackingIfNotExists(kitRequestShipping, userId);
+    }
+
     /**
      * Inserts a row into the kit tracking table as long as no row exists in the table
      * with the given kit label or tracking id.  If a row exists with either of these values,
@@ -708,7 +715,8 @@ public class KitDao {
         });
 
         if (results.resultException != null) {
-            logger.error(String.format("Error checking if kit exists in tracking table w/ kit_label %s", kitLabel), results.resultException);
+            logger.error(String.format("Error checking if kit exists in tracking table w/ kit_label %s", kitLabel),
+                    results.resultException);
         }
         return (int) results.resultValue > 0;
     }
@@ -770,7 +778,7 @@ public class KitDao {
 
     public Optional<ScanResult> updateKitLabel(KitRequestShipping kitRequestShipping) {
         Optional<ScanResult> result = Optional.empty();
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_LABEL)) {
                 stmt.setString(1, kitRequestShipping.getKitLabel());
@@ -793,13 +801,6 @@ public class KitDao {
             result = Optional.ofNullable((ScanResult) results.resultValue);
         }
         return result;
-    }
-
-    public Optional<ScanResult> insertKitTrackingIfNotExists(String kitLabel, String trackingReturnId, int userId) {
-        KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setTrackingId(trackingReturnId);
-        kitRequestShipping.setKitLabel(kitLabel);
-        return insertKitTrackingIfNotExists(kitRequestShipping, userId);
     }
 
     public boolean hasKitReceived(Connection connection, String ddpParticipantId) {
