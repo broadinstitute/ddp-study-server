@@ -10,6 +10,11 @@ public class TrackingScanPayload extends BaseScanPayload {
     String trackingReturnId;
 
     @Override
+    public void setKitLabel(String kitLabel) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getTrackingReturnId() {
         return trackingReturnId;
     }
@@ -21,6 +26,11 @@ public class TrackingScanPayload extends BaseScanPayload {
 
     @Override
     public String getHruid() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setHruid(String hruid) {
         throw new UnsupportedOperationException();
     }
 

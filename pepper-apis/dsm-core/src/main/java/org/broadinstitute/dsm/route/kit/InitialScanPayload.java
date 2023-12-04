@@ -13,6 +13,11 @@ public class InitialScanPayload extends BaseScanPayload {
     }
 
     @Override
+    public void setKitLabel(String kitLabel) {
+        this.kitLabel = kitLabel;
+    }
+
+    @Override
     public String getTrackingReturnId() {
         throw new UnsupportedOperationException();
     }
@@ -25,6 +30,11 @@ public class InitialScanPayload extends BaseScanPayload {
     @Override
     public String getHruid() {
         return hruid;
+    }
+
+    @Override
+    public void setHruid(String hruid) {
+        this.hruid = hruid;
     }
 
     @Override

@@ -13,6 +13,11 @@ public class SentAndFinalScanPayload extends BaseScanPayload {
     }
 
     @Override
+    public void setKitLabel(String kitLabel) {
+        this.kitLabel = kitLabel;
+    }
+
+    @Override
     public String getTrackingReturnId() {
         throw new UnsupportedOperationException();
     }
@@ -26,6 +31,12 @@ public class SentAndFinalScanPayload extends BaseScanPayload {
     public String getHruid()  {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void setHruid(String hruid) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public String getRNA() {
         throw new UnsupportedOperationException();

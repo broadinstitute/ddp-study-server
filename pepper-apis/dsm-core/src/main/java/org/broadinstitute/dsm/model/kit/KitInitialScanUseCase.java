@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.kit;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -17,13 +18,13 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
         super(kitPayload, kitDao);
     }
 
+    @VisibleForTesting
     @Override
     protected Optional<ScanResult> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         String hruid = scanPayload.getHruid();
-        Optional<ScanResult> maybeScanError = updateKitRequest(hruid, kitLabel);
         // not writing into ES because same info will get written per final scan into ES
-        return maybeScanError;
+        return updateKitRequest(hruid, kitLabel);
     }
 
     private Optional<ScanResult> updateKitRequest(String hruid, String kit) {
@@ -36,17 +37,8 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
             Optional<KitRequestShipping> kitRequestWithPrefix =
                     kitList.stream().filter(k -> StringUtils.isNotBlank(k.getKitLabelPrefix())).findFirst();
             for (KitRequestShipping kitRequest : kitList) {
-                if (StringUtils.isNotBlank(kitRequest.getKitLabelPrefix()) && kit.startsWith(kitRequest.getKitLabelPrefix())) {
-                    // blood kit
-                    setKitInformation(kitRequest, kit, hruid);
-                    return kitDao.updateKitLabel(kitRequest);
-                } else if (StringUtils.isBlank(kitRequest.getKitLabelPrefix())
-                        && kitRequestWithPrefix.isPresent() && !kit.startsWith(kitRequestWithPrefix.get().getKitLabelPrefix())) {
-                    // saliva kit and blood kit in the queue -> so check that kit does not start with prefix
-                    setKitInformation(kitRequest, kit, hruid);
-                    return kitDao.updateKitLabel(kitRequest);
-                } else if (StringUtils.isBlank(kitRequest.getKitLabelPrefix()) && !kitRequestWithPrefix.isPresent()) {
-                    // saliva kit and no blood kit in the queue -> DSM doesn't know prefix then
+                if (isBloodKit(kitRequest, kit) || salivaAndBloodKitInQueue(kitRequest, kit, kitRequestWithPrefix)
+                        || salivaAndNoBloodInQueue(kitRequest, kitRequestWithPrefix)) {
                     setKitInformation(kitRequest, kit, hruid);
                     return kitDao.updateKitLabel(kitRequest);
                 }
@@ -54,6 +46,20 @@ public class KitInitialScanUseCase extends BaseKitUseCase {
         }
         return Optional.ofNullable(new ScanResult(kit, "Kit for participant with ShortId \"" + hruid + "\" was not found.\n"
                 + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+    }
+
+    private boolean salivaAndNoBloodInQueue(KitRequestShipping kitRequest, Optional<KitRequestShipping> kitRequestWithPrefix) {
+        return StringUtils.isBlank(kitRequest.getKitLabelPrefix()) && !kitRequestWithPrefix.isPresent();
+    }
+
+    private boolean salivaAndBloodKitInQueue(KitRequestShipping kitRequest, String kitLabel,
+                                             Optional<KitRequestShipping> kitRequestWithPrefix) {
+        return StringUtils.isBlank(kitRequest.getKitLabelPrefix())
+                && kitRequestWithPrefix.isPresent() && !kitLabel.startsWith(kitRequestWithPrefix.get().getKitLabelPrefix());
+    }
+
+    private boolean isBloodKit(KitRequestShipping kitRequest, String kitLabel) {
+        return StringUtils.isNotBlank(kitRequest.getKitLabelPrefix()) && kitLabel.startsWith(kitRequest.getKitLabelPrefix());
     }
 
     private void setKitInformation(KitRequestShipping kitRequestShipping, String kit, String hruid) {

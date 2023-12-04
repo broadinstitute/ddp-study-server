@@ -2,21 +2,27 @@ package org.broadinstitute.dsm.db.dao;
 
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.kit.KitTypeDao;
 import org.broadinstitute.dsm.db.dao.kit.KitTypeImpl;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
+import org.broadinstitute.dsm.model.kit.KitInitialScanUseCase;
 import org.broadinstitute.dsm.model.kit.ScanResult;
+import org.broadinstitute.dsm.route.kit.InitialScanPayload;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -41,6 +47,7 @@ public class KitDaoTest extends DbTxnBaseTest {
     private static final String PARTICIPANT_ID = "KITDAOTEST123";
 
     private static final String TRACKING_RETURN_ID = KIT_NAME + "TRACKINGID";
+    private static final String HRUID = "PROJECT_SHORT_ID";
 
     private static Integer kitId;
 
@@ -85,6 +92,7 @@ public class KitDaoTest extends DbTxnBaseTest {
         kitReq.setCreatedDate(System.currentTimeMillis());
         kitReq.setDdpKitRequestId(KIT_NAME);
         kitReq.setKitTypeId(Long.toString(kitTypeId));
+        kitReq.setBspCollaboratorParticipantId(HRUID);
         kitRequestId = kitDao.insertKitRequest(kitReq);
         kitReq.setDsmKitRequestId(Long.valueOf(kitRequestId));
         kitId = kitDao.insertKit(kitReq);
@@ -151,6 +159,33 @@ public class KitDaoTest extends DbTxnBaseTest {
         scanUpdate.setScanDate(null);
         scanUpdate.setDdpLabel(KIT_NAME);
         scanUpdate.setDsmKitId(Long.valueOf(kitId));
+
+        //now do an initial scan first
+        InitialScanPayload scanPayload = new InitialScanPayload();
+        scanPayload.setHruid(HRUID);
+        scanPayload.setKitLabel(KIT_NAME);
+        List<ScanPayload> scanList = new ArrayList<>();
+        scanList.add(scanPayload);
+        int ddpInstanceId = userAdminTestUtil.getDdpInstanceId();
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
+        KitPayload kitPayload = new KitPayload(scanList, userId, ddpInstanceDto);
+        KitInitialScanUseCase kitInitialScanUseCase = new KitInitialScanUseCase(kitPayload, kitDao);
+        List<ScanResult> initialScanError = kitInitialScanUseCase.get();
+        initialScanError.forEach(error -> Assert.assertNull("Initial scan should not cause any errors", error));
+
+        //now a final scan
+        Optional<ScanResult> shouldBeEmptyScanError = kitDao.updateKitScanInfo(scanUpdate, "tester");
+        Assert.assertTrue("The kit was not sent yet and only has tracking and initial information, so scan info should get updated without "
+                        + "errors",
+                shouldBeEmptyScanError.isEmpty());
+
+        //repeating initial and final scan now should throw an error
+        kitInitialScanUseCase = new KitInitialScanUseCase(kitPayload, kitDao);
+        initialScanError = kitInitialScanUseCase.get();
+        initialScanError.forEach(error -> Assert.assertNotNull("Initial scan should not cause any errors", error));
+        initialScanError.forEach(error -> Assert.assertTrue("Error expected for repeating initial scan after the kit is sent out",
+                error.hasError()));
+
 
         Optional<ScanResult> scanError = kitDao.updateKitScanInfo(scanUpdate, "tester");
         Assert.assertTrue("Updating an existing kit that already has scan information should result in an error.",
