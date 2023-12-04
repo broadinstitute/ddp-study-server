@@ -12,7 +12,6 @@ public class InitialScanPayload extends BaseScanPayload {
         this.kitLabel = kitLabel;
     }
 
-    @Override
     public void setKitLabel(String kitLabel) {
         this.kitLabel = kitLabel;
     }
@@ -32,7 +31,6 @@ public class InitialScanPayload extends BaseScanPayload {
         return hruid;
     }
 
-    @Override
     public void setHruid(String hruid) {
         this.hruid = hruid;
     }
