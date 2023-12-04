@@ -42,8 +42,8 @@ public class TissueList {
                     + "AND p.ddp_instance_id = ex.ddp_instance_id) "
                     + "LEFT JOIN ddp_institution inst on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_medical_record m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
-                    + "LEFT JOIN ddp_onc_history_detail oD on (m.medical_record_id = oD.medical_record_id "
-                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id "
+                    + "LEFT JOIN ddp_onc_history_detail oD on (m.medical_record_id = oD.medical_record_id) "
+                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
                     + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id) "
                     + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) "
                     + "WHERE realm.instance_name = ? AND ex.ddp_participant_exit_id IS NULL AND oD.onc_history_detail_id IS NOT NULL";
