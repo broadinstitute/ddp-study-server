@@ -5,6 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.kit.KitSentUseCase;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class SentKitRoute extends KitStatusChangeRoute {
@@ -14,9 +15,9 @@ public class SentKitRoute extends KitStatusChangeRoute {
     }
 
     @Override
-    protected void processRequest() {
+    protected List<ScanResult> processRequest(KitPayload kitPayload) {
         KitSentUseCase kitSentUseCase = new KitSentUseCase(kitPayload, new KitDao());
-        scanResultList.addAll(kitSentUseCase.get());
+        return kitSentUseCase.get();
     }
 
     @Override

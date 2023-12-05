@@ -5,17 +5,19 @@ import java.util.List;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class KitFinalScanRoute extends KitStatusChangeRoute {
+
     public KitFinalScanRoute() {
         super(null);
     }
 
     @Override
-    protected void processRequest() {
+    protected List<ScanResult> processRequest(KitPayload kitPayload) {
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
-        scanResultList.addAll(kitFinalScanUseCase.get());
+        return kitFinalScanUseCase.get();
     }
 
     @Override
