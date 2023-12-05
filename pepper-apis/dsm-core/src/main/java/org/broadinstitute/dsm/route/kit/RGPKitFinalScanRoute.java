@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 
 
 public class RGPKitFinalScanRoute  extends KitStatusChangeRoute {
@@ -15,9 +16,9 @@ public class RGPKitFinalScanRoute  extends KitStatusChangeRoute {
     }
 
     @Override
-    protected void processRequest() {
+    protected List<ScanResult> processRequest(KitPayload kitPayload) {
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
-        scanResultList.addAll(kitFinalScanUseCase.getRGPFinalScan());
+        return kitFinalScanUseCase.getRGPFinalScan();
     }
 
     @Override
