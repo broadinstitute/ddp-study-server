@@ -69,8 +69,8 @@ public class PecgsKitRuleUpdates implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        //updateExistingSalivaKitConfig(handle, "CMI-OSTEO", PEX_RULE_EXPR_OS);
-        //updateExistingSalivaKitConfig(handle, "cmi-lms", PEX_RULE_EXPR_LMS);
+        updateExistingSalivaKitConfig(handle, "CMI-OSTEO", PEX_RULE_EXPR_OS);
+        updateExistingSalivaKitConfig(handle, "cmi-lms", PEX_RULE_EXPR_LMS);
 
         updateBloodKitEvent(handle, "CMI-OSTEO", PEX_RULE_EXPR_BK_OS);
         updateBloodKitEvent(handle, "cmi-lms", PEX_RULE_EXPR_BK_LMS);
