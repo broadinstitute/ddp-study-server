@@ -69,8 +69,8 @@ public class PecgsKitRuleUpdates implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        updateExistingSalivaKitConfig(handle, "CMI-OSTEO", PEX_RULE_EXPR_OS);
-        updateExistingSalivaKitConfig(handle, "cmi-lms", PEX_RULE_EXPR_LMS);
+        //updateExistingSalivaKitConfig(handle, "CMI-OSTEO", PEX_RULE_EXPR_OS);
+        //updateExistingSalivaKitConfig(handle, "cmi-lms", PEX_RULE_EXPR_LMS);
 
         updateBloodKitEvent(handle, "CMI-OSTEO", PEX_RULE_EXPR_BK_OS);
         updateBloodKitEvent(handle, "cmi-lms", PEX_RULE_EXPR_BK_LMS);
@@ -102,21 +102,18 @@ public class PecgsKitRuleUpdates implements CustomTask {
         List<EventConfiguration> events = handle.attach(EventDao.class)
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
-        //Disable All existing enrolled status events
+        //update blood kit expr
         EventConfiguration bloodKitEvent = events.stream()
                 .filter(event -> event.getEventTriggerType() == EventTriggerType.DSM_NOTIFICATION)
                 .filter(event -> event.getEventActionType() == EventActionType.CREATE_KIT)
                 .findFirst().get();
 
-        String currentExpr = bloodKitEvent.getPreconditionExpression();
-
-        PecgsKitRuleUpdates.SqlHelper helper = handle.attach(PecgsKitRuleUpdates.SqlHelper.class);
         long expressionId = handle.attach(PecgsKitRuleUpdates.SqlHelper.class).getPreCondExpressionIdByEventId(
                 bloodKitEvent.getEventConfigurationId());
         int udpCount =  handle.attach(JdbiExpression.class).updateById(expressionId, expr);
         DBUtils.checkUpdate(1, udpCount);
-
-
+        log.info("Updated blood kit event configuration  {} of study {} with precond exprId: {} ", bloodKitEvent.getEventConfigurationId(),
+                studyGuid, expressionId);
     }
 
     private interface SqlHelper extends SqlObject {
