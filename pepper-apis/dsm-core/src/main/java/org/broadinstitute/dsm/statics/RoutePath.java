@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.statics;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import spark.QueryParamsMap;
 import spark.Request;
 
@@ -132,6 +133,8 @@ public class RoutePath {
 
     public static final String DASHBOARD = "dashboard";
 
+    public static final String SEQ_ORDER_NUMBER = "sequencingOrderNumber";
+
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
         String realm = "";
@@ -140,7 +143,7 @@ public class RoutePath {
         }
 
         if (StringUtils.isBlank(realm)) {
-            throw new RuntimeException("No realm query param was sent");
+            throw new DSMBadRequestException("No realm query param was sent");
         }
         return realm;
     }

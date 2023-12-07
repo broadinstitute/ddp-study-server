@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
@@ -30,8 +32,8 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public static final String FAILED = "Failed";
     public static String SQL_INSERT_MERCURY_ORDER = "insert into ddp_mercury_sequencing (order_id, order_date, ddp_participant_id, "
-            + "kit_type_id, barcode, ddp_instance_id, created_by, tissue_id, dsm_kit_request_id, order_message, status_message) "
-            + "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + "kit_type_id, barcode, ddp_instance_id, created_by, tissue_id, dsm_kit_request_id, mercury_pdo_id, order_message,  "
+            + "status_message) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     public static String SQL_GET_KIT_FROM_BARCODE_KIT_LABEL =
             "SELECT p.ddp_participant_id, kit_type_name, ktype.kit_type_id,  ddp.ddp_instance_id, kit.kit_label, "
@@ -70,6 +72,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public static String SQL_UPDATE_ORDER_STATUS =
             "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
                     + " status_detail = ?, status_message = ? where order_id = ?";
+
+    private static String SQL_GET_MERCURY_ORDER_ID = " SELECT * FROM ddp_mercury_sequencing WHERE order_id = ? ";
 
     private static final int MAX_CHAR_ALLOWED = 2000;
 
@@ -138,7 +142,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     }
 
     public Map<String, MercuryOrderDto> getPossibleBarcodesForParticipant(String ddpParticipantId) {
-        String errorMessage = "Error getting eligible barcodes for a mercury order for participant "+ ddpParticipantId;
+        String errorMessage = "Error getting eligible barcodes for a mercury order for participant " + ddpParticipantId;
         HashMap<String, MercuryOrderDto> map = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -149,7 +153,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.KIT_LABEL),
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                null, rs.getLong("kit." + DBConstants.DSM_KIT_REQUEST_ID));
+                                null, rs.getInt("kit." + DBConstants.DSM_KIT_REQUEST_ID));
                         log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
@@ -174,7 +178,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.SM_ID_VALUE),
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                rs.getLong(DBConstants.TISSUE_ID), null);
+                                rs.getInt(DBConstants.TISSUE_ID), null);
                         log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
@@ -203,9 +207,12 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         return 1;
     }
 
+    /**
+     * This is not implemented, call {@link #getByOrderId(String)}
+     */
     @Override
     public Optional<MercuryOrderDto> get(long id) {
-        return Optional.empty();
+        throw new NotImplementedException("This method is not implemented");
     }
 
     public boolean orderNumberExists(String orderNumber) {
@@ -255,8 +262,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 stmt.setString(5, mercuryOrderDto.getBarcode());
                 stmt.setInt(6, mercuryOrderDto.getDdpInstanceId());
                 stmt.setString(7, mercuryOrderDto.getCreatedBy().orElse(""));
-                stmt.setString(10, messageJson);
-                stmt.setNull(11, Types.VARCHAR);
+                stmt.setString(11, messageJson);
+                stmt.setNull(12, Types.VARCHAR);
                 if (mercuryOrderDto.getTissueId() != null) {
                     stmt.setString(8, String.valueOf(mercuryOrderDto.getTissueId()));
                 } else {
@@ -266,6 +273,11 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     stmt.setString(9, String.valueOf(mercuryOrderDto.getDsmKitRequestId()));
                 } else {
                     stmt.setNull(9, Types.INTEGER);
+                }
+                if (mercuryOrderDto.getMercuryPdoId() != null) {
+                    stmt.setString(10, mercuryOrderDto.getMercuryPdoId());
+                } else {
+                    stmt.setNull(10, Types.VARCHAR);
                 }
 
                 stmt.executeUpdate();
@@ -285,6 +297,45 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     results.resultException);
         }
         return (int) results.resultValue;
+    }
+
+    /** Returns a list of all the MercurySequencingDto that are associated with an order id. Each MercurySequencingDto represents one
+     * (Tumor or Normal) sample that was in the order
+     * @param orderId the pepper order id
+     */
+    public List<MercuryOrderDto> getByOrderId(String orderId) {
+        List<MercuryOrderDto> ordersWithOrderId = new ArrayList<>();
+        SimpleResult result = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try {
+                PreparedStatement stmt = conn.prepareStatement(SQL_GET_MERCURY_ORDER_ID);
+                stmt.setString(1, orderId);
+                try {
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        MercuryOrderDto mercurySequencingDto = new MercuryOrderDto.Builder()
+                                .withOrderId(rs.getString(DBConstants.MERCURY_ORDER_ID))
+                                .withMercuryPdoId(rs.getString(DBConstants.MERCURY_PDO_ID))
+                                .withBarcode(rs.getString(DBConstants.MERCURY_BARCODE))
+                                .withDdpInstanceId(rs.getInt(DBConstants.DDP_INSTANCE_ID))
+                                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID)).build();
+                        ordersWithOrderId.add(mercurySequencingDto);
+                    }
+                } catch (SQLException e) {
+                    dbVals.resultException = new DsmInternalError("Unable to query db for mercury order with order number "
+                            + orderId, e);
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = new DsmInternalError("Unable to query db for mercury order with order number "
+                        + orderId, e);
+            }
+            return dbVals;
+        });
+        if (result.resultException != null) {
+            throw new DsmInternalError(result.resultException);
+        }
+        log.info("Found {} barcodes for order number {} ", ordersWithOrderId.size(), orderId);
+        return ordersWithOrderId;
     }
 
 }

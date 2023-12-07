@@ -74,7 +74,7 @@ public class OncHistoryTestUtil {
     }
 
     public void initialize() {
-        ddpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
+        ddpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex, studyGuid);
         userAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collabPrefix, groupName, esIndex);
         userAdminUtil.setStudyAdminAndRoles("adminUserPatchTest@unittest.dev", USER_ADMIN_ROLE, Arrays.asList(MR_VIEW));
         userId = Integer.toString(userAdminUtil.createTestUser(userEmail, Collections.singletonList("mr_view")));
@@ -100,6 +100,19 @@ public class OncHistoryTestUtil {
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
         participantIds.add(testParticipant.getParticipantId().orElseThrow());
         log.debug("ES participant record for {}: {}", ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        return testParticipant;
+    }
+
+    public ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob) {
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(guid);
+        ParticipantDto testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        ElasticTestUtil.createParticipant(esIndex, testParticipant);
+        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
+        ElasticTestUtil.addParticipantDsmFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId, dob);
+        ElasticTestUtil.addActivitiesFromFile(esIndex, "elastic/lmsActivitiesSharedLearningEligible.json", ddpParticipantId);
+        participantIds.add(testParticipant.getParticipantId().orElseThrow());
+        log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         return testParticipant;
     }
@@ -146,6 +159,17 @@ public class OncHistoryTestUtil {
         Patch smIdPatch = new Gson().fromJson(newSmIdPatchJson, Patch.class);
         BasePatch patcher = PatchFactory.makePatch(smIdPatch, notificationUtil);
         return patcher.doPatch();
+    }
+
+    public Object createSmId(ParticipantDto participantDto, String eligibleSmId, DDPInstanceDto ddpInstanceDto) throws Exception {
+        String guid = participantDto.getDdpParticipantIdOrThrow();
+        int participantId = participantDto.getParticipantId().orElseThrow();
+        Map<String, Object> resp = (Map<String, Object>) createOncHistory(guid, participantId,
+                ddpInstanceDto.getInstanceName(), userEmail);
+        int oncHistoryDetailId = Integer.parseInt((String) resp.get("oncHistoryDetailId"));
+        Map<String, Object> response = (Map<String, Object>) createTissue(guid, oncHistoryDetailId, instanceName, userEmail);
+        int tissueId = Integer.parseInt((String) response.get("tissueId"));
+        return createSmId(guid, tissueId, ddpInstanceDto.getInstanceName(), userEmail, eligibleSmId);
     }
 
     public void deleteOncHistory(String guid, int participantId, String realm, String userEmail, int oncHistoryDetailId) throws Exception {
