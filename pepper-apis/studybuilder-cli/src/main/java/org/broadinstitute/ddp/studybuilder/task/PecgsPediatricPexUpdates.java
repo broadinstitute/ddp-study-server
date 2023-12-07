@@ -32,7 +32,7 @@ public class PecgsPediatricPexUpdates implements CustomTask {
     public void updatePediatricAgePex(Handle handle) {
 
         List<Long> matchedExprIds = handle.attach(PecgsPediatricPexUpdates.SqlHelper.class).getAge7Pex();
-        log.info("Matched {} pex expressions" , matchedExprIds.size());
+        log.info("Matched {} pex expressions", matchedExprIds.size());
         JdbiExpression jdbiExpression = handle.attach(JdbiExpression.class);
         int updatedPexCount = 0;
         for (Long expressionId : matchedExprIds) {
@@ -43,7 +43,7 @@ public class PecgsPediatricPexUpdates implements CustomTask {
             updatedPexCount++;
             log.info("Updated expressionId  {} with expr text {}. Old expr: {} ", expressionId, updatedExpr, currentExpr);
         }
-        log.info("Updated {} pex expressions" , updatedPexCount);
+        log.info("Updated {} pex expressions", updatedPexCount);
     }
 
 
