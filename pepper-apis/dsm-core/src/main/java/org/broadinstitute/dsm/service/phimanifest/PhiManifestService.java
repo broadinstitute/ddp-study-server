@@ -18,12 +18,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -31,14 +29,11 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifest;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifestResponse;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
-import spark.QueryParamsMap;
 
 @Slf4j
 public class PhiManifestService {
-
     private static final String CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID = "CONSENT_ADDENDUM_PEDIATRIC";
     private static final String SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION = "SOMATIC_CONSENT_TUMOR_PEDIATRIC";
     private static final String SOMATIC_ASSENT_ADDENDUM_QUESTION = "SOMATIC_ASSENT_ADDENDUM";
@@ -52,34 +47,19 @@ public class PhiManifestService {
             "Block Id", "Tumor Collaborator Sample Id", "Tissue Site", "Sequencing Results", "Normal Manufacturer Barcode",
             "Normal Collaborator Sample Id", "Clinical Order Date", "Clinical Order Id", "Clinical PDO Number", "Order Status",
             "Order Status Date"};
-    
-    
-    public Object generateReport(QueryParamsMap queryParams, String realm) {
-        String sequencingOrderId = queryParams.get(RoutePath.SEQ_ORDER_NUMBER).value();
-        String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        DDPInstanceDto ddpInstanceDto = DDPInstanceDao.of().getDDPInstanceByInstanceName(realm).orElseThrow();
-        String maybeErrorMessage = null;
-        if (StringUtils.isBlank(ddpParticipantId)) {
-            maybeErrorMessage = "No DdpParticipantId was provided";
-        }
-        if (StringUtils.isBlank(sequencingOrderId)) {
-            maybeErrorMessage = "No sequencingOrderNumber was provided";
-        }
-        if (!isSequencingOrderValid(sequencingOrderId, ddpParticipantId, ddpInstanceDto)) {
-            maybeErrorMessage = String.format("Sequencing order number %s is not a valid order for participant %s ", sequencingOrderId,
-                    ddpParticipantId);
-        }
-        if (!isParticipantConsented(ddpParticipantId, ddpInstanceDto)) {
-            maybeErrorMessage = String.format("Participant %s has not consented to receive shared learning ", ddpParticipantId);
-        }
-        if (StringUtils.isNotBlank(maybeErrorMessage)) {
-            log.warn(maybeErrorMessage);
-            throw new DSMBadRequestException(maybeErrorMessage);
-        }
-        return generateReport(ddpParticipantId, sequencingOrderId, ddpInstanceDto);
-    }
+
 
     public PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId, DDPInstanceDto ddpInstanceDto) {
+        if (!isSequencingOrderValid(sequencingOrderId, ddpParticipantId, ddpInstanceDto)) {
+            String errorMessage = String.format("Sequencing order number %s is not a valid order for participant", sequencingOrderId);
+            log.warn(errorMessage);
+            return new PhiManifestResponse(errorMessage);
+        }
+        if (!isParticipantConsented(ddpParticipantId, ddpInstanceDto)) {
+            String errorMessage = String.format("Participant %s has not consented to receive shared learning ", ddpParticipantId);
+            log.warn(errorMessage);
+            return new PhiManifestResponse(errorMessage);
+        }
         ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
                 ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
         if (participant.getProfile().isEmpty()) {
@@ -240,8 +220,8 @@ public class PhiManifestService {
                     CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION, true);
 
         } else if (age < 7) {
-            return checkAnswerToActivity(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION,
-                    true);
+            return checkAnswerToActivity(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
+                    SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true);
         }
         return false;
     }
