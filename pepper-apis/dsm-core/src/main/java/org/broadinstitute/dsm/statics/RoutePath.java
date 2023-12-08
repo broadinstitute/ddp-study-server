@@ -70,6 +70,7 @@ public class RoutePath {
     public static final String SAMPLE_REPORT_REQUEST = "sampleReport";
     public static final String LOOKUP = "lookup";
     public static final String PARTICIPANT_MEDICAL_RECORD_REQUEST = "rawData/";
+    public static final String PHI_MANIFEST = "phiManifest";
     public static final String MAILING_LIST_REQUEST = "mailingList";
     public static final String ALLOWED_REALMS_REQUEST = "realmsAllowed";
     public static final String STUDIES = "studies";

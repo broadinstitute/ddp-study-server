@@ -805,11 +805,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
     }
 
-    public static KitRequestShipping getKitRequest(@NonNull String kitRequestId) {
+    public static KitRequestShipping getKitRequest(String dsmKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KitDao.KIT_BY_KIT_REQUEST_ID)) {
-                stmt.setString(1, kitRequestId);
+                stmt.setString(1, dsmKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
                     while (rs.next()) {
@@ -817,7 +817,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         dbVals.resultValue = getKitRequestShipping(rs);
                     }
                     if (numRows > 1) {
-                        throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitRequestId);
+                        throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + dsmKitRequestId);
                     }
                 }
             } catch (SQLException ex) {
@@ -827,7 +827,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId,
+            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + dsmKitRequestId,
                     results.resultException);
         }
         return (KitRequestShipping) results.resultValue;

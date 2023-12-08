@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -42,6 +43,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
  * Usage: Create an instance with the desired realm variables and email of the privileged user and then call initialize()
  **/
 @Slf4j
+@Data
 public class OncHistoryTestUtil {
 
     private static final DeletedObjectDao deletedObjectDao = new DeletedObjectDao();
@@ -484,5 +486,27 @@ public class OncHistoryTestUtil {
                 OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
         Assert.assertNotNull(oncHistoryDetail);
         return oncHistoryDetail;
+    }
+
+    public Object createPatchRequest(String guid, int participantId, String realm, String userEmail, String name, String value,
+                                     String tableAlias, String parent, int id, String parentId)
+            throws Exception {
+        String patchJson = TestUtil.readFile("patchRequests/updateFieldPatchRequests.json");
+        patchJson = patchJson.replace("<userEmail>", userEmail)
+                .replace("<GUID>", guid)
+                .replace("<participantId>", String.valueOf(participantId))
+                .replace("<instanceName>", realm)
+                .replace("<id>", String.valueOf(id))
+                .replace("<name>", name)
+                .replace("<value>", value)
+                .replace("<tableAlias>", tableAlias)
+                .replace("<parent>", parent);
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(parentId)) {
+            patchJson = patchJson.replace("<parentId>", parentId);
+        }
+        Patch updatePatch = new Gson().fromJson(patchJson, Patch.class);
+        BasePatch patcher = PatchFactory.makePatch(updatePatch, notificationUtil);
+        Object response = patcher.doPatch();
+        return response;
     }
 }

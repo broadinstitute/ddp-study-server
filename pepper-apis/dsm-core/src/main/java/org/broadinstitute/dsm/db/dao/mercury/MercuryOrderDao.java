@@ -318,6 +318,9 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                                 .withMercuryPdoId(rs.getString(DBConstants.MERCURY_PDO_ID))
                                 .withBarcode(rs.getString(DBConstants.MERCURY_BARCODE))
                                 .withDdpInstanceId(rs.getInt(DBConstants.DDP_INSTANCE_ID))
+                                .withOrderDate(rs.getLong(DBConstants.MERCURY_ORDER_DATE))
+                                .withStatusDate(rs.getLong(DBConstants.MERCURY_STATUS_DATE))
+                                .withOrderStatus(rs.getString(DBConstants.MERCURY_ORDER_STATUS))
                                 .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID)).build();
                         ordersWithOrderId.add(mercurySequencingDto);
                     }
