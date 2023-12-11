@@ -201,6 +201,7 @@ public class PhiManifestService {
     private boolean hasParticipantConsentedToTumor(ElasticSearchParticipantDto participant) {
         return participant.getDsm().isPresent() && participant.getDsm().get().isHasConsentedToTissueSample();
     }
+
     private boolean hasAdultParticipantConsentedToTumor(ElasticSearchParticipantDto participant, String studyGuid) {
         if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
             return checkAnswerToActivity(participant, CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
