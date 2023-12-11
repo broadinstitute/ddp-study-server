@@ -197,6 +197,54 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         throw new IllegalStateException("Call the version of this method that includes the raw json payload");
     }
 
+    public int create(MercuryOrderDto mercuryOrderDto, String messageJson) {
+        SimpleResult results = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MERCURY_ORDER, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, mercuryOrderDto.getOrderId());
+                stmt.setLong(2, mercuryOrderDto.getOrderDate());
+                stmt.setString(3, mercuryOrderDto.getDdpParticipantId());
+                stmt.setInt(4, mercuryOrderDto.getKitTypeId());
+                stmt.setString(5, mercuryOrderDto.getBarcode());
+                stmt.setInt(6, mercuryOrderDto.getDdpInstanceId());
+                stmt.setString(7, mercuryOrderDto.getCreatedBy().orElse(""));
+                stmt.setString(11, messageJson);
+                stmt.setNull(12, Types.VARCHAR);
+                if (mercuryOrderDto.getTissueId() != null) {
+                    stmt.setString(8, String.valueOf(mercuryOrderDto.getTissueId()));
+                } else {
+                    stmt.setNull(8, Types.INTEGER);
+                }
+                if (mercuryOrderDto.getDsmKitRequestId() != null) {
+                    stmt.setString(9, String.valueOf(mercuryOrderDto.getDsmKitRequestId()));
+                } else {
+                    stmt.setNull(9, Types.INTEGER);
+                }
+                if (mercuryOrderDto.getMercuryPdoId() != null) {
+                    stmt.setString(10, mercuryOrderDto.getMercuryPdoId());
+                } else {
+                    stmt.setNull(10, Types.VARCHAR);
+                }
+
+                stmt.executeUpdate();
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        execResult.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                execResult.resultException = ex;
+            }
+            return execResult;
+
+        });
+        if (results.resultException != null) {
+            throw new DsmInternalError(String.format("Error inserting mercury order for order with json %s", messageJson),
+                    results.resultException);
+        }
+        return (int) results.resultValue;
+    }
+
     @Override
     public int delete(int id) {
         DaoUtil.deleteSingleRowById(id, SQL_DELETE_ORDER);
