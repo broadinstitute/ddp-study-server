@@ -1,3 +1,4 @@
 {
-  "dateOfBirth" : "<dateOfBirth>"
+  "dateOfBirth" : "<dateOfBirth>",
+  "hasConsentedToTissueSample" : true
 }

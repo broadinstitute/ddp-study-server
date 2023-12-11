@@ -106,19 +106,6 @@ public class OncHistoryTestUtil {
         return testParticipant;
     }
 
-    public ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob) {
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(guid);
-        ParticipantDto testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
-        ElasticTestUtil.createParticipant(esIndex, testParticipant);
-        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
-        ElasticTestUtil.addParticipantDsmFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId, dob);
-        ElasticTestUtil.addActivitiesFromFile(esIndex, "elastic/lmsActivitiesSharedLearningEligible.json", ddpParticipantId);
-        participantIds.add(testParticipant.getParticipantId().orElseThrow());
-        log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
-                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-        return testParticipant;
-    }
-
     public void deleteParticipants() {
         medicalRecordIds.forEach(integer -> medicalRecordDao.delete(integer));
         participantIds.forEach(id -> TestParticipantUtil.deleteParticipantAndInstitution(id));

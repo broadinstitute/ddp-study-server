@@ -14,12 +14,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dao.util.DaoUtil;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -31,10 +35,10 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @Slf4j
 public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public static final String FAILED = "Failed";
-    public static String SQL_INSERT_MERCURY_ORDER = "insert into ddp_mercury_sequencing (order_id, order_date, ddp_participant_id, "
+    private static final int MAX_CHAR_ALLOWED = 2000;
+    public static final String SQL_INSERT_MERCURY_ORDER = "insert into ddp_mercury_sequencing (order_id, order_date, ddp_participant_id, "
             + "kit_type_id, barcode, ddp_instance_id, created_by, tissue_id, dsm_kit_request_id, mercury_pdo_id, order_message,  "
             + "status_message) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
     public static String SQL_GET_KIT_FROM_BARCODE_KIT_LABEL =
             "SELECT p.ddp_participant_id, kit_type_name, ktype.kit_type_id,  ddp.ddp_instance_id, kit.kit_label, "
                     + " ddp.mercury_order_creator, kit.dsm_kit_request_id "
@@ -44,7 +48,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "LEFT JOIN kit_type ktype on ( req.kit_type_id = ktype.kit_type_id) "
                     + "LEFT JOIN ddp_kit kit on (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
                     + "WHERE  p.ddp_participant_id = ?";
-
     public static String SQL_GET_KIT_FROM_BARCODE_SM_ID =
             "SELECT p.ddp_participant_id, kit_type_name, ktype.kit_type_id,  ddp.ddp_instance_id ,sm.sm_id_value, "
                     + " ddp.mercury_order_creator, t.tissue_id "
@@ -59,11 +62,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "LEFT JOIN kit_type ktype on ( smt.kit_type_id = ktype.kit_type_id) "
                     + "WHERE p.ddp_participant_id = ? "
                     + "AND NOT sm.sm_id_value IS NULL";
-
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from ddp_mercury_sequencing where order_id = ?";
-
     public static String SQL_DELETE_ORDER = "delete from ddp_mercury_sequencing where mercury_sequencing_id = ?";
-
     public static String SQL_SELECT_LAST_UPDATED_ORDER =
             "Select min(mercury_sequencing_id) as mercury_sequencing_id, min(ddp_instance_id) as ddp_instance_id, min(ddp_participant_id) "
                     + "  as ddp_participant_id, min(order_date) as order_date, order_id, tissue_id, dsm_kit_request_id "
@@ -72,10 +72,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public static String SQL_UPDATE_ORDER_STATUS =
             "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
                     + " status_detail = ?, status_message = ? where order_id = ?";
-
     private static String SQL_GET_MERCURY_ORDER_ID = " SELECT * FROM ddp_mercury_sequencing WHERE order_id = ? ";
-
-    private static final int MAX_CHAR_ALLOWED = 2000;
 
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, String msgData) {
         long statusDate = System.currentTimeMillis();
@@ -110,7 +107,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 dbVals.resultException =
                         new DsmInternalError(String.format(
                                 "Error encountered while updating Mercury status for order id %s, status message received was %s",
-                                        mercuryStatusMessage.getOrderID(), baseMercuryStatusMessage), ex);
+                                mercuryStatusMessage.getOrderID(), baseMercuryStatusMessage), ex);
                 return dbVals;
             }
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_LAST_UPDATED_ORDER)) {
@@ -293,7 +290,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
         });
         if (results.resultException != null) {
-            throw new DsmInternalError(String.format("Error inserting mercury order for order with json {}", messageJson),
+            throw new DsmInternalError(String.format("Error inserting mercury order for order with json %s", messageJson),
                     results.resultException);
         }
         return (int) results.resultValue;
@@ -301,6 +298,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     /** Returns a list of all the MercurySequencingDto that are associated with an order id. Each MercurySequencingDto represents one
      * (Tumor or Normal) sample that was in the order
+     *
      * @param orderId the pepper order id
      */
     public List<MercuryOrderDto> getByOrderId(String orderId) {
@@ -321,7 +319,9 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                                 .withOrderDate(rs.getLong(DBConstants.MERCURY_ORDER_DATE))
                                 .withStatusDate(rs.getLong(DBConstants.MERCURY_STATUS_DATE))
                                 .withOrderStatus(rs.getString(DBConstants.MERCURY_ORDER_STATUS))
-                                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID)).build();
+                                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
+                                .withTissueId(rs.getInt(DBConstants.TISSUE_ID))
+                                .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID)).build();
                         ordersWithOrderId.add(mercurySequencingDto);
                     }
                 } catch (SQLException e) {
@@ -339,6 +339,13 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         }
         log.info("Found {} barcodes for order number {} ", ordersWithOrderId.size(), orderId);
         return ordersWithOrderId;
+    }
+
+    public boolean isSequencingOrderValidForPhiReport(@NonNull List<MercuryOrderDto> orders, @NonNull String ddpParticipantId,
+                                                      @NonNull DDPInstanceDto ddpInstanceDto) {
+        return !(orders.isEmpty() || orders.stream().anyMatch(order -> StringUtils.isBlank(order.getMercuryPdoId())
+                || ddpInstanceDto.getDdpInstanceId() != order.getDdpInstanceId()
+                || !ddpParticipantId.equals(order.getDdpParticipantId())));
     }
 
 }

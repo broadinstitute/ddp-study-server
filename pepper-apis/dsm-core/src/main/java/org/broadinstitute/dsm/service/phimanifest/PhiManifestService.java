@@ -1,9 +1,5 @@
 package org.broadinstitute.dsm.service.phimanifest;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +7,6 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +24,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifest;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifestResponse;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.DateTimeUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 
@@ -41,7 +37,7 @@ public class PhiManifestService {
     private static final String LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR = "SOMATIC_CONSENT_ADDENDUM_TUMOR";
     private static final String OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR = "SOMATIC_CONSENT_TUMOR";
 
-    private final String[] headers = new String[]{"Short Id", "First Name", "Last Name", "Proxy First Name", "Proxy Last Name",
+    private final String[] headers = new String[] {"Short Id", "First Name", "Last Name", "Proxy First Name", "Proxy Last Name",
             "Date of Birth", "Gender", "Somatic Assent Addendum Response", "Somatic Consent Tumor Pediatric Response",
             "somatic Consent Tumor Response", "Date of PX", "Facility Name", "Sample Type", "Accession Number", "Histology",
             "Block Id", "Tumor Collaborator Sample Id", "Tissue Site", "Sequencing Results", "Normal Manufacturer Barcode",
@@ -50,7 +46,9 @@ public class PhiManifestService {
 
 
     public PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId, DDPInstanceDto ddpInstanceDto) {
-        if (!isSequencingOrderValid(sequencingOrderId, ddpParticipantId, ddpInstanceDto)) {
+        MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
+        List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(sequencingOrderId);
+        if (!mercuryOrderDao.isSequencingOrderValidForPhiReport(orders, ddpParticipantId, ddpInstanceDto)) {
             String errorMessage = String.format("Sequencing order number %s is not a valid order for participant", sequencingOrderId);
             log.warn(errorMessage);
             return new PhiManifestResponse(errorMessage);
@@ -65,7 +63,6 @@ public class PhiManifestService {
         if (participant.getProfile().isEmpty()) {
             throw new DsmInternalError("There is no profile in ES for participant " + ddpParticipantId);
         }
-        List<MercuryOrderDto> orders = new MercuryOrderDao().getByOrderId(sequencingOrderId);
         PhiManifest finalPhiManifest = generateDataForReport(participant, orders, ddpInstanceDto);
         return createResponse(finalPhiManifest, ddpParticipantId, sequencingOrderId);
     }
@@ -110,7 +107,9 @@ public class PhiManifestService {
         return phiManifestResponse;
     }
 
-    /**Creates a PhiManifest from the information in participant and in a clinical order*/
+    /**
+     * Creates a PhiManifest from the information in participant and in a clinical order
+     */
     public PhiManifest generateDataForReport(@NonNull ElasticSearchParticipantDto participant, @NonNull List<MercuryOrderDto> orders,
                                              @NonNull DDPInstanceDto ddpInstanceDto) {
         //This method assumes that each order has at most 1 Tumor and at most 1 Normal sample, which is a correct assumption based on
@@ -121,7 +120,7 @@ public class PhiManifestService {
         phiManifest.setFirstName(participantProfile.getFirstName());
         phiManifest.setLastName(participantProfile.getLastName());
         List<String> proxies = participant.getProxies();
-        if (proxies != null && proxies.isEmpty()) {
+        if (proxies != null && !proxies.isEmpty()) {
             String proxyParticipantId = proxies.get(0);
             ElasticSearchParticipantDto proxyParticipant = ElasticSearchUtil.getParticipantESDataByParticipantId(
                     ddpInstanceDto.getEsParticipantIndex(), proxyParticipantId);
@@ -151,13 +150,16 @@ public class PhiManifestService {
             phiManifest.setFacility(oncHistoryDetail.getFacility());
             phiManifest.setAccessionNumber(oncHistoryDetail.getAccessionNumber());
             phiManifest.setHistology(oncHistoryDetail.getHistology());
-            try {
-                Map<String, String> oncHistoryAdditionalValues =
-                        new ObjectMapper().readValue(oncHistoryDetail.getAdditionalValuesJson(), HashMap.class);
-                phiManifest.setSampleType(oncHistoryAdditionalValues.getOrDefault("FFPE", null));
-            } catch (JsonProcessingException e) {
-                throw new DsmInternalError(String.format("Unable to read additional values from oncHistory with id %d for participant %s",
-                        oncHistoryDetail.getOncHistoryDetailId(), participantProfile.getGuid()), e);
+            if (StringUtils.isNotBlank(oncHistoryDetail.getAdditionalValuesJson())) {
+                try {
+                    Map<String, String> oncHistoryAdditionalValues =
+                            new ObjectMapper().readValue(oncHistoryDetail.getAdditionalValuesJson(), HashMap.class);
+                    phiManifest.setSampleType(oncHistoryAdditionalValues.getOrDefault("FFPE", null));
+                } catch (JsonProcessingException e) {
+                    throw new DsmInternalError(
+                            String.format("Unable to read additional values from oncHistory with id %d for participant %s",
+                                    oncHistoryDetail.getOncHistoryDetailId(), participantProfile.getGuid()), e);
+                }
             }
             phiManifest.setBlockId(tissue.getBlockIdShl());
             phiManifest.setTumorCollaboratorSampleId(tissue.getCollaboratorSampleId());
@@ -165,7 +167,7 @@ public class PhiManifestService {
             phiManifest.setSequencingResults(tissue.getTissueSequence());
         }
         Optional<MercuryOrderDto> maybeNormalDataInOrder = orders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getDsmKitRequestId()
-                != null).findFirst();
+                != null && mercuryOrderDto.getDsmKitRequestId() != 0).findFirst();
         if (maybeNormalDataInOrder.isPresent()) {
             MercuryOrderDto clinicalOrderWithNormalData = maybeNormalDataInOrder.get();
             KitRequestShipping kitRequestShipping = KitRequestShipping.getKitRequest(
@@ -174,17 +176,17 @@ public class PhiManifestService {
             phiManifest.setNormalCollaboratorSampleId(kitRequestShipping.getBspCollaboratorSampleId());
         }
         MercuryOrderDto mercuryOrderDto = orders.get(0);
-        phiManifest.setClinicalOrderDate(getDateFromEpoch(mercuryOrderDto.getOrderDate()));
+        phiManifest.setClinicalOrderDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getOrderDate()));
         phiManifest.setClinicalOrderId(mercuryOrderDto.getOrderId());
         phiManifest.setClinicalPdoNumber(mercuryOrderDto.getMercuryPdoId());
         phiManifest.setOrderStatus(mercuryOrderDto.getOrderStatus());
-        phiManifest.setOrderStatusDate(getDateFromEpoch(mercuryOrderDto.getStatusDate()));
-        
+        phiManifest.setOrderStatusDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getStatusDate()));
+
         phiManifest.setSomaticConsentTumorPediatricResponse(String.valueOf(getParticipantAnswerInSurvey(participant,
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION).orElse(false)));
         phiManifest.setSomaticAssentAddendumResponse(String.valueOf(getParticipantAnswerInSurvey(participant,
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION).orElse(false)));
-        phiManifest.setSomaticConsentTumorResponse(String.valueOf(hasParticipantConsentedToTumor(participant, 
+        phiManifest.setSomaticConsentTumorResponse(String.valueOf(hasAdultParticipantConsentedToTumor(participant,
                 ddpInstanceDto.getStudyGuid())));
         return phiManifest;
     }
@@ -192,11 +194,14 @@ public class PhiManifestService {
     public boolean isParticipantConsented(@NonNull String ddpParticipantId, @NonNull DDPInstanceDto ddpInstanceDto) {
         ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
                 ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
-        return participant != null && hasParticipantConsentedToSharedLearning(participant) && hasParticipantConsentedToTumor(participant,
-                ddpInstanceDto.getStudyGuid());
+        return participant != null && hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto)
+                && hasParticipantConsentedToTumor(participant);
     }
 
-    private boolean hasParticipantConsentedToTumor(ElasticSearchParticipantDto participant, String studyGuid) {
+    private boolean hasParticipantConsentedToTumor(ElasticSearchParticipantDto participant) {
+        return participant.getDsm().isPresent() && participant.getDsm().get().isHasConsentedToTissueSample();
+    }
+    private boolean hasAdultParticipantConsentedToTumor(ElasticSearchParticipantDto participant, String studyGuid) {
         if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
             return checkAnswerToActivity(participant, CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
                     true);
@@ -207,13 +212,17 @@ public class PhiManifestService {
         return false;
     }
 
-    private boolean hasParticipantConsentedToSharedLearning(ElasticSearchParticipantDto participant) {
+    private boolean hasParticipantConsentedToSharedLearning(ElasticSearchParticipantDto participant, DDPInstanceDto ddpInstanceDto) {
         if (participant.getDsm().isEmpty()) {
             log.error("Participant {} does not have a DoB, which means we can't assess their consent", participant.getParticipantId());
             return false;
         }
         String dateOfBirth = participant.getDsm().get().getDateOfBirth();
-        int age = calculateAge(dateOfBirth);
+        String dateOfMajority = (String) participant.getDsm().get().getDateOfMajority();
+        if (StringUtils.isBlank(dateOfMajority) || DateTimeUtil.isAdult(dateOfMajority)) {
+            return hasAdultParticipantConsentedToTumor(participant, ddpInstanceDto.getStudyGuid());
+        }
+        int age = DateTimeUtil.calculateAgeInYears(dateOfBirth);
         if (age >= 7) {
             return checkAnswerToActivity(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
                     SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true) && checkAnswerToActivity(participant,
@@ -235,50 +244,23 @@ public class PhiManifestService {
      * @param answer       desired answer
      */
     private boolean checkAnswerToActivity(ElasticSearchParticipantDto participant, String activityName, String question, Object answer) {
-        Optional<Object> possibleAnswer = getParticipantAnswerInSurvey(participant, activityName, question);
+        Optional<Activities> maybeActivity = participant.getActivities().stream().filter(activities -> activities.getActivityCode()
+                .equals(activityName)).findAny();
+        Optional<Object> possibleAnswer = maybeActivity.isPresent() ? maybeActivity.get().getAnswerToQuestion(question) : Optional.empty();
         return possibleAnswer.isPresent() && possibleAnswer.get().equals(answer);
 
     }
 
+    /**
+     * checks if the answer provided by a participant to a survey question matches the criteria
+     *
+     * @param participant  participant data from ES.
+     * @param activityName stable id of the activity
+     * @param question     stable id of the question
+     */
     private Optional<Object> getParticipantAnswerInSurvey(ElasticSearchParticipantDto participant, String activityName, String question) {
         Optional<Activities> maybeActivity = participant.getActivities().stream().filter(activities -> activities.getActivityCode()
                 .equals(activityName)).findAny();
-        if (maybeActivity.isPresent()) {
-            Activities activities = maybeActivity.get();
-            Optional<Map<String, Object>> maybeQuestionAnswers = activities.getQuestionsAnswers()
-                    .stream().filter(questionAnswer -> questionAnswer.get("stableId").equals(question)).findAny();
-            if (maybeQuestionAnswers.isPresent()) {
-                Map<String, Object> questionAnswer = maybeQuestionAnswers.get();
-                if (questionAnswer.containsKey("answer")) {
-                    return Optional.ofNullable(questionAnswer.get("answer"));
-                }
-            }
-        }
-        return Optional.empty();
-    }
-
-
-    @VisibleForTesting
-    public boolean isSequencingOrderValid(@NonNull String sequencingOrderId, @NonNull String ddpParticipantId,
-                                          @NonNull DDPInstanceDto ddpInstanceDto) {
-        List<MercuryOrderDto> orders = new MercuryOrderDao().getByOrderId(sequencingOrderId);
-        return !(orders.isEmpty() || orders.stream().anyMatch(order -> StringUtils.isBlank(order.getMercuryPdoId())
-                || ddpInstanceDto.getDdpInstanceId() != order.getDdpInstanceId()
-                || !ddpParticipantId.equals(order.getDdpParticipantId())));
-    }
-
-    public int calculateAge(@NonNull String dateOfBirth) {
-        LocalDate dob = LocalDate.parse(dateOfBirth);
-        LocalDate curDate = LocalDate.now();
-        if ((dob != null) && (curDate != null)) {
-            return Period.between(dob, curDate).getYears();
-        } else {
-            throw new DsmInternalError("Could not calculate age for dateOfBirth " + dateOfBirth);
-        }
-    }
-
-    public String getDateFromEpoch(long epoch) {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        return sdf.format(new Date(epoch));
+        return maybeActivity.isPresent() ? maybeActivity.get().getAnswerToQuestion(question) : Optional.empty();
     }
 }

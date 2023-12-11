@@ -14,12 +14,15 @@ import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifest;
 import org.broadinstitute.dsm.service.phimanifest.PhiManifestService;
+import org.broadinstitute.dsm.util.DateTimeUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.OncHistoryTestUtil;
+import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -77,7 +80,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                         .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).withTissueId(smId.getTissueId())
                 .withDsmKitRequestId(null).withDdpParticipantId(eligibleParticipantGuid1).withBarcode(eligibleSmId).build();
         int mercuryOrderId = mercuryOrderDao.create(eligibleMercuryOrder, "");
-        Assert.assertTrue(phiManifestService.isSequencingOrderValid(eligibleTestOrderId, eligibleParticipantGuid1, ddpInstanceDto));
+        List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(eligibleTestOrderId);
+        Assert.assertTrue(mercuryOrderDao.isSequencingOrderValidForPhiReport(orders, eligibleParticipantGuid1, ddpInstanceDto));
         mercuryOrderDao.delete(mercuryOrderId);
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
         OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
@@ -99,7 +103,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).withTissueId(smId.getTissueId())
                 .withDsmKitRequestId(null).withDdpParticipantId(eligibleParticipantGuid1).withBarcode(smIdValue).build();
         int mercuryOrderId = mercuryOrderDao.create(eligibleMercuryOrder, "");
-        Assert.assertFalse(phiManifestService.isSequencingOrderValid(notEligibleTestOrderId, unEligibleParticipantGuid1, ddpInstanceDto));
+        List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(notEligibleTestOrderId);
+        Assert.assertFalse(mercuryOrderDao.isSequencingOrderValidForPhiReport(orders, unEligibleParticipantGuid1, ddpInstanceDto));
         mercuryOrderDao.delete(mercuryOrderId);
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
         OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
@@ -110,8 +115,9 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
     @Test
     public void lmsParticipantEligibilityTest() {
         String eligibleGuid = "adultEligibleGuid";
-        ParticipantDto adultEligibleParticipant = lmsOncHistoryTestUtil.createSharedLearningParticipant(eligibleGuid, ddpInstanceDto,
-                "1990-10-01");
+        ParticipantDto adultEligibleParticipant = TestParticipantUtil.createSharedLearningParticipant(eligibleGuid, ddpInstanceDto,
+                "1990-10-01", lmsEsIndex);
+        lmsOncHistoryTestUtil.getParticipantIds().add(adultEligibleParticipant.getParticipantId().orElseThrow());
         Assert.assertTrue(phiManifestService.isParticipantConsented(adultEligibleParticipant.getDdpParticipantIdOrThrow(), ddpInstanceDto));
         String unEligibleGuid = "unEligibleGuid";
         //TODO add test for uneligible adult and eligible child
@@ -122,9 +128,10 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
     public void phiReportTest() throws Exception {
         String pdo = "child-report-PDO";
         String smIdValue = "child-SM-ID";
-        ParticipantDto participantDto = lmsOncHistoryTestUtil.createSharedLearningParticipant(childReportGuid, ddpInstanceDto,
-                "2020-10-10");
+        ParticipantDto participantDto = TestParticipantUtil.createSharedLearningParticipant(childReportGuid, ddpInstanceDto,
+                "2020-10-10", lmsEsIndex);
         childReportGuid = participantDto.getDdpParticipantIdOrThrow();
+        lmsOncHistoryTestUtil.getParticipantIds().add(participantDto.getParticipantId().orElseThrow());
         Map<String, Object> response = (Map<String, Object>) lmsOncHistoryTestUtil.createSmId(participantDto, smIdValue, ddpInstanceDto);
         int smIdPk = (int) response.get("smIdPk");
         SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
@@ -161,6 +168,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
                 ddpInstanceDto.getEsParticipantIndex(), childReportGuid);
         List<MercuryOrderDto> orders = new MercuryOrderDao().getByOrderId(childReportOrderId);
+        oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
+        createdTissue = new TissueDao().get(smId.getTissueId()).get();
         PhiManifest phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
         assertPhiManifest(phiManifest, participantDto, orders, createdTissue, oncHistoryDetail, participant);
         mercuryOrderDao.delete(mercuryOrderId);
@@ -173,7 +182,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         MercuryOrderDto mercuryOrderDto = orders.get(0);
         Assert.assertEquals(mercuryOrderDto.getOrderId(), phiManifest.getClinicalOrderId());
         Assert.assertEquals(mercuryOrderDto.getMercuryPdoId(), phiManifest.getClinicalPdoNumber());
-        Assert.assertEquals(phiManifestService.getDateFromEpoch(mercuryOrderDto.getOrderDate()), phiManifest.getClinicalOrderDate());
+        Assert.assertEquals(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getOrderDate()), phiManifest.getClinicalOrderDate());
         Assert.assertEquals(participant.getProfile().get().getFirstName(), phiManifest.getFirstName());
         Assert.assertEquals(participant.getProfile().get().getLastName(), phiManifest.getLastName());
         Assert.assertEquals(participant.getProfile().get().getHruid(), phiManifest.getShortId());
@@ -185,5 +194,10 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         Assert.assertEquals(tissue.getBlockIdShl(), phiManifest.getBlockId());
         Assert.assertEquals(tissue.getTissueSite(), phiManifest.getTissueSite());
         Assert.assertEquals(tissue.getTissueSequence(), phiManifest.getSequencingResults());
+        Profile participantProfile = participant.getProfile().get();
+        Assert.assertEquals(participantProfile.getHruid(), phiManifest.getShortId());
+        Assert.assertEquals(participantProfile.getFirstName(), phiManifest.getFirstName());
+        Assert.assertEquals(participantProfile.getLastName(), phiManifest.getLastName());
+        Assert.assertEquals(participant.getDsm().get().getDateOfBirth(), phiManifest.getDateOfBirth());
     }
 }
