@@ -106,7 +106,7 @@ public class KitDao {
             + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
             + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
             + "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id AND ks.ddp_instance_id = req.ddp_instance_id "
-            + "WHERE req.ddp_label = ?";
+            + "WHERE req.ddp_label = ? and kit.deactivated_date is null";
 
     private static final String SQL_GET_SUB_KIT_BY_DDP_LABEL =
             "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
@@ -121,7 +121,8 @@ public class KitDao {
                     + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
                     +
                     "LEFT JOIN ddp_kit_request_settings AS ks ON ks.kit_type_id = req.kit_type_id "
-                    + " AND ks.ddp_instance_id = req.ddp_instance_id WHERE ( req.ddp_label = ? or ddp_label like ? )";
+                    + " AND ks.ddp_instance_id = req.ddp_instance_id WHERE ( req.ddp_label = ? or ddp_label like ? )"
+                    + " AND kit.deactivated_date is null";
 
     private static final String INSERT_KIT = "INSERT INTO ddp_kit "
             + "(dsm_kit_request_id, kit_label, label_url_to, label_url_return, easypost_to_id, easypost_return_id, tracking_to_id, "
@@ -151,7 +152,7 @@ public class KitDao {
     private static final String SQL_DELETE_KIT = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
 
     private static final String SQL_NUM_KITS_BY_LABEL = "select count(1) from ddp_kit WHERE dsm_kit_request_id = "
-            + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?)";
+            + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) and deactivated_date is null";
 
     private static final String SQL_DELETE_KIT_TRACKING = "DELETE FROM ddp_kit_tracking WHERE kit_label = ?";
 

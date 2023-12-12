@@ -191,7 +191,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             " SELECT count(*) kitRequestCount from ddp_kit_request where bsp_collaborator_sample_id REGEXP \"^%1\" and kit_type_id = ?";
 
     public static final String SELECT_1_FROM_KIT_REQUEST_WITH_DDP_LABEL =
-            " select 1 from ddp_kit_request req  where req.ddp_label = ? ";
+            " select 1 from ddp_kit_request req  where req.ddp_label = ? and deactivated_date is null";
 
     private static final String QUEUE = "queue";
     private static final String ERROR = "error";
