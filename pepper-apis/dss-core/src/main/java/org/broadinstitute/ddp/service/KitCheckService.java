@@ -160,7 +160,7 @@ public class KitCheckService {
         if (wasSuccessful) {
             kitCheckResult.addQueuedParticipantForStudy(studyGuid, candidate.getUserId());
         } else {
-            log.warn("Participant {} was ineligible for a kit", userGuid);
+            log.debug("Participant {} was ineligible for a kit", userGuid);
         }
 
         return kitCheckResult;
