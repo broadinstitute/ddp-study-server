@@ -124,7 +124,7 @@ public class KitCheckService {
 
         if (candidate.getAddressValidationStatus() == null
                 || candidate.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
-            log.warn("Participant {} has an invalid mailing address", userGuid);
+            log.debug("Participant {} has an invalid mailing address", userGuid);
             return null;
         }
 
@@ -338,7 +338,7 @@ public class KitCheckService {
         }
         if (pending.getAddressValidationStatus() == null
                 || pending.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
-            log.warn("Participant {} has an invalid mailing address", userGuid);
+            log.debug("Participant {} has an invalid mailing address", userGuid);
             return;
         }
 
