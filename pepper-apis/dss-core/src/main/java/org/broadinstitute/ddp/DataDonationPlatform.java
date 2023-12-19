@@ -22,6 +22,9 @@ import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -183,6 +186,7 @@ import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
+import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -596,7 +600,25 @@ public class DataDonationPlatform {
                 MDCLogBreadCrumbFilter.LOG_BREADCRUMB));
 
         awaitInitialization();
+        startRedisPingThread();
+
         log.info("ddp startup complete");
+    }
+
+    private static void startRedisPingThread() {
+        try {
+            int initialDelay = new Random().nextInt(55) + 5; // add jitter so that different backends don't hammer redis at once
+            log.info("Starting redis thread with initial delay of " + initialDelay + "s");
+            Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(() -> {
+                try {
+                    RedisConnectionValidator.doTest();
+                } catch (Exception e) {
+                    log.error("Trouble pinging redis ", e);
+                }
+            }, initialDelay, 10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Redis connection validator thread has failed", e);
+        }
     }
 
     private static void registerAppEngineCallbacks(long bootWaitSecs) {
