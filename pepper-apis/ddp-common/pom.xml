@@ -8,9 +8,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>ddp-common</artifactId>
 
+    <!-- -->
     <properties>
         <logback.version>1.4.5</logback.version>
         <sonar.sources>src/main/java</sonar.sources>
@@ -108,6 +108,27 @@
             <artifactId>sendgrid-java</artifactId>
             <version>4.8.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>auth0</artifactId>
+        </dependency>
 
+        <dependency>
+            <!-- jwt security token stuff -->
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+
+        </dependency>
+
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>jwks-rsa</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 </project>

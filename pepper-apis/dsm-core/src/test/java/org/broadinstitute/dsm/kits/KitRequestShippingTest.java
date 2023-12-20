@@ -11,8 +11,6 @@ public class KitRequestShippingTest {
     public static String BLOOD_RNA_KIT_TYPE_DISPLAY_NAME = "BLOOD and RNA";
     private static String guid = "TEST_GUID";
 
-
-
     @Test
     public void testEmptyDisplayName() {
         // test that not having a display name means the display name is set as the kit type name
@@ -27,8 +25,6 @@ public class KitRequestShippingTest {
         Assert.assertEquals(kitWithoutDisplayName.getKitTypeName(), BLOOD_RNA_KIT_TYPE_NAME);
     }
 
-
-
     @Test
     public void testNotEmptyDisplayName() {
         // test that  having a display name means the display name is different from the kit type name
@@ -41,6 +37,19 @@ public class KitRequestShippingTest {
                 null, null, null, null, null, null, BLOOD_RNA_KIT_TYPE_DISPLAY_NAME);
         Assert.assertEquals(kitWithDisplayName.getDisplayName(), BLOOD_RNA_KIT_TYPE_DISPLAY_NAME);
         Assert.assertEquals(kitWithDisplayName.getKitTypeName(), BLOOD_RNA_KIT_TYPE_NAME);
+    }
+
+    @Test
+    public void testHasBSPCollaboratorParticipantId() {
+        KitRequestShipping shipping = new KitRequestShipping();
+        shipping.setBspCollaboratorParticipantId("123");
+        Assert.assertTrue(shipping.hasBSPCollaboratorParticipantId());
+
+        shipping.setBspCollaboratorParticipantId("");
+        Assert.assertFalse(shipping.hasBSPCollaboratorParticipantId());
+
+        shipping.setBspCollaboratorParticipantId(null);
+        Assert.assertFalse(shipping.hasBSPCollaboratorParticipantId());
     }
 
 

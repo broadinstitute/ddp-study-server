@@ -25,11 +25,11 @@ public class KitReceivedUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanResult> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel(kitLabel);
-        Optional<ScanError> maybeScanError =
+        Optional<ScanResult> maybeScanError =
                 kitDao.updateKitReceived(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         if (!isKitUpdateSuccessful(maybeScanError, kitRequestShipping.getBspCollaboratorParticipantId())) {
             if (isReceiveATKitRequest(kitLabel)) {
@@ -48,7 +48,7 @@ public class KitReceivedUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+    protected Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload) {
         throw new NotImplementedException();
     }
 

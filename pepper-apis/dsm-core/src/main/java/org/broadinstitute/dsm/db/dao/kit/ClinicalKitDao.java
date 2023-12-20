@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class ClinicalKitDao {
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
-                    + "WHERE sm.sm_id_value = ? AND NOT sm.deleted <=> 1 ";
+                    + "WHERE sm.sm_id_value = ? ";
     private static final String SQL_GET_RECEIVED_CLINICAL_TISSUE_BY_DDP_PARTICIPANT_ID = "SELECT sm.received_date FROM sm_id sm "
                     + "LEFT JOIN ddp_tissue t on (t.tissue_id  = sm.tissue_id) "
                     + "LEFT JOIN ddp_onc_history_detail oD on (oD.onc_history_detail_id = t.onc_history_detail_id) "
@@ -44,15 +45,16 @@ public class ClinicalKitDao {
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
-                    + "WHERE p.ddp_participant_id = ? AND ddp.instance_name = ? AND NOT sm.deleted <=> 1 AND sm.received_date IS NOT NULL ";
+                    + "WHERE p.ddp_participant_id = ? AND ddp.instance_name = ? AND sm.received_date IS NOT NULL ";
 
     public static final String SQL_GET_RECEIVED_CLINICAL_KITS_BY_DDP_PARTICIPANT_ID = "SELECT receive_date "
                     + "FROM ddp_kit_request req LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = req.ddp_instance_id) "
                     + "LEFT JOIN kit_type ty ON (req.kit_type_id = ty.kit_type_id) "
                     + "WHERE req.ddp_participant_id = ? AND realm.instance_name = ? AND receive_date IS NOT NULL AND receive_by = ?";
-    private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ? "
-                    + "AND NOT deleted <=> 1";
+
+    private static final String SQL_SET_ACCESSION_TIME =
+            "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ? ";
 
     public Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
         SimpleResult results = inTransaction((conn) -> {
@@ -92,7 +94,9 @@ public class ClinicalKitDao {
     public ClinicalKitDto getClinicalKitBasedOnSmId(String smIdValue) {
         log.info("Checking the kit for SM Id value " + smIdValue);
         Optional<ClinicalKitWrapper> maybeClinicalKitWrapper = getClinicalKitFromSMId(smIdValue);
-        maybeClinicalKitWrapper.orElseThrow();
+        maybeClinicalKitWrapper.orElseThrow(() -> {
+            throw new NoSuchElementException("No kit found for " + smIdValue);
+        });
         ClinicalKitWrapper clinicalKitWrapper = maybeClinicalKitWrapper.get();
         ClinicalKitDto clinicalKitDto = clinicalKitWrapper.getClinicalKitDto();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(clinicalKitWrapper.getDdpInstanceId());

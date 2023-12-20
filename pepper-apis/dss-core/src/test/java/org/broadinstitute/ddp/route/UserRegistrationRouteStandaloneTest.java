@@ -1,38 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import static io.restassured.RestAssured.given;
-import static java.util.stream.Collectors.toList;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
-import static org.broadinstitute.ddp.util.GuidUtils.UPPER_ALPHA_NUMERIC;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.core.SettableApiFuture;
@@ -105,6 +72,40 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static io.restassured.RestAssured.given;
+import static java.util.stream.Collectors.toList;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
+import static org.broadinstitute.ddp.util.GuidUtils.UPPER_ALPHA_NUMERIC;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @Slf4j
 public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.TestCase {
@@ -419,7 +420,20 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             // Have to create a completely new user that only exists in Auth0, so that email-lookup-by-user will not
             // fail and we can test that user/profile is created post-registration.
             var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
-            return Auth0Util.createTestingUser(mgmtClient).getAuth0Id();
+            Auth0Util.TestingUser testAuth0User = Auth0Util.createTestingUser(mgmtClient);
+            assertNotNull(testAuth0User.getEmail());
+            try {
+                //delay to make sure no timings issue
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
+            //test Auth0 email lookup
+            Map<String, String> emailMap = auth0Util.getAuth0UsersByAuth0UserIds(Set.of(testAuth0User.getAuth0Id()), mgmtClient.getToken());
+            assertEquals(1, emailMap.size());
+            assertEquals(testAuth0User.getEmail(), emailMap.get(testAuth0User.getAuth0Id()));
+            return testAuth0User.getAuth0Id();
         });
         auth0UserIdsToDelete.add(testAuth0UserId);
 

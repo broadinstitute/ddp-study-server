@@ -38,7 +38,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.kit.KitTypeImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
@@ -46,7 +46,6 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitShippingIds;
@@ -191,7 +190,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE =
             " SELECT count(*) kitRequestCount from ddp_kit_request where bsp_collaborator_sample_id REGEXP \"^%1\" and kit_type_id = ?";
 
-    private static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS =
+    public static final String SELECT_1_FROM_KIT_REQUEST_WITH_DDP_LABEL =
             " select 1 from ddp_kit_request req  where req.ddp_label = ? ";
 
     private static final String QUEUE = "queue";
@@ -258,6 +257,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.KIT_TYPE_NAME)
     private String kitTypeName;
 
+    // at runtime, this must be an integer that maps to kit_type_id foreign key
 
     @JsonProperty("displayName")
     private String displayName;
@@ -666,7 +666,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                     || (
                                     (UPLOADED.equals(target) || DEACTIVATED.equals(target) || TRIGGERED.equals(target) || OVERVIEW.equals(
                                             target) || WAITING.equals(target))
-                                            && StringUtils.isBlank(kit.getBspCollaboratorParticipantId()))) {
+                                            && !kit.hasBSPCollaboratorParticipantId())) {
                                 String apiKey = DSMServer.getDDPEasypostApiKey(ddpInstance.getName());
                                 if (StringUtils.isNotBlank(apiKey) && kit.getEasypostAddressId() != null && StringUtils.isNotBlank(
                                         kit.getEasypostAddressId())) {
@@ -808,7 +808,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static KitRequestShipping getKitRequest(@NonNull String kitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KitDaoImpl.KIT_BY_KIT_REQUEST_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KitDao.KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setString(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
@@ -1243,7 +1243,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
      * and checking it against db if unique
      */
     public static String generateDdpLabelID() {
-        return generateDdpLabelID(15, GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS);
+        return generateDdpLabelID(15, SELECT_1_FROM_KIT_REQUEST_WITH_DDP_LABEL);
     }
 
     public static String generateDdpLabelID(int length, String query) {
@@ -1747,5 +1747,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public boolean hasTrackingScan() {
         return StringUtils.isNotBlank(trackingId);
+    }
+
+    public boolean hasBSPCollaboratorParticipantId() {
+        return StringUtils.isNotBlank(bspCollaboratorParticipantId);
     }
 }

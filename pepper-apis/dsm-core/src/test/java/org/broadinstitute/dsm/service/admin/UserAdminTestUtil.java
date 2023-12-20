@@ -93,7 +93,7 @@ public class UserAdminTestUtil {
 
     private void assertInitialized() {
         if (!initialized) {
-            throw new DsmInternalError("Test users not initialized: call createRealmAndStudyGroup");
+            throw new DsmInternalError("Test users not initialized: call createRealmAndStudyGroup first.");
         }
     }
 

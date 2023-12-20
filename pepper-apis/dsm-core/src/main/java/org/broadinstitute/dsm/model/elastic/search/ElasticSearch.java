@@ -111,8 +111,7 @@ public class ElasticSearch implements ElasticSearchable {
     /**
      * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
      * @param sourceMap the source map
-     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the
-     *                             {@link ElasticSearchParticipantDto#queriedParticipantId}
+     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the queriedParticipantId
      * @return
      */
     public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
@@ -154,6 +153,24 @@ public class ElasticSearch implements ElasticSearchable {
         }
         int dotIndex = searchHitIndex.lastIndexOf('.');
         return searchHitIndex.substring(dotIndex + 1);
+    }
+
+    /**
+     * returns a list of all the guids in one ES index
+     *
+     * @param esParticipantsIndex the ES index to get all participants from
+     */
+    public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
+        logger.info("Getting all participant ids from index " + esParticipantsIndex);
+        ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
+        List<String> participantIds = new ArrayList<>();
+        for (ElasticSearchParticipantDto elasticSearchParticipantDto : es.esParticipants) {
+            if (elasticSearchParticipantDto.getProfile().isPresent()
+                    && StringUtils.isNotBlank(elasticSearchParticipantDto.getProfile().get().getGuid())) {
+                participantIds.add(elasticSearchParticipantDto.getProfile().get().getGuid());
+            }
+        }
+        return participantIds;
     }
 
     @Override
@@ -348,7 +365,6 @@ public class ElasticSearch implements ElasticSearchable {
         return boolQuery;
     }
 
-
     @Override
     public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
         logger.info("Collecting ES data from index " + esParticipantsIndex);
@@ -359,7 +375,7 @@ public class ElasticSearch implements ElasticSearchable {
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
             searchSourceBuilder.size(legacyAltPids.size());
             searchSourceBuilder.fetchSource(
-                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+                    new String[] {ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES}, null
             );
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);

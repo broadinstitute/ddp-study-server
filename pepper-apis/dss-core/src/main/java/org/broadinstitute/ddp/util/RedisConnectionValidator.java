@@ -22,10 +22,10 @@ public class RedisConnectionValidator {
 
             String valRead = jedis.hget(testHash, "hello");
             if (valToWrite.equals(valRead)) {
-                log.info("Redis is fine");
+                log.debug("Redis ping ok");
             }
         } catch (RuntimeException e) {
-            log.error("There was a problem reading/writing to Redis", e);
+            log.error("There was a problem reading/writing to Redis at {}:{}", host, port, e);
         }
     }
 

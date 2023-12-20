@@ -16,18 +16,18 @@ public class KitSentUseCase extends KitFinalSentBaseUseCase {
     }
 
     @Override
-    protected Optional<ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanResult> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel(kitLabel);
-        Optional<ScanError> result =
-                kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
+        Optional<ScanResult> result =
+                kitDao.updateKitScanInfo(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         trigerEventsIfSuccessfulKitUpdate(result, kitLabel, kitRequestShipping);
         return result;
     }
 
     @Override
-    protected Optional<ScanError> processRGPFinalScan(ScanPayload scanPayload) {
+    protected Optional<ScanResult> processRGPFinalScan(ScanPayload scanPayload) {
         throw new NotImplementedException();
     }
 }

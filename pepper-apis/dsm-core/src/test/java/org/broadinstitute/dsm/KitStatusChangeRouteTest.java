@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -57,8 +57,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<ScanError> scanErrorList = new ArrayList<>();
-        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanResult> scanResultList = new ArrayList<>();
+        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanResultList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_DSM_LABEL_UID + "_3");
@@ -66,7 +66,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to tracking table
         Assert.assertEquals("1", count);
 
-        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanResultList, "3", null);
 
         strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_3");
@@ -84,8 +84,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<ScanError> scanErrorList = new ArrayList<>();
-        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanResult> scanResultList = new ArrayList<>();
+        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanResultList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_4");
@@ -93,7 +93,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         String count = DBTestUtil.getStringFromQuery(CHECK_KITLABEL, strings, "count");
         //check that kit label was not updated as send, because tracking scan was missing
         Assert.assertEquals("0", count);
-        Assert.assertFalse(scanErrorList.isEmpty());
+        Assert.assertFalse(scanResultList.isEmpty());
     }
 
     @Ignore("Broken. Data needed not in db")
@@ -107,8 +107,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
         }
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<ScanError> scanErrorList = new ArrayList<>();
-        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanResult> scanResultList = new ArrayList<>();
+        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanResultList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_DSM_LABEL_UID + "_3");
@@ -116,7 +116,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to tracking table
         Assert.assertEquals("1", count);
 
-        scanErrorList = new ArrayList<>();
-        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        scanResultList = new ArrayList<>();
+        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanResultList, "3", null);
     }
 }
