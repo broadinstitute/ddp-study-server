@@ -298,9 +298,9 @@ public abstract class BasePatch {
     private int getOncHistoryDetailId(Patch patch) {
         int oncHistoryDetailId = -1;
         if (patch.getNameValue().getName().contains(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER)) {
-            oncHistoryDetailId = Integer.parseInt(patch.getParentId());
+            oncHistoryDetailId = patch.getParentIdAsInt();
         } else if (patch.getNameValue().getName().contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
-            oncHistoryDetailId = Integer.parseInt(patch.getId());
+            oncHistoryDetailId = patch.getIdAsInt();
         }
         return oncHistoryDetailId;
     }

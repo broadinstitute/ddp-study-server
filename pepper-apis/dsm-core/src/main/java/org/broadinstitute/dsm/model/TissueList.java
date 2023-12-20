@@ -23,7 +23,7 @@ public class TissueList {
     public static final Logger logger = LoggerFactory.getLogger(TissueList.class);
     public static final String SQL_SELECT_ALL_ONC_HISTORY_TISSUE_FOR_REALM =
             "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, p.assignee_id_tissue,"
-                    + "oD.onc_history_detail_id, oD.request, oD.deleted, oD.fax_sent, oD.tissue_received, oD.medical_record_id, "
+                    + "oD.onc_history_detail_id, oD.request, oD.fax_sent, oD.tissue_received, oD.medical_record_id, "
                     + "oD.date_px, oD.type_px, "
                     + "oD.location_px, oD.histology, oD.accession_number, oD.facility, oD.phone, oD.fax, oD.notes, "
                     + "oD.additional_values_json, "
@@ -36,15 +36,15 @@ public class TissueList {
                     + "t.shl_work_number, t.block_id_shl, t.tumor_percentage, t.tissue_sequence, t"
                     + ".onc_history_detail_id, "
                     + "t.scrolls_count, t.h_e_count, t.uss_count, t.blocks_count, "
-                    + "sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, sm.tissue_id, smt.sm_id_type "
+                    + "sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.tissue_id, smt.sm_id_type "
                     + "FROM ddp_participant p LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
                     + "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id "
                     + "AND p.ddp_instance_id = ex.ddp_instance_id) "
                     + "LEFT JOIN ddp_institution inst on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_medical_record m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
-                    + "LEFT JOIN ddp_onc_history_detail oD on (m.medical_record_id = oD.medical_record_id AND NOT oD.deleted <=> 1) "
-                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
-                    + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id AND NOT sm.deleted <=> 1 ) "
+                    + "LEFT JOIN ddp_onc_history_detail oD on (m.medical_record_id = oD.medical_record_id) "
+                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
+                    + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id) "
                     + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) "
                     + "WHERE realm.instance_name = ? AND ex.ddp_participant_exit_id IS NULL AND oD.onc_history_detail_id IS NOT NULL";
     public static final String SQL_ORDER_BY_ONC_HISTORY = " ORDER BY oD.onc_history_detail_id ";
@@ -130,7 +130,7 @@ public class TissueList {
                             continue;
                         }
                         for (Tissue tissue : oncHistoryDetail.getTissues()) {
-                            if (tissue.isDeleted() != null && !tissue.isDeleted() && tissue.getTissueId() != null) {
+                            if (tissue.getTissueId() != null) {
                                 tissueList.setTissue(tissue);
                             }
                             results.add(tissueList);

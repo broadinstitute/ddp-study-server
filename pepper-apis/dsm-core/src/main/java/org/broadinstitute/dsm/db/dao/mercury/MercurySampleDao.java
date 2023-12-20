@@ -12,7 +12,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.mercury.MercurySampleDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -25,17 +25,17 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN ddp_institution inst on (inst.participant_id = p.participant_id) "
                     + "LEFT JOIN ddp_medical_record mr on (mr.institution_id = inst.institution_id AND NOT mr.deleted <=> 1) "
-                    + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id AND NOT oD.deleted <=> 1) "
-                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
+                    + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id) "
+                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
                     + "WHERE oD.tissue_received IS NOT NULL AND p.ddp_participant_id = ? AND ddp.instance_name = ? "
                     + "AND (IFNULL(t.uss_count, 0) <> 0 OR IFNULL(t.scrolls_count, 0) <> 0) "
                     + "AND  IFNULL(t.uss_count, 0) = (SELECT count(*) from sm_id sm "
                     + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
-                    + "where smtype.sm_id_type = \"uss\" and sm.tissue_id = t.tissue_id and NOT sm.deleted <=> 1 "
+                    + "where smtype.sm_id_type = \"uss\" and sm.tissue_id = t.tissue_id "
                     + "and sm.received_date is not null) "
                     + "AND IFNULL(t.scrolls_count, 0) = (SELECT count(*) from sm_id sm "
                     + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
-                    + "where smtype.sm_id_type = \"scrolls\" and sm.tissue_id = t.tissue_id and NOT sm.deleted <=> 1 "
+                    + "where smtype.sm_id_type = \"scrolls\" and sm.tissue_id = t.tissue_id "
                     + "and sm.received_date is not null) ) as table1 "
                     + "left join (select max(mercury_sequencing_id) AS ms_id, tissue_id as seqt "
                     + "From ddp_mercury_sequencing where ddp_participant_id = ? group by (tissue_id) ) as table2 "
@@ -79,12 +79,12 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
     }
 
     public List<MercurySampleDto> findEligibleSamples(String ddpParticipantId, String realm,
-                                                      KitDaoImpl kitDaoImpl) {
+                                                      KitDao kitDao) {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
-                samples.addAll(getEligibleTissues(conn, ddpParticipantId, realm, kitDaoImpl));
+                samples.addAll(getEligibleTissues(conn, ddpParticipantId, realm, kitDao));
                 samples.addAll(getEligibleKits(conn, ddpParticipantId, realm));
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -130,9 +130,9 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
     }
 
     private List<MercurySampleDto> getEligibleTissues(Connection conn, String ddpParticipantId, String realm,
-                                                      KitDaoImpl kitDaoImpl) throws Exception {
+                                                      KitDao kitDao) throws Exception {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
-        if (!participantHasKitReceived(conn, ddpParticipantId, kitDaoImpl)) {
+        if (!participantHasKitReceived(conn, ddpParticipantId, kitDao)) {
             return samples;
         }
         SimpleResult dbVals = new SimpleResult();
@@ -164,8 +164,8 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         return samples;
     }
 
-    private boolean participantHasKitReceived(Connection conn, String ddpParticipantId, KitDaoImpl kitDaoImpl) {
-        return kitDaoImpl.hasKitReceived(conn, ddpParticipantId);
+    private boolean participantHasKitReceived(Connection conn, String ddpParticipantId, KitDao kitDao) {
+        return kitDao.hasKitReceived(conn, ddpParticipantId);
     }
 
     private String getSampleStatus(ResultSet rs) throws SQLException {

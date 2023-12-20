@@ -115,7 +115,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         return Optional.ofNullable((String) results.resultValue);
     }
 
-    public String getRandomOncHistoryForStudy(String ddpInstanceName) {
+    public Integer getRandomOncHistoryIdForStudy(String ddpInstanceName) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -124,7 +124,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
                 stmt.setString(1, ddpInstanceName);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
-                    dbVals.resultValue = rs.getString(DBConstants.ONC_HISTORY_DETAIL_ID);
+                    dbVals.resultValue = rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID);
                 } else {
                     throw new RuntimeException(
                             "Couldn't find a valid random onc history with accession number in realm " + ddpInstanceName);
@@ -138,10 +138,10 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Problem getting a random participant id for instance " + ddpInstanceName, results.resultException);
         }
-        return (String) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
-    public String getRandomOncHistoryForParticipant(String ddpInstanceName, String ddpParticipantId) {
+    public Integer getRandomOncHistoryForParticipant(String ddpInstanceName, String ddpParticipantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -152,7 +152,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
                 stmt.setString(2, ddpParticipantId);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
-                    dbVals.resultValue = rs.getString(DBConstants.ONC_HISTORY_DETAIL_ID);
+                    dbVals.resultValue = rs.getInt(DBConstants.ONC_HISTORY_DETAIL_ID);
                 } else {
                     throw new RuntimeException(
                             "Couldn't find a valid random onc history with accession number in realm " + ddpInstanceName);
@@ -166,7 +166,7 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Problem getting a random participant id for instance " + ddpInstanceName, results.resultException);
         }
-        return (String) results.resultValue;
+        return (Integer) results.resultValue;
     }
 
     @Override

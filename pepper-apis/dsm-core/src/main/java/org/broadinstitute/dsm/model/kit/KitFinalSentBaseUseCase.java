@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.kit;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
@@ -25,7 +24,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         super(kitPayload, kitDao);
     }
 
-    protected void trigerEventsIfSuccessfulKitUpdate(Optional<ScanError> result, String kit,
+    protected void trigerEventsIfSuccessfulKitUpdate(Optional<ScanResult> result, String kit,
                                                      KitRequestShipping kitRequestShipping) {
         if (isKitUpdateSuccessful(result, kitRequestShipping.getBspCollaboratorParticipantId())) {
             triggerEvents(kit, kitRequestShipping);

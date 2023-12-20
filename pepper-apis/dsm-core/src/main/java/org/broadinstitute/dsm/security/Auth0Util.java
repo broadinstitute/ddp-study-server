@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
@@ -29,6 +30,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.broadinstitute.ddp.security.RSAKeyProviderFactory;
 import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -56,6 +58,8 @@ public class Auth0Util {
     private final String audience;
     private String token;
     private Long expiresAt;
+    // jwk provider for each auth0 tenant, since the urls to the jwk endpoints are different from one tenant to another
+    private static final Map<String, JwkProvider> jwkProviderMap = new HashMap<>();
 
     public Auth0Util(@NonNull String account, @NonNull List<String> connections, @NonNull String ddpKey, @NonNull String ddpSecret,
                      @NonNull String mgtKey, @NonNull String mgtSecret, @NonNull String mgtApiUrl, String audience) {
@@ -186,7 +190,11 @@ public class Auth0Util {
      */
     public static DecodedJWT verifyAuth0Token(String jwt, String auth0Domain) {
         try {
-            JwkProvider jwkProvider = new JwkProviderBuilder(auth0Domain).build();
+            if (!jwkProviderMap.containsKey(auth0Domain)) {
+                jwkProviderMap.put(auth0Domain,
+                        new JwkProviderBuilder(auth0Domain).cached(100, 3L, TimeUnit.HOURS).build());
+            }
+            JwkProvider jwkProvider = jwkProviderMap.get(auth0Domain);
             RSAKeyProvider keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
             return JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
         } catch (JWTVerificationException e) {

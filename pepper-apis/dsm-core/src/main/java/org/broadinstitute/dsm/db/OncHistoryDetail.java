@@ -24,6 +24,7 @@ import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -53,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_ONC_HISTORY_DETAIL =
-            "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, oD.onc_history_detail_id, oD.request, oD.deleted, "
+            "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, oD.onc_history_detail_id, oD.request, "
                     + "oD.fax_sent, oD.tissue_received, oD.medical_record_id, oD.date_px, oD.type_px, "
                     + "oD.location_px, oD.histology, oD.accession_number, oD.facility, oD.phone, oD.fax, oD.notes, "
                     + "oD.additional_values_json, oD.request, oD.fax_sent, oD.fax_sent_by, oD.fax_confirmed, oD.fax_sent_2, "
@@ -64,16 +65,15 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     + "collaborator_sample_id, block_sent, scrolls_received, sk_id, sm_id, "
                     + "sent_gp, first_sm_id, additional_tissue_value_json, expected_return, return_date, return_fedex_id, "
                     + "shl_work_number, block_id_shl, tumor_percentage, tissue_sequence, "
-                    + "scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, "
+                    + "scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, "
                     + "sm.tissue_id, smt.sm_id_type FROM ddp_onc_history_detail oD "
-                    + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id "
-                    + "AND NOT oD.deleted <=> 1 AND NOT m.deleted <=> 1) "
+                    + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id AND NOT m.deleted <=> 1) "
                     + "LEFT JOIN ddp_institution inst on (inst.institution_id = m.institution_id) "
                     + "LEFT JOIN ddp_participant p on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
-                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
-                    + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id AND NOT sm.deleted <=> 1 ) "
-                    + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) " + "WHERE realm.instance_name = ? ";
+                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
+                    + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id) "
+                    + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) WHERE realm.instance_name = ? ";
     public static final String SQL_ORDER_BY =
             " ORDER BY p.ddp_participant_id, inst.ddp_institution_id, oD.onc_history_detail_id, t.tissue_id ASC";
     public static final String SQL_SELECT_ONC_HISTORY_LAST_CHANGED = "SELECT oD.last_changed FROM ddp_institution inst "
@@ -107,14 +107,16 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             "SELECT onc_history_detail_id, medical_record_id, date_px, type_px, location_px, histology, accession_number, facility,"
                     + " phone, fax, notes, additional_values_json, request, fax_sent, fax_sent_by, fax_confirmed, fax_sent_2, "
                     + "fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3,"
-                    + " tissue_received, gender, tissue_problem_option, destruction_policy FROM ddp_onc_history_detail "
-                    + "WHERE NOT (deleted <=> 1)";
+                    + " tissue_received, gender, tissue_problem_option, destruction_policy FROM ddp_onc_history_detail ";
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
 
     private static final String SQL_CREATE_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, date_px = ?, type_px = ?, location_px = ?, facility = ?, "
                     + "request = ?, destruction_policy = ?, last_changed = ?, changed_by = ?";
+
+    private static final String SQL_DELETE_ONC_HISTORY_DETAIL =
+            "delete from ddp_onc_history_detail where onc_history_detail_id = ?";
 
     private static final String SQL_UPDATE_DESTRUCTION_POLICY =
             "UPDATE ddp_onc_history_detail onc "
@@ -211,7 +213,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     @ColumnName(DBConstants.DESTRUCTION_POLICY)
     private String destructionPolicy;
     private String changedBy;
+
+    // although the database does not have this column, it is required as a field
+    // for proper processing of delete request from the frontend
     @ColumnName(DBConstants.DELETED)
+
     private boolean deleted;
     @ColumnName(DBConstants.UNABLE_OBTAIN_TISSUE)
     private boolean unableObtainTissue;
@@ -344,12 +350,12 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     // TODO: there should be no need for the realm parameter -DC
-    public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
+    public static OncHistoryDetail getOncHistoryDetail(@NonNull int oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
                 stmt.setString(1, realm);
-                stmt.setString(2, oncHistoryDetailId);
+                stmt.setInt(2, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = getOncHistoryDetail(rs);
@@ -429,7 +435,10 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
 
         if (results.resultException != null) {
-            throw new DsmInternalError(String.format("Couldn't get list of oncHistories with queryAddition '%s' and for realm %s", queryAddition, realm), results.resultException);
+            throw new DsmInternalError(
+                    String.format("Couldn't get list of oncHistories with queryAddition '%s' and for realm %s",
+                            queryAddition, realm),
+                    results.resultException);
         }
 
         logger.info("Got " + oncHistory.size() + " participants oncHistories in DSM DB for " + realm);
@@ -516,6 +525,10 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                 throw new DsmInternalError("Error creating ddp_onc_history_detail for medical record " + medicalRecordId);
             }
         });
+    }
+
+    public static void delete(int oncHistoryDetailId) {
+        DaoUtil.deleteSingleRowById(oncHistoryDetailId, SQL_DELETE_ONC_HISTORY_DETAIL);
     }
 
     @JsonProperty("dynamicFields")

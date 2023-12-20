@@ -23,7 +23,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitCurrentStatus;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
@@ -105,9 +105,9 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
         juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
-        List<ScanError> scanErrorList = JuniperSetupUtil.changeKitToSent(juniperTestKit);
+        List<ScanResult> scanResultList = JuniperSetupUtil.changeKitToSent(juniperTestKit);
         Assert.assertFalse(
-                scanErrorList.stream().filter(scanError -> StringUtils.isNotBlank(scanError.getError())).findAny().isPresent());
+                scanResultList.stream().filter(scanError -> scanError.hasError()).findAny().isPresent());
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
         JuniperSetupUtil.changeKitToReceived();

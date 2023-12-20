@@ -49,7 +49,7 @@ public class CreateClinicalDummyKitRoute implements Route {
     }
 
 
-    public static void addCollaboratorSampleId(String tissueId, DDPInstance ddpInstance, String ddpParticipantId, String shortId) {
+    public static void addCollaboratorSampleId(int tissueId, DDPInstance ddpInstance, String ddpParticipantId, String shortId) {
         String collaboratorParticipantId = KitRequestShipping
                 .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                         ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, "4");
@@ -58,11 +58,11 @@ public class CreateClinicalDummyKitRoute implements Route {
 
     }
 
-    private static void updateTissue(String tissueId, String collaboratorSampleId) {
+    private static void updateTissue(int tissueId, String collaboratorSampleId) {
         String name = "t.collaboratorSampleId";
         NameValue nameValue = new NameValue(name, collaboratorSampleId);
         DBElement dbElement = PatchUtil.getColumnNameMap().get(name);
-        Patch.patch(tissueId, ffpeUser, nameValue, dbElement);
+        Patch.patch(Integer.toString(tissueId), ffpeUser, nameValue, dbElement);
     }
 
     @Override
@@ -155,19 +155,19 @@ public class CreateClinicalDummyKitRoute implements Route {
             } else {
                 throw new RuntimeException("The FFPE kit type does not match any of the valid types " + kitTypeString);
             }
-            String randomOncHistoryDetailId;
+            Integer randomOncHistoryDetailId;
             OncHistoryDetail oncHistoryDetail;
 
             if (fixedParticipantId) {
                 randomOncHistoryDetailId =
                         bspDummyKitDao.getRandomOncHistoryForParticipant(ddpInstance.getName(), ddpParticipantId);
-                if (StringUtils.isBlank(randomOncHistoryDetailId)) {
+                if (randomOncHistoryDetailId == null) {
                     return "Participant doesn't have an eligible onc history/tissue";
                 }
                 logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId + " for participant " + ddpParticipantId);
             } else {
                 int tries = 0;
-                randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
+                randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryIdForStudy(ddpInstance.getName());
                 oncHistoryDetail =
                         OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
                 ddpParticipantId = oncHistoryDetail.getDdpParticipantId();
@@ -181,7 +181,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                         || StringUtils.isBlank(oncHistoryDetail.getDatePx())
                         || esParticipantDto.getProfile().map(Profile::getHruid).isEmpty()
                         || !participantIsEnrolled(esParticipantDto))) {
-                    randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
+                    randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryIdForStudy(ddpInstance.getName());
                     oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
                     ddpParticipantId = oncHistoryDetail.getDdpParticipantId();
                     esParticipantDto =
@@ -197,14 +197,14 @@ public class CreateClinicalDummyKitRoute implements Route {
             }
             List<Tissue> tissueIds =
                     oncHistoryDetailDaoImpl.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
-            String tissueId = null;
+            Integer tissueId = null;
             if (tissueIds != null && !tissueIds.isEmpty()) {
                 Optional<Tissue> tissue = tissueIds.stream().filter(tissue1 ->
                         tissue1 != null && StringUtils.isNotBlank(tissue1.getCollaboratorSampleId())
                 ).findAny();
-                tissueId = tissue.isPresent() ? String.valueOf(tissue.get().getTissueId()) : null;
+                tissueId = tissue.isPresent() ? tissue.get().getTissueId() : null;
             }
-            if (StringUtils.isBlank(tissueId) || tissueIds.isEmpty()) {
+            if (tissueId != null || tissueIds.isEmpty()) {
                 tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, ffpeUser);
                 String shortId = esParticipantDto.getProfile().map(Profile::getHruid).get();
                 addCollaboratorSampleId(tissueId, ddpInstance, ddpParticipantId, shortId);

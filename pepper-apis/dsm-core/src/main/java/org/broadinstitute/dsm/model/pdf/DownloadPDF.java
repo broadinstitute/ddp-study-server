@@ -51,7 +51,7 @@ public class DownloadPDF {
     private static final String IRB = "irb";
     private static final String JSON_START_DATE = "startDate";
     private static final String JSON_END_DATE = "endDate";
-    List<String> oncHistoryIDs;
+    List<Integer> oncHistoryIDs;
     Logger logger = LoggerFactory.getLogger(DownloadPDF.class);
     private String ddpParticipantId;
     private String configName;
@@ -76,7 +76,7 @@ public class DownloadPDF {
             this.oncHistoryIDs = new ArrayList<>();
             JsonArray array = (JsonArray) jsonObject.get("requestId");
             for (int i = 0; i < array.size(); i++) {
-                this.oncHistoryIDs.add(array.get(i).getAsString());
+                this.oncHistoryIDs.add(array.get(i).getAsInt());
             }
         }
         if (jsonObject.has("pdfs")) {

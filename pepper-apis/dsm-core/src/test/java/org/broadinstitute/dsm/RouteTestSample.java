@@ -40,7 +40,7 @@ import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.gp.KitInfo;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
-import org.broadinstitute.dsm.model.kit.ScanError;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
@@ -1476,9 +1476,9 @@ public class RouteTestSample extends TestHelper {
                         .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
-        ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
+        ScanResult[] scanResults = new GsonBuilder().create().fromJson(message, ScanResult[].class);
         //check that kit came back as scan error
-        Assert.assertTrue(scanErrors.length > 0);
+        Assert.assertTrue(scanResults.length > 0);
 
         //use endpoint to give kit tracking number
         json = "[{\"leftValue\":\"FAKE_TRACKING_" + kitId + "\", \"rightValue\": \"" + "FAKE_MF_" + kitId + "\"}]";
@@ -1492,9 +1492,9 @@ public class RouteTestSample extends TestHelper {
                 .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         message = DDPRequestUtil.getContentAsString(response);
-        scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
+        scanResults = new GsonBuilder().create().fromJson(message, ScanResult[].class);
         //check that kit came NOT back as scan error
-        Assert.assertTrue(scanErrors.length == 0);
+        Assert.assertTrue(scanResults.length == 0);
     }
 
     @Test
@@ -1525,9 +1525,9 @@ public class RouteTestSample extends TestHelper {
                 .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
-        ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
+        ScanResult[] scanResults = new GsonBuilder().create().fromJson(message, ScanResult[].class);
         //check that kit came NOT back as scan error
-        Assert.assertTrue(scanErrors.length == 0);
+        Assert.assertTrue(scanResults.length == 0);
 
         //check kit sent is in event queue
         Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ?", kitId, "EVENT_ID"));
@@ -1552,9 +1552,9 @@ public class RouteTestSample extends TestHelper {
                         .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
-        ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
+        ScanResult[] scanResults = new GsonBuilder().create().fromJson(message, ScanResult[].class);
         //check that kit came NOT back as scan error
-        Assert.assertTrue(scanErrors.length == 0);
+        Assert.assertTrue(scanResults.length == 0);
 
         //check kit sent is in event queue
         Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ?", kitId, "EVENT_ID"));

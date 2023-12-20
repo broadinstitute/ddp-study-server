@@ -27,7 +27,7 @@ import org.redisson.Redisson;
 import org.redisson.api.LocalCachedMapOptions;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.api.RedissonClient;
-import org.redisson.codec.FstCodec;
+import org.redisson.codec.Kryo5Codec;
 import org.redisson.config.Config;
 import org.redisson.jcache.JCacheManager;
 
@@ -73,7 +73,9 @@ public class CacheService {
                 Config redissonConfig = Config.fromYAML(redissonConfigPathUri.toURL());
                 redissonClient = Redisson.create(redissonConfig);
             } catch (IOException e) {
-                throw new DDPException("Path for configuration file: " + ConfigFile.JCACHE_CONFIGURATION_FILE + " could not be read");
+                throw new DDPException(String.format("Path for configuration file %s from field %s could not be read.",
+                        redissonConfigPathUri,
+                        ConfigFile.JCACHE_CONFIGURATION_FILE), e);
             }
         } else {
             log.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
@@ -155,7 +157,7 @@ public class CacheService {
                     .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
                     .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
                     .cacheSize(size);
-            return redissonClient.getLocalCachedMap(LOCAL_CACHE_PREFIX + name, new FstCodec(), cacheOptions);
+            return redissonClient.getLocalCachedMap(LOCAL_CACHE_PREFIX + name, new Kryo5Codec(), cacheOptions);
         }
     }
 
@@ -168,7 +170,7 @@ public class CacheService {
         }
         if (!(cacheManager instanceof NullCacheManager)) {
             redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey -> {
-                redissonClient.getLocalCachedMap(cacheKey, new FstCodec(), LocalCachedMapOptions.defaults()).delete();
+                redissonClient.getLocalCachedMap(cacheKey, new Kryo5Codec(), LocalCachedMapOptions.defaults()).delete();
                 log.info("Cleared local redis cache {}", cacheKey);
             });
         }

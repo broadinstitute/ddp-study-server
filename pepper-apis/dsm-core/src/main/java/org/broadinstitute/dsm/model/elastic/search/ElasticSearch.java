@@ -108,14 +108,22 @@ public class ElasticSearch implements ElasticSearchable {
         return totalCount;
     }
 
-    public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap) {
+    /**
+     * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
+     * @param sourceMap the source map
+     * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the queriedParticipantId
+     * @return
+     */
+    public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
         if (sourceMap != null) {
             Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
             if (deserializedSourceMap.isPresent()) {
+                var participantDto = deserializedSourceMap.get();
+                participantDto.setQueriedParticipantId(queriedParticipantId);
                 return deserializedSourceMap.get();
             }
         }
-        return new ElasticSearchParticipantDto.Builder().build();
+        return new ElasticSearchParticipantDto.Builder().withQueriedParticipantId(queriedParticipantId).build();
     }
 
     public List<ElasticSearchParticipantDto> parseSourceMaps(SearchHit[] searchHits) {
@@ -125,7 +133,7 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> result = new ArrayList<>();
         String ddp = getDdpFromSearchHit(Arrays.stream(searchHits).findFirst().orElse(null));
         for (SearchHit searchHit : searchHits) {
-            ElasticSearchParticipantDto participantDto = parseSourceMap(searchHit.getSourceAsMap());
+            ElasticSearchParticipantDto participantDto = parseSourceMap(searchHit.getSourceAsMap(), null);
             participantDto.setDdp(ddp);
             result.add(participantDto);
         }
@@ -145,6 +153,24 @@ public class ElasticSearch implements ElasticSearchable {
         }
         int dotIndex = searchHitIndex.lastIndexOf('.');
         return searchHitIndex.substring(dotIndex + 1);
+    }
+
+    /**
+     * returns a list of all the guids in one ES index
+     *
+     * @param esParticipantsIndex the ES index to get all participants from
+     */
+    public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
+        logger.info("Getting all participant ids from index " + esParticipantsIndex);
+        ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
+        List<String> participantIds = new ArrayList<>();
+        for (ElasticSearchParticipantDto elasticSearchParticipantDto : es.esParticipants) {
+            if (elasticSearchParticipantDto.getProfile().isPresent()
+                    && StringUtils.isNotBlank(elasticSearchParticipantDto.getProfile().get().getGuid())) {
+                participantIds.add(elasticSearchParticipantDto.getProfile().get().getGuid());
+            }
+        }
+        return participantIds;
     }
 
     @Override
@@ -307,7 +333,7 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by id: " + participantId,
                     e);
         }
-        return parseSourceMap(sourceAsMap);
+        return parseSourceMap(sourceAsMap, id);
     }
 
     @Override
@@ -339,7 +365,6 @@ public class ElasticSearch implements ElasticSearchable {
         return boolQuery;
     }
 
-
     @Override
     public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
         logger.info("Collecting ES data from index " + esParticipantsIndex);
@@ -350,7 +375,7 @@ public class ElasticSearch implements ElasticSearchable {
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
             searchSourceBuilder.size(legacyAltPids.size());
             searchSourceBuilder.fetchSource(
-                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+                    new String[] {ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES}, null
             );
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);

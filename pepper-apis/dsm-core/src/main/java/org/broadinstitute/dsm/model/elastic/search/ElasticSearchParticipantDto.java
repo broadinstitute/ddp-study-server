@@ -34,10 +34,9 @@ public class ElasticSearchParticipantDto {
     private List<Map<String, Object>> workflows;
     private String status;
     private Dsm dsm;
+    private String queriedParticipantId;
     @Getter
     private String ddp;
-
-
 
     private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {
         this.address = builder.address;
@@ -53,6 +52,7 @@ public class ElasticSearchParticipantDto {
         this.dsm = builder.dsm;
         this.computed = builder.computed;
         this.governedUsers = builder.governedUsers;
+        this.queriedParticipantId = builder.queriedParticipantId;
     }
 
     protected ElasticSearchParticipantDto() {  }
@@ -63,6 +63,14 @@ public class ElasticSearchParticipantDto {
 
     public List<Object> getMedicalProviders() {
         return medicalProviders == null ? Collections.emptyList() : medicalProviders;
+    }
+
+    /**
+     * When not null, this is the participantId used to query
+     * elastic search when this object was created.
+     */
+    public String getQueriedParticipantId() {
+        return queriedParticipantId;
     }
 
     public List<Object> getInvitations() {
@@ -114,6 +122,11 @@ public class ElasticSearchParticipantDto {
         return governedUsers == null ? Collections.emptyList() : governedUsers;
     }
 
+
+    /**
+     * Returns the participant id by checking the profile
+     * for guid and altpid, preferentially returning the guid.
+     */
     public String getParticipantId() {
         return getProfile().map(esProfile -> StringUtils.isNotBlank(esProfile.getGuid())
                         ? esProfile.getGuid()
@@ -135,6 +148,7 @@ public class ElasticSearchParticipantDto {
         private List<Map<String, Object>> workflows;
         private String status;
         private Dsm dsm;
+        private String queriedParticipantId;
 
         public Builder() {
         }
@@ -156,6 +170,14 @@ public class ElasticSearchParticipantDto {
 
         public Builder withActivities(List<Activities> activities) {
             this.activities = activities;
+            return this;
+        }
+
+        /**
+         * Sets the queried participant id.  Used only for troubleshooting.
+         */
+        public Builder withQueriedParticipantId(String queriedParticipantId) {
+            this.queriedParticipantId = queriedParticipantId;
             return this;
         }
 

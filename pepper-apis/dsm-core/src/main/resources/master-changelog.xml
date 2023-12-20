@@ -144,4 +144,6 @@
     <include file="liquibase/neale-lab/PEPPER-1079_neale_lab_eating_disorders_setup.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1182_cancer_list_translations.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/rgp/PEPPER-833_rgp_kit_display_name.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-1204_dsm_delete.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-1205_remove_deleted_columns.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

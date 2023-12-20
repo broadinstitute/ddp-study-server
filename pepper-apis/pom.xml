@@ -24,7 +24,10 @@
         <liquibase.version>4.8.0</liquibase.version>
         <elasticsearch.version>7.17.10</elasticsearch.version>
         <velocity.version>2.3</velocity.version>
-        <jackson.version>2.12.1</jackson.version>
+        <jackson.version>2.15.1</jackson.version>
+        <redisson.version>3.24.2</redisson.version>
+        <jedis.version>3.3.0</jedis.version>
+        <netty.version>4.1.100.Final</netty.version>
     </properties>
 
     <modules>
@@ -333,7 +336,6 @@
                 <groupId>com.auth0</groupId>
                 <artifactId>java-jwt</artifactId>
                 <version>3.2.0</version>
-
             </dependency>
 
             <dependency>
@@ -578,22 +580,17 @@
             <dependency>
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson</artifactId>
-                <version>3.13.4</version>
+                <version>${redisson.version}</version>
             </dependency>
             <dependency>
                 <groupId>redis.clients</groupId>
                 <artifactId>jedis</artifactId>
-                <version>3.3.0</version>
+                <version>${jedis.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-common</artifactId>
-                <version>4.1.50.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>de.ruedigermoeller</groupId>
-                <artifactId>fst</artifactId>
-                <version>2.57</version>
+                <version>${netty.version}</version>
             </dependency>
             <!-- jackson libraries below meant to upgrade  transitive dependencies    -->
             <!-- from sendgrid.com::sendgrid-java for infosec                         -->

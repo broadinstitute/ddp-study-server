@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -49,15 +50,18 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN ddp_institution inst on  (inst.participant_id = p.participant_id) "
                     + "LEFT JOIN ddp_medical_record mr on (mr.institution_id = inst.institution_id AND NOT mr.deleted <=> 1) "
-                    + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id AND NOT oD.deleted <=> 1) "
-                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
-                    + "LEFT JOIN sm_id sm on (t.tissue_id  = sm.tissue_id AND NOT sm.deleted <=> 1)"
+                    + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id) "
+                    + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id) "
+                    + "LEFT JOIN sm_id sm on (t.tissue_id  = sm.tissue_id) "
                     + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) "
                     + "LEFT JOIN kit_type ktype on ( smt.kit_type_id = ktype.kit_type_id) "
                     + "WHERE p.ddp_participant_id = ? "
                     + "AND NOT sm.sm_id_value IS NULL";
 
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from ddp_mercury_sequencing where order_id = ?";
+
+    public static String SQL_DELETE_ORDER = "delete from ddp_mercury_sequencing where mercury_sequencing_id = ?";
+
     public static String SQL_SELECT_LAST_UPDATED_ORDER =
             "Select min(mercury_sequencing_id) as mercury_sequencing_id, min(ddp_instance_id) as ddp_instance_id, min(ddp_participant_id) "
                     + "  as ddp_participant_id, min(order_date) as order_date, order_id, tissue_id, dsm_kit_request_id "
@@ -134,7 +138,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     }
 
     public Map<String, MercuryOrderDto> getPossibleBarcodesForParticipant(String ddpParticipantId) {
-        String errorMessage = "Error getting eligible barcodes for a mercury order for participant "+ ddpParticipantId;
+        String errorMessage = "Error getting eligible barcodes for a mercury order for participant " + ddpParticipantId;
         HashMap<String, MercuryOrderDto> map = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -190,53 +194,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     @Override
     public int create(MercuryOrderDto mercuryOrderDto) {
-        throw new IllegalStateException("This method should not be used");
-    }
-
-    @Override
-    public int delete(int id) {
-        return 0;
-    }
-
-    @Override
-    public Optional<MercuryOrderDto> get(long id) {
-        return Optional.empty();
-    }
-
-    public boolean orderNumberExists(String orderNumber) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement selectKitRequest = conn.prepareStatement(SQL_SELECT_ORDER_NUMBER)) {
-                selectKitRequest.setString(1, orderNumber);
-                try (ResultSet rs = selectKitRequest.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = true;
-                    } else {
-                        dbVals.resultValue = false;
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError(String.format("Error checking if mercury order number %s exist in db", orderNumber),
-                    results.resultException);
-        }
-        return (boolean) results.resultValue;
-    }
-
-    public void insertMercuryOrders(List<MercuryOrderDto> newOrders, String json) {
-        for (MercuryOrderDto order : newOrders) {
-            try {
-                create(order, json);
-            } catch (Exception e) {
-                log.error("Unable to insert mercury order for participant " + order.getDdpParticipantId() + " with barcode "
-                        + order.getBarcode(), e);
-            }
-        }
+        throw new IllegalStateException("Call the version of this method that includes the raw json payload");
     }
 
     public int create(MercuryOrderDto mercuryOrderDto, String messageJson) {
@@ -280,6 +238,53 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     results.resultException);
         }
         return (int) results.resultValue;
+    }
+
+    @Override
+    public int delete(int id) {
+        DaoUtil.deleteSingleRowById(id, SQL_DELETE_ORDER);
+        return 1;
+    }
+
+    @Override
+    public Optional<MercuryOrderDto> get(long id) {
+        return Optional.empty();
+    }
+
+    public boolean orderNumberExists(String orderNumber) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement selectKitRequest = conn.prepareStatement(SQL_SELECT_ORDER_NUMBER)) {
+                selectKitRequest.setString(1, orderNumber);
+                try (ResultSet rs = selectKitRequest.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = true;
+                    } else {
+                        dbVals.resultValue = false;
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError(String.format("Error checking if mercury order number %s exist in db", orderNumber),
+                    results.resultException);
+        }
+        return (boolean) results.resultValue;
+    }
+
+    public void insertMercuryOrders(List<MercuryOrderDto> newOrders, String json) {
+        for (MercuryOrderDto order : newOrders) {
+            try {
+                create(order, json);
+            } catch (Exception e) {
+                log.error("Unable to insert mercury order for participant " + order.getDdpParticipantId() + " with barcode "
+                        + order.getBarcode(), e);
+            }
+        }
     }
 
 }

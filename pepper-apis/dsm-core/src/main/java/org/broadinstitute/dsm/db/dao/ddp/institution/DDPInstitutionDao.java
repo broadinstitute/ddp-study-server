@@ -30,6 +30,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
     public static final String SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID = "SELECT * FROM ddp_institution WHERE institution_id = ?;";
 
     private static final String SQL_DELETE_BY_ID = "DELETE FROM ddp_institution WHERE institution_id = ?";
+    private static final String SQL_DELETE_BY_PT_ID = "DELETE FROM ddp_institution WHERE participant_id = ?";
 
     public static DDPInstitutionDao of() {
         return new DDPInstitutionDao();
@@ -73,6 +74,16 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
             throw new DsmInternalError("Error deleting ddp_institution record with id: " + id, simpleResult.resultException);
         }
         logger.info("Deleted institution with ID {}", id);
+        return (int) simpleResult.resultValue;
+    }
+
+    @VisibleForTesting
+    public int deleteByParticipant(int participantId) {
+        SimpleResult simpleResult = DaoUtil.deleteById(participantId, SQL_DELETE_BY_PT_ID);
+        if (simpleResult.resultException != null) {
+            throw new DsmInternalError("Error deleting ddp_institution record with participant_id: " + participantId, simpleResult.resultException);
+        }
+        logger.info("Deleted institution with participant_id {}", participantId);
         return (int) simpleResult.resultValue;
     }
 
