@@ -245,7 +245,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
         ActivityI18nDetail currentEN = currentDetails.get("en");
         //todo if no es .. get en details and
         ActivityI18nDetail latestDetails =
-                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES != null ? currentES : currentEN );
+                buildLatestNamingDetail(activityId, versionDto.getRevId(), activityCode, currentES != null ? currentES : currentEN);
         if (latestDetails == null) {
             log.warn("NO Latest Details null for activity: {}", activityCode);
             return;
@@ -621,7 +621,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
             key = "somatic_consent_addendum." + variableName;
             //special case to handle same variable name in same activity
             if (activityCode.equalsIgnoreCase("GERMLINE_CONSENT_ADDENDUM")
-                && variableName.equalsIgnoreCase("somatic_consent_addendum_election_agree_pediatric")
+                    && variableName.equalsIgnoreCase("somatic_consent_addendum_election_agree_pediatric")
                     && allActTransMapES.get(activityCode).get(variableName) == null) {
                 //set key
                 key = "somatic_consent_addendum.somatic_consent_addendum_election_agree1";
