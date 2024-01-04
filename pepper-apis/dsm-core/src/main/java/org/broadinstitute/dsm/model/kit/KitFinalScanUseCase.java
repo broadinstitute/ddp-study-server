@@ -128,7 +128,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             if (!result.isEmpty()) {
                 return result;
             }
-             if (((rgpBloodKit.isKitRequiringTrackingScan() && rgpBloodKit.hasTrackingScan())
+            if (((rgpBloodKit.isKitRequiringTrackingScan() && rgpBloodKit.hasTrackingScan())
                     || (!rgpBloodKit.isKitRequiringTrackingScan()))) {
                 //tracking scan needed and done OR no tracking scan needed
                 //successfully scanned and going to update db and ES
@@ -145,12 +145,13 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                     return result;
                 }
             } else {
-                 result = Optional.of(
-                         new ScanResult(ddpLabel, "DDP Label " + rgpBloodKit.getDdpLabel() + " requires tracking scan"));
-                 return result;
-             }
+                result = Optional.of(
+                     new ScanResult(ddpLabel, "DDP Label " + rgpBloodKit.getDdpLabel() + " requires tracking scan"));
+                return result;
+            }
             KitRequestShipping rgpRnaKit =
-                    subkits.stream().filter(subkit -> subkit != null && "RNA".equals(subkit.getKitTypeName())).findFirst().orElseThrow();
+                        subkits.stream().filter(subkit -> subkit != null && "RNA".equals(subkit.getKitTypeName())).findFirst()
+                                .orElseThrow();
             result = checkForKitErrors(rgpRnaKit, kitLabel, rgpRnaKit.getDdpLabel());
             if (!result.isEmpty()) {
                 return result;
@@ -172,7 +173,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 }
             } else {
                 result = Optional.of(
-                        new ScanResult(ddpLabel, "DDP Label " + rgpRnaKit.getDdpLabel() + " requires tracking scan"));
+                    new ScanResult(ddpLabel, "DDP Label " + rgpRnaKit.getDdpLabel() + " requires tracking scan"));
                 return result;
             }
         } else {

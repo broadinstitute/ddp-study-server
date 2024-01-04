@@ -73,10 +73,10 @@ public class AgeUpService {
             String userGuid = candidate.getParticipantUserGuid();
             String operatorGuid = candidate.getOperatorUserGuid();
             if (candidate.getBirthDate() == null) {
-                log.info("Age-up candidate with guid {} in study {} does not have birth date, skipping", userGuid, studyGuid);
+                log.debug("Age-up candidate with guid {} in study {} does not have birth date, skipping", userGuid, studyGuid);
                 continue;
             } else if (candidate.getStatus().isExited()) {
-                log.info("Age-up candidate with guid {} has exited study {}, will be removed", userGuid, studyGuid);
+                log.debug("Age-up candidate with guid {} has exited study {}, will be removed", userGuid, studyGuid);
                 exitedCandidates.add(candidate.getId());
                 continue;
             }
@@ -89,7 +89,7 @@ public class AgeUpService {
                 continue;
             }
             if (rule == null) {
-                log.warn("No applicable age-of-majority rules found for participant {} in study {}", userGuid, studyGuid);
+                log.debug("No applicable age-of-majority rules found for participant {} in study {}", userGuid, studyGuid);
                 continue;
             }
 

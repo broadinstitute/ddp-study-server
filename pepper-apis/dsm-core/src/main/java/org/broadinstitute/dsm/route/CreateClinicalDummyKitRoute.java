@@ -161,7 +161,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             if (fixedParticipantId) {
                 randomOncHistoryDetailId =
                         bspDummyKitDao.getRandomOncHistoryForParticipant(ddpInstance.getName(), ddpParticipantId);
-                if (randomOncHistoryDetailId != null) {
+                if (randomOncHistoryDetailId == null) {
                     return "Participant doesn't have an eligible onc history/tissue";
                 }
                 logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId + " for participant " + ddpParticipantId);
