@@ -36,12 +36,20 @@ public class UpdateEmailEventTemplates implements CustomTask {
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
+    private String languageCode;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         this.cfgPath = cfgPath;
         this.studyCfg = studyCfg;
         this.varsCfg = varsCfg;
+    }
+
+    public void init(Path cfgPath, Config studyCfg, Config varsCfg, String languageCode) {
+        this.cfgPath = cfgPath;
+        this.studyCfg = studyCfg;
+        this.varsCfg = varsCfg;
+        this.languageCode = languageCode;
     }
 
     @Override
@@ -52,7 +60,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
 
         Map<String, EventConfiguration> emailEvents =  new HashMap<>();
         handle.attach(EventDao.class)
-                .getAllEventConfigurationsByStudyId(studyDto.getId())
+                .getAllActiveEventConfigurationsByStudyId(studyDto.getId())
                 .forEach(event -> {
                     if (event.getEventActionType() == EventActionType.NOTIFICATION) {
                         String eventKey = hashEvent(handle, event);
@@ -66,7 +74,9 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 String eventKey = hashEvent(eventCfg);
                 EventConfiguration currentEvent = emailEvents.get(eventKey);
                 if (currentEvent != null) {
+                    //if (eventKey.equalsIgnoreCase("ACTIVITY_STATUS/CONSENT/COMPLETE-1-0")) {
                     compareEmailTemplates(handle, eventKey, eventCfg.getConfig("action"), currentEvent);
+                    //}
                 } else {
                     throw new DDPException("Could not find email event configuration for: " + eventKey);
                 }
@@ -91,7 +101,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
         return String.format("%s-%d-%d",
                 EventBuilder.triggerAsStr(handle, eventConfig.getEventTrigger()),
                 eventConfig.getExecutionOrder(),
-                eventConfig.getPostDelaySeconds());
+                eventConfig.getPostDelaySeconds() == null ? 0 : eventConfig.getPostDelaySeconds());
     }
 
     private void compareEmailTemplates(Handle handle, String eventKey, Config actionCfg, EventConfiguration event) {
@@ -131,7 +141,10 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 addEmailTemplate(handle, actionId, language, latestTemplateKey, isDynamic);
                 log.info("[{}] language {}: added template {}", eventKey, language, latestTemplateKey);
             } else {
-                if (!current.getTemplateKey().equals(latestTemplateKey)) {
+                //if (!current.getTemplateKey().equals(latestTemplateKey)) {
+                if (!current.getTemplateKey().equals(latestTemplateKey) &&
+                        !current.getLanguageCode().equalsIgnoreCase("en")) {
+                    //do only non-english
                     String currentTemplateKey = current.getTemplateKey();
                     updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
                     log.info("[{}] language {}: un-assigned template {} and added template {}",
