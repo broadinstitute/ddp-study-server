@@ -142,8 +142,8 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 log.info("[{}] language {}: added template {}", eventKey, language, latestTemplateKey);
             } else {
                 //if (!current.getTemplateKey().equals(latestTemplateKey)) {
-                if (!current.getTemplateKey().equals(latestTemplateKey) &&
-                        !current.getLanguageCode().equalsIgnoreCase("en")) {
+                if (!current.getTemplateKey().equals(latestTemplateKey)
+                        && !current.getLanguageCode().equalsIgnoreCase("en")) {
                     //do only non-english
                     String currentTemplateKey = current.getTemplateKey();
                     updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
