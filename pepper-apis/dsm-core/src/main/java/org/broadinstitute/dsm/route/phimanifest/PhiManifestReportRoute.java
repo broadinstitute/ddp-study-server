@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.route.phimanifest;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -19,7 +20,6 @@ import spark.Response;
 
 @Slf4j
 public class PhiManifestReportRoute extends RequestHandler {
-    //TODO add to DSMServer and bind to an endpoint
     PhiManifestService phiManifestService = new PhiManifestService();
 
     @Override
@@ -55,4 +55,21 @@ public class PhiManifestReportRoute extends RequestHandler {
         }
         return null;
     }
+
+    @Setter
+    public static class PhiManifestResponse {
+        String[][] data;
+        String ddpParticipantId;
+        String orderId;
+        String errorMessage;
+
+        public PhiManifestResponse() {
+        }
+
+        public PhiManifestResponse(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+    }
+
 }

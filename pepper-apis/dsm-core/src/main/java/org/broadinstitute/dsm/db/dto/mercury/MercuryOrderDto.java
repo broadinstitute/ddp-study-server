@@ -3,6 +3,9 @@ package org.broadinstitute.dsm.db.dto.mercury;
 import java.util.Optional;
 
 import lombok.Data;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 
 @Data
 
@@ -36,6 +39,9 @@ public class MercuryOrderDto {
         this.dsmKitRequestId = dsmKitRequestId;
     }
 
+    /**
+     * Creates a MercuryOrderDto from a Builder
+     * */
     public MercuryOrderDto(Builder builder) {
         this.mercurySequencingId = builder.mercurySequencingOrderId;
         this.orderId = builder.orderId;
@@ -55,6 +61,11 @@ public class MercuryOrderDto {
 
     public Optional<String> getCreatedBy() {
         return Optional.ofNullable(createdBy);
+    }
+
+    public boolean orderMatchesParticipantAndStudyInfo(@NonNull String ddpParticipantId, @NonNull DDPInstanceDto ddpInstanceDto) {
+        return StringUtils.isNotBlank(this.getMercuryPdoId()) && ddpInstanceDto.getDdpInstanceId() == this.getDdpInstanceId()
+                && ddpParticipantId.equals(this.getDdpParticipantId());
     }
 
     public static class Builder {

@@ -65,15 +65,14 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         }
         ElasticTestUtil.deleteIndex(lmsEsIndex);
     }
-    
+
     @Test
     public void isSequencingOrderValidTest() throws Exception {
         String eligiblePDO = "PDO-VALUE";
         String eligibleSmId = "some-barcode";
         ParticipantDto participantDto = lmsOncHistoryTestUtil.createParticipant(eligibleParticipantGuid1, ddpInstanceDto);
         eligibleParticipantGuid1 = participantDto.getDdpParticipantIdOrThrow();
-        Map<String, Object> response =
-                (Map<String, Object>) lmsOncHistoryTestUtil.createSmId(participantDto, eligibleSmId, ddpInstanceDto);
+        Map<String, Object> response = lmsOncHistoryTestUtil.createSmId(participantDto, eligibleSmId, ddpInstanceDto);
         int smIdPk = (int) response.get("smIdPk");
         SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
         MercuryOrderDto eligibleMercuryOrder = new MercuryOrderDto.Builder().withMercuryPdoId(eligiblePDO).withOrderId(eligibleTestOrderId)
@@ -81,7 +80,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 .withDsmKitRequestId(null).withDdpParticipantId(eligibleParticipantGuid1).withBarcode(eligibleSmId).build();
         int mercuryOrderId = mercuryOrderDao.create(eligibleMercuryOrder, "");
         List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(eligibleTestOrderId);
-        Assert.assertTrue(mercuryOrderDao.isSequencingOrderValidForPhiReport(orders, eligibleParticipantGuid1, ddpInstanceDto));
+        Assert.assertFalse(orders.stream().anyMatch(order -> !order.orderMatchesParticipantAndStudyInfo(eligibleParticipantGuid1,
+                ddpInstanceDto)));
         mercuryOrderDao.delete(mercuryOrderId);
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
         OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
@@ -95,8 +95,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         String smIdValue = "not-the-same-barcode";
         ParticipantDto participantDto = lmsOncHistoryTestUtil.createParticipant(unEligibleParticipantGuid1, ddpInstanceDto);
         unEligibleParticipantGuid1 = participantDto.getDdpParticipantIdOrThrow();
-        Map<String, Object> response =
-                (Map<String, Object>) lmsOncHistoryTestUtil.createSmId(participantDto, smIdValue, ddpInstanceDto);
+        Map<String, Object> response = lmsOncHistoryTestUtil.createSmId(participantDto, smIdValue, ddpInstanceDto);
         int smIdPk = (int) response.get("smIdPk");
         SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
         MercuryOrderDto eligibleMercuryOrder = new MercuryOrderDto.Builder().withMercuryPdoId(pdo).withOrderId(notEligibleTestOrderId)
@@ -104,7 +103,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 .withDsmKitRequestId(null).withDdpParticipantId(eligibleParticipantGuid1).withBarcode(smIdValue).build();
         int mercuryOrderId = mercuryOrderDao.create(eligibleMercuryOrder, "");
         List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(notEligibleTestOrderId);
-        Assert.assertFalse(mercuryOrderDao.isSequencingOrderValidForPhiReport(orders, unEligibleParticipantGuid1, ddpInstanceDto));
+        Assert.assertTrue(orders.stream().anyMatch(order -> !order.orderMatchesParticipantAndStudyInfo(unEligibleParticipantGuid1,
+                ddpInstanceDto)));
         mercuryOrderDao.delete(mercuryOrderId);
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
         OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
@@ -132,7 +132,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 "2020-10-10", lmsEsIndex);
         childReportGuid = participantDto.getDdpParticipantIdOrThrow();
         lmsOncHistoryTestUtil.getParticipantIds().add(participantDto.getParticipantId().orElseThrow());
-        Map<String, Object> response = (Map<String, Object>) lmsOncHistoryTestUtil.createSmId(participantDto, smIdValue, ddpInstanceDto);
+        Map<String, Object> response = lmsOncHistoryTestUtil.createSmId(participantDto, smIdValue, ddpInstanceDto);
         int smIdPk = (int) response.get("smIdPk");
         SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
         MercuryOrderDto eligibleMercuryOrder = new MercuryOrderDto.Builder().withMercuryPdoId(pdo).withOrderId(childReportOrderId)

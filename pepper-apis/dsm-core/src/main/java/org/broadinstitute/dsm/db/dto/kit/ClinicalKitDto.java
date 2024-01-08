@@ -10,7 +10,6 @@ import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +44,12 @@ public class ClinicalKitDto {
     @SerializedName("kit_label")
     String mfBarcode;
 
+    /**
+     * Creates a ClinicalKitDto
+     * */
     public ClinicalKitDto(String collaboratorParticipantId, String sampleId, String sampleCollection, String materialType,
-                          String vesselType,
-                          String firstName, String lastName, String dateOfBirth, String sampleType, String gender, String accessionNumber,
-                          String mfBarcode) {
+                          String vesselType, String firstName, String lastName, String dateOfBirth, String sampleType, String gender,
+                          String accessionNumber, String mfBarcode) {
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.sampleId = sampleId;
         this.sampleCollection = sampleCollection;
@@ -104,13 +105,13 @@ public class ClinicalKitDto {
             this.setDateOfBirth(esParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(""));
             this.setFirstName(esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
             this.setLastName(esParticipantDto.getProfile().map(Profile::getLastName).orElse(""));
-            this.setGender(ParticipantUtil.getParticipantGender(esParticipantDto, ddpInstance.getName(), ddpParticipantId));
+            this.setGender(esParticipantDto.getParticipantGender(ddpInstance.getName(), ddpParticipantId));
             String shortId = esParticipantDto.getProfile().map(Profile::getHruid).orElse("");
-            String collaboratorParticipantId =
+            String collaboratorId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                             ddpInstance.isMigratedDDP(),
                             ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
-            this.setCollaboratorParticipantId(collaboratorParticipantId);
+            this.setCollaboratorParticipantId(collaboratorId);
         } catch (Exception e) {
             throw new DsmInternalError(String.format("Error getting participant data for %s", ddpParticipantId), e);
         }

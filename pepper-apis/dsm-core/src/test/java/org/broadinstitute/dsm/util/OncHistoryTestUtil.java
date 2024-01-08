@@ -138,7 +138,7 @@ public class OncHistoryTestUtil {
         return patcher.doPatch();
     }
 
-    public Object createSmId(String guid, int tissueId, String realm, String userEmail, String value) throws Exception {
+    public Map<String, Object> createSmId(String guid, int tissueId, String realm, String userEmail, String value) throws Exception {
         String newSmIdPatchJson = TestUtil.readFile("patchRequests/newSmIdPatchPlaceholder.json");
         newSmIdPatchJson = newSmIdPatchJson.replace("<userEmail>", userEmail)
                 .replace("<GUID>", guid)
@@ -147,10 +147,11 @@ public class OncHistoryTestUtil {
                 .replace("<instanceName>", realm);
         Patch smIdPatch = new Gson().fromJson(newSmIdPatchJson, Patch.class);
         BasePatch patcher = PatchFactory.makePatch(smIdPatch, notificationUtil);
-        return patcher.doPatch();
+        return (Map<String, Object>) patcher.doPatch();
     }
 
-    public Object createSmId(ParticipantDto participantDto, String eligibleSmId, DDPInstanceDto ddpInstanceDto) throws Exception {
+    public Map<String, Object> createSmId(ParticipantDto participantDto, String eligibleSmId, DDPInstanceDto ddpInstanceDto)
+            throws Exception {
         String guid = participantDto.getDdpParticipantIdOrThrow();
         int participantId = participantDto.getParticipantId().orElseThrow();
         Map<String, Object> resp = (Map<String, Object>) createOncHistory(guid, participantId,
@@ -475,7 +476,7 @@ public class OncHistoryTestUtil {
         return oncHistoryDetail;
     }
 
-    public Object createPatchRequest(String guid, int participantId, String realm, String userEmail, String name, String value,
+    public Map<String, Object> createPatchRequest(String guid, int participantId, String realm, String userEmail, String name, String value,
                                      String tableAlias, String parent, int id, String parentId)
             throws Exception {
         String patchJson = TestUtil.readFile("patchRequests/updateFieldPatchRequests.json");
@@ -493,7 +494,6 @@ public class OncHistoryTestUtil {
         }
         Patch updatePatch = new Gson().fromJson(patchJson, Patch.class);
         BasePatch patcher = PatchFactory.makePatch(updatePatch, notificationUtil);
-        Object response = patcher.doPatch();
-        return response;
+        return (Map<String, Object>) patcher.doPatch();
     }
 }

@@ -18,15 +18,14 @@ import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifest;
-import org.broadinstitute.dsm.model.phimanifest.PhiManifestResponse;
+import org.broadinstitute.dsm.route.phimanifest.PhiManifestReportRoute;
+import org.broadinstitute.dsm.route.phimanifest.PhiManifestReportRoute.PhiManifestResponse;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DateTimeUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.ParticipantUtil;
 
 @Slf4j
 public class PhiManifestService {
@@ -37,21 +36,16 @@ public class PhiManifestService {
     private static final String LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR = "SOMATIC_CONSENT_ADDENDUM_TUMOR";
     private static final String OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR = "SOMATIC_CONSENT_TUMOR";
 
-    private final String[] headers = new String[] {"Short Id", "First Name", "Last Name", "Proxy First Name", "Proxy Last Name",
-            "Date of Birth", "Gender", "Somatic Assent Addendum Response", "Somatic Consent Tumor Pediatric Response",
-            "somatic Consent Tumor Response", "Date of PX", "Facility Name", "Sample Type", "Accession Number", "Histology",
-            "Block Id", "Tumor Collaborator Sample Id", "Tissue Site", "Sequencing Results", "Normal Manufacturer Barcode",
-            "Normal Collaborator Sample Id", "Clinical Order Date", "Clinical Order Id", "Clinical PDO Number", "Order Status",
-            "Order Status Date"};
 
 
-    public PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId, DDPInstanceDto ddpInstanceDto) {
+    public PhiManifestReportRoute.PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId,
+                                                                     DDPInstanceDto ddpInstanceDto) {
         MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
         List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(sequencingOrderId);
-        if (!mercuryOrderDao.isSequencingOrderValidForPhiReport(orders, ddpParticipantId, ddpInstanceDto)) {
+        if (orders.stream().anyMatch(order -> !order.orderMatchesParticipantAndStudyInfo(ddpParticipantId, ddpInstanceDto))) {
             String errorMessage = String.format("Sequencing order number %s is not a valid order for participant", sequencingOrderId);
             log.warn(errorMessage);
-            return new PhiManifestResponse(errorMessage);
+            return new PhiManifestReportRoute.PhiManifestResponse(errorMessage);
         }
         if (!isParticipantConsented(ddpParticipantId, ddpInstanceDto)) {
             String errorMessage = String.format("Participant %s has not consented to receive shared learning ", ddpParticipantId);
@@ -64,47 +58,7 @@ public class PhiManifestService {
             throw new DsmInternalError("There is no profile in ES for participant " + ddpParticipantId);
         }
         PhiManifest finalPhiManifest = generateDataForReport(participant, orders, ddpInstanceDto);
-        return createResponse(finalPhiManifest, ddpParticipantId, sequencingOrderId);
-    }
-
-    private PhiManifestResponse createResponse(PhiManifest finalPhiManifest, String ddpParticipantId, String sequencingOrderId) {
-        String[][] report = new String[2][headers.length];
-
-        String[] data = new String[headers.length];
-        data[0] = finalPhiManifest.getShortId();
-        data[1] = finalPhiManifest.getFirstName();
-        data[2] = finalPhiManifest.getLastName();
-        data[3] = finalPhiManifest.getProxyFirstName();
-        data[4] = finalPhiManifest.getProxyLastName();
-        data[5] = finalPhiManifest.getDateOfBirth();
-        data[6] = finalPhiManifest.getGender();
-        data[7] = finalPhiManifest.getSomaticAssentAddendumResponse();
-        data[8] = finalPhiManifest.getSomaticConsentTumorPediatricResponse();
-        data[9] = finalPhiManifest.getSomaticConsentTumorResponse();
-        data[10] = finalPhiManifest.getDateOfPx();
-        data[11] = finalPhiManifest.getFacility();
-        data[12] = finalPhiManifest.getSampleType();
-        data[13] = finalPhiManifest.getAccessionNumber();
-        data[14] = finalPhiManifest.getHistology();
-        data[15] = finalPhiManifest.getBlockId();
-        data[16] = finalPhiManifest.getTumorCollaboratorSampleId();
-        data[17] = finalPhiManifest.getTissueSite();
-        data[18] = finalPhiManifest.getSequencingResults();
-        data[19] = finalPhiManifest.getMfBarcode();
-        data[20] = finalPhiManifest.getNormalCollaboratorSampleId();
-        data[21] = finalPhiManifest.getClinicalOrderDate();
-        data[22] = finalPhiManifest.getClinicalOrderId();
-        data[23] = finalPhiManifest.getClinicalPdoNumber();
-        data[24] = finalPhiManifest.getOrderStatus();
-        data[25] = finalPhiManifest.getOrderStatusDate();
-
-        report[0] = headers;
-        report[1] = data;
-        PhiManifestResponse phiManifestResponse = new PhiManifestResponse();
-        phiManifestResponse.setData(report);
-        phiManifestResponse.setOrderId(sequencingOrderId);
-        phiManifestResponse.setDdpParticipantId(ddpParticipantId);
-        return phiManifestResponse;
+        return finalPhiManifest.toResponseArray(ddpParticipantId, sequencingOrderId);
     }
 
     /**
@@ -135,7 +89,7 @@ public class PhiManifestService {
         } else {
             log.warn("participant {} does not have a DSM object in ES", participant.getParticipantId());
         }
-        String participantGenderInDsm = ParticipantUtil.getParticipantGender(participant, ddpInstanceDto.getInstanceName(),
+        String participantGenderInDsm = participant.getParticipantGender(ddpInstanceDto.getInstanceName(),
                 participant.getParticipantId());
         phiManifest.setGender(participantGenderInDsm);
         Optional<MercuryOrderDto> maybeTumorDataInOrder = orders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getTissueId() != null)
@@ -182,9 +136,9 @@ public class PhiManifestService {
         phiManifest.setOrderStatus(mercuryOrderDto.getOrderStatus());
         phiManifest.setOrderStatusDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getStatusDate()));
 
-        phiManifest.setSomaticConsentTumorPediatricResponse(String.valueOf(getParticipantAnswerInSurvey(participant,
+        phiManifest.setSomaticConsentTumorPediatricResponse(String.valueOf(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION).orElse(false)));
-        phiManifest.setSomaticAssentAddendumResponse(String.valueOf(getParticipantAnswerInSurvey(participant,
+        phiManifest.setSomaticAssentAddendumResponse(String.valueOf(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION).orElse(false)));
         phiManifest.setSomaticConsentTumorResponse(String.valueOf(hasAdultParticipantConsentedToTumor(participant,
                 ddpInstanceDto.getStudyGuid())));
@@ -204,10 +158,10 @@ public class PhiManifestService {
 
     private boolean hasAdultParticipantConsentedToTumor(ElasticSearchParticipantDto participant, String studyGuid) {
         if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
-            return checkAnswerToActivity(participant, CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
+            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
                     true);
         } else if (DBConstants.OSTEO_STUDY_GUID.equals(studyGuid)) {
-            return checkAnswerToActivity(participant, CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
+            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
                     true);
         }
         return false;
@@ -225,43 +179,16 @@ public class PhiManifestService {
         }
         int age = DateTimeUtil.calculateAgeInYears(dateOfBirth);
         if (age >= 7) {
-            return checkAnswerToActivity(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
-                    SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true) && checkAnswerToActivity(participant,
+            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
+                    SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true) && participant.checkAnswerToActivity(
                     CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION, true);
 
         } else if (age < 7) {
-            return checkAnswerToActivity(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
+            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
                     SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true);
         }
         return false;
     }
 
-    /**
-     * checks if the answer provided by a participant to a survey question matches the criteria
-     *
-     * @param participant  participant data from ES.
-     * @param activityName stable id of the activity
-     * @param question     stable id of the question
-     * @param answer       desired answer
-     */
-    private boolean checkAnswerToActivity(ElasticSearchParticipantDto participant, String activityName, String question, Object answer) {
-        Optional<Activities> maybeActivity = participant.getActivities().stream().filter(activities -> activities.getActivityCode()
-                .equals(activityName)).findAny();
-        Optional<Object> possibleAnswer = maybeActivity.isPresent() ? maybeActivity.get().getAnswerToQuestion(question) : Optional.empty();
-        return possibleAnswer.isPresent() && possibleAnswer.get().equals(answer);
 
-    }
-
-    /**
-     * checks if the answer provided by a participant to a survey question matches the criteria
-     *
-     * @param participant  participant data from ES.
-     * @param activityName stable id of the activity
-     * @param question     stable id of the question
-     */
-    private Optional<Object> getParticipantAnswerInSurvey(ElasticSearchParticipantDto participant, String activityName, String question) {
-        Optional<Activities> maybeActivity = participant.getActivities().stream().filter(activities -> activities.getActivityCode()
-                .equals(activityName)).findAny();
-        return maybeActivity.isPresent() ? maybeActivity.get().getAnswerToQuestion(question) : Optional.empty();
-    }
 }
