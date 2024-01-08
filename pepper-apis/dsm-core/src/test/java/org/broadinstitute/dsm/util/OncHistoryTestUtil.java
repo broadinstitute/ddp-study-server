@@ -58,17 +58,19 @@ public class OncHistoryTestUtil {
     private String groupName;
     private String esIndex;
     private String userEmail;
+    private String adminUser;
     private String userId;
     private String collabPrefix;
 
     @Mock
     private NotificationUtil notificationUtil = mock(NotificationUtil.class);
 
-    public OncHistoryTestUtil(String instanceName, String studyGuid, String userEmail, String groupName, String collabPrefix,
-                              String esIndex) {
+    public OncHistoryTestUtil(String instanceName, String studyGuid, String userEmail, String adminUser, String groupName,
+                              String collabPrefix, String esIndex) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.userEmail = userEmail;
+        this.adminUser = adminUser;
         this.collabPrefix = collabPrefix;
         this.groupName = groupName;
         this.esIndex = esIndex;
@@ -78,7 +80,7 @@ public class OncHistoryTestUtil {
     public void initialize() {
         ddpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex, studyGuid);
         userAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collabPrefix, groupName, esIndex);
-        userAdminUtil.setStudyAdminAndRoles("adminUserPatchTest@unittest.dev", USER_ADMIN_ROLE, Arrays.asList(MR_VIEW));
+        userAdminUtil.setStudyAdminAndRoles(adminUser, USER_ADMIN_ROLE, Arrays.asList(MR_VIEW));
         userId = Integer.toString(userAdminUtil.createTestUser(userEmail, Collections.singletonList("mr_view")));
         //todo create instance with role
     }

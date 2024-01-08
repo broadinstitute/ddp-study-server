@@ -28,6 +28,7 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
     private static final String groupName = "delete_group";
     static OncHistoryTestUtil oncHistoryTestUtil;
     static String userEmail = "deleteTestUser1@unittest.dev";
+    static String adminUserEmail = "adminUserDeleteExport@unittest.dev";
     private static String esIndex;
     private static int remainingOncHistoryDetailId;
     private static DDPInstanceDto ddpInstanceDto;
@@ -40,7 +41,8 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        oncHistoryTestUtil = new OncHistoryTestUtil(instanceName, instanceName, userEmail, groupName, "lmsPrefix", esIndex);
+        oncHistoryTestUtil = new OncHistoryTestUtil(instanceName, instanceName, userEmail, adminUserEmail, groupName,
+                "lmsPrefix", esIndex);
         oncHistoryTestUtil.initialize();
         ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
     }

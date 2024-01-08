@@ -38,6 +38,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
     private static DDPInstanceDto ddpInstanceDto;
     private PhiManifestService phiManifestService = new PhiManifestService();
     static String userEmail = "phiReportEligibleTestUser@unittest.dev";
+    static String adminUserEmail = "adminUserPhiReport@unittest.dev";
     static String eligibleParticipantGuid1 = "PHI_REP_0_PARTICIPANT";
     static String unEligibleParticipantGuid1 = "PHI_REP_1_PARTICIPANT";
     static String childReportGuid = "CHILD_1_PARTICIPANT";
@@ -49,7 +50,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         lmsEsIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        lmsOncHistoryTestUtil = new OncHistoryTestUtil(instanceName, lmsStudyGuid, userEmail, groupName, "lmsPrefix", lmsEsIndex);
+        lmsOncHistoryTestUtil = new OncHistoryTestUtil(instanceName, lmsStudyGuid, userEmail, adminUserEmail,
+                groupName, "lmsPrefix", lmsEsIndex);
         lmsOncHistoryTestUtil.initialize();
         ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
     }

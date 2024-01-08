@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -220,6 +221,10 @@ public class UserAdminTestUtil {
         userDto.setEmail(email);
         userDto.setIsActive(1);
         UserDao userDao = new UserDao();
+        Optional<UserDto> maybeUserExists = userDao.getUserByEmail(email);
+        if (maybeUserExists.isPresent()) {
+            return maybeUserExists.get().getId();
+        }
         return userDao.create(userDto);
     }
 
