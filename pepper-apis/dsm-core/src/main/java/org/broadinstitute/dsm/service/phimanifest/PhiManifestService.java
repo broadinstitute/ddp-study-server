@@ -36,19 +36,24 @@ public class PhiManifestService {
     private static final String LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR = "SOMATIC_CONSENT_ADDENDUM_TUMOR";
     private static final String OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR = "SOMATIC_CONSENT_TUMOR";
 
+    private static final String NOT_VALID_ORDER_ERROR =
+            "Sequencing order number %s does not exist or is not a valid clinical order for this participant";
+
+    private static final String NOT_CONSENTED_ERROR = "Participant %s has not consented to receive shared learning";
 
 
     public PhiManifestReportRoute.PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId,
                                                                      DDPInstanceDto ddpInstanceDto) {
         MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
         List<MercuryOrderDto> orders = mercuryOrderDao.getByOrderId(sequencingOrderId);
-        if (orders.stream().anyMatch(order -> !order.orderMatchesParticipantAndStudyInfo(ddpParticipantId, ddpInstanceDto))) {
-            String errorMessage = String.format("Sequencing order number %s is not a valid order for participant", sequencingOrderId);
+        if (orders.isEmpty()
+                || orders.stream().anyMatch(order -> !order.orderMatchesParticipantAndStudyInfo(ddpParticipantId, ddpInstanceDto))) {
+            String errorMessage = String.format(NOT_VALID_ORDER_ERROR, sequencingOrderId);
             log.warn(errorMessage);
             return new PhiManifestReportRoute.PhiManifestResponse(errorMessage);
         }
         if (!isParticipantConsented(ddpParticipantId, ddpInstanceDto)) {
-            String errorMessage = String.format("Participant %s has not consented to receive shared learning ", ddpParticipantId);
+            String errorMessage = String.format(NOT_CONSENTED_ERROR, ddpParticipantId);
             log.warn(errorMessage);
             return new PhiManifestResponse(errorMessage);
         }
@@ -136,13 +141,19 @@ public class PhiManifestService {
         phiManifest.setOrderStatus(mercuryOrderDto.getOrderStatus());
         phiManifest.setOrderStatusDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getStatusDate()));
 
-        phiManifest.setSomaticConsentTumorPediatricResponse(String.valueOf(participant.getParticipantAnswerInSurvey(
-                CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION).orElse(false)));
-        phiManifest.setSomaticAssentAddendumResponse(String.valueOf(participant.getParticipantAnswerInSurvey(
-                CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION).orElse(false)));
-        phiManifest.setSomaticConsentTumorResponse(String.valueOf(hasAdultParticipantConsentedToTumor(participant,
-                ddpInstanceDto.getStudyGuid())));
+        String pediatricResponse = convertActivityAnswerValue((Boolean) participant.getParticipantAnswerInSurvey(
+                CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION).orElse(false));
+        phiManifest.setSomaticConsentTumorPediatricResponse(pediatricResponse);
+        String assentAddendumResponse = convertActivityAnswerValue((Boolean) participant.getParticipantAnswerInSurvey(
+                CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION).orElse(false));
+        phiManifest.setSomaticAssentAddendumResponse(assentAddendumResponse);
+        String consentAnswer = convertActivityAnswerValue(hasAdultParticipantConsentedToTumor(participant, ddpInstanceDto.getStudyGuid()));
+        phiManifest.setSomaticConsentTumorResponse(consentAnswer);
         return phiManifest;
+    }
+
+    private String convertActivityAnswerValue(boolean b) {
+        return b ? "Yes" : "No";
     }
 
     public boolean isParticipantConsented(@NonNull String ddpParticipantId, @NonNull DDPInstanceDto ddpInstanceDto) {
@@ -157,14 +168,15 @@ public class PhiManifestService {
     }
 
     private boolean hasAdultParticipantConsentedToTumor(ElasticSearchParticipantDto participant, String studyGuid) {
+        boolean answer = false;
         if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
-            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
+            answer = participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
                     true);
         } else if (DBConstants.OSTEO_STUDY_GUID.equals(studyGuid)) {
-            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
+            answer = participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_STABLE_ID, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR,
                     true);
         }
-        return false;
+        return answer;
     }
 
     private boolean hasParticipantConsentedToSharedLearning(ElasticSearchParticipantDto participant, DDPInstanceDto ddpInstanceDto) {

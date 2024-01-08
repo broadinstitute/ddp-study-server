@@ -307,7 +307,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 stmt.setString(1, orderId);
                 try {
                     ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
+                    while (rs.next()) {
                         MercuryOrderDto mercurySequencingDto = new MercuryOrderDto.Builder()
                                 .withOrderId(rs.getString(DBConstants.MERCURY_ORDER_ID))
                                 .withMercuryPdoId(rs.getString(DBConstants.MERCURY_PDO_ID))

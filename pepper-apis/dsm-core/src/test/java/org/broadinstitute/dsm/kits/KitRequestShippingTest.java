@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm.kits;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.model.KitRequestSettings;
-import org.broadinstitute.dsm.util.KitUtil;
 import org.junit.Assert;
 import org.junit.Test;
 

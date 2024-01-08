@@ -120,7 +120,10 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         lmsOncHistoryTestUtil.getParticipantIds().add(adultEligibleParticipant.getParticipantId().orElseThrow());
         Assert.assertTrue(phiManifestService.isParticipantConsented(adultEligibleParticipant.getDdpParticipantIdOrThrow(), ddpInstanceDto));
         String unEligibleGuid = "unEligibleGuid";
-        //TODO add test for uneligible adult and eligible child
+        ParticipantDto ineligibleAdult = TestParticipantUtil.createIneligibleSharedLearningParticipant(unEligibleGuid, ddpInstanceDto,
+                "1990-11-11", lmsEsIndex);
+        lmsOncHistoryTestUtil.getParticipantIds().add(ineligibleAdult.getParticipantId().orElseThrow());
+        Assert.assertFalse(phiManifestService.isParticipantConsented(ineligibleAdult.getDdpParticipantIdOrThrow(), ddpInstanceDto));
     }
 
 

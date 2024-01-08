@@ -79,4 +79,16 @@ public class TestParticipantUtil {
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         return testParticipant;
     }
+
+    public static ParticipantDto createIneligibleSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob, String esIndex) {
+        String ddpParticipantId = genDDPParticipantId(guid);
+        ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        ElasticTestUtil.createParticipant(esIndex, testParticipant);
+        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
+        ElasticTestUtil.addDsmObjectToParticipantFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId, dob);
+        ElasticTestUtil.addActivitiesFromFile(esIndex, "elastic/lmsActivitiesSharedLearningIneligible.json", ddpParticipantId);
+        log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        return testParticipant;
+    }
 }
