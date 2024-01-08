@@ -86,7 +86,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 ddpInstanceDto)));
         mercuryOrderDao.delete(mercuryOrderId);
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
-        OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
+        OncHistoryDetail oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
         lmsOncHistoryTestUtil.deleteOncHistory(eligibleParticipantGuid1, participantDto.getParticipantId().get(), instanceName, userEmail,
                 oncHistoryDetail.getOncHistoryDetailId());
     }
@@ -109,7 +109,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 ddpInstanceDto)));
         mercuryOrderDao.delete(mercuryOrderId);
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
-        OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
+        OncHistoryDetail oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
         lmsOncHistoryTestUtil.deleteOncHistory(unEligibleParticipantGuid1, participantDto.getParticipantId().get(), instanceName, userEmail,
                 oncHistoryDetail.getOncHistoryDetailId());
     }
@@ -140,15 +140,8 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         Map<String, Object> response = lmsOncHistoryTestUtil.createSmId(participantDto, smIdValue, ddpInstanceDto);
         int smIdPk = (int) response.get("smIdPk");
         SmId smId = new TissueSMIDDao().getBySmIdPk(smIdPk);
-        MercuryOrderDto eligibleMercuryOrder = new MercuryOrderDto.Builder().withMercuryPdoId(pdo).withOrderId(childReportOrderId)
-                .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).withTissueId(smId.getTissueId())
-                .withCreatedByUserId(lmsOncHistoryTestUtil.getUserId()).withOrderDate(System.currentTimeMillis()).withDsmKitRequestId(null)
-                .withDdpParticipantId(childReportGuid).withOrderStatus("Submitted").withStatusDate(System.currentTimeMillis())
-                .withBarcode(smIdValue).build();
-        int mercuryOrderId = mercuryOrderDao.create(eligibleMercuryOrder, "");
-
         Tissue createdTissue = new TissueDao().get(smId.getTissueId()).get();
-        OncHistoryDetail oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
+        OncHistoryDetail oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
         lmsOncHistoryTestUtil.createPatchRequest(childReportGuid, participantDto.getParticipantId().get(), instanceName, userEmail,
                 "oD.accessionNumber", "ACCESSION-NUMBER", "oD", "ddpParticipantId",
                 oncHistoryDetail.getOncHistoryDetailId(), childReportGuid);
@@ -170,20 +163,26 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         lmsOncHistoryTestUtil.createPatchRequest(childReportGuid, participantDto.getParticipantId().get(), instanceName, userEmail,
                 "t.tissueSequence", "some-tissue-sequence", "t", "oncHisotryDetail",
                 createdTissue.getTissueId(), String.valueOf(oncHistoryDetail.getOncHistoryDetailId()));
+        MercuryOrderDto eligibleMercuryOrder = new MercuryOrderDto.Builder().withMercuryPdoId(pdo).withOrderId(childReportOrderId)
+                .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).withTissueId(smId.getTissueId())
+                .withCreatedByUserId(lmsOncHistoryTestUtil.getUserId()).withOrderDate(System.currentTimeMillis()).withDsmKitRequestId(null)
+                .withDdpParticipantId(childReportGuid).withOrderStatus("Submitted").withStatusDate(System.currentTimeMillis())
+                .withBarcode(smIdValue).build();
+        int mercuryOrderId = mercuryOrderDao.create(eligibleMercuryOrder, "");
         ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
                 ddpInstanceDto.getEsParticipantIndex(), childReportGuid);
         List<MercuryOrderDto> orders = new MercuryOrderDao().getByOrderId(childReportOrderId);
-        oncHistoryDetail = new OncHistoryDetail().getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
         createdTissue = new TissueDao().get(smId.getTissueId()).get();
         PhiManifest phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
-        assertPhiManifest(phiManifest, participantDto, orders, createdTissue, oncHistoryDetail, participant);
+        oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
+        assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
         mercuryOrderDao.delete(mercuryOrderId);
         lmsOncHistoryTestUtil.deleteOncHistory(childReportGuid, participantDto.getParticipantId().get(), instanceName, userEmail,
                 oncHistoryDetail.getOncHistoryDetailId());
     }
 
-    private void assertPhiManifest(PhiManifest phiManifest, ParticipantDto participantDto, List<MercuryOrderDto> orders, Tissue tissue,
-                                   OncHistoryDetail oncHistoryDetail, ElasticSearchParticipantDto participant) {
+    private void assertPhiManifest(PhiManifest phiManifest, List<MercuryOrderDto> orders, Tissue tissue, OncHistoryDetail oncHistoryDetail,
+                                   ElasticSearchParticipantDto participant) {
         MercuryOrderDto mercuryOrderDto = orders.get(0);
         Assert.assertEquals(mercuryOrderDto.getOrderId(), phiManifest.getClinicalOrderId());
         Assert.assertEquals(mercuryOrderDto.getMercuryPdoId(), phiManifest.getClinicalPdoNumber());
