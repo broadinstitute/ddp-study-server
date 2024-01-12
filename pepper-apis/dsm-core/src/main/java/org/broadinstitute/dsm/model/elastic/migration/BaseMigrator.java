@@ -38,8 +38,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords) {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
-        logger.info("filling bulk request with participant size {} for participants, for {} for study: {} with index: {}",
-                participantRecords.size(), object, realm, index);
+        logger.info("Creating {} bulk upsert with {} participants for study {} with index: {}",
+                object, participantRecords.size(), realm, index);
         long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
@@ -94,12 +94,12 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
         List<String> participantsInTheStudy = null;
-        if (index != null) {
-            participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
-            for (String ddpParticipantId : participantsInTheStudy) {
-                if (!dataByRealm.containsKey(ddpParticipantId)) {
-                    dataByRealm.put(ddpParticipantId, new ArrayList<>());
-                }
+        participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
+        logger.info("Found {} participants in ES index {} for instance {}",
+                participantsInTheStudy.size(), index, realm);
+        for (String ddpParticipantId : participantsInTheStudy) {
+            if (!dataByRealm.containsKey(ddpParticipantId)) {
+                dataByRealm.put(ddpParticipantId, new ArrayList<>());
             }
         }
         if (dataByRealm.isEmpty()) {

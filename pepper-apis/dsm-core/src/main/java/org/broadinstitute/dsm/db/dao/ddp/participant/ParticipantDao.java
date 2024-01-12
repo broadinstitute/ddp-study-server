@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -46,8 +47,6 @@ public class ParticipantDao implements Dao<ParticipantDto> {
 
     @Override
     public int create(ParticipantDto participantDto) {
-        logger.info(String.format("Attempting to create a new participant with ddp_participant_id = %s",
-                participantDto.getDdpParticipantId().orElse("")));
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
@@ -75,11 +74,11 @@ public class ParticipantDao implements Dao<ParticipantDto> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error inserting participant with id: " + participantDto.getDdpParticipantId().orElse(""),
+            throw new DsmInternalError("Error inserting participant with id: " + participantDto.getDdpParticipantIdOrThrow(),
                     simpleResult.resultException);
         }
-        logger.info(String.format("A new participant with ddp_participant_id = %s has been created successfully",
-                participantDto.getDdpParticipantId().orElse("")));
+        logger.info("Created participant with ddp_participant_id {} for instance {}",
+                participantDto.getDdpParticipantIdOrThrow(), participantDto.getDdpInstanceId());
         return (int) simpleResult.resultValue;
     }
 
