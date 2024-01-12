@@ -123,7 +123,7 @@ where
 
 -- delete instance roles from dsm
 select
-    concat('delete from ddp_instance_role where instance_role_id = ',dir.instance_role_id, ';')
+    concat('delete from ddp_instance_role where ddp_instance_id = ',i.ddp_instance_id, ';')
 FROM ddp_instance_role dir, ddp_instance i
 where
         i.study_guid = @study_guid and dir.ddp_instance_id = i.ddp_instance_id;
@@ -141,6 +141,12 @@ select
 FROM ddp_group g
 where g.name = @study_guid;
 
+-- delete access for the group for the study
+
+delete from access_user_role_group where group_id = (
+    select group_id from ddp_group where name = @study_guid
+);
+
 -- delete ddp group from dsm
 select
     concat('delete from ddp_group where group_id = ', g.group_id, ';')
@@ -153,9 +159,19 @@ select
 FROM ddp_participant_exit e, ddp_instance i
 where i.study_guid = @study_guid and e.ddp_instance_id = i.ddp_instance_id;
 
--- delete instance from dsm
-select
-    concat('delete from ddp_instance where ddp_instance_id = ', i.ddp_instance_id, ';')
-FROM ddp_instance i
-where
-        i.study_guid = @study_guid;
+-- disable the instance just in case deleting the instance row fails
+update ddp_instance set is_active = 0,
+                        es_users_index = null,
+                        es_activity_definition_index = null,
+                        es_users_index = null
+where study_guid = @study_guid;
+
+-- remove all instance settings
+delete from instance_settings where ddp_instance_id = (select ddp_instance_id from ddp_instance
+                                                       where study_guid = @study_guid);
+
+delete from EVENT_QUEUE where DDP_INSTANCE_ID =
+                              (select ddp_instance_id from ddp_instance where study_guid = @study_guid);
+
+delete from cohort_tag where ddp_instance_id =
+                             (select ddp_instance_id from ddp_instance where study_guid = @study_guid);
