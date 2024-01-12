@@ -80,7 +80,7 @@ public class CohortTagMigratorTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void xxxTest() {
+    public void os1AndOs2ExportTest() {
         // create participants and tags for OS1, OS2 and for both
         createParticipant(Cohort.OS1);
         createParticipant(Cohort.OS2);
