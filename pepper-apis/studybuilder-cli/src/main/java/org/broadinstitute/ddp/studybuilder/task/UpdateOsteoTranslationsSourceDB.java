@@ -80,7 +80,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @NoArgsConstructor
-public class UpdateTranslationsSourceDB implements CustomTask {
+public class UpdateOsteoTranslationsSourceDB implements CustomTask {
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -97,7 +97,7 @@ public class UpdateTranslationsSourceDB implements CustomTask {
     }.getType();
 
 
-    public UpdateTranslationsSourceDB(List<String> variablesToSkip) {
+    public UpdateOsteoTranslationsSourceDB(List<String> variablesToSkip) {
         this.variablesToSkip = variablesToSkip;
     }
 
