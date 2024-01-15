@@ -12,16 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CohortTagDaoImpl implements CohortTagDao {
-
-    private static final Logger logger = LoggerFactory.getLogger(CohortTagDaoImpl.class);
-
     private static final String SQL_INSERT_COHORT_TAG =
             "INSERT INTO cohort_tag(cohort_tag_name, ddp_participant_id, ddp_instance_id, created, created_by) VALUES (?,?,?,?,?)";
     private static final String SQL_DELETE_COHORT_TAG_BY_ID = "DELETE FROM cohort_tag WHERE cohort_tag_id = ?";
@@ -61,15 +59,11 @@ public class CohortTagDaoImpl implements CohortTagDao {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException(
-                    String.format("Error inserting cohort tag for participant with id: %s", cohortTagDto.getDdpParticipantId()),
-                    simpleResult.resultException);
+            throw new DsmInternalError(String.format("Error inserting cohort tag for participant with id: %s",
+                    cohortTagDto.getDdpParticipantId()), simpleResult.resultException);
         }
-        logger.info(
-                String.format(
-                        "Cohort tag: %s has been created successfully for participant with id: %s",
-                        cohortTagDto.getCohortTagName(), cohortTagDto.getDdpParticipantId()
-                ));
+        log.info("Created cohort tag '{}' for participant {}", cohortTagDto.getCohortTagName(),
+                cohortTagDto.getDdpParticipantId());
         return (int) simpleResult.resultValue;
     }
 
@@ -87,7 +81,7 @@ public class CohortTagDaoImpl implements CohortTagDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error deleting cohort tag with id: " + id, simpleResult.resultException);
+            throw new DsmInternalError("Error deleting cohort tag with id: " + id, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
@@ -121,7 +115,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Could not fetch cohort tags for instance: " + instanceName, simpleResult.resultException);
+            throw new DsmInternalError("Could not fetch cohort tags for instance: " + instanceName,
+                    simpleResult.resultException);
         }
         return result;
     }
@@ -152,15 +147,10 @@ public class CohortTagDaoImpl implements CohortTagDao {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException(
-                    "Error inserting cohort tags of size: " + cohortTags.size(),
+            throw new DsmInternalError("Error inserting cohort tags of size: " + cohortTags.size(),
                     simpleResult.resultException);
         }
-        logger.info(
-                String.format(
-                        "Cohort tags of size: %s have been inserted successfully",
-                        cohortTags.size()
-                ));
+        log.info("Inserted {} cohort tags", cohortTags.size());
         return ids;
     }
 
@@ -179,9 +169,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException(String.format(
-                    "Error deleting cohort tag with cohortTagName: %s and ddpParticipantId: %s", cohortTagName, ddpParticipantId
-            ), simpleResult.resultException);
+            throw new DsmInternalError(String.format("Error deleting cohort tag '%s' for participant %s",
+                    cohortTagName, ddpParticipantId), simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }
@@ -206,7 +195,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Could not fetch cohort tags for participant: " + ddpParticipantId, simpleResult.resultException);
+            throw new DsmInternalError("Could not fetch cohort tags for participant: " + ddpParticipantId,
+                    simpleResult.resultException);
         }
         return (boolean) simpleResult.resultValue;
     }
