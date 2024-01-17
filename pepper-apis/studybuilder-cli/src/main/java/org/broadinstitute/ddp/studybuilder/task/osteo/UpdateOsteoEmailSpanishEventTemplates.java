@@ -167,8 +167,8 @@ public class UpdateOsteoEmailSpanishEventTemplates implements CustomTask {
                     //do only non-english
                     String currentTemplateKey = current.getTemplateKey();
                     //updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
-                    log.warn("[{}] language {}: Need to un-assigned template {} and add template {} .. ignored",
-                            eventKey, language, currentTemplateKey, latestTemplateKey);
+                    log.warn("[{}] language {}: Need to un-assigned template {} and add template {}.. actionId: {}  .. ignored",
+                            eventKey, language, currentTemplateKey, latestTemplateKey, actionId);
                 }
             }
         }
