@@ -170,95 +170,107 @@ public class KitUtil {
     public static void createLabel(List<KitRequestCreateLabel> kitsLabelTriggered, EasyPostUtil easyPostUtil) {
         DBUtil.updateBookmark(System.currentTimeMillis(), BOOKMARK_LABEL_CREATION_RUNNING);
         DDPInstanceDto ddpInstanceDto = null;
+        boolean hasEasyPostUtil = easyPostUtil != null;
 
-        for (KitRequestCreateLabel kitLabelTriggered : kitsLabelTriggered) {
-            if (easyPostUtil == null) {
-                easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
+        for (KitRequestCreateLabel kitLabel : kitsLabelTriggered) {
+            if (!hasEasyPostUtil) {
+                easyPostUtil = new EasyPostUtil(kitLabel.getInstanceName());
             }
             Address toAddress = null;
             try {
-                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName());
+                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabel.getInstanceName());
 
                 //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
                 ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
                         .withEsParticipantIndex(ddpInstance.getParticipantIndexES())
                         .withResearchProject(ddpInstance.getResearchProject()).build();
 
-                if (StringUtils.isBlank(kitLabelTriggered.getAddressIdTo())) {
-
-                    Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                            ElasticSearchUtil.BY_GUID + kitLabelTriggered.getDdpParticipantId());
-                    if (participantESData == null || participantESData.isEmpty()) {
-                        participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                                ElasticSearchUtil.BY_LEGACY_ALTPID + kitLabelTriggered.getDdpParticipantId());
-                    }
-                    DDPParticipant ddpParticipant =
-                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, kitLabelTriggered.getDdpParticipantId());
-                    if (ddpParticipant != null) {
-                        toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(), null,
-                                ddpParticipant, ddpInstanceDto);
-                        KitRequestShipping.updateRequest(kitLabelTriggered, ddpParticipant, kitLabelTriggered.getKitTyp(),
-                                kitLabelTriggered.getKitRequestSettings());
-                    } else {
-                        KitRequestShipping.deactivateKitRequest(Long.parseLong(kitLabelTriggered.getDsmKitRequestId()),
+                if (StringUtils.isBlank(kitLabel.getAddressIdTo())) {
+                    DDPParticipant ddpParticipant = getDDPParticipant(kitLabel, ddpInstance);
+                    if (ddpParticipant == null) {
+                        KitRequestShipping.deactivateKitRequest(Long.parseLong(kitLabel.getDsmKitRequestId()),
                                 "Participant not found", null, SystemUtil.SYSTEM, ddpInstanceDto);
-                        logger.error("Didn't find participant " + kitLabelTriggered.getDdpParticipantId());
+                        logger.error("Did not find participant {} for kit {}",
+                                kitLabel.getDdpParticipantId(), kitLabel.getDsmKitId());
+                    } else {
+                        toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabel.getKitRequestSettings(),
+                                null, ddpParticipant, ddpInstanceDto);
+                        KitRequestShipping.updateRequest(kitLabel, ddpParticipant, kitLabel.getKitTyp(),
+                                kitLabel.getKitRequestSettings());
                     }
                 } else {
+                    // TODO: I believe this case does not exist, so setting this to trip alert if it ever does.
+                    // ideally we would remove this code or fix it - DC
+                    logger.error("Handling case where kit has an address id: assumed case would not occur");
                     //uploaded pt
-                    toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabelTriggered.getKitRequestSettings(),
-                            kitLabelTriggered.getAddressIdTo(), null, ddpInstanceDto);
+                    toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabel.getKitRequestSettings(),
+                            kitLabel.getAddressIdTo(), null, ddpInstanceDto);
                     //uploaded pt is missing collaborator ids -> due to migration and upload with wrong shortId
-                    if (kitLabelTriggered.getParticipantCollaboratorId() == null) {
-                        if (StringUtils.isNotBlank(kitLabelTriggered.getBaseURL())) {
+                    if (kitLabel.getParticipantCollaboratorId() == null) {
+                        if (StringUtils.isNotBlank(kitLabel.getBaseURL())) {
                             //DDP requested pt
                             DDPParticipant ddpParticipant = null;
-                            if (StringUtils.isNotBlank(kitLabelTriggered.getParticipantIndexES())) {
+                            if (StringUtils.isNotBlank(kitLabel.getParticipantIndexES())) {
                                 Map<String, Map<String, Object>> participantsESData =
-                                        ElasticSearchUtil.getDDPParticipantsFromES(kitLabelTriggered.getInstanceName(),
-                                                kitLabelTriggered.getParticipantIndexES());
+                                        ElasticSearchUtil.getDDPParticipantsFromES(kitLabel.getInstanceName(),
+                                                kitLabel.getParticipantIndexES());
                                 ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                                        kitLabelTriggered.getDdpParticipantId());
+                                        kitLabel.getDdpParticipantId());
                             } else {
                                 //DDP requested pt
-                                ddpParticipant = DDPParticipant.getDDPParticipant(kitLabelTriggered.getBaseURL(),
-                                        kitLabelTriggered.getInstanceName(), kitLabelTriggered.getDdpParticipantId(),
-                                        kitLabelTriggered.isHasAuth0Token());
+                                ddpParticipant = DDPParticipant.getDDPParticipant(kitLabel.getBaseURL(),
+                                        kitLabel.getInstanceName(), kitLabel.getDdpParticipantId(),
+                                        kitLabel.isHasAuth0Token());
 
                             }
                             if (ddpParticipant != null) {
                                 String collaboratorParticipantId =
-                                        KitRequestShipping.generateBspParticipantID(kitLabelTriggered.getCollaboratorIdPrefix(),
-                                                kitLabelTriggered.getKitRequestSettings().getCollaboratorParticipantLengthOverwrite(),
+                                        KitRequestShipping.generateBspParticipantID(kitLabel.getCollaboratorIdPrefix(),
+                                                kitLabel.getKitRequestSettings().getCollaboratorParticipantLengthOverwrite(),
                                                 ddpParticipant.getShortId());
-                                String bspCollaboratorSampleType = kitLabelTriggered.getKitTyp().getKitTypeName();
-                                if (kitLabelTriggered.getKitRequestSettings().getCollaboratorSampleTypeOverwrite() != null) {
+                                String bspCollaboratorSampleType = kitLabel.getKitTyp().getKitTypeName();
+                                if (kitLabel.getKitRequestSettings().getCollaboratorSampleTypeOverwrite() != null) {
                                     bspCollaboratorSampleType =
-                                            kitLabelTriggered.getKitRequestSettings().getCollaboratorSampleTypeOverwrite();
+                                            kitLabel.getKitRequestSettings().getCollaboratorSampleTypeOverwrite();
                                 }
                                 if (collaboratorParticipantId == null) {
                                     logger.warn("CollaboratorParticipantId was too long " + ddpParticipant.getParticipantId());
                                 } else {
-                                    updateCollaboratorIds(kitLabelTriggered, collaboratorParticipantId, bspCollaboratorSampleType);
+                                    updateCollaboratorIds(kitLabel, collaboratorParticipantId, bspCollaboratorSampleType);
                                 }
                             }
                         } else {
-                            logger.error("Kit of pt  " + kitLabelTriggered.getDdpParticipantId() + " w/ kit id "
-                                    + kitLabelTriggered.getDsmKitId() + " is missing collaborator id");
+                            logger.error("Kit of pt  " + kitLabel.getDdpParticipantId() + " w/ kit id "
+                                    + kitLabel.getDsmKitId() + " is missing collaborator id");
                         }
                     }
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Couldn't get address for participant " + kitLabelTriggered.getDdpParticipantId() + " in study "
-                        + kitLabelTriggered.getInstanceName() + " w/ kit id " + kitLabelTriggered.getDsmKitId(), e);
+                // note error and skip ptp
+                logger.error("Error getting address for participant {} in study {} with kit ID {}",
+                        kitLabel.getDdpParticipantId(), kitLabel.getInstanceName(), kitLabel.getDsmKitId(), e);
             }
             if (toAddress != null) {
-                buyShipmentForKit(easyPostUtil, kitLabelTriggered.getDsmKitId(), kitLabelTriggered.getKitRequestSettings(),
-                        kitLabelTriggered.getKitTyp(), toAddress.getId(), kitLabelTriggered.getBillingReference(), ddpInstanceDto);
+                buyShipmentForKit(easyPostUtil, kitLabel.getDsmKitId(), kitLabel.getKitRequestSettings(),
+                        kitLabel.getKitTyp(), toAddress.getId(), kitLabel.getBillingReference(), ddpInstanceDto);
             }
         }
 
         DBUtil.updateBookmark(0, BOOKMARK_LABEL_CREATION_RUNNING);
+    }
+
+    private static DDPParticipant getDDPParticipant(KitRequestCreateLabel kitLabel, DDPInstance ddpInstance) {
+        String ddpParticipantId = kitLabel.getDdpParticipantId();
+        Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(
+                ddpInstance, ElasticSearchUtil.BY_GUID + ddpParticipantId);
+        if (participantESData == null || participantESData.isEmpty()) {
+            participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
+                    ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
+        }
+        if (participantESData == null || participantESData.isEmpty()) {
+            return null;
+        }
+        return ElasticSearchUtil.getParticipantAsDDPParticipant(participantESData, ddpParticipantId);
     }
 
     public static List<KitRequestCreateLabel> getListOfKitsLabelTriggered() {

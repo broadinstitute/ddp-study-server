@@ -102,7 +102,7 @@ public class DdpInstanceGroupTestUtil {
         deleteInstance(instanceId);
     }
 
-    private static void deleteInstance(int instanceId) {
+    public static void deleteInstance(int instanceId) {
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE)) {
                 stmt.setInt(1, instanceId);
