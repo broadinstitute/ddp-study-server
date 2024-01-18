@@ -18,6 +18,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             target/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.scanner.force-deprecated-java-version>true</sonar.scanner.force-deprecated-java-version>
     </properties>
 
     <dependencies>
