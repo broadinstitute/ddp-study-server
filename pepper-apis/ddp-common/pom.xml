@@ -15,7 +15,6 @@
         <logback.version>1.4.14</logback.version>
         <sonar.sources>src/main/java</sonar.sources>
         <sonar.java.binaries>target/classes</sonar.java.binaries>
-        <sonar.scanner.force-deprecated-java-version>true</sonar.scanner.force-deprecated-java-version>
         <liquibase.version>4.8.0</liquibase.version>
     </properties>
 
