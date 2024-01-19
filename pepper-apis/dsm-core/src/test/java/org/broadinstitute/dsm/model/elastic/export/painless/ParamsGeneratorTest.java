@@ -20,7 +20,7 @@ public class ParamsGeneratorTest {
 
     @Test
     public void generate() {
-        KitRequestShipping kitRequestShipping = new KitRequestShipping(1L, 2L, "easyPostIdValue", "easyPostAddressIdValue", true, "msg");
+        KitRequestShipping kitRequestShipping = new KitRequestShipping(1, 2L, "easyPostIdValue", "easyPostAddressIdValue", true, "msg");
         ParamsGenerator paramsGenerator = new ParamsGenerator(kitRequestShipping, StringUtils.EMPTY);
         Map<String, Object> paramsMap = paramsGenerator.generate();
         Map<String, Object> dsm = (Map<String, Object>) paramsMap.get("dsm");

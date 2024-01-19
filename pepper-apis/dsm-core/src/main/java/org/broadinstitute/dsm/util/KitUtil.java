@@ -200,7 +200,7 @@ public class KitUtil {
                         KitRequestShipping.updateRequest(kitLabelTriggered, ddpParticipant, kitLabelTriggered.getKitTyp(),
                                 kitLabelTriggered.getKitRequestSettings());
                     } else {
-                        KitRequestShipping.deactivateKitRequest(Long.parseLong(kitLabelTriggered.getDsmKitRequestId()),
+                        KitRequestShipping.deactivateKitRequest(Integer.parseInt(kitLabelTriggered.getDsmKitRequestId()),
                                 "Participant not found", null, SystemUtil.SYSTEM, ddpInstanceDto);
                         logger.error("Didn't find participant " + kitLabelTriggered.getDdpParticipantId());
                     }
@@ -286,8 +286,8 @@ public class KitUtil {
         logger.info("Found {} kit requests which should get a label", kitsLabelTriggered.size());
         Map<String, KitRequestCreateLabel> subKitsLabelTriggered = KitUtil.getListOfSubKitsThatNeedLabels();
         for (Map.Entry<String, KitRequestCreateLabel> subKitEntry : subKitsLabelTriggered.entrySet()) {
-            if (!kitsLabelTriggered.containsKey(subKitEntry.getKey()) ||
-                    kitsLabelTriggered.get(subKitEntry.getKey()).getKitRequestSettings().getReturnName() == null) {
+            if (!kitsLabelTriggered.containsKey(subKitEntry.getKey())
+                    || kitsLabelTriggered.get(subKitEntry.getKey()).getKitRequestSettings().getReturnName() == null) {
                 kitsLabelTriggered.put(subKitEntry.getKey(), subKitEntry.getValue());
             }
         }
@@ -535,7 +535,7 @@ public class KitUtil {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         KitRequestShipping kitRequest =
-                                new KitRequestShipping(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
+                                new KitRequestShipping(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
                                         rs.getString(DBConstants.EASYPOST_TO_ID), rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO),
                                         rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE));
                         kits.add(kitRequest);
