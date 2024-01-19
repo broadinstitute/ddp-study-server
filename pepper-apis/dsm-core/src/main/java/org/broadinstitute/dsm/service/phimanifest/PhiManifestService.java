@@ -130,7 +130,7 @@ public class PhiManifestService {
         if (maybeNormalDataInOrder.isPresent()) {
             MercuryOrderDto clinicalOrderWithNormalData = maybeNormalDataInOrder.get();
             KitRequestShipping kitRequestShipping = KitRequestShipping.getKitRequest(
-                    String.valueOf(clinicalOrderWithNormalData.getDsmKitRequestId()));
+                    clinicalOrderWithNormalData.getDsmKitRequestId());
             phiManifest.setMfBarcode(kitRequestShipping.getKitLabel());
             phiManifest.setNormalCollaboratorSampleId(kitRequestShipping.getBspCollaboratorSampleId());
         }
@@ -159,7 +159,7 @@ public class PhiManifestService {
     public boolean isParticipantConsented(@NonNull String ddpParticipantId, @NonNull DDPInstanceDto ddpInstanceDto) {
         ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
                 ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
-        return participant != null && hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto)
+        return (participant != null && hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto))
                 && hasParticipantConsentedToTumor(participant);
     }
 
@@ -194,12 +194,11 @@ public class PhiManifestService {
             return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
                     SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true) && participant.checkAnswerToActivity(
                     CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID, SOMATIC_ASSENT_ADDENDUM_QUESTION, true);
-
-        } else if (age < 7) {
-            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
-                    SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true);
         }
-        return false;
+        // else if age < 7
+        return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_STABLE_ID,
+                SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION, true);
+
     }
 
 

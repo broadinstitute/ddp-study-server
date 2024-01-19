@@ -36,7 +36,7 @@ public class DdpInstanceGroupTestUtil {
 
 
     public static int createInstanceGroup(String instanceName, String studyGroup) {
-        int instanceId = getDdpInstanceId(instanceName);
+        int instanceId = createDDPInstanceIfNotFound(instanceName);
         int studyGroupId = getGroupId(studyGroup);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
@@ -114,7 +114,7 @@ public class DdpInstanceGroupTestUtil {
         });
     }
 
-    public static int getDdpInstanceId(String instanceName) {
+    public static int createDDPInstanceIfNotFound(String instanceName) {
         int id = ddpInstanceDao.getDDPInstanceIdByInstanceName(instanceName);
         if (id != -1) {
             return id;
