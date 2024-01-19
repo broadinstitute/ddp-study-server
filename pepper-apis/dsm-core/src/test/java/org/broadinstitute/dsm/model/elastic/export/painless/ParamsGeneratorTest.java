@@ -25,7 +25,7 @@ public class ParamsGeneratorTest {
         Map<String, Object> paramsMap = paramsGenerator.generate();
         Map<String, Object> dsm = (Map<String, Object>) paramsMap.get("dsm");
         Map<String, Object> kitRequestShippingObj = (Map<String, Object>) dsm.get("kitRequestShipping");
-        Assert.assertEquals(1L, kitRequestShippingObj.get("dsmKitRequestId"));
+        Assert.assertEquals(1, kitRequestShippingObj.get("dsmKitRequestId"));
         Assert.assertEquals(2L, kitRequestShippingObj.get("dsmKitId"));
         Assert.assertEquals("easyPostIdValue", kitRequestShippingObj.get("easypostToId"));
         Assert.assertEquals(true, kitRequestShippingObj.get("error"));
