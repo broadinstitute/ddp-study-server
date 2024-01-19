@@ -1,14 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
@@ -26,16 +17,24 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * General task to update templates for an activity in-place. Need to provide the `--activity-code` argument.
  */
 @Slf4j
-public class UpdateActivityTemplatesInPlace implements CustomTask {
+public class UpdateOsteoActivityTemplatesInPlace implements CustomTask {
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -96,7 +95,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
                 log.info("Found activity definition for {}", activityCode);
                 var updateTask = new UpdateTemplatesInPlace(variableNamesToSkip);
                 updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, versionTag,
-                        definition, updateTask, activityCode);
+                        definition, updateTask, activityCode, activityCfg.getString("filepath"));
 
                 //load nestedActivities
                 List<ActivityDef> nestedDefs = activityBuilder.loadNestedActivities(activityCfg);
@@ -112,8 +111,9 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
                     }
                 }
                 for (ActivityDef nestedDef : nestedDefs) {
-                    updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, versionTag,
-                            nestedActivityConf.get(nestedDef.getActivityCode()), updateTask, nestedDef.getActivityCode());
+                    updateActivityTemplates(handle, studyId, activityDao, jdbiActivity, jdbiActVersion, nestedDef.getVersionTag(),
+                            nestedActivityConf.get(nestedDef.getActivityCode()), updateTask, nestedDef.getActivityCode(),
+                            activityCfg.getString("filepath"));
                 }
                 found = true;
                 break;
@@ -127,12 +127,23 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
 
     private void updateActivityTemplates(Handle handle, long studyId, ActivityDao activityDao, JdbiActivity jdbiActivity,
                                          JdbiActivityVersion jdbiActVersion, String versionTag, Config activityCfg,
-                                         UpdateTemplatesInPlace updateTask, String activityCode) {
+                                         UpdateTemplatesInPlace updateTask, String activityCode, String activityFilePath) {
         log.info("Working on activity definition/templates for {}", activityCode);
         ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode).get();
         ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
-        FormActivityDef activityDef = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
-        updateTask.traverseActivity(handle, activityCode, activityCfg, activityDef, versionDto.getRevStart());
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
+        User admin = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
+        var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, admin.getId());
+
+        updateTask.traverseActivity(handle, studyId, activityBuilder, activityDao,
+                jdbiActivity, jdbiActVersion, activityFilePath);
+
+        if (activityCfg.hasPath("nestedActivities")) {
+            for (String nestedActivity : activityCfg.getStringList("nestedActivities")) {
+                updateTask.traverseActivity(handle, studyId, activityBuilder, activityDao, jdbiActivity, jdbiActVersion, nestedActivity);
+            }
+        }
+
     }
 
 }

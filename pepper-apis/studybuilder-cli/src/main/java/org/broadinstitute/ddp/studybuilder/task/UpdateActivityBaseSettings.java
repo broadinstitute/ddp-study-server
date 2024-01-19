@@ -79,9 +79,9 @@ public class UpdateActivityBaseSettings implements CustomTask {
         ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
         log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
 
+        compareBasicSettings(handle, activityCfg, activityId);
+        compareNamingDetails(handle, activityCfg, activityId, versionDto);
         compareStatusSummaries(handle, activityCfg, activityId);
-        //compareBasicSettings(handle, activityCfg, activityId);
-        //compareNamingDetails(handle, activityCfg, activityId, versionDto);
     }
 
     private void compareBasicSettings(Handle handle, Config definition, long activityId) {
@@ -149,7 +149,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
         for (String language : currentDetails.keySet()) {
             ActivityI18nDetail current = currentDetails.get(language);
             ActivityI18nDetail latest = latestDetails.remove(language);
-            if (!current.equals(latest) && language.equalsIgnoreCase("es")) {
+            if (!current.equals(latest)) {
                 updatedDetails.add(latest);
             }
         }
@@ -225,9 +225,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
         for (String key : currentSummaries.keySet()) {
             SummaryTranslation current = currentSummaries.get(key);
             SummaryTranslation latest = latestSummaries.remove(key);
-            if (!current.equals(latest) && current.getLanguageCode().equalsIgnoreCase("es")) {
+            if (!current.equals(latest)) {
                 updatedSummaries.add(latest);
-                //log.info("updating translation text to: {}", latest.getText());
             }
         }
 
