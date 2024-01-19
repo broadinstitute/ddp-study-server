@@ -1,6 +1,7 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValueFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +15,10 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,19 +32,35 @@ import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_SENDGRID_E
 import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_STUDY_EMAIL;
 
 /**
- * General task to update sendgrid templates for email event configurations.
+ * General task to update sendgrid templates for osteo pe-cgs spanish email event configurations.
  */
 @Slf4j
-public class UpdateEmailEventTemplates implements CustomTask {
+public class UpdateOsteoEmailSpanishEventTemplates implements CustomTask {
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
+    private Config dataCfg;
+    private String languageCode;
+    private static final String DATA_FILE = "./spanish-email-events.conf";
+    //private static final String DATA_FILE = "./study-es-email-events.conf";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         this.cfgPath = cfgPath;
         this.studyCfg = studyCfg;
         this.varsCfg = varsCfg;
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+        this.dataCfg = ConfigFactory.parseFile(file);
+    }
+
+    public void init(Path cfgPath, Config studyCfg, Config varsCfg, String languageCode) {
+        this.cfgPath = cfgPath;
+        this.studyCfg = studyCfg;
+        this.varsCfg = varsCfg;
+        this.languageCode = languageCode;
     }
 
     @Override
@@ -60,7 +79,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
                     }
                 });
 
-        for (var eventCfg : studyCfg.getConfigList("events")) {
+        for (var eventCfg : studyCfg.getConfigList("email-events")) {
             String type = eventCfg.getString("action.type");
             if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type) || ACTION_INVITATION_EMAIL.equals(type)) {
                 String eventKey = hashEvent(eventCfg);
@@ -68,7 +87,8 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 if (currentEvent != null) {
                     compareEmailTemplates(handle, eventKey, eventCfg.getConfig("action"), currentEvent);
                 } else {
-                    throw new DDPException("Could not find email event configuration for: " + eventKey);
+                    log.warn("SKIPPED event: {} ", eventKey);
+                    //throw new DDPException("Could not find email event configuration for: " + eventKey);
                 }
             }
         }
@@ -141,11 +161,14 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 addEmailTemplate(handle, actionId, language, latestTemplateKey, isDynamic);
                 log.info("[{}] language {}: added template {}", eventKey, language, latestTemplateKey);
             } else {
-                if (!current.getTemplateKey().equals(latestTemplateKey)) {
+                //if (!current.getTemplateKey().equals(latestTemplateKey)) {
+                if (!current.getTemplateKey().equals(latestTemplateKey)
+                        && !current.getLanguageCode().equalsIgnoreCase("en")) {
+                    //do only non-english
                     String currentTemplateKey = current.getTemplateKey();
-                    updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
-                    log.info("[{}] language {}: un-assigned template {} and added template {}",
-                            eventKey, language, currentTemplateKey, latestTemplateKey);
+                    //updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
+                    log.warn("[{}] language {}: Need to un-assigned template {} and add template {}.. actionId: {}  .. ignored",
+                            eventKey, language, currentTemplateKey, latestTemplateKey, actionId);
                 }
             }
         }
