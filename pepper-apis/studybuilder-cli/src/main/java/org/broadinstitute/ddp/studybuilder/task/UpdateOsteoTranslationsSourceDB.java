@@ -185,10 +185,14 @@ public class UpdateOsteoTranslationsSourceDB implements CustomTask {
             //get latest version
             ActivityVersionDto versionDto = jdbiActVersion.getActiveVersion(activityDto.getActivityId()).get();
             FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
-            log.info("#activity : {}  .. version: {}", activityDto.getActivityCode(), versionDto.getVersionTag());
 
             //tailored to osteo for now
-            if (activityDto.getActivityCode().equalsIgnoreCase("LOVEDONE")) {
+            if (!activityDto.getActivityCode().equalsIgnoreCase("SOMATIC_RESULTS")
+                    && !activityDto.getActivityCode().contains("FAMILY_HISTORY")
+                    && !activityDto.getActivityCode().equalsIgnoreCase("ABOUT_YOU_ACTIVITY")
+            ) {
+                //if (activityDto.getActivityCode().equalsIgnoreCase("LOVEDONE")) {
+                log.info("#activity: {}  .. version: {}", activityDto.getActivityCode(), versionDto.getVersionTag());
 
                 traverseActivity(handle, activity);
 
@@ -200,7 +204,7 @@ public class UpdateOsteoTranslationsSourceDB implements CustomTask {
                 Template lastUpdatedTemplate = activity.getReadonlyHintTemplate();
                 compareTemplate(handle, activity.getTag(), lastUpdatedTemplate, activity.getActivityCode());
 
-                //handle activity level validations / errorMessages / messageTempates
+                //handle activity level validations / errorMessages / messageTemplates
                 List<ActivityValidationDto> validationDtos = jdbiActivityValidation._findByActivityId(activityDto.getActivityId());
                 for (ActivityValidationDto validationDto : validationDtos) {
                     //NOTE: ActivityDef does not include messageTemplate info.. todo in future
@@ -587,8 +591,12 @@ public class UpdateOsteoTranslationsSourceDB implements CustomTask {
         var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
         String variableName = current.getName();
         long variableId = current.getId().get();
+        if (variableName.trim().isEmpty()) {
+            log.warn("--VAR-NAME empty---");
+        }
         if (variableName.equalsIgnoreCase("prompt") && activityCode.equalsIgnoreCase("LOVEDONE")) {
             //skip
+            log.warn("skipping variable: {} .. activity: {}", variableName, activityCode);
             return;
         }
 

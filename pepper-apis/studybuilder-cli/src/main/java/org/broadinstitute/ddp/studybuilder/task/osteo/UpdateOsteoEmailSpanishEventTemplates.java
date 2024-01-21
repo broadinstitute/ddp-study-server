@@ -41,8 +41,8 @@ public class UpdateOsteoEmailSpanishEventTemplates implements CustomTask {
     private Config varsCfg;
     private Config dataCfg;
     private String languageCode;
-    private static final String DATA_FILE = "./spanish-email-events.conf";
-    //private static final String DATA_FILE = "./study-es-email-events.conf";
+    //private static final String DATA_FILE = "./spanish-email-events.conf";
+    private static final String DATA_FILE = "./study-es-email-events-test.conf";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {

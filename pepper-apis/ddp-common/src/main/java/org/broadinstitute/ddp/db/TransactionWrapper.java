@@ -355,8 +355,8 @@ public class TransactionWrapper {
             long endTime = System.currentTimeMillis();
             // 30s threshold
             if (endTime - startTime > 190000) {
-                logger.warn("DB transaction open for > 90s\n {}",
-                        stackTraceToString(Thread.currentThread().getStackTrace()));
+                //logger.warn("DB transaction open for > 90s\n {}",
+                //        stackTraceToString(Thread.currentThread().getStackTrace()));
             }
         }
     }

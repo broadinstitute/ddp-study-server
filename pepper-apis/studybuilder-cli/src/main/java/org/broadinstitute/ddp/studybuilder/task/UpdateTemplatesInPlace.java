@@ -592,7 +592,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
             String language = translation.getLanguageCode();
             String currentText = translation.getText();
             String latestText = latestTranslations.remove(language);
-            if (!currentText.equals(latestText)) {
+            if (!currentText.equals(latestText) && language.equalsIgnoreCase("es")) {
                 if (latestText == null || latestText.isBlank()) {
                     log.warn("EMPTY new text for variable: {} . ignored", variableName);
                     continue;
