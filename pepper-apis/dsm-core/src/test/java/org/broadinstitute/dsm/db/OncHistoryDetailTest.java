@@ -5,8 +5,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
-import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -16,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
+import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -61,8 +60,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
 
-        int medicalRecordId = OncHistoryDetail.verifyOrCreateMedicalRecord(testParticipant.getParticipantId().orElseThrow(),
-                ddpParticipantId, instanceName, true);
+        int medicalRecordId = MedicalRecordTestUtil.createMedicalRecord(testParticipant, ddpInstanceDto);
 
         log.debug("ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
@@ -82,8 +80,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
 
             log.debug("ES participant record for {}: {}", ddpParticipantId2,
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId2));
-            ptp2MedicalRecordId = OncHistoryDetail.verifyOrCreateMedicalRecord(ptp2.getParticipantId().orElseThrow(),
-                    ddpParticipantId2, instanceName, true);
+            ptp2MedicalRecordId = MedicalRecordTestUtil.createMedicalRecord(ptp2, ddpInstanceDto);
 
             // add some onc history detail records
             OncHistoryDetail.Builder builder = new OncHistoryDetail.Builder()
@@ -150,23 +147,15 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             if (recId3 != -1) {
                 oncHistoryDetailDao.delete(recId3);
             }
-            deleteMedicalRecord(medicalRecordId);
+            MedicalRecordTestUtil.deleteMedicalRecord(medicalRecordId);
 
             // ptp2
             if (ptp2MedicalRecordId != -1) {
-                deleteMedicalRecord(ptp2MedicalRecordId);
+                MedicalRecordTestUtil.deleteMedicalRecord(ptp2MedicalRecordId);
             }
             if (ptp2 != null) {
                 TestParticipantUtil.deleteParticipant(ptp2.getParticipantId().orElseThrow());
             }
         }
-    }
-
-    private static void deleteMedicalRecord(int medicalRecordId) {
-        MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
-        MedicalRecord medicalRecord = medicalRecordDao.get(medicalRecordId).get();
-        medicalRecordDao.delete(medicalRecordId);
-        DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
-        ddpInstitutionDao.delete(medicalRecord.getInstitutionId());
     }
 }

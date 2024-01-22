@@ -67,7 +67,7 @@ public class BulkExportFacade {
 
     private void buildFailureMessage(BulkResponse bulkResponse) {
         if (bulkResponse.hasFailures()) {
-            logger.warn(bulkResponse.buildFailureMessage());
+            logger.error(bulkResponse.buildFailureMessage());
         }
     }
 
