@@ -39,7 +39,7 @@ public class PhiManifestService {
     private static final String NOT_VALID_ORDER_ERROR =
             "Sequencing order number %s does not exist or is not a valid clinical order for this participant";
 
-    private static final String NOT_CONSENTED_ERROR = "Participant %s has not consented to receive shared learning";
+    private static final String NOT_CONSENTED_ERROR = "Participant %s has not consented to receive shared learnings";
 
 
     public PhiManifestReportRoute.PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId,
