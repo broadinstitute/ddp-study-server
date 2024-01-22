@@ -161,7 +161,6 @@ public class ElasticSearch implements ElasticSearchable {
      * @param esParticipantsIndex the ES index to get all participants from
      */
     public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
-        logger.info("Getting all participant ids from index " + esParticipantsIndex);
         ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
         List<String> participantIds = new ArrayList<>();
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : es.esParticipants) {
@@ -170,6 +169,7 @@ public class ElasticSearch implements ElasticSearchable {
                 participantIds.add(elasticSearchParticipantDto.getProfile().get().getGuid());
             }
         }
+        logger.info("Got {} participant ids from index (getAllParticipantsInIndex)", esParticipantsIndex);
         return participantIds;
     }
 
@@ -181,7 +181,6 @@ public class ElasticSearch implements ElasticSearchable {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data from index " + esParticipantsIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;

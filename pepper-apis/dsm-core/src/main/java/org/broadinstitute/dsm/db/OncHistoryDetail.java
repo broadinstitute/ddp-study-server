@@ -379,7 +379,6 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm, String queryAddition) {
-        logger.info("Collection oncHistoryDetail information");
         Map<String, List<OncHistoryDetail>> oncHistory = new HashMap<>();
         Map<Integer, Tissue> tissues = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -441,7 +440,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                     results.resultException);
         }
 
-        logger.info("Got " + oncHistory.size() + " participants oncHistories in DSM DB for " + realm);
+        logger.info("Retrieved {} participant oncHistories from DB for {}", oncHistory.size(), realm);
         return oncHistory;
     }
 

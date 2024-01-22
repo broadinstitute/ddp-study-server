@@ -199,6 +199,7 @@ public class ElasticTestUtil {
             Map<String, Object> props = new HashMap<>();
             props.put("oncHistoryDetailId", oncHistoryDetail.getOncHistoryDetailId());
             props.put("ddpInstanceId", oncHistoryDetail.getDdpInstanceId());
+            props.put("medicalRecordId", oncHistoryDetail.getMedicalRecordId());
             props.put("phone", oncHistoryDetail.getPhone());
             props.put("fax", oncHistoryDetail.getFax());
             props.put("facility", oncHistoryDetail.getFacility());

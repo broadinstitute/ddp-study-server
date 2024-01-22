@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Optional;
 
+import com.netflix.servo.util.VisibleForTesting;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -90,6 +91,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_STUDY_GUID= SQL_BASE_SELECT + " WHERE study_guid = ?";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
+    private static final String SQL_UPDATE_PARTICIPANT_INDEX =
+            "UPDATE ddp_instance SET es_participant_index = ? WHERE ddp_instance_id = ?";
 
     public static DDPInstanceDao of() {
         return new DDPInstanceDao();
@@ -189,6 +192,23 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             throw new RuntimeException("Error inserting ddp instance ", simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
+    }
+
+    @VisibleForTesting
+    public void updateEsParticipantIndex(int instanceId, String esParticipantIndex) {
+        inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_PARTICIPANT_INDEX)) {
+                stmt.setString(1, esParticipantIndex);
+                stmt.setInt(2, instanceId);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    throw new DsmInternalError("Error updating ES participant index. Result count was " + result);
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error updating ES participant index", e);
+            }
+            return null;
+        });
     }
 
     private String getNotificationsAsSequence(DDPInstanceDto ddpInstanceDto) {

@@ -93,17 +93,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
-        List<String> participantsInTheStudy = null;
-        participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
-        logger.info("Found {} participants in ES index {} for instance {}",
-                participantsInTheStudy.size(), index, realm);
-        for (String ddpParticipantId : participantsInTheStudy) {
-            if (!dataByRealm.containsKey(ddpParticipantId)) {
-                dataByRealm.put(ddpParticipantId, new ArrayList<>());
-            }
-        }
         if (dataByRealm.isEmpty()) {
-            logger.info("Found nothing to export for {} to ES for study: {} with index: {} ", object, realm, index);
             return;
         }
         fillBulkRequestWithTransformedMapAndExport(dataByRealm);
