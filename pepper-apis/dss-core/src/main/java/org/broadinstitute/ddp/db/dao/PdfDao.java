@@ -220,7 +220,7 @@ public interface PdfDao extends SqlObject {
     }
 
     default void deleteTemplate(PdfTemplate template) {
-        LOG.error("deleting template with id:" + template.getId());
+        LOG.warn("deleting template with id:" + template.getId());
         PdfSql pdfSql = getPdfSql();
         switch (template.getType()) {
             case MAILING_ADDRESS:
