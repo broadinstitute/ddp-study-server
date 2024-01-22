@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
+import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -56,7 +56,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private static final Map<Integer, Integer> participantToOncHistoryId = new HashMap<>();
     private static final String OS1_TAG = "OS";
     private static final String OS2_TAG = "OS PE-CGS";
-    private static final String baseInstanceName = "osteomigrator";
+    private static final String baseInstanceName = "osteom";
 
     private enum Cohort {
         OS1, OS2, OS1_OS2
@@ -162,55 +162,74 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         createOncHistoryDetail(os1BothPtp, os1DdpInstanceDto, 1);
         createOncHistoryDetail(os2BothPtp, os2DdpInstanceDto, 1);
         kitShippingTestUtil.createTestKitShipping(os1BothPtp, os1DdpInstanceDto);
-        kitShippingTestUtil.createTestKitShipping(os2BothPtp, os1DdpInstanceDto);
+        kitShippingTestUtil.createTestKitShipping(os2BothPtp, os2DdpInstanceDto);
 
         // do an OS1 export
         try {
             StudyMigrator.migrate(os1InstanceName);
-            TimeUnit.SECONDS.sleep(1);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
 
         // should be onc history for OS1 only participant
-        verifyOncHistory(os1Ptp.getDdpParticipantIdOrThrow(), List.of(os1Ptp.getParticipantIdOrThrow()));
+        String os1DdpPtpId = os1Ptp.getDdpParticipantIdOrThrow();
+        verifyOncHistory(os1DdpPtpId, List.of(os1Ptp.getParticipantIdOrThrow()));
+        verifyKitShipping(os1DdpPtpId);
         // should be no onc history for OS2 only participant (not exported)
         //!!TODO
         // for OS1 participant consented to OS2 there are  two onc history records, one for each instance
-        verifyOncHistory(os1BothPtp.getDdpParticipantIdOrThrow(),
+        String os1BothDdpPtpId = os1BothPtp.getDdpParticipantIdOrThrow();
+        verifyOncHistory(os1BothDdpPtpId,
                 List.of(os1BothPtp.getParticipantIdOrThrow(), os2BothPtp.getParticipantIdOrThrow()));
+        verifyKitShipping(os1BothDdpPtpId);
 
         // do an OS2 export
         try {
             StudyMigrator.migrate(os2InstanceName);
-            TimeUnit.SECONDS.sleep(1);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyMigrated(os1Ptp, os2Ptp, os1BothPtp, os2BothPtp);
+
+        // do another OS1 export
+        try {
+            StudyMigrator.migrate(os1InstanceName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception exporting to ES" + e);
+        }
+        verifyMigrated(os1Ptp, os2Ptp, os1BothPtp, os2BothPtp);
+    }
+
+    private void verifyMigrated(ParticipantDto os1Ptp, ParticipantDto os2Ptp,
+                                ParticipantDto os1BothPtp, ParticipantDto os2BothPtp) {
+        String os1DdpPtpId = os1Ptp.getDdpParticipantIdOrThrow();
+        String os2DdpPtpId = os2Ptp.getDdpParticipantIdOrThrow();
+        String os1BothDdpPtpId = os1BothPtp.getDdpParticipantIdOrThrow();
+
         // should be onc history for OS2 only participant
-        verifyOncHistory(os2Ptp.getDdpParticipantIdOrThrow(), List.of(os2Ptp.getParticipantIdOrThrow()));
+        verifyOncHistory(os2DdpPtpId, List.of(os2Ptp.getParticipantIdOrThrow()));
         // should be onc history for OS1 only participant
-        verifyOncHistory(os1Ptp.getDdpParticipantIdOrThrow(), List.of(os1Ptp.getParticipantIdOrThrow()));
+        verifyOncHistory(os1DdpPtpId, List.of(os1Ptp.getParticipantIdOrThrow()));
         // for OS1 participant consented to OS2 there should be two onc history records, one for each instance
-        verifyOncHistory(os1BothPtp.getDdpParticipantIdOrThrow(),
+        verifyOncHistory(os1BothDdpPtpId,
                 List.of(os1BothPtp.getParticipantIdOrThrow(), os2BothPtp.getParticipantIdOrThrow()));
 
-        // expected data for OS1 only
-        // expected data for OS2 only
-        // expected data for OS1 consented to OS2
+        verifyKitShipping(os1DdpPtpId);
+        verifyKitShipping(os2DdpPtpId);
+        verifyKitShipping(os1BothDdpPtpId);
     }
 
     private void verifyCohortTags() {
         try {
             os1Participants.forEach(ptp -> {
                 String ddpParticipantId = ptp.getDdpParticipantIdOrThrow();
-                //!! change to log.debug
-                log.info("ES participant record for {}: {}",  ddpParticipantId,
+                log.debug("ES participant record for {}: {}",  ddpParticipantId,
                         ElasticTestUtil.getParticipantDocumentAsString(esIndex,  ddpParticipantId));
                 List<CohortTag> cohortTags = getCohortTagsFromDoc(ddpParticipantId);
-                log.info("TEMP: participant {} has cohort tags {}", ddpParticipantId, cohortTags);
+                log.debug("Participant {} has cohort tags {}", ddpParticipantId, cohortTags);
                 Assert.assertTrue(cohortTags.stream().anyMatch(tag -> tag.getCohortTagName().equals(OS1_TAG)));
             });
             os2Participants.forEach(ptp -> {
@@ -218,7 +237,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
                 log.debug("ES participant record for {}: {}",  ddpParticipantId,
                         ElasticTestUtil.getParticipantDocumentAsString(esIndex,  ddpParticipantId));
                 List<CohortTag> cohortTags = getCohortTagsFromDoc(ddpParticipantId);
-                log.info("TEMP: participant {} has cohort tags {}", ddpParticipantId, cohortTags);
+                log.debug("Participant {} has cohort tags {}", ddpParticipantId, cohortTags);
                 Assert.assertTrue(cohortTags.stream().anyMatch(tag -> tag.getCohortTagName().equals(OS2_TAG)));
             });
         } catch (Exception e) {
@@ -254,13 +273,8 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private void verifyOncHistory(String ddpParticipantId, List<Integer> participantIds) {
         ElasticSearchParticipantDto esParticipant =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
-        //TEMP: change to log.debug
-        log.info("Verifying ES participant record for {}: {}", ddpParticipantId,
+        log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-        log.info("TEMP: verifying {} participant ids", participantIds.size());
-        log.info("TEMP: ES participant record for {} has {} medical records and {} onc history records",
-                ddpParticipantId, esParticipant.getDsm().orElseThrow().getMedicalRecord().size(),
-                esParticipant.getDsm().orElseThrow().getOncHistoryDetail().size());
         Dsm dsm = esParticipant.getDsm().orElseThrow();
 
         List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
@@ -274,7 +288,6 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
             OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.stream()
                     .filter(rec -> rec.getMedicalRecordId() == medicalRecordId)
                     .findFirst().orElseThrow();
-            log.info("TEMP: oncHistoryDetail: {}", oncHistoryDetail);
             Assert.assertEquals(oncHistoryDetail.getOncHistoryDetailId(),
                     participantToOncHistoryId.get(participantId).intValue());
             Assert.assertTrue(medicalRecords.stream()
@@ -286,7 +299,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
         int participantId = participant.getParticipantIdOrThrow();
         int medicalRecordId = MedicalRecordTestUtil.createMedicalRecord(participant, instanceDto);
-        log.info("TEMP: created medical record {} for participant {}", medicalRecordId, participantId);
+        log.debug("Created medical record {} for participant {}", medicalRecordId, participantId);
         participantToMedicalRecordId.put(participantId, medicalRecordId);
 
         // add some onc history detail records
@@ -305,8 +318,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
             ElasticTestUtil.createOncHistoryDetail(esIndex, rec, ddpParticipantId);
         }
 
-        //TEMP: change to log.debug
-        log.info("Created ES participant record for {}: {}", ddpParticipantId,
+        log.debug("Created ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
     }
 
@@ -319,5 +331,19 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         Assert.assertNotNull(cohortTags);
         return cohortTags.stream().map(tag ->
                 ObjectMapperSingleton.instance().convertValue(tag, CohortTag.class)).collect(Collectors.toList());
+    }
+
+    private void verifyKitShipping(String ddpParticipantId) {
+        ElasticSearchParticipantDto esParticipant =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+        log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        Dsm dsm = esParticipant.getDsm().orElseThrow();
+        List<KitRequestShipping> kitRequests = dsm.getKitRequestShipping();
+        log.debug("Found {} kit requests for ptp {}", kitRequests.size(), ddpParticipantId);
+        kitShippingTestUtil.getParticipantKitRequestIds(ddpParticipantId).forEach(kitRequestId -> {
+            Assert.assertTrue(kitRequests.stream()
+                    .anyMatch(kitRequest -> kitRequest.getDsmKitId().intValue() == kitRequestId));
+        });
     }
 }
