@@ -76,6 +76,8 @@ public class PhiManifestService {
         PhiManifest phiManifest = new PhiManifest();
         Profile participantProfile = participant.getProfile().orElseThrow();
         phiManifest.setShortId(participantProfile.getHruid());
+        phiManifest.setParticipantId(participantProfile.getGuid());
+        phiManifest.setRealm(ddpInstanceDto.getInstanceName());
         phiManifest.setFirstName(participantProfile.getFirstName());
         phiManifest.setLastName(participantProfile.getLastName());
         List<String> proxies = participant.getProxies();
@@ -122,6 +124,7 @@ public class PhiManifestService {
             }
             phiManifest.setBlockId(tissue.getBlockIdShl());
             phiManifest.setTumorCollaboratorSampleId(tissue.getCollaboratorSampleId());
+            phiManifest.setFirstSmId(tissue.getFirstSmId());
             phiManifest.setTissueSite(tissue.getTissueSite());
             phiManifest.setSequencingResults(tissue.getTissueSequence());
         }
