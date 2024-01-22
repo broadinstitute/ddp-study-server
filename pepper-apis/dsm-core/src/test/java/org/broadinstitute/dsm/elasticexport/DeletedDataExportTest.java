@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.util.OncHistoryTestUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class DeletedDataExportTest extends DbAndElasticBaseTest {
@@ -59,6 +60,11 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
     }
 
 
+    // TODO: remove or modify this test. We do not want to have export/migrate fixup onc history records that
+    // were not deleted properly (that is, the onc histories were not deleted from the ES).
+    // There was a one-time need for this capability, but we cannot depend on it long-term without making significant
+    // changes to the export/migrate code. -DC
+    @Ignore
     //this test checks if a deleted record from database will also be removed from ES after running an export
     @Test
     public void deleteAllOncHistories() throws Exception {

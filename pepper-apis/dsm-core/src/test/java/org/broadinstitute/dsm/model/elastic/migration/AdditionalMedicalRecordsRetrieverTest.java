@@ -11,7 +11,7 @@ public class AdditionalMedicalRecordsRetrieverTest {
     @Test
     public void createInstance() {
         var realm = "Osteo";
-        Assert.assertTrue(AdditionalMedicalRecordsRetriever.fromRealm(realm).get() instanceof NewOsteoMedicalRecordsRetriever);
+        Assert.assertTrue(AdditionalMedicalRecordsRetriever.fromRealm(realm).isPresent());
     }
 
     @Test

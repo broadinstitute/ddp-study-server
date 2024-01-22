@@ -1,11 +1,14 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import java.util.List;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 
+@Slf4j
 public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
 
     public OncHistoryDetailsMigrator(String index, String realm) {
@@ -14,8 +17,12 @@ public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
 
     @Override
     protected Map<String, Object> getDataByRealm() {
-
-        return (Map) OncHistoryDetail.getOncHistoryDetails(realm);
+        Map<String, List<OncHistoryDetail>> records = OncHistoryDetail.getOncHistoryDetails(realm);
+        int recordsFromRealm = records.size();
+        AdditionalOncHistoryDetailsRetriever.fromRealm(realm)
+                .ifPresent(retriever -> retriever.mergeRecords(records));
+        log.info("Migrator retrieved {} onc history records from realm {}, and {} additional records",
+                recordsFromRealm, records.size() - recordsFromRealm, realm);
+        return (Map) records;
     }
-
 }
