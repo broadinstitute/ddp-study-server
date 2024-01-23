@@ -22,7 +22,7 @@ public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
         AdditionalOncHistoryDetailsRetriever.fromRealm(realm)
                 .ifPresent(retriever -> retriever.mergeRecords(records));
         log.info("Migrator retrieved {} onc history records from realm {}, and {} additional records",
-                recordsFromRealm, records.size() - recordsFromRealm, realm);
+                recordsFromRealm, realm, records.size() - recordsFromRealm);
         return (Map) records;
     }
 }

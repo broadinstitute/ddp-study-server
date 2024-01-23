@@ -24,7 +24,7 @@ public class CohortTagMigrator extends BaseCollectionMigrator {
         AdditionalCohortTagsRetriever.fromRealm(realm)
                 .ifPresent(retriever -> retriever.mergeRecords(cohortTags));
         log.info("Migrator retrieved {} cohort tags from realm {}, and {} additional tags",
-                tagsFromRealm, cohortTags.size() - tagsFromRealm, realm);
+                tagsFromRealm, realm, cohortTags.size() - tagsFromRealm);
         return (Map) cohortTags;
     }
 }
