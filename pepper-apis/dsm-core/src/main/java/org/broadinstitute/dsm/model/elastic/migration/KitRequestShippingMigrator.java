@@ -24,8 +24,8 @@ public class KitRequestShippingMigrator extends BaseCollectionMigrator {
         int recordsFromRealm = kitRequests.size();
         AdditionalKitShippingRetriever.fromRealm(realm)
                 .ifPresent(retriever -> retriever.mergeRecords(kitRequests));
-        log.info("Migrator retrieved {} medical records from realm {}, and {} additional records",
-                kitRequests, kitRequests.size() - recordsFromRealm, realm);
+        log.info("Migrator retrieved {} kit request records from realm {}, and {} additional records",
+                recordsFromRealm, realm, kitRequests.size() - recordsFromRealm);
         return (Map) kitRequests;
     }
 }

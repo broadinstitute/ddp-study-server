@@ -21,7 +21,7 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
         AdditionalMedicalRecordsRetriever.fromRealm(realm)
                 .ifPresent(retriever -> retriever.mergeRecords(medicalRecords));
         log.info("Migrator retrieved {} medical records from realm {}, and {} additional records",
-                medicalRecords, medicalRecords.size() - recordsFromRealm, realm);
+                recordsFromRealm, realm, medicalRecords.size() - recordsFromRealm);
         return (Map) medicalRecords;
     }
 }
