@@ -623,7 +623,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         for (var language : latestTranslations.keySet()) {
             String text = latestTranslations.get(language);
             jdbiVariableSubstitution.insert(language, text, revisionId, variableId);
-            log.info("[{}] variable {} language {}: inserted substitution", tag, variableName, language);
+            log.info("[{}] variable {} language {}: inserted substitution : {}", tag, variableName, language, text);
         }
     }
 

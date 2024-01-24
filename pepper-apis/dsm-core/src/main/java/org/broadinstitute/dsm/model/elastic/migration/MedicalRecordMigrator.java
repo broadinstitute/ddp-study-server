@@ -2,12 +2,12 @@ package org.broadinstitute.dsm.model.elastic.migration;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
+@Slf4j
 public class MedicalRecordMigrator extends BaseCollectionMigrator {
 
     public MedicalRecordMigrator(String index, String realm) {
@@ -17,25 +17,11 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
     @Override
     protected Map<String, Object> getDataByRealm() {
         Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(realm);
-        updateMedicalRecordsIfRequired(medicalRecords);
+        int recordsFromRealm = medicalRecords.size();
+        AdditionalMedicalRecordsRetriever.fromRealm(realm)
+                .ifPresent(retriever -> retriever.mergeRecords(medicalRecords));
+        log.info("Migrator retrieved {} medical records from realm {}, and {} additional records",
+                recordsFromRealm, realm, medicalRecords.size() - recordsFromRealm);
         return (Map) medicalRecords;
     }
-
-    private void updateMedicalRecordsIfRequired(Map<String, List<MedicalRecord>> medicalRecords) {
-        AdditionalMedicalRecordsRetriever.fromRealm(realm).ifPresent(retriever -> concatenateMedicalRecords(medicalRecords, retriever));
-    }
-
-    private void concatenateMedicalRecords(Map<String, List<MedicalRecord>> medicalRecords, AdditionalMedicalRecordsRetriever retriever) {
-        Map<String, List<MedicalRecord>> additionalMedicalRecords = retriever.retrieve();
-        additionalMedicalRecords.forEach((guid, records) -> {
-            if (medicalRecords.containsKey(guid)) {
-                List<MedicalRecord> mergedMedicalRecords =
-                        Stream.concat(medicalRecords.get(guid).stream(), records.stream()).collect(Collectors.toList());
-                medicalRecords.put(guid, mergedMedicalRecords);
-            } else {
-                medicalRecords.put(guid, records);
-            }
-        });
-    }
-
 }

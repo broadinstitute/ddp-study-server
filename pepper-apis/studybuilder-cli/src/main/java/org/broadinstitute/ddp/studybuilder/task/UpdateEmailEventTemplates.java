@@ -1,17 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
-import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_INVITATION_EMAIL;
-import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_SENDGRID_EMAIL;
-import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_STUDY_EMAIL;
-
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValueFactory;
@@ -27,6 +15,18 @@ import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
+
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_INVITATION_EMAIL;
+import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_SENDGRID_EMAIL;
+import static org.broadinstitute.ddp.studybuilder.EventBuilder.ACTION_STUDY_EMAIL;
 
 /**
  * General task to update sendgrid templates for email event configurations.
@@ -50,9 +50,9 @@ public class UpdateEmailEventTemplates implements CustomTask {
                 .findByStudyGuid(studyCfg.getString("study.guid"));
         log.info("Comparing {} email event templates...", studyDto.getGuid());
 
-        Map<String, EventConfiguration> emailEvents =  new HashMap<>();
+        Map<String, EventConfiguration> emailEvents = new HashMap<>();
         handle.attach(EventDao.class)
-                .getAllEventConfigurationsByStudyId(studyDto.getId())
+                .getAllActiveEventConfigurationsByStudyId(studyDto.getId())
                 .forEach(event -> {
                     if (event.getEventActionType() == EventActionType.NOTIFICATION) {
                         String eventKey = hashEvent(handle, event);
@@ -77,21 +77,31 @@ public class UpdateEmailEventTemplates implements CustomTask {
     private String hashEvent(Config eventCfg) {
         //use delaySeconds in key to handle emails with same "order" triggered in same event
         //ex:- reminder emails
+        int preCondExprLen = 0;
+        int cancelExprLen = 0;
         int delaySeconds = 0;
         if (eventCfg.hasPath("delaySeconds")) {
             delaySeconds = eventCfg.getInt("delaySeconds");
         }
-        return String.format("%s-%d-%d",
+        if (eventCfg.hasPath("preconditionExpr")) {
+            preCondExprLen = eventCfg.getString("preconditionExpr").trim().length();
+        }
+        if (eventCfg.hasPath("cancelExpr")) {
+            cancelExprLen = eventCfg.getString("cancelExpr").trim().length();
+        }
+        return String.format("%s-%d-%d-%d-%d",
                 EventBuilder.triggerAsStr(eventCfg.getConfig("trigger")),
                 eventCfg.getInt("order"),
-                delaySeconds);
+                delaySeconds, preCondExprLen, cancelExprLen);
     }
 
     private String hashEvent(Handle handle, EventConfiguration eventConfig) {
-        return String.format("%s-%d-%d",
+        return String.format("%s-%d-%d-%d-%d",
                 EventBuilder.triggerAsStr(handle, eventConfig.getEventTrigger()),
                 eventConfig.getExecutionOrder(),
-                eventConfig.getPostDelaySeconds());
+                eventConfig.getPostDelaySeconds() == null ? 0 : eventConfig.getPostDelaySeconds(),
+                eventConfig.getPreconditionExpression() != null ? eventConfig.getPreconditionExpression().trim().length() : 0,
+                eventConfig.getCancelExpression() != null ? eventConfig.getCancelExpression().trim().length() : 0);
     }
 
     private void compareEmailTemplates(Handle handle, String eventKey, Config actionCfg, EventConfiguration event) {

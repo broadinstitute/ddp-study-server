@@ -41,6 +41,12 @@ public interface EventDao extends SqlObject {
                 .collect(Collectors.toList());
     }
 
+    default List<EventConfiguration> getAllActiveEventConfigurationsByStudyId(long studyId) {
+        return getActiveEventConfigurationDtosByStudyId(studyId).stream()
+                .map(dto -> new EventConfiguration(dto))
+                .collect(Collectors.toList());
+    }
+
     default Optional<EventConfiguration> getEventConfigurationByStudyIdAndLabel(long studyId, String label) {
         if (label == null) {
             throw new DDPException("label argument cannot be null");
@@ -102,6 +108,13 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(EventConfigurationDto.class)
     @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getEventConfigurationDtosByStudyId(
+            @Bind("studyId") long studyId);
+
+    @SqlQuery("getActiveEventConfigurationsByStudyId")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    List<EventConfigurationDto> getActiveEventConfigurationDtosByStudyId(
             @Bind("studyId") long studyId);
 
     @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")

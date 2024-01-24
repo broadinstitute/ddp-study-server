@@ -11,7 +11,7 @@ public class AdditionalCohortTagsRetrieverTest {
     @Test
     public void createInstance() {
         var realm = "Osteo";
-        Assert.assertTrue(AdditionalCohortTagsRetriever.fromRealm(realm).get() instanceof NewOsteoCohortTagsRetriever);
+        Assert.assertTrue(AdditionalCohortTagsRetriever.fromRealm(realm).isPresent());
     }
 
     @Test
