@@ -501,7 +501,7 @@ public class KitDao {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-                        kitRequestShipping.setDsmKitRequestId(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID));
+                        kitRequestShipping.setDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID));
                         kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
                         kitRequestShipping.setDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
                         kitRequestShipping.setKitTypeId(String.valueOf(rs.getInt(DBConstants.KIT_TYPE_ID)));
@@ -548,7 +548,7 @@ public class KitDao {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-                        kitRequestShipping.setDsmKitRequestId(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID));
+                        kitRequestShipping.setDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID));
                         kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
                         kitRequestShipping.setDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
                         kitRequestShipping.setKitTypeId(String.valueOf(rs.getInt(DBConstants.KIT_TYPE_ID)));
@@ -593,7 +593,7 @@ public class KitDao {
                 new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
                         rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
                         rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.KIT_TYPE_NAME),
-                        rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
+                        rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
                         rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),
                         rs.getString(DBConstants.DSM_TRACKING_TO), returnTrackingId, rs.getString(DBConstants.DSM_TRACKING_URL_TO),
                         rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),

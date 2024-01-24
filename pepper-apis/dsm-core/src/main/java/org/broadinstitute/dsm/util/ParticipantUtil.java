@@ -5,12 +5,14 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 
+@Slf4j
 public class ParticipantUtil {
 
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";

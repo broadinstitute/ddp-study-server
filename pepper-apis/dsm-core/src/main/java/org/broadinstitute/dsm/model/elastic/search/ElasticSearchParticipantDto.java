@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -9,16 +10,21 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Address;
-import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.Dsm;
-import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.Files;
+import org.broadinstitute.dsm.model.elastic.Profile;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Slf4j
 public class ElasticSearchParticipantDto {
 
     private Address address;
@@ -132,6 +138,69 @@ public class ElasticSearchParticipantDto {
                         ? esProfile.getGuid()
                         : esProfile.getLegacyAltPid())
                 .orElse(StringUtils.EMPTY);
+    }
+
+    /**
+     * checks if the answer provided by a participant to a survey question matches the criteria
+     *
+     * @param activityName      stable id of the activity
+     * @param question          stable id of the question
+     * @param expectedAnswer    desired answer
+     */
+    public boolean checkAnswerToActivity(String activityName, String question, Object expectedAnswer) {
+        Optional<Activities> maybeActivity = this.getActivities().stream().filter(activity -> activity.getActivityCode()
+                .equals(activityName)).findAny();
+        Optional<Object> possibleAnswer = maybeActivity.isPresent() ? maybeActivity.get().getAnswerToQuestion(question) : Optional.empty();
+        return possibleAnswer.isPresent() && possibleAnswer.get().equals(expectedAnswer);
+
+    }
+
+    /**
+     * checks if the answer provided by a participant to a survey question matches the criteria
+     *
+     * @param activityName stable id of the activity
+     * @param question     stable id of the question
+     */
+    public Optional<Object> getParticipantAnswerInSurvey(String activityName, String question) {
+        Optional<Activities> maybeActivity = this.getActivities().stream().filter(activity -> activity.getActivityCode()
+                .equals(activityName)).findAny();
+        return maybeActivity.isPresent() ? maybeActivity.get().getAnswerToQuestion(question) : Optional.empty();
+    }
+
+    public String getParticipantGender(String realm, String ddpParticipantId) {
+        String participantId = this.getParticipantId();
+        if (StringUtils.isBlank(participantId)) {
+            throw new DsmInternalError(String.format("The participant %s is missing participant id", ddpParticipantId));
+        }
+        // if gender is set on tissue page use that
+        List<String> list = new ArrayList<>();
+        list.add(participantId);
+        Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetailsByParticipantIds(realm, list);
+        if (!oncHistoryDetails.isEmpty()) {
+            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantId).stream()
+                    .filter(o -> StringUtils.isNotBlank(o.getGender())).findFirst();
+            if (oncHistoryWithGender.isPresent()) {
+                return oncHistoryWithGender.get().getGender();
+            }
+        }
+        log.info("Participant {} did not have gender on tissue pages, will look into activities", this.getParticipantId());
+        //if gender is not set on tissue page get answer from "ABOUT_YOU.ASSIGNED_SEX"
+        return getGenderFromActivities(this.getActivities());
+    }
+
+    private String getGenderFromActivities(List<Activities> activities) {
+        Optional<Activities> maybeAboutYouActivity = activities.stream()
+                .filter(activity -> DDPActivityConstants.ACTIVITY_ABOUT_YOU.equals(activity.getActivityCode()))
+                .findFirst();
+        return (String) maybeAboutYouActivity.map(aboutYou -> {
+            List<Map<String, Object>> questionsAnswers = aboutYou.getQuestionsAnswers();
+            Optional<Map<String, Object>> maybeGenderQuestionAnswer = questionsAnswers.stream()
+                    .filter(q -> DDPActivityConstants.ABOUT_YOU_ACTIVITY_GENDER.equals(q.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID)))
+                    .findFirst();
+            return maybeGenderQuestionAnswer
+                    .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
+                    .orElse("U");
+        }).orElse("U");
     }
 
     public static class Builder {

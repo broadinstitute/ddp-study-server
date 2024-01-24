@@ -33,7 +33,7 @@ public class KitRequestExternal extends KitRequest {
     private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_RESPONSE =
             "UPDATE ddp_kit_request SET external_response = ? WHERE dsm_kit_request_id = ?";
 
-    public KitRequestExternal(long dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber,
+    public KitRequestExternal(int dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber,
                               DDPParticipant participant, String externalOrderStatus, String externalKitName) {
         super(dsmKitRequestId, participantId, shortId, shippingId, externalOrderNumber, participant, externalOrderStatus, externalKitName,
                 null);
@@ -57,7 +57,7 @@ public class KitRequestExternal extends KitRequest {
             throw new RuntimeException("Error updating kit request w/ dsm_kit_request_id " + dsmKitRequestId, e);
         }
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setDsmKitRequestId(Long.valueOf(dsmKitRequestId));
+        kitRequestShipping.setDsmKitRequestId(Integer.parseInt(dsmKitRequestId));
         kitRequestShipping.setExternalOrderStatus(externalOrderStatus);
         kitRequestShipping.setExternalOrderDate(externalOrderDate);
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(instanceId).orElseThrow();
@@ -108,7 +108,7 @@ public class KitRequestExternal extends KitRequest {
             logger.error("Error updating kit w/ dsm_kit_request_id " + dsmKitRequestId, e);
         }
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setDsmKitRequestId(Long.valueOf(dsmKitRequestId));
+        kitRequestShipping.setDsmKitRequestId(Integer.parseInt(dsmKitRequestId));
         kitRequestShipping.setTrackingToId(trackingIdTo);
         kitRequestShipping.setTrackingReturnId(trackingIdReturn);
         kitRequestShipping.setKitLabel(kitLabel);

@@ -1,0 +1,52 @@
+[
+  {
+    "activityCode" : "CONSENT_ADDENDUM_PEDIATRIC",
+    "activityVersion" : "v2",
+    "parentInstanceGuid" : null,
+    "questionsAnswers" : [
+      {
+        "stableId" : "SOMATIC_CONSENT_TUMOR_PEDIATRIC",
+        "answer" : true,
+        "SOMATIC_CONSENT_TUMOR_PEDIATRIC" : true,
+        "questionType" : "BOOLEAN"
+      },
+      {
+        "stableId" : "SOMATIC_ASSENT_ADDENDUM",
+        "answer" : false,
+        "SOMATIC_ASSENT_ADDENDUM" : false,
+        "questionType" : "BOOLEAN"
+      },
+      {
+        "stableId" : "SOMATIC_SINGATURE_PEDIATRIC",
+        "SOMATIC_SINGATURE_PEDIATRIC" : "name",
+        "answer" : "name",
+        "questionType" : "TEXT"
+      }
+    ],
+    "guid" : "SOME_RANDOM_GUID_0",
+    "attributes" : { },
+    "status" : "COMPLETE"
+  },
+  {
+    "activityCode" : "CONSENT_ADDENDUM",
+    "activityVersion" : "v2",
+    "parentInstanceGuid" : null,
+    "questionsAnswers" : [
+      {
+        "stableId" : "SOMATIC_CONSENT_ADDENDUM_TUMOR",
+        "answer" : false,
+        "SOMATIC_CONSENT_ADDENDUM_TUMOR" : false,
+        "questionType" : "BOOLEAN"
+      },
+      {
+        "stableId" : "SOMATIC_SINGATURE",
+        "SOMATIC_SINGATURE" : "signature",
+        "answer" : "name",
+        "questionType" : "TEXT"
+      }
+    ],
+    "guid" : "SOME_RANDOM_GUID_1",
+    "attributes" : { },
+    "status" : "COMPLETE"
+  }
+]

@@ -139,6 +139,7 @@ import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.participantfiles.DownloadParticipantFileRoute;
+import org.broadinstitute.dsm.route.phimanifest.PhiManifestReportRoute;
 import org.broadinstitute.dsm.route.somaticresults.DeleteSomaticResultRoute;
 import org.broadinstitute.dsm.route.somaticresults.GetSomaticResultsRoute;
 import org.broadinstitute.dsm.route.somaticresults.PostSomaticResultUploadRoute;
@@ -906,6 +907,8 @@ public class DSMServer {
     }
 
     private void setupMiscellaneousRoutes() {
+        get(UI_ROOT + RoutePath.PHI_MANIFEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new PhiManifestReportRoute(),
+                new JsonTransformer());
         MailingListRoute mailingListRoute = new MailingListRoute();
         get(UI_ROOT + RoutePath.MAILING_LIST_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, mailingListRoute,
                 new JsonTransformer());
