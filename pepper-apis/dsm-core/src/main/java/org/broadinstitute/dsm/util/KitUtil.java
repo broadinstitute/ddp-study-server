@@ -631,7 +631,7 @@ public class KitUtil {
                                 if (!IGNORE_AUTO_DEACTIVATION.equals(kit.getMessage())) {
                                     Map<String, Object> participant = participants.get(kit.getParticipantId());
                                     if (participant != null) {
-                                        logger.info("Checking pt " + kit.getParticipantId() + " for special behavior");
+                                        logger.debug("Checking ptp {} for special behavior", kit.getParticipantId());
                                         boolean specialBehavior = InstanceSettings.shouldKitBehaveDifferently(participant, uploaded);
                                         if (specialBehavior) {
                                             KitRequestShipping.deactivateKitRequest(kit.getDsmKitRequestId(),
