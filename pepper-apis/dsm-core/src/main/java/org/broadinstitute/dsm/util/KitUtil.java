@@ -186,7 +186,7 @@ public class KitUtil {
                         .withResearchProject(ddpInstance.getResearchProject()).build();
 
                 if (StringUtils.isBlank(kitLabel.getAddressIdTo())) {
-                    DDPParticipant ddpParticipant = getDDPParticipant(kitLabel, ddpInstance);
+                    DDPParticipant ddpParticipant = getDDPParticipant(kitLabel.getDdpParticipantId(), ddpInstance);
                     if (ddpParticipant == null) {
                         KitRequestShipping.deactivateKitRequest(Long.parseLong(kitLabel.getDsmKitRequestId()),
                                 "Participant not found", null, SystemUtil.SYSTEM, ddpInstanceDto);
@@ -201,7 +201,8 @@ public class KitUtil {
                 } else {
                     // TODO: I believe this case does not exist, so setting this to trip alert if it ever does.
                     // ideally we would remove this code or fix it - DC
-                    logger.error("Handling case where kit has an address id: assumed case would not occur");
+                    logger.error("Handling case where kit has an address id: assumed case would not occur: "
+                                   + "KitCreateLabel: {}", kitLabel);
                     //uploaded pt
                     toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabel.getKitRequestSettings(),
                             kitLabel.getAddressIdTo(), null, ddpInstanceDto);
@@ -251,6 +252,7 @@ public class KitUtil {
                         kitLabel.getDdpParticipantId(), kitLabel.getInstanceName(), kitLabel.getDsmKitId(), e);
             }
             if (toAddress != null) {
+                //TODO: why not pass toAddress? - DC
                 buyShipmentForKit(easyPostUtil, kitLabel.getDsmKitId(), kitLabel.getKitRequestSettings(),
                         kitLabel.getKitTyp(), toAddress.getId(), kitLabel.getBillingReference(), ddpInstanceDto);
             }
@@ -259,8 +261,7 @@ public class KitUtil {
         DBUtil.updateBookmark(0, BOOKMARK_LABEL_CREATION_RUNNING);
     }
 
-    private static DDPParticipant getDDPParticipant(KitRequestCreateLabel kitLabel, DDPInstance ddpInstance) {
-        String ddpParticipantId = kitLabel.getDdpParticipantId();
+    protected static DDPParticipant getDDPParticipant(String ddpParticipantId, DDPInstance ddpInstance) {
         Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(
                 ddpInstance, ElasticSearchUtil.BY_GUID + ddpParticipantId);
         if (participantESData == null || participantESData.isEmpty()) {
@@ -312,7 +313,7 @@ public class KitUtil {
      * so the query has to look it up through sub_kits_settings
      */
 
-    public static Map<String, KitRequestCreateLabel> getListOfSubKitsThatNeedLabels() {
+    private static Map<String, KitRequestCreateLabel> getListOfSubKitsThatNeedLabels() {
         Map<String, KitRequestCreateLabel> subKitsLabelTriggered = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();

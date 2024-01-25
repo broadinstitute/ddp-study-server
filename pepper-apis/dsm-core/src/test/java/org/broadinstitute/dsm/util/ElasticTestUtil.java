@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
@@ -29,7 +30,6 @@ import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -49,6 +49,7 @@ public class ElasticTestUtil {
      *      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
      */
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
+        log.info("Creating test index for realm {}", realm);
         String indexName = createIndex(realm);
         try {
             if (StringUtils.isNotBlank(settingsFile)) {
@@ -71,11 +72,11 @@ public class ElasticTestUtil {
             CreateIndexRequest req = new CreateIndexRequest(indexName);
             String settingsJson = TestUtil.readFile("elastic/indexSettings.json");
             req.settings(settingsJson, XContentType.JSON);
-            CreateIndexResponse createIndexResponse = client.indices().create(req, RequestOptions.DEFAULT);
-            log.info("CreateIndexResponse: {}", createIndexResponse);
+            client.indices().create(req, RequestOptions.DEFAULT);
+            log.info("Created index {}", indexName);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception creating index " + realm + ":" + e.getMessage());
+            Assert.fail(String.format("Exception creating index %s: %s", indexName, e.getMessage()));
         }
         return indexName;
     }
@@ -103,6 +104,7 @@ public class ElasticTestUtil {
         try {
             IndicesClient indicesClient = ElasticSearchUtil.getClientInstance().indices();
             indicesClient.putMapping(putMappingRequest, RequestOptions.DEFAULT);
+            ElasticSearchUtil.loadFieldMappings();
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail(String.format("Unexpected exception updating ES mappings for index %s: %s", esIndex, e));
@@ -114,7 +116,7 @@ public class ElasticTestUtil {
      * query it from an existing elastic instance by running a command like this
      */
     public static void updateSettings(String esIndex, String settingsJson) {
-       UpdateSettingsRequest putSettingsRequest = new UpdateSettingsRequest(esIndex);
+        UpdateSettingsRequest putSettingsRequest = new UpdateSettingsRequest(esIndex);
         putSettingsRequest.settings(settingsJson, XContentType.JSON);
 
         try {
@@ -235,11 +237,32 @@ public class ElasticTestUtil {
         }
     }
 
+    public static Address addParticipantAddressFromFile(String esIndex, String fileName, String ddpParticipantId) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            Address address = gson.fromJson(json, Address.class);
+            addParticipantAddress(esIndex, ddpParticipantId, address);
+            return address;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating address for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
     public static void addParticipantProfile(String esIndex, Profile profile) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> valueMap = mapper.convertValue(profile, Map.class);
         Map<String, Object> profileMap = Map.of("profile", valueMap);
         ElasticSearchUtil.updateRequest(profile.getGuid(), esIndex, profileMap);
+    }
+
+    public static void addParticipantAddress(String esIndex, String ddpParticipantId, Address address) {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> valueMap = mapper.convertValue(address, Map.class);
+        Map<String, Object> addressMap = Map.of("address", valueMap);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, addressMap);
     }
 
     public static void addActivities(String esIndex, String ddpParticipantId, String activitiesJson) {
