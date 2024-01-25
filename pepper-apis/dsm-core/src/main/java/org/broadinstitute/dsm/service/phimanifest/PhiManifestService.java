@@ -29,7 +29,6 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Slf4j
 public class PhiManifestService {
-    // todo arz enum to bind these together?
     public static final String CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE = "CONSENT_ADDENDUM_PEDIATRIC";
     public static final String SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID = "SOMATIC_CONSENT_TUMOR_PEDIATRIC";
     public static final String SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID = "SOMATIC_ASSENT_ADDENDUM";
