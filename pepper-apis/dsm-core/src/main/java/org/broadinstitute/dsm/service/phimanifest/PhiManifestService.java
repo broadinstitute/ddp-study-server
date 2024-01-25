@@ -147,7 +147,7 @@ public class PhiManifestService {
 
         String pediatricResponse = convertBooleanActivityAnswerToReportValue(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID));
-        phiManifest.setSomaticConsentTumorPediatricResponse(pediatricResponse);  // todo arz is this phiManifest.getSomaticConsentTumorPediatricResponse()?
+        phiManifest.setSomaticConsentTumorPediatricResponse(pediatricResponse);
 
         String assentAddendumResponse = convertBooleanActivityAnswerToReportValue(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID));
@@ -218,7 +218,7 @@ public class PhiManifestService {
         if (StringUtils.isBlank(dateOfMajority) || DateTimeUtil.isAdult(dateOfMajority)) {
             return getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid()).get();
         }
-        int age = DateTimeUtil.calculateAgeInYears(dateOfBirth); // todo arz suspect this is wrong, need age
+        int age = DateTimeUtil.calculateAgeInYears(dateOfBirth);
         if (age >= 7) {
             return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
                     SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, true) && participant.checkAnswerToActivity(
