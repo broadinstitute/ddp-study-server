@@ -14,7 +14,6 @@ import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.phimanifest.PhiManifest;
@@ -180,14 +179,14 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
         assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
 
-        // now change the answers to various questions and verify the phi manifest columns are correct
-        changeQuestionAnswer(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+        // now change the answers to various questions and verify that the phi manifest columns are correct
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
                 SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, "");
         phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
         assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
-        changeQuestionAnswer(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
                 SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, "false");
-        changeQuestionAnswer(participant, CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, "");
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, "");
         phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
         assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
 
@@ -196,30 +195,6 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                 oncHistoryDetail.getOncHistoryDetailId());
     }
 
-
-    /**
-     * Changes the in-memory value for the given question's answer.
-     * Does not make any modification to underlying elastic data.
-     */
-    private static void changeQuestionAnswer(ElasticSearchParticipantDto participant,
-                                             String activityCode, String questionStableId, String value) {
-        boolean changedIt = false;
-        for (Activities activity : participant.getActivities()) {
-            activity.getQuestionsAnswers();
-            if (activity.getActivityCode().equals(activityCode)) {
-                for (Map<String, Object> questionAnswer : activity.getQuestionsAnswers()) {
-                    if (questionAnswer.containsKey(questionStableId)) {
-                        questionAnswer.replace("answer", value);
-                        questionAnswer.replace(questionStableId, value);
-                        changedIt = true;
-                    }
-                }
-            }
-        }
-        if (!changedIt) {
-            Assert.fail(String.format("Could not change answer to %s.%s", activityCode, questionStableId));
-        }
-    }
 
     private void assertPhiManifest(PhiManifest phiManifest, List<MercuryOrderDto> orders, Tissue tissue,
                                    OncHistoryDetail oncHistoryDetail, ElasticSearchParticipantDto participant) {
