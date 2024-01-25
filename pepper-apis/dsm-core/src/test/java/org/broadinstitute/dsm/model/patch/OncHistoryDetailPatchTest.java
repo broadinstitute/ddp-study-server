@@ -49,7 +49,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void setup() throws Exception {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex, instanceName);
     }
 
     @AfterClass

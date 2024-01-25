@@ -14,7 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
@@ -251,6 +253,40 @@ public class ElasticTestUtil {
         }
     }
 
+    /**
+     * Add a DSM entity to the participant doc
+     *
+     * @param dob date of birth to replace in DSM entity
+     */
+    public static Dsm addDsmEntityFromFile(String esIndex, String fileName, String ddpParticipantId, String dob) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            json = json.replace("<dateOfBirth>", dob);
+            Dsm dsm = gson.fromJson(json, Dsm.class);
+            addParticipantDsm(esIndex, dsm, ddpParticipantId);
+            return dsm;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating dsm for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
+    public static List<Activities> addActivitiesFromFile(String esIndex, String fileName, String ddpParticipantId) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            List<Activities> activitiesList = gson.fromJson(json, List.class);
+            addParticipantActivities(esIndex, activitiesList, ddpParticipantId);
+            return activitiesList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating activities for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
     public static void addParticipantProfile(String esIndex, Profile profile) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> valueMap = mapper.convertValue(profile, Map.class);
@@ -263,6 +299,20 @@ public class ElasticTestUtil {
         Map<String, Object> valueMap = mapper.convertValue(address, Map.class);
         Map<String, Object> addressMap = Map.of("address", valueMap);
         ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, addressMap);
+    }
+
+    public static void addParticipantDsm(String esIndex, Dsm dsm, String guid) {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> valueMap = mapper.convertValue(dsm, Map.class);
+        Map<String, Object> dsmMap = Map.of("dsm", valueMap);
+        ElasticSearchUtil.updateRequest(guid, esIndex, dsmMap);
+    }
+
+    public static void addParticipantActivities(String esIndex, List<Activities> activitiesList, String guid) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Activities> valueMap = mapper.convertValue(activitiesList, List.class);
+        Map<String, Object> activitiesMap = Map.of("activities", valueMap);
+        ElasticSearchUtil.updateRequest(guid, esIndex, activitiesMap);
     }
 
     public static void addActivities(String esIndex, String ddpParticipantId, String activitiesJson) {

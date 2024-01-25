@@ -17,7 +17,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 public class KitRequest {
 
     @ColumnName(DBConstants.DSM_KIT_REQUEST_ID)
-    private Long dsmKitRequestId;
+    private Integer dsmKitRequestId;
     private String participantId;
     private String shortId;
     @ColumnName(DBConstants.DSM_LABEL)
@@ -42,7 +42,7 @@ public class KitRequest {
         this(null, participantId, shortId, null, externalOrderNumber, participant, null, null, null);
     }
 
-    public KitRequest(Long dsmKitRequestId, String participantId, String shortId, String ddpLabel, String externalOrderNumber,
+    public KitRequest(Integer dsmKitRequestId, String participantId, String shortId, String ddpLabel, String externalOrderNumber,
                       DDPParticipant participant, String externalOrderStatus, String externalKitName, Long externalOrderDate) {
         this.dsmKitRequestId = dsmKitRequestId;
         this.participantId = participantId;
