@@ -17,6 +17,12 @@
       "questionType" : "BOOLEAN"
     },
     {
+      "stableId" : "SOMATIC_CONSENT_ADDENDUM_TUMOR",
+      "answer" : true,
+      "SOMATIC_CONSENT_ADDENDUM_TUMOR" : true,
+      "questionType" : "BOOLEAN"
+    },
+    {
     "stableId" : "SOMATIC_SINGATURE_PEDIATRIC",
     "SOMATIC_SINGATURE_PEDIATRIC" : "name",
     "answer" : "name",

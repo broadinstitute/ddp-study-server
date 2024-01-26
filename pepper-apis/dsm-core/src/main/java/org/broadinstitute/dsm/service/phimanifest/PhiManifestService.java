@@ -158,9 +158,10 @@ public class PhiManifestService {
         String assentAddendumResponse = convertBooleanActivityAnswerToString(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID));
         phiManifest.setSomaticAssentAddendumResponse(assentAddendumResponse);
-        Optional<Boolean> consentAnswer = getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid());
+        Optional<Object> consentAnswer = getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid());
+
         if (consentAnswer.isPresent()) {
-            phiManifest.setSomaticConsentTumorResponse(convertBooleanToYesNo(consentAnswer.get()));
+            phiManifest.setSomaticConsentTumorResponse(convertBooleanToYesNo((Boolean)consentAnswer.get()));
         } else {
             phiManifest.setSomaticConsentTumorResponse("");
         }
@@ -203,13 +204,11 @@ public class PhiManifestService {
      * If the participant has answered the question, it will be returned
      * as a boolean.  If they have not, an empty optional will be returned.
      */
-    private static Optional<Boolean> getAdultParticipantConsentedToTumorAnswer(ElasticSearchParticipantDto participant, String studyGuid) {
+    private static Optional<Object> getAdultParticipantConsentedToTumorAnswer(ElasticSearchParticipantDto participant, String studyGuid) {
         if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
-            return Optional.of(participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID,
-                    true));
+            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
         } else if (DBConstants.OSTEO_STUDY_GUID.equals(studyGuid)) {
-            return Optional.of(participant.checkAnswerToActivity(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID,
-                    true));
+            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
         }
         return Optional.empty();
     }
@@ -222,7 +221,8 @@ public class PhiManifestService {
         String dateOfBirth = participant.getDsm().get().getDateOfBirth();
         String dateOfMajority = (String) participant.getDsm().get().getDateOfMajority();
         if (StringUtils.isBlank(dateOfMajority) || DateTimeUtil.isAdult(dateOfMajority)) {
-            return getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid()).get();
+            return (Boolean)getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid())
+                    .orElse(false);
         }
         int age = DateTimeUtil.calculateAgeInYears(dateOfBirth);
         if (age >= 7) {
