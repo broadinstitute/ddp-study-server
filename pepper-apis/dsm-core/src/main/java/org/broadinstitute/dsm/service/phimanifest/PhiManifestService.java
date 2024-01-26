@@ -27,6 +27,13 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DateTimeUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+/**
+ * Extracts various data fields for a participant and writes them
+ * into a "report" that is ultimately displayed for CRCs in PE-CGS
+ * studies so that they can more easily view all the data in one
+ * place when double checking results that will be shared
+ * with a participant.
+ */
 @Slf4j
 public class PhiManifestService {
     public static final String CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE = "CONSENT_ADDENDUM_PEDIATRIC";
@@ -41,7 +48,6 @@ public class PhiManifestService {
             "Sequencing order number %s does not exist or is not a valid clinical order for this participant";
 
     private static final String NOT_CONSENTED_ERROR = "Participant %s has not consented to receive shared learnings";
-
 
     public PhiManifestReportRoute.PhiManifestResponse generateReport(String ddpParticipantId, String sequencingOrderId,
                                                                      DDPInstanceDto ddpInstanceDto) {
