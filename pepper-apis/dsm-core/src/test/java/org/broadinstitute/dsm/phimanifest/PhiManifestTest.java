@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.phimanifest;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.SmId;
@@ -27,6 +28,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.broadinstitute.dsm.service.phimanifest.PhiManifestService.*;
 
 public class PhiManifestTest extends DbAndElasticBaseTest {
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
@@ -176,13 +179,30 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         PhiManifest phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
         oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(createdTissue.getOncHistoryDetailId(), instanceName);
         assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
+
+        // now change the answers to various questions and verify that the phi manifest columns are correct
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+                SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, "");
+        phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
+        assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+                SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, "false");
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, "");
+        phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
+        assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
+
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, null);
+        phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
+        assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
+
         mercuryOrderDao.delete(mercuryOrderId);
         lmsOncHistoryTestUtil.deleteOncHistory(childReportGuid, participantDto.getParticipantId().get(), instanceName, userEmail,
                 oncHistoryDetail.getOncHistoryDetailId());
     }
 
-    private void assertPhiManifest(PhiManifest phiManifest, List<MercuryOrderDto> orders, Tissue tissue, OncHistoryDetail oncHistoryDetail,
-                                   ElasticSearchParticipantDto participant) {
+
+    private void assertPhiManifest(PhiManifest phiManifest, List<MercuryOrderDto> orders, Tissue tissue,
+                                   OncHistoryDetail oncHistoryDetail, ElasticSearchParticipantDto participant) {
         MercuryOrderDto mercuryOrderDto = orders.get(0);
         Assert.assertEquals(mercuryOrderDto.getOrderId(), phiManifest.getClinicalOrderId());
         Assert.assertEquals(mercuryOrderDto.getMercuryPdoId(), phiManifest.getClinicalPdoNumber());
@@ -203,5 +223,17 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         Assert.assertEquals(participantProfile.getFirstName(), phiManifest.getFirstName());
         Assert.assertEquals(participantProfile.getLastName(), phiManifest.getLastName());
         Assert.assertEquals(participant.getDsm().get().getDateOfBirth(), phiManifest.getDateOfBirth());
+
+        String somaticTumorReportValue = PhiManifestService.convertBooleanActivityAnswerToString(
+                participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+                        SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID));
+        Assert.assertTrue(
+                StringUtils.equals(somaticTumorReportValue, phiManifest.getSomaticConsentTumorPediatricResponse()));
+
+        String somaticAssentAddendumReportValue = PhiManifestService.convertBooleanActivityAnswerToString(
+                participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+                        SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID));
+        Assert.assertTrue(
+                StringUtils.equals(somaticAssentAddendumReportValue, phiManifest.getSomaticAssentAddendumResponse()));
     }
 }

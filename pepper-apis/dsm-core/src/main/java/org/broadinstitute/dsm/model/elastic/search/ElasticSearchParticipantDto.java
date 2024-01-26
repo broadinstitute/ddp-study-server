@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.Files;
 import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -62,6 +64,27 @@ public class ElasticSearchParticipantDto {
     }
 
     protected ElasticSearchParticipantDto() {  }
+
+    /**
+     * Changes the value for the given question's answer.
+     * Does not make any modification to underlying elastic data.
+     */
+    @VisibleForTesting
+    public void changeQuestionAnswer(String activityCode, String questionStableId, String value) {
+        for (Activities activity : getActivities()) {
+            if (activity.getActivityCode().equals(activityCode)) {
+                for (Map<String, Object> questionAnswer : activity.getQuestionsAnswers()) {
+                    if (questionAnswer.containsKey(questionStableId)) {
+                        questionAnswer.replace(ESObjectConstants.ANSWER, value);
+                        questionAnswer.replace(questionStableId, value);
+                        return;
+                    }
+                }
+            }
+        }
+        throw new DsmInternalError(String.format("Could not change answer to %s.%s because question %s was not found "
+                + "in any activities.", activityCode, questionStableId, questionStableId));
+    }
 
     public Optional<Address> getAddress() {
         return Optional.ofNullable(address);
