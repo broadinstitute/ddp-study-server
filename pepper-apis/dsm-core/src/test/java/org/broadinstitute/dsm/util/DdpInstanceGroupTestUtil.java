@@ -36,7 +36,7 @@ public class DdpInstanceGroupTestUtil {
 
 
     public static int createInstanceGroup(String instanceName, String studyGroup) {
-        int instanceId = getDdpInstanceId(instanceName);
+        int instanceId = createDDPInstanceIfNotFound(instanceName);
         int studyGroupId = getGroupId(studyGroup);
         SimpleResult res = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
@@ -102,7 +102,11 @@ public class DdpInstanceGroupTestUtil {
         deleteInstance(instanceId);
     }
 
-    private static void deleteInstance(int instanceId) {
+    public static void deleteInstance(DDPInstanceDto ddpInstanceDto) {
+        deleteInstance(ddpInstanceDto.getDdpInstanceId());
+    }
+
+    public static void deleteInstance(int instanceId) {
         inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_INSTANCE)) {
                 stmt.setInt(1, instanceId);
@@ -114,10 +118,12 @@ public class DdpInstanceGroupTestUtil {
         });
     }
 
-    public static int getDdpInstanceId(String instanceName) {
+    public static int createDDPInstanceIfNotFound(String instanceName) {
         int id = ddpInstanceDao.getDDPInstanceIdByInstanceName(instanceName);
-        if (id != -1) return id;
-        return createTestDdpInstance(instanceName, null).getDdpInstanceId();
+        if (id != -1) {
+            return id;
+        }
+        return createTestDdpInstance(instanceName).getDdpInstanceId();
     }
 
     public static int deleteStudyGroup(int groupId) {
@@ -133,13 +139,17 @@ public class DdpInstanceGroupTestUtil {
     }
 
     public static DDPInstanceDto createTestDdpInstance(String ddpInstanceName) {
-        return createTestDdpInstance(ddpInstanceName, null);
+        return createTestDdpInstance(ddpInstanceName, null, ddpInstanceName);
     }
 
     public static DDPInstanceDto createTestDdpInstance(String ddpInstanceName, String esIndex) {
+        return createTestDdpInstance(ddpInstanceName, esIndex, ddpInstanceName);
+    }
+
+    public static DDPInstanceDto createTestDdpInstance(String ddpInstanceName, String esIndex, String studyGuid) {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
         ddpInstanceDto.setInstanceName(ddpInstanceName);
-        ddpInstanceDto.setStudyGuid(ddpInstanceName);
+        ddpInstanceDto.setStudyGuid(studyGuid);
         ddpInstanceDto.setEsParticipantIndex(esIndex);
         ddpInstanceDto.setIsActive(true);
         ddpInstanceDto.setAuth0Token(false);

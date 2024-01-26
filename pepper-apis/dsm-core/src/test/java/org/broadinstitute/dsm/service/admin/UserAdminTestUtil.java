@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
@@ -45,33 +47,16 @@ import org.junit.Assert;
 public class UserAdminTestUtil {
     private final Map<Integer, List<Integer>> createdUserRoles = new HashMap<>();
     private final List<Integer> createdGroupRoles = new ArrayList<>();
+    @Getter
     private int studyGroupId = -1;
+    @Getter
     private int ddpInstanceId = -1;
     private int userAdminRoleId;
     private int userAdminId = -1;
     private Map<String, Integer> allRoles;
-
     private boolean initialized = false;
 
-
-    public UserAdminTestUtil() {
-    }
-
-    protected static Map<String, Integer> getAllRoles() {
-        return inTransaction(conn -> {
-            Map<String, Integer> roles = new HashMap<>();
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT ar.role_id, ar.name FROM access_role ar")) {
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        roles.put(rs.getString(2), rs.getInt(1));
-                    }
-                }
-            } catch (SQLException e) {
-                throw new DsmInternalError("Error getting roles", e);
-            }
-            return roles;
-        });
-    }
+    public UserAdminTestUtil() {}
 
     /**
      * Call this to teardown this class, typically in an @After or @AfterClass method
@@ -98,21 +83,23 @@ public class UserAdminTestUtil {
     }
 
     /**
-     * Checks if the instance is already initialized, if not
-     * initialize class and create a test DDP realm/instance and study group
+     * Initialize class and create a test DDP realm/instance and study group
      *
      * @param realmName          name of study realm that is not already in use
      * @param studyGuid          study guid of the new realm we are creating
      * @param collaboratorPrefix string that appears before the collaborator sample and participant ids specific to this realm
      * @param studyGroup         name of study group that is not already in use to associate with realm
-     * @param esIndex           ES index
+     * @param esIndex            ES index
      */
-    public void createRealmAndStudyGroup(@NonNull String realmName, String studyGuid, String collaboratorPrefix, String studyGroup,
-                                         String esIndex) {
-        ddpInstanceId = DdpInstanceGroupTestUtil.createInstance(realmName, studyGuid, collaboratorPrefix, esIndex).getDdpInstanceId();
-        studyGroupId = DdpInstanceGroupTestUtil.createGroup(studyGroup);
-
+    public void createRealmAndStudyGroup(@NonNull String realmName, String studyGuid, String collaboratorPrefix,
+                                         String studyGroup, String esIndex) {
+        if (ddpInstanceId != -1 || studyGroupId != -1) {
+            throw new DsmInternalError("Realm and study group already initialized");
+        }
         initialize();
+        ddpInstanceId = DdpInstanceGroupTestUtil.createInstance(realmName, studyGuid, collaboratorPrefix, esIndex)
+                .getDdpInstanceId();
+        studyGroupId = DdpInstanceGroupTestUtil.createGroup(studyGroup);
         DdpInstanceGroupTestUtil.createInstanceGroup(realmName, studyGroup);
     }
 
@@ -220,6 +207,10 @@ public class UserAdminTestUtil {
         userDto.setEmail(email);
         userDto.setIsActive(1);
         UserDao userDao = new UserDao();
+        Optional<UserDto> maybeUserExists = userDao.getUserByEmail(email);
+        if (maybeUserExists.isPresent()) {
+            return maybeUserExists.get().getId();
+        }
         return userDao.create(userDto);
     }
 
@@ -321,13 +312,19 @@ public class UserAdminTestUtil {
         return roleId;
     }
 
-    public int getStudyGroupId() {
-        return studyGroupId;
+    public static Map<String, Integer> getAllRoles() {
+        return inTransaction(conn -> {
+            Map<String, Integer> roles = new HashMap<>();
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT ar.role_id, ar.name FROM access_role ar")) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        roles.put(rs.getString(2), rs.getInt(1));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting roles", e);
+            }
+            return roles;
+        });
     }
-
-    public int getDdpInstanceId() {
-        return ddpInstanceId;
-    }
-
-
 }

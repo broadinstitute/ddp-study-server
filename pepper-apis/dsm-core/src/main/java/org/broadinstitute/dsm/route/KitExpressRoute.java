@@ -19,6 +19,8 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.EasypostLabelRate;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
@@ -55,8 +57,8 @@ public class KitExpressRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String userIdRequest = UserUtil.getUserId(request);
         if (UserUtil.checkUserAccess(null, userId, "kit_express", userIdRequest)) {
-            String kitRequestId = request.params(RequestParameter.KITREQUESTID);
-            if (StringUtils.isNotBlank(kitRequestId)) {
+            if (StringUtils.isNotBlank(request.params(RequestParameter.KITREQUESTID))) {
+                int kitRequestId = Integer.parseInt(request.params(RequestParameter.KITREQUESTID));
                 if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
                     return getRateForOvernightExpress(kitRequestId);
                 }
@@ -64,9 +66,9 @@ public class KitExpressRoute extends RequestHandler {
                     expressKitRequest(kitRequestId, userIdRequest);
                     return new Result(200);
                 }
-                throw new RuntimeException("Request method not known");
+                throw new DSMBadRequestException("Request method not known");
             } else {
-                throw new RuntimeException("KitRequestId was missing");
+                throw new DSMBadRequestException("KitRequestId was missing");
             }
         } else {
             response.status(500);
@@ -74,13 +76,13 @@ public class KitExpressRoute extends RequestHandler {
         }
     }
 
-    public void expressKitRequest(@NonNull String kitRequestId, @NonNull String userId) {
+    public void expressKitRequest(int kitRequestId, @NonNull String userId) {
         KitRequestShipping kitRequest = KitRequestShipping.getKitRequest(kitRequestId);
 
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(kitRequest.getRealm()).orElseThrow();
 
         //deactivate kit which is  already in db and refund the label
-        KitRequestShipping.deactivateKitRequest(Long.parseLong(kitRequestId), KitRequestShipping.DEACTIVATION_REASON,
+        KitRequestShipping.deactivateKitRequest(kitRequestId, KitRequestShipping.DEACTIVATION_REASON,
                 DSMServer.getDDPEasypostApiKey(kitRequest.getRealm()), userId, ddpInstanceDto);
         //add new kit into db
         KitRequestShipping.reactivateKitRequest(kitRequestId, ddpInstanceDto);
@@ -120,12 +122,12 @@ public class KitExpressRoute extends RequestHandler {
         KitRequestShipping.updateKit(kitId, participantShipment, null, errorMessage, toAddress, true, ddpInstanceDto);
     }
 
-    private String getKitId(@NonNull String kitRequestId) {
-        SimpleResult results = inTransaction((conn) -> {
+    private String getKitId(int kitRequestId) {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + KitDao.KIT_BY_KIT_REQUEST_ID)) {
-                stmt.setString(1, kitRequestId);
+                stmt.setInt(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.DSM_KIT_ID);
@@ -138,12 +140,13 @@ public class KitExpressRoute extends RequestHandler {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting dsm_kit_id for kit w/ dsm_kit_request_id " + kitRequestId, results.resultException);
+            throw new DsmInternalError("Error getting dsm_kit_id for kit w/ dsm_kit_request_id " + kitRequestId,
+                    results.resultException);
         }
         return (String) results.resultValue;
     }
 
-    private EasypostLabelRate getRateForOvernightExpress(@NonNull String kitRequestId) throws EasyPostException {
+    private EasypostLabelRate getRateForOvernightExpress(int kitRequestId) throws EasyPostException {
         KitRequestShipping kitRequest = KitRequestShipping.getKitRequest(kitRequestId);
         if (StringUtils.isNotBlank(kitRequest.getEasypostToId())) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitRequest.getRealm());

@@ -94,7 +94,7 @@ public class KitDaoTest extends DbTxnBaseTest {
         kitReq.setKitTypeId(Long.toString(kitTypeId));
         kitReq.setBspCollaboratorParticipantId(HRUID);
         kitRequestId = kitDao.insertKitRequest(kitReq);
-        kitReq.setDsmKitRequestId(Long.valueOf(kitRequestId));
+        kitReq.setDsmKitRequestId(kitRequestId);
         kitId = kitDao.insertKit(kitReq);
     }
 
