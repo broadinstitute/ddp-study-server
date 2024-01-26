@@ -2,10 +2,12 @@ package org.broadinstitute.dsm.statics;
 
 public class DBConstants {
 
-    private DBConstants(){
+    private DBConstants() {
         throw new IllegalStateException("Utility class");
     }
 
+    public static final String LMS_STUDY_GUID = "cmi-lms";
+    public static final String OSTEO_STUDY_GUID = "cmi-osteo";
     //table names
     public static final String DDP_MEDICAL_RECORD = "ddp_medical_record";
     public static final String DDP_ONC_HISTORY = "ddp_onc_history";

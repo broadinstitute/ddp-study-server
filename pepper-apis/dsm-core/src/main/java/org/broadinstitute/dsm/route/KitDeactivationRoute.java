@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -40,8 +41,8 @@ public class KitDeactivationRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        String kitRequestId = request.params(RequestParameter.KITREQUESTID);
-        if (StringUtils.isNotBlank(kitRequestId)) {
+        if (StringUtils.isNotBlank(request.params(RequestParameter.KITREQUESTID))) {
+            int kitRequestId = Integer.parseInt(request.params(RequestParameter.KITREQUESTID));
             String userIdRequest = UserUtil.getUserId(request);
             boolean deactivate = request.url().toLowerCase().contains("deactivate");
             KitRequestShipping kitRequest = KitRequestShipping.getKitRequest(kitRequestId);
@@ -51,7 +52,7 @@ public class KitDeactivationRoute extends RequestHandler {
                 if (deactivate) {
                     JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
                     String reason = jsonObject.get("reason").getAsString();
-                    KitRequestShipping.deactivateKitRequest(Long.parseLong(kitRequestId), reason,
+                    KitRequestShipping.deactivateKitRequest(kitRequestId, reason,
                             DSMServer.getDDPEasypostApiKey(realm), userIdRequest, ddpInstanceByInstanceName);
                 } else {
                     QueryParamsMap queryParams = request.queryMap();
@@ -104,7 +105,7 @@ public class KitDeactivationRoute extends RequestHandler {
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
         } else {
-            throw new RuntimeException("KitRequestId id was missing");
+            throw new DSMBadRequestException("KitRequestId id was missing");
         }
     }
 }

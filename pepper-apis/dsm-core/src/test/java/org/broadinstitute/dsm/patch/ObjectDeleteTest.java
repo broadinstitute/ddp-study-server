@@ -12,8 +12,8 @@ import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.util.OncHistoryTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
+import org.broadinstitute.dsm.util.OncHistoryTestUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -25,6 +25,7 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     private static final String groupName = "patch_group";
     static OncHistoryTestUtil oncHistoryTestUtil;
     static String userEmail = "patchTestUser1@unittest.dev";
+    static String adminUserEmail = "patchTestAdmin@unittest.dev";
     static String guid = "PATCH1_PARTICIPANT";
     static String guid2 = "PATCH2_PARTICIPANT";
     static String guid3 = "PATCH3_PARTICIPANT";
@@ -37,7 +38,8 @@ public class ObjectDeleteTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        oncHistoryTestUtil = new OncHistoryTestUtil(instanceName, instanceName, userEmail, groupName, "lmsPrefix", esIndex);
+        oncHistoryTestUtil = new OncHistoryTestUtil(instanceName, instanceName, userEmail, adminUserEmail,
+                groupName, "lmsPrefix", esIndex);
         oncHistoryTestUtil.initialize();
         ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
     }

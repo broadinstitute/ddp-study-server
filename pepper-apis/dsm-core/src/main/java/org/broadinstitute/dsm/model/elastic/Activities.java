@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -46,5 +47,17 @@ public class Activities {
 
     public Activities() {
 
+    }
+
+    public Optional<Object> getAnswerToQuestion(String question) {
+        Optional<Map<String, Object>> maybeQuestionAnswers = this.getQuestionsAnswers().stream()
+                .filter(questionAnswer -> questionAnswer.get("stableId").equals(question)).findAny();
+        if (maybeQuestionAnswers.isPresent()) {
+            Map<String, Object> questionAnswer = maybeQuestionAnswers.get();
+            if (questionAnswer.containsKey("answer")) {
+                return Optional.ofNullable(questionAnswer.get("answer"));
+            }
+        }
+        return Optional.empty();
     }
 }
