@@ -145,11 +145,11 @@ public class PhiManifestService {
         phiManifest.setOrderStatus(mercuryOrderDto.getOrderStatus());
         phiManifest.setOrderStatusDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getStatusDate()));
 
-        String pediatricResponse = convertBooleanActivityAnswerToReportValue(participant.getParticipantAnswerInSurvey(
+        String pediatricResponse = convertBooleanActivityAnswerToString(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID));
         phiManifest.setSomaticConsentTumorPediatricResponse(pediatricResponse);
 
-        String assentAddendumResponse = convertBooleanActivityAnswerToReportValue(participant.getParticipantAnswerInSurvey(
+        String assentAddendumResponse = convertBooleanActivityAnswerToString(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID));
         phiManifest.setSomaticAssentAddendumResponse(assentAddendumResponse);
         Optional<Boolean> consentAnswer = getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid());
@@ -169,7 +169,7 @@ public class PhiManifestService {
      * Given an answer to a boolean question, returns Yes, No, or a blank string
      * to include in the PHI report.
      */
-    public static String convertBooleanActivityAnswerToReportValue(Optional<Object> b) {
+    public static String convertBooleanActivityAnswerToString(Optional<Object> b) {
         if (b.isPresent() && b.get() instanceof Boolean) {
             return convertBooleanToReportValue((Boolean) b.get());
         } else {

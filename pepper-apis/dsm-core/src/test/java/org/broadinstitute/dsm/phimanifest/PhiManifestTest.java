@@ -219,11 +219,11 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         Assert.assertEquals(participantProfile.getLastName(), phiManifest.getLastName());
         Assert.assertEquals(participant.getDsm().get().getDateOfBirth(), phiManifest.getDateOfBirth());
 
-        String somaticTumorReportValue = PhiManifestService.convertBooleanActivityAnswerToReportValue(participant.getParticipantAnswerInSurvey(
+        String somaticTumorReportValue = PhiManifestService.convertBooleanActivityAnswerToString(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID));
         Assert.assertEquals(somaticTumorReportValue, phiManifest.getSomaticConsentTumorPediatricResponse());
 
-        String somaticAssentAddendumReportValue = PhiManifestService.convertBooleanActivityAnswerToReportValue(participant.getParticipantAnswerInSurvey(
+        String somaticAssentAddendumReportValue = PhiManifestService.convertBooleanActivityAnswerToString(participant.getParticipantAnswerInSurvey(
                 CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID));
         Assert.assertEquals(somaticAssentAddendumReportValue, phiManifest.getSomaticAssentAddendumResponse());
     }

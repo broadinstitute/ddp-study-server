@@ -71,23 +71,19 @@ public class ElasticSearchParticipantDto {
      */
     @VisibleForTesting
     public void changeQuestionAnswer(String activityCode, String questionStableId, String value) {
-        boolean changedIt = false;
         for (Activities activity : getActivities()) {
-            activity.getQuestionsAnswers();
             if (activity.getActivityCode().equals(activityCode)) {
                 for (Map<String, Object> questionAnswer : activity.getQuestionsAnswers()) {
                     if (questionAnswer.containsKey(questionStableId)) {
                         questionAnswer.replace(ESObjectConstants.ANSWER, value);
                         questionAnswer.replace(questionStableId, value);
-                        changedIt = true;
+                        return;
                     }
                 }
             }
         }
-        if (!changedIt) {
-            throw new DsmInternalError(String.format("Could not change answer to %s.%s",
-                    activityCode, questionStableId));
-        }
+        throw new DsmInternalError(String.format("Could not change answer to %s.%s because question %s was not found "
+                + "in any activities.", activityCode, questionStableId, questionStableId));
     }
 
     public Optional<Address> getAddress() {
