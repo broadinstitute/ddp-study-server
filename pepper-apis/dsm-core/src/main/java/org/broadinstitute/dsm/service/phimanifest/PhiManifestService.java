@@ -160,14 +160,14 @@ public class PhiManifestService {
         phiManifest.setSomaticAssentAddendumResponse(assentAddendumResponse);
         Optional<Boolean> consentAnswer = getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid());
         if (consentAnswer.isPresent()) {
-            phiManifest.setSomaticConsentTumorResponse(convertBooleanToReportValue(consentAnswer.get()));
+            phiManifest.setSomaticConsentTumorResponse(convertBooleanToYesNo(consentAnswer.get()));
         } else {
             phiManifest.setSomaticConsentTumorResponse("");
         }
         return phiManifest;
     }
 
-    public static String convertBooleanToReportValue(boolean b) {
+    public static String convertBooleanToYesNo(boolean b) {
         return b ? "Yes" : "No";
     }
 
@@ -175,12 +175,12 @@ public class PhiManifestService {
      * Given an answer to a boolean question, returns Yes, No, or a blank string
      * to include in the PHI report.
      */
-    public static String convertBooleanActivityAnswerToString(Optional<Object> b) {
-        if (b.isPresent() && b.get() instanceof Boolean) {
-            return convertBooleanToReportValue((Boolean) b.get());
+    public static String convertBooleanActivityAnswerToString(Optional<Object> answer) {
+        if (answer.isPresent() && answer.get() instanceof Boolean) {
+            return convertBooleanToYesNo((Boolean) answer.get());
         } else {
-            if (b.isPresent()) {
-                return b.get().toString();
+            if (answer.isPresent()) {
+                return answer.get().toString();
             } else {
                 return "";
             }
