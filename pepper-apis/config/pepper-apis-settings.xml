@@ -12,7 +12,6 @@
                 <sonar.projectName>ddp-study-server</sonar.projectName>
                 <sonar.projectKey>broadinstitute_ddp-study-server</sonar.projectKey>
                 <sonar.organization>dsp-appsec</sonar.organization>
-                <sonar.scanner.force-deprecated-java-version>true</sonar.scanner.force-deprecated-java-version>
             </properties>
         </profile>
     </profiles>
