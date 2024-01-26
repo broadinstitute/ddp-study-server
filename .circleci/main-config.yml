@@ -890,7 +890,7 @@ jobs:
                 additional_options: -PDefaultBuild,coverage -Ddsm.test.excludes='${dsm.test.ci.excludes}'
                 restore_m2_cache: false
                 save_m2_cache: false    #REMOVE WHEN DONE
-                coverage_report: false
+                coverage_report: true
                 sonar_scan: false
                 sonar_additional_module: 'ddp-common'
             - save-ddp-cache
@@ -935,7 +935,7 @@ jobs:
                 skip_checkstyle: true
                 additional_options: '-PDefaultBuild,coverage -Dtest=ServerInSameProcessIntegrationTestSuite'
                 restore_m2_cache: false
-                coverage_report: false
+                coverage_report: true
                 sonar_scan: false
             - save-ddp-cache
 
@@ -982,7 +982,7 @@ jobs:
                 module: dss-core
                 additional_options: '-PCircleciParallelBuild,coverage -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
                 save_m2_cache: true
-                coverage_report: false
+                coverage_report: true
                 sonar_scan: false
             - save-ddp-cache
             - run:
