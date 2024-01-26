@@ -18,10 +18,10 @@ On Mac computer we are using:
 
 ## Procedure
 
-``docker buildx build --platform linux/amd64,linux/arm64 -t broadinstitute/study-server-build:2022-06-01A  --build-arg GIT_SHA=`git rev-parse --verify HEAD` -f ./Dockerfile-build --push .
+``docker buildx build --platform linux/amd64,linux/arm64 -t broadinstitute/study-server-build:java-2023-03-28C  --build-arg GIT_SHA=`git rev-parse --verify HEAD` -f ./Dockerfile-build --push .
 ``
 
-``docker buildx build --platform linux/amd64,linux/arm64 -t broadinstitute/study-server-build:java-2022-06-01A  --build-arg GIT_SHA=`git rev-parse --verify HEAD` -f ./Dockerfile-java-build --push .``
+``docker buildx build --platform linux/amd64,linux/arm64 -t broadinstitute/study-server-build:java-2023-03-28C  --build-arg GIT_SHA=`git rev-parse --verify HEAD` -f ./Dockerfile-java-build --push .``
 
 ## Additional Notes
 We are using multi-platform builds (amd64 and arm64) to create separate versions of images that can run on Intel 
