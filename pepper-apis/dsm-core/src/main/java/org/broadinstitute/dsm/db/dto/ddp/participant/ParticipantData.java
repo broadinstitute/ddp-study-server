@@ -119,6 +119,13 @@ public class ParticipantData {
         return Optional.ofNullable(fieldTypeId);
     }
 
+    public String getRequiredFieldTypeId() {
+        if (StringUtils.isBlank(fieldTypeId)) {
+            throw new DsmInternalError("Error, fieldTypeId should not be blank");
+        }
+        return fieldTypeId;
+    }
+
     public Optional<String> getData() {
         return Optional.ofNullable(data);
     }
