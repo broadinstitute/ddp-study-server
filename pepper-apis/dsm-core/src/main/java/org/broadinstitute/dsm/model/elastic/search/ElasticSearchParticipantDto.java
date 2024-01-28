@@ -68,22 +68,23 @@ public class ElasticSearchParticipantDto {
     /**
      * Changes the value for the given question's answer.
      * Does not make any modification to underlying elastic data.
+     * @return true if the value was changed, false if the activity
+     * and question do not exist.
      */
     @VisibleForTesting
-    public void changeQuestionAnswer(String activityCode, String questionStableId, String value) {
+    public boolean changeQuestionAnswer(String activityCode, String questionStableId, String value) {
         for (Activities activity : getActivities()) {
             if (activity.getActivityCode().equals(activityCode)) {
                 for (Map<String, Object> questionAnswer : activity.getQuestionsAnswers()) {
                     if (questionAnswer.containsKey(questionStableId)) {
                         questionAnswer.replace(ESObjectConstants.ANSWER, value);
                         questionAnswer.replace(questionStableId, value);
-                        return;
+                        return true;
                     }
                 }
             }
         }
-        throw new DsmInternalError(String.format("Could not change answer to %s.%s because question %s was not found "
-                + "in any activities.", activityCode, questionStableId, questionStableId));
+        return false;
     }
 
     public Optional<Address> getAddress() {
