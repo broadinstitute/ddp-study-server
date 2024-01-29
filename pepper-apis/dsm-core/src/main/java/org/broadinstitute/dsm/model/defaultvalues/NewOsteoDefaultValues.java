@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -18,6 +19,7 @@ import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
+@Slf4j
 public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
 
     private CohortTagDao cohortTagDao;
@@ -47,7 +49,7 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
                 ddpInstanceByInstanceName.getDdpInstanceId());
         int newCohortTagId = cohortTagDao.create(newCohortTag);
         newCohortTag.setCohortTagId(newCohortTagId);
-        logger.info("Attempting to update `dsm` object in ES");
+        log.info("Attempting to update `dsm` object in ES");
         dsm.setCohortTag(List.of(newCohortTag));
         Map<String, Object> dsmAsMap =
                 ObjectMapperSingleton.readValue(ObjectMapperSingleton.writeValueAsString(dsm),
@@ -59,7 +61,7 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
     }
 
     private void writeDataToES(Map<String, Object> esPtDtoAsMap) {
-        logger.info("Attempting to write `dsm` object in ES");
+        log.info("Attempting to write `dsm` object in ES");
         elasticDataExportAdapter.setSource(esPtDtoAsMap);
         elasticDataExportAdapter.export();
     }
