@@ -68,12 +68,14 @@ public class TestParticipantUtil {
         }
     }
 
-    public static ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob, String esIndex) {
+    public static ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob,
+                                                                 String dateOfMajority, String esIndex) {
         String ddpParticipantId = genDDPParticipantId(guid);
         ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
-        ElasticTestUtil.addDsmObjectToParticipantFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId, dob);
+        ElasticTestUtil.addDsmObjectToParticipantFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId,
+                dob, dateOfMajority);
         ElasticTestUtil.addActivitiesFromFile(esIndex, "elastic/lmsActivitiesSharedLearningEligible.json", ddpParticipantId);
         log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
@@ -85,7 +87,7 @@ public class TestParticipantUtil {
         ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
-        ElasticTestUtil.addDsmObjectToParticipantFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId, dob);
+        ElasticTestUtil.addDsmObjectToParticipantFromFile(esIndex, "elastic/participantDsm.json", ddpParticipantId, dob, null);
         ElasticTestUtil.addActivitiesFromFile(esIndex, "elastic/lmsActivitiesSharedLearningIneligible.json", ddpParticipantId);
         log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));

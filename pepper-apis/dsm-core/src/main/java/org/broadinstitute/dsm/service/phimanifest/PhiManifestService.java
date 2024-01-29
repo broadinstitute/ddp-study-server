@@ -59,13 +59,13 @@ public class PhiManifestService {
             log.warn(errorMessage);
             return new PhiManifestReportRoute.PhiManifestResponse(errorMessage);
         }
-        if (!isParticipantConsented(ddpParticipantId, ddpInstanceDto)) {
+        ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
+                ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
+        if (!isParticipantConsented(participant, ddpInstanceDto)) {
             String errorMessage = String.format(NOT_CONSENTED_ERROR, ddpParticipantId);
             log.warn(errorMessage);
             return new PhiManifestResponse(errorMessage);
         }
-        ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
-                ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
         if (participant.getProfile().isEmpty()) {
             throw new DsmInternalError("There is no profile in ES for participant " + ddpParticipantId);
         }
@@ -189,11 +189,8 @@ public class PhiManifestService {
 
     }
 
-    public boolean isParticipantConsented(@NonNull String ddpParticipantId, @NonNull DDPInstanceDto ddpInstanceDto) {
-        ElasticSearchParticipantDto participant = ElasticSearchUtil.getParticipantESDataByParticipantId(
-                ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
-        return (participant != null && hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto))
-                && hasParticipantConsentedToTumor(participant);
+    public boolean isParticipantConsented(@NonNull ElasticSearchParticipantDto participant, @NonNull DDPInstanceDto ddpInstanceDto) {
+        return (hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto)) && hasParticipantConsentedToTumor(participant);
     }
 
     private boolean hasParticipantConsentedToTumor(ElasticSearchParticipantDto participant) {
@@ -205,10 +202,14 @@ public class PhiManifestService {
      * as a boolean.  If they have not, an empty optional will be returned.
      */
     public static Optional<Object> getAdultParticipantConsentedToTumorAnswer(ElasticSearchParticipantDto participant, String studyGuid) {
-        if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
-            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
-        } else if (DBConstants.OSTEO_STUDY_GUID.equals(studyGuid)) {
-            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
+        boolean hasCompletedConsentAddendum = participant.hasCompletedActivity(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE);
+
+        if (hasCompletedConsentAddendum) {
+            if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
+                return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
+            } else if (DBConstants.OSTEO_STUDY_GUID.equals(studyGuid)) {
+                return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
+            }
         }
         return Optional.empty();
     }
@@ -225,15 +226,20 @@ public class PhiManifestService {
                     .orElse(false);
         }
         int age = DateTimeUtil.calculateAgeInYears(dateOfBirth);
-        if (age >= 7) {
-            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
-                    SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, true) && participant.checkAnswerToActivity(
-                    CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, true);
-        }
-        // else if age < 7
-        return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
-                SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, true);
+        boolean hasCompletedPediatricConsentAddendum = participant.hasCompletedActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE);
 
+        if (hasCompletedPediatricConsentAddendum) {
+            if (age >= 7) {
+                return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+                        SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, true) && participant.checkAnswerToActivity(
+                        CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, true);
+            }
+            // else if age < 7
+            return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
+                    SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, true);
+        } else {
+            return false;
+        }
     }
 
 

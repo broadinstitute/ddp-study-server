@@ -227,6 +227,30 @@ public class ElasticSearchParticipantDto {
         }).orElse("U");
     }
 
+    public boolean hasCompletedActivity(String activityCode) {
+        boolean isComplete = false;
+        for (Activities activity : getActivities()) {
+            if (activityCode.equals(activity.getActivityCode())) {
+                isComplete = "COMPLETE".equals(activity.getStatus());
+            }
+        }
+        return isComplete;
+    }
+
+    /**
+     * Changes the status of the given activity, returning true
+     * if the activity was found, and false otherwise.
+     */
+    public boolean changeActivityStatus(String activityCode, String activityStatusCode) {
+        for (Activities activity : getActivities()) {
+            if (activityCode.equals(activity.getActivityCode())) {
+                activity.setStatus(activityStatusCode);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static class Builder {
         private Address address;
         private List<Object> medicalProviders;
