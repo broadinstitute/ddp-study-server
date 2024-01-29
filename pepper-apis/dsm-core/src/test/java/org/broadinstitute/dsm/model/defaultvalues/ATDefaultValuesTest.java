@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -17,8 +18,10 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.tools.FieldSettingsTestUtil;
@@ -28,6 +31,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class ATDefaultValuesTest extends DbAndElasticBaseTest {
     private static final String instanceName = "atdefault";
     private static String esIndex;
@@ -122,6 +126,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
                 "[{\"value\":\"0\",\"name\":\"Not Exited\",\"default\":true},"
                         + "{\"value\":\"1\",\"name\":\"Exited\"}]",
                 ddpInstanceDto.getDdpInstanceId());
+        fieldSettingsIds.add(fieldSettingsId);
 
         try {
             boolean updated = atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
@@ -146,6 +151,8 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
             }
         });
 
+        verifyElasticData(ddpParticipantId);
+
         try {
             // should not create additional genomic ids or exit statues
             boolean updated = atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
@@ -166,5 +173,28 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
                 ddpParticipantId);
         return participant;
+    }
+
+    private void verifyElasticData(String ddpParticipantId) {
+        ElasticSearchParticipantDto esParticipant =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+        log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        Dsm dsm = esParticipant.getDsm().orElseThrow();
+
+        List<ParticipantData> participantDataList = dsm.getParticipantData();
+        participantDataList.stream()
+                .filter(participantData -> participantData.getRequiredFieldTypeId().equals(AT_PARTICIPANT_EXIT))
+                .findFirst().ifPresent(participantData -> {
+                    Assert.assertEquals(ddpParticipantId, participantData.getRequiredDdpParticipantId());
+                    Assert.assertEquals("0", participantData.getDataMap().get(EXIT_STATUS));
+                });
+        participantDataList.stream()
+                .filter(participantData -> participantData.getRequiredFieldTypeId().equals(GENOME_STUDY_FIELD_TYPE))
+                .findFirst().ifPresent(participantData -> {
+                    Assert.assertEquals(ddpParticipantId, participantData.getRequiredDdpParticipantId());
+                    Assert.assertTrue(participantData.getDataMap().get(GENOME_STUDY_CPT_ID)
+                            .startsWith(GENOMIC_ID_PREFIX));
+                });
     }
 }
