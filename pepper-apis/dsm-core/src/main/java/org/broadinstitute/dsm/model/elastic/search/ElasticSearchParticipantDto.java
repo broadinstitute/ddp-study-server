@@ -241,6 +241,7 @@ public class ElasticSearchParticipantDto {
      * Changes the status of the given activity, returning true
      * if the activity was found, and false otherwise.
      */
+    @VisibleForTesting
     public boolean changeActivityStatus(String activityCode, String activityStatusCode) {
         for (Activities activity : getActivities()) {
             if (activityCode.equals(activity.getActivityCode())) {

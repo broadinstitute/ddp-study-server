@@ -190,7 +190,7 @@ public class PhiManifestService {
     }
 
     public boolean isParticipantConsented(@NonNull ElasticSearchParticipantDto participant, @NonNull DDPInstanceDto ddpInstanceDto) {
-        return (hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto)) && hasParticipantConsentedToTumor(participant);
+        return hasParticipantConsentedToSharedLearning(participant, ddpInstanceDto) && hasParticipantConsentedToTumor(participant);
     }
 
     private boolean hasParticipantConsentedToTumor(ElasticSearchParticipantDto participant) {
