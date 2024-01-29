@@ -72,7 +72,7 @@ public class ElasticSearchParticipantDto {
      * and question do not exist.
      */
     @VisibleForTesting
-    public boolean changeQuestionAnswer(String activityCode, String questionStableId, String value) {
+    public boolean changeQuestionAnswer(String activityCode, String questionStableId, Object value) {
         for (Activities activity : getActivities()) {
             if (activity.getActivityCode().equals(activityCode)) {
                 for (Map<String, Object> questionAnswer : activity.getQuestionsAnswers()) {
