@@ -201,6 +201,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
         assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
 
+        // change the LMS consent tumor to blank/true/false and verify
         participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
                 LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
         phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
@@ -208,17 +209,20 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         Assert.assertEquals("", phiManifest.getSomaticConsentTumorResponse());
 
         participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
-        participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
                 LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, true);
         phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
         assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
         Assert.assertEquals("Yes", phiManifest.getSomaticConsentTumorResponse());
 
+        participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
+                LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, false);
+        phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
+        assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
+        Assert.assertEquals("No", phiManifest.getSomaticConsentTumorResponse());
+
         try {
             // verify that consent tumor response strings in the report are correct
-            // for adult consent in both LMS and OS.  This requires changing the study guid
-            // in order to exercise the if-osteo, if-lms branching in the code under test.
+            // for adult consent in both OS.
 
             ddpInstanceDto.setStudyGuid(DBConstants.OSTEO_STUDY_GUID);
 
@@ -228,12 +232,6 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
                         CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
                         OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID));
             }
-            if (!participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                    LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, "")) {
-                Assert.fail(String.format("%s.%s is missing from the participant's activities.  Is the test json correct?",
-                        CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                        LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID));
-            }
 
             phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
             assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
@@ -241,36 +239,21 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
 
             participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
                     OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, false);
-            participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                    LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
             phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
             assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
             Assert.assertEquals("No", phiManifest.getSomaticConsentTumorResponse());
 
             participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
                     OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, true);
-            participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                    LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
             phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
             assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
             Assert.assertEquals("Yes", phiManifest.getSomaticConsentTumorResponse());
 
             participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
                     OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
-            participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                    LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
             phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
             assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
             Assert.assertEquals("", phiManifest.getSomaticConsentTumorResponse());
-
-            ddpInstanceDto.setStudyGuid(DBConstants.LMS_STUDY_GUID);
-            participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                    OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, null);
-            participant.changeQuestionAnswer(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE,
-                    LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID, false);
-            phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
-            assertPhiManifest(phiManifest, orders, createdTissue, oncHistoryDetail, participant);
-            Assert.assertEquals("No", phiManifest.getSomaticConsentTumorResponse());
 
         } finally {
             // if there's an issue, always reset the study guid to LMS
