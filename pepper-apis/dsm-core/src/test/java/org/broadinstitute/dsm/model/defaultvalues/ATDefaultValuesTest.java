@@ -136,22 +136,8 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
             Assert.fail("Exception from generateDefaults: " + e.getMessage());
         }
 
-        ParticipantDataDao dataDao = new ParticipantDataDao();
-        List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
-        Assert.assertEquals(2, ptpDataList.size()); // 1 for exit status, 1 for genomic id
-        ptpDataList.forEach(ptpData -> {
-            String fieldType = ptpData.getRequiredFieldTypeId();
-            Map<String, String> dataMap = ptpData.getDataMap();
-            if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
-                Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
-            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
-                Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
-            } else {
-                Assert.fail("Unexpected field type: " + fieldType);
-            }
-        });
-
-        verifyElasticData(ddpParticipantId);
+        verifyDefaultParticipantData(ddpParticipantId);
+        verifyDefaultElasticData(ddpParticipantId);
 
         try {
             // should not create additional genomic ids or exit statues
@@ -161,6 +147,8 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
             e.printStackTrace();
             Assert.fail("Exception from generateDefaults: " + e.getMessage());
         }
+
+        verifyDefaultParticipantData(ddpParticipantId);
     }
 
     private ParticipantDto createParticipant() {
@@ -175,7 +163,24 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         return participant;
     }
 
-    private void verifyElasticData(String ddpParticipantId) {
+    private void verifyDefaultParticipantData(String ddpParticipantId) {
+        ParticipantDataDao dataDao = new ParticipantDataDao();
+        List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        Assert.assertEquals(2, ptpDataList.size()); // 1 for exit status, 1 for genomic id
+        ptpDataList.forEach(ptpData -> {
+            String fieldType = ptpData.getRequiredFieldTypeId();
+            Map<String, String> dataMap = ptpData.getDataMap();
+            if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
+                Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
+            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
+                Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
+            } else {
+                Assert.fail("Unexpected field type: " + fieldType);
+            }
+        });
+    }
+
+    private void verifyDefaultElasticData(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
