@@ -45,6 +45,12 @@
     "questionType" : "BOOLEAN"
     },
     {
+      "stableId" : "SOMATIC_CONSENT_TUMOR",
+      "answer" : true,
+      "SOMATIC_CONSENT_TUMOR" : true,
+      "questionType" : "BOOLEAN"
+    },
+    {
     "stableId" : "SOMATIC_SINGATURE",
     "SOMATIC_SINGATURE" : "signature",
     "answer" : "name",

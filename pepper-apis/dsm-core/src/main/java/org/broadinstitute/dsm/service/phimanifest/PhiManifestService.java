@@ -161,14 +161,14 @@ public class PhiManifestService {
         Optional<Object> consentAnswer = getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid());
 
         if (consentAnswer.isPresent()) {
-            phiManifest.setSomaticConsentTumorResponse(convertBooleanToYesNo((Boolean)consentAnswer.get()));
+            phiManifest.setSomaticConsentTumorResponse(convertBooleanActivityAnswerToString(consentAnswer));
         } else {
             phiManifest.setSomaticConsentTumorResponse("");
         }
         return phiManifest;
     }
 
-    public static String convertBooleanToYesNo(boolean b) {
+    private static String convertBooleanToYesNo(boolean b) {
         return b ? "Yes" : "No";
     }
 
@@ -178,7 +178,7 @@ public class PhiManifestService {
      */
     public static String convertBooleanActivityAnswerToString(Optional<Object> answer) {
         if (answer.isPresent() && answer.get() instanceof Boolean) {
-            return convertBooleanToYesNo((Boolean) answer.get());
+            return convertBooleanToYesNo((Boolean)answer.get());
         } else {
             if (answer.isPresent()) {
                 return answer.get().toString();
@@ -204,11 +204,11 @@ public class PhiManifestService {
      * If the participant has answered the question, it will be returned
      * as a boolean.  If they have not, an empty optional will be returned.
      */
-    private static Optional<Object> getAdultParticipantConsentedToTumorAnswer(ElasticSearchParticipantDto participant, String studyGuid) {
+    public static Optional<Object> getAdultParticipantConsentedToTumorAnswer(ElasticSearchParticipantDto participant, String studyGuid) {
         if (DBConstants.LMS_STUDY_GUID.equals(studyGuid)) {
-            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
+            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
         } else if (DBConstants.OSTEO_STUDY_GUID.equals(studyGuid)) {
-            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
+            return participant.getParticipantAnswerInSurvey(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID);
         }
         return Optional.empty();
     }
