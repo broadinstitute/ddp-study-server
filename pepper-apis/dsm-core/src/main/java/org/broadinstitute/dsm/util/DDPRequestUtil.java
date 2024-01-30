@@ -23,6 +23,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
 import org.broadinstitute.dsm.model.SomaticResultTriggerActivityPayload;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
@@ -116,9 +117,19 @@ public class DDPRequestUtil {
     private static Integer getResponseCode(HttpResponse res, String sendRequest) {
         int responseCodeInt = res.getStatusLine().getStatusCode();
         if (responseCodeInt != HttpStatusCodes.STATUS_CODE_OK) {
-            logger.error("Got " + responseCodeInt + " from " + sendRequest);
+            String msg = String.format("Got %d from request %s", responseCodeInt, sendRequest);
+            if (res.getEntity().getContentLength() > 0) {
+                try {
+                    logger.error(String.format("%s. Response:%n%s", msg,
+                            EntityUtils.toString(res.getEntity(), "UTF-8")));
+                } catch (IOException e) {
+                    logger.error("Error reading HttpResponse ", e);
+                }
+            } else {
+                logger.error(msg);
+            }
             if (responseCodeInt == HttpStatusCodes.STATUS_CODE_SERVER_ERROR) {
-                throw new RuntimeException("Got " + responseCodeInt + " from " + sendRequest);
+                throw new DsmInternalError(msg);
             }
         }
         return responseCodeInt;
