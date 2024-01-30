@@ -38,6 +38,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
                 1);
         if (kitDDPNotification != null) {
             TransactionWrapper.inTransaction(conn -> {
+                // TODO: this should not be in a DB transaction since it makes a call to an external service -DC
                 EventUtil.triggerDDP(conn, kitDDPNotification);
                 return null;
             });
