@@ -61,13 +61,6 @@ public class TestParticipantUtil {
         }
     }
 
-    public static void deleteParticipantAndInstitution(int participantId) {
-        if (participantId >= 0) {
-            new DDPInstitutionDao().deleteByParticipant(participantId);
-            participantDao.delete(participantId);
-        }
-    }
-
     public static ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob, String esIndex) {
         String ddpParticipantId = genDDPParticipantId(guid);
         ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
