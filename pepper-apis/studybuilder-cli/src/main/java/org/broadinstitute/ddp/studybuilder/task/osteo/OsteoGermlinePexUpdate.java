@@ -15,12 +15,16 @@ import java.util.List;
 @Slf4j
 public class OsteoGermlinePexUpdate implements CustomTask {
 
-    public static String CURR_PEX = "user.studies[\"cmi-osteo\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n" +
-            "                           && operator.studies[\"cmi-osteo\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7";
+    public static String CURR_PEX = "user.studies[\"cmi-osteo\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
+            + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
+            + "  && operator.studies[\"cmi-osteo\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7";
 
-    public static String NEW_PEX = "user.studies[\"cmi-osteo\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n" +
-            "                                      && ((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"cmi-osteo\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)\n" +
-            "                                          || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"cmi-osteo\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7))";
+    public static String NEW_PEX = "user.studies[\"cmi-osteo\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
+            + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
+            + " && ((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"cmi-osteo\"]."
+            + "forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)\n"
+            + " || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"cmi-osteo\"].forms[\"PREQUAL\"]."
+            + "questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7))";
 
 
     @Override
@@ -55,10 +59,11 @@ public class OsteoGermlinePexUpdate implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
 
-        @SqlQuery("select e.expression_id from block b , block__expression bee, expression e " +
-                "where bee.block_id = b.block_id " +
-                "and e.expression_id = bee.expression_id " +
-                "and e.expression_text like '%user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()%"
+        @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
+                + "where bee.block_id = b.block_id "
+                + "and e.expression_id = bee.expression_id "
+                + "and e.expression_text like '%user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"]."
+                + "questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()%"
                 + " && operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7%'")
         List<Long> getPexIdToUpd();
 
