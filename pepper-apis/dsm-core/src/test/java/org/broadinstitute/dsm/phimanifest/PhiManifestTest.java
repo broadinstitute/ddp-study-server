@@ -119,17 +119,48 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void lmsParticipantEligibilityTest() {
+    public void testLMSAdultParticipantEligibility() {
         String eligibleGuid = "adultEligibleGuid";
         ParticipantDto adultEligibleParticipant = TestParticipantUtil.createSharedLearningParticipant(eligibleGuid, ddpInstanceDto,
-                "1990-10-01", lmsEsIndex);
+                "1990-10-01", null, lmsEsIndex);
         lmsOncHistoryTestUtil.getParticipantIds().add(adultEligibleParticipant.getParticipantId().orElseThrow());
-        Assert.assertTrue(phiManifestService.isParticipantConsented(adultEligibleParticipant.getDdpParticipantIdOrThrow(), ddpInstanceDto));
+        ElasticSearchParticipantDto adultEligibleParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(
+                ddpInstanceDto.getEsParticipantIndex(), adultEligibleParticipant.getDdpParticipantId().orElseThrow());
+        lmsOncHistoryTestUtil.getParticipantIds().add(adultEligibleParticipant.getParticipantId().orElseThrow());
+        Assert.assertTrue(phiManifestService.isParticipantConsented(adultEligibleParticipantDto, ddpInstanceDto));
+
         String unEligibleGuid = "unEligibleGuid";
         ParticipantDto ineligibleAdult = TestParticipantUtil.createIneligibleSharedLearningParticipant(unEligibleGuid, ddpInstanceDto,
                 "1990-11-11", lmsEsIndex);
+        ElasticSearchParticipantDto ineligibleAdultDto = ElasticSearchUtil.getParticipantESDataByParticipantId(
+                ddpInstanceDto.getEsParticipantIndex(), ineligibleAdult.getDdpParticipantId().orElseThrow());
+
         lmsOncHistoryTestUtil.getParticipantIds().add(ineligibleAdult.getParticipantId().orElseThrow());
-        Assert.assertFalse(phiManifestService.isParticipantConsented(ineligibleAdult.getDdpParticipantIdOrThrow(), ddpInstanceDto));
+        Assert.assertFalse(phiManifestService.isParticipantConsented(ineligibleAdultDto, ddpInstanceDto));
+
+        // now change activity status for pediatric and adult consent and verify that
+        // the participants aren't considered consented if their consent status isn't complete.
+        Assert.assertTrue(phiManifestService.isParticipantConsented(adultEligibleParticipantDto, ddpInstanceDto));
+        if (!adultEligibleParticipantDto.changeActivityStatus(CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE, "BOGUS")) {
+            Assert.fail("Could not change status of " + CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE);
+        }
+        Assert.assertFalse(phiManifestService.isParticipantConsented(adultEligibleParticipantDto, ddpInstanceDto));
+
+    }
+
+    @Test
+    public void testLMSPediatricParticipantEligibility() {
+        String childParticipantGuid = "childEligibleGuid";
+        ParticipantDto childParticipant = TestParticipantUtil.createSharedLearningParticipant(childParticipantGuid, ddpInstanceDto,
+                "2020-11-11", "2038-11-11", lmsEsIndex); // todo arz make birth dates relative to now
+        lmsOncHistoryTestUtil.getParticipantIds().add(childParticipant.getParticipantId().orElseThrow());
+        ElasticSearchParticipantDto childParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(
+                ddpInstanceDto.getEsParticipantIndex(), childParticipant.getDdpParticipantId().orElseThrow());
+        Assert.assertTrue(phiManifestService.isParticipantConsented(childParticipantDto, ddpInstanceDto));
+        if (!childParticipantDto.changeActivityStatus(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, "FAKE")) {
+            Assert.fail("Could not change status of " + CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE);
+        }
+        Assert.assertFalse(phiManifestService.isParticipantConsented(childParticipantDto, ddpInstanceDto));
     }
 
     @Test
@@ -137,7 +168,7 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
         String pdo = "child-report-PDO";
         String smIdValue = "child-SM-ID";
         ParticipantDto participantDto = TestParticipantUtil.createSharedLearningParticipant(childReportGuid, ddpInstanceDto,
-                "2020-10-10", lmsEsIndex);
+                "2020-10-10", null, lmsEsIndex);
         String initialStudyGuid = ddpInstanceDto.getStudyGuid();
         childReportGuid = participantDto.getDdpParticipantIdOrThrow();
         lmsOncHistoryTestUtil.getParticipantIds().add(participantDto.getParticipantId().orElseThrow());

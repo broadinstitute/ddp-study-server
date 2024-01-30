@@ -237,12 +237,18 @@ public class ElasticTestUtil {
         }
     }
 
-    public static Dsm addDsmObjectToParticipantFromFile(String esIndex, String fileName, String ddpParticipantId, String dob) {
+    public static Dsm addDsmObjectToParticipantFromFile(String esIndex, String fileName, String ddpParticipantId,
+                                                        String dob, String dateOfMajority) {
         Gson gson = new Gson();
         String json = null;
         try {
             json = TestUtil.readFile(fileName);
             json = json.replace("<dateOfBirth>", dob);
+            if (StringUtils.isNotBlank(dateOfMajority)) {
+                json = json.replace("<dateOfMajority>", dateOfMajority);
+            } else {
+                json = json.replace("\"dateOfMajority\" : \"<dateOfMajority>\",", "");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception creating dsm for participant " + ddpParticipantId);
