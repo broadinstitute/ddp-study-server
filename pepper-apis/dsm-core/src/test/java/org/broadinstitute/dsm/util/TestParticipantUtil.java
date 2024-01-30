@@ -77,7 +77,7 @@ public class TestParticipantUtil {
         ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, pathToParticipantProfileJson, ddpParticipantId);
-        ElasticTestUtil.addDsmObjectToParticipantFromFile(esIndex, pathToDsmDataJson, ddpParticipantId,
+        ElasticTestUtil.addDsmEntityFromFile(esIndex, pathToDsmDataJson, ddpParticipantId,
                 dob, dateOfMajority);
         ElasticTestUtil.addActivitiesFromFile(esIndex, pathToActivitiesJson, ddpParticipantId);
         log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
