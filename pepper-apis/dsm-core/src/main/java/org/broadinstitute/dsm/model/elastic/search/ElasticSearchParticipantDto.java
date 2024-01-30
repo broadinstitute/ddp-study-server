@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.Files;
 import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -62,6 +64,28 @@ public class ElasticSearchParticipantDto {
     }
 
     protected ElasticSearchParticipantDto() {  }
+
+    /**
+     * Changes the value for the given question's answer.
+     * Does not make any modification to underlying elastic data.
+     * @return true if the value was changed, false if the activity
+     * and question do not exist.
+     */
+    @VisibleForTesting
+    public boolean changeQuestionAnswer(String activityCode, String questionStableId, Object value) {
+        for (Activities activity : getActivities()) {
+            if (activity.getActivityCode().equals(activityCode)) {
+                for (Map<String, Object> questionAnswer : activity.getQuestionsAnswers()) {
+                    if (questionAnswer.containsKey(questionStableId)) {
+                        questionAnswer.replace(ESObjectConstants.ANSWER, value);
+                        questionAnswer.replace(questionStableId, value);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     public Optional<Address> getAddress() {
         return Optional.ofNullable(address);
@@ -201,6 +225,31 @@ public class ElasticSearchParticipantDto {
                     .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
                     .orElse("U");
         }).orElse("U");
+    }
+
+    public boolean hasCompletedActivity(String activityCode) {
+        boolean isComplete = false;
+        for (Activities activity : getActivities()) {
+            if (activityCode.equals(activity.getActivityCode())) {
+                isComplete = "COMPLETE".equals(activity.getStatus());
+            }
+        }
+        return isComplete;
+    }
+
+    /**
+     * Changes the status of the given activity, returning true
+     * if the activity was found, and false otherwise.
+     */
+    @VisibleForTesting
+    public boolean changeActivityStatus(String activityCode, String activityStatusCode) {
+        for (Activities activity : getActivities()) {
+            if (activityCode.equals(activity.getActivityCode())) {
+                activity.setStatus(activityStatusCode);
+                return true;
+            }
+        }
+        return false;
     }
 
     public static class Builder {

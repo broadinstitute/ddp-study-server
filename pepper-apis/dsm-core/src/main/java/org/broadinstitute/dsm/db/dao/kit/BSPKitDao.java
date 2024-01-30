@@ -10,6 +10,7 @@ import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.gp.BSPKit;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -101,18 +102,15 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                 stmt.setString(3, kitLabel);
                 int result = stmt.executeUpdate();
                 if (result > 1) { // 1 row or 0 row updated is perfect
-                    throw new RuntimeException("Error updating kit w/label " + kitLabel + " (was updating " + result + " rows)");
+                    throw new DsmInternalError("Error updating kit w/label " + kitLabel + " (updated " + result + " rows)");
                 }
-                if (result == 1) {
-                    firstTimeReceived = true;
-                } else {
-                    firstTimeReceived = false;
-                }
+                firstTimeReceived = result == 1;
             } catch (Exception e) {
                 logger.error("Failed to set kit w/ label " + kitLabel + " as received ", e);
             }
             if (triggerDDP) {
                 BSPKit bspKit = new BSPKit();
+                // TODO: this should not be in a DB transaction since it makes a call to an external service -DC
                 bspKit.triggerDDP(conn, bspKitDto, firstTimeReceived, kitLabel);
             }
             return firstTimeReceived;
