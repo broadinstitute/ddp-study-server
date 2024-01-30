@@ -136,13 +136,13 @@ public class ElasticSearchUtil {
     // These clients are expensive. They internally have thread pools and other resources. Let's
     // create one instance and reuse it as much as possible. Client is thread-safe per the docs.
     private static RestHighLevelClient client;
-    private static Map<String, MappingMetadata> fieldMappings;
+    private static Map<String, MappingMetadata> fieldMappings = null;
     private static boolean initialized = false;
 
     private static void initialize() {
         if (!initialized) {
             initClient();
-            fetchFieldMappings();
+            loadFieldMappings();
             initialized = true;
         }
     }
@@ -161,12 +161,13 @@ public class ElasticSearchUtil {
         }
     }
 
-    private static synchronized void fetchFieldMappings() {
+    protected static synchronized void loadFieldMappings() {
         GetMappingsRequest request = new GetMappingsRequest();
         request.indices(PARTICIPANTS_STRUCTURED_ANY);
         try {
             logger.info("Getting ES data field mapping");
             fieldMappings = client.indices().getMapping(request, RequestOptions.DEFAULT).mappings();
+            logger.info("Got ES data field mappings with keys {}", fieldMappings.keySet());
         } catch (IOException e) {
             throw new DsmInternalError("Error while fetching field mappings from ES", e);
         }
@@ -398,7 +399,7 @@ public class ElasticSearchUtil {
         initialize();
         if (StringUtils.isNotBlank(index)) {
             Map<String, Map<String, Object>> esData = new HashMap<>();
-            logger.info("Collecting ES data from index " + index);
+            logger.info("Getting ES data from index {} with filter {}", index, filter);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
@@ -407,7 +408,7 @@ public class ElasticSearchUtil {
                 int i = 0;
                 AbstractQueryBuilder query = createESQuery(filter);
                 if (query == null) {
-                    throw new RuntimeException("Couldn't create query from filter " + filter);
+                    throw new DsmInternalError("Couldn't create query from filter " + filter);
                 }
                 searchSourceBuilder.query(query).sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
@@ -422,7 +423,8 @@ public class ElasticSearchUtil {
             } catch (Exception e) {
                 logger.error("Couldn't get participants from ES for instance " + instanceName, e);
             }
-            logger.info("Got " + esData.size() + " participants from ES for instance " + instanceName);
+            logger.info("Got {} participant documents from ES index {} (getFilteredDDPParticipantsFromES)",
+                    esData.size(), instanceName);
             return esData;
         }
         return null;
@@ -731,6 +733,15 @@ public class ElasticSearchUtil {
         doUpdate(ddpParticipantId, index, objectsMapES, client);
     }
 
+    public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,
+                                     Map<String, Object> objectsMapES) {
+        if (client != null) {
+            doUpdate(ddpParticipantId, index, objectsMapES, client);
+        } else {
+            logger.error("RestHighLevelClient was null");
+        }
+    }
+
     private static void doUpdate(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES,
                                  RestHighLevelClient client) {
         String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
@@ -752,15 +763,6 @@ public class ElasticSearchUtil {
             // TODO We may see these for version conflicts, which we need to handle, but first step is capturing
             // and understanding the failures
             throw new DsmInternalError("Error updating Elasticsearch", e);
-        }
-    }
-
-    public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,
-                                     Map<String, Object> objectsMapES) {
-        if (client != null) {
-            doUpdate(ddpParticipantId, index, objectsMapES, client);
-        } else {
-            logger.error("RestHighLevelClient was null");
         }
     }
 
@@ -1712,8 +1714,8 @@ public class ElasticSearchUtil {
     }
 
     private static String getAnyStudy() {
-        return fieldMappings.keySet().stream().findAny()
-                .orElseThrow(() -> new RuntimeException("Error while getting study mapping from ES"));
+        return fieldMappings.keySet().stream().findAny().orElseThrow(() ->
+                new DsmInternalError("Error while getting study mapping from ES: no fieldMappings keys"));
     }
 
 
