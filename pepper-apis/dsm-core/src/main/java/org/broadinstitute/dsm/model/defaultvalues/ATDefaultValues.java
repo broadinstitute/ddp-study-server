@@ -25,7 +25,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Slf4j
 public class ATDefaultValues extends BasicDefaultDataMaker {
-    protected static final String EXIT_STATUS = "EXITSTATUS";
+    public static final String EXIT_STATUS = "EXITSTATUS";
     public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
     protected static final String AT_GENOMIC_ID = "at_genomic_id";
     protected static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
@@ -129,6 +129,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         log.info("{} record created for participant {}", fieldTypeId, ddpParticipantId);
     }
 
+    // TODO: this deserves a better home but do not want to mix it with other ES util code until we clean that up
     public static void updateEsParticipantData(String ddpParticipantId, Collection<ParticipantData> participantDataList,
                                                DDPInstance instance) {
         ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());

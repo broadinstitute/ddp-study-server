@@ -26,16 +26,15 @@ import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 @Slf4j
 public class ParticipantDataFixupService implements AdminOperation {
 
-    public enum UpdateStatus {
+    protected enum UpdateStatus {
         UPDATED,
         NOT_UPDATED,
         ERROR,
         NO_PARTICIPANT_DATA
     }
 
-    private static final String AT_REALM = "ATCP";
     private static final Gson gson = new Gson();
-    private String userId;
+    protected List<String> validRealms = List.of("atcp");
     private DDPInstance ddpInstance;
     private Map<String, List<ParticipantData>> participantDataByPtpId;
 
@@ -48,10 +47,8 @@ public class ParticipantDataFixupService implements AdminOperation {
      * @param payload    request body, if any, as ParticipantDataFixupRequest
      */
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
-        this.userId = userId;
-
         // this class currently only supports AT realm
-        if (!realm.equalsIgnoreCase(AT_REALM)) {
+        if (!validRealms.contains(realm.toLowerCase())) {
             throw new DsmInternalError("Invalid realm for ParticipantDataFixupService: " + realm);
         }
 
@@ -60,7 +57,8 @@ public class ParticipantDataFixupService implements AdminOperation {
             throw new DSMBadRequestException("Missing required attribute 'fixupType'");
         }
 
-        if (fixupType.equalsIgnoreCase("atcpGenomicId")) {
+        // for now, this is the only fixup available
+        if (!fixupType.equalsIgnoreCase("atcpGenomicId")) {
             throw new DSMBadRequestException("Invalid fixupType: " + fixupType);
         }
 

@@ -23,8 +23,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
+import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
-import org.broadinstitute.dsm.util.tools.FieldSettingsTestUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -121,11 +121,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         List<Activities> activities = ReferralSourceServiceTest.getActivities();
         ElasticTestUtil.addParticipantActivities(esIndex, activities, ddpParticipantId);
 
-        int fieldSettingsId = FieldSettingsTestUtil.createRadioFieldSettings(AT_PARTICIPANT_EXIT,
-                EXIT_STATUS,
-                "[{\"value\":\"0\",\"name\":\"Not Exited\",\"default\":true},"
-                        + "{\"value\":\"1\",\"name\":\"Exited\"}]",
-                ddpInstanceDto.getDdpInstanceId());
+        int fieldSettingsId = FieldSettingsTestUtil.createExitStatusFieldSetting(ddpInstanceDto.getDdpInstanceId());
         fieldSettingsIds.add(fieldSettingsId);
 
         try {
