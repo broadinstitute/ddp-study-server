@@ -291,6 +291,25 @@ public class PhiManifestTest extends DbAndElasticBaseTest {
             ddpInstanceDto.setStudyGuid(initialStudyGuid);
         }
 
+        // check that null tissue results in null values and not an exception
+        MercuryOrderDto orderWithoutTissue = orders.iterator().next();
+        Integer originalTissueId = orderWithoutTissue.getTissueId();
+        orderWithoutTissue.setTissueId(null);
+        try {
+            phiManifest = phiManifestService.generateDataForReport(participant, orders, ddpInstanceDto);
+            Assert.assertNull(phiManifest.getTumorCollaboratorSampleId());
+            Assert.assertNull(phiManifest.getBlockId());
+            Assert.assertNull(phiManifest.getTissueSite());
+            Assert.assertNull(phiManifest.getSequencingResults());
+            Assert.assertNull(phiManifest.getAccessionNumber());
+            Assert.assertNull(phiManifest.getDateOfPx());
+            Assert.assertNull(phiManifest.getHistology());
+            Assert.assertNull(phiManifest.getFacility());
+        } finally {
+            // reset value for proper deletion
+            orderWithoutTissue.setTissueId(originalTissueId);
+        }
+
         mercuryOrderDao.delete(mercuryOrderId);
         lmsOncHistoryTestUtil.deleteOncHistory(childReportGuid, participantDto.getParticipantId().get(), instanceName, userEmail,
                 oncHistoryDetail.getOncHistoryDetailId());
