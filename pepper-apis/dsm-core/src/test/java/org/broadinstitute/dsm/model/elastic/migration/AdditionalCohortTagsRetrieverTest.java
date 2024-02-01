@@ -12,6 +12,8 @@ public class AdditionalCohortTagsRetrieverTest {
     public void createInstance() {
         var realm = "Osteo";
         Assert.assertTrue(AdditionalCohortTagsRetriever.fromRealm(realm).isPresent());
+        // ensure that realm name case variations are handled correctly
+        Assert.assertTrue(AdditionalCohortTagsRetriever.fromRealm(realm.toLowerCase()).isPresent());
     }
 
     @Test

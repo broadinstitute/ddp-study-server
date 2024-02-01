@@ -1,14 +1,11 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
@@ -17,22 +14,20 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
-import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 
 @Slf4j
 public class ATDefaultValues extends BasicDefaultDataMaker {
-    public static final String EXIT_STATUS = "EXITSTATUS";
-    public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
     protected static final String AT_GENOMIC_ID = "at_genomic_id";
     protected static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
     protected static final String COMPLETE = "COMPLETE";
-    public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
     protected static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
     protected static final String GENOMIC_ID_PREFIX = "DDP_ATCP_";
+    public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
+    public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
+    public static final String EXIT_STATUS = "EXITSTATUS";
 
     /**
      * Inserts default data for a participant in the AT study: a genomic id and an exit status
@@ -73,7 +68,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
                 return false;
             }
 
-            updateEsParticipantData(ddpParticipantId, participantDataList, instance);
+            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
         } catch (Exception e) {
             throw new DsmInternalError("Error setting AT default data for participant " + ddpParticipantId, e);
         }
@@ -127,17 +122,5 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         participantData.setData(ddpParticipantId, instanceId, fieldTypeId, data);
         participantData.insertParticipantData("SYSTEM");
         log.info("{} record created for participant {}", fieldTypeId, ddpParticipantId);
-    }
-
-    // TODO: this deserves a better home but do not want to mix it with other ES util code until we clean that up
-    public static void updateEsParticipantData(String ddpParticipantId, Collection<ParticipantData> participantDataList,
-                                               DDPInstance instance) {
-        ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
-        List<Map<String, Object>> transformedList =
-                objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
-        ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(),
-                new HashMap<>(Map.of(ESObjectConstants.DSM,
-                        new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
-        log.info("Updated DSM participantData in Elastic for {}", ddpParticipantId);
     }
 }

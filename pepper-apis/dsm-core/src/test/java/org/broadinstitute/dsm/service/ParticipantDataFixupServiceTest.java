@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
+import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
@@ -86,7 +87,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
 
         List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
         Assert.assertEquals(2, ptpData.size());
-        ATDefaultValues.updateEsParticipantData(ddpParticipantId, ptpData, ddpInstance);
+        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, ptpData, ddpInstance);
 
         ParticipantDataFixupService fixupService = new ParticipantDataFixupService();
         ParticipantDataFixupService.ParticipantListRequest req =

@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
+import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 
@@ -136,7 +137,7 @@ public class ParticipantDataFixupService implements AdminOperation {
                         .collect(Collectors.toMap(ParticipantData::getParticipantDataId, pd -> pd));
                 updateParticipantDataList(idToData, genomeIdToDelete);
                 updateParticipantDataList(idToData, exitToDelete);
-                ATDefaultValues.updateEsParticipantData(ddpParticipantId, idToData.values(), ddpInstance);
+                WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, idToData.values(), ddpInstance);
 
                 updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.UPDATED.name()));
             } catch (Exception e) {
