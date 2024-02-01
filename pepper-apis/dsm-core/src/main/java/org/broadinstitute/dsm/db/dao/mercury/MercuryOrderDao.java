@@ -317,7 +317,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                                 .withStatusDate(rs.getLong(DBConstants.MERCURY_STATUS_DATE))
                                 .withOrderStatus(rs.getString(DBConstants.MERCURY_ORDER_STATUS))
                                 .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
-                                .withTissueId(rs.getInt(DBConstants.TISSUE_ID))
+                                .withTissueId(rs.getObject(DBConstants.TISSUE_ID) != null
+                                        ? rs.getInt(DBConstants.TISSUE_ID) : null)
                                 .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID)).build();
                         ordersWithOrderId.add(mercurySequencingDto);
                     }
