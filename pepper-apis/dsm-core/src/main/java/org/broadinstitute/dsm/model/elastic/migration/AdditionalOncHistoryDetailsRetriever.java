@@ -16,10 +16,10 @@ public class AdditionalOncHistoryDetailsRetriever extends AdditionalRecordsRetri
     }
 
     static Optional<AdditionalOncHistoryDetailsRetriever> fromRealm(String realm) {
-        if  (OLD_OSTEO_INSTANCE_NAME.equals(realm)) {
+        if  (OLD_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalOncHistoryDetailsRetriever(NEW_OSTEO_INSTANCE_NAME));
         }
-        if (NEW_OSTEO_INSTANCE_NAME.equals(realm)) {
+        if (NEW_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalOncHistoryDetailsRetriever(OLD_OSTEO_INSTANCE_NAME));
         }
         return Optional.empty();

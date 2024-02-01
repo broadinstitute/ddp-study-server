@@ -29,7 +29,6 @@ import org.broadinstitute.dsm.model.elastic.sort.MockFieldSettingsDao;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -285,7 +284,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         refSourceQA.put(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER, answer);
     }
 
-    protected static List<Activities> getActivities() {
+    public static List<Activities> getActivities() {
         List<Activities> activitiesList = new ArrayList<>();
         try {
             String json = TestUtil.readFile("activities.json");

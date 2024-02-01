@@ -4,6 +4,7 @@ import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
 import org.broadinstitute.dsm.model.defaultvalues.RgpAutomaticProbandDataCreator;
+import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -88,35 +90,7 @@ public class WorkflowStatusUpdate {
             return;
         }
 
-        List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
-        Optional<FieldSettingsDto> fieldSetting =
-                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
-        if (fieldSetting.isEmpty()) {
-            throw new DsmInternalError(String.format("Invalid workflow name %s for instance %s", workflow, instance.getName()));
-        }
-
-        FieldSettingsDto setting = fieldSetting.get();
-        String fieldType = setting.getFieldType();
-        boolean isOldParticipant = participantDatas.stream().anyMatch(
-                participantDataDto -> {
-                    if (participantDataDto.getFieldTypeId().isPresent()) {
-                        String ft = participantDataDto.getFieldTypeId().get();
-                        return ft.equals(fieldType) || ft.contains(FamilyMemberConstants.PARTICIPANTS);
-                    }
-                    return false;
-                });
-        if (isOldParticipant) {
-            participantDatas.forEach(participantDataDto -> {
-                log.info("Updating participant {} data for participant {} in study {} via workflow {} with status {}",
-                        fieldType, ddpParticipantId, studyGuid, workflow, status);
-                updateProbandStatus(workflow, status, participantDataDto, fieldType);
-            });
-        } else {
-            log.info("Creating participant {} data for participant {} in study {} via workflow {} with status {}",
-                    fieldType, ddpParticipantId, studyGuid, workflow, status);
-            createParticipantData(workflow, status, ddpParticipantId, instance.getDdpInstanceIdAsInt(), fieldType);
-        }
-        exportWorkflowToES(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+        updateWorkflowData(ddpParticipantId, workflow, status, instance);
 
         try {
             if (isATStudy(studyGuid)) {
@@ -128,6 +102,44 @@ public class WorkflowStatusUpdate {
         } catch (Exception e) {
             throw new DsmInternalError("Could not add AT default values", e);
         }
+    }
+
+    protected static void updateWorkflowData(String ddpParticipantId, String workflow, String status,
+                                             DDPInstance instance) {
+        String instanceName = instance.getName();
+        List<ParticipantData> participantDataList =
+                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        Optional<FieldSettingsDto> fieldSetting =
+                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(instance.getDdpInstanceIdAsInt(), workflow);
+        if (fieldSetting.isEmpty()) {
+            throw new DsmInternalError(String.format("Invalid workflow name %s for instance %s", workflow, instanceName));
+        }
+
+        FieldSettingsDto setting = fieldSetting.get();
+        String fieldType = setting.getFieldType();
+        boolean isOldParticipant = participantDataList.stream().anyMatch(
+                participantDataDto -> {
+                    if (participantDataDto.getFieldTypeId().isPresent()) {
+                        String ft = participantDataDto.getFieldTypeId().get();
+                        return ft.equals(fieldType) || ft.contains(FamilyMemberConstants.PARTICIPANTS);
+                    }
+                    return false;
+                });
+
+        if (isOldParticipant) {
+            participantDataList.forEach(participantData -> {
+                log.info("Updating participantData {} for participant {} in study {} via workflow {} with status {}",
+                        fieldType, ddpParticipantId, instanceName, workflow, status);
+                updateProbandStatus(workflow, status, participantData, fieldType);
+            });
+        } else {
+            log.info("Creating participantData {} for participant {} in study {} via workflow {} with status {}",
+                    fieldType, ddpParticipantId, instanceName, workflow, status);
+            createParticipantData(workflow, status, ddpParticipantId, instance.getDdpInstanceIdAsInt(), fieldType);
+        }
+
+        exportWorkflowToES(workflow, status, ddpParticipantId, instance, setting, participantDataList);
+        updateEsParticipantData(ddpParticipantId, instance);
     }
 
     private static boolean isATStudy(String studyGuid) {
@@ -206,11 +218,11 @@ public class WorkflowStatusUpdate {
         return participantDataId;
     }
 
-    protected static void updateProbandStatus(String workflow, String status, ParticipantData participantData,
-                                              String fieldSettingsFieldType) {
+    protected static boolean updateProbandStatus(String workflow, String status, ParticipantData participantData,
+                                                 String fieldSettingsFieldType) {
         String oldData = participantData.getData().orElse(null);
         if (oldData == null || participantData.getFieldTypeId().isEmpty()) {
-            return;
+            return false;
         }
 
         JsonObject dataJsonObject = gson.fromJson(oldData, JsonObject.class);
@@ -224,7 +236,9 @@ public class WorkflowStatusUpdate {
                             .withDdpInstanceId(participantData.getDdpInstanceId())
                             .withFieldTypeId(fieldSettingsFieldType).withData(dataJsonObject.toString())
                             .withLastChanged(System.currentTimeMillis()).withChangedBy(DSS).build());
+            return true;
         }
+        return false;
     }
 
     public static boolean isProband(Map<String, String> dataMap) {
@@ -239,6 +253,22 @@ public class WorkflowStatusUpdate {
             throw new DsmInternalError(String.format("Error creating participant data for participant %s in study %s",
                     participantId, studyGuid), e);
         }
+    }
+
+    // TODO: this deserves a better home but do not want to mix it with other ES util code until we clean that up -DC
+    /**
+     * Update ParticipantData entities in ElasticSearch based on participantData in the database
+     */
+    public static void updateEsParticipantData(String ddpParticipantId, DDPInstance instance) {
+        List<ParticipantData> participantDataList =
+                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
+        List<Map<String, Object>> transformedList =
+                        objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(),
+                        new HashMap<>(Map.of(ESObjectConstants.DSM,
+                                        new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
+        log.info("Updated DSM participantData in Elastic for {}", ddpParticipantId);
     }
 
     private static class WorkflowPayload {
