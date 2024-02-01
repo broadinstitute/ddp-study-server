@@ -117,20 +117,23 @@ public class WorkflowStatusUpdate {
 
         FieldSettingsDto setting = fieldSetting.get();
         String fieldType = setting.getFieldType();
-        boolean isOldParticipant = participantDataList.stream().anyMatch(
+        boolean hasWorkflowData = participantDataList.stream().anyMatch(
                 participantDataDto -> {
                     if (participantDataDto.getFieldTypeId().isPresent()) {
                         String ft = participantDataDto.getFieldTypeId().get();
+                        // TODO: not sure what the test for FamilyMemberConstants.PARTICIPANTS is supposed to do.
+                        // It appears that this would match only match 'RGP_PARTICIPANTS', based on a recent query.
+                        // That test is not symmetrical with the code that uses 'hasWorkflowData' -DC
                         return ft.equals(fieldType) || ft.contains(FamilyMemberConstants.PARTICIPANTS);
                     }
                     return false;
                 });
 
-        if (isOldParticipant) {
+        if (hasWorkflowData) {
             participantDataList.forEach(participantData -> {
                 log.info("Updating participantData {} for participant {} in study {} via workflow {} with status {}",
                         fieldType, ddpParticipantId, instanceName, workflow, status);
-                updateProbandStatus(workflow, status, participantData, fieldType);
+                updateWorkflowStatus(workflow, status, participantData, fieldType);
             });
         } else {
             log.info("Creating participantData {} for participant {} in study {} via workflow {} with status {}",
@@ -218,8 +221,14 @@ public class WorkflowStatusUpdate {
         return participantDataId;
     }
 
-    protected static boolean updateProbandStatus(String workflow, String status, ParticipantData participantData,
-                                                 String fieldSettingsFieldType) {
+    /**
+     * Update workflow status in participant data table
+     *
+     * @return true if the update was completed, false otherwise
+     */
+    protected static boolean updateWorkflowStatus(String workflow, String status, ParticipantData participantData,
+                                                  String fieldTypeId) {
+        // TODO: probably should be asserts/exceptions -DC
         String oldData = participantData.getData().orElse(null);
         if (oldData == null || participantData.getFieldTypeId().isEmpty()) {
             return false;
@@ -227,14 +236,14 @@ public class WorkflowStatusUpdate {
 
         JsonObject dataJsonObject = gson.fromJson(oldData, JsonObject.class);
         // TODO the requirements are not clear but from the method name should the following conditional be an &&? -DC
-        if (participantData.getFieldTypeId().get().equals(fieldSettingsFieldType)
+        if (participantData.getFieldTypeId().get().equals(fieldTypeId)
                 || isProband(gson.fromJson(dataJsonObject, Map.class))) {
             dataJsonObject.addProperty(workflow, status);
             participantDataDao.updateParticipantDataColumn(
                     new ParticipantData.Builder().withParticipantDataId(participantData.getParticipantDataId())
-                            .withDdpParticipantId(participantData.getDdpParticipantId().orElse(""))
+                            .withDdpParticipantId(participantData.getRequiredDdpParticipantId())
                             .withDdpInstanceId(participantData.getDdpInstanceId())
-                            .withFieldTypeId(fieldSettingsFieldType).withData(dataJsonObject.toString())
+                            .withFieldTypeId(fieldTypeId).withData(dataJsonObject.toString())
                             .withLastChanged(System.currentTimeMillis()).withChangedBy(DSS).build());
             return true;
         }

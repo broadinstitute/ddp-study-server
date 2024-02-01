@@ -133,14 +133,15 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testUpdateProbandStatus() {
+    public void testUpdateWorkflowStatus() {
         ParticipantData participantData = createParticipantData("ups");
         int participantDataId = participantData.getParticipantDataId();
 
         String workflow = "REGISTRATION_STATUS";
         String status = "ENROLLED";
         String fieldType = participantData.getFieldTypeId().orElseThrow();
-        WorkflowStatusUpdate.updateProbandStatus(workflow, status, participantData, fieldType);
+        boolean updated = WorkflowStatusUpdate.updateWorkflowStatus(workflow, status, participantData, fieldType);
+        Assert.assertTrue(updated);
         String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElseThrow();
         JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
         Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());
