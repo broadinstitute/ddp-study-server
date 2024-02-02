@@ -1,4 +1,10 @@
-package org.broadinstitute.dsm.service;
+package org.broadinstitute.dsm.service.adminoperation;
+
+import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.AT_PARTICIPANT_EXIT;
+import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.EXIT_STATUS;
+import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_CPT_ID;
+import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_FIELD_TYPE;
+import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOMIC_ID_PREFIX;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,18 +95,33 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         Assert.assertEquals(2, ptpData.size());
         WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, ptpData, ddpInstance);
 
-        ParticipantDataFixupService fixupService = new ParticipantDataFixupService();
-        ParticipantDataFixupService.ParticipantListRequest req =
-                new ParticipantDataFixupService.ParticipantListRequest();
-        req.setParticipants(List.of(ddpParticipantId));
+        ParticipantListRequest req = new ParticipantListRequest(List.of(ddpParticipantId));
         String reqJson = gson.toJson(req);
 
         Map<String, String> attributes = new HashMap<>();
         attributes.put("fixupType", "atcpGenomicId");
 
+        ParticipantDataFixupService fixupService = new ParticipantDataFixupService();
+        // there is nothing to fixup in this run
         fixupService.validRealms = List.of(instanceName);
         fixupService.initialize(TEST_USER, instanceName, attributes, reqJson);
-        fixupService.run(42);
+        UpdateLog updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
+        Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+
+        ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_1", instanceId);
+        ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
+
+        // now have the correct number of genomic IDs and exit statuses
+        updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
+        Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+
+        ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_2", instanceId);
+        ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
+
+        // now have extra genomic IDs and exit statuses
+        updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
+        Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.UPDATED.name(), updateLog.getStatus());
+
     }
 
     private ParticipantDto createParticipant() {
@@ -114,4 +135,23 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
                 ddpParticipantId);
         return participant;
     }
+
+    private void verifyParticipantData(String ddpParticipantId) {
+        ParticipantDataDao dataDao = new ParticipantDataDao();
+        List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        // 1 for exit status, 1 for genomic id, 2 for other data
+        Assert.assertEquals(4, ptpDataList.size());
+        ptpDataList.forEach(ptpData -> {
+            String fieldType = ptpData.getRequiredFieldTypeId();
+            Map<String, String> dataMap = ptpData.getDataMap();
+            if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
+                Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
+            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
+                Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
+            } else {
+                Assert.fail("Unexpected field type: " + fieldType);
+            }
+        });
+    }
+
 }

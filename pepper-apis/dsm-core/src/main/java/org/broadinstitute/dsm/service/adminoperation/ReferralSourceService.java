@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.defaultvalues;
+package org.broadinstitute.dsm.service.adminoperation;
 
 import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.isProband;
 
@@ -27,10 +27,8 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.statics.DBConstants;

@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.service;
+package org.broadinstitute.dsm.service.adminoperation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,8 +10,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -76,7 +74,8 @@ public class ParticipantDataFixupService implements AdminOperation {
 
         // handle optional list of ptps
         if (!StringUtils.isBlank(payload)) {
-            List<String> participants = getParticipantList(payload);
+            ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
+            List<String> participants = req.getParticipants();
             for (String participantId: participants) {
                 List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(participantId);
                 if (ptpData.isEmpty()) {
@@ -105,55 +104,7 @@ public class ParticipantDataFixupService implements AdminOperation {
 
         // for each participant attempt an update and log results
         for (var entry: participantDataByPtpId.entrySet()) {
-            String ddpParticipantId = entry.getKey();
-            List<ParticipantData> participantDataList = entry.getValue();
-            if (participantDataList.isEmpty()) {
-                updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.NO_PARTICIPANT_DATA.name()));
-                continue;
-            }
-            // no duplicates
-            if (participantDataList.size() == 1) {
-                updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name()));
-                continue;
-            }
-
-            try {
-                Set<Integer> genomeIdToDelete =
-                        getRecordsToDelete(participantDataList, ATDefaultValues.GENOME_STUDY_FIELD_TYPE);
-                Set<Integer> exitToDelete =
-                        getRecordsToDelete(participantDataList, ATDefaultValues.AT_PARTICIPANT_EXIT);
-
-                if (genomeIdToDelete.isEmpty() && exitToDelete.isEmpty()) {
-                    updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name()));
-                    continue;
-                }
-
-                // remove records from DB
-                deleteParticipantData(genomeIdToDelete);
-                deleteParticipantData(exitToDelete);
-
-                // update ES
-                Map<Integer, ParticipantData> idToData = participantDataList.stream()
-                        .collect(Collectors.toMap(ParticipantData::getParticipantDataId, pd -> pd));
-                updateParticipantDataList(idToData, genomeIdToDelete);
-                updateParticipantDataList(idToData, exitToDelete);
-                WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, idToData.values(), ddpInstance);
-
-                updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.UPDATED.name()));
-            } catch (Exception e) {
-                updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.ERROR.name(), e.toString()));
-
-                String msg = String.format("Exception in ParticipantDataFixupService.run for participant %s: %s",
-                        ddpParticipantId, e);
-                // many of these exceptions will require investigation, but conservatively we will just log
-                // at error level for those that are definitely concerning
-                if (e instanceof DsmInternalError) {
-                    log.error(msg);
-                    e.printStackTrace();
-                } else {
-                    log.warn(msg);
-                }
-            }
+            updateLog.add(updateParticipant(entry.getKey(), entry.getValue()));
         }
 
         // update job log record
@@ -163,6 +114,51 @@ public class ParticipantDataFixupService implements AdminOperation {
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
         }
+    }
+
+    protected UpdateLog updateParticipant(String ddpParticipantId, List<ParticipantData> participantDataList) {
+        if (participantDataList.isEmpty()) {
+            return new UpdateLog(ddpParticipantId, UpdateStatus.NO_PARTICIPANT_DATA.name());
+        }
+        // no duplicates
+        if (participantDataList.size() == 1) {
+            return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
+        }
+
+        try {
+            Set<Integer> genomeIdToDelete =
+                    getRecordsToDelete(participantDataList, ATDefaultValues.GENOME_STUDY_FIELD_TYPE);
+            Set<Integer> exitToDelete =
+                    getRecordsToDelete(participantDataList, ATDefaultValues.AT_PARTICIPANT_EXIT);
+
+            if (genomeIdToDelete.isEmpty() && exitToDelete.isEmpty()) {
+                return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
+            }
+
+            // remove records from DB
+            deleteParticipantData(genomeIdToDelete);
+            deleteParticipantData(exitToDelete);
+
+            // update ES
+            Map<Integer, ParticipantData> idToData = participantDataList.stream()
+                    .collect(Collectors.toMap(ParticipantData::getParticipantDataId, pd -> pd));
+            updateParticipantDataList(idToData, genomeIdToDelete);
+            updateParticipantDataList(idToData, exitToDelete);
+            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, idToData.values(), ddpInstance);
+        } catch (Exception e) {
+            String msg = String.format("Exception in ParticipantDataFixupService.run for participant %s: %s",
+                    ddpParticipantId, e);
+            // many of these exceptions will require investigation, but conservatively we will just log
+            // at error level for those that are definitely concerning
+            if (e instanceof DsmInternalError) {
+                log.error(msg);
+                e.printStackTrace();
+            } else {
+                log.warn(msg);
+            }
+            return new UpdateLog(ddpParticipantId, UpdateStatus.ERROR.name(), e.toString());
+        }
+        return new UpdateLog(ddpParticipantId, UpdateStatus.UPDATED.name());
     }
 
     private Set<Integer> getRecordsToDelete(List<ParticipantData> participantDataList, String fieldTypeId) {
@@ -203,39 +199,5 @@ public class ParticipantDataFixupService implements AdminOperation {
         }
         ParticipantDataDao dataDao = new ParticipantDataDao();
         participantDataIds.forEach(dataDao::delete);
-    }
-
-    //!! TODO: try to blend this with copy in ReferralSourceService
-    // the format of each participant results
-    @AllArgsConstructor
-    private static class UpdateLog {
-        private final String ddpParticipantId;
-        private final String status;
-        private String message;
-
-        public UpdateLog(String ddpParticipantId, String status) {
-            this.ddpParticipantId = ddpParticipantId;
-            this.status = status;
-        }
-    }
-
-    //!! TODO: try to blend this with copy in ReferralSourceService
-    private static List<String> getParticipantList(String payload) {
-        ParticipantListRequest req;
-        try {
-            req = new Gson().fromJson(payload, ParticipantListRequest.class);
-        } catch (Exception e) {
-            throw new DSMBadRequestException("Invalid request format. Payload: " + payload);
-        }
-        List<String> participants = req.getParticipants();
-        if (participants.isEmpty()) {
-            throw new DSMBadRequestException("Invalid request format. Empty participant list");
-        }
-        return participants;
-    }
-
-    @Data
-    public static class ParticipantListRequest {
-        private List<String> participants;
     }
 }

@@ -5,7 +5,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService;
+import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
 
 /**
  * Provides a service to run admin operations (e.g. fixing data, etc.) typically asynchronously, recording results

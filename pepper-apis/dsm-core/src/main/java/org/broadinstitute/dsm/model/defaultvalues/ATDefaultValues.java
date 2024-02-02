@@ -53,14 +53,14 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
                     participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
                             participantDataDto.getRequiredFieldTypeId()));
             if (!hasGenomeId) {
-                insertGenomicIdForParticipant(ddpParticipantId, profile);
+                insertGenomicIdForParticipant(ddpParticipantId, profile.getHruid(), instanceId);
             }
 
             boolean hasExitStatus = participantDataList.stream().anyMatch(
                     participantDataDto -> ATDefaultValues.AT_PARTICIPANT_EXIT.equals(
                             participantDataDto.getRequiredFieldTypeId()));
             if (!hasExitStatus) {
-                insertExitStatusForParticipant(ddpParticipantId);
+                insertExitStatusForParticipant(ddpParticipantId, instanceId);
             }
 
             if (hasGenomeId && hasExitStatus) {
@@ -83,13 +83,19 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && COMPLETE.equals(activity.getStatus());
     }
 
-    private void insertGenomicIdForParticipant(String ddpParticipantId, Profile esProfile) {
-        String hruid = esProfile.getHruid();
+    /**
+     * Insert a genomic id for a participant in the AT study
+     * Note: this updates ParticipantData in the DB, but does not update ES
+     *
+     * @param hruid hruid of the participant, per the ES profile
+     */
+    public static void insertGenomicIdForParticipant(String ddpParticipantId, String hruid, int instanceId) {
         insertParticipantData(GENOME_STUDY_FIELD_TYPE,
-                Map.of(GENOME_STUDY_CPT_ID, GENOMIC_ID_PREFIX.concat(getGenomicIdValue(hruid))), ddpParticipantId);
+                Map.of(GENOME_STUDY_CPT_ID, GENOMIC_ID_PREFIX.concat(getGenomicIdValue(hruid))),
+                ddpParticipantId, instanceId);
     }
 
-    private String getGenomicIdValue(String hruid) {
+    private static String getGenomicIdValue(String hruid) {
         BookmarkDao bookmarkDao = new BookmarkDao();
         Optional<BookmarkDto> maybeGenomicId = bookmarkDao.getBookmarkByInstance(AT_GENOMIC_ID);
         return maybeGenomicId.map(bookmarkDto -> {
@@ -98,15 +104,19 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }).orElse(hruid);
     }
 
-    private void insertExitStatusForParticipant(String ddpParticipantId) {
-        String defaultValue = getDefaultExitStatus();
+    /**
+     * Insert default exit status for a participant in the AT study
+     * Note: this updates ParticipantData in the DB, but does not update ES
+     */
+    public static void insertExitStatusForParticipant(String ddpParticipantId, int instanceId) {
+        String defaultValue = getDefaultExitStatus(instanceId);
         if (StringUtils.isBlank(defaultValue)) {
             throw new DsmInternalError("No default exit status found for AT study");
         }
-        insertParticipantData(AT_PARTICIPANT_EXIT, Map.of(EXIT_STATUS, defaultValue), ddpParticipantId);
+        insertParticipantData(AT_PARTICIPANT_EXIT, Map.of(EXIT_STATUS, defaultValue), ddpParticipantId, instanceId);
     }
 
-    private String getDefaultExitStatus() {
+    private static String getDefaultExitStatus(int instanceId) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         Optional<FieldSettingsDto> fieldSettingByColumnNameAndInstanceId =
                 fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(instanceId, EXIT_STATUS);
@@ -116,7 +126,8 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }).orElse(StringUtils.EMPTY);
     }
 
-    private void insertParticipantData(String fieldTypeId, Map<String, String> data, String ddpParticipantId) {
+    private static void insertParticipantData(String fieldTypeId, Map<String, String> data, String ddpParticipantId,
+                                              int instanceId) {
         org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                 new org.broadinstitute.dsm.model.participant.data.ParticipantData(participantDataDao);
         participantData.setData(ddpParticipantId, instanceId, fieldTypeId, data);
