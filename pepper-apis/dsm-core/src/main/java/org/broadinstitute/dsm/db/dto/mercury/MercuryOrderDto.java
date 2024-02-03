@@ -99,7 +99,7 @@ public class MercuryOrderDto {
             return this;
         }
 
-        public Builder withTissueId(int tissueId) {
+        public Builder withTissueId(Integer tissueId) {
             this.tissueId = tissueId;
             return this;
         }
