@@ -84,6 +84,9 @@ public class ParticipantDataFixupService implements AdminOperation {
                 participantDataByPtpId.put(participantId, ptpData);
             }
         } else {
+            throw new DSMBadRequestException("Missing required payload");
+            /* TODO: it feels too easy to inadvertently forget to include the payload, so for now we will require it.
+            // Keeping the code in case that becomes untenable -DC
             // get study participants and their data
             // Implementation note: we can either gather all the ptp data now (fewer queries, larger memory footprint),
             // or just gather the ptp IDs here and query for ptp data separately (more queries, smaller memory footprint)
@@ -91,6 +94,7 @@ public class ParticipantDataFixupService implements AdminOperation {
             List<ParticipantData> dataList =
                     dataDao.getParticipantDataByInstanceId(ddpInstance.getDdpInstanceIdAsInt());
             participantDataByPtpId = dataList.stream().collect(Collectors.groupingBy(ParticipantData::getRequiredDdpParticipantId));
+            */
         }
     }
 
@@ -124,12 +128,15 @@ public class ParticipantDataFixupService implements AdminOperation {
         if (participantDataList.size() == 1) {
             return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
         }
+        log.info("TEMP: participantDataList size: {}", participantDataList.size());
 
         try {
             Set<Integer> genomeIdToDelete =
                     getRecordsToDelete(participantDataList, ATDefaultValues.GENOME_STUDY_FIELD_TYPE);
             Set<Integer> exitToDelete =
                     getRecordsToDelete(participantDataList, ATDefaultValues.AT_PARTICIPANT_EXIT);
+            log.info("Found {} genomic IDs and {} exit statuses to delete for participant {}",
+                    genomeIdToDelete.size(), exitToDelete.size(), ddpParticipantId);
 
             if (genomeIdToDelete.isEmpty() && exitToDelete.isEmpty()) {
                 return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
@@ -144,13 +151,14 @@ public class ParticipantDataFixupService implements AdminOperation {
                     .collect(Collectors.toMap(ParticipantData::getParticipantDataId, pd -> pd));
             updateParticipantDataList(idToData, genomeIdToDelete);
             updateParticipantDataList(idToData, exitToDelete);
-            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, idToData.values(), ddpInstance);
+            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,
+                    new ArrayList<>(idToData.values()), ddpInstance);
         } catch (Exception e) {
             String msg = String.format("Exception in ParticipantDataFixupService.run for participant %s: %s",
                     ddpParticipantId, e);
             // many of these exceptions will require investigation, but conservatively we will just log
             // at error level for those that are definitely concerning
-            if (e instanceof DsmInternalError) {
+            if (e instanceof DsmInternalError || e instanceof RuntimeException) {
                 log.error(msg);
                 e.printStackTrace();
             } else {

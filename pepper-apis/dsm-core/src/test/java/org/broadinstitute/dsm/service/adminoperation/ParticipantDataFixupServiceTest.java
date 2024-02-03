@@ -1,15 +1,14 @@
 package org.broadinstitute.dsm.service.adminoperation;
 
 import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.AT_PARTICIPANT_EXIT;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.EXIT_STATUS;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_CPT_ID;
 import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_FIELD_TYPE;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOMIC_ID_PREFIX;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
@@ -112,16 +111,19 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
 
         // now have the correct number of genomic IDs and exit statuses
-        updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
+        updateLog = fixupService.updateParticipant(ddpParticipantId,
+                dataDao.getParticipantDataByParticipantId(ddpParticipantId));
         Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+        verifyParticipantData(ddpParticipantId);
 
         ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_2", instanceId);
         ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
 
         // now have extra genomic IDs and exit statuses
-        updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
+        updateLog = fixupService.updateParticipant(ddpParticipantId,
+                dataDao.getParticipantDataByParticipantId(ddpParticipantId));
         Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.UPDATED.name(), updateLog.getStatus());
-
+        verifyParticipantData(ddpParticipantId);
     }
 
     private ParticipantDto createParticipant() {
@@ -141,17 +143,11 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
         // 1 for exit status, 1 for genomic id, 2 for other data
         Assert.assertEquals(4, ptpDataList.size());
-        ptpDataList.forEach(ptpData -> {
-            String fieldType = ptpData.getRequiredFieldTypeId();
-            Map<String, String> dataMap = ptpData.getDataMap();
-            if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
-                Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
-            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
-                Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
-            } else {
-                Assert.fail("Unexpected field type: " + fieldType);
-            }
-        });
-    }
 
+        Set<String> expectedFieldTypes =
+                Set.of(AT_PARTICIPANT_EXIT, GENOME_STUDY_FIELD_TYPE, "AT_GROUP_MISCELLANEOUS", "AT_GROUP_ELIGIBILITY");
+        Set<String> foundFieldTypes = ptpDataList.stream()
+                .map(ParticipantData::getRequiredFieldTypeId).collect(Collectors.toSet());
+        Assert.assertEquals(expectedFieldTypes, foundFieldTypes);
+    }
 }

@@ -23,8 +23,8 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     protected static final String AT_GENOMIC_ID = "at_genomic_id";
     protected static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
     protected static final String COMPLETE = "COMPLETE";
-    protected static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
-    protected static final String GENOMIC_ID_PREFIX = "DDP_ATCP_";
+    public static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
+    public static final String GENOMIC_ID_PREFIX = "DDP_ATCP_";
     public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
     public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
     public static final String EXIT_STATUS = "EXITSTATUS";

@@ -4,6 +4,7 @@ import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -278,7 +279,7 @@ public class WorkflowStatusUpdate {
      * Update ParticipantData entities in ElasticSearch based on participantData list provided.
      * Note that participantDataList should be a list of ALL participant data for the participant.
      */
-    public static void updateEsParticipantData(String ddpParticipantId, Collection<ParticipantData> participantDataList,
+    public static void updateEsParticipantData(String ddpParticipantId, List<ParticipantData> participantDataList,
                                                DDPInstance instance) {
         ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
         List<Map<String, Object>> transformedList =
