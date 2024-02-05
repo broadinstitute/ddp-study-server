@@ -5,7 +5,6 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -72,19 +71,13 @@ public class TestParticipantUtil {
         }
     }
 
-    public static void deleteParticipantAndInstitution(int participantId) {
-        if (participantId >= 0) {
-            new DDPInstitutionDao().deleteByParticipant(participantId);
-            participantDao.delete(participantId);
-        }
-    }
-
     private static ParticipantDto createParticipantWithEsData(String participantBaseName, DDPInstanceDto ddpInstanceDto,
                                                               String esIndex, String dob, String dateOfMajority,
                                                               String pathToParticipantProfileJson,
                                                               String pathToDsmDataJson,
                                                               String pathToActivitiesJson) {
         String ddpParticipantId = genDDPParticipantId(participantBaseName);
+
         ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, pathToParticipantProfileJson, ddpParticipantId);
