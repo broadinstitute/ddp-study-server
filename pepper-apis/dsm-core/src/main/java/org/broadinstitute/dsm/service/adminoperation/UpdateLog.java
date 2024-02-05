@@ -3,6 +3,9 @@ package org.broadinstitute.dsm.service.adminoperation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+/**
+ * Log entry for various AdminOperations
+ */
 @AllArgsConstructor
 @Data
 public class UpdateLog {

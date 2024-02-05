@@ -22,6 +22,9 @@ import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 
+/**
+ * AdminOperation service to asynchronously fix various ParticipantData issues
+ */
 @Slf4j
 public class ParticipantDataFixupService implements AdminOperation {
 
