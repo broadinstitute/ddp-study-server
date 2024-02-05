@@ -5,6 +5,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 
@@ -12,7 +13,11 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
 
     public OncHistoryDetailsMigrator(String index, String realm) {
-        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL);
+        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL, null);
+    }
+
+    public OncHistoryDetailsMigrator(String index, String realm, List<ExportLog> exportLog) {
+        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL, exportLog);
     }
 
     @Override

@@ -41,12 +41,6 @@ public class ParticipantRecord {
         this.participantRecordDao = participantRecordDao;
     }
 
-    public int createNewParticipantRecord() {
-        participantId = insertDdpParticipant();
-        participantRecordId = insertDdpParticipantRecord(participantId);
-        return participantId;
-    }
-
     private int insertDdpParticipant() {
         ParticipantDto participantDto =
                 new ParticipantDto.Builder(ddpInstanceDto.getDdpInstanceId(), System.currentTimeMillis())
