@@ -55,11 +55,8 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
 
     @Test
     public void updateDestructionPolicyTest() {
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("OncHistoryDetailTest");
-        testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
-        ElasticTestUtil.createParticipant(esIndex, testParticipant);
-        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId);
-
+        testParticipant = TestParticipantUtil.createParticipantWithEsProfile("ptp1_onchistory", ddpInstanceDto, esIndex);
+        String ddpParticipantId = testParticipant.getDdpParticipantIdOrThrow();
         int medicalRecordId = MedicalRecordTestUtil.createMedicalRecord(testParticipant, ddpInstanceDto);
 
         log.debug("ES participant record for {}: {}", ddpParticipantId,
@@ -73,10 +70,8 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
         OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
         try {
             // create another ptp with a medical record but no onc history
-            String ddpParticipantId2 = TestParticipantUtil.genDDPParticipantId("ptp2_OncHistoryDetailTest");
-            ptp2 = TestParticipantUtil.createParticipant(ddpParticipantId2, ddpInstanceDto.getDdpInstanceId());
-            ElasticTestUtil.createParticipant(esIndex, ptp2);
-            ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json", ddpParticipantId2);
+            ptp2 = TestParticipantUtil.createParticipantWithEsProfile("ptp2_onchistory", ddpInstanceDto, esIndex);
+            String ddpParticipantId2 = ptp2.getDdpParticipantIdOrThrow();
 
             log.debug("ES participant record for {}: {}", ddpParticipantId2,
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId2));
@@ -90,22 +85,13 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
                     .withDestructionPolicy("12")
                     .withChangedBy(TEST_USER);
 
-            OncHistoryDetail rec1 = builder.build();
-            recId1 = OncHistoryDetail.createOncHistoryDetail(rec1);
-            rec1.setOncHistoryDetailId(recId1);
-            ElasticTestUtil.createOncHistoryDetail(esIndex, rec1, ddpParticipantId);
+            recId1 = MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
 
             builder.withDestructionPolicy("3");
-            OncHistoryDetail rec2 = builder.build();
-            recId2 = OncHistoryDetail.createOncHistoryDetail(rec2);
-            rec2.setOncHistoryDetailId(recId2);
-            ElasticTestUtil.createOncHistoryDetail(esIndex, rec2, ddpParticipantId);
+            recId2 = MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
 
             builder.withFacility("Other office");
-            OncHistoryDetail rec3 = builder.build();
-            recId3 = OncHistoryDetail.createOncHistoryDetail(rec3);
-            rec3.setOncHistoryDetailId(recId3);
-            ElasticTestUtil.createOncHistoryDetail(esIndex, rec3, ddpParticipantId);
+            recId3 = MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
 
             // update and verify
             OncHistoryDetail.updateDestructionPolicy("5", "Office", instanceName, TEST_USER);
@@ -139,13 +125,13 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
         } finally {
             log.info("recId1={}, ptp2MedicalRecordId={}, ptp2={}", recId1, ptp2MedicalRecordId, ptp2);
             if (recId1 != -1) {
-                oncHistoryDetailDao.delete(recId1);
+                MedicalRecordTestUtil.deleteOncHistoryDetail(recId1);
             }
             if (recId2 != -1) {
-                oncHistoryDetailDao.delete(recId2);
+                MedicalRecordTestUtil.deleteOncHistoryDetail(recId2);
             }
             if (recId3 != -1) {
-                oncHistoryDetailDao.delete(recId3);
+                MedicalRecordTestUtil.deleteOncHistoryDetail(recId3);
             }
             MedicalRecordTestUtil.deleteMedicalRecord(medicalRecordId);
 

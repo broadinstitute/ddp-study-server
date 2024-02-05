@@ -55,6 +55,17 @@ public class TestParticipantUtil {
         return participantDto;
     }
 
+    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName,
+                                                                DDPInstanceDto ddpInstanceDto, String esIndex) {
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
+        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+
+        ElasticTestUtil.createParticipant(esIndex, participant);
+        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
+                ddpParticipantId);
+        return participant;
+    }
+
     public static void deleteParticipant(int participantId) {
         if (participantId >= 0) {
             participantDao.delete(participantId);
@@ -68,12 +79,12 @@ public class TestParticipantUtil {
         }
     }
 
-    private static ParticipantDto createParticipantFromConfigFiles(String guid, DDPInstanceDto ddpInstanceDto, String dob,
-                                                            String dateOfMajority, String esIndex,
-                                                            String pathToParticipantProfileJson,
-                                                            String pathToDsmDataJson,
-                                                            String pathToActivitiesJson) {
-        String ddpParticipantId = genDDPParticipantId(guid);
+    private static ParticipantDto createParticipantWithEsData(String participantBaseName, DDPInstanceDto ddpInstanceDto,
+                                                              String esIndex, String dob, String dateOfMajority,
+                                                              String pathToParticipantProfileJson,
+                                                              String pathToDsmDataJson,
+                                                              String pathToActivitiesJson) {
+        String ddpParticipantId = genDDPParticipantId(participantBaseName);
         ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, testParticipant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, pathToParticipantProfileJson, ddpParticipantId);
@@ -85,15 +96,19 @@ public class TestParticipantUtil {
         return testParticipant;
     }
 
-    public static ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob,
+    public static ParticipantDto createSharedLearningParticipant(String participantBaseName,
+                                                                 DDPInstanceDto ddpInstanceDto, String dob,
                                                                  String dateOfMajority, String esIndex) {
-        return createParticipantFromConfigFiles(guid, ddpInstanceDto, dob, dateOfMajority, esIndex,
-               "elastic/participantProfile.json", "elastic/participantDsm.json", "elastic/lmsActivitiesSharedLearningEligible.json");
+        return createParticipantWithEsData(participantBaseName, ddpInstanceDto, esIndex, dob, dateOfMajority,
+               "elastic/participantProfile.json", "elastic/participantDsm.json",
+                "elastic/lmsActivitiesSharedLearningEligible.json");
     }
 
-    public static ParticipantDto createIneligibleSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto,
+    public static ParticipantDto createIneligibleSharedLearningParticipant(String participantBaseName,
+                                                                           DDPInstanceDto ddpInstanceDto,
                                                                            String dob, String esIndex) {
-        return createParticipantFromConfigFiles(guid, ddpInstanceDto, dob, null, esIndex,
-                "elastic/participantProfile.json", "elastic/participantDsm.json", "elastic/lmsActivitiesSharedLearningIneligible.json");
+        return createParticipantWithEsData(participantBaseName, ddpInstanceDto, esIndex, dob, null,
+                "elastic/participantProfile.json", "elastic/participantDsm.json",
+                "elastic/lmsActivitiesSharedLearningIneligible.json");
     }
 }

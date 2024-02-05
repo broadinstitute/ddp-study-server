@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public abstract class BaseCollectionMigrator extends BaseMigrator {
@@ -14,8 +13,8 @@ public abstract class BaseCollectionMigrator extends BaseMigrator {
     protected List<Map<String, Object>> transformedList;
     protected Set<String> primaryKeys;
 
-    public BaseCollectionMigrator(String index, String realm, String object, List<ExportLog> exportLog) {
-        super(index, realm, object, exportLog);
+    public BaseCollectionMigrator(String index, String realm, String object) {
+        super(index, realm, object);
         this.primaryKeys = new HashSet<>();
     }
 

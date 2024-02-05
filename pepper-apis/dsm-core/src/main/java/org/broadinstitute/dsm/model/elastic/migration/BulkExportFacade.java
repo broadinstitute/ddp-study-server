@@ -69,7 +69,7 @@ public class BulkExportFacade {
         return !response.isFailed();
     }
 
-    private void buildFailureMessage(BulkResponse bulkResponse, ExportLog exportLog) {
+    private void buildFailureMessage(BulkResponse bulkResponse) {
         if (exportLog != null) {
             if (bulkResponse.hasFailures()) {
                 exportLog.setMessage(bulkResponse.buildFailureMessage());

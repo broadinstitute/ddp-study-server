@@ -35,7 +35,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 @Slf4j
@@ -311,11 +310,9 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
                     .withDestructionPolicy("12")
                     .withChangedBy(TEST_USER);
 
-            OncHistoryDetail rec = builder.build();
-            int oncHistoryDetailId = OncHistoryDetail.createOncHistoryDetail(rec);
+            int oncHistoryDetailId =
+                    MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
             participantToOncHistoryId.put(participantId, oncHistoryDetailId);
-            rec.setOncHistoryDetailId(oncHistoryDetailId);
-            ElasticTestUtil.createOncHistoryDetail(esIndex, rec, ddpParticipantId);
         }
 
         log.debug("Created ES participant record for {}: {}", ddpParticipantId,

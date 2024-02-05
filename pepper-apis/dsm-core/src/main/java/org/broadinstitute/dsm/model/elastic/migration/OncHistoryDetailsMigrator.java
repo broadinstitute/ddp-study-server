@@ -13,11 +13,11 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
 
     public OncHistoryDetailsMigrator(String index, String realm) {
-        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL, null);
+        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL);
     }
 
     public OncHistoryDetailsMigrator(String index, String realm, List<ExportLog> exportLog) {
-        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL, exportLog);
+        super(index, realm, ESObjectConstants.ONC_HISTORY_DETAIL);
     }
 
     @Override
