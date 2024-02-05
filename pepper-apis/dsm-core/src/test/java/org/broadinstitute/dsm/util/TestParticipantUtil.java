@@ -5,7 +5,6 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -57,13 +56,6 @@ public class TestParticipantUtil {
 
     public static void deleteParticipant(int participantId) {
         if (participantId >= 0) {
-            participantDao.delete(participantId);
-        }
-    }
-
-    public static void deleteParticipantAndInstitution(int participantId) {
-        if (participantId >= 0) {
-            new DDPInstitutionDao().deleteByParticipant(participantId);
             participantDao.delete(participantId);
         }
     }

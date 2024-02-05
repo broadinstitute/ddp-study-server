@@ -12,6 +12,7 @@ public class FieldSettingsTestUtil {
      * Creates a radio button field setting
      * @return fieldSettingsId
      */
+
     public static int createRadioFieldSetting(FieldSettingsDto.Builder builder) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         FieldSettingsDto fieldSettings = builder

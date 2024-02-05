@@ -4,6 +4,8 @@ import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -269,14 +271,22 @@ public class WorkflowStatusUpdate {
      * Update ParticipantData entities in ElasticSearch based on participantData in the database
      */
     public static void updateEsParticipantData(String ddpParticipantId, DDPInstance instance) {
-        List<ParticipantData> participantDataList =
-                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        updateEsParticipantData(ddpParticipantId,
+                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId), instance);
+    }
+
+    /**
+     * Update ParticipantData entities in ElasticSearch based on participantData list provided.
+     * Note that participantDataList should be a list of ALL participant data for the participant.
+     */
+    public static void updateEsParticipantData(String ddpParticipantId, List<ParticipantData> participantDataList,
+                                               DDPInstance instance) {
         ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
         List<Map<String, Object>> transformedList =
-                        objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
+                objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
         ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(),
-                        new HashMap<>(Map.of(ESObjectConstants.DSM,
-                                        new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
+                new HashMap<>(Map.of(ESObjectConstants.DSM,
+                        new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
         log.info("Updated DSM participantData in Elastic for {}", ddpParticipantId);
     }
 

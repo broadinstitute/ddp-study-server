@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
+import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -93,7 +94,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }
     }
 
-    protected static Map<String, String> buildDataMap(String participantId, long familyId, String instanceName,
+    public static Map<String, String> buildDataMap(String participantId, long familyId, String instanceName,
                                                       List<Activities> activities, Profile esProfile) {
         Map<String, String> probandDataMap;
 

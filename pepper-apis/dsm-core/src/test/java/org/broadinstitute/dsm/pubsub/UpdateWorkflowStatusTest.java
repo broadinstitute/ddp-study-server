@@ -24,7 +24,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceServiceTest;
+import org.broadinstitute.dsm.service.adminoperation.ReferralSourceServiceTest;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
