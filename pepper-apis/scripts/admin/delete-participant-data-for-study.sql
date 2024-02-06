@@ -6,8 +6,14 @@
 set @study_guid = 'singular' collate 'utf8mb4_unicode_ci';
 
 -- set the gcp environment in which to run the user deletes for dss
-set @gcp_project = 'broad-ddp-dev';
-use pepperdev;
+set @gcp_project = 'broad-ddp-test';
+set @delete_sleep_seconds = 5;
+use peppertest;
+
+-- remove age up jobs
+delete from study_governance_policy
+where study_id in (select s.umbrella_study_id from umbrella_study s where s.guid = @study_guid)
+
 
 -- reset queued events to the future
 update queued_event set post_after = 99999999999999 where event_configuration_id in
@@ -21,7 +27,7 @@ update queued_event set post_after = 99999999999999 where event_configuration_id
 -- delete governed users in dss
 select distinct
     concat('gcloud --project=', @gcp_project,  ' pubsub topics publish dss-tasks --attribute ''taskType=USER_DELETE,participantGuid=',
-           u.guid,',operatorGuid=andrew'' --message ''{"comment" : "purging singular data"} '';  sleep 10;')
+           u.guid,',operatorGuid=andrew'' --message ''{"comment" : "purging singular data"} '';  sleep ',@delete_sleep_seconds, ';')
 from user u,
      user_study_enrollment e,
      umbrella_study s,
@@ -38,7 +44,7 @@ where
 -- delete non governed users in dss
 select distinct
     concat('gcloud --project=', @gcp_project,  ' pubsub topics publish dss-tasks --attribute ''taskType=USER_DELETE,participantGuid=',
-           u.guid,',operatorGuid=andrew'' --message ''{"comment" : "purging singular data"} ''; sleep 10;')
+           u.guid,',operatorGuid=andrew'' --message ''{"comment" : "purging singular data"} ''; sleep ',@delete_sleep_seconds,';')
 from user u,
      user_study_enrollment e,
      umbrella_study s
@@ -53,7 +59,7 @@ where
         s.guid = @study_guid;
 
 
-use dev_dsm_db;
+use test_dsm_db;
 
 -- delete kits
 select
