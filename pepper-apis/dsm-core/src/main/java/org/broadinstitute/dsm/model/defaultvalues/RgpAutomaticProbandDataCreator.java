@@ -58,7 +58,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         // this will increment the family value (which we want to ensure we are not messed up by concurrency)
         // but will leave an unused family ID if we abort later. As things stand now that is not a concern.
         long familyId = getFamilyId(participantId, bookmark);
-        writeFamilyIdToElastic(instance.getParticipantIndexES(), participantId, familyId);
+        insertFamilyIdToDsmES(instance.getParticipantIndexES(), participantId, familyId);
 
         Map<String, String> probandDataMap = buildDataMap(participantId, familyId, instanceName,
                 elasticSearchParticipantDto.getActivities(), esProfile);
@@ -150,7 +150,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }).orElse("");
     }
 
-    protected static void writeFamilyIdToElastic(@NonNull String esIndex, @NonNull String participantId, long familyId) {
+    void insertFamilyIdToDsmES(@NonNull String esIndex, @NonNull String participantId, long familyId) {
         try {
             Map<String, Object> esObjectMap = ElasticSearchUtil.getObjectsMap(esIndex, participantId, ESObjectConstants.DSM);
             Map<String, Object> esDsmObjectMap = (Map<String, Object>) esObjectMap.get(ESObjectConstants.DSM);

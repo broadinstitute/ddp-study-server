@@ -18,7 +18,7 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 @Slf4j
 public class ElasticExportService implements AdminOperation {
     private static final Gson gson = new Gson();
-    private String esIndex;
+    private DDPInstance ddpInstance;
     private List<String> ddpParticipantIds = new ArrayList<>();
 
     /**
@@ -30,11 +30,11 @@ public class ElasticExportService implements AdminOperation {
      * @param payload request body as ParticipantListRequest
      */
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
-        DDPInstance instance = DDPInstance.getDDPInstance(realm);
-        if (instance == null) {
+        ddpInstance = DDPInstance.getDDPInstance(realm);
+        if (ddpInstance == null) {
             throw new DsmInternalError("Invalid realm: " + realm);
         }
-        esIndex = instance.getParticipantIndexES();
+        String esIndex = ddpInstance.getParticipantIndexES();
         if (StringUtils.isEmpty(esIndex)) {
             throw new DsmInternalError("No ES participant index for study " + realm);
         }
@@ -62,7 +62,7 @@ public class ElasticExportService implements AdminOperation {
      */
     public void run(int operationId) {
         List<ExportLog> exportLogs = new ArrayList<>();
-        exportParticipants(ddpParticipantIds, esIndex, exportLogs);
+        exportParticipants(ddpParticipantIds, ddpInstance.getName(), exportLogs);
 
         // update job log record
         try {
@@ -74,11 +74,11 @@ public class ElasticExportService implements AdminOperation {
         }
     }
 
-    protected static void exportParticipants(List<String> ddpParticipantIds, String esIndex,
+    protected static void exportParticipants(List<String> ddpParticipantIds, String realm,
                                              List<ExportLog> exportLogs) {
         try {
             // export participant data to ES
-            StudyMigrator.migrateParticipants(ddpParticipantIds, esIndex, exportLogs);
+            StudyMigrator.migrateParticipants(ddpParticipantIds, realm, exportLogs);
         } catch (Exception e) {
             log.error("Error migrating participant data to ES: {}", e.toString());
             ExportLog exportLog = new ExportLog("<No entity>");

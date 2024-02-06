@@ -11,7 +11,6 @@ import java.util.Optional;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
-import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
@@ -26,7 +25,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 
-public class RgpAutomaticProbandDataCreatorTest extends DbAndElasticBaseTest {
+public class RgpAutomaticProbandDataCreatorTest extends DbTxnBaseTest {
 
     @Test
     public void getFamilyId() {
@@ -52,15 +51,6 @@ public class RgpAutomaticProbandDataCreatorTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void writeFamilyIdToElastic() {
-        String instanceId = "rgp_family_id";
-        String participantId = "PTP123";
-        long familyId = 1000;
-
-        RgpAutomaticProbandDataCreator.writeFamilyIdToElastic(instanceId, participantId, familyId);
-    }
-
-    @Test
     public void buildDataMap() {
         String participantId = "RGP123";
         long familyId = 1000;
@@ -81,5 +71,33 @@ public class RgpAutomaticProbandDataCreatorTest extends DbAndElasticBaseTest {
         // from activities FILLER_PHONE
         Assert.assertEquals("6177147395", dataMap.get("DATSTAT_MOBILEPHONE"));
         Assert.assertEquals("MORE_THAN_ONE", dataMap.get("REF_SOURCE"));
+    }
+
+    private void applyFoundOutAnswer(List<Activities> activities, List<String> answer) {
+        Optional<Activities> enrollment = activities.stream().filter(activity ->
+                DDPActivityConstants.ACTIVITY_ENROLLMENT.equals(activity.getActivityCode())).findFirst();
+        Assert.assertTrue(enrollment.isPresent());
+
+        List<Map<String, Object>> questionsAnswers = enrollment.get().getQuestionsAnswers();
+        Assert.assertNotNull(questionsAnswers);
+        Optional<Map<String, Object>> rs = questionsAnswers.stream()
+                .filter(q -> q.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID).equals(
+                        DDPActivityConstants.ENROLLMENT_FIND_OUT))
+                .findFirst();
+        Assert.assertTrue(rs.isPresent());
+        Map<String, Object> refSourceQA = rs.get();
+
+        refSourceQA.put(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER, answer);
+    }
+
+    private static List<Activities> getActivities() throws Exception {
+        String json = TestUtil.readFile("activities.json");
+        JsonArray jsonArray = (JsonArray) JsonParser.parseString(json);
+        Assert.assertNotNull(jsonArray);
+
+        List<Activities> activitiesList = new ArrayList<>();
+        Gson gson = new Gson();
+        jsonArray.forEach(a -> activitiesList.add(gson.fromJson(a.getAsJsonObject(), Activities.class)));
+        return activitiesList;
     }
 }

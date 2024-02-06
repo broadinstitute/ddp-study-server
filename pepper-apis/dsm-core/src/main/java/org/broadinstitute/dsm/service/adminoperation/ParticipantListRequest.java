@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import lombok.Data;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 
-
 /**
  * Handling of participant list request body for an AdminOperation
  */

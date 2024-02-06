@@ -34,6 +34,7 @@ import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
+import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -97,9 +98,9 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
         participantDataMap.put("REGISTRATION_STATUS", "REGISTERED");
         participantDataMap.put("MEMBER_TYPE", "SELF");
 
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("UpdateWorkflowStatusTest_" + participantIdSeed);
-        return TestParticipantUtil.createParticipantData(ddpParticipantId, participantDataMap, memberTypeFieldTypeId,
-                ddpInstanceDto.getDdpInstanceId(), userDto.getEmailOrThrow());
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("updateworkflow_" + participantIdSeed);
+        return ParticipantDataTestUtil.createParticipantData(ddpParticipantId, participantDataMap,
+                memberTypeFieldTypeId, ddpInstanceDto.getDdpInstanceId(), userDto.getEmailOrThrow());
     }
 
     private static void createMemberTypeFieldSetting() {

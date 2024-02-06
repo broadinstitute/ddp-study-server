@@ -31,12 +31,14 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
     private static String instanceName;
     private static String esIndex;
     private static ParticipantDto testParticipant = null;
+    private static MedicalRecordTestUtil medicalRecordTestUtil;
 
     @BeforeClass
     public static void setup() throws Exception {
         instanceName = "onchistorydetailtest";
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
+        medicalRecordTestUtil = new MedicalRecordTestUtil();
     }
 
     @AfterClass
@@ -47,6 +49,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
 
     @After
     public void deleteParticipants() {
+        medicalRecordTestUtil.tearDown();
         if (testParticipant != null) {
             TestParticipantUtil.deleteParticipant(testParticipant.getParticipantId().orElseThrow());
             testParticipant = null;
@@ -57,16 +60,12 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
     public void updateDestructionPolicyTest() {
         testParticipant = TestParticipantUtil.createParticipantWithEsProfile("ptp1_onchistory", ddpInstanceDto, esIndex);
         String ddpParticipantId = testParticipant.getDdpParticipantIdOrThrow();
-        int medicalRecordId = MedicalRecordTestUtil.createMedicalRecord(testParticipant, ddpInstanceDto);
+        int medicalRecordId = medicalRecordTestUtil.createMedicalRecord(testParticipant, ddpInstanceDto);
 
         log.debug("ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
         ParticipantDto ptp2 = null;
-        int ptp2MedicalRecordId = -1;
-        int recId1 = -1;
-        int recId2 = -1;
-        int recId3 = -1;
         OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
         try {
             // create another ptp with a medical record but no onc history
@@ -75,7 +74,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
 
             log.debug("ES participant record for {}: {}", ddpParticipantId2,
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId2));
-            ptp2MedicalRecordId = MedicalRecordTestUtil.createMedicalRecord(ptp2, ddpInstanceDto);
+            medicalRecordTestUtil.createMedicalRecord(ptp2, ddpInstanceDto);
 
             // add some onc history detail records
             OncHistoryDetail.Builder builder = new OncHistoryDetail.Builder()
@@ -85,13 +84,13 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
                     .withDestructionPolicy("12")
                     .withChangedBy(TEST_USER);
 
-            recId1 = MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
+            int recId1 = medicalRecordTestUtil.createOncHistoryDetail(testParticipant, builder.build(), esIndex);
 
             builder.withDestructionPolicy("3");
-            recId2 = MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
+            int recId2 = medicalRecordTestUtil.createOncHistoryDetail(testParticipant, builder.build(), esIndex);
 
             builder.withFacility("Other office");
-            recId3 = MedicalRecordTestUtil.createOncHistoryDetail(ddpParticipantId, builder.build(), esIndex);
+            int recId3 = medicalRecordTestUtil.createOncHistoryDetail(testParticipant, builder.build(), esIndex);
 
             // update and verify
             OncHistoryDetail.updateDestructionPolicy("5", "Office", instanceName, TEST_USER);
@@ -123,22 +122,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             e.printStackTrace();
             Assert.fail("Unexpected exception" + e);
         } finally {
-            log.info("recId1={}, ptp2MedicalRecordId={}, ptp2={}", recId1, ptp2MedicalRecordId, ptp2);
-            if (recId1 != -1) {
-                MedicalRecordTestUtil.deleteOncHistoryDetail(recId1);
-            }
-            if (recId2 != -1) {
-                MedicalRecordTestUtil.deleteOncHistoryDetail(recId2);
-            }
-            if (recId3 != -1) {
-                MedicalRecordTestUtil.deleteOncHistoryDetail(recId3);
-            }
-            MedicalRecordTestUtil.deleteMedicalRecord(medicalRecordId);
-
             // ptp2
-            if (ptp2MedicalRecordId != -1) {
-                MedicalRecordTestUtil.deleteMedicalRecord(ptp2MedicalRecordId);
-            }
             if (ptp2 != null) {
                 TestParticipantUtil.deleteParticipant(ptp2.getParticipantId().orElseThrow());
             }
