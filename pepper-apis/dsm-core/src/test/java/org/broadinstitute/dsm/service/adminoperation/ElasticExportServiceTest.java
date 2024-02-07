@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
@@ -12,6 +13,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
@@ -19,10 +21,10 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
-import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.KitShippingTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
 import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
@@ -44,8 +46,6 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     private static MedicalRecordTestUtil medicalRecordTestUtil;
     private static KitShippingTestUtil kitShippingTestUtil;
     private static final Map<String, Map<String, Integer>> participantDataInfo = new HashMap<>();
-
-    private static final List<Integer> fieldSettingsIds = new ArrayList<>();
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -74,11 +74,8 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
                 participantDataDao.delete(participantData.getParticipantDataId()));
 
         participants.forEach(participantDto ->
-                TestParticipantUtil.deleteParticipant(participantDto.getParticipantIdOrThrow()));
+                TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
         participants.clear();
-        //!! TEMP: do we have any?
-        fieldSettingsIds.forEach(FieldSettingsTestUtil::deleteFieldSettings);
-        fieldSettingsIds.clear();
     }
 
     @Test
@@ -102,6 +99,13 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         List<ExportLog> exportLogs = new ArrayList<>();
         ElasticExportService.exportParticipants(List.of(ddpParticipantId), ddpInstanceDto.getInstanceName(),
                 exportLogs);
+
+        try {
+            // TODO: need to wait for the export to complete. Fussing with the refresh policy did not resolve this.
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            log.error("Interrupted while waiting for ES refresh", e);
+        }
 
         // verify the data was exported properly
         verifyParticipant(ddpParticipantId);
@@ -142,7 +146,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     }
 
     private void createMedicalRecordAndOncHistory(ParticipantDto participantDto) {
-        int medicalRecordId = medicalRecordTestUtil.createMedicalRecord(participantDto, ddpInstanceDto);
+        int medicalRecordId = medicalRecordTestUtil.createMedicalRecordBundle(participantDto, ddpInstanceDto);
 
         OncHistoryDetail.Builder builder = new OncHistoryDetail.Builder()
                 .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
@@ -152,7 +156,6 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
                 .withChangedBy(TEST_USER);
 
         medicalRecordTestUtil.createOncHistoryDetail(participantDto, builder.build(), esIndex);
-        medicalRecordTestUtil.createOncHistory(participantDto, TEST_USER, esIndex);
     }
 
     private void updateEsDsm(String ddpParticipantId) {
@@ -171,22 +174,29 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
 
-        List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
-        Assert.assertEquals(1, oncHistoryDetailList.size());
+        List<OncHistoryDetail> esOncHistoryDetailList = dsm.getOncHistoryDetail();
+        Assert.assertEquals(1, esOncHistoryDetailList.size());
 
-        List<MedicalRecord> medicalRecords = dsm.getMedicalRecord();
-        Assert.assertEquals(1, medicalRecords.size());
+        List<MedicalRecord> esMedicalRecords = dsm.getMedicalRecord();
+        Assert.assertEquals(1, esMedicalRecords.size());
 
         int participantId = participant.getRequiredParticipantId();
-        int medicalRecordId = medicalRecordTestUtil.getParticipantMedicalIds(participantId).get(0);
+        List<MedicalRecord> medicalRecords = MedicalRecord.getMedicalRecordsForParticipant(participantId);
+        Assert.assertEquals(1, medicalRecords.size());
 
-        OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.stream()
-                .filter(rec -> rec.getMedicalRecordId() == medicalRecordId)
-                .findFirst().orElseThrow();
-        Assert.assertEquals(oncHistoryDetail.getOncHistoryDetailId(),
-                medicalRecordTestUtil.getParticipantOncHistoryDetailIds(participantId).get(0).intValue());
-        Assert.assertTrue(medicalRecords.stream()
-                .anyMatch(rec -> rec.getMedicalRecordId() == medicalRecordId));
+        int medicalRecordId = medicalRecords.get(0).getMedicalRecordId();
+        Assert.assertEquals(medicalRecordId, esMedicalRecords.get(0).getMedicalRecordId());
+
+        List<OncHistoryDetailDto> oncHistoryDetailList =
+                OncHistoryDetail.getOncHistoryDetailByMedicalRecord(medicalRecordId);
+        Assert.assertEquals(1, oncHistoryDetailList.size());
+
+        int oncHistoryDetailId =
+                (Integer) oncHistoryDetailList.get(0).getColumnValues().get(DBConstants.ONC_HISTORY_DETAIL_ID);
+        int oncHistoryMedicalRecordId =
+                (Integer) oncHistoryDetailList.get(0).getColumnValues().get(DBConstants.MEDICAL_RECORD_ID);
+        Assert.assertEquals(oncHistoryDetailId, esOncHistoryDetailList.get(0).getOncHistoryDetailId());
+        Assert.assertEquals(oncHistoryMedicalRecordId, esOncHistoryDetailList.get(0).getMedicalRecordId());
     }
 
     private void verifyKitShipping(String ddpParticipantId) {
@@ -209,12 +219,12 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
-        List<ParticipantData> participantData = dsm.getParticipantData();
+        List<ParticipantData> esParticipantData = dsm.getParticipantData();
 
         Map<String, Integer> ptpDataInfo = participantDataInfo.get(ddpParticipantId);
-        Assert.assertEquals(ptpDataInfo.size(), participantData.size());
+        Assert.assertEquals(ptpDataInfo.size(), esParticipantData.size());
 
-        participantData.forEach(ptpData -> {
+        esParticipantData.forEach(ptpData -> {
             Integer dataMapSize = ptpDataInfo.get(ptpData.getRequiredFieldTypeId());
             Assert.assertNotNull(dataMapSize);
             Assert.assertEquals(dataMapSize.intValue(), ptpData.getDataMap().size());

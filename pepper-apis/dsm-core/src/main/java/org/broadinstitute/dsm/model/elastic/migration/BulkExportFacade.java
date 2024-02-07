@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-import static org.broadinstitute.dsm.model.elastic.Util.DOC;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -40,7 +38,7 @@ public class BulkExportFacade {
     }
 
     private UpdateRequest createRequest(Map<String, Object> mapToUpsert, String docId) {
-        UpdateRequest updateRequest = new UpdateRequest(index, DOC, docId);
+        UpdateRequest updateRequest = new UpdateRequest(index, docId);
         updateRequest.doc(mapToUpsert);
         return updateRequest;
     }

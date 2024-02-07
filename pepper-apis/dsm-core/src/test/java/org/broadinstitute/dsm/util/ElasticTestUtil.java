@@ -152,19 +152,6 @@ public class ElasticTestUtil {
         return res;
     }
 
-    public static void addInstitutionAndMedicalRecord(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
-        String ddpParticipantId = participantDto.getDdpParticipantIdOrThrow();
-        Institution institution = new Institution(String.format("%s_GUID", ddpParticipantId), "PHYSICIAN");
-        String lastUpdated = Long.toString(System.currentTimeMillis());
-
-        InstitutionRequest institutionRequest = new InstitutionRequest(1L, ddpParticipantId, List.of(institution), lastUpdated);
-        inTransaction(conn -> {
-            DDPMedicalRecordDataRequest.writeParticipantIntoDb(conn, ddpInstanceDto.getDdpInstanceId().toString(),
-                    institutionRequest, ddpInstanceDto.getInstanceName());
-            return null;
-        });
-    }
-
     public static void addDsmParticipant(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
         ElasticSearchParticipantExporterFactory.fromPayload(
                 new ParticipantExportPayload(

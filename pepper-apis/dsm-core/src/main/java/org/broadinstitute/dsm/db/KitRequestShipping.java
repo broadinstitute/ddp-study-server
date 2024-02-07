@@ -1491,7 +1491,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     int count = rs.getRow();
                     rs.beforeFirst();
                     if (count != 1) {
-                        throw new DsmInternalError("Couldn't find kit w/ dsm_kit_request_id " + dsmKitRequestId + ". Rowcount: " + count);
+                        // with the current UI, the backend is providing the kit request ID, so log at error level
+                        // so we can investigate
+                        logger.error("Could not find kit with request ID {} for reactivation. (Got {} result rows.)",
+                                dsmKitRequestId, count);
+                        throw new DSMBadRequestException("Could not find kit with request ID  " + dsmKitRequestId);
                     }
                     if (rs.next()) {
                         dbVals.resultValue =

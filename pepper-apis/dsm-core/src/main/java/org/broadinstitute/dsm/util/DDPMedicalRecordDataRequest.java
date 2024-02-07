@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -78,7 +79,7 @@ public class DDPMedicalRecordDataRequest {
                                                 "Got " + institutionRequests.length + " InstitutionRequests for " + ddpInstance.getName());
                                         for (InstitutionRequest institutionRequest : institutionRequests) {
                                             try {
-                                                writeParticipantIntoDb(conn, ddpInstance.getDdpInstanceId(), institutionRequest,
+                                                writeInstitutionBundle(conn, ddpInstance.getDdpInstanceId(), institutionRequest,
                                                         ddpInstance.getName());
                                                 value = Math.max(value, institutionRequest.getId());
                                             } catch (Exception e) {
@@ -103,18 +104,22 @@ public class DDPMedicalRecordDataRequest {
         }
     }
 
-    public static void writeParticipantIntoDb(@NonNull Connection conn, @NonNull String instanceId, InstitutionRequest institutionRequest,
-                                       String instanceName) {
+    /**
+     * Returns created medical record IDs
+     */
+    public static List<Integer> writeInstitutionBundle(@NonNull Connection conn, @NonNull String instanceId,
+                                                       InstitutionRequest institutionRequest, String instanceName) {
+        List<Integer> medicalRecordIds = new ArrayList<>();
         String ddpParticipantId = institutionRequest.getParticipantId();
         if (MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, instanceId)) {
             //participant already exists
             if (MedicalRecordUtil.updateParticipant(conn, ddpParticipantId, instanceId, institutionRequest.getId(),
                     institutionRequest.getLastUpdated(), SystemUtil.SYSTEM)) {
-                writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
+                medicalRecordIds = writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
                 //participant lastVersion changed
-                Collection<Number> medicalRecordIds = getMedicalRecordIds(conn, ddpParticipantId, instanceId);
-                if (!medicalRecordIds.isEmpty()) {
-                    for (Number medicalRecordId : medicalRecordIds) {
+                Collection<Number> allMedicalRecordIds = getMedicalRecordIds(conn, ddpParticipantId, instanceId);
+                if (!allMedicalRecordIds.isEmpty()) {
+                    for (Number medicalRecordId : allMedicalRecordIds) {
                         writingMedicalRecordLogIntoDb(conn, medicalRecordId);
                     }
                 }
@@ -124,7 +129,7 @@ public class DDPMedicalRecordDataRequest {
                     new ParticipantDto.Builder(Integer.parseInt(instanceId), System.currentTimeMillis()).withDdpParticipantId(
                                     ddpParticipantId).withLastVersion(institutionRequest.getId())
                             .withLastVersionDate(institutionRequest.getLastUpdated()).withChangedBy(SystemUtil.SYSTEM).build();
-            int participantId             = new ParticipantDao().create(participantDto);
+            int participantId = new ParticipantDao().create(participantDto);
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
             ElasticSearchParticipantExporterFactory.fromPayload(
                     new ParticipantExportPayload(
@@ -135,11 +140,17 @@ public class DDPMedicalRecordDataRequest {
                             ddpInstanceDto
                     )
             ).export();
-            writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
+            medicalRecordIds = writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
         }
+        return medicalRecordIds;
     }
 
-    private static void writeInstitutionInfo(Connection conn, InstitutionRequest institutionRequest, String instanceId, String instanceName) {
+    /**
+     * Returns created medical record IDs
+     */
+    private static List<Integer> writeInstitutionInfo(Connection conn, InstitutionRequest institutionRequest,
+                                                      String instanceId, String instanceName) {
+        List<Integer> medicalRecordIds = new ArrayList<>();
         String ddpParticipantId = institutionRequest.getParticipantId();
         Collection<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
@@ -148,13 +159,15 @@ public class DDPMedicalRecordDataRequest {
             // calls (which should be modified to use the participant ID instead of repeatedly looking it up -DC
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_ONC_HISTORY, ddpParticipantId, instanceId);
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, ddpParticipantId, instanceId);
+
             for (Institution institution : institutions) {
-                MedicalRecordUtil.writeInstitutionIntoDb(conn, ddpParticipantId, instanceId, institution.getId(),
-                        institution.getType(), instanceName);
+                medicalRecordIds.add(MedicalRecordUtil.writeInstitution(conn, ddpParticipantId, instanceId,
+                        institution.getId(), institution.getType(), instanceName));
             }
         } else {
             logger.info("Institution list was empty for participant {}", ddpParticipantId);
         }
+        return medicalRecordIds;
     }
 
     private static void writingMedicalRecordLogIntoDb(Connection conn, Number medicalRecordId) {
