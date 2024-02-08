@@ -189,12 +189,7 @@ public class EasyPostUtil {
         }
     }
 
-    public Map<String, Object> createAddressMap(DDPParticipant ddpParticipant, @NonNull String phone)
-            throws EasyPostException {
-        if (StringUtils.isEmpty(this.phone)) {
-            throw new RuntimeException("Contact phone number is needed");
-        }
-
+    private Map<String, Object> createAddressMap(DDPParticipant ddpParticipant, @NonNull String phone) {
         String mailToName = ddpParticipant.getMailToName();
         if (StringUtils.isBlank(mailToName)) {
             String firstName = ddpParticipant.getFirstName();
@@ -215,20 +210,19 @@ public class EasyPostUtil {
         return toAddressMap;
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone, @NonNull String company)
+    public Address createAddress(DDPParticipant ddpParticipant, String phone, @NonNull String company)
             throws EasyPostException {
-        if (StringUtils.isEmpty(this.phone)) {
-            throw new RuntimeException("Contact phone number is needed");
+        if (StringUtils.isEmpty(phone)) {
+            throw new DSMBadRequestException("Contact phone number is required for creating address");
         }
         Map<String, Object> toAddressMap = createAddressMap(ddpParticipant, phone);
         toAddressMap.put(this.company, company); // Care Of field goes here
         return Address.create(toAddressMap);
     }
 
-    public Address createAddress(DDPParticipant ddpParticipant, @NonNull String phone)
-            throws EasyPostException {
-        if (StringUtils.isEmpty(this.phone)) {
-            throw new RuntimeException("Contact phone number is needed");
+    public Address createAddress(DDPParticipant ddpParticipant, String phone) throws EasyPostException {
+        if (StringUtils.isEmpty(phone)) {
+            throw new DSMBadRequestException("Contact phone number is required for creating address");
         }
         Map<String, Object> toAddressMap = createAddressMap(ddpParticipant, phone);
         return Address.create(toAddressMap);

@@ -106,6 +106,14 @@ public class PubSubMessageBuilder {
                         if (jmlDtoOpt.isPresent()) {
                             userPreferredLangCode = jmlDtoOpt.get().getLanguageCode();
                         }
+                    } else if (queuedNotificationDto.getParticipantGuid() != null) {
+                        //handle the scenario where Agedup users email is passed in the message during Ageup prep
+                        //try to get user preferred language
+                        UserProfile profile = apisHandle.attach(UserProfileDao.class)
+                                .findProfileByUserGuid(queuedNotificationDto.getParticipantGuid()).orElse(null);
+                        userPreferredLangCode = profile != null ? profile.getPreferredLangCode() : null;
+                        log.info("looked up user preferred language using the participant guid. user preferred lang: {}",
+                                userPreferredLangCode);
                     }
                 } else {
                     // otherwise, lookup address information for the auth0 account
@@ -226,6 +234,9 @@ public class PubSubMessageBuilder {
                     }
                 }
 
+                log.info("Looking up notification template(s) for event configId: {} study: {} and user preferred language={} "
+                                + "for queued event {}", queuedNotificationDto.getEventConfigurationId(),
+                        queuedNotificationDto.getStudyGuid(), queuedNotificationDto.getQueuedEventId());
                 NotificationTemplate template = determineEmailTemplate(
                         apisHandle,
                         queuedNotificationDto.getEventConfigurationId(),

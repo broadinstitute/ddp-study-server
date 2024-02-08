@@ -14,6 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
@@ -29,7 +32,6 @@ import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -49,6 +51,7 @@ public class ElasticTestUtil {
      *      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
      */
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
+        log.info("Creating test index for realm {}", realm);
         String indexName = createIndex(realm);
         try {
             if (StringUtils.isNotBlank(settingsFile)) {
@@ -71,11 +74,11 @@ public class ElasticTestUtil {
             CreateIndexRequest req = new CreateIndexRequest(indexName);
             String settingsJson = TestUtil.readFile("elastic/indexSettings.json");
             req.settings(settingsJson, XContentType.JSON);
-            CreateIndexResponse createIndexResponse = client.indices().create(req, RequestOptions.DEFAULT);
-            log.info("CreateIndexResponse: {}", createIndexResponse);
+            client.indices().create(req, RequestOptions.DEFAULT);
+            log.info("Created index {}", indexName);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception creating index " + realm + ":" + e.getMessage());
+            Assert.fail(String.format("Exception creating index %s: %s", indexName, e.getMessage()));
         }
         return indexName;
     }
@@ -103,6 +106,7 @@ public class ElasticTestUtil {
         try {
             IndicesClient indicesClient = ElasticSearchUtil.getClientInstance().indices();
             indicesClient.putMapping(putMappingRequest, RequestOptions.DEFAULT);
+            ElasticSearchUtil.loadFieldMappings();
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail(String.format("Unexpected exception updating ES mappings for index %s: %s", esIndex, e));
@@ -114,7 +118,7 @@ public class ElasticTestUtil {
      * query it from an existing elastic instance by running a command like this
      */
     public static void updateSettings(String esIndex, String settingsJson) {
-       UpdateSettingsRequest putSettingsRequest = new UpdateSettingsRequest(esIndex);
+        UpdateSettingsRequest putSettingsRequest = new UpdateSettingsRequest(esIndex);
         putSettingsRequest.settings(settingsJson, XContentType.JSON);
 
         try {
@@ -197,6 +201,7 @@ public class ElasticTestUtil {
             Map<String, Object> props = new HashMap<>();
             props.put("oncHistoryDetailId", oncHistoryDetail.getOncHistoryDetailId());
             props.put("ddpInstanceId", oncHistoryDetail.getDdpInstanceId());
+            props.put("medicalRecordId", oncHistoryDetail.getMedicalRecordId());
             props.put("phone", oncHistoryDetail.getPhone());
             props.put("fax", oncHistoryDetail.getFax());
             props.put("facility", oncHistoryDetail.getFacility());
@@ -234,11 +239,101 @@ public class ElasticTestUtil {
         }
     }
 
+    public static Address addParticipantAddressFromFile(String esIndex, String fileName, String ddpParticipantId) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            Address address = gson.fromJson(json, Address.class);
+            addParticipantAddress(esIndex, ddpParticipantId, address);
+            return address;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating address for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
+    /**
+     * Add a DSM entity to the participant doc
+     *
+     * @param dob date of birth to replace in DSM entity
+     */
+    public static Dsm addDsmEntityFromFile(String esIndex, String fileName, String ddpParticipantId, String dob) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            json = json.replace("<dateOfBirth>", dob);
+            Dsm dsm = gson.fromJson(json, Dsm.class);
+            addParticipantDsm(esIndex, dsm, ddpParticipantId);
+            return dsm;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating dsm for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
+    public static Dsm addDsmEntityFromFile(String esIndex, String fileName, String ddpParticipantId, String dob,
+                                           String dateOfMajority) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            json = json.replace("<dateOfBirth>", dob);
+            if (StringUtils.isNotBlank(dateOfMajority)) {
+                json = json.replace("<dateOfMajority>", dateOfMajority);
+            } else {
+                json = json.replace("\"dateOfMajority\" : \"<dateOfMajority>\",", "");
+            }
+            Dsm dsm = gson.fromJson(json, Dsm.class);
+            addParticipantDsm(esIndex, dsm, ddpParticipantId);
+            return dsm;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating dsm for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
+    public static List<Activities> addActivitiesFromFile(String esIndex, String fileName, String ddpParticipantId) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
+            List<Activities> activitiesList = gson.fromJson(json, List.class);
+            addParticipantActivities(esIndex, activitiesList, ddpParticipantId);
+            return activitiesList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating activities for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
     public static void addParticipantProfile(String esIndex, Profile profile) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> valueMap = mapper.convertValue(profile, Map.class);
         Map<String, Object> profileMap = Map.of("profile", valueMap);
         ElasticSearchUtil.updateRequest(profile.getGuid(), esIndex, profileMap);
+    }
+
+    public static void addParticipantAddress(String esIndex, String ddpParticipantId, Address address) {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> valueMap = mapper.convertValue(address, Map.class);
+        Map<String, Object> addressMap = Map.of("address", valueMap);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, addressMap);
+    }
+
+    public static void addParticipantDsm(String esIndex, Dsm dsm, String guid) {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> valueMap = mapper.convertValue(dsm, Map.class);
+        Map<String, Object> dsmMap = Map.of("dsm", valueMap);
+        ElasticSearchUtil.updateRequest(guid, esIndex, dsmMap);
+    }
+
+    public static void addParticipantActivities(String esIndex, List<Activities> activitiesList, String guid) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Activities> valueMap = mapper.convertValue(activitiesList, List.class);
+        Map<String, Object> activitiesMap = Map.of("activities", valueMap);
+        ElasticSearchUtil.updateRequest(guid, esIndex, activitiesMap);
     }
 
     public static void addActivities(String esIndex, String ddpParticipantId, String activitiesJson) {

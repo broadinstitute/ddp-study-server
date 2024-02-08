@@ -1,9 +1,6 @@
 package org.broadinstitute.dsm.pubsub;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -17,30 +14,13 @@ import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
-import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.model.defaultvalues.Defaultable;
 import org.broadinstitute.dsm.model.defaultvalues.DefaultableMaker;
-import org.broadinstitute.dsm.model.elastic.export.Exportable;
-import org.broadinstitute.dsm.model.elastic.migration.AdditionalParticipantMigratorFactory;
-import org.broadinstitute.dsm.model.elastic.migration.ClinicalOrderMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.CohortTagMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.DynamicFieldsMappingMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.KitRequestShippingMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.OncHistoryDetailsMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.OncHistoryMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.ParticipantDataMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.ParticipantMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.SMIDMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.SomaticResultMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.TissueMigrator;
+import org.broadinstitute.dsm.model.elastic.migration.StudyMigrator;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,24 +101,7 @@ public class DSMtasksSubscription {
     }
 
     public static void migrateToES(ExportToES.ExportPayload exportPayload) {
-        String study = exportPayload.getStudy();
-        Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
-        maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {
-            String index = ddpInstanceDto.getEsParticipantIndex();
-            logger.info("Starting migration of DSM data to ES for study {} with index {}", study, index);
-            List<? extends Exportable> exportables = Arrays.asList(
-                    //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
-                    new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
-                    new OncHistoryDetailsMigrator(index, study), new OncHistoryMigrator(index, study),
-                    new ParticipantDataMigrator(index, study), AdditionalParticipantMigratorFactory.of(index, study),
-                    new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
-                    new TissueMigrator(index, study), new SMIDMigrator(index, study),
-                    new CohortTagMigrator(index, study, new CohortTagDaoImpl()),
-                    new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()),
-                    new SomaticResultMigrator(index, study));
-            exportables.forEach(Exportable::export);
-            logger.info("Successfully finished migration of DSM data to ES for study {} with index {}", study, index);
-        });
+        StudyMigrator.migrate(exportPayload.getStudy());
     }
 
     private static void generateStudyDefaultValues(AckReplyConsumer consumer, Map<String, String> attributesMap) {

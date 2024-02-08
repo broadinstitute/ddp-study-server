@@ -4,31 +4,26 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
 public class KitAuthorizationRoute extends RequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(KitAuthorizationRoute.class);
-
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         QueryParamsMap queryParams = request.queryMap();
-        String kitRequestId = null;
-        if (queryParams.value(RequestParameter.KIT_REQUEST_ID) != null) {
-            kitRequestId = queryParams.get(RequestParameter.KIT_REQUEST_ID).value();
-        }
-        if (StringUtils.isNotBlank(kitRequestId)) {
+
+        if (StringUtils.isNotBlank(queryParams.value(RequestParameter.KIT_REQUEST_ID))) {
+            int kitRequestId = Integer.parseInt(queryParams.get(RequestParameter.KIT_REQUEST_ID).value());
             if (queryParams.value(RequestParameter.ACTIVATE) == null) {
-                throw new RuntimeException("No Authorization value sent");
+                throw new DSMBadRequestException("No Authorization value sent");
             }
             boolean authorize = queryParams.get(RequestParameter.ACTIVATE).booleanValue();
             KitRequestShipping kitRequest = KitRequestShipping.getKitRequest(kitRequestId);
@@ -48,7 +43,7 @@ public class KitAuthorizationRoute extends RequestHandler {
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
         } else {
-            throw new RuntimeException("KitRequestId id was missing");
+            throw new DSMBadRequestException("KitRequestId id was missing");
         }
     }
 }

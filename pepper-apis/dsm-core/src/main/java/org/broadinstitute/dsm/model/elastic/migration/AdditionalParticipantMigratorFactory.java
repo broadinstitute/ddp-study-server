@@ -5,7 +5,7 @@ public class AdditionalParticipantMigratorFactory {
     public static final String OSTEO = "osteo";
 
     public static ParticipantMigrator of(String index, String study) {
-        if (OSTEO.equals(study)) {
+        if (OSTEO.equalsIgnoreCase(study)) {
             return new NewOsteoParticipantMigrator(index, study);
         } else {
             return new NullAdditionalParticipantMigrator();

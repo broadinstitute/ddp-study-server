@@ -4,12 +4,14 @@ import java.time.Instant;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 
+@Slf4j
 public class TestParticipantUtil {
     private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     private static final ParticipantDao participantDao = new ParticipantDao();
@@ -58,10 +60,32 @@ public class TestParticipantUtil {
         }
     }
 
-    public static void deleteParticipantAndInstitution(int participantId) {
-        if (participantId >= 0) {
-            new DDPInstitutionDao().deleteByParticipant(participantId);
-            participantDao.delete(participantId);
-        }
+    private static ParticipantDto createParticipantFromConfigFiles(String guid, DDPInstanceDto ddpInstanceDto, String dob,
+                                                            String dateOfMajority, String esIndex,
+                                                            String pathToParticipantProfileJson,
+                                                            String pathToDsmDataJson,
+                                                            String pathToActivitiesJson) {
+        String ddpParticipantId = genDDPParticipantId(guid);
+        ParticipantDto testParticipant = createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        ElasticTestUtil.createParticipant(esIndex, testParticipant);
+        ElasticTestUtil.addParticipantProfileFromFile(esIndex, pathToParticipantProfileJson, ddpParticipantId);
+        ElasticTestUtil.addDsmEntityFromFile(esIndex, pathToDsmDataJson, ddpParticipantId,
+                dob, dateOfMajority);
+        ElasticTestUtil.addActivitiesFromFile(esIndex, pathToActivitiesJson, ddpParticipantId);
+        log.debug("ES participant record with dob {} for {}: {}", dob, ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        return testParticipant;
+    }
+
+    public static ParticipantDto createSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto, String dob,
+                                                                 String dateOfMajority, String esIndex) {
+        return createParticipantFromConfigFiles(guid, ddpInstanceDto, dob, dateOfMajority, esIndex,
+               "elastic/participantProfile.json", "elastic/participantDsm.json", "elastic/lmsActivitiesSharedLearningEligible.json");
+    }
+
+    public static ParticipantDto createIneligibleSharedLearningParticipant(String guid, DDPInstanceDto ddpInstanceDto,
+                                                                           String dob, String esIndex) {
+        return createParticipantFromConfigFiles(guid, ddpInstanceDto, dob, null, esIndex,
+                "elastic/participantProfile.json", "elastic/participantDsm.json", "elastic/lmsActivitiesSharedLearningIneligible.json");
     }
 }

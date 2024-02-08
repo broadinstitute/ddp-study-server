@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseMigrator.class);
-    private static final int BATCH_LIMIT = 300;
+    private static final int BATCH_LIMIT = 150;
     protected final BulkExportFacade bulkExportFacade;
     protected final String realm;
     protected final String index;
@@ -38,8 +37,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords) {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
-        logger.info("filling bulk request with participant size {} for participants, for {} for study: {} with index: {}",
-                participantRecords.size(), object, realm, index);
+        logger.info("Creating {} bulk upsert with {} participants for study {} with index: {}",
+                object, participantRecords.size(), realm, index);
         long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
@@ -93,17 +92,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
-        List<String> participantsInTheStudy = null;
-        if (index != null) {
-            participantsInTheStudy = elasticSearch.getAllParticipantsInIndex(index);
-            for (String ddpParticipantId : participantsInTheStudy) {
-                if (!dataByRealm.containsKey(ddpParticipantId)) {
-                    dataByRealm.put(ddpParticipantId, new ArrayList<>());
-                }
-            }
-        }
         if (dataByRealm.isEmpty()) {
-            logger.info("Found nothing to export for {} to ES for study: {} with index: {} ", object, realm, index);
             return;
         }
         fillBulkRequestWithTransformedMapAndExport(dataByRealm);

@@ -592,7 +592,7 @@ public class GBFRequestUtil implements ExternalShipper {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         if (StringUtils.isNotBlank(ddpParticipantId)) {
-                            KitRequest kitRequest = new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
+                            KitRequest kitRequest = new KitRequest(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
                                     rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null, rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
                                     rs.getString(DBConstants.EXTERNAL_KIT_NAME), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE));
                             try {
@@ -648,7 +648,7 @@ public class GBFRequestUtil implements ExternalShipper {
                             // ddpParticipantId);
                             // logger.info("ddpParticipant found: "+ddpParticipant.getParticipantId());
                             // if (ddpParticipant != null) {
-                            kitRequests.add(new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
+                            kitRequests.add(new KitRequest(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
                                     rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null, rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
                                     rs.getString("subkits." + DBConstants.EXTERNAL_KIT_NAME), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE)));
                             // }

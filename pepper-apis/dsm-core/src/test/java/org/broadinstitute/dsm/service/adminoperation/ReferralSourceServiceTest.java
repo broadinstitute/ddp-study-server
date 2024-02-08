@@ -1,6 +1,6 @@
-package org.broadinstitute.dsm.model.defaultvalues;
+package org.broadinstitute.dsm.service.adminoperation;
 
-import static org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService.NA_REF_SOURCE;
+import static org.broadinstitute.dsm.service.adminoperation.ReferralSourceService.NA_REF_SOURCE;
 import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.isProband;
 
 import java.time.Instant;
@@ -23,13 +23,13 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
+import org.broadinstitute.dsm.model.defaultvalues.RgpAutomaticProbandDataCreator;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.sort.MockFieldSettingsDao;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -285,7 +285,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         refSourceQA.put(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER, answer);
     }
 
-    protected static List<Activities> getActivities() {
+    public static List<Activities> getActivities() {
         List<Activities> activitiesList = new ArrayList<>();
         try {
             String json = TestUtil.readFile("activities.json");

@@ -161,7 +161,6 @@ public class ElasticSearch implements ElasticSearchable {
      * @param esParticipantsIndex the ES index to get all participants from
      */
     public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
-        logger.info("Getting all participant ids from index " + esParticipantsIndex);
         ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
         List<String> participantIds = new ArrayList<>();
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : es.esParticipants) {
@@ -170,6 +169,7 @@ public class ElasticSearch implements ElasticSearchable {
                 participantIds.add(elasticSearchParticipantDto.getProfile().get().getGuid());
             }
         }
+        logger.info("Got {} participant ids from index (getAllParticipantsInIndex)", esParticipantsIndex);
         return participantIds;
     }
 
@@ -181,7 +181,6 @@ public class ElasticSearch implements ElasticSearchable {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data from index " + esParticipantsIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;
@@ -197,7 +196,8 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
-        logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
+        logger.info("Got {} participants from ES for instance {} (getParticipantsWithinRange)",
+                esParticipants.size(), esParticipantsIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
@@ -221,7 +221,8 @@ public class ElasticSearch implements ElasticSearchable {
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
 
-        logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
+        logger.info("Got {} participants from ES for instance {} (getParticipantsByIds)",
+                esParticipants.size(), esIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
@@ -269,7 +270,8 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
-        logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
+        logger.info("Got {} participants from ES for instance {} (getParticipantsByRangeAndFilter)",
+                esParticipants.size(), esParticipantsIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
@@ -309,7 +311,8 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + participantIndexES, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
-        logger.info("Got " + esParticipants.size() + " participants from ES for instance " + participantIndexES);
+        logger.info("Got {} participants from ES for instance {} (getParticipantsByRangeAndIds)",
+                esParticipants.size(), participantIndexES);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
@@ -353,7 +356,8 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
         List<ElasticSearchParticipantDto> elasticSearchParticipantDtos = parseSourceMaps(searchResponse.getHits().getHits());
-        logger.info("Got " + elasticSearchParticipantDtos.size() + " participants from ES for instance " + esParticipantsIndex);
+        logger.info("Got {} participants from ES for instance {} (getAllParticipantsDataByInstanceIndex)",
+                elasticSearchParticipantDtos.size(), esParticipantsIndex);
         return new ElasticSearch(elasticSearchParticipantDtos, searchResponse.getHits().getTotalHits().value);
     }
 
@@ -367,7 +371,8 @@ public class ElasticSearch implements ElasticSearchable {
 
     @Override
     public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
-        logger.info("Collecting ES data from index " + esParticipantsIndex);
+        logger.info("Collecting ES data from index {} for {} legacy participant IDs",
+                esParticipantsIndex, legacyAltPids.size());
         SearchResponse response;
         try {
             SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
@@ -383,7 +388,8 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
         SearchHit[] records = response.getHits().getHits();
-        logger.info("Got " + records.length + " participants from ES for instance " + esParticipantsIndex);
+        logger.info("Got {} participants from ES for instance {} (getGuidsByLegacyAltPids)",
+                records.length, esParticipantsIndex);
         SearchHitProxy[] searchHitProxies = Arrays.stream(records)
                 .map(SearchHitProxy::new)
                 .collect(Collectors.toList())

@@ -13,12 +13,14 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
+import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
@@ -42,6 +44,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
  * Usage: Create an instance with the desired realm variables and email of the privileged user and then call initialize()
  **/
 @Slf4j
+@Data
 public class OncHistoryTestUtil {
 
     private static final DeletedObjectDao deletedObjectDao = new DeletedObjectDao();
@@ -56,17 +59,19 @@ public class OncHistoryTestUtil {
     private String groupName;
     private String esIndex;
     private String userEmail;
+    private String adminUser;
     private String userId;
     private String collabPrefix;
 
     @Mock
     private NotificationUtil notificationUtil = mock(NotificationUtil.class);
 
-    public OncHistoryTestUtil(String instanceName, String studyGuid, String userEmail, String groupName, String collabPrefix,
-                              String esIndex) {
+    public OncHistoryTestUtil(String instanceName, String studyGuid, String userEmail, String adminUser, String groupName,
+                              String collabPrefix, String esIndex) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.userEmail = userEmail;
+        this.adminUser = adminUser;
         this.collabPrefix = collabPrefix;
         this.groupName = groupName;
         this.esIndex = esIndex;
@@ -74,9 +79,9 @@ public class OncHistoryTestUtil {
     }
 
     public void initialize() {
-        ddpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
+        ddpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex, studyGuid);
         userAdminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collabPrefix, groupName, esIndex);
-        userAdminUtil.setStudyAdminAndRoles("adminUserPatchTest@unittest.dev", USER_ADMIN_ROLE, Arrays.asList(MR_VIEW));
+        userAdminUtil.setStudyAdminAndRoles(adminUser, USER_ADMIN_ROLE, Arrays.asList(MR_VIEW));
         userId = Integer.toString(userAdminUtil.createTestUser(userEmail, Collections.singletonList("mr_view")));
         //todo create instance with role
     }
@@ -106,7 +111,10 @@ public class OncHistoryTestUtil {
 
     public void deleteParticipants() {
         medicalRecordIds.forEach(integer -> medicalRecordDao.delete(integer));
-        participantIds.forEach(id -> TestParticipantUtil.deleteParticipantAndInstitution(id));
+        participantIds.forEach(id -> {
+            new DDPInstitutionDao().deleteByParticipant(id);
+            TestParticipantUtil.deleteParticipant(id);
+        });
     }
 
     public Object createOncHistory(String guid, int participantId, String realm, String userEmail) throws Exception {
@@ -136,7 +144,7 @@ public class OncHistoryTestUtil {
         return patcher.doPatch();
     }
 
-    public Object createSmId(String guid, int tissueId, String realm, String userEmail, String value) throws Exception {
+    public Map<String, Object> createSmId(String guid, int tissueId, String realm, String userEmail, String value) throws Exception {
         String newSmIdPatchJson = TestUtil.readFile("patchRequests/newSmIdPatchPlaceholder.json");
         newSmIdPatchJson = newSmIdPatchJson.replace("<userEmail>", userEmail)
                 .replace("<GUID>", guid)
@@ -145,7 +153,19 @@ public class OncHistoryTestUtil {
                 .replace("<instanceName>", realm);
         Patch smIdPatch = new Gson().fromJson(newSmIdPatchJson, Patch.class);
         BasePatch patcher = PatchFactory.makePatch(smIdPatch, notificationUtil);
-        return patcher.doPatch();
+        return (Map<String, Object>) patcher.doPatch();
+    }
+
+    public Map<String, Object> createSmId(ParticipantDto participantDto, String eligibleSmId, DDPInstanceDto ddpInstanceDto)
+            throws Exception {
+        String guid = participantDto.getDdpParticipantIdOrThrow();
+        int participantId = participantDto.getParticipantId().orElseThrow();
+        Map<String, Object> resp = (Map<String, Object>) createOncHistory(guid, participantId,
+                ddpInstanceDto.getInstanceName(), userEmail);
+        int oncHistoryDetailId = Integer.parseInt((String) resp.get("oncHistoryDetailId"));
+        Map<String, Object> response = (Map<String, Object>) createTissue(guid, oncHistoryDetailId, instanceName, userEmail);
+        int tissueId = Integer.parseInt((String) response.get("tissueId"));
+        return createSmId(guid, tissueId, ddpInstanceDto.getInstanceName(), userEmail, eligibleSmId);
     }
 
     public void deleteOncHistory(String guid, int participantId, String realm, String userEmail, int oncHistoryDetailId) throws Exception {
@@ -460,5 +480,26 @@ public class OncHistoryTestUtil {
                 OncHistoryDetail.getOncHistoryDetail(oncHistoryDetailId, ddpInstanceDto.getInstanceName());
         Assert.assertNotNull(oncHistoryDetail);
         return oncHistoryDetail;
+    }
+
+    public Object createPatchRequest(String guid, int participantId, String realm, String userEmail, String name, String value,
+                                     String tableAlias, String parent, int id, String parentId)
+            throws Exception {
+        String patchJson = TestUtil.readFile("patchRequests/updateFieldPatchRequests.json");
+        patchJson = patchJson.replace("<userEmail>", userEmail)
+                .replace("<GUID>", guid)
+                .replace("<participantId>", String.valueOf(participantId))
+                .replace("<instanceName>", realm)
+                .replace("<id>", String.valueOf(id))
+                .replace("<name>", name)
+                .replace("<value>", value)
+                .replace("<tableAlias>", tableAlias)
+                .replace("<parent>", parent);
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(parentId)) {
+            patchJson = patchJson.replace("<parentId>", parentId);
+        }
+        Patch updatePatch = new Gson().fromJson(patchJson, Patch.class);
+        BasePatch patcher = PatchFactory.makePatch(updatePatch, notificationUtil);
+        return patcher.doPatch();
     }
 }
