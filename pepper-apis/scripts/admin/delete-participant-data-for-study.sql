@@ -173,7 +173,7 @@ where study_guid = ''',@study_guid, ''';');
 
 -- remove all instance settings
 select concat('delete from instance_settings where ddp_instance_id = (select ddp_instance_id from ddp_instance
-                                                       where study_guid = ''', @study_guid,''';');
+                                                       where study_guid = ''', @study_guid,''');');
 
 
 select concat('delete from EVENT_QUEUE where DDP_INSTANCE_ID =
