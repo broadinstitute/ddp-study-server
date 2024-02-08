@@ -15,6 +15,10 @@ import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 
+/**
+ * AdminOperation service to asynchronously export DSM data to ElasticSearch for a set of participants
+ */
+
 @Slf4j
 public class ElasticExportService implements AdminOperation {
     private static final Gson gson = new Gson();

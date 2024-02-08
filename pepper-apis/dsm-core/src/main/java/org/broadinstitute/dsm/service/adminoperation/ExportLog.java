@@ -2,6 +2,9 @@ package org.broadinstitute.dsm.service.adminoperation;
 
 import lombok.Data;
 
+/**
+ * A log entry for part of an Elastic export operation.
+ */
 @Data
 public class ExportLog {
     public enum Status {

@@ -41,6 +41,11 @@ public class StudyMigrator {
         log.info("Finished migration of DSM data to ES index {} for study {}", index, studyName);
     }
 
+    /**
+     * Export study data to ES for a list of participants
+     *
+     * @param exportLogs  list export logs to append to
+     */
     public static void migrateParticipants(List<String> ddpParticipantIds, String studyName,
                                            List<ExportLog> exportLogs) {
         if (ddpParticipantIds.isEmpty()) {

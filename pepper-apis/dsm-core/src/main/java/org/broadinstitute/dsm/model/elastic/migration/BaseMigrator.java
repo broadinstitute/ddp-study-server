@@ -111,6 +111,11 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         fillBulkRequestWithTransformedMapAndExport(dataByRealm, new BulkExportFacade(index, null));
     }
 
+    /**
+     * Export data to ES for a list of participants
+     *
+     * @param exportLogs  list export logs to append to
+     */
     public void exportParticipants(List<String> ddpParticipantIds, List<ExportLog> exportLogs) {
         ExportLog exportLog = new ExportLog(entity);
         exportLogs.add(exportLog);
