@@ -2,7 +2,8 @@
 -- generate a bunch of sql statements and shell script calls to be run to erase data for a study from dsm and dss.
 -- it also sets queued events to happen in the infinite future, effectively disabling them
 
--- set the study to be deleted
+-- set the study to be deleted.  First confirm that this guid is accurate by checking it in the
+-- environment in which you are running the delete
 set @study_guid = 'singular' collate 'utf8mb4_unicode_ci';
 
 -- set the gcp environment in which to run the user deletes for dss
