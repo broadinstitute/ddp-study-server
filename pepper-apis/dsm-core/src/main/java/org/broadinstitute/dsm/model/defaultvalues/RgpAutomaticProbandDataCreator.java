@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,9 +29,7 @@ import org.broadinstitute.dsm.util.SystemUtil;
 
 @Slf4j
 public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
-
     public static final String RGP_FAMILY_ID = "rgp_family_id";
-
 
     /**
      * Given an elasticSearchParticipantDto, get selected data from ES and put it in DSM DB.
@@ -54,18 +53,18 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         String participantId = StringUtils.isNotBlank(esProfile.getLegacyAltPid()) ? esProfile.getLegacyAltPid() : esProfile.getGuid();
         String instanceName = instance.getName();
 
-        // ensure we can get a family ID before writing things to the DB
-        // this will increment the family value (which we want to ensure we are not messed up by concurrency)
-        // but will leave an unused family ID if we abort later. As things stand now that is not a concern.
+        // ensure we can get a family ID before writing things to the DB (to avoid concurrency issues)
+        // This will increment the family ID value but will leave an unused family ID if we abort later.
+        // As things stand now that is not a concern.
         long familyId = getFamilyId(participantId, bookmark);
-        insertFamilyIdToDsmES(instance.getParticipantIndexES(), participantId, familyId);
+        insertEsFamilyId(instance.getParticipantIndexES(), participantId, familyId);
 
         Map<String, String> probandDataMap = buildDataMap(participantId, familyId, instanceName,
                 elasticSearchParticipantDto.getActivities(), esProfile);
 
         Map<String, String> columnsWithDefaultOptions =
                 this.fieldSettings.getColumnsWithDefaultValues(fieldSettings);
-        Map<String, String> columnsWithDefaultOptionsFilteredByElasticExportWorkflow =
+        Map<String, String> columnsWithElasticExportWorkflow =
                 this.fieldSettings.getColumnsWithDefaultOptionsFilteredByElasticExportWorkflow(fieldSettings);
         ParticipantData participantData = new ParticipantData(participantDataDao);
 
@@ -74,7 +73,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         participantData.addDefaultOptionsValueToData(columnsWithDefaultOptions);
         participantData.insertParticipantData(SystemUtil.SYSTEM);
 
-        columnsWithDefaultOptionsFilteredByElasticExportWorkflow.forEach((col, val) -> ElasticSearchUtil.writeWorkflow(
+        columnsWithElasticExportWorkflow.forEach((col, val) -> ElasticSearchUtil.writeWorkflow(
                 WorkflowForES.createInstanceWithStudySpecificData(instance, participantId, col, val,
                         new WorkflowForES.StudySpecificData(probandDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
                                 probandDataMap.get(FamilyMemberConstants.FIRSTNAME),
@@ -150,15 +149,20 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }).orElse("");
     }
 
-    void insertFamilyIdToDsmES(@NonNull String esIndex, @NonNull String participantId, long familyId) {
+    protected static void insertEsFamilyId(@NonNull String esIndex, @NonNull String ddpParticipantId, long familyId) {
         try {
-            Map<String, Object> esObjectMap = ElasticSearchUtil.getObjectsMap(esIndex, participantId, ESObjectConstants.DSM);
-            Map<String, Object> esDsmObjectMap = (Map<String, Object>) esObjectMap.get(ESObjectConstants.DSM);
-            esDsmObjectMap.put(ESObjectConstants.FAMILY_ID, familyId);
-            ElasticSearchUtil.updateRequest(participantId, esIndex, esObjectMap);
-            log.info("Family id for participant {} successfully added to ES", participantId);
+            Map<String, Object> esMap =
+                    ElasticSearchUtil.getObjectsMap(esIndex, ddpParticipantId, ESObjectConstants.DSM);
+            Map<String, Object> dsmMap = (Map<String, Object>) esMap.get(ESObjectConstants.DSM);
+            if (dsmMap == null) {
+                dsmMap = new HashMap<>();
+                esMap.put(ESObjectConstants.DSM, dsmMap);
+            }
+            dsmMap.put(ESObjectConstants.FAMILY_ID, familyId);
+            ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, esMap);
+            log.info("Family id for participant {} successfully added to ES", ddpParticipantId);
         } catch (Exception e) {
-            throw new DsmInternalError("Could not insert family id for participant: " + participantId, e);
+            throw new DsmInternalError("Could not insert family id for participant: " + ddpParticipantId, e);
         }
     }
 }
