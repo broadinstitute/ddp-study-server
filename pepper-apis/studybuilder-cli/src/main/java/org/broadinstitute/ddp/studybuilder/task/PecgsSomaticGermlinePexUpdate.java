@@ -17,54 +17,57 @@ import java.util.List;
 @Slf4j
 public class PecgsSomaticGermlinePexUpdate implements CustomTask {
 
-    public static String CURR_PEX = "user.studies[\"cmi-osteo\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
+    public static String CURR_PEX = "user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
             + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
             + " && ((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"cmi-osteo\"]."
             + "forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)\n"
-            + " || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"cmi-osteo\"].forms[\"PREQUAL\"]."
+            + " || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"]."
             + "questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7))";
 
-    public static String NEW_OSTEO_GERMLINE_PEX = "user.studies[\"cmi-osteo\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
+    public static String NEW_OSTEO_GERMLINE_PEX = "user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
             + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
             + " (( user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].hasInstance() && user.studies[\"CMI-OSTEO\"]"
             + ".forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))"
             + " || ( user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"CMI-OSTEO\"]."
-            + " forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
+            + "forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
 
     public static String NEW_LMS_GERMLINE_PEX = "user.studies[\"cmi-lms\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
             + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
             + " (( user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance() && user.studies[\"cmi-lms\"]"
             + ".forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))"
             + " || ( user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"cmi-lms\"]."
-            + " forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
+            + "forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
 
-    public static String NEW_LMS_SOMATIC_PEX = "!(operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"]"
-            + ".answers.hasOption(\"CA\") || "
+    public static String NEW_LMS_SOMATIC_PEX = ""
+            + "!(operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") || "
             + " operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")) && "
             + " (( user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance() && "
             + " user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_TISSUE\"].answers.hasTrue() && "
             + " user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))"
-            + " || ( user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"cmi-lms\"]."
-            + " user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_TISSUE\"].answers.hasTrue() && "
-            + " forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
+            + " || ( user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() "
+            + " && user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_TISSUE\"].answers.hasTrue() && "
+            + " user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
 
     public static String NEW_OSTEO_SOMATIC_PEX =
-            "      (((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance()\n" +
-                    "          && !(\n" +
-                    "            operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") \n" +
-                    "            || operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")\n" +
-                    "          ))\n" +
-                    "          ||\n" +
-                    "          (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance()\n" +
-                    "          && !(\n" +
-                    "            user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") \n" +
-                    "            || user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")\n" +
-                    "          )))\n" +
-                    "          &&\n" +
-                    "          ((( user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))\n" +
-                    "            || ( user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))\n" +
-                    "          )\n" +
-                    "        )      \n ";
+            "      (((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance()\n"
+                    + "          && !(\n"
+                    + "  operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") \n"
+                    + "   || operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")\n"
+                    + "   ))\n"
+                    + "   ||\n"
+                    + "   (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance()\n"
+                    + "  && !(\n"
+                    + "  user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") \n"
+                    + "  || user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")\n"
+                    + "  )))\n"
+                    + "  &&\n"
+                    + " (( user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].hasInstance() && "
+                    + " user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"]."
+                    + "answers.ageAtLeast(7, YEARS))\n"
+                    + "            || ( user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && "
+                    + " user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"]"
+                    + ".answers.ageAtLeast(7, YEARS)))\n"
+                    + "        )      \n ";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -94,7 +97,7 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
         //update matched LMS content block pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getLmsPexIdToUpd();
         log.info("Matched LMS {} pex expressions", matchedExprIds.size());
-        updatePexExpressions(handle, matchedExprIds,  NEW_LMS_GERMLINE_PEX);
+        updatePexExpressions(handle, matchedExprIds, NEW_LMS_GERMLINE_PEX);
 
         //update LMS Question pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getQuestionPexIdByStudyAnsQuestions(
@@ -182,36 +185,36 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
                 + "%user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\")%'")
         List<Long> getOsteoSomaticPexIdToUpd();
 
-        @SqlQuery(" select e.expression_id \n" +
-                "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s" +
-                "    , block b, block__question bq, block_nesting bn, block__expression be, expression e\n" +
-                "    where q.question_stable_code_id = qsc.question_stable_code_id\n" +
-                "    and sa.study_activity_id = q.study_activity_id\n" +
-                "    and s.umbrella_study_id = sa.study_id\n" +
-                "    and bq.question_id = q.question_id\n" +
-                "    and b.block_id = bq.block_id\n" +
-                "    and bn.nested_block_id = b.block_id\n" +
-                "    and be.block_id = bn.parent_block_id"
-                + "    and e.expression_id = be.expression_id\n" +
-                "    and s.guid = :studyGuid\n" +
-                "    and sa.study_activity_code = :activityCode " +
-                "    and qsc.stable_id in (<stableIds>) ;\n")
+        @SqlQuery(" select e.expression_id \n"
+                + "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s"
+                + "    , block b, block__question bq, block_nesting bn, block__expression be, expression e\n"
+                + "    where q.question_stable_code_id = qsc.question_stable_code_id\n"
+                + "    and sa.study_activity_id = q.study_activity_id\n"
+                + "    and s.umbrella_study_id = sa.study_id\n"
+                + "    and bq.question_id = q.question_id\n"
+                + "    and b.block_id = bq.block_id\n"
+                + "    and bn.nested_block_id = b.block_id\n"
+                + "    and be.block_id = bn.parent_block_id"
+                + "    and e.expression_id = be.expression_id\n"
+                + "    and s.guid = :studyGuid\n"
+                + "    and sa.study_activity_code = :activityCode "
+                + "    and qsc.stable_id in (<stableIds>) ;\n")
         List<Long> getSomaticQuestionPexIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode") String activityCode,
-                                                       @BindList("stableIds") List<String> stableIds);
+                                                              @BindList("stableIds") List<String> stableIds);
 
-        @SqlQuery(" select e.expression_id \n" +
-                "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s" +
-                "    , block b, block__question bq, block__expression be, expression e\n" +
-                "    where q.question_stable_code_id = qsc.question_stable_code_id\n" +
-                "    and sa.study_activity_id = q.study_activity_id\n" +
-                "    and s.umbrella_study_id = sa.study_id\n" +
-                "    and bq.question_id = q.question_id\n" +
-                "    and b.block_id = bq.block_id\n" +
-                "    and be.block_id = b.block_id\n" +
-                "    and e.expression_id = be.expression_id\n" +
-                "    and s.guid = :studyGuid\n" +
-                "    and sa.study_activity_code = :activityCode " +
-                "    and qsc.stable_id in (<stableIds>) ;\n")
+        @SqlQuery(" select e.expression_id \n"
+                + "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s"
+                + "    , block b, block__question bq, block__expression be, expression e\n"
+                + "    where q.question_stable_code_id = qsc.question_stable_code_id\n"
+                + "    and sa.study_activity_id = q.study_activity_id\n"
+                + "    and s.umbrella_study_id = sa.study_id\n"
+                + "    and bq.question_id = q.question_id\n"
+                + "    and b.block_id = bq.block_id\n"
+                + "    and be.block_id = b.block_id\n"
+                + "    and e.expression_id = be.expression_id\n"
+                + "    and s.guid = :studyGuid\n"
+                + "    and sa.study_activity_code = :activityCode "
+                + "    and qsc.stable_id in (<stableIds>) ;\n")
         List<Long> getQuestionPexIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode") String activityCode,
                                                        @BindList("stableIds") List<String> stableIds);
 
