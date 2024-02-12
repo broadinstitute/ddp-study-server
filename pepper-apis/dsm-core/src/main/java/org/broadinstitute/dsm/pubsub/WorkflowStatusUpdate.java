@@ -4,8 +4,6 @@ import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,15 +92,11 @@ public class WorkflowStatusUpdate {
 
         updateWorkflowData(ddpParticipantId, workflow, status, instance);
 
-        try {
-            if (isATStudy(studyGuid)) {
-                log.info("Generating default values for ATCP participant: {}, workflow: {}, status: {}", ddpParticipantId,
-                        workflow, status);
-                ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
-                basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
-            }
-        } catch (Exception e) {
-            throw new DsmInternalError("Could not add AT default values", e);
+        if (isATStudy(studyGuid)) {
+            log.info("Generating default values for ATCP participant: {}, workflow: {}, status: {}", ddpParticipantId,
+                    workflow, status);
+            ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
+            basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
         }
     }
 
