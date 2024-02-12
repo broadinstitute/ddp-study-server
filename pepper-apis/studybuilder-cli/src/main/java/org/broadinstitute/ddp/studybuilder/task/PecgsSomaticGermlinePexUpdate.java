@@ -46,7 +46,8 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
             + " user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))"
             + " || ( user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() "
             + " && user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_TISSUE\"].answers.hasTrue() && "
-            + " user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
+            + " user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"]"
+            + ".answers.ageAtLeast(7, YEARS)))";
 
     public static String NEW_OSTEO_SOMATIC_PEX =
             "      (((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance()\n"
@@ -153,9 +154,6 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
                 + "and e.expression_text like '%user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"]."
                 + "questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()%"
                 + "%operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"cmi-osteo\"].%'")
-                //+ "forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)\n"
-                //+ " || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"cmi-osteo\"].forms[\"PREQUAL\"]."
-                //+ "questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)%'")
         List<Long> getPexIdToUpd();
 
         @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
@@ -170,10 +168,10 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
                 + " where bee.block_id = b.block_id and b.block_type_id != 5 "
                 + " and e.expression_id = bee.expression_id "
                 + " and e.expression_text like "
-                + "'!(operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") ||\n" +
-                " %operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")) &&\n" +
-                " %operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7 &&\n" +
-                " %user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_TISSUE\"].answers.hasTrue()%'")
+                + "'!(operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") ||\n"
+                + " %operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_STATE\"].answers.hasOption(\"NY\")) &&\n"
+                + " %operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7 &&\n"
+                + " %user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_TISSUE\"].answers.hasTrue()%'")
         List<Long> getLmsSomaticPexIdToUpd();
 
         @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
