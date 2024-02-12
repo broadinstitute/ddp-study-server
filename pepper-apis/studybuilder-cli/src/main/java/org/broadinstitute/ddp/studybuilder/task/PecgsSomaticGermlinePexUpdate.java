@@ -76,7 +76,6 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-
         updatePediatricGermlinePex(handle);
     }
 
@@ -84,51 +83,51 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
 
         //update matched OSTEO content block pex
         List<Long> matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getPexIdToUpd();
-        log.info("Matched Osteo {} pex expressions", matchedExprIds.size());
+        log.info("Matched Osteo {} pex expressions .. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_OSTEO_GERMLINE_PEX);
 
         //update OSTEO Question pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getQuestionPexIdByStudyAnsQuestions(
                 "CMI-OSTEO", "GERMLINE_CONSENT_ADDENDUM_PEDIATRIC",
                 Arrays.asList("ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC", "ADDENDUM_CONSENT_PATIENT_SINGATURE_PEDIATRIC"));
-        log.info("Matched Osteo {} question pex expressions", matchedExprIds.size());
+        log.info("Matched Osteo {} question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_OSTEO_GERMLINE_PEX);
 
         //update matched LMS content block pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getLmsPexIdToUpd();
-        log.info("Matched LMS {} pex expressions", matchedExprIds.size());
+        log.info("Matched LMS {} pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_LMS_GERMLINE_PEX);
 
         //update LMS Question pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getQuestionPexIdByStudyAnsQuestions(
                 "cmi-lms", "GERMLINE_CONSENT_ADDENDUM_PEDIATRIC",
                 Arrays.asList("ADDENDUM_CONSENT_PATIENT_DOB_PEDIATRIC", "ADDENDUM_CONSENT_PATIENT_SINGATURE_PEDIATRIC"));
-        log.info("Matched LMS {} question pex expressions", matchedExprIds.size());
+        log.info("Matched LMS {} question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_LMS_GERMLINE_PEX);
 
         //todo Osteo Somatic/CONSENT_ADDENDUM_PEDIATRIC
         //update OSTEO Somatic pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getOsteoSomaticPexIdToUpd();
-        log.info("Matched OSTEO {} Somatic pex expressions", matchedExprIds.size());
+        log.info("Matched OSTEO {} Somatic pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_OSTEO_SOMATIC_PEX);
 
         //update OSTEO Somatic Question pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getSomaticQuestionPexIdByStudyAnsQuestions(
                 "CMI-OSTEO", "CONSENT_ADDENDUM_PEDIATRIC",
                 Arrays.asList("SOMATIC_ASSENT_ADDENDUM", "ADDENDUM"));
-        log.info("Matched OSTEO {} Somatic question pex expressions", matchedExprIds.size());
+        log.info("Matched OSTEO {} Somatic question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_OSTEO_SOMATIC_PEX);
 
         //update LMS Somatic pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getLmsSomaticPexIdToUpd();
-        log.info("Matched LMS {} Somatic pex expressions", matchedExprIds.size());
+        log.info("Matched LMS {} Somatic pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_LMS_SOMATIC_PEX);
 
         //update LMS Somatic Question pex
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getSomaticQuestionPexIdByStudyAnsQuestions(
                 "cmi-lms", "CONSENT_ADDENDUM_PEDIATRIC",
                 Arrays.asList("SOMATIC_ASSENT_ADDENDUM", "ADDENDUM"));
-        log.info("Matched LMS {} Somatic question pex expressions", matchedExprIds.size());
+        log.info("Matched LMS {} Somatic question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_LMS_SOMATIC_PEX);
 
     }
@@ -150,17 +149,17 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
 
         @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
                 + "where bee.block_id = b.block_id "
-                + "and e.expression_id = bee.expression_id "
+                + "and e.expression_id = bee.expression_id and b.block_type_id != 5 "
                 + "and e.expression_text like '%user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"]."
                 + "questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()%"
-                + " && ((operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"cmi-osteo\"]."
-                + "forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)\n"
-                + " || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"cmi-osteo\"].forms[\"PREQUAL\"]."
-                + "questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)%'")
+                + "%operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && operator.studies[\"cmi-osteo\"].%'")
+                //+ "forms[\"PREQUAL\"].questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)\n"
+                //+ " || (user.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance() && user.studies[\"cmi-osteo\"].forms[\"PREQUAL\"]."
+                //+ "questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7)%'")
         List<Long> getPexIdToUpd();
 
         @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
-                + "where bee.block_id = b.block_id "
+                + "where bee.block_id = b.block_id and b.block_type_id != 5 "
                 + "and e.expression_id = bee.expression_id "
                 + "and e.expression_text like '%user.studies[\"CMI-LMS\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"]."
                 + "questions[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()%"
@@ -168,7 +167,7 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
         List<Long> getLmsPexIdToUpd();
 
         @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
-                + " where bee.block_id = b.block_id "
+                + " where bee.block_id = b.block_id and b.block_type_id != 5 "
                 + " and e.expression_id = bee.expression_id "
                 + " and e.expression_text like "
                 + "'!(operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"].answers.hasOption(\"CA\") ||\n" +
@@ -178,7 +177,7 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
         List<Long> getLmsSomaticPexIdToUpd();
 
         @SqlQuery("select e.expression_id from block b , block__expression bee, expression e "
-                + " where bee.block_id = b.block_id "
+                + " where bee.block_id = b.block_id and b.block_type_id != 5 "
                 + " and e.expression_id = bee.expression_id "
                 + " and e.expression_text like "
                 + "'%operator.studies[\"CMI-OSTEO\"].forms[\"PREQUAL\"].hasInstance()"
