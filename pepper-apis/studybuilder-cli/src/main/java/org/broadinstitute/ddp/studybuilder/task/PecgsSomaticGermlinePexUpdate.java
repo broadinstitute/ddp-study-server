@@ -196,8 +196,8 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
                 + "    and s.guid = :studyGuid\n"
                 + "    and sa.study_activity_code = :activityCode "
                 + "    and qsc.stable_id in (<stableIds>) ;\n")
-        List<Long> getSomaticQuestionPexIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode") String activityCode,
-                                                              @BindList("stableIds") List<String> stableIds);
+        List<Long> getSomaticQuestionPexIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode")
+                String activityCode, @BindList("stableIds") List<String> stableIds);
 
         @SqlQuery(" select e.expression_id \n"
                 + "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s"
