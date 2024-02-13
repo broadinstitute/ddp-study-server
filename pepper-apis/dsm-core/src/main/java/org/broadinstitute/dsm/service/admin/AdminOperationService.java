@@ -5,7 +5,8 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.model.defaultvalues.ReferralSourceService;
+import org.broadinstitute.dsm.service.adminoperation.ParticipantDataFixupService;
+import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
 
 /**
  * Provides a service to run admin operations (e.g. fixing data, etc.) typically asynchronously, recording results
@@ -16,7 +17,8 @@ public class AdminOperationService {
 
     // supported operations
     public enum OperationTypeId {
-        SYNC_REFERRAL_SOURCE
+        SYNC_REFERRAL_SOURCE,
+        FIXUP_PARTICIPANT_DATA
     }
 
     private final String userId;
@@ -35,11 +37,14 @@ public class AdminOperationService {
         switch (opId) {
             case SYNC_REFERRAL_SOURCE:
                 adminOperation = new ReferralSourceService();
-                adminOperation.initialize(userId, realm, attributes, payload);
+                break;
+            case FIXUP_PARTICIPANT_DATA:
+                adminOperation = new ParticipantDataFixupService();
                 break;
             default:
                 throw new DSMBadRequestException("Invalid operation type ID: " + operationTypeId);
         }
+        adminOperation.initialize(userId, realm, attributes, payload);
 
         // create operation record
         int operationId = AdminOperationRecord.createOperationRecord(opId, userId);

@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.DeletedObjectDao;
+import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
@@ -110,7 +111,10 @@ public class OncHistoryTestUtil {
 
     public void deleteParticipants() {
         medicalRecordIds.forEach(integer -> medicalRecordDao.delete(integer));
-        participantIds.forEach(id -> TestParticipantUtil.deleteParticipantAndInstitution(id));
+        participantIds.forEach(id -> {
+            new DDPInstitutionDao().deleteByParticipant(id);
+            TestParticipantUtil.deleteParticipant(id);
+        });
     }
 
     public Object createOncHistory(String guid, int participantId, String realm, String userEmail) throws Exception {

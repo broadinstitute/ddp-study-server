@@ -4,7 +4,6 @@ import static org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao.ONC_HIS
 import static org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao.ONC_HISTORY_LAST_CHANGED;
 
 import lombok.Data;
-import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;

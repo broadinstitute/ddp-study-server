@@ -16,9 +16,9 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Slf4j
 public abstract class BasicDefaultDataMaker implements Defaultable {
+    protected static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     protected final FieldSettings fieldSettings = new FieldSettings();
     protected final Bookmark bookmark = new Bookmark();
-    protected final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     protected final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     protected DDPInstance instance;
     protected int instanceId;

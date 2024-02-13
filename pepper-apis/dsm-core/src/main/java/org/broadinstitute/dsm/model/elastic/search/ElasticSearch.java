@@ -116,11 +116,12 @@ public class ElasticSearch implements ElasticSearchable {
      */
     public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
         if (sourceMap != null) {
-            Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
-            if (deserializedSourceMap.isPresent()) {
-                var participantDto = deserializedSourceMap.get();
+            Optional<ElasticSearchParticipantDto> esParticipantDto =
+                    ElasticSearchParticipantDto.fromSourceMap(sourceMap, deserializer);
+            if (esParticipantDto.isPresent()) {
+                var participantDto = esParticipantDto.get();
                 participantDto.setQueriedParticipantId(queriedParticipantId);
-                return deserializedSourceMap.get();
+                return esParticipantDto.get();
             }
         }
         return new ElasticSearchParticipantDto.Builder().withQueriedParticipantId(queriedParticipantId).build();

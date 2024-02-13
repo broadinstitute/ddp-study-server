@@ -4,7 +4,7 @@ import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.NEW
 import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD_OSTEO_INSTANCE_NAME;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,7 +35,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 @Slf4j
@@ -52,8 +51,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private static KitShippingTestUtil kitShippingTestUtil;
     private static final List<ParticipantDto> os1Participants = new ArrayList<>();
     private static final List<ParticipantDto> os2Participants = new ArrayList<>();
-    private static final Map<Integer, Integer> participantToMedicalRecordId = new HashMap<>();
-    private static final Map<Integer, Integer> participantToOncHistoryId = new HashMap<>();
+    private static MedicalRecordTestUtil medicalRecordTestUtil;
     private static final String OS1_TAG = "OS";
     private static final String OS2_TAG = "OS PE-CGS";
     private static final String baseInstanceName = "osteom";
@@ -76,6 +74,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         os1DdpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(os1InstanceName, esIndex);
         os2DdpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(os2InstanceName).orElseThrow();
         ddpInstanceDao.updateEsParticipantIndex(os2DdpInstanceDto.getDdpInstanceId(), esIndex);
+        medicalRecordTestUtil = new MedicalRecordTestUtil();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, baseInstanceName);
     }
 
@@ -88,10 +87,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     @After
     public void deleteParticipantData() {
         kitShippingTestUtil.tearDown();
-        participantToOncHistoryId.values().forEach(oncHistoryDetailDao::delete);
-        participantToOncHistoryId.clear();
-        participantToMedicalRecordId.values().forEach(MedicalRecordTestUtil::deleteMedicalRecord);
-        participantToMedicalRecordId.clear();
+        medicalRecordTestUtil.tearDown();
         os1Participants.forEach(ptp -> {
             CohortTagTestUtil.deleteTag(ptp.getDdpParticipantIdOrThrow(), OS1_TAG);
             TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow());
@@ -284,12 +280,12 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         Assert.assertEquals(participantIds.size(), medicalRecords.size());
 
         participantIds.forEach(participantId -> {
-            int medicalRecordId = participantToMedicalRecordId.get(participantId);
+            int medicalRecordId = medicalRecordTestUtil.getParticipantMedicalIds(participantId).get(0);
             OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.stream()
                     .filter(rec -> rec.getMedicalRecordId() == medicalRecordId)
                     .findFirst().orElseThrow();
             Assert.assertEquals(oncHistoryDetail.getOncHistoryDetailId(),
-                    participantToOncHistoryId.get(participantId).intValue());
+                    medicalRecordTestUtil.getParticipantOncHistoryDetailIds(participantId).get(0).intValue());
             Assert.assertTrue(medicalRecords.stream()
                     .anyMatch(rec -> rec.getMedicalRecordId() == medicalRecordId));
         });
@@ -298,9 +294,8 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private void createOncHistoryDetail(ParticipantDto participant, DDPInstanceDto instanceDto, int oncHistoryCount) {
         String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
         int participantId = participant.getParticipantIdOrThrow();
-        int medicalRecordId = MedicalRecordTestUtil.createMedicalRecord(participant, instanceDto);
+        int medicalRecordId = medicalRecordTestUtil.createMedicalRecord(participant, instanceDto);
         log.debug("Created medical record {} for participant {}", medicalRecordId, participantId);
-        participantToMedicalRecordId.put(participantId, medicalRecordId);
 
         // add some onc history detail records
         for (int i = 1; i <= oncHistoryCount; i++) {
@@ -311,11 +306,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
                     .withDestructionPolicy("12")
                     .withChangedBy(TEST_USER);
 
-            OncHistoryDetail rec = builder.build();
-            int oncHistoryDetailId = OncHistoryDetail.createOncHistoryDetail(rec);
-            participantToOncHistoryId.put(participantId, oncHistoryDetailId);
-            rec.setOncHistoryDetailId(oncHistoryDetailId);
-            ElasticTestUtil.createOncHistoryDetail(esIndex, rec, ddpParticipantId);
+            medicalRecordTestUtil.createOncHistoryDetail(participant, builder.build(), esIndex);
         }
 
         log.debug("Created ES participant record for {}: {}", ddpParticipantId,

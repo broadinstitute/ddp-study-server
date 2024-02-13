@@ -15,6 +15,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
@@ -31,7 +32,6 @@ import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -51,6 +51,7 @@ public class ElasticTestUtil {
      *      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
      */
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
+        log.info("Creating test index for realm {}", realm);
         String indexName = createIndex(realm);
         try {
             if (StringUtils.isNotBlank(settingsFile)) {
@@ -73,11 +74,11 @@ public class ElasticTestUtil {
             CreateIndexRequest req = new CreateIndexRequest(indexName);
             String settingsJson = TestUtil.readFile("elastic/indexSettings.json");
             req.settings(settingsJson, XContentType.JSON);
-            CreateIndexResponse createIndexResponse = client.indices().create(req, RequestOptions.DEFAULT);
-            log.info("CreateIndexResponse: {}", createIndexResponse);
+            client.indices().create(req, RequestOptions.DEFAULT);
+            log.info("Created index {}", indexName);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception creating index " + realm + ":" + e.getMessage());
+            Assert.fail(String.format("Exception creating index %s: %s", indexName, e.getMessage()));
         }
         return indexName;
     }
@@ -105,6 +106,7 @@ public class ElasticTestUtil {
         try {
             IndicesClient indicesClient = ElasticSearchUtil.getClientInstance().indices();
             indicesClient.putMapping(putMappingRequest, RequestOptions.DEFAULT);
+            ElasticSearchUtil.loadFieldMappings();
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail(String.format("Unexpected exception updating ES mappings for index %s: %s", esIndex, e));
@@ -148,19 +150,6 @@ public class ElasticTestUtil {
             Assert.fail("Unexpected exception getting document for participant " + ddpParticipantId);
         }
         return res;
-    }
-
-    public static void addInstitutionAndMedicalRecord(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
-        String ddpParticipantId = participantDto.getDdpParticipantIdOrThrow();
-        Institution institution = new Institution(String.format("%s_GUID", ddpParticipantId), "PHYSICIAN");
-        String lastUpdated = Long.toString(System.currentTimeMillis());
-
-        InstitutionRequest institutionRequest = new InstitutionRequest(1L, ddpParticipantId, List.of(institution), lastUpdated);
-        inTransaction(conn -> {
-            DDPMedicalRecordDataRequest.writeParticipantIntoDb(conn, ddpInstanceDto.getDdpInstanceId().toString(),
-                    institutionRequest, ddpInstanceDto.getInstanceName());
-            return null;
-        });
     }
 
     public static void addDsmParticipant(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
@@ -237,26 +226,45 @@ public class ElasticTestUtil {
         }
     }
 
-    public static Dsm addDsmObjectToParticipantFromFile(String esIndex, String fileName, String ddpParticipantId,
-                                                        String dob, String dateOfMajority) {
+    public static Address addParticipantAddressFromFile(String esIndex, String fileName, String ddpParticipantId) {
         Gson gson = new Gson();
-        String json = null;
         try {
-            json = TestUtil.readFile(fileName);
+            String json = TestUtil.readFile(fileName);
+            Address address = gson.fromJson(json, Address.class);
+            addParticipantAddress(esIndex, ddpParticipantId, address);
+            return address;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating address for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
+    /**
+     * Add a DSM entity to the participant doc
+     *
+     * @param dob date of birth to replace in DSM entity
+     * @param dateOfMajority date of majority to replace in DSM entity
+     */
+    public static Dsm addDsmEntityFromFile(String esIndex, String fileName, String ddpParticipantId, String dob,
+                                           String dateOfMajority) {
+        Gson gson = new Gson();
+        try {
+            String json = TestUtil.readFile(fileName);
             json = json.replace("<dateOfBirth>", dob);
             if (StringUtils.isNotBlank(dateOfMajority)) {
                 json = json.replace("<dateOfMajority>", dateOfMajority);
             } else {
                 json = json.replace("\"dateOfMajority\" : \"<dateOfMajority>\",", "");
             }
+            Dsm dsm = gson.fromJson(json, Dsm.class);
+            addParticipantDsm(esIndex, dsm, ddpParticipantId);
+            return dsm;
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception creating dsm for participant " + ddpParticipantId);
             return null;
         }
-        Dsm dsm = gson.fromJson(json, Dsm.class);
-        addParticipantDsm(esIndex, dsm, ddpParticipantId);
-        return dsm;
     }
 
     public static List<Activities> addActivitiesFromFile(String esIndex, String fileName, String ddpParticipantId) {
@@ -280,18 +288,26 @@ public class ElasticTestUtil {
         ElasticSearchUtil.updateRequest(profile.getGuid(), esIndex, profileMap);
     }
 
-    public static void addParticipantDsm(String esIndex, Dsm dsm, String guid) {
+    public static void addParticipantAddress(String esIndex, String ddpParticipantId, Address address) {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> valueMap = mapper.convertValue(address, Map.class);
+        Map<String, Object> addressMap = Map.of("address", valueMap);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, addressMap);
+    }
+
+    public static void addParticipantDsm(String esIndex, Dsm dsm, String ddpParticipantId) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> valueMap = mapper.convertValue(dsm, Map.class);
         Map<String, Object> dsmMap = Map.of("dsm", valueMap);
-        ElasticSearchUtil.updateRequest(guid, esIndex, dsmMap);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, dsmMap);
     }
 
-    public static void addParticipantActivities(String esIndex, List<Activities> activitiesList, String guid) {
+    public static void addParticipantActivities(String esIndex, List<Activities> activitiesList,
+                                                String ddpParticipantId) {
         ObjectMapper mapper = new ObjectMapper();
         List<Activities> valueMap = mapper.convertValue(activitiesList, List.class);
         Map<String, Object> activitiesMap = Map.of("activities", valueMap);
-        ElasticSearchUtil.updateRequest(guid, esIndex, activitiesMap);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, activitiesMap);
     }
 
     public static void addActivities(String esIndex, String ddpParticipantId, String activitiesJson) {

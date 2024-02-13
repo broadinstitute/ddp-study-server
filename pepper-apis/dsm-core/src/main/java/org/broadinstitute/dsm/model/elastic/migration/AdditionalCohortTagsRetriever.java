@@ -22,10 +22,10 @@ public class AdditionalCohortTagsRetriever extends AdditionalRecordsRetriever<Co
     }
 
     static Optional<AdditionalCohortTagsRetriever> fromRealm(String realm) {
-        if  (OLD_OSTEO_INSTANCE_NAME.equals(realm)) {
+        if  (OLD_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalCohortTagsRetriever(NEW_OSTEO_INSTANCE_NAME));
         }
-        if (NEW_OSTEO_INSTANCE_NAME.equals(realm)) {
+        if (NEW_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalCohortTagsRetriever(OLD_OSTEO_INSTANCE_NAME));
         }
         return Optional.empty();

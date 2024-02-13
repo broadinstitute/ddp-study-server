@@ -20,11 +20,12 @@ import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.adminoperation.ReferralSourceServiceTest;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
+import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
-import org.broadinstitute.dsm.util.tools.FieldSettingsTestUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -121,11 +122,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         List<Activities> activities = ReferralSourceServiceTest.getActivities();
         ElasticTestUtil.addParticipantActivities(esIndex, activities, ddpParticipantId);
 
-        int fieldSettingsId = FieldSettingsTestUtil.createRadioFieldSettings(AT_PARTICIPANT_EXIT,
-                EXIT_STATUS,
-                "[{\"value\":\"0\",\"name\":\"Not Exited\",\"default\":true},"
-                        + "{\"value\":\"1\",\"name\":\"Exited\"}]",
-                ddpInstanceDto.getDdpInstanceId());
+        int fieldSettingsId = FieldSettingsTestUtil.createExitStatusFieldSetting(ddpInstanceDto.getDdpInstanceId());
         fieldSettingsIds.add(fieldSettingsId);
 
         try {
@@ -153,13 +150,9 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
-        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        ParticipantDto participant =
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
         participants.add(participant);
-
-        ElasticTestUtil.createParticipant(esIndex, participant);
-        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
-                ddpParticipantId);
         return participant;
     }
 
@@ -188,18 +181,20 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         Dsm dsm = esParticipant.getDsm().orElseThrow();
 
         List<ParticipantData> participantDataList = dsm.getParticipantData();
-        participantDataList.stream()
-                .filter(participantData -> participantData.getRequiredFieldTypeId().equals(AT_PARTICIPANT_EXIT))
-                .findFirst().ifPresent(participantData -> {
-                    Assert.assertEquals(ddpParticipantId, participantData.getRequiredDdpParticipantId());
-                    Assert.assertEquals("0", participantData.getDataMap().get(EXIT_STATUS));
-                });
-        participantDataList.stream()
-                .filter(participantData -> participantData.getRequiredFieldTypeId().equals(GENOME_STUDY_FIELD_TYPE))
-                .findFirst().ifPresent(participantData -> {
-                    Assert.assertEquals(ddpParticipantId, participantData.getRequiredDdpParticipantId());
-                    Assert.assertTrue(participantData.getDataMap().get(GENOME_STUDY_CPT_ID)
-                            .startsWith(GENOMIC_ID_PREFIX));
-                });
+        Assert.assertEquals(2, participantDataList.size());
+
+        participantDataList.forEach(participantData -> {
+            Assert.assertEquals(ddpParticipantId, participantData.getRequiredDdpParticipantId());
+            String fieldType = participantData.getRequiredFieldTypeId();
+            Map<String, String> dataMap = participantData.getDataMap();
+
+            if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
+                Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
+            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
+                Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
+            } else {
+                Assert.fail("Unexpected field type: " + fieldType);
+            }
+        });
     }
 }

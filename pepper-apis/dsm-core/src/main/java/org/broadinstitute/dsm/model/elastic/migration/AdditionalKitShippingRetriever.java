@@ -16,10 +16,10 @@ public class AdditionalKitShippingRetriever extends AdditionalRecordsRetriever<K
     }
 
     static Optional<AdditionalKitShippingRetriever> fromRealm(String realm) {
-        if  (OLD_OSTEO_INSTANCE_NAME.equals(realm)) {
+        if  (OLD_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalKitShippingRetriever(NEW_OSTEO_INSTANCE_NAME));
         }
-        if (NEW_OSTEO_INSTANCE_NAME.equals(realm)) {
+        if (NEW_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalKitShippingRetriever(OLD_OSTEO_INSTANCE_NAME));
         }
         return Optional.empty();

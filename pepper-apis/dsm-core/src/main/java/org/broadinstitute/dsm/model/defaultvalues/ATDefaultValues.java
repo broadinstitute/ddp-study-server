@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,22 +14,20 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
-import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 
 @Slf4j
 public class ATDefaultValues extends BasicDefaultDataMaker {
-    protected static final String EXIT_STATUS = "EXITSTATUS";
-    protected static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
     protected static final String AT_GENOMIC_ID = "at_genomic_id";
     protected static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
     protected static final String COMPLETE = "COMPLETE";
-    protected static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
-    protected static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
-    protected static final String GENOMIC_ID_PREFIX = "DDP_ATCP_";
+    public static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
+    public static final String GENOMIC_ID_PREFIX = "DDP_ATCP_";
+    public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
+    public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
+    public static final String EXIT_STATUS = "EXITSTATUS";
 
     /**
      * Inserts default data for a participant in the AT study: a genomic id and an exit status
@@ -56,14 +53,14 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
                     participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
                             participantDataDto.getRequiredFieldTypeId()));
             if (!hasGenomeId) {
-                insertGenomicIdForParticipant(ddpParticipantId, profile);
+                insertGenomicIdForParticipant(ddpParticipantId, profile.getHruid(), instanceId);
             }
 
             boolean hasExitStatus = participantDataList.stream().anyMatch(
                     participantDataDto -> ATDefaultValues.AT_PARTICIPANT_EXIT.equals(
                             participantDataDto.getRequiredFieldTypeId()));
             if (!hasExitStatus) {
-                insertExitStatusForParticipant(ddpParticipantId);
+                insertExitStatusForParticipant(ddpParticipantId, instanceId);
             }
 
             if (hasGenomeId && hasExitStatus) {
@@ -71,12 +68,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
                 return false;
             }
 
-            ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
-            List<Map<String, Object>> transformedList =
-                    objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
-            ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(), new HashMap<>(
-                    Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
-            log.info("Updated participant {} dsm values in elastic", ddpParticipantId);
+            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
         } catch (Exception e) {
             throw new DsmInternalError("Error setting AT default data for participant " + ddpParticipantId, e);
         }
@@ -91,13 +83,19 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && COMPLETE.equals(activity.getStatus());
     }
 
-    private void insertGenomicIdForParticipant(String ddpParticipantId, Profile esProfile) {
-        String hruid = esProfile.getHruid();
+    /**
+     * Insert a genomic id for a participant in the AT study
+     * Note: this updates ParticipantData in the DB, but does not update ES
+     *
+     * @param hruid hruid of the participant, per the ES profile
+     */
+    public static void insertGenomicIdForParticipant(String ddpParticipantId, String hruid, int instanceId) {
         insertParticipantData(GENOME_STUDY_FIELD_TYPE,
-                Map.of(GENOME_STUDY_CPT_ID, GENOMIC_ID_PREFIX.concat(getGenomicIdValue(hruid))), ddpParticipantId);
+                Map.of(GENOME_STUDY_CPT_ID, GENOMIC_ID_PREFIX.concat(getGenomicIdValue(hruid))),
+                ddpParticipantId, instanceId);
     }
 
-    private String getGenomicIdValue(String hruid) {
+    private static String getGenomicIdValue(String hruid) {
         BookmarkDao bookmarkDao = new BookmarkDao();
         Optional<BookmarkDto> maybeGenomicId = bookmarkDao.getBookmarkByInstance(AT_GENOMIC_ID);
         return maybeGenomicId.map(bookmarkDto -> {
@@ -106,15 +104,19 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }).orElse(hruid);
     }
 
-    private void insertExitStatusForParticipant(String ddpParticipantId) {
-        String defaultValue = getDefaultExitStatus();
+    /**
+     * Insert default exit status for a participant in the AT study
+     * Note: this updates ParticipantData in the DB, but does not update ES
+     */
+    public static void insertExitStatusForParticipant(String ddpParticipantId, int instanceId) {
+        String defaultValue = getDefaultExitStatus(instanceId);
         if (StringUtils.isBlank(defaultValue)) {
             throw new DsmInternalError("No default exit status found for AT study");
         }
-        insertParticipantData(AT_PARTICIPANT_EXIT, Map.of(EXIT_STATUS, defaultValue), ddpParticipantId);
+        insertParticipantData(AT_PARTICIPANT_EXIT, Map.of(EXIT_STATUS, defaultValue), ddpParticipantId, instanceId);
     }
 
-    private String getDefaultExitStatus() {
+    private static String getDefaultExitStatus(int instanceId) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         Optional<FieldSettingsDto> fieldSettingByColumnNameAndInstanceId =
                 fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(instanceId, EXIT_STATUS);
@@ -124,7 +126,8 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }).orElse(StringUtils.EMPTY);
     }
 
-    private void insertParticipantData(String fieldTypeId, Map<String, String> data, String ddpParticipantId) {
+    private static void insertParticipantData(String fieldTypeId, Map<String, String> data, String ddpParticipantId,
+                                              int instanceId) {
         org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                 new org.broadinstitute.dsm.model.participant.data.ParticipantData(participantDataDao);
         participantData.setData(ddpParticipantId, instanceId, fieldTypeId, data);

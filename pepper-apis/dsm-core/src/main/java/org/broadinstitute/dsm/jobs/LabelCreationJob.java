@@ -28,7 +28,7 @@ public class LabelCreationJob implements Job {
                 logger.error("Label creation job is running for over 2 hours now...");
             }
         } catch (Exception ex) {
-            logger.error("Failed to execute properly.", ex);
+            logger.error("Error running LabelCreationJob", ex);
         }
     }
 }

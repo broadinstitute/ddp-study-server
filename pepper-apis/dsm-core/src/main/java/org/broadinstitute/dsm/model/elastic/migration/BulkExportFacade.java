@@ -1,11 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-import static org.broadinstitute.dsm.model.elastic.Util.DOC;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -17,18 +17,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BulkExportFacade {
-
     private static final Logger logger = LoggerFactory.getLogger(BulkExportFacade.class);
+    private final String index;
+    private final BulkRequest bulkRequest;
+    private final ExportLog exportLog;
 
-    private String index;
-    private BulkRequest bulkRequest;
 
-    public BulkExportFacade(String index) {
+    public BulkExportFacade(String index, ExportLog exportLog) {
         this.index = index;
+        this.exportLog = exportLog;
         this.bulkRequest = new BulkRequest();
     }
 
-    public void addDataToRequest(Map mapToUpsert, String docId) {
+    public void addDataToRequest(Map<String, Object> mapToUpsert, String docId) {
         bulkRequest.add(createRequest(mapToUpsert, docId));
     }
 
@@ -36,29 +37,30 @@ public class BulkExportFacade {
         return bulkRequest.requests().size();
     }
 
-    private UpdateRequest createRequest(Map mapToUpsert, String docId) {
-        UpdateRequest updateRequest = new UpdateRequest(index, DOC, docId);
+    private UpdateRequest createRequest(Map<String, Object> mapToUpsert, String docId) {
+        UpdateRequest updateRequest = new UpdateRequest(index, docId);
         updateRequest.doc(mapToUpsert);
         return updateRequest;
     }
 
     public long executeBulkUpsert() {
+        if (bulkRequest.requests().isEmpty()) {
+            return 0;
+        }
+
         RestHighLevelClient client = ElasticSearchUtil.getClientInstance();
         try {
-            if (bulkRequest.requests().size() > 0) {
-                logger.info(String.format("attempting to upsert data for %s participants", bulkRequest.requests().size()));
-                BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
-                long successfullyExported = Arrays.stream(bulkResponse.getItems())
-                        .filter(this::isSuccessfullyExported)
-                        .count();
-                logger.info(String.format("%s participants data has been successfully upserted", successfullyExported));
-                buildFailureMessage(bulkResponse);
-                return successfullyExported;
-            }
+            logger.info("Upserting data for {} participants", bulkRequest.requests().size());
+            BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            long successfullyExported = Arrays.stream(bulkResponse.getItems())
+                    .filter(this::isSuccessfullyExported)
+                    .count();
+            logger.info("Upserted data for {} participants", successfullyExported);
+            buildFailureMessage(bulkResponse);
+            return successfullyExported;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new DsmInternalError(e);
         }
-        return 0;
     }
 
     private boolean isSuccessfullyExported(BulkItemResponse response) {
@@ -66,7 +68,14 @@ public class BulkExportFacade {
     }
 
     private void buildFailureMessage(BulkResponse bulkResponse) {
-        if (bulkResponse.hasFailures()) {
+        if (exportLog != null) {
+            if (bulkResponse.hasFailures()) {
+                exportLog.setMessage(bulkResponse.buildFailureMessage());
+                exportLog.setStatus(ExportLog.Status.FAILURES);
+            } else {
+                exportLog.setStatus(ExportLog.Status.NO_FAILURES);
+            }
+        } else if (bulkResponse.hasFailures()) {
             logger.error(bulkResponse.buildFailureMessage());
         }
     }
