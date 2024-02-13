@@ -41,9 +41,25 @@ public class ParticipantDto implements Cloneable {
                 + " be null for DDP participant ID %s and instance ID %d", getDdpParticipantId().orElse("null"), ddpInstanceId)));
     }
 
+    /**
+     * Returns participant ID that is expected to be set
+     * Note: This is designed to replace getParticipantIdOrThrow()
+     */
+    public int getRequiredParticipantId() {
+        return getParticipantIdOrThrow();
+    }
+
     public String getDdpParticipantIdOrThrow() {
         return getDdpParticipantId().orElseThrow(() -> new DsmInternalError(String.format("DDP participant ID cannot"
                 + " be null for participant ID %d and instance ID %d", getParticipantId().orElse(-1), ddpInstanceId)));
+    }
+
+    /**
+     * Returns DDP participant ID that is expected to be set
+     * Note: This is designed to replace getDdpParticipantIdOrThrow()
+     */
+    public String getRequiredDdpParticipantId() {
+        return getDdpParticipantIdOrThrow();
     }
 
     public void setDdpInstanceId(int ddpInstanceId) {

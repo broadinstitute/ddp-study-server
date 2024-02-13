@@ -26,6 +26,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -134,12 +135,12 @@ public class ReceiveKitRequestTest extends DbAndElasticBaseTest {
         // create random participant data
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("REGISTRATION_TYPE", "Self");
-        TestParticipantUtil.createParticipantData(ddpParticipantId,
+        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_MISCELLANEOUS", instanceId, TEST_USER);
 
         dataMap.clear();
         dataMap.put("ELIGIBILITY", "1");
-        TestParticipantUtil.createParticipantData(ddpParticipantId,
+        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_ELIGIBILITY", instanceId, TEST_USER);
 
         WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,
@@ -159,7 +160,7 @@ public class ReceiveKitRequestTest extends DbAndElasticBaseTest {
         dataMap.put("GENOME_STUDY_DATE_SHIPPED", "2016-08-19T08:58:00");
         dataMap.put(ReceiveKitRequest.GENOME_STUDY_DATE_RECEIVED, null);
 
-        TestParticipantUtil.createParticipantData(ddpParticipantId,
+        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_GENOME_STUDY", instanceId, TEST_USER);
 
         WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,

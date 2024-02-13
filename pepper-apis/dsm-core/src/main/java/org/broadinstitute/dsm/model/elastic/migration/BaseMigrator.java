@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -11,34 +12,33 @@ import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
+import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class BaseMigrator extends BaseExporter implements Generator {
-
     private static final Logger logger = LoggerFactory.getLogger(BaseMigrator.class);
     private static final int BATCH_LIMIT = 150;
-    protected final BulkExportFacade bulkExportFacade;
     protected final String realm;
     protected final String index;
-    protected String object;
+    protected final String entity;
     protected ObjectTransformer objectTransformer;
     protected ElasticSearch elasticSearch;
 
-    protected BaseMigrator(String index, String realm, String object) {
-        bulkExportFacade = new BulkExportFacade(index);
+    protected BaseMigrator(String index, String realm, String entity) {
         this.realm = realm;
         this.index = index;
-        this.object = object;
+        this.entity = entity;
         elasticSearch = new ElasticSearch();
         objectTransformer = new ObjectTransformer(realm);
     }
 
-    protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords) {
+    protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords,
+                                                              BulkExportFacade bulkExportFacade) {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
-        logger.info("Creating {} bulk upsert with {} participants for study {} with index: {}",
-                object, participantRecords.size(), realm, index);
+        logger.info("Creating {} bulk upsert with {} participants for study {} with index {}",
+                entity, participantRecords.size(), realm, index);
         long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
@@ -50,20 +50,21 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
                 Map<String, Object> finalMapToUpsert = generate();
                 bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
             }
-            if (isReadyToExport(participantsIterator)) {
+            if (isReadyToExport(participantsIterator, bulkExportFacade)) {
                 totalExported += bulkExportFacade.executeBulkUpsert();
                 bulkExportFacade.clear();
             }
         }
-        logger.info("finished migrating data of {} participants for {} to ES for study: {} with index: {}", totalExported, object, realm,
-                index);
+        logger.info("Exported {} data for {} participants for study {} to index {}", entity,
+                totalExported, realm, index);
     }
 
-    private boolean isReadyToExport(Iterator<Map.Entry<String, Object>> participantsIterator) {
-        return hasReachedToBatchLimit() || !participantsIterator.hasNext();
+    private boolean isReadyToExport(Iterator<Map.Entry<String, Object>> participantsIterator,
+                                    BulkExportFacade bulkExportFacade) {
+        return hasReachedToBatchLimit(bulkExportFacade) || !participantsIterator.hasNext();
     }
 
-    private boolean hasReachedToBatchLimit() {
+    private boolean hasReachedToBatchLimit(BulkExportFacade bulkExportFacade) {
         return bulkExportFacade.size() != 0 && bulkExportFacade.size() % BATCH_LIMIT == 0;
     }
 
@@ -89,12 +90,44 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     protected abstract Map<String, Object> getDataByRealm();
 
+    protected Map<String, Object> getParticipantData(List<String> ddpParticipantIds) {
+        Map<String, Object> allPtpData = getDataByRealm();
+        Map<String, Object> ptpData = new HashMap<>();
+        ddpParticipantIds.forEach(ptpId -> {
+            Object data = allPtpData.get(ptpId);
+            if (data != null) {
+                ptpData.put(ptpId, data);
+            }
+        });
+        return ptpData;
+    }
+
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
         if (dataByRealm.isEmpty()) {
             return;
         }
-        fillBulkRequestWithTransformedMapAndExport(dataByRealm);
+        fillBulkRequestWithTransformedMapAndExport(dataByRealm, new BulkExportFacade(index, null));
+    }
+
+    /**
+     * Export data to ES for a list of participants
+     *
+     * @param exportLogs  list export logs to append to
+     */
+    public void exportParticipants(List<String> ddpParticipantIds, List<ExportLog> exportLogs) {
+        ExportLog exportLog = new ExportLog(entity);
+        exportLogs.add(exportLog);
+        try {
+            Map<String, Object> dataByRealm = getParticipantData(ddpParticipantIds);
+            if (dataByRealm.isEmpty()) {
+                exportLog.setStatus(ExportLog.Status.NO_PARTICIPANTS);
+                return;
+            }
+            fillBulkRequestWithTransformedMapAndExport(dataByRealm, new BulkExportFacade(index, exportLog));
+        } catch (Exception e) {
+            exportLog.setError(e.getMessage());
+        }
     }
 }
