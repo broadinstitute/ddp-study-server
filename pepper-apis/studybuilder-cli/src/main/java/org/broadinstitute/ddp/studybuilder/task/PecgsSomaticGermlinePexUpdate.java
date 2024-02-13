@@ -131,6 +131,15 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
         log.info("Matched LMS {} Somatic question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
         updatePexExpressions(handle, matchedExprIds, NEW_LMS_SOMATIC_PEX);
 
+        //update LMS Somatic nested block content pex
+        List<Long> matchedParentBlockIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getSomaticQuestionParentBlockIdByStudyAnsQuestions(
+                "cmi-lms", "CONSENT_ADDENDUM_PEDIATRIC",
+                Arrays.asList("SOMATIC_ASSENT_ADDENDUM", "ADDENDUM"));
+        log.info("Matched LMS Somatic group question block. IDs: {}", matchedParentBlockIds);
+        matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getBlockPexIdByParentBlock(matchedParentBlockIds);
+        log.info("Matched LMS {} Somatic question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
+        updatePexExpressions(handle, matchedExprIds, "true"); //since parent group block has pex.. not needed for nested Qs
+
     }
 
     private void updatePexExpressions(Handle handle, List<Long> matchedExprIds, String newPexExpr) {
@@ -141,7 +150,7 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
             int udpCount = jdbiExpression.updateById(expressionId, newPexExpr);
             DBUtils.checkUpdate(1, udpCount);
             updatedPexCount++;
-            log.info("Updated expressionId  {} with expr text \n{}. \nOld expr: \n{} ", expressionId, newPexExpr, currentExpr);
+            log.info("Updated expressionId  {} with expr text \n{} \nOld expr: \n{} ", expressionId, newPexExpr, currentExpr);
         }
         log.info("Updated {} pex expressions", updatedPexCount);
     }
@@ -199,6 +208,23 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
         List<Long> getSomaticQuestionPexIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode")
                 String activityCode, @BindList("stableIds") List<String> stableIds);
 
+        @SqlQuery(" select bn.parent_block_id \n"
+                + "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s"
+                + "    , block b, block__question bq, block_nesting bn, block__expression be, expression e\n"
+                + "    where q.question_stable_code_id = qsc.question_stable_code_id\n"
+                + "    and sa.study_activity_id = q.study_activity_id\n"
+                + "    and s.umbrella_study_id = sa.study_id\n"
+                + "    and bq.question_id = q.question_id\n"
+                + "    and b.block_id = bq.block_id\n"
+                + "    and bn.nested_block_id = b.block_id\n"
+                + "    and be.block_id = bn.parent_block_id"
+                + "    and e.expression_id = be.expression_id\n"
+                + "    and s.guid = :studyGuid\n"
+                + "    and sa.study_activity_code = :activityCode "
+                + "    and qsc.stable_id in (<stableIds>) ;\n")
+        List<Long> getSomaticQuestionParentBlockIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode")
+                String activityCode, @BindList("stableIds") List<String> stableIds);
+
         @SqlQuery(" select e.expression_id \n"
                 + "    from question q, question_stable_code qsc, study_activity sa, umbrella_study s"
                 + "    , block b, block__question bq, block__expression be, expression e\n"
@@ -214,6 +240,13 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
                 + "    and qsc.stable_id in (<stableIds>) ;\n")
         List<Long> getQuestionPexIdByStudyAnsQuestions(@Bind("studyGuid") String studyGuid, @Bind("activityCode") String activityCode,
                                                        @BindList("stableIds") List<String> stableIds);
+
+
+        @SqlQuery("select e.expression_id from block b , block_nesting bn , block__expression bee, expression e "
+                + " where b.block_id = bn.nested_block_id and bee.block_id = b.block_id "
+                + " and e.expression_id = bee.expression_id "
+                + " and bn.parent_block_id in (<parentBlockIds>)")
+        List<Long> getBlockPexIdByParentBlock(@BindList("parentBlockIds") List<Long> parentBlockIds);
 
     }
 
