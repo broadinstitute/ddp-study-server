@@ -15,7 +15,7 @@ public abstract class BaseSingleMigrator extends BaseMigrator {
 
     @Override
     public Map<String, Object> generate() {
-        return new HashMap<>(Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(object, transformedObject))));
+        return new HashMap<>(Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(entity, transformedObject))));
     }
 
     @Override

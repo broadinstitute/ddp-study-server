@@ -70,7 +70,7 @@ public class OncHistoryDetailPatch extends BasePatch {
             }
 
             // mr of that type doesn't exist yet, so create an institution and mr
-            MedicalRecordUtil.writeInstitutionIntoDb(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
+            MedicalRecordUtil.writeInstitution(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
                     realm, true);
             patch.setParentId(participantId.toString());
             mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());

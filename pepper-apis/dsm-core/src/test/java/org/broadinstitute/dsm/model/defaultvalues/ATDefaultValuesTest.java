@@ -150,13 +150,9 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
-        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        ParticipantDto participant =
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
         participants.add(participant);
-
-        ElasticTestUtil.createParticipant(esIndex, participant);
-        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
-                ddpParticipantId);
         return participant;
     }
 

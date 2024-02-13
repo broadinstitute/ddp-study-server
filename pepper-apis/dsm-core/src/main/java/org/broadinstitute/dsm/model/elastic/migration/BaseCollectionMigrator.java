@@ -20,7 +20,7 @@ public abstract class BaseCollectionMigrator extends BaseMigrator {
 
     @Override
     public Map<String, Object> generate() {
-        return new HashMap<>(Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(object, transformedList))));
+        return new HashMap<>(Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(entity, transformedList))));
     }
 
     @Override

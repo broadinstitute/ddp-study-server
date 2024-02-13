@@ -566,7 +566,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
                                                   boolean updateElastic) {
         Number mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
         if (mrId == null) {
-            MedicalRecordUtil.writeInstitutionIntoDb(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm,
+            MedicalRecordUtil.writeInstitution(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm,
                     updateElastic);
             Integer id = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
             if (id == null) {
