@@ -31,6 +31,7 @@ import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
+import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.After;
@@ -81,7 +82,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
     @After
     public void deleteParticipants() {
         if (testParticipantData != null) {
-            TestParticipantUtil.deleteParticipantData(testParticipantData.getParticipantDataId());
+            ParticipantDataTestUtil.deleteParticipantData(testParticipantData.getParticipantDataId());
             testParticipantData = null;
         }
     }
@@ -264,7 +265,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         } catch (Exception e) {
             Assert.fail("Exception from updateReferralSource: " + e);
         } finally {
-            TestParticipantUtil.deleteParticipantData(secondRecord.getParticipantDataId());
+            ParticipantDataTestUtil.deleteParticipantData(secondRecord.getParticipantDataId());
         }
     }
 
@@ -314,7 +315,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         Map<String, String> participantDefaults = getParticipantDefaults(instance.getDdpInstanceId());
         participantDefaults.forEach(dataMap::putIfAbsent);
 
-        return TestParticipantUtil.createParticipantData(ddpParticipantId,
+        return ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, ReferralSourceService.RGP_PARTICIPANT_DATA, instance.getDdpInstanceId(), TEST_USER);
     }
 

@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
+import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -82,12 +83,12 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         // create ptp data that is neither genomic id nor exit status
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("REGISTRATION_TYPE", "Self");
-        TestParticipantUtil.createParticipantData(ddpParticipantId,
+        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_MISCELLANEOUS", instanceId, TEST_USER);
 
         dataMap.clear();
         dataMap.put("ELIGIBILITY", "1");
-        TestParticipantUtil.createParticipantData(ddpParticipantId,
+        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_ELIGIBILITY", instanceId, TEST_USER);
 
         List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
@@ -128,13 +129,8 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
 
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
-        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        ParticipantDto participant = TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
         participants.add(participant);
-
-        ElasticTestUtil.createParticipant(esIndex, participant);
-        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
-                ddpParticipantId);
         return participant;
     }
 

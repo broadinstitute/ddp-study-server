@@ -65,6 +65,11 @@ public class ElasticSearchParticipantDto {
 
     protected ElasticSearchParticipantDto() {  }
 
+    public static Optional<ElasticSearchParticipantDto> fromSourceMap(Map<String, Object> sourceMap,
+                                                                      Deserializer deserializer) {
+        return deserializer.deserialize(sourceMap);
+    }
+
     /**
      * Changes the value for the given question's answer.
      * Does not make any modification to underlying elastic data.

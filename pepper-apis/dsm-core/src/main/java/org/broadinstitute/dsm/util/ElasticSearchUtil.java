@@ -125,7 +125,7 @@ public class ElasticSearchUtil {
     public static final byte INNER_FIELD_INDEX = 1;
     public static final int MAX_RESULT_SIZE = 500;
     public static final int DEFAULT_FROM = 0;
-    private static final Logger logger = LoggerFactory.getLogger(DDPRequestUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchUtil.class);
     private static final String ACTIVITIES_QUESTIONS_ANSWER = "activities.questionsAnswers";
     private static final String ACTIVITIES_QUESTIONS_ANSWER_ANSWER = "activities.questionsAnswers.answer";
     private static final String ACTIVITIES_QUESTIONS_ANSWER_GROUPED_OPTIONS = "activities.questionsAnswers.groupedOptions";

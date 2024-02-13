@@ -1239,7 +1239,7 @@ public class RouteTest extends TestHelper {
                 try {
                     inTransaction((conn) -> {
                         try {
-                            ddpMedicalRecordDataRequest.writeParticipantIntoDb(conn, String.valueOf(instanceId), participantInstitution,
+                            ddpMedicalRecordDataRequest.writeInstitutionBundle(conn, String.valueOf(instanceId), participantInstitution,
                                     instanceName);
                         } catch (Exception e) {
                             throw new RuntimeException("medicalRecordLog ", e);
