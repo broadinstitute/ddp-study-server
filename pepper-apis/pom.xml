@@ -854,7 +854,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <release>11</release>
+                    <release>17</release>
                     <compilerArgs>
                         <!-- use this flag to skip a ton of ridiculous boilerplate when binding jdbi params http://jdbi.org/#_compiling_with_parameter_names -->
                         <arg>-parameters</arg>
