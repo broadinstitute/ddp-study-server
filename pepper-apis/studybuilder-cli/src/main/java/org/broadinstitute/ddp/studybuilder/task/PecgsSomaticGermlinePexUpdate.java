@@ -25,14 +25,14 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
             + "questions[\"CHILD_CURRENT_AGE\"].answers.value() >= 7))";
 
     public static String NEW_OSTEO_GERMLINE_PEX = "user.studies[\"CMI-OSTEO\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
-            + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
+            + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue() && \n"
             + " (( user.studies[\"CMI-OSTEO\"].forms[\"CONSENT_ASSENT\"].hasInstance() && user.studies[\"CMI-OSTEO\"]"
             + ".forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))"
             + " || ( user.studies[\"CMI-OSTEO\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"CMI-OSTEO\"]."
             + "forms[\"PARENTAL_CONSENT\"].questions[\"PARENTAL_CONSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS)))";
 
     public static String NEW_LMS_GERMLINE_PEX = "user.studies[\"cmi-lms\"].forms[\"GERMLINE_CONSENT_ADDENDUM_PEDIATRIC\"].questions"
-            + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue()\n"
+            + "[\"ADDENDUM_CONSENT_BOOL_PEDIATRIC\"].answers.hasTrue() && \n"
             + " (( user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance() && user.studies[\"cmi-lms\"]"
             + ".forms[\"CONSENT_ASSENT\"].questions[\"CONSENT_ASSENT_CHILD_DOB\"].answers.ageAtLeast(7, YEARS))"
             + " || ( user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() && user.studies[\"cmi-lms\"]."
