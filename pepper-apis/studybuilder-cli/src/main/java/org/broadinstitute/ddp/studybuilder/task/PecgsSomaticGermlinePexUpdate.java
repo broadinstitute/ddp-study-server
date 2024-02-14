@@ -139,7 +139,7 @@ public class PecgsSomaticGermlinePexUpdate implements CustomTask {
         log.info("Matched LMS Somatic group question block. IDs: {}", matchedParentBlockIds);
         matchedExprIds = handle.attach(PecgsSomaticGermlinePexUpdate.SqlHelper.class).getBlockPexIdByParentBlock(matchedParentBlockIds);
         log.info("Matched LMS {} Somatic question pex expressions.. IDs: {}", matchedExprIds.size(), matchedExprIds);
-        updatePexExpressions(handle, matchedExprIds, "true"); //since parent group block has pex.. not needed for nested Qs
+        updatePexExpressions(handle, matchedExprIds, NEW_LMS_SOMATIC_PEX);
 
     }
 
