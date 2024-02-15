@@ -1,0 +1,30 @@
+[
+  {
+    "activityCode": "GENOME_STUDY",
+    "activityVersion": "v1",
+    "questionsAnswers": [
+      {
+        "stableId": "COLLECTION_KIT",
+        "COLLECTION_KIT": [
+          "AGREE"
+        ],
+        "answer": [
+          "AGREE"
+        ],
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "PARTICIPANT_GENDER",
+        "PARTICIPANT_GENDER": [
+          "M"
+        ],
+        "answer": [
+          "M"
+        ],
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "123456abcd",
+    "status": "COMPLETE"
+  }
+]
