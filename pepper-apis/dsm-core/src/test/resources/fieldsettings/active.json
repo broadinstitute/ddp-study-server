@@ -1,0 +1,15 @@
+[
+  {
+    "value": "ACTIVE",
+    "name": "Active",
+    "default": true
+  },
+  {
+    "value": "HOLD",
+    "name": "HOLD"
+  },
+  {
+    "value": "INACTIVE",
+    "name": "Inactive"
+  }
+]

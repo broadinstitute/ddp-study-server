@@ -20,11 +20,11 @@ import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.service.adminoperation.ReferralSourceServiceTest;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
+import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -119,7 +119,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
             Assert.assertTrue(e instanceof ESMissingParticipantDataException);
         }
 
-        List<Activities> activities = ReferralSourceServiceTest.getActivities();
+        List<Activities> activities = ParticipantDataTestUtil.getRgpActivities();
         ElasticTestUtil.addParticipantActivities(esIndex, activities, ddpParticipantId);
 
         int fieldSettingsId = FieldSettingsTestUtil.createExitStatusFieldSetting(ddpInstanceDto.getDdpInstanceId());
