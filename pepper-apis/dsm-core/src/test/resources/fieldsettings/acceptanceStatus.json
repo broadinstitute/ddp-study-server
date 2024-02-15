@@ -1,0 +1,27 @@
+[
+  {
+    "value": "ACCEPTED",
+    "name": "Accepted"
+  },
+  {
+    "value": "IN_REVIEW",
+    "name": "In Review"
+  },
+  {
+    "value": "MORE_INFO_NEEDED",
+    "name": "More Info Needed"
+  },
+  {
+    "value": "NOT_ACCEPTED",
+    "name": "Not Accepted"
+  },
+  {
+    "value": "NMI_TO_ACCEPTED",
+    "name": "NMI to Accepted"
+  },
+  {
+    "value": "PRE_REVIEW",
+    "name": "Pre-review",
+    "default": true
+  }
+]

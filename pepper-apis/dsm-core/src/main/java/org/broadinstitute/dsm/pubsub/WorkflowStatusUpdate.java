@@ -24,10 +24,10 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.model.defaultvalues.RgpAutomaticProbandDataCreator;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
+import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
@@ -251,11 +251,10 @@ public class WorkflowStatusUpdate {
     }
 
     protected static void updateRGP(String participantId, String studyGuid) {
-        RgpAutomaticProbandDataCreator dataCreator = new RgpAutomaticProbandDataCreator();
         try {
-            dataCreator.generateDefaults(studyGuid, participantId);
+            RgpParticipantDataService.updateWithExtractedData(participantId, studyGuid);
         } catch (Exception e) {
-            throw new DsmInternalError(String.format("Error creating participant data for participant %s in study %s",
+            throw new DsmInternalError(String.format("Error updating participant data for participant %s in study %s",
                     participantId, studyGuid), e);
         }
     }

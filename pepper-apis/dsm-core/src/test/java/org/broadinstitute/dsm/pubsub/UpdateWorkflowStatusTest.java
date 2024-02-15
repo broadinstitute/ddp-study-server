@@ -220,7 +220,7 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
         ElasticTestUtil.createParticipant(esIndex, participant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
                 ddpParticipantId);
-        List<Activities> activities = ReferralSourceServiceTest.getActivities();
+        List<Activities> activities = ParticipantDataTestUtil.getRgpActivities();
         ElasticTestUtil.addParticipantActivities(esIndex, activities, ddpParticipantId);
 
         return participant;

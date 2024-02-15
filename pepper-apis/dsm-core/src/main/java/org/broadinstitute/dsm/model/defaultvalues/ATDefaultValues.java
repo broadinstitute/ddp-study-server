@@ -35,7 +35,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
      * @return true if data was actually inserted
      */
     @Override
-    protected boolean setDefaultData() {
+    protected boolean setDefaultData(String ddpParticipantId) {
         // expecting ptp has a profile and has completed the enrollment activity
         if (elasticSearchParticipantDto.getProfile().isEmpty()
                 || elasticSearchParticipantDto.getActivities().isEmpty()) {
@@ -44,7 +44,6 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }
 
         Profile profile = elasticSearchParticipantDto.getProfile().orElseThrow();
-        String ddpParticipantId = profile.getGuid();
         try {
             List<ParticipantData> participantDataList =
                     participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);

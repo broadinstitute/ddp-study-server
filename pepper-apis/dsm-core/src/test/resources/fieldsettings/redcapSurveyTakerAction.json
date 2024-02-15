@@ -1,0 +1,6 @@
+[
+  {
+    "name": "REDCAP_SURVEY_TAKER",
+    "type": "ELASTIC_EXPORT.workflows"
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "value": "HMB",
+    "name": "HMB"
+  },
+  {
+    "value": "GRU",
+    "name": "GRU"
+  },
+  {
+    "value": "UNKNOWN",
+    "name": "Unknown",
+    "default": true
+  }
+]

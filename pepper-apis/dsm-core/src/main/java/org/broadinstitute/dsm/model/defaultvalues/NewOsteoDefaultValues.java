@@ -33,7 +33,7 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
 
 
     @Override
-    protected boolean setDefaultData() {
+    protected boolean setDefaultData(String ddpParticipantId) {
         if (elasticSearchParticipantDto.getDsm().isEmpty()) {
             // TODO: coding it this way since the existing behavior was to retry elastic until the data shows up
             // but I'm not sure that is applicable here since the code is looking for DSM data - DC
@@ -45,7 +45,7 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
                 ddpInstanceDao.getDDPInstanceByInstanceName(NEW_OSTEO_INSTANCE_NAME).orElseThrow();
         CohortTag newCohortTag = new CohortTag(
                 NEW_OSTEO_COHORT_TAG_NAME,
-                elasticSearchParticipantDto.getParticipantId(),
+                ddpParticipantId,
                 ddpInstanceByInstanceName.getDdpInstanceId());
         int newCohortTagId = cohortTagDao.create(newCohortTag);
         newCohortTag.setCohortTagId(newCohortTagId);
@@ -55,7 +55,7 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
                 ObjectMapperSingleton.readValue(ObjectMapperSingleton.writeValueAsString(dsm),
                         new TypeReference<Map<String, Object>>() {});
         this.elasticDataExportAdapter.setRequestPayload(new RequestPayload(ddpInstanceByInstanceName.getEsParticipantIndex(),
-                elasticSearchParticipantDto.getParticipantId()));
+                ddpParticipantId));
         writeDataToES(Map.of(ESObjectConstants.DSM, dsmAsMap));
         return true;
     }

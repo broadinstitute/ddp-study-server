@@ -31,6 +31,7 @@ import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
+import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -54,7 +55,6 @@ public class ReferralSourceService implements AdminOperation {
     }
 
     private static final String RGP_REALM = "RGP";
-    protected static final String RGP_PARTICIPANT_DATA = "RGP_PARTICIPANTS";
     protected static final String NA_REF_SOURCE = "NA";
     private static final Gson gson = new Gson();
     private String userId;
@@ -182,14 +182,9 @@ public class ReferralSourceService implements AdminOperation {
         }
 
         // only need the RGP_PARTICIPANT_DATA type ParticipantData
-        List<ParticipantData> rgpData = dataList.stream().filter(
-                participantDataDto -> {
-                    if (participantDataDto.getFieldTypeId().isPresent()) {
-                        String ft = participantDataDto.getFieldTypeId().get();
-                        return ft.equals(RGP_PARTICIPANT_DATA);
-                    }
-                    return false;
-                }).collect(Collectors.toList());
+        List<ParticipantData> rgpData = dataList.stream().filter(participantDataDto ->
+                participantDataDto.getRequiredFieldTypeId().equals(RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE)
+        ).collect(Collectors.toList());
 
         if (rgpData.isEmpty()) {
             return UpdateStatus.NO_PARTICIPANT_DATA;
@@ -206,14 +201,15 @@ public class ReferralSourceService implements AdminOperation {
 
         if (updateCount > 1) {
             log.warn(String.format("Multiple records found for field type %s, participant %s in realm %s",
-                    RGP_PARTICIPANT_DATA, ddpParticipantId, RGP_REALM));
+                    RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE, ddpParticipantId, RGP_REALM));
         }
         return updateCount > 0 ? UpdateStatus.UPDATED : UpdateStatus.NOT_UPDATED;
     }
 
     private boolean updateParticipantData(ParticipantData participantData, String ddpParticipantId, String refSourceId) {
         String msg = String.format("for field type %s, participant %s, participantDataId %s in realm %s",
-                RGP_PARTICIPANT_DATA, ddpParticipantId, participantData.getParticipantDataId(), RGP_REALM);
+                RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE, ddpParticipantId,
+                participantData.getParticipantDataId(), RGP_REALM);
 
         try {
             Map<String, String> props = getDataMap(participantData);
@@ -234,7 +230,7 @@ public class ReferralSourceService implements AdminOperation {
                             .withParticipantDataId(participantData.getParticipantDataId())
                             .withDdpParticipantId(ddpParticipantId)
                             .withDdpInstanceId(participantData.getDdpInstanceId())
-                            .withFieldTypeId(RGP_PARTICIPANT_DATA)
+                            .withFieldTypeId(RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE)
                             .withData(gson.toJson(props))
                             .withLastChanged(System.currentTimeMillis())
                             .withChangedBy(userId).build());
