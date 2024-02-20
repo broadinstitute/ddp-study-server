@@ -45,7 +45,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
         Profile profile = elasticSearchParticipantDto.getProfile().orElseThrow();
         try {
-            if (!createGenomicId(ddpParticipantId, profile.getHruid())) {
+            if (!createGenomicId(ddpParticipantId, profile.getHruid(), instanceId)) {
                 return false;
             }
             WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
@@ -55,9 +55,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return true;
     }
 
-    protected synchronized boolean createGenomicId(String ddpParticipantId, String hruid) {
-        log.info("TEMP: Entering createGenomicId for {} and thread {}", ddpParticipantId,
-                Thread.currentThread().getId());
+    protected static synchronized boolean createGenomicId(String ddpParticipantId, String hruid, int instanceId) {
         List<ParticipantData> participantDataList =
                 participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
 
@@ -75,8 +73,6 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
             insertExitStatusForParticipant(ddpParticipantId, instanceId);
         }
 
-        log.info("TEMP: Exiting createGenomicId for {} and thread {}", ddpParticipantId,
-                Thread.currentThread().getId());
         if (hasGenomeId && hasExitStatus) {
             log.info("Participant {} already has AT default data", ddpParticipantId);
             return false;
