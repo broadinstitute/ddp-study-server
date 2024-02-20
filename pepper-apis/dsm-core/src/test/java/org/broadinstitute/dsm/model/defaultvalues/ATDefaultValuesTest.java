@@ -110,7 +110,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
     @Test
     public void testSetDefaultValues() {
         ParticipantDto participant = createParticipant();
-        String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
         ATDefaultValues atDefaultValues = new ATDefaultValues();
         try {
             atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
@@ -146,6 +146,35 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         }
 
         verifyDefaultParticipantData(ddpParticipantId);
+    }
+
+    @Test
+    public void testConcurrentGenerateDefaults() {
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        List<Activities> activities = ParticipantDataTestUtil.getRgpActivities();
+        ElasticTestUtil.addParticipantActivities(esIndex, activities, ddpParticipantId);
+
+        int fieldSettingsId = FieldSettingsTestUtil.createExitStatusFieldSetting(ddpInstanceDto.getDdpInstanceId());
+        fieldSettingsIds.add(fieldSettingsId);
+
+        // call generate defaults on two separate threads
+        Thread t1 = new Thread(new RunGenerateDefaults(ddpParticipantId, instanceName));
+        t1.start();
+        Thread t2 = new Thread(new RunGenerateDefaults(ddpParticipantId, instanceName));
+        t2.start();
+
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Assert.fail("InterruptedException from generateDefaults: " + e.getMessage());
+        }
+
+        verifyDefaultParticipantData(ddpParticipantId);
+        verifyDefaultElasticData(ddpParticipantId);
     }
 
     private ParticipantDto createParticipant() {
@@ -196,5 +225,25 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
                 Assert.fail("Unexpected field type: " + fieldType);
             }
         });
+    }
+
+    private static class RunGenerateDefaults implements Runnable {
+        private final String ddpParticipantId;
+        private final String instanceName;
+
+        public RunGenerateDefaults(String ddpParticipantId, String instanceName) {
+            this.ddpParticipantId = ddpParticipantId;
+            this.instanceName = instanceName;
+        }
+
+        public void run() {
+            try {
+                ATDefaultValues atDefaultValues = new ATDefaultValues();
+                atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("Error calling generateDefaults for {}", ddpParticipantId, e);
+            }
+        }
     }
 }

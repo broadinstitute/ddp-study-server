@@ -37,6 +37,7 @@ public class ParticipantDataFixupService implements AdminOperation {
 
     private static final Gson gson = new Gson();
     protected List<String> validRealms = List.of("atcp");
+    private boolean forceFlag = false;
     private DDPInstance ddpInstance;
     private Map<String, List<ParticipantData>> participantDataByPtpId;
 
@@ -62,6 +63,14 @@ public class ParticipantDataFixupService implements AdminOperation {
         // for now, this is the only fixup available
         if (!fixupType.equalsIgnoreCase("atcpGenomicId")) {
             throw new DSMBadRequestException("Invalid fixupType: " + fixupType);
+        }
+
+        if (attributes.containsKey("force")) {
+            String force = attributes.get("force");
+            if (!StringUtils.isBlank(force)) {
+                throw new DSMBadRequestException("Invalid 'force' attribute: not expecting a value");
+            }
+            forceFlag = true;
         }
 
         ddpInstance = DDPInstance.getDDPInstance(realm);
@@ -131,7 +140,6 @@ public class ParticipantDataFixupService implements AdminOperation {
         if (participantDataList.size() == 1) {
             return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
         }
-        log.info("TEMP: participantDataList size: {}", participantDataList.size());
 
         try {
             Set<Integer> genomeIdToDelete =
@@ -187,12 +195,14 @@ public class ParticipantDataFixupService implements AdminOperation {
         int min = candidateRecords.keySet().stream().min(Comparator.comparing(id -> id)).orElseThrow();
         candidateRecords.remove(min);
 
-        // we are expecting the records to delete to have only one data map entry
-        candidateRecords.values().forEach(pd -> {
-            if (pd.getDataMap().size() > 1) {
-                throw new DsmInternalError("Unexpected data map size: " + pd.getDataMap().size());
-            }
-        });
+        if (!forceFlag) {
+            // we are expecting the records to delete to have only one data map entry
+            candidateRecords.values().forEach(pd -> {
+                if (pd.getDataMap().size() > 1) {
+                    throw new DsmInternalError("Unexpected data map size: " + pd.getDataMap().size());
+                }
+            });
+        }
         return candidateRecords.keySet();
     }
 
