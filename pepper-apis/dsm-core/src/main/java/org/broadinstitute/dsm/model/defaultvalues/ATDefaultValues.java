@@ -45,7 +45,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
         Profile profile = elasticSearchParticipantDto.getProfile().orElseThrow();
         try {
-            if (!createGenomicId(ddpParticipantId, profile.getHruid())) {
+            if (!createGenomicId(ddpParticipantId, profile.getHruid(), instanceId)) {
                 return false;
             }
             WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
@@ -55,7 +55,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return true;
     }
 
-    protected synchronized boolean createGenomicId(String ddpParticipantId, String hruid) {
+    protected static synchronized boolean createGenomicId(String ddpParticipantId, String hruid, int instanceId) {
         List<ParticipantData> participantDataList =
                 participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
 

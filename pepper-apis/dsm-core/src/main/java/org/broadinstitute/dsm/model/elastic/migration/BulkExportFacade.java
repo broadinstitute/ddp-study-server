@@ -52,12 +52,12 @@ public class BulkExportFacade {
         try {
             logger.info("Upserting data for {} participants", bulkRequest.requests().size());
             BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
-            long successfullyExported = Arrays.stream(bulkResponse.getItems())
+            long exportedCount = Arrays.stream(bulkResponse.getItems())
                     .filter(this::isSuccessfullyExported)
                     .count();
-            logger.info("Upserted data for {} participants", successfullyExported);
-            buildFailureMessage(bulkResponse);
-            return successfullyExported;
+            logger.info("Upserted data for {} participants", exportedCount);
+            updateExportLog(bulkResponse, exportedCount);
+            return exportedCount;
         } catch (IOException e) {
             throw new DsmInternalError(e);
         }
@@ -67,8 +67,10 @@ public class BulkExportFacade {
         return !response.isFailed();
     }
 
-    private void buildFailureMessage(BulkResponse bulkResponse) {
+    private void updateExportLog(BulkResponse bulkResponse, long exportedCount) {
         if (exportLog != null) {
+            exportLog.setParticipantCount(bulkRequest.requests().size());
+            exportLog.setExportedCount((int) exportedCount);
             if (bulkResponse.hasFailures()) {
                 exportLog.setMessage(bulkResponse.buildFailureMessage());
                 exportLog.setStatus(ExportLog.Status.FAILURES);
