@@ -17,7 +17,6 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.WorkflowForES;
-import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -34,7 +33,6 @@ import org.broadinstitute.dsm.util.SystemUtil;
 
 @Slf4j
 public class RgpParticipantDataService {
-    public static final String RGP_FAMILY_ID = "rgp_family_id";
     public static final String RGP_PARTICIPANTS_FIELD_TYPE = "RGP_PARTICIPANTS";
     protected static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     private static final Gson gson = new Gson();
@@ -46,7 +44,7 @@ public class RgpParticipantDataService {
      *                                         callers to retry after waiting for the ES profile to be created.
      */
     public static void createDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipantDto,
-                                         long familyId, DDPInstance instance) {
+                                         DDPInstance instance, FamilyIdProvider familyIdProvider) {
         // expecting ptp has a profile
         if (esParticipantDto.getProfile().isEmpty()) {
             throw new ESMissingParticipantDataException("Participant does not yet have profile in ES");
@@ -61,6 +59,10 @@ public class RgpParticipantDataService {
                     RGP_PARTICIPANTS_FIELD_TYPE, ddpParticipantId));
         }
 
+        // ensure we can get a family ID before writing things to the DB (to avoid concurrency issues)
+        // This will increment the family ID value but will leave an unused family ID if we abort later.
+        // As things stand now that is not a concern.
+        long familyId = familyIdProvider.createFamilyId(ddpParticipantId);
         insertEsFamilyId(instance.getParticipantIndexES(), ddpParticipantId, familyId);
         Map<String, String> dataMap = buildParticipantData(esProfile, familyId);
 
@@ -102,16 +104,6 @@ public class RgpParticipantDataService {
                 false));
 
         log.info("Created RGP proband data for participant {}", ddpParticipantId);
-    }
-
-    public static long getNextFamilyId(String participantId, Bookmark bookmark) {
-        try {
-            return bookmark.getThenIncrementBookmarkValue(RGP_FAMILY_ID);
-        } catch (Exception e) {
-            String msg = String.format("Could not set DSM default values for participant %s and DDP instance %s: "
-                    + "RGP family ID not found in Bookmark table", participantId, RGP_FAMILY_ID);
-            throw new DsmInternalError(msg, e);
-        }
     }
 
     public static Map<String, String> buildParticipantData(Profile esProfile, long familyId) {

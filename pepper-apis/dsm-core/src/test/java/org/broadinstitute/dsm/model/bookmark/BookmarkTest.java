@@ -14,17 +14,18 @@ import org.junit.Test;
 public class BookmarkTest {
 
     @Test
-    public void getThenIncrementBookmarkValue() {
+    public void testGetThenIncrementBookmarkValue() {
         BookmarkDao bookmarkDao = mock(BookmarkDao.class);
-        String instanceId = "rgp_family_id";
+        String bookmarkKey = "rgp_family_id";
         long value = 1000;
         int bookmarkId = 1;
-        BookmarkDto bookmarkDto = new BookmarkDto.Builder(value, instanceId).withBookmarkId(bookmarkId).build();
+        BookmarkDto bookmarkDto = new BookmarkDto.Builder(value, bookmarkKey).withBookmarkId(bookmarkId).build();
 
-        when(bookmarkDao.getBookmarkByInstance(instanceId)).thenReturn(Optional.of(bookmarkDto));
+        when(bookmarkDao.getBookmarkByInstance(bookmarkKey)).thenReturn(Optional.of(bookmarkDto));
         when(bookmarkDao.updateBookmarkValueByBookmarkId(bookmarkId, value)).thenReturn(1);
         Bookmark bookmark = new Bookmark(bookmarkDao);
-        Assert.assertEquals(value, bookmark.getThenIncrementBookmarkValue(instanceId));
+        Assert.assertEquals(value, bookmark.getThenIncrementBookmarkValue(bookmarkKey));
         verify(bookmarkDao).updateBookmarkValueByBookmarkId(bookmarkId, value + 1);
     }
 }
+
