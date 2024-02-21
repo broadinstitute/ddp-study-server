@@ -8,16 +8,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
-import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -79,26 +76,16 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void getFamilyId() {
+    public void testCreateFamilyId() {
         String participantId = "PTP123";
-        String instanceId = "rgp_family_id";
+        String bookmarkKey = "rgp_family_id";
         long familyId = 1000;
-        int bookmarkId = 1;
 
-        BookmarkDto bookmarkDto = new BookmarkDto.Builder(familyId, instanceId).withBookmarkId(bookmarkId).build();
-        BookmarkDao bookmarkDao = mock(BookmarkDao.class);
-        when(bookmarkDao.getBookmarkByInstance(instanceId)).thenReturn(Optional.of(bookmarkDto));
-        when(bookmarkDao.updateBookmarkValueByBookmarkId(bookmarkId, familyId)).thenReturn(1);
-        Bookmark bookmark = new Bookmark(bookmarkDao);
+        Bookmark mockBookmark = mock(Bookmark.class);
+        when(mockBookmark.getThenIncrementBookmarkValue(bookmarkKey)).thenReturn(familyId);
 
-        Assert.assertEquals(familyId, RgpParticipantDataService.getNextFamilyId(participantId, bookmark));
-
-        when(bookmarkDao.getBookmarkByInstance(instanceId)).thenThrow(new RuntimeException("Error getting bookmark with instance"));
-        try {
-            RgpParticipantDataService.getNextFamilyId(participantId, bookmark);
-        } catch (RuntimeException e) {
-            Assert.assertTrue(e.getMessage().contains("not found in Bookmark table"));
-        }
+        RgpFamilyIdProvider familyIdProvider = new RgpFamilyIdProvider(mockBookmark);
+        Assert.assertEquals(familyId, familyIdProvider.createFamilyId(participantId));
     }
 
     @Test
@@ -127,7 +114,8 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
 
         int familyId = 1000;
-        RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipantDto, familyId, ddpInstance);
+        RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipantDto, ddpInstance,
+                new TestFamilyIdProvider(familyId));
 
         Map<String, String> expectedDataMap = new HashMap<>();
         expectedDataMap.put("COLLABORATOR_PARTICIPANT_ID",
