@@ -8,7 +8,7 @@ public class RgpFamilyIdProvider implements FamilyIdProvider {
     public final Bookmark bookmark;
 
     public RgpFamilyIdProvider() {
-        this. bookmark = new Bookmark();
+        this.bookmark = new Bookmark();
     }
 
     public RgpFamilyIdProvider(Bookmark bookmark) {
