@@ -35,11 +35,12 @@ public class OncHistoryDto {
     @ColumnName(ONC_HISTORY_CHANGED_BY)
     private String changedBy;
 
-    public OncHistoryDto(int oncHistoryId, int participantId, String created, String reviewed) {
+    public OncHistoryDto(int oncHistoryId, int participantId, String created, String reviewed, long lastChanged) {
         this.oncHistoryId = oncHistoryId;
         this.participantId = participantId;
         this.created = created;
         this.reviewed = reviewed;
+        this.lastChanged = lastChanged;
     }
 
     public OncHistoryDto(Builder builder) {

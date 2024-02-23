@@ -20,7 +20,6 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class OncHistoryDao implements Dao<OncHistoryDto> {
-
     public static final String ONC_HISTORY_ID = "onc_history_id";
     public static final String PARTICIPANT_ID = "participant_id";
     public static final String CREATED = "created";
@@ -28,8 +27,9 @@ public class OncHistoryDao implements Dao<OncHistoryDto> {
     public static final String ONC_HISTORY_LAST_CHANGED = "last_changed";
     public static final String ONC_HISTORY_CHANGED_BY = "changed_by";
 
-    private static final String SQL_SELECT_ONC_HISTORIES_BY_STUDY =
-            "SELECT p.participant_id, p.ddp_participant_id, o.onc_history_id, o.created, o.reviewed FROM ddp_participant p "
+    private static final String SQL_SELECT_ONC_HISTORY_BY_STUDY =
+            "SELECT p.participant_id, p.ddp_participant_id, o.onc_history_id, o.created, o.reviewed, o.last_changed, o.changed_by "
+                    + "FROM ddp_participant p "
                     + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
                     + "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) WHERE realm.instance_name = ? ";
 
@@ -92,14 +92,14 @@ public class OncHistoryDao implements Dao<OncHistoryDto> {
         OncHistoryDao.BuildOncHistoryDto builder = new OncHistoryDao.BuildOncHistoryDto();
         SimpleResult res = DaoUtil.getById(id, SQL_SELECT_BY_PARTICIPANT_ID, builder);
         if (res.resultException != null) {
-            throw new RuntimeException("Error getting onc history with participant id: " + id,
+            throw new DsmInternalError("Error getting onc history with participant id: " + id,
                     res.resultException);
         }
         return (Optional<OncHistoryDto>) res.resultValue;
     }
 
     private static class BuildOncHistoryDto implements ResultsBuilder {
-        public Object build(ResultSet rs) throws SQLException {
+        public OncHistoryDto build(ResultSet rs) throws SQLException {
             return new OncHistoryDto.Builder()
                     .withOncHistoryId(rs.getInt(ONC_HISTORY_ID))
                     .withParticipantId(rs.getInt(PARTICIPANT_ID))
@@ -110,29 +110,22 @@ public class OncHistoryDao implements Dao<OncHistoryDto> {
         }
     }
 
-    public Map<String, OncHistoryDto> getOncHistoriesByStudy(String study) {
-        Map<String, OncHistoryDto> oncHistories = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORIES_BY_STUDY)) {
+    public Map<String, OncHistoryDto> getOncHistoryByParticipant(String study) {
+        return inTransaction(conn -> {
+            Map<String, OncHistoryDto> oncHistories = new HashMap<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_BY_STUDY)) {
                 stmt.setString(1, study);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                        OncHistoryDto oncHistoryDto =
-                                new OncHistoryDto(rs.getInt(ONC_HISTORY_ID), rs.getInt(PARTICIPANT_ID), rs.getString(CREATED),
-                                        rs.getString(REVIEWED));
-                        oncHistories.put(ddpParticipantId, oncHistoryDto);
+                        OncHistoryDao.BuildOncHistoryDto builder = new OncHistoryDao.BuildOncHistoryDto();
+                        oncHistories.put(ddpParticipantId, builder.build(rs));
                     }
                 }
-            } catch (SQLException ex) {
-                execResult.resultException = ex;
+                return oncHistories;
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting oncHistory for " + study, e);
             }
-            return execResult;
         });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting onc histories for " + study, results.resultException);
-        }
-        return oncHistories;
     }
 }
