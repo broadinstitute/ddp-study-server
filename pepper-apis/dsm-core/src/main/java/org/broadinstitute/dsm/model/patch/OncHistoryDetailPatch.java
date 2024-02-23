@@ -7,10 +7,10 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.slf4j.Logger;
@@ -113,8 +113,10 @@ public class OncHistoryDetailPatch extends BasePatch {
             exportToESWithId(oncHistoryDetailId, nameValuesOd);
             //set oncHistoryDetails created if it is a oncHistoryDetails value without a ID, otherwise created should already be set
             if (dbElement.getTableName().equals(DBConstants.DDP_ONC_HISTORY_DETAIL)) {
-                NameValue oncHistoryCreated = OncHistory.setOncHistoryCreated(patch.getParentId(), patch.getUser());
-                if (oncHistoryCreated.getValue() != null) {
+                int participantId = Integer.parseInt(patch.getParentId());
+                String createdDate = OncHistoryService.setCreatedNow(participantId, patch.getUser());
+                if (createdDate != null) {
+                    NameValue oncHistoryCreated = new NameValue("o.created", createdDate);
                     exportToESWithId(patch.getParentId(), oncHistoryCreated);
                     nameValues.add(oncHistoryCreated);
                 }

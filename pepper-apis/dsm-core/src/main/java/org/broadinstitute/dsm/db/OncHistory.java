@@ -7,15 +7,12 @@ import java.sql.SQLException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.NonNull;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.SystemUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,37 +53,35 @@ public class OncHistory {
         this.changedBy = changedBy;
     }
 
-    public static NameValue setOncHistoryCreated(@NonNull String participantId, @NonNull String userId) {
-        String createdDate = SystemUtil.getDateFormatted(System.currentTimeMillis());
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+    /**
+     * Set oncHistory created date for participant iff created date is null
+     *
+     * @return true if the created date was set, false if created date was already set or oncHistory record
+     *              was not found
+     */
+    public static boolean setOncHistoryCreated(int participantId, String createdDate, String userId) {
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_ONC_HISTORY)) {
                 stmt.setString(1, createdDate);
                 stmt.setLong(2, System.currentTimeMillis());
                 stmt.setString(3, userId);
-                stmt.setString(4, participantId);
+                stmt.setInt(4, participantId);
                 int result = stmt.executeUpdate();
-                // 0 is also fine, because then created was already set
                 if (result == 1) {
-                    logger.info("Set oncHistoryDetails created for participant " + participantId);
-                    dbVals.resultValue = createdDate;
+                    logger.info("Set oncHistory createdDate for participant {}", participantId);
+                    return true;
                 } else if (result == 0) {
-                    logger.info("OncHistory was already set");
-                    dbVals.resultValue = null;
+                    logger.info("Did not update oncHistory createdDate for participant {}. "
+                            + "Date was already set or oncHistory now found for participant", participantId);
+                    return false;
                 } else {
-                    throw new RuntimeException(
-                            "Error setting oncHistoryDetails of participant " + participantId + " it was updating " + result + " rows");
+                    throw new DsmInternalError(String.format("Error setting oncHistory createdDate for participant %d."
+                            + " Result row count: %d", participantId, result));
                 }
             } catch (SQLException e) {
-                dbVals.resultException = e;
+                throw new DsmInternalError("Error setting oncHistory createdDate of participant " + participantId, e);
             }
-            return dbVals;
         });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error updating oncHistoryDetails ", results.resultException);
-        }
-        return new NameValue("o.created", results.resultValue);
     }
 
     public long getParticipantId() {

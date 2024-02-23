@@ -9,7 +9,7 @@ public abstract class BaseSingleMigrator extends BaseMigrator {
 
     private Map<String, Object> transformedObject;
 
-    public BaseSingleMigrator(String index, String realm, String object) {
+    protected BaseSingleMigrator(String index, String realm, String object) {
         super(index, realm, object);
     }
 
@@ -20,6 +20,6 @@ public abstract class BaseSingleMigrator extends BaseMigrator {
 
     @Override
     protected void transformObject(Object object) {
-        transformedObject = objectTransformer.transformObjectToMap(object);
+        transformedObject = getObjectTransformer().transformObjectToMap(object);
     }
 }
