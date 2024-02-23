@@ -9,6 +9,17 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class UpdateLog {
+
+    public enum UpdateStatus {
+        UPDATED,
+        NOT_UPDATED,
+        NA_REFERRAL_SOURCE,
+        ERROR,
+        NO_ACTIVITIES,
+        NO_REFERRAL_SOURCE_IN_ACTIVITY,
+        NO_PARTICIPANT_DATA
+    }
+
     private final String ddpParticipantId;
     private final String status;
     private String message;

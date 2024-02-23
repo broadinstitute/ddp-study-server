@@ -106,7 +106,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         fixupService.validRealms = List.of(instanceName);
         fixupService.initialize(TEST_USER, instanceName, attributes, reqJson);
         UpdateLog updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
-        Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
 
         ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_1", instanceId);
         ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
@@ -114,7 +114,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         // now have the correct number of genomic IDs and exit statuses
         updateLog = fixupService.updateParticipant(ddpParticipantId,
                 dataDao.getParticipantDataByParticipantId(ddpParticipantId));
-        Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
         verifyParticipantData(ddpParticipantId);
 
         ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_2", instanceId);
@@ -123,7 +123,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         // now have extra genomic IDs and exit statuses
         updateLog = fixupService.updateParticipant(ddpParticipantId,
                 dataDao.getParticipantDataByParticipantId(ddpParticipantId));
-        Assert.assertEquals(ParticipantDataFixupService.UpdateStatus.UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED.name(), updateLog.getStatus());
         verifyParticipantData(ddpParticipantId);
     }
 
