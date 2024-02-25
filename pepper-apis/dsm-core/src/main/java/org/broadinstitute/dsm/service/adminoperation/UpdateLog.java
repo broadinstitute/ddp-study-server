@@ -17,7 +17,8 @@ public class UpdateLog {
         ERROR,
         NO_ACTIVITIES,
         NO_REFERRAL_SOURCE_IN_ACTIVITY,
-        NO_PARTICIPANT_DATA
+        NO_PARTICIPANT_DATA,
+        ES_UPDATED
     }
 
     private final String ddpParticipantId;

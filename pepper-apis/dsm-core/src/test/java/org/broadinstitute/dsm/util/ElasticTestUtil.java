@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
 
 import java.util.HashMap;
@@ -21,8 +20,6 @@ import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
-import org.broadinstitute.lddp.handlers.util.Institution;
-import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.action.get.GetRequest;
@@ -155,8 +152,8 @@ public class ElasticTestUtil {
     public static void addDsmParticipant(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
         ElasticSearchParticipantExporterFactory.fromPayload(
                 new ParticipantExportPayload(
-                        participantDto.getParticipantIdOrThrow(),
-                        participantDto.getDdpParticipantId().orElseThrow(),
+                        participantDto.getRequiredParticipantId(),
+                        participantDto.getRequiredDdpParticipantId(),
                         ddpInstanceDto.getDdpInstanceId().toString(),
                         ddpInstanceDto.getInstanceName(),
                         ddpInstanceDto
@@ -165,11 +162,11 @@ public class ElasticTestUtil {
     }
 
     public static void createParticipant(String esIndex, ParticipantDto participantDto) {
-        String ddpParticipantId = participantDto.getDdpParticipantIdOrThrow();
+        String ddpParticipantId = participantDto.getRequiredDdpParticipantId();
         try {
             Map<String, Object> props = new HashMap<>();
             props.put("ddpParticipantId", ddpParticipantId);
-            props.put("participantId", participantDto.getParticipantIdOrThrow());
+            props.put("participantId", participantDto.getRequiredParticipantId());
             props.put("created", participantDto.getLastChanged());
             Map<String, Object> parent = new HashMap<>();
             parent.put("participant", props);

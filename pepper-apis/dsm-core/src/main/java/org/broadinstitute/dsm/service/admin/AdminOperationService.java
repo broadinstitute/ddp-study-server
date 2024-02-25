@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.service.adminoperation.ElasticExportService;
 import org.broadinstitute.dsm.service.adminoperation.ParticipantDataFixupService;
+import org.broadinstitute.dsm.service.adminoperation.ParticipantInitService;
 import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
 
 /**
@@ -20,7 +21,8 @@ public class AdminOperationService {
     public enum OperationTypeId {
         SYNC_REFERRAL_SOURCE,
         FIXUP_PARTICIPANT_DATA,
-        ELASTIC_EXPORT
+        ELASTIC_EXPORT,
+        PARTICIPANT_INIT
     }
 
     private final String userId;
@@ -45,6 +47,9 @@ public class AdminOperationService {
                 break;
             case ELASTIC_EXPORT:
                 adminOperation = new ElasticExportService();
+                break;
+            case PARTICIPANT_INIT:
+                adminOperation = new ParticipantInitService();
                 break;
             default:
                 throw new DSMBadRequestException("Invalid operation type ID: " + operationTypeId);

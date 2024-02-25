@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
-import liquibase.pro.packaged.D;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -103,7 +102,7 @@ public class ParticipantData {
             return Collections.emptyList();
         }
         ParticipantDataDao dataAccess = (ParticipantDataDao) setDataAccess(new ParticipantDataDao());
-        return dataAccess.getParticipantDataByParticipantId(ddpParticipantId);
+        return dataAccess.getParticipantData(ddpParticipantId);
     }
 
     private Dao setDataAccess(Dao dao) {
@@ -156,7 +155,7 @@ public class ParticipantData {
 
     public boolean isRelationshipIdExists() {
         List<String> participantRelationshipIds =
-                parseDtoList(((ParticipantDataDao) dataAccess).getParticipantDataByParticipantId(this.ddpParticipantId)).stream()
+                parseDtoList(((ParticipantDataDao) dataAccess).getParticipantData(this.ddpParticipantId)).stream()
                         .map(pData -> {
                             Map<String, String> familyMemberData = pData.getData();
                             boolean hasRelationshipId = familyMemberData.containsKey(FamilyMemberConstants.RELATIONSHIP_ID);
@@ -205,6 +204,4 @@ public class ParticipantData {
         String applicantEmail = StringUtils.defaultIfBlank(applicantProfile.getEmail(), StringUtils.EMPTY);
         return applicantEmail.equalsIgnoreCase(familyMemberEmail);
     }
-
-
 }

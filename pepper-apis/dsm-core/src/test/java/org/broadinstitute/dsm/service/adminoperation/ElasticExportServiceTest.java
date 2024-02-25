@@ -104,7 +104,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
             // TODO: need to wait for the export to complete. Fussing with the refresh policy did not resolve this.
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
-            log.error("Interrupted while waiting for ES refresh", e);
+            Assert.fail("Interrupted while waiting for ES refresh");
         }
 
         // verify the data was exported properly

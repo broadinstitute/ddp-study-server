@@ -33,6 +33,6 @@ public class GetParticipantDataRoute extends RequestHandler {
         String ddpParticipantId = queryParamsMap.get(ParticipantUtil.DDP_PARTICIPANT_ID).value();
         ParticipantDataDao participantDataDao = new ParticipantDataDao();
 
-        return ParticipantData.parseDtoList(participantDataDao.getParticipantDataByParticipantId(ddpParticipantId));
+        return ParticipantData.parseDtoList(participantDataDao.getParticipantData(ddpParticipantId));
     }
 }

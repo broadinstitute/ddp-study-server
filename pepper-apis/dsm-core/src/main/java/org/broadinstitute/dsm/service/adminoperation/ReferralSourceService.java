@@ -81,7 +81,7 @@ public class ReferralSourceService implements AdminOperation {
         if (!StringUtils.isBlank(payload)) {
             List<String> participants = getParticipantList(payload);
             for (String participantId: participants) {
-                List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(participantId);
+                List<ParticipantData> ptpData = dataDao.getParticipantData(participantId);
                 if (ptpData.isEmpty()) {
                     throw new DSMBadRequestException("Invalid participant ID: " + participantId);
                 }

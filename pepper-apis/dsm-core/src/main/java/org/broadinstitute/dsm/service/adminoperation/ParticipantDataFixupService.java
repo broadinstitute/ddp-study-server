@@ -81,7 +81,7 @@ public class ParticipantDataFixupService implements AdminOperation {
             ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
             List<String> participants = req.getParticipants();
             for (String participantId: participants) {
-                List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(participantId);
+                List<ParticipantData> ptpData = dataDao.getParticipantData(participantId);
                 if (ptpData.isEmpty()) {
                     throw new DSMBadRequestException("Invalid participant ID: " + participantId);
                 }
