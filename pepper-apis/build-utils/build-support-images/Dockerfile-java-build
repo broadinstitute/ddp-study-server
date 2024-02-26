@@ -35,7 +35,7 @@ RUN case "${TARGETARCH:-amd64}" in \
     # base alpine image does not have ssh
     openssh-client \
     git \
-    openjdk17 \
+    openjdk11 \
     # to support configure.rb
     ruby \
     ruby-json \
