@@ -10,85 +10,101 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class ReceiveKitRequest {
+    // Due to an unfortunate design choice, these values the ordinals of the possible field settings values,
+    // in this case for field_type AT_GROUP_GENOME_STUDY and column_name GENOME_STUDY_STATUS.
+    // There is a way to get this info from the field_settings table but it is still not conclusive, so this seemed
+    // to be an appropriate improvement. -DC
+    public enum ATKitShipStatus {
+        NOT_SHIIPED(1),
+        SENT(2),
+        RECEIVED(3),
+        SEQUENCED(4),
+        COMPLETED(5),
+        REPEAT(6);
 
-    public static final String SQL_UPDATE_KIT_REQUEST = "UPDATE ddp_participant_data SET data = ? WHERE participant_data_id = ?";
-    private static final Logger logger = LoggerFactory.getLogger(ReceiveKitRequest.class);
-    private static final String RECEIVED_DATE = "GENOME_STUDY_DATE_RECEIVED";
-    private static final String GENOME_STUDY_STATUS = "GENOME_STUDY_STATUS";
+        private final int value;
+
+        ATKitShipStatus(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
+    protected static final String GENOME_STUDY_DATE_RECEIVED = "GENOME_STUDY_DATE_RECEIVED";
+    protected static final String GENOME_STUDY_STATUS = "GENOME_STUDY_STATUS";
+    private static final String SQL_UPDATE_KIT_REQUEST =
+            "UPDATE ddp_participant_data SET data = ? WHERE participant_data_id = ?";
     private static final String NOTIFICATION_SUBJECT = "Sample received by Broad Institute";
     private static final String NOTIFICATION_MESSAGE =
             "Sample GENOME_STUDY_SPIT_KIT_BARCODE has been received at the Broad Institute as of GENOME_STUDY_DATE_RECEIVED.";
 
-    public static boolean receiveATKitRequest(@NonNull NotificationUtil notificationUtil, @NonNull String mfBarcode) {
-        org.broadinstitute.dsm.db.ParticipantData participantData = SearchKitRequest.findATKitRequest(mfBarcode);
-        if (participantData != null && StringUtils.isNotBlank(participantData.getData())) {
-            Map<String, String> data = new Gson().fromJson(participantData.getData(), new TypeToken<Map<String, String>>() {
-            }.getType());
-            long now = Instant.now().toEpochMilli();
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-            String formattedDate = formatter.format(now);
-            data.put(RECEIVED_DATE, formattedDate);
-            data.put(GENOME_STUDY_STATUS, "3");
-            DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName("atcp").orElseThrow();
-            String dataString = new Gson().toJson(data);
-            if (updateData(dataString, participantData.getParticipantDataId(), ddpInstanceDto)) {
-                List<String> recipients = ddpInstanceDto.getNotificationRecipients();
-                if (recipients != null && !recipients.isEmpty()) {
-                    for (String recipient : recipients) {
-                        String message = NOTIFICATION_MESSAGE.replace("GENOME_STUDY_SPIT_KIT_BARCODE", mfBarcode)
-                                .replace("GENOME_STUDY_DATE_RECEIVED", formattedDate);
-                        notificationUtil.sentNotification(recipient, message, NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
-                                NOTIFICATION_SUBJECT);
-                    }
-                    logger.info("Notified study staff of kit received");
-                }
-                return true;
-            }
+
+    public static boolean receiveATKitRequest(String kitBarcode, DDPInstanceDto ddpInstanceDto,
+                                              NotificationUtil notificationUtil) {
+        ParticipantData participantData = SearchKitRequest.findATKitRequest(kitBarcode);
+        if (participantData == null || participantData.getData().isEmpty()) {
+            log.info("Did not find AT kit with kit barcode {}", kitBarcode);
+            return false;
         }
-        //no else because if participantData then study manager wouldn't have been able to find the kit request!
-        return false;
+        Map<String, String> dataMap = participantData.getDataMap();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = formatter.format(Instant.now().toEpochMilli());
+        dataMap.put(GENOME_STUDY_DATE_RECEIVED, formattedDate);
+        dataMap.put(GENOME_STUDY_STATUS, Integer.toString(ATKitShipStatus.RECEIVED.getValue()));
+
+        updateData(dataMap, participantData.getParticipantDataId(), ddpInstanceDto);
+
+        List<String> recipients = ddpInstanceDto.getNotificationRecipients();
+        if (recipients != null && !recipients.isEmpty()) {
+            for (String recipient : recipients) {
+                String message = NOTIFICATION_MESSAGE.replace("GENOME_STUDY_SPIT_KIT_BARCODE", kitBarcode)
+                        .replace("GENOME_STUDY_DATE_RECEIVED", formattedDate);
+                notificationUtil.sentNotification(recipient, message, NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
+                        NOTIFICATION_SUBJECT);
+            }
+            log.info("Notified study staff of kit received");
+        }
+        return true;
     }
 
-    private static boolean updateData(@NonNull String data, @NonNull long participantDataId, DDPInstanceDto ddpInstanceDto) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+    private static void updateData(Map<String, String> dataMap, int participantDataId, DDPInstanceDto ddpInstanceDto) {
+        String dataString = new Gson().toJson(dataMap);
+        inTransaction(conn -> {
+            String errorMsg =
+                    String.format("Error updating ParticipantData (id=%d) for AT kit received", participantDataId);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_KIT_REQUEST)) {
-                stmt.setString(1, data);
-                stmt.setObject(2, participantDataId);
+                stmt.setString(1, dataString);
+                stmt.setInt(2, participantDataId);
                 int result = stmt.executeUpdate();
-                if (result == 1) {
-                    logger.info("Set AT kit to received " + participantDataId);
-                } else {
-                    throw new RuntimeException(
-                            "Error setting AT kit to received with id " + participantDataId + ": it was updating " + result + " rows");
+                if (result != 1) {
+                    throw new DsmInternalError(errorMsg + ". Number of rows updated: " + result);
                 }
+                return result;
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError(errorMsg, ex);
             }
-            return dbVals;
         });
 
-        if (results.resultException != null) {
-            throw new RuntimeException("Error setting AT kit to received with id " + participantDataId, results.resultException);
-        }
+        log.info(String.format("Updated ParticipantData (id=%d) for AT kit received ", participantDataId));
 
-        ParticipantData participantData = new ParticipantData.Builder().withData(data).withParticipantDataId((int) participantDataId)
+        ParticipantData participantData = new ParticipantData.Builder()
+                .withData(dataString)
+                .withParticipantDataId(participantDataId)
                 .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).build();
 
         try {
@@ -96,10 +112,8 @@ public class ReceiveKitRequest {
                     ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId,
                     new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
-            logger.error(String.format("Error updating kit data for AT with participant data id: %s in ElasticSearch", participantDataId));
+            log.error(String.format("Error updating ES ParticipantData (id=%d) for AT kit received", participantDataId));
             e.printStackTrace();
         }
-
-        return true;
     }
 }

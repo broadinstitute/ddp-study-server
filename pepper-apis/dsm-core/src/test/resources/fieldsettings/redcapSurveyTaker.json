@@ -1,0 +1,15 @@
+[
+  {
+    "value": "YES",
+    "name": "Yes"
+  },
+  {
+    "value": "NO",
+    "name": "No"
+  },
+  {
+    "value": "NA",
+    "name": "N/A",
+    "default": true
+  }
+]

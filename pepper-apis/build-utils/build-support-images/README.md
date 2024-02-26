@@ -1,7 +1,8 @@
 # Creating build and deployment-support Docker images
 
 ## Overview
-Our builds and deploys are executed via CircleCi.
+Our builds and deplo
+ys are executed via CircleCi.
 
 We have two images used in our CircleCi configuration.
 

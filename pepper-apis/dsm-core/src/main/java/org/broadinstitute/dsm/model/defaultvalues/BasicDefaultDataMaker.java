@@ -26,7 +26,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
 
 
     @VisibleForTesting
-    protected abstract boolean setDefaultData();
+    protected abstract boolean setDefaultData(String ddpParticipantId);
 
     @Override
     public boolean generateDefaults(String studyGuid, String participantId) {
@@ -42,6 +42,6 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
 
         elasticSearchParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, participantId);
         log.info("Calling setDefaultData for ES index {} and participant ID {}", esIndex, participantId);
-        return setDefaultData();
+        return setDefaultData(participantId);
     }
 }

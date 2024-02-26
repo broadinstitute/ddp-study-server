@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.at.SearchKitRequest;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -43,7 +45,8 @@ public class KitSearchRoute extends RequestHandler {
             }
             List<KitRequestShipping> kitRequestShipping = KitRequestShipping.findKitRequest(field, value, realms);
             if (Arrays.asList(realms).contains("atcp")) { //only if user has right to see atcp
-                kitRequestShipping.addAll(SearchKitRequest.findATKitRequest(field, value));
+                DDPInstance ddpInstance = DDPInstance.getDDPInstance(Study.ATCP.name());
+                kitRequestShipping.addAll(SearchKitRequest.findATKitRequest(field, value, ddpInstance));
             }
             return kitRequestShipping;
         } else {

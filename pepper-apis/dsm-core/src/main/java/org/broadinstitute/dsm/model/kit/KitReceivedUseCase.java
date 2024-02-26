@@ -4,7 +4,10 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
@@ -43,8 +46,10 @@ public class KitReceivedUseCase extends BaseKitUseCase {
         return maybeScanError;
     }
 
-    private boolean isReceiveATKitRequest(String kit) {
-        return ReceiveKitRequest.receiveATKitRequest(notificationUtil, kit);
+    private boolean isReceiveATKitRequest(String kitBarcode) {
+        DDPInstanceDto ddpInstanceDto =
+                new DDPInstanceDao().getDDPInstanceByInstanceName(Study.ATCP.name()).orElseThrow();
+        return ReceiveKitRequest.receiveATKitRequest(kitBarcode, ddpInstanceDto, notificationUtil);
     }
 
     @Override
