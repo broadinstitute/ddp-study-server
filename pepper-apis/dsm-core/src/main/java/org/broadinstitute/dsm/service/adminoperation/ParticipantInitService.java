@@ -28,6 +28,16 @@ import org.broadinstitute.dsm.service.participantdata.RgpFamilyIdProvider;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+/**
+ * Service to initialize RGP participant data for participants that have not yet been initialized.
+ * The service also detects errors in participant data, fixes those that have a direct fix,
+ * and logs errors for those that require investigation. The 'logging' is part of the operation result which is
+ * stored in the DB. See AdminOperationRecord for details.
+ * </p>
+ * This service has a dry-run mode that logs changes that would be made without actually making them,
+ * including logging errors. Dry-run mode should always be run first to ensure the operation will yield the expected
+ * results.
+ */
 @Slf4j
 public class ParticipantInitService implements AdminOperation {
 
