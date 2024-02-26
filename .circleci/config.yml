@@ -49,7 +49,7 @@ workflows:
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
             .circleci/.* dss true
-            .circleci/.* dss true dsm true
+            .circleci/.* dsm true
 
   branch-triggered-workflow:
     description: Will initiate workflows based on updates to branches
@@ -72,7 +72,7 @@ workflows:
             pepper-apis/config/.* dss true
             pepper-apis/dsm-server/appengine/StudyManager.tmpl.yaml dsm true
             .circleci/.* dss true
-            .circleci/.* dss true dsm true
+            .circleci/.* dsm true
           filters:
             branches:
               only:
