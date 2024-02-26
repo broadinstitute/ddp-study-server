@@ -44,10 +44,10 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
             assertTrue(invitation.getCreatedAt().isBefore(Instant.now()));
 
             // set various dates
-            Instant createdAt = invitation.getCreatedAt();
-            Instant acceptedAt = createdAt.plus(2 * 10000, ChronoUnit.MILLIS);
-            Instant verifiedAt = createdAt.plus(4 * 10000, ChronoUnit.MILLIS);
-            Instant voidedAt = createdAt.plus(6 * 10000, ChronoUnit.MILLIS);
+            Instant createdAt = invitation.getCreatedAt().truncatedTo(ChronoUnit.SECONDS);
+            Instant acceptedAt = createdAt.plus(20, ChronoUnit.SECONDS).truncatedTo(ChronoUnit.SECONDS);
+            Instant verifiedAt = createdAt.plus(40, ChronoUnit.SECONDS).truncatedTo(ChronoUnit.SECONDS);
+            Instant voidedAt = createdAt.plus(60, ChronoUnit.SECONDS).truncatedTo(ChronoUnit.SECONDS);
 
             invitationDao.markAccepted(invitation.getInvitationId(), acceptedAt);
             invitationDao.markVerified(invitation.getInvitationId(), verifiedAt);
@@ -78,7 +78,7 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
             assertNull(invitation.getUserId());
             assertEquals("foobar", invitation.getInvitationGuid());
 
-            Instant now = Instant.now();
+            Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);;
             dao.assignAcceptingUser(invitation.getInvitationId(), userId, now);
 
             var updated = dao.findByInvitationGuid(studyId, invitation.getInvitationGuid()).orElse(null);
