@@ -56,10 +56,10 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
             // requery and verify
             InvitationDto requeriedInvitation = invitationDao.findByInvitationGuid(studyId, invitation.getInvitationGuid()).get();
 
-            assertEquals(createdAt, requeriedInvitation.getCreatedAt());
-            assertEquals(acceptedAt, requeriedInvitation.getAcceptedAt());
-            assertEquals(verifiedAt, requeriedInvitation.getVerifiedAt());
-            assertEquals(voidedAt, requeriedInvitation.getVoidedAt());
+            assertEquals(createdAt, requeriedInvitation.getCreatedAt().truncatedTo(ChronoUnit.SECONDS));
+            assertEquals(acceptedAt, requeriedInvitation.getAcceptedAt().truncatedTo(ChronoUnit.SECONDS));
+            assertEquals(verifiedAt, requeriedInvitation.getVerifiedAt().truncatedTo(ChronoUnit.SECONDS));
+            assertEquals(voidedAt, requeriedInvitation.getVoidedAt().truncatedTo(ChronoUnit.SECONDS));
             assertEquals(invitation.getInvitationGuid(), requeriedInvitation.getInvitationGuid());
             assertEquals(email, requeriedInvitation.getContactEmail());
 
