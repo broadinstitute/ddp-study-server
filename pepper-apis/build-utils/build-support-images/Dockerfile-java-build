@@ -1,10 +1,9 @@
 # To make our config generation "compatible" with official dsdetoolbox, extract what is needed from it (this is not the base image)
 FROM broadinstitute/dsde-toolbox:DDO-1934 AS dsdetoolbox
 
-# upgrade https://github.com/netty/netty-tcnative/issues/649
-FROM maven:3-openjdk-17-slim AS maven
+FROM maven:3.6.3-jdk-11 AS maven
 
-FROM alpine:3.15.0
+FROM alpine:3.15
 
 #Essentials for Maven
 COPY --from=maven /usr/share/maven /usr/share/maven
@@ -36,7 +35,7 @@ RUN case "${TARGETARCH:-amd64}" in \
     # base alpine image does not have ssh
     openssh-client \
     git \
-    openjdk17 \
+    openjdk11 \
     # to support configure.rb
     ruby \
     ruby-json \
