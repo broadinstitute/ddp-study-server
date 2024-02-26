@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -82,7 +83,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
             assertNull(upload.getScannedAt());
             assertNull(upload.getScanResult());
 
-            var now = Instant.now();
+            Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
             dao.updateStatus(upload.getId(), now, now, FileScanResult.CLEAN);
             FileUpload actual = dao.findById(upload.getId()).orElse(null);
             assertEquals(now, actual.getUploadedAt());

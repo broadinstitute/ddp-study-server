@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -304,23 +305,23 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
             TestFormActivity act = TestFormActivity.builder()
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            var time = Instant.now();
+            Instant time = Instant.now().truncatedTo(ChronoUnit.SECONDS);
             int count = dao.upsertActivityInstanceCreationMutex(testData.getUserId(), testData.getStudyId(),
                     act.getDef().getActivityCode(), time);
             assertEquals(1, count);
-            time = Instant.now();
+            time = Instant.now().truncatedTo(ChronoUnit.SECONDS);
             dao.upsertActivityInstanceCreationMutex(testData.getUserId(), testData.getStudyId(),
                     act.getDef().getActivityCode(), time);
-            var timeRead = dao.getActivityInstanceCreationMutexLastUpdate(testData.getUserId(), testData.getStudyId(),
+            Instant timeRead = dao.getActivityInstanceCreationMutexLastUpdate(testData.getUserId(), testData.getStudyId(),
                     act.getDef().getActivityCode());
-            assertTrue(time.equals(timeRead));
+            assertEquals(time, timeRead);
             Thread.sleep(10);
-            time = Instant.now();
+            time = Instant.now().truncatedTo(ChronoUnit.SECONDS);
             dao.upsertActivityInstanceCreationMutex(testData.getUserId(), testData.getStudyId(),
                     act.getDef().getActivityCode(), time);
             timeRead = dao.getActivityInstanceCreationMutexLastUpdate(testData.getUserId(), testData.getStudyId(),
                     act.getDef().getActivityCode());
-            assertTrue(time.equals(timeRead));
+            assertEquals(time, timeRead);
 
             handle.rollback();
         });

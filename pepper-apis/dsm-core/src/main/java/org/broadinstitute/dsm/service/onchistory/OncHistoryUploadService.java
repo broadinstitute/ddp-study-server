@@ -4,11 +4,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.statics.DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS;
 import static org.broadinstitute.dsm.statics.DBConstants.FIELD_SETTINGS_ALIAS;
 import static org.broadinstitute.dsm.statics.ESObjectConstants.DYNAMIC_FIELDS;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_CREATED;
 import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_DETAIL;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_ID;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.PARTICIPANT_ID;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,29 +15,23 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
-import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -214,55 +204,12 @@ public class OncHistoryUploadService {
         Set<Integer> participantIds = new HashSet<>();
 
         for (OncHistoryRecord row: rows) {
-            if (!participantIds.contains(row.getParticipantId())) {
-                createOncHistory(row);
-                participantIds.add(row.getParticipantId());
+            int participantId = row.getParticipantId();
+            if (!participantIds.contains(participantId)) {
+                OncHistoryService.createOrUpdateOncHistory(participantId, row.getDdpParticipantId(), userId,
+                        elasticUpdater);
+                participantIds.add(participantId);
             }
-        }
-    }
-
-    /**
-     * Create or update OncHistory record, and update ES if needed
-     */
-    protected void createOncHistory(OncHistoryRecord row) {
-        OncHistoryDto oncHistoryDto;
-        boolean updateEs = true;
-        int participantId = row.getParticipantId();
-        try {
-            Optional<OncHistoryDto> res = OncHistoryDao.getByParticipantId(participantId);
-            if (res.isEmpty()) {
-                oncHistoryDto = new OncHistoryDto.Builder()
-                        .withParticipantId(participantId)
-                        .withChangedBy(userId)
-                        .withLastChangedNow()
-                        .withCreatedNow().build();
-                OncHistoryDao oncHistoryDao = new OncHistoryDao();
-                oncHistoryDto.setOncHistoryId(oncHistoryDao.create(oncHistoryDto));
-            } else {
-                oncHistoryDto = res.get();
-                String createdDate = oncHistoryDto.getCreated();
-                if (createdDate == null || createdDate.isEmpty()) {
-                    NameValue created = OncHistory.setOncHistoryCreated(Integer.toString(participantId), userId);
-                    oncHistoryDto.setCreated(created.getValue().toString());
-                } else {
-                    updateEs = false;
-                }
-            }
-        } catch (Exception e) {
-            throw new DsmInternalError("Error updating onc history record for participant " + participantId, e);
-        }
-
-        if (updateEs) {
-            Map<String, Object> oncHistory = new HashMap<>();
-            oncHistory.put(PARTICIPANT_ID, participantId);
-            oncHistory.put(ONC_HISTORY_ID, oncHistoryDto.getOncHistoryId());
-            oncHistory.put(ONC_HISTORY_CREATED, oncHistoryDto.getCreated());
-
-            Map<String, Object> parent = new HashMap<>();
-            parent.put(ONC_HISTORY, oncHistory);
-            Map<String, Object> update = Map.of(ESObjectConstants.DSM, parent);
-
-            elasticUpdater.update(update, row.getDdpParticipantId());
         }
     }
 

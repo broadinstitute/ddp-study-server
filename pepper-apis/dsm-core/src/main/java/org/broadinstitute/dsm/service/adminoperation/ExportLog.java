@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.service.adminoperation;
 
+import java.util.List;
+
 import lombok.Data;
 
 /**
@@ -15,6 +17,8 @@ public class ExportLog {
     private Status status;
     private int participantCount;
     private int exportedCount;
+    private List<String> successIds;
+    private List<String> failureIds;
     private String message;
 
     public ExportLog(String entity) {

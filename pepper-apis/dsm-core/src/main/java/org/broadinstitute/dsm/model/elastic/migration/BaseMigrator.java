@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import lombok.NonNull;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
@@ -20,10 +19,11 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseMigrator extends BaseExporter implements Generator {
     private static final Logger logger = LoggerFactory.getLogger(BaseMigrator.class);
     private static final int BATCH_LIMIT = 150;
+    private final ObjectTransformer objectTransformer;
+
     protected final String realm;
     protected final String index;
     protected final String entity;
-    protected ObjectTransformer objectTransformer;
     protected ElasticSearch elasticSearch;
 
     protected BaseMigrator(String index, String realm, String entity) {
@@ -34,8 +34,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         objectTransformer = new ObjectTransformer(realm);
     }
 
-    protected void fillBulkRequestWithTransformedMapAndExport(@NonNull Map<String, Object> participantRecords,
-                                                              BulkExportFacade bulkExportFacade) {
+    protected void exportParticipantRecords(Map<String, Object> participantRecords, BulkExportFacade bulkExportFacade) {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
         logger.info("Creating {} bulk upsert with {} participants for study {} with index {}",
                 entity, participantRecords.size(), realm, index);
@@ -88,6 +87,10 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     protected abstract void transformObject(Object object);
 
+    protected ObjectTransformer getObjectTransformer() {
+        return objectTransformer;
+    }
+
     protected abstract Map<String, Object> getDataByRealm();
 
     protected Map<String, Object> getParticipantData(List<String> ddpParticipantIds) {
@@ -108,7 +111,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         if (dataByRealm.isEmpty()) {
             return;
         }
-        fillBulkRequestWithTransformedMapAndExport(dataByRealm, new BulkExportFacade(index, null));
+        exportParticipantRecords(dataByRealm, new BulkExportFacade(index, null));
     }
 
     /**
@@ -125,7 +128,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
                 exportLog.setStatus(ExportLog.Status.NO_PARTICIPANTS);
                 return;
             }
-            fillBulkRequestWithTransformedMapAndExport(dataByRealm, new BulkExportFacade(index, exportLog));
+            exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLog));
         } catch (Exception e) {
             exportLog.setError(e.getMessage());
         }
