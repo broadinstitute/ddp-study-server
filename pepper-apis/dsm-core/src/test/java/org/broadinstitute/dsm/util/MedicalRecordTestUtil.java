@@ -1,10 +1,6 @@
 package org.broadinstitute.dsm.util;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_CREATED;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.ONC_HISTORY_ID;
-import static org.broadinstitute.dsm.statics.ESObjectConstants.PARTICIPANT_ID;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,8 +23,8 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
+import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.handlers.util.Institution;
 import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 import org.junit.Assert;
@@ -144,35 +140,44 @@ public class MedicalRecordTestUtil {
         dao.delete(oncHistoryDetailId);
     }
 
-    public int createOncHistory(ParticipantDto participantDto, String userId, String esIndex) {
+    public int createOrUpdateOncHistory(ParticipantDto participantDto, String userId, String esIndex) {
         try {
-            int participantId = participantDto.getRequiredParticipantId();
-            OncHistoryDto oncHistoryDto = new OncHistoryDto.Builder()
-                    .withParticipantId(participantId)
-                    .withChangedBy(userId)
-                    .withLastChangedNow()
-                    .withCreatedNow().build();
-            OncHistoryDao oncHistoryDao = new OncHistoryDao();
-            int oncHistoryId = oncHistoryDao.create(oncHistoryDto);
-            oncHistoryDto.setOncHistoryId(oncHistoryId);
-
-            Map<String, Object> oncHistory = new HashMap<>();
-            oncHistory.put(PARTICIPANT_ID, participantId);
-            oncHistory.put(ONC_HISTORY_ID, oncHistoryDto.getOncHistoryId());
-            oncHistory.put(ONC_HISTORY_CREATED, oncHistoryDto.getCreated());
-
-            Map<String, Object> parent = new HashMap<>();
-            parent.put(ONC_HISTORY, oncHistory);
-            Map<String, Object> update = Map.of(ESObjectConstants.DSM, parent);
-
-            OncHistoryElasticUpdater elasticUpdater = new OncHistoryElasticUpdater(esIndex);
-            elasticUpdater.update(update, participantDto.getRequiredDdpParticipantId());
-            participantToOncHistoryId.put(participantId, oncHistoryId);
+            int oncHistoryId = OncHistoryService.createOrUpdateOncHistory(participantDto.getRequiredParticipantId(),
+                    participantDto.getRequiredDdpParticipantId(), userId, new OncHistoryElasticUpdater(esIndex));
+            participantToOncHistoryId.put(participantDto.getRequiredParticipantId(), oncHistoryId);
             return oncHistoryId;
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Error creating onHistoryDetail " + e.toString());
+            Assert.fail("Error creating onHistory " + e.toString());
             return -1;
+        }
+    }
+
+    /**
+     * Update oncHistory created date for a participant
+     * Note: this does not update ES
+     */
+    public void updateOncHistory(int participantId, String createdDate, String userId) {
+        try {
+            // due to the idiosyncrasies of how OncHistory is implemented, just create a new record
+            Optional<OncHistoryDto> oh = OncHistoryDao.getByParticipantId(participantId);
+            Assert.assertTrue(oh.isPresent());
+
+            OncHistoryDao oncHistoryDao = new OncHistoryDao();
+            OncHistoryDto oncHistoryDto = oh.get();
+            oncHistoryDao.delete(oncHistoryDto.getOncHistoryId());
+            participantToOncHistoryId.remove(participantId);
+
+            oncHistoryDto = new OncHistoryDto.Builder()
+                    .withParticipantId(participantId)
+                    .withChangedBy(userId)
+                    .withLastChangedNow()
+                    .withCreated(createdDate).build();
+            int oncHistoryId = oncHistoryDao.create(oncHistoryDto);
+            participantToOncHistoryId.put(participantId, oncHistoryId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Error updating onHistory " + e.toString());
         }
     }
 

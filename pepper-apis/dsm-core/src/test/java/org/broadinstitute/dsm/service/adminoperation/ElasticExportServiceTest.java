@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
@@ -11,13 +12,16 @@ import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
@@ -111,6 +115,24 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         verifyParticipant(ddpParticipantId);
         verifyMedicalRecordAndOncHistory(participant);
         verifyKitShipping(ddpParticipantId);
+
+        // special case: oncHistory created date is null
+        medicalRecordTestUtil.updateOncHistory(participant.getRequiredParticipantId(), null, TEST_USER);
+
+        exportLogs.clear();
+        ElasticExportService.exportParticipants(List.of(ddpParticipantId), ddpInstanceDto.getInstanceName(),
+                exportLogs);
+        try {
+            // TODO: need to wait for the export to complete. Fussing with the refresh policy did not resolve this.
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            log.error("Interrupted while waiting for ES refresh", e);
+        }
+
+        // verify the data was exported properly
+        verifyParticipant(ddpParticipantId);
+        verifyMedicalRecordAndOncHistory(participant);
+        verifyKitShipping(ddpParticipantId);
     }
 
     private ParticipantDto createParticipant() {
@@ -156,6 +178,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
                 .withChangedBy(TEST_USER);
 
         medicalRecordTestUtil.createOncHistoryDetail(participantDto, builder.build(), esIndex);
+        medicalRecordTestUtil.createOrUpdateOncHistory(participantDto, TEST_USER, esIndex);
     }
 
     private void updateEsDsm(String ddpParticipantId) {
@@ -180,6 +203,10 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         List<MedicalRecord> esMedicalRecords = dsm.getMedicalRecord();
         Assert.assertEquals(1, esMedicalRecords.size());
 
+        Optional<OncHistory> oh = dsm.getOncHistory();
+        Assert.assertTrue(oh.isPresent());
+        OncHistory esOncHistory = oh.get();
+
         int participantId = participant.getRequiredParticipantId();
         List<MedicalRecord> medicalRecords = MedicalRecord.getMedicalRecordsForParticipant(participantId);
         Assert.assertEquals(1, medicalRecords.size());
@@ -197,6 +224,11 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
                 (Integer) oncHistoryDetailList.get(0).getColumnValues().get(DBConstants.MEDICAL_RECORD_ID);
         Assert.assertEquals(oncHistoryDetailId, esOncHistoryDetailList.get(0).getOncHistoryDetailId());
         Assert.assertEquals(oncHistoryMedicalRecordId, esOncHistoryDetailList.get(0).getMedicalRecordId());
+
+        Optional<OncHistoryDto> oncHistory = OncHistoryDao.getByParticipantId(participantId);
+        Assert.assertTrue(oncHistory.isPresent());
+        Assert.assertEquals(oncHistory.get().getCreated(), esOncHistory.getCreated());
+        Assert.assertEquals(oncHistory.get().getReviewed(), esOncHistory.getReviewed());
     }
 
     private void verifyKitShipping(String ddpParticipantId) {

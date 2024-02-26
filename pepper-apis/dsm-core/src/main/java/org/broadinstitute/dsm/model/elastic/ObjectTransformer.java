@@ -8,22 +8,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import lombok.Setter;
 import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.converters.Converter;
 import org.broadinstitute.dsm.model.elastic.converters.ConverterFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 
 public class ObjectTransformer {
-    private BaseParser parser;
-    private String realm;
-
-    public ObjectTransformer(String realm, BaseParser parser) {
-        this(realm);
-        this.parser = parser;
-    }
+    @Setter
+    private BaseParser parser = null;
+    private final String realm;
+    private final boolean includeNulls;
 
     public ObjectTransformer(String realm) {
+        this(realm, false);
+    }
+
+    public ObjectTransformer(String realm, boolean includeNulls) {
         this.realm = realm;
+        this.includeNulls = includeNulls;
     }
 
     public List<Map<String, Object>> transformObjectCollectionToCollectionMap(List<Object> values) {
@@ -49,12 +53,12 @@ public class ObjectTransformer {
             declaredField.setAccessible(true);
             Object fieldValue = declaredField.get(obj);
             Map<String, Object> result = Map.of();
-            if (Objects.nonNull(fieldValue)) {
+            if (includeNulls || Objects.nonNull(fieldValue)) {
                 result = convertToMap(annotation.value(), fieldValue);
             }
             return result;
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new DsmInternalError(e);
         }
     }
 
@@ -77,5 +81,4 @@ public class ObjectTransformer {
         }
         return converter.convert();
     }
-
 }

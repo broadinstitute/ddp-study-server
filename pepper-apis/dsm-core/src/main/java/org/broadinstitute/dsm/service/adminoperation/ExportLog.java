@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.service.adminoperation;
 
+import java.util.List;
+
 import lombok.Data;
 
 /**
@@ -14,11 +16,15 @@ public class ExportLog {
     private String entity;
     private Status status;
     private int participantCount;
+    private int exportedCount;
+    private List<String> successIds;
+    private List<String> failureIds;
     private String message;
 
     public ExportLog(String entity) {
         this.entity = entity;
         this.participantCount = 0;
+        this.exportedCount = 0;
     }
 
     public void setError(String message) {

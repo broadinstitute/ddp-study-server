@@ -35,7 +35,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
      * @return true if data was actually inserted
      */
     @Override
-    protected boolean setDefaultData() {
+    protected boolean setDefaultData(String ddpParticipantId) {
         // expecting ptp has a profile and has completed the enrollment activity
         if (elasticSearchParticipantDto.getProfile().isEmpty()
                 || elasticSearchParticipantDto.getActivities().isEmpty()) {
@@ -44,33 +44,38 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }
 
         Profile profile = elasticSearchParticipantDto.getProfile().orElseThrow();
-        String ddpParticipantId = profile.getGuid();
         try {
-            List<ParticipantData> participantDataList =
-                    participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
-
-            boolean hasGenomeId = participantDataList.stream().anyMatch(
-                    participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
-                            participantDataDto.getRequiredFieldTypeId()));
-            if (!hasGenomeId) {
-                insertGenomicIdForParticipant(ddpParticipantId, profile.getHruid(), instanceId);
-            }
-
-            boolean hasExitStatus = participantDataList.stream().anyMatch(
-                    participantDataDto -> ATDefaultValues.AT_PARTICIPANT_EXIT.equals(
-                            participantDataDto.getRequiredFieldTypeId()));
-            if (!hasExitStatus) {
-                insertExitStatusForParticipant(ddpParticipantId, instanceId);
-            }
-
-            if (hasGenomeId && hasExitStatus) {
-                log.info("Participant {} already has AT default data", ddpParticipantId);
+            if (!createGenomicId(ddpParticipantId, profile.getHruid(), instanceId)) {
                 return false;
             }
-
             WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
         } catch (Exception e) {
             throw new DsmInternalError("Error setting AT default data for participant " + ddpParticipantId, e);
+        }
+        return true;
+    }
+
+    protected static synchronized boolean createGenomicId(String ddpParticipantId, String hruid, int instanceId) {
+        List<ParticipantData> participantDataList =
+                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+
+        boolean hasGenomeId = participantDataList.stream().anyMatch(
+                participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
+                        participantDataDto.getRequiredFieldTypeId()));
+        if (!hasGenomeId) {
+            insertGenomicIdForParticipant(ddpParticipantId, hruid, instanceId);
+        }
+
+        boolean hasExitStatus = participantDataList.stream().anyMatch(
+                participantDataDto -> ATDefaultValues.AT_PARTICIPANT_EXIT.equals(
+                        participantDataDto.getRequiredFieldTypeId()));
+        if (!hasExitStatus) {
+            insertExitStatusForParticipant(ddpParticipantId, instanceId);
+        }
+
+        if (hasGenomeId && hasExitStatus) {
+            log.info("Participant {} already has AT default data", ddpParticipantId);
+            return false;
         }
         return true;
     }

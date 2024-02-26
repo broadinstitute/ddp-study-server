@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.service.adminoperation;
 
-import static org.broadinstitute.dsm.service.adminoperation.ReferralSourceService.NA_REF_SOURCE;
 import static org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate.isProband;
+import static org.broadinstitute.dsm.service.adminoperation.ReferralSourceService.NA_REF_SOURCE;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -12,8 +12,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -23,12 +21,12 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
-import org.broadinstitute.dsm.model.defaultvalues.RgpAutomaticProbandDataCreator;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.sort.MockFieldSettingsDao;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
+import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
@@ -56,7 +54,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        activities = getActivities();
+        activities = ParticipantDataTestUtil.getRgpActivities();
 
         refSourceValues = TestUtil.readFile("RefSourceFieldSettingsValues.json");
         refSourceDetails = TestUtil.readFile("RefSourceFieldSettingsDetails.json");
@@ -125,7 +123,7 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
 
     @Test
     public void getRefSourceNoFindOut() throws Exception {
-        List<Activities> lessActivities = getActivities();
+        List<Activities> lessActivities = ParticipantDataTestUtil.getRgpActivities();
         Optional<Activities> enrollActivity = lessActivities.stream().filter(activity ->
                 DDPActivityConstants.ACTIVITY_ENROLLMENT.equals(activity.getActivityCode())).findFirst();
         Assert.assertTrue(enrollActivity.isPresent());
@@ -286,37 +284,22 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         refSourceQA.put(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER, answer);
     }
 
-    public static List<Activities> getActivities() {
-        List<Activities> activitiesList = new ArrayList<>();
-        try {
-            String json = TestUtil.readFile("activities.json");
-            JsonArray jsonArray = (JsonArray) JsonParser.parseString(json);
-            Assert.assertNotNull(jsonArray);
-
-            Gson gson = new Gson();
-            jsonArray.forEach(a -> activitiesList.add(gson.fromJson(a.getAsJsonObject(), Activities.class)));
-        } catch (Exception e) {
-            Assert.fail("Error loading activities fixture: " + e);
-        }
-        return activitiesList;
-    }
-
     private ParticipantData createParticipantData(String ddpParticipantId, DDPInstanceDto instance, List<Activities> activities) {
-        String instanceName = instance.getInstanceName();
         Profile esProfile = new Profile();
         esProfile.setGuid(ddpParticipantId);
         esProfile.setEmail("test_ptp@gmail.com");
         esProfile.setLastName("test_ptp_last_name");
 
+        Map<String, String> dataMap =
+                RgpParticipantDataService.buildParticipantData(esProfile, 1234L);
         // this includes referral source from activities
-        Map<String, String> dataMap = RgpAutomaticProbandDataCreator.buildDataMap(ddpParticipantId, 1234L, instanceName,
-                activities, esProfile);
+        RgpParticipantDataService.updateDataMap(ddpParticipantId, dataMap, activities, esProfile);
 
         Map<String, String> participantDefaults = getParticipantDefaults(instance.getDdpInstanceId());
         participantDefaults.forEach(dataMap::putIfAbsent);
 
-        return ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
-                dataMap, ReferralSourceService.RGP_PARTICIPANT_DATA, instance.getDdpInstanceId(), TEST_USER);
+        return ParticipantDataTestUtil.createParticipantData(ddpParticipantId, dataMap,
+                RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE, instance.getDdpInstanceId(), TEST_USER);
     }
 
     private void updateParticipantData(ParticipantData participantData) {

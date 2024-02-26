@@ -25,6 +25,6 @@ public abstract class BaseCollectionMigrator extends BaseMigrator {
 
     @Override
     protected void transformObject(Object object) {
-        transformedList = objectTransformer.transformObjectCollectionToCollectionMap((List) object);
+        transformedList = getObjectTransformer().transformObjectCollectionToCollectionMap((List) object);
     }
 }

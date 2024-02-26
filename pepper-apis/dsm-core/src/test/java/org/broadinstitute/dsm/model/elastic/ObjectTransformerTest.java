@@ -42,8 +42,9 @@ public class ObjectTransformerTest {
                 .build();
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
         dynamicFieldsParser.setHelperParser(new ValueParser());
-        Map<String, Object> result = new ObjectTransformer(StringUtils.EMPTY, dynamicFieldsParser)
-                .transformObjectToMap(participantData);
+        ObjectTransformer transformer = new ObjectTransformer(StringUtils.EMPTY);
+        transformer.setParser(dynamicFieldsParser);
+        Map<String, Object> result = transformer.transformObjectToMap(participantData);
         assertEquals("TEST", ((Map) result.get("dynamicFields")).get("ddpInstance"));
         assertEquals("VALUE", ((Map) result.get("dynamicFields")).get("ddpValue"));
         assertEquals(true, ((Map) result.get("dynamicFields")).get("booleanVal"));

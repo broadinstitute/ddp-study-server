@@ -5,6 +5,7 @@ import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.EXIT_ST
 
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.junit.Assert;
 
 public class FieldSettingsTestUtil {
 
@@ -12,11 +13,18 @@ public class FieldSettingsTestUtil {
      * Creates a radio button field setting
      * @return fieldSettingsId
      */
-
     public static int createRadioFieldSetting(FieldSettingsDto.Builder builder) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         FieldSettingsDto fieldSettings = builder
                 .withDisplayType("RADIO")
+                .build();
+        return fieldSettingsDao.create(fieldSettings);
+    }
+
+    public static int createOptionsFieldSetting(FieldSettingsDto.Builder builder) {
+        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
+        FieldSettingsDto fieldSettings = builder
+                .withDisplayType("OPTIONS")
                 .build();
         return fieldSettingsDao.create(fieldSettings);
     }
@@ -48,5 +56,36 @@ public class FieldSettingsTestUtil {
     public static void deleteFieldSettings(int fieldSettingsId) {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         fieldSettingsDao.delete(fieldSettingsId);
+    }
+
+    public static int loadOptionsFromFile(String fileName, String fieldType, String columnName, int ddpInstanceId) {
+        try {
+            String jsonValues = TestUtil.readFile(fileName);
+            FieldSettingsDto.Builder builder = new FieldSettingsDto.Builder(ddpInstanceId);
+            builder.withFieldType(fieldType)
+                    .withColumnName(columnName)
+                    .withPossibleValues(jsonValues);
+            return FieldSettingsTestUtil.createOptionsFieldSetting(builder);
+        } catch (Exception e) {
+            Assert.fail("Could not read file " + fileName);
+            return -1;
+        }
+    }
+
+    public static int loadOptionsAndActionsFromFile(String fileName, String actionsFileName, String fieldType,
+                                                    String columnName, int ddpInstanceId) {
+        try {
+            String jsonValues = TestUtil.readFile(fileName);
+            String actionValues = TestUtil.readFile(actionsFileName);
+            FieldSettingsDto.Builder builder = new FieldSettingsDto.Builder(ddpInstanceId);
+            builder.withFieldType(fieldType)
+                    .withColumnName(columnName)
+                    .withPossibleValues(jsonValues)
+                    .withActions(actionValues);
+            return FieldSettingsTestUtil.createOptionsFieldSetting(builder);
+        } catch (Exception e) {
+            Assert.fail("Could not read file " + fileName);
+            return -1;
+        }
     }
 }
