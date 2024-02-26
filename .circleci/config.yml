@@ -71,6 +71,7 @@ workflows:
             pepper-apis/docs/.* api-docs true
             pepper-apis/config/.* dss true
             pepper-apis/dsm-server/appengine/StudyManager.tmpl.yaml dsm true
+            .circleci/.* action "build-test-deploy"
             .circleci/.* dss true
             .circleci/.* dsm true
           filters:
