@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -103,11 +104,19 @@ public class ParticipantInitService implements AdminOperation {
     protected static UpdateLog initParticipant(String ddpParticipantId, ElasticSearchParticipantDto esParticipant,
                                                DDPInstance ddpInstance, FamilyIdProvider familyIdProvider,
                                                boolean isDryRun) {
+        ParticipantData probandData = null;
         List<ParticipantData> ptpData = RgpParticipantDataService.getRgpParticipantData(ddpParticipantId);
+        if (!ptpData.isEmpty()) {
+            UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name());
+            probandData = getProbandRgpData(ptpData, updateLog);
+            if (probandData == null) {
+                return updateLog;
+            }
+        }
 
         Optional<Dsm> dsm = esParticipant.getDsm();
         if (dsm.isPresent() && StringUtils.isNotBlank(dsm.get().getFamilyId())) {
-            if (ptpData.isEmpty()) {
+            if (probandData == null) {
                 return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(),
                         "Participant has family ID in ES but no RGP data");
             }
@@ -117,8 +126,8 @@ public class ParticipantInitService implements AdminOperation {
         // participant has no family ID in ES
         try {
             // ptp does not have a family ID in ES, but does have RGP participant data
-            if (!ptpData.isEmpty()) {
-                return updateESFamilyId(ptpData, ddpParticipantId, ddpInstance.getParticipantIndexES(), isDryRun);
+            if (probandData != null) {
+                return updateESFamilyId(probandData, ddpParticipantId, ddpInstance.getParticipantIndexES(), isDryRun);
             }
             return createDefaultData(ddpParticipantId, esParticipant, ddpInstance, familyIdProvider, isDryRun);
         } catch (ESMissingParticipantDataException e) {
@@ -139,6 +148,27 @@ public class ParticipantInitService implements AdminOperation {
         }
     }
 
+    protected static ParticipantData getProbandRgpData(List<ParticipantData> ptpData, UpdateLog updateLog) {
+        List<ParticipantData> probandData = ptpData.stream()
+                .filter(data -> MEMBER_TYPE_SELF.equals(data.getDataMap().get(MEMBER_TYPE)))
+                .collect(Collectors.toList());
+        if (probandData.isEmpty()) {
+            updateLog.setError("Participant has RGP data but no proband record");
+            return null;
+        }
+        if (probandData.size() > 1) {
+            updateLog.setError(String.format("Participant has %d RGP proband records", probandData.size()));
+            return null;
+        }
+
+        ParticipantData participantData = probandData.get(0);
+        String familyId = participantData.getDataMap().get(FAMILY_ID);
+        if (StringUtils.isBlank(familyId)) {
+            updateLog.setError("Participant has proband RGP data that does not contain a family ID");
+        }
+        return participantData;
+    }
+
     protected static UpdateLog createDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant,
                                                  DDPInstance ddpInstance, FamilyIdProvider familyIdProvider,
                                                  boolean isDryRun) {
@@ -153,22 +183,15 @@ public class ParticipantInitService implements AdminOperation {
     }
 
     /**
-     * Handle case where participant has RGP data but no family ID in ES
+     * Handle case where participant has RGP data but no family ID in ES.
+     * @param probandData proband participant RGP data, already checked for errors
      */
-    protected static UpdateLog updateESFamilyId(List<ParticipantData> ptpData, String ddpParticipantId, String esIndex,
+    protected static UpdateLog updateESFamilyId(ParticipantData probandData, String ddpParticipantId, String esIndex,
                                                 boolean isDryRun) {
-        Optional<ParticipantData> probandData = ptpData.stream()
-                .filter(data -> MEMBER_TYPE_SELF.equals(data.getDataMap().get(MEMBER_TYPE)))
-                .findFirst();
-        if (probandData.isEmpty()) {
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(),
-                    "Participant has RGP data but no proband record");
-        }
-
-        String familyId = probandData.get().getDataMap().get(FAMILY_ID);
+        String familyId = probandData.getDataMap().get(FAMILY_ID);
         if (StringUtils.isBlank(familyId)) {
             return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(),
-                    "Participant has proband RGP data but no family ID");
+                    "Participant has proband RGP data that does not contain a family ID");
         }
         if (!isDryRun) {
             RgpParticipantDataService.insertEsFamilyId(esIndex, ddpParticipantId, Long.parseLong(familyId));

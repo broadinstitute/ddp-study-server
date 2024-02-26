@@ -180,6 +180,9 @@ public class RgpParticipantDataService {
         });
     }
 
+    /**
+     * Return RGP participant data (records with field type RGP_PARTICIPANTS), or empty list if none found
+     */
     public static List<ParticipantData> getRgpParticipantData(String ddpParticipantId) {
         List<ParticipantData> participantDataList = participantDataDao.getParticipantData(ddpParticipantId);
 

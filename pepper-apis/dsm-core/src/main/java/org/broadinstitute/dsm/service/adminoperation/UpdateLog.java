@@ -22,11 +22,16 @@ public class UpdateLog {
     }
 
     private final String ddpParticipantId;
-    private final String status;
+    private String status;
     private String message;
 
     public UpdateLog(String ddpParticipantId, String status) {
         this.ddpParticipantId = ddpParticipantId;
         this.status = status;
+    }
+
+    public void setError(String message) {
+        this.message = message;
+        this.status = UpdateStatus.ERROR.name();
     }
 }
