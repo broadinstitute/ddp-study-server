@@ -48,6 +48,7 @@ workflows:
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
+            .circleci/.* action "build-test"
             .circleci/.* dss true
             .circleci/.* dsm true
 
