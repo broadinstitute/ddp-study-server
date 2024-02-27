@@ -6,9 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -21,7 +18,6 @@ import lombok.NonNull;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -62,49 +58,6 @@ public class ParticipantData {
         this.participantDataId = dataId;
         this.fieldTypeId = fieldTypeId;
         this.data = data;
-    }
-
-    public static ParticipantData getParticipantDataObject(@NonNull ResultSet rs) throws SQLException {
-        ParticipantData participantData =
-                new ParticipantData(rs.getLong(DBConstants.PARTICIPANT_DATA_ID), rs.getString(DBConstants.FIELD_TYPE_ID),
-                        rs.getString(DBConstants.DATA));
-        return participantData;
-    }
-
-    public static Map<String, List<ParticipantData>> getParticipantData(@NonNull String realm) {
-        return getParticipantData(realm, null);
-    }
-
-    public static Map<String, List<ParticipantData>> getParticipantData(@NonNull String realm, String queryAddition) {
-        logger.info("Collection participant data information");
-        Map<String, List<ParticipantData>> participantData = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_PARTICIPANT, queryAddition))) {
-                stmt.setString(1, realm);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                        List<ParticipantData> participantDataList = new ArrayList<>();
-                        if (participantData.containsKey(ddpParticipantId)) {
-                            participantDataList = participantData.get(ddpParticipantId);
-                        } else {
-                            participantData.put(ddpParticipantId, participantDataList);
-                        }
-                        participantDataList.add(getParticipantDataObject(rs));
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of participant data ", results.resultException);
-        }
-        logger.info("Got " + participantData.size() + " participants data in DSM DB for " + realm);
-        return participantData;
     }
 
     public static String createNewParticipantData(@NonNull String ddpParticipantId, @NonNull String ddpInstanceId,
