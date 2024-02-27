@@ -1,5 +1,5 @@
 service: study-manager-backend
-runtime: java11
+runtime: java17
 instance_class: B8
 
 manual_scaling:
