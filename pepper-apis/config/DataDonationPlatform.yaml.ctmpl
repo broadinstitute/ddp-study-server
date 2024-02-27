@@ -1,7 +1,7 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $gae := env "GAE"}}
 service: pepper-backend
-runtime: java11
+runtime: java17
 instance_class: B8
 {{if eq $environment "prod"}}
 manual_scaling:
