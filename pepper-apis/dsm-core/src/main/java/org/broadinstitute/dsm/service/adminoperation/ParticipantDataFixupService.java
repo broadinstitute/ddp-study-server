@@ -27,14 +27,6 @@ import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
  */
 @Slf4j
 public class ParticipantDataFixupService implements AdminOperation {
-
-    protected enum UpdateStatus {
-        UPDATED,
-        NOT_UPDATED,
-        ERROR,
-        NO_PARTICIPANT_DATA
-    }
-
     private static final Gson gson = new Gson();
     protected List<String> validRealms = List.of("atcp");
     private boolean forceFlag = false;
@@ -89,7 +81,7 @@ public class ParticipantDataFixupService implements AdminOperation {
             ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
             List<String> participants = req.getParticipants();
             for (String participantId: participants) {
-                List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(participantId);
+                List<ParticipantData> ptpData = dataDao.getParticipantData(participantId);
                 if (ptpData.isEmpty()) {
                     throw new DSMBadRequestException("Invalid participant ID: " + participantId);
                 }
@@ -134,11 +126,11 @@ public class ParticipantDataFixupService implements AdminOperation {
 
     protected UpdateLog updateParticipant(String ddpParticipantId, List<ParticipantData> participantDataList) {
         if (participantDataList.isEmpty()) {
-            return new UpdateLog(ddpParticipantId, UpdateStatus.NO_PARTICIPANT_DATA.name());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA.name());
         }
         // no duplicates
         if (participantDataList.size() == 1) {
-            return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
         }
 
         try {
@@ -150,7 +142,7 @@ public class ParticipantDataFixupService implements AdminOperation {
                     genomeIdToDelete.size(), exitToDelete.size(), ddpParticipantId);
 
             if (genomeIdToDelete.isEmpty() && exitToDelete.isEmpty()) {
-                return new UpdateLog(ddpParticipantId, UpdateStatus.NOT_UPDATED.name());
+                return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
             }
 
             // remove records from DB
@@ -169,15 +161,15 @@ public class ParticipantDataFixupService implements AdminOperation {
                     ddpParticipantId, e);
             // many of these exceptions will require investigation, but conservatively we will just log
             // at error level for those that are definitely concerning
-            if (e instanceof DsmInternalError || e instanceof RuntimeException) {
+            if (e instanceof DsmInternalError) {
                 log.error(msg);
                 e.printStackTrace();
             } else {
                 log.warn(msg);
             }
-            return new UpdateLog(ddpParticipantId, UpdateStatus.ERROR.name(), e.toString());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(), e.toString());
         }
-        return new UpdateLog(ddpParticipantId, UpdateStatus.UPDATED.name());
+        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.UPDATED.name());
     }
 
     private Set<Integer> getRecordsToDelete(List<ParticipantData> participantDataList, String fieldTypeId) {

@@ -89,7 +89,8 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
     public void getRefSourceOneProvided() {
         List<String> answer = List.of("TWITTER");
         applyFoundOutAnswer(activities, answer);
-        String refSourceId = ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
+        String refSourceId =
+                ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
         Assert.assertEquals("TWITTER", refSourceId);
     }
 
@@ -97,7 +98,8 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
     public void getRefSourceMultipleProvided() {
         List<String> answer = Arrays.asList("TWITTER", "FACEBOOK", "FAMILY");
         applyFoundOutAnswer(activities, answer);
-        String refSourceId = ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
+        String refSourceId =
+                ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
         Assert.assertEquals("MORE_THAN_ONE", refSourceId);
     }
 
@@ -105,7 +107,8 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
     public void getRefSourceNoneProvided() {
         List<String> answer = new ArrayList<>();
         applyFoundOutAnswer(activities, answer);
-        String refSourceId = ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
+        String refSourceId =
+                ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
         Assert.assertEquals("NA", refSourceId);
     }
 
@@ -137,7 +140,8 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         enrollment.setQuestionsAnswers(qa);
         log.info("Enrollment: " + enrollment);
 
-        String refSourceId = ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(lessActivities));
+        String refSourceId =
+                ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(lessActivities));
         Assert.assertEquals("NA", refSourceId);
     }
 
@@ -148,7 +152,8 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         // this possible value is still intact
         List<String> answer = List.of("FACEBOOK");
         applyFoundOutAnswer(activities, answer);
-        String refSourceId = ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
+        String refSourceId =
+                ReferralSourceService.convertReferralSources(ReferralSourceService.getReferralSources(activities));
         Assert.assertEquals("FACEBOOK", refSourceId);
 
         // the NA is removed
@@ -201,9 +206,9 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
 
         // already has a REFERRAL_SOURCE
         try {
-            ReferralSourceService.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
+            UpdateLog.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
                     List.of(testParticipantData), activities);
-            Assert.assertEquals(ReferralSourceService.UpdateStatus.NOT_UPDATED, res);
+            Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, res);
         } catch (Exception e) {
             Assert.fail("Exception from updateReferralSource: " + e);
         }
@@ -215,9 +220,9 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         testParticipantData.setData(gson.toJson(dataMap));
         updateParticipantData(testParticipantData);
         try {
-            ReferralSourceService.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
+            UpdateLog.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
                     List.of(testParticipantData), activities);
-            Assert.assertEquals(ReferralSourceService.UpdateStatus.NOT_UPDATED, res);
+            Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, res);
         } catch (Exception e) {
             Assert.fail("Exception from updateReferralSource: " + e);
         }
@@ -228,9 +233,9 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         testParticipantData.setData(gson.toJson(dataMap));
         updateParticipantData(testParticipantData);
         try {
-            ReferralSourceService.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
+            UpdateLog.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
                     List.of(testParticipantData), activities);
-            Assert.assertEquals(ReferralSourceService.UpdateStatus.NOT_UPDATED, res);
+            Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, res);
         } catch (Exception e) {
             Assert.fail("Exception from updateReferralSource: " + e);
         }
@@ -240,9 +245,9 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         testParticipantData.setData(gson.toJson(dataMap));
         updateParticipantData(testParticipantData);
         try {
-            ReferralSourceService.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
+            UpdateLog.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
                     List.of(testParticipantData), activities);
-            Assert.assertEquals(ReferralSourceService.UpdateStatus.UPDATED, res);
+            Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED, res);
             verifyReferralSource(testParticipantData.getParticipantDataId(), "TWITTER");
         } catch (Exception e) {
             Assert.fail("Exception from updateReferralSource: " + e);
@@ -255,9 +260,9 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         secondRecord.setData(gson.toJson(dataMap));
         updateParticipantData(secondRecord);
         try {
-            ReferralSourceService.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
+            UpdateLog.UpdateStatus res = service.updateReferralSource(ddpParticipantId,
                     List.of(testParticipantData, secondRecord), activities);
-            Assert.assertEquals(ReferralSourceService.UpdateStatus.UPDATED, res);
+            Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED, res);
             verifyReferralSource(testParticipantData.getParticipantDataId(), "TWITTER");
             verifyReferralSource(secondRecord.getParticipantDataId(), "TWITTER");
         } catch (Exception e) {
@@ -284,7 +289,8 @@ public class ReferralSourceServiceTest extends DbTxnBaseTest {
         refSourceQA.put(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER, answer);
     }
 
-    private ParticipantData createParticipantData(String ddpParticipantId, DDPInstanceDto instance, List<Activities> activities) {
+    private ParticipantData createParticipantData(String ddpParticipantId, DDPInstanceDto instance,
+                                                  List<Activities> activities) {
         Profile esProfile = new Profile();
         esProfile.setGuid(ddpParticipantId);
         esProfile.setEmail("test_ptp@gmail.com");

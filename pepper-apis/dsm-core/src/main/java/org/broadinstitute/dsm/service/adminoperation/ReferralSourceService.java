@@ -16,8 +16,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -42,17 +40,6 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  */
 @Slf4j
 public class ReferralSourceService implements AdminOperation {
-
-    // the outcome of referral source update for each participant
-    public enum UpdateStatus {
-        UPDATED,
-        NOT_UPDATED,
-        NA_REFERRAL_SOURCE,
-        ERROR,
-        NO_ACTIVITIES,
-        NO_REFERRAL_SOURCE_IN_ACTIVITY,
-        NO_PARTICIPANT_DATA
-    }
 
     private static final String RGP_REALM = "RGP";
     protected static final String NA_REF_SOURCE = "NA";
@@ -94,7 +81,7 @@ public class ReferralSourceService implements AdminOperation {
         if (!StringUtils.isBlank(payload)) {
             List<String> participants = getParticipantList(payload);
             for (String participantId: participants) {
-                List<ParticipantData> ptpData = dataDao.getParticipantDataByParticipantId(participantId);
+                List<ParticipantData> ptpData = dataDao.getParticipantData(participantId);
                 if (ptpData.isEmpty()) {
                     throw new DSMBadRequestException("Invalid participant ID: " + participantId);
                 }
@@ -123,11 +110,11 @@ public class ReferralSourceService implements AdminOperation {
         for (var entry: participantDataByPtpId.entrySet()) {
             String ddpParticipantId = entry.getKey();
             try {
-                UpdateStatus status = updateReferralSource(ddpParticipantId, entry.getValue(),
+                UpdateLog.UpdateStatus status = updateReferralSource(ddpParticipantId, entry.getValue(),
                         getParticipantActivities(ddpParticipantId, esIndex));
                 updateLog.add(new UpdateLog(ddpParticipantId, status.name()));
             } catch (Exception e) {
-                updateLog.add(new UpdateLog(ddpParticipantId, UpdateStatus.ERROR.name(), e.toString()));
+                updateLog.add(new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(), e.toString()));
 
                 String msg = String.format("Exception in ReferralSourceService.run for participant %s: %s", ddpParticipantId, e);
                 // many of these exceptions will require investigation, but conservatively we will just log
@@ -151,12 +138,7 @@ public class ReferralSourceService implements AdminOperation {
     }
 
     private static List<String> getParticipantList(String payload) {
-        ReferralSourceRequest req;
-        try {
-            req = new Gson().fromJson(payload, ReferralSourceRequest.class);
-        } catch (Exception e) {
-            throw new DSMBadRequestException("Invalid request format. Payload: " + payload);
-        }
+        ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
         List<String> participants = req.getParticipants();
         if (participants.isEmpty()) {
             throw new DSMBadRequestException("Invalid request format. Empty participant list");
@@ -164,21 +146,22 @@ public class ReferralSourceService implements AdminOperation {
         return participants;
     }
 
-    protected UpdateStatus updateReferralSource(String ddpParticipantId, List<ParticipantData> dataList, List<Activities> activities) {
+    protected UpdateLog.UpdateStatus updateReferralSource(String ddpParticipantId, List<ParticipantData> dataList,
+                                                          List<Activities> activities) {
         if (dataList.isEmpty()) {
-            return UpdateStatus.NO_PARTICIPANT_DATA;
+            return UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA;
         }
         if (activities.isEmpty()) {
-            return UpdateStatus.NO_ACTIVITIES;
+            return UpdateLog.UpdateStatus.NO_ACTIVITIES;
         }
         List<String> refSources = getReferralSources(activities);
         if (refSources.isEmpty()) {
-            return UpdateStatus.NO_REFERRAL_SOURCE_IN_ACTIVITY;
+            return UpdateLog.UpdateStatus.NO_REFERRAL_SOURCE_IN_ACTIVITY;
         }
 
         String refSourceId = convertReferralSources(refSources);
         if (refSourceId.equals(NA_REF_SOURCE)) {
-            return UpdateStatus.NA_REFERRAL_SOURCE;
+            return UpdateLog.UpdateStatus.NA_REFERRAL_SOURCE;
         }
 
         // only need the RGP_PARTICIPANT_DATA type ParticipantData
@@ -187,7 +170,7 @@ public class ReferralSourceService implements AdminOperation {
         ).collect(Collectors.toList());
 
         if (rgpData.isEmpty()) {
-            return UpdateStatus.NO_PARTICIPANT_DATA;
+            return UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA;
         }
 
         // There may be multiple participant data records due to prior update errors
@@ -203,7 +186,7 @@ public class ReferralSourceService implements AdminOperation {
             log.warn(String.format("Multiple records found for field type %s, participant %s in realm %s",
                     RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE, ddpParticipantId, RGP_REALM));
         }
-        return updateCount > 0 ? UpdateStatus.UPDATED : UpdateStatus.NOT_UPDATED;
+        return updateCount > 0 ? UpdateLog.UpdateStatus.UPDATED : UpdateLog.UpdateStatus.NOT_UPDATED;
     }
 
     private boolean updateParticipantData(ParticipantData participantData, String ddpParticipantId, String refSourceId) {
@@ -380,23 +363,5 @@ public class ReferralSourceService implements AdminOperation {
                     + "source %s: %s", sources.get(0), refSource));
         }
         return refSource;
-    }
-
-    // the format of each participant results
-    @AllArgsConstructor
-    private static class UpdateLog {
-        private final String ddpParticipantId;
-        private final String status;
-        private String message;
-
-        public UpdateLog(String ddpParticipantId, String status) {
-            this.ddpParticipantId = ddpParticipantId;
-            this.status = status;
-        }
-    }
-
-    @Data
-    private static class ReferralSourceRequest {
-        private List<String> participants;
     }
 }

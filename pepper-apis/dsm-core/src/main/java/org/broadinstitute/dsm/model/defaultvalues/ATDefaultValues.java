@@ -57,7 +57,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     protected static synchronized boolean createGenomicId(String ddpParticipantId, String hruid, int instanceId) {
         List<ParticipantData> participantDataList =
-                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+                participantDataDao.getParticipantData(ddpParticipantId);
 
         boolean hasGenomeId = participantDataList.stream().anyMatch(
                 participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(

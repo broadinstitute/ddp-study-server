@@ -104,7 +104,7 @@ public class WorkflowStatusUpdate {
                                              DDPInstance instance) {
         String instanceName = instance.getName();
         List<ParticipantData> participantDataList =
-                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+                participantDataDao.getParticipantData(ddpParticipantId);
         Optional<FieldSettingsDto> fieldSetting =
                 fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(instance.getDdpInstanceIdAsInt(), workflow);
         if (fieldSetting.isEmpty()) {
@@ -265,7 +265,7 @@ public class WorkflowStatusUpdate {
      */
     public static void updateEsParticipantData(String ddpParticipantId, DDPInstance instance) {
         updateEsParticipantData(ddpParticipantId,
-                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId), instance);
+                participantDataDao.getParticipantData(ddpParticipantId), instance);
     }
 
     /**

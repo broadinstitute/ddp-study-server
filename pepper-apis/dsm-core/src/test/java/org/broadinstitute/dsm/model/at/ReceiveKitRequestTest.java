@@ -169,7 +169,7 @@ public class ReceiveKitRequestTest extends DbAndElasticBaseTest {
 
     private void verifyParticipantData(String ddpParticipantId, boolean hasReceiveDate) {
         ParticipantDataDao dataDao = new ParticipantDataDao();
-        List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        List<ParticipantData> ptpDataList = dataDao.getParticipantData(ddpParticipantId);
         Assert.assertEquals(3, ptpDataList.size());
 
         Optional<ParticipantData> participantData = ptpDataList.stream()

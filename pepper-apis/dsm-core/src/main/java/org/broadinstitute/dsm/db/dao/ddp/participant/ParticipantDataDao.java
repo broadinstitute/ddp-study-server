@@ -150,29 +150,34 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
         return (int) result.resultValue;
     }
 
-    public List<ParticipantData> getParticipantDataByParticipantId(String participantId) {
-        List<ParticipantData> participantDataList = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult execResult = new SimpleResult();
+    /**
+     * Get participant data for a participant
+     *
+     * @param ddpParticipantId DDP participant id
+     * @return list of participant data
+     */
+    public List<ParticipantData> getParticipantData(String ddpParticipantId) {
+        return inTransaction(conn -> {
+            List<ParticipantData> participantDataList = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_PARTICIPANT_DATA_BY_PARTICIPANT_ID)) {
-                stmt.setString(1, participantId);
+                stmt.setString(1, ddpParticipantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        participantDataList.add(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID)).withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID)).withData(rs.getString(DATA))
-                                .withLastChanged(rs.getLong(LAST_CHANGED)).withChangedBy(rs.getString(CHANGED_BY)).build());
+                        participantDataList.add(new ParticipantData.Builder()
+                                .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
+                                .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
+                                .withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED))
+                                .withChangedBy(rs.getString(CHANGED_BY)).build());
                     }
                 }
-            } catch (SQLException ex) {
-                execResult.resultException = ex;
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting ParticipantData for " + ddpParticipantId, e);
             }
-            return execResult;
+            return participantDataList;
         });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting participant data with " + participantId, results.resultException);
-        }
-        return participantDataList;
     }
 
     public Map<String, List<ParticipantData>> getParticipantDataByParticipantIds(List<String> participantIds) {

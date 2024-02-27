@@ -24,7 +24,6 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.service.adminoperation.ReferralSourceServiceTest;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -229,7 +228,7 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
     private void verifyWorkflowParticipantData(String ddpParticipantId, String registrationFieldTypeId,
                                                String registrationStatus, List<String> otherFieldTypes) {
         ParticipantDataDao dataDao = new ParticipantDataDao();
-        List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        List<ParticipantData> ptpDataList = dataDao.getParticipantData(ddpParticipantId);
         Assert.assertEquals(otherFieldTypes.size() + 1, ptpDataList.size());
 
         ptpDataList.forEach(ptpData -> {

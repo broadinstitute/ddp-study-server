@@ -92,8 +92,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
             // TODO: ElasticDataExportAdapter should probably force a refresh, but for now...
             Thread.sleep(1000);
-            //!! TEMP: update to debug level
-            log.info("Participant document with oncHistory patch: {}",
+            log.debug("Participant document with oncHistory patch: {}",
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             ElasticSearchParticipantDto esParticipant =
