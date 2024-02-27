@@ -287,50 +287,36 @@ public class ElasticSearchUtil {
         return esData;
     }
 
-
-    //Dashboard used
-    private static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index,
+    private static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceName, @NonNull String index,
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
-        if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data from index " + index);
-            try {
-                int scrollSize = 1000;
-                SearchRequest searchRequest = new SearchRequest(index);
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-                SearchResponse response = null;
-                int i = 0;
-                searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.DESC);
-                while (response == null || response.getHits().getHits().length != 0) {
-                    searchSourceBuilder.size(scrollSize);
-                    searchSourceBuilder.from(i * scrollSize);
-                    searchRequest.source(searchSourceBuilder);
+        try {
+            int scrollSize = 1000;
+            SearchRequest searchRequest = new SearchRequest(index);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            SearchResponse response = null;
+            int i = 0;
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.DESC);
+            while (response == null || response.getHits().getHits().length != 0) {
+                searchSourceBuilder.size(scrollSize);
+                searchSourceBuilder.from(i * scrollSize);
+                searchRequest.source(searchSourceBuilder);
 
-                    response = search(searchRequest);
-                    addingParticipantStructuredHits(response, esData, instanceDisplayName, index);
-                    i++;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Couldn't get participants from ES for instance " + instanceDisplayName, e);
+                response = search(searchRequest);
+                addingParticipantStructuredHits(response, esData, instanceName, index);
+                i++;
             }
-            logger.info("Got " + esData.size() + " participants from ES for instance " + instanceDisplayName);
+        } catch (Exception e) {
+            throw new DsmInternalError("Error getting participants from ES for instance " + instanceName, e);
         }
+        logger.info("Got {} participants from ES for instance {} (getDDPParticipantsFromES)", esData.size(),
+                instanceName);
         return esData;
     }
 
-    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index) {
+    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceName, @NonNull String index) {
         initialize();
-        Map<String, Map<String, Object>> esData = new HashMap<>();
-        if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data from index: " + index);
-            try {
-                esData = getDDPParticipantsFromES(instanceDisplayName, index, client);
-            } catch (Exception e) {
-                logger.error("Couldn't get participants from ES for instance " + instanceDisplayName, e);
-            }
-            logger.info("Finished collecting ES data");
-        }
-        return esData;
+        return getDDPParticipantsFromES(instanceName, index, client);
     }
 
     public static ElasticSearchParticipantDto getParticipantESDataByParticipantId(@NonNull String index, @NonNull String participantId) {
@@ -1395,7 +1381,7 @@ public class ElasticSearchUtil {
                     esData.put(hit.getId(), sourceMap);
                 }
             } else {
-                logger.warn("Participant {} doesn't have profile information", hit.getId());
+                logger.warn("Participant {} does not have an ES profile", hit.getId());
             }
         }
     }

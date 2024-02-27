@@ -1,10 +1,8 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
-import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.service.participantdata.RgpFamilyIdProvider;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
-
 
 public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
 

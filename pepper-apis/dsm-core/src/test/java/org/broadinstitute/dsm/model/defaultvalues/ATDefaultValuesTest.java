@@ -187,7 +187,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
     private void verifyDefaultParticipantData(String ddpParticipantId) {
         ParticipantDataDao dataDao = new ParticipantDataDao();
-        List<ParticipantData> ptpDataList = dataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        List<ParticipantData> ptpDataList = dataDao.getParticipantData(ddpParticipantId);
         Assert.assertEquals(2, ptpDataList.size()); // 1 for exit status, 1 for genomic id
         ptpDataList.forEach(ptpData -> {
             String fieldType = ptpData.getRequiredFieldTypeId();

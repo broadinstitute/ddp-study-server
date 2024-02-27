@@ -187,7 +187,7 @@ public abstract class BasePatch {
                 ElasticSearchUtil.writeWorkflow(
                         WorkflowForES.createInstance(ddpInstance, esParticipantId, action.getName(), action.getValue()), false);
             } else if (ParticipantUtil.matchesApplicantEmail(data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                    participantDataDao.getParticipantDataByParticipantId(patch.getParentId()))) {
+                    participantDataDao.getParticipantData(patch.getParentId()))) {
                 ElasticSearchUtil.writeWorkflow(
                         WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, esParticipantId, action.getName(),
                                 data.get(action.getName()),
@@ -199,7 +199,7 @@ public abstract class BasePatch {
                 ElasticSearchUtil.writeWorkflow(
                         WorkflowForES.createInstance(ddpInstance, esParticipantId, action.getName(), data.get(action.getName())), false);
             } else if (ParticipantUtil.matchesApplicantEmail(data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                    participantDataDao.getParticipantDataByParticipantId(patch.getParentId()))) {
+                    participantDataDao.getParticipantData(patch.getParentId()))) {
                 ElasticSearchUtil.writeWorkflow(
                         WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, esParticipantId, action.getName(),
                                 data.get(action.getName()),

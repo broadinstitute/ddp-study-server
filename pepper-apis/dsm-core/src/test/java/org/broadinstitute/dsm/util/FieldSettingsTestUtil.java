@@ -34,7 +34,7 @@ public class FieldSettingsTestUtil {
         builder.withFieldType(AT_PARTICIPANT_EXIT)
                 .withColumnName(EXIT_STATUS)
                 .withPossibleValues("[{\"value\":\"0\",\"name\":\"Not Exited\",\"default\":true},"
-                + "{\"value\":\"1\",\"name\":\"Exited\"}]");
+                    + "{\"value\":\"1\",\"name\":\"Exited\"}]");
         return FieldSettingsTestUtil.createRadioFieldSetting(builder);
     }
 

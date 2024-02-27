@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -53,8 +54,8 @@ public class RgpParticipantDataService {
         log.info("Got ES profile of participant: {}", esProfile.getGuid());
         int ddpInstanceId = Integer.parseInt(instance.getDdpInstanceId());
 
-        Optional<ParticipantData> ptpData = getRgpParticipantData(ddpParticipantId);
-        if (ptpData.isPresent()) {
+        List<ParticipantData> ptpData = getRgpParticipantData(ddpParticipantId);
+        if (!ptpData.isEmpty()) {
             throw new DsmInternalError(String.format("Existing %s data found for participant %s",
                     RGP_PARTICIPANTS_FIELD_TYPE, ddpParticipantId));
         }
@@ -124,7 +125,7 @@ public class RgpParticipantDataService {
         return String.format("RGP_%d_%d", familyId, FamilyMemberConstants.PROBAND_RELATIONSHIP_ID);
     }
 
-    protected static void insertEsFamilyId(String esIndex, String ddpParticipantId, long familyId) {
+    public static void insertEsFamilyId(String esIndex, String ddpParticipantId, long familyId) {
         try {
             Map<String, Object> esMap =
                     ElasticSearchUtil.getObjectsMap(esIndex, ddpParticipantId, ESObjectConstants.DSM);
@@ -163,26 +164,31 @@ public class RgpParticipantDataService {
         Profile esProfile = esParticipantDto.getProfile().orElseThrow();
 
         // get existing ptp data
-        Optional<ParticipantData> ptpData = getRgpParticipantData(ddpParticipantId);
+        List<ParticipantData> ptpData = getRgpParticipantData(ddpParticipantId);
         if (ptpData.isEmpty()) {
             throw new DsmInternalError(String.format("No %s data found for participant %s", RGP_PARTICIPANTS_FIELD_TYPE,
                     ddpParticipantId));
         }
-        ParticipantData participantData = ptpData.get();
 
-        Map<String, String> dataMap = new HashMap<>(participantData.getDataMap());
+        // TODO should all family members be updated with the same data or just proband? -DC
+        ptpData.forEach(participantData -> {
+            Map<String, String> dataMap = new HashMap<>(participantData.getDataMap());
 
-        // update data with new data from ES profile and activities
-        updateDataMap(ddpParticipantId, dataMap, esParticipantDto.getActivities(), esProfile);
-        updateParticipantData(ddpParticipantId, participantData, dataMap, ddpInstance);
+            // update with new data from ES profile and activities
+            updateDataMap(ddpParticipantId, dataMap, esParticipantDto.getActivities(), esProfile);
+            updateParticipantData(ddpParticipantId, participantData, dataMap, ddpInstance);
+        });
     }
 
-    protected static Optional<ParticipantData> getRgpParticipantData(String ddpParticipantId) {
-        List<ParticipantData> participantDataList =
-                participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+    /**
+     * Return RGP participant data (records with field type RGP_PARTICIPANTS), or empty list if none found
+     */
+    public static List<ParticipantData> getRgpParticipantData(String ddpParticipantId) {
+        List<ParticipantData> participantDataList = participantDataDao.getParticipantData(ddpParticipantId);
 
         return participantDataList.stream().filter(participantDataDto ->
-                RGP_PARTICIPANTS_FIELD_TYPE.equals(participantDataDto.getRequiredFieldTypeId())).findFirst();
+                RGP_PARTICIPANTS_FIELD_TYPE.equals(participantDataDto.getRequiredFieldTypeId()))
+                .collect(Collectors.toList());
     }
 
     protected static void updateParticipantData(String ddpParticipantId, ParticipantData participantData,
