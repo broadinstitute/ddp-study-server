@@ -9,7 +9,7 @@ references:
   tcell_config_file: &tcell_config_file
                        tcell_agent.config
   ci_support_image: &ci_support_image
-                      broadinstitute/study-server-build:2022-06-01A
+                      broadinstitute/study-server-build:2023-03-28C
   root_path: &root_path
                /home/circleci
   repo_path: &repo_path
