@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
@@ -29,9 +30,8 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
         columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Setter
+@Getter
 public class ParticipantData {
-
-    private static final Gson gson = new Gson();
 
     @ColumnName(ParticipantDataDao.PARTICIPANT_DATA_ID)
     private int participantDataId;
@@ -50,13 +50,14 @@ public class ParticipantData {
     @JsonIgnore
     private String changedBy;
     // We cache the json data map to avoid deserializing it multiple times.
+    // TODO: This caching should be done elsewhere since this is a DTO this field is getting serialized.
     @JsonIgnore
     private Map<String, String> cachedDataMap;
 
     public ParticipantData() {
     }
 
-    private ParticipantData(Builder builder) {
+    public ParticipantData(Builder builder) {
         this.participantDataId = builder.participantDataId;
         this.ddpParticipantId = builder.ddpParticipantId;
         this.ddpInstanceId = builder.ddpInstanceId;
@@ -96,10 +97,6 @@ public class ParticipantData {
         }
     }
 
-    public int getParticipantDataId() {
-        return participantDataId;
-    }
-
     public Optional<String> getDdpParticipantId() {
         return Optional.ofNullable(ddpParticipantId);
     }
@@ -109,10 +106,6 @@ public class ParticipantData {
             throw new DsmInternalError("Error, ddpParticipantId should not be blank");
         }
         return ddpParticipantId;
-    }
-
-    public int getDdpInstanceId() {
-        return ddpInstanceId;
     }
 
     public Optional<String> getFieldTypeId() {
@@ -145,12 +138,9 @@ public class ParticipantData {
         }
         Type type = new TypeToken<HashMap<String, String>>() {
         }.getType();
+        Gson gson = new Gson();
         cachedDataMap = gson.fromJson(data, type);
         return cachedDataMap;
-    }
-
-    public long getLastChanged() {
-        return lastChanged;
     }
 
     public Optional<String> getChangedBy() {
@@ -204,8 +194,6 @@ public class ParticipantData {
         public ParticipantData build() {
             return new ParticipantData(this);
         }
-
-
     }
 }
 
