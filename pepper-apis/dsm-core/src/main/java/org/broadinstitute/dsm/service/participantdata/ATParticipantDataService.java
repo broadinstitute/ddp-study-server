@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.defaultvalues;
+package org.broadinstitute.dsm.service.participantdata;
 
 import java.util.List;
 import java.util.Map;
@@ -6,49 +6,68 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Slf4j
-public class ATDefaultValues extends BasicDefaultDataMaker {
+public class ATParticipantDataService {
     protected static final String AT_GENOMIC_ID = "at_genomic_id";
     protected static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
-    protected static final String COMPLETE = "COMPLETE";
+    protected static final String ACTIVITY_COMPLETE = "COMPLETE";
     public static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
     public static final String GENOMIC_ID_PREFIX = "DDP_ATCP_";
     public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
-    public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
+    public static final String AT_GROUP_GENOME_STUDY = "AT_GROUP_GENOME_STUDY";
     public static final String EXIT_STATUS = "EXITSTATUS";
+    protected static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
+
+    public static boolean generateDefaultData(String studyGuid, String ddpParticipantId) {
+        DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
+        if (instance == null) {
+            throw new DSMBadRequestException("Invalid study GUID: " + studyGuid);
+        }
+        String esIndex = instance.getParticipantIndexES();
+        if (StringUtils.isEmpty(esIndex)) {
+            throw new DsmInternalError("No ES participant index for study " + studyGuid);
+        }
+
+        return createDefaultData(ddpParticipantId,
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId), instance);
+    }
 
     /**
      * Inserts default data for a participant in the AT study: a genomic id and an exit status
      *
      * @return true if data was actually inserted
      */
-    @Override
-    protected boolean setDefaultData(String ddpParticipantId) {
+    protected static boolean createDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipantDto,
+                                               DDPInstance ddpInstance) {
         // expecting ptp has a profile and has completed the enrollment activity
-        if (elasticSearchParticipantDto.getProfile().isEmpty()
-                || elasticSearchParticipantDto.getActivities().isEmpty()) {
+        if (esParticipantDto.getProfile().isEmpty() || esParticipantDto.getActivities().isEmpty()) {
             throw new ESMissingParticipantDataException(String.format("Participant %s does not yet have profile and "
-                    + "activities in ES", elasticSearchParticipantDto.getQueriedParticipantId()));
+                    + "activities in ES", ddpParticipantId));
         }
 
-        Profile profile = elasticSearchParticipantDto.getProfile().orElseThrow();
+        log.info("Creating default data for participant {} and instance {}", ddpParticipantId, ddpInstance.getName());
+        Profile profile = esParticipantDto.getProfile().orElseThrow();
         try {
-            if (!createGenomicId(ddpParticipantId, profile.getHruid(), instanceId)) {
+            if (!createGenomicId(ddpParticipantId, profile.getHruid(), ddpInstance.getDdpInstanceIdAsInt())) {
                 return false;
             }
-            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
+            ParticipantDataService.updateEsParticipantData(ddpParticipantId, ddpInstance);
         } catch (Exception e) {
             throw new DsmInternalError("Error setting AT default data for participant " + ddpParticipantId, e);
         }
@@ -56,18 +75,17 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     }
 
     protected static synchronized boolean createGenomicId(String ddpParticipantId, String hruid, int instanceId) {
-        List<ParticipantData> participantDataList =
-                participantDataDao.getParticipantData(ddpParticipantId);
+        List<ParticipantData> participantDataList = participantDataDao.getParticipantData(ddpParticipantId);
 
         boolean hasGenomeId = participantDataList.stream().anyMatch(
-                participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
+                participantDataDto -> ATParticipantDataService.AT_GROUP_GENOME_STUDY.equals(
                         participantDataDto.getRequiredFieldTypeId()));
         if (!hasGenomeId) {
             insertGenomicIdForParticipant(ddpParticipantId, hruid, instanceId);
         }
 
         boolean hasExitStatus = participantDataList.stream().anyMatch(
-                participantDataDto -> ATDefaultValues.AT_PARTICIPANT_EXIT.equals(
+                participantDataDto -> ATParticipantDataService.AT_PARTICIPANT_EXIT.equals(
                         participantDataDto.getRequiredFieldTypeId()));
         if (!hasExitStatus) {
             insertExitStatusForParticipant(ddpParticipantId, instanceId);
@@ -80,12 +98,12 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return true;
     }
 
-    protected boolean isParticipantRegistrationComplete() {
-        return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isRegistrationComplete);
+    protected static boolean isParticipantRegistrationComplete(ElasticSearchParticipantDto esParticipantDto) {
+        return esParticipantDto.getActivities().stream().anyMatch(ATParticipantDataService::isRegistrationComplete);
     }
 
-    private boolean isRegistrationComplete(Activities activity) {
-        return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && COMPLETE.equals(activity.getStatus());
+    private static boolean isRegistrationComplete(Activities activity) {
+        return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && ACTIVITY_COMPLETE.equals(activity.getStatus());
     }
 
     /**
@@ -95,7 +113,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
      * @param hruid hruid of the participant, per the ES profile
      */
     public static void insertGenomicIdForParticipant(String ddpParticipantId, String hruid, int instanceId) {
-        insertParticipantData(GENOME_STUDY_FIELD_TYPE,
+        insertParticipantData(AT_GROUP_GENOME_STUDY,
                 Map.of(GENOME_STUDY_CPT_ID, GENOMIC_ID_PREFIX.concat(getGenomicIdValue(hruid))),
                 ddpParticipantId, instanceId);
     }

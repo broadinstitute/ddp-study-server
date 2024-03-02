@@ -146,6 +146,7 @@ import org.broadinstitute.dsm.route.somaticresults.PostSomaticResultUploadRoute;
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
+import org.broadinstitute.dsm.route.util.JsonResponseTransformer;
 import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.dsm.service.FileDownloadService;
 import org.broadinstitute.dsm.service.SomaticResultUploadService;
@@ -958,8 +959,8 @@ public class DSMServer {
         put(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
 
         AdminOperationRoute adminOperationRoute = new AdminOperationRoute();
-        post(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonResponseTransformer());
+        get(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonResponseTransformer());
     }
 
 

@@ -20,7 +20,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
+import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
@@ -143,7 +143,7 @@ public class ReceiveKitRequestTest extends DbAndElasticBaseTest {
         ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_ELIGIBILITY", instanceId, TEST_USER);
 
-        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,
+        ParticipantDataService.updateEsParticipantData(ddpParticipantId,
                 DDPInstance.getDDPInstance(ddpInstanceDto.getInstanceName()));
     }
 
@@ -163,7 +163,7 @@ public class ReceiveKitRequestTest extends DbAndElasticBaseTest {
         ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
                 dataMap, "AT_GROUP_GENOME_STUDY", instanceId, TEST_USER);
 
-        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,
+        ParticipantDataService.updateEsParticipantData(ddpParticipantId,
                 DDPInstance.getDDPInstance(ddpInstanceDto.getInstanceName()));
     }
 

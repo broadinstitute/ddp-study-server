@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -25,18 +24,17 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
 import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 @Slf4j
 public class RgpParticipantDataService {
     public static final String RGP_PARTICIPANTS_FIELD_TYPE = "RGP_PARTICIPANTS";
     protected static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
-    private static final Gson gson = new Gson();
 
     /**
      * Create default data for an RGP participant. Expects an ES profile to exist for the participant.
@@ -82,12 +80,12 @@ public class RgpParticipantDataService {
                         .withDdpParticipantId(ddpParticipantId)
                         .withDdpInstanceId(ddpInstanceId)
                         .withFieldTypeId(RGP_PARTICIPANTS_FIELD_TYPE)
-                        .withData(gson.toJson(columnsWithDefaultOptions))
+                        .withData(ObjectMapperSingleton.writeValueAsString(columnsWithDefaultOptions))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(SystemUtil.SYSTEM).build();
 
         participantDataDao.create(participantDataDto);
-        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
+        ParticipantDataService.updateEsParticipantData(ddpParticipantId, instance);
 
         // initialize workflows
         Map<String, String> columnsWithWorkflow =
@@ -199,10 +197,10 @@ public class RgpParticipantDataService {
                         .withDdpParticipantId(ddpParticipantId)
                         .withDdpInstanceId(participantData.getDdpInstanceId())
                         .withFieldTypeId(participantData.getRequiredFieldTypeId())
-                        .withData(gson.toJson(dataMap))
+                        .withData(ObjectMapperSingleton.writeValueAsString(dataMap))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(SystemUtil.SYSTEM).build());
-        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, instance);
+        ParticipantDataService.updateEsParticipantData(ddpParticipantId, instance);
     }
 
     public static void updateDataMap(String ddpParticipantId, Map<String, String> dataMap,

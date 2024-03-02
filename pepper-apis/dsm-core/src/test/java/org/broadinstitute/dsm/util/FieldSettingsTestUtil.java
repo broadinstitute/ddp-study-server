@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.util;
 
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.AT_PARTICIPANT_EXIT;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.EXIT_STATUS;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_PARTICIPANT_EXIT;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.EXIT_STATUS;
 
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;

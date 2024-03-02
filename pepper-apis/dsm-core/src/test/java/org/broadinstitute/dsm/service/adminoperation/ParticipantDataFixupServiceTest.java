@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.service.adminoperation;
 
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.AT_PARTICIPANT_EXIT;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_FIELD_TYPE;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_GROUP_GENOME_STUDY;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_PARTICIPANT_EXIT;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,18 +11,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
+import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
+import org.broadinstitute.dsm.service.participantdata.ATParticipantDataTestUtil;
+import org.broadinstitute.dsm.service.participantdata.DuplicateParticipantData;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
-import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -30,6 +35,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
     private static final String TEST_USER = "TEST_USER";
     private static final String instanceName = "atdefault";
@@ -41,6 +47,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
     private static int participantCounter = 0;
     private static final List<Integer> fieldSettingsIds = new ArrayList<>();
     private static final Gson gson = new Gson();
+    private static ATParticipantDataTestUtil atParticipantDataUtil;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -48,6 +55,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
                 "elastic/atcpSettings.json");
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
         ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceDto.getDdpInstanceId());
+        atParticipantDataUtil = new ATParticipantDataTestUtil(ddpInstanceDto.getDdpInstanceId());
     }
 
     @AfterClass
@@ -81,58 +89,157 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         fieldSettingsIds.add(fieldSettingsId);
 
         // create ptp data that is neither genomic id nor exit status
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("REGISTRATION_TYPE", "Self");
-        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
-                dataMap, "AT_GROUP_MISCELLANEOUS", instanceId, TEST_USER);
-
-        dataMap.clear();
-        dataMap.put("ELIGIBILITY", "1");
-        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
-                dataMap, "AT_GROUP_ELIGIBILITY", instanceId, TEST_USER);
+        atParticipantDataUtil.createMiscellaneousParticipantData(ddpParticipantId);
+        atParticipantDataUtil.createEligibilityParticipantData(ddpParticipantId);
 
         List<ParticipantData> ptpData = dataDao.getParticipantData(ddpParticipantId);
         Assert.assertEquals(2, ptpData.size());
-        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId, ptpData, ddpInstance);
+        ElasticSearchService.updateEsParticipantData(ddpParticipantId, ptpData, ddpInstance);
 
         ParticipantListRequest req = new ParticipantListRequest(List.of(ddpParticipantId));
         String reqJson = gson.toJson(req);
 
         Map<String, String> attributes = new HashMap<>();
         attributes.put("fixupType", "atcpGenomicId");
+        attributes.put("dryRun", "false");
 
         ParticipantDataFixupService fixupService = new ParticipantDataFixupService();
         // there is nothing to fixup in this run
         fixupService.validRealms = List.of(instanceName);
         fixupService.initialize(TEST_USER, instanceName, attributes, reqJson);
-        UpdateLog updateLog = fixupService.updateParticipant(ddpParticipantId, ptpData);
+        UpdateLog updateLog = fixupService.updateGenomicId(ddpParticipantId, ptpData);
         Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
 
-        ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_1", instanceId);
-        ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
+        ATParticipantDataService.insertGenomicIdForParticipant(ddpParticipantId, "GUID_1", instanceId);
+        ATParticipantDataService.insertExitStatusForParticipant(ddpParticipantId, instanceId);
 
         // now have the correct number of genomic IDs and exit statuses
-        updateLog = fixupService.updateParticipant(ddpParticipantId,
+        updateLog = fixupService.updateGenomicId(ddpParticipantId,
                 dataDao.getParticipantData(ddpParticipantId));
         Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
         verifyParticipantData(ddpParticipantId);
 
-        ATDefaultValues.insertGenomicIdForParticipant(ddpParticipantId, "GUID_2", instanceId);
-        ATDefaultValues.insertExitStatusForParticipant(ddpParticipantId, instanceId);
+        ATParticipantDataService.insertGenomicIdForParticipant(ddpParticipantId, "GUID_2", instanceId);
+        ATParticipantDataService.insertExitStatusForParticipant(ddpParticipantId, instanceId);
 
         // now have extra genomic IDs and exit statuses
-        updateLog = fixupService.updateParticipant(ddpParticipantId,
+        updateLog = fixupService.updateGenomicId(ddpParticipantId,
                 dataDao.getParticipantData(ddpParticipantId));
         Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED.name(), updateLog.getStatus());
         verifyParticipantData(ddpParticipantId);
     }
 
+    @Test
+    public void testFixupLegacyPidData() {
+        // ptp with no data and no legacy pid (helps test the legacy ID lookup)
+        createParticipant();
+
+        // ptp with ptp data, legacy pid, and legacy ptp data (not overlapping with ptp data)
+        String legacyPidBase = "legacy";
+        Pair<ParticipantDto, String> ptpToLegacyId = createLegacyParticipant(legacyPidBase);
+        String ddpParticipantId = ptpToLegacyId.getLeft().getRequiredDdpParticipantId();
+        String legacyPid1 = ptpToLegacyId.getRight();
+        atParticipantDataUtil.createEligibilityParticipantData(ddpParticipantId);
+        atParticipantDataUtil.createExitStatusParticipantData(ddpParticipantId);
+
+        Map<String, String> legcayGenomeStudyDataMap = new HashMap<>();
+        legcayGenomeStudyDataMap.put("GENOME_STUDY_HAS_SIBLING", "0");
+        legcayGenomeStudyDataMap.put("GENOME_STUDY_CPT_ID", "DDP_ATCP_678");
+        atParticipantDataUtil.createGenomeStudyParticipantData(legacyPid1, legcayGenomeStudyDataMap);
+
+        Map<String, String> legcayMiscStudyDataMap = new HashMap<>();
+        legcayMiscStudyDataMap.put("REGISTRATION_STATUS", "SubmittedEnrollment");
+        atParticipantDataUtil.createMiscellaneousParticipantData(legacyPid1, legcayMiscStudyDataMap);
+
+        Map<String, List<ParticipantData>> ptpDataMap = new HashMap<>();
+        List<ParticipantData> ptpDataList = dataDao.getParticipantData(ddpParticipantId);
+        Assert.assertEquals(2, ptpDataList.size());
+        ptpDataMap.put(ddpParticipantId, ptpDataList);
+
+        List<ParticipantData> legacyPid1Data = dataDao.getParticipantData(legacyPid1);
+        Assert.assertEquals(2, legacyPid1Data.size());
+        ptpDataMap.put(legacyPid1, legacyPid1Data);
+
+        ParticipantDataFixupService fixupService = new ParticipantDataFixupService();
+        List<UpdateLog> updateLog = fixupService.fixupLegacyPidData(ptpDataMap, esIndex);
+
+        Assert.assertEquals(2, updateLog.size());
+        Set<String> ddpParticipantIds = updateLog.stream()
+                .map(UpdateLog::getDdpParticipantId).collect(Collectors.toSet());
+        Assert.assertEquals(Set.of(ddpParticipantId, legacyPid1), ddpParticipantIds);
+        updateLog.stream().map(UpdateLog::getStatus).forEach(status ->
+                Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), status));
+
+        // ptp with ptp data and legacy pid and overlapping legacy ptp data
+        Map<String, String> genomeStudyDataMap = new HashMap<>();
+        genomeStudyDataMap.put("GENOME_STUDY_HAS_SIBLING", "0");
+        genomeStudyDataMap.put("GENOME_STUDY_CPT_ID", "DDP_ATCP_1161");
+        genomeStudyDataMap.put("GENOME_STUDY_STATUS", "2");
+        genomeStudyDataMap.put("GENOME_STUDY_SPIT_KIT_BARCODE", "0");
+        genomeStudyDataMap.put("GENOME_STUDY_DATE_SHIPPED", "2023-01-11");
+        atParticipantDataUtil.createGenomeStudyParticipantData(ddpParticipantId, genomeStudyDataMap);
+
+        Map<String, String> miscStudyDataMap = new HashMap<>();
+        miscStudyDataMap.put("REGISTRATION_TYPE", "Dependent");
+        miscStudyDataMap.put("REGISTRATION_STATUS", "ConsentedNeedsAssent");
+        atParticipantDataUtil.createMiscellaneousParticipantData(ddpParticipantId, miscStudyDataMap);
+
+        ptpDataList = dataDao.getParticipantData(ddpParticipantId);
+        Assert.assertEquals(4, ptpDataList.size());
+        ptpDataMap.put(ddpParticipantId, ptpDataList);
+
+        // add another ptp with a legacy pid to test the legacy ID lookup
+        createLegacyParticipant(legacyPidBase);
+
+        updateLog = fixupService.fixupLegacyPidData(ptpDataMap, esIndex);
+        Assert.assertEquals(2, updateLog.size());
+        updateLog.forEach(log -> {
+            if (log.getDdpParticipantId().equals(ddpParticipantId)) {
+                Assert.assertEquals(UpdateLog.UpdateStatus.DUPLICATE_PARTICIPANT_DATA.name(), log.getStatus());
+                List<DuplicateParticipantData> duplicateData = log.getDuplicateParticipantData();
+                Assert.assertEquals(2, duplicateData.size());
+
+                duplicateData.forEach(data -> {
+                    if (data.getFieldTypeId().equals(ATParticipantDataService.AT_GROUP_GENOME_STUDY)) {
+                        Assert.assertEquals(Set.of("GENOME_STUDY_HAS_SIBLING", "GENOME_STUDY_CPT_ID"),
+                                data.getCommonKeys());
+                        Assert.assertEquals(Set.of("GENOME_STUDY_DATE_SHIPPED", "GENOME_STUDY_SPIT_KIT_BARCODE",
+                                "GENOME_STUDY_STATUS"), data.getDuplicateOnlyKeys());
+                        Assert.assertEquals(Map.of("GENOME_STUDY_CPT_ID", Pair.of("DDP_ATCP_678", "DDP_ATCP_1161")),
+                                data.getDifferentValues());
+                    } else {
+                        Assert.assertEquals(Set.of("REGISTRATION_STATUS"), data.getCommonKeys());
+                        Assert.assertEquals(Set.of("REGISTRATION_TYPE"), data.getDuplicateOnlyKeys());
+                        Assert.assertEquals(Map.of("REGISTRATION_STATUS", Pair.of("SubmittedEnrollment",
+                                "ConsentedNeedsAssent")), data.getDifferentValues());
+                    }
+                });
+            } else {
+                Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), log.getStatus());
+            }
+        });
+    }
+
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
-        ParticipantDto participant = TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
+        ParticipantDto participant =
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
         participants.add(participant);
         return participant;
     }
+
+    private Pair<ParticipantDto, String> createLegacyParticipant(String legacyPidBase) {
+        String baseName = String.format("%s_%d", instanceName, participantCounter++);
+        Profile profile = TestParticipantUtil.createProfile("Joe", "Participant%d".formatted(participantCounter),
+                participantCounter);
+        String legacyPid = "%s_%d".formatted(legacyPidBase, participantCounter);
+        profile.setLegacyAltPid(legacyPid);
+        ParticipantDto participant =
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, profile, ddpInstanceDto, esIndex);
+        participants.add(participant);
+        return new ImmutablePair<>(participant, legacyPid);
+    }
+
 
     private void verifyParticipantData(String ddpParticipantId) {
         ParticipantDataDao dataDao = new ParticipantDataDao();
@@ -141,7 +248,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         Assert.assertEquals(4, ptpDataList.size());
 
         Set<String> expectedFieldTypes =
-                Set.of(AT_PARTICIPANT_EXIT, GENOME_STUDY_FIELD_TYPE, "AT_GROUP_MISCELLANEOUS", "AT_GROUP_ELIGIBILITY");
+                Set.of(AT_PARTICIPANT_EXIT, AT_GROUP_GENOME_STUDY, "AT_GROUP_MISCELLANEOUS", "AT_GROUP_ELIGIBILITY");
         Set<String> foundFieldTypes = ptpDataList.stream()
                 .map(ParticipantData::getRequiredFieldTypeId).collect(Collectors.toSet());
         Assert.assertEquals(expectedFieldTypes, foundFieldTypes);

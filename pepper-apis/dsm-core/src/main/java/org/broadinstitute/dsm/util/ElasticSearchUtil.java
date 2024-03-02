@@ -94,18 +94,11 @@ public class ElasticSearchUtil {
     public static final String GUID = "guid";
     public static final String LEGACY_ALT_PID = "legacyAltPid";
     public static final String BY_GUID = " AND profile.guid = ";
-    public static final String BY_PROFILE_GUID = "profile.guid = ";
     public static final String EMPTY = "empty";
-    public static final String BY_HRUID = " AND profile.hruid = ";
-    public static final String BY_GUIDS = " OR profile.guid = ";
     public static final String BY_LEGACY_ALTPID = " AND profile.legacyAltPid = ";
-    public static final String BY_PROFILE_LEGACY_ALTPID = "profile.legacyAltPid = ";
     public static final String AND = " AND (";
     public static final String ES = "ES";
-    public static final String CLOSING_PARENTHESIS = ")";
     public static final String ESCAPE_CHARACTER_DOT_SEPARATOR = "\\.";
-    public static final String BY_LEGACY_ALTPIDS = " OR profile.legacyAltPid = ";
-    public static final String BY_LEGACY_SHORTID = " AND profile.legacyShortId = ";
     public static final String END_OF_DAY = " 23:59:59";
     public static final String CREATED_AT = "createdAt";
     public static final String COMPLETED_AT = "completedAt";
@@ -114,8 +107,6 @@ public class ElasticSearchUtil {
     public static final String PROFILE_CREATED_AT = "profile." + CREATED_AT;
     public static final String PROFILE_GUID = "profile.guid";
     public static final String PROFILE_LEGACYALTPID = "profile.legacyAltPid";
-    public static final String WORKFLOWS = "workflows";
-    public static final String EMAIL_FIELD = "email";
     public static final String PARTICIPANTS_STRUCTURED_ANY = "participants_structured.*";
     public static final String TYPE = "type";
     public static final String TEXT = "text";
@@ -733,7 +724,7 @@ public class ElasticSearchUtil {
         String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
                 getParticipantESDataByAltpid(client, index, ddpParticipantId).getProfile().map(Profile::getGuid).orElse(ddpParticipantId);
         UpdateRequest updateRequest =
-                new UpdateRequest().index(index).type("_doc")
+                new UpdateRequest().index(index)
                         .id(participantId)
                         .doc(objectsMapES)
                         .docAsUpsert(true)

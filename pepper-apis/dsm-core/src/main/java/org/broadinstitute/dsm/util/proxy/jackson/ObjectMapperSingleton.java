@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 
 public class ObjectMapperSingleton {
 
@@ -25,7 +26,7 @@ public class ObjectMapperSingleton {
         } catch (com.fasterxml.jackson.core.JsonParseException e) {
             throw new JsonParseException(e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new DsmInternalError(e);
         }
     }
 

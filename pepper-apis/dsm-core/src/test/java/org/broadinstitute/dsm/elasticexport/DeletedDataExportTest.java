@@ -10,8 +10,8 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.export.ExportToES;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
@@ -136,12 +136,13 @@ public class DeletedDataExportTest extends DbAndElasticBaseTest {
 
     @Test
     public void getAllParticipantIdsFromIndexTest() {
-        List<String> participantsInTheStudy = new ElasticSearch().getAllParticipantsInIndex(ddpInstanceDto.getEsParticipantIndex());
+        ElasticSearchService elasticSearchService = new ElasticSearchService();
+        List<String> participantsInTheStudy = elasticSearchService.getAllParticipantGuids(ddpInstanceDto.getEsParticipantIndex());
         int size = participantsInTheStudy.size();
         ParticipantDto participantDto1 = oncHistoryTestUtil.createParticipant(guid1, ddpInstanceDto);
         ParticipantDto participantDto2 = oncHistoryTestUtil.createParticipant(guid2, ddpInstanceDto);
         ParticipantDto participantDto3 = oncHistoryTestUtil.createParticipant(guid3, ddpInstanceDto);
-        participantsInTheStudy = new ElasticSearch().getAllParticipantsInIndex(ddpInstanceDto.getEsParticipantIndex());
+        participantsInTheStudy = elasticSearchService.getAllParticipantGuids(ddpInstanceDto.getEsParticipantIndex());
         Assert.assertEquals(3, participantsInTheStudy.size() - size);
         Assert.assertTrue(participantsInTheStudy.contains(participantDto1.getDdpParticipantIdOrThrow()));
         Assert.assertTrue(participantsInTheStudy.contains(participantDto2.getDdpParticipantIdOrThrow()));

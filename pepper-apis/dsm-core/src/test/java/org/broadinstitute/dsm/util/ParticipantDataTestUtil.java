@@ -10,11 +10,11 @@ import com.google.gson.JsonParser;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.junit.Assert;
 
 public class ParticipantDataTestUtil {
     private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
-    private static final Gson gson = new Gson();
 
     public static ParticipantData createParticipantData(String ddpParticipantId, Map<String, String> dataMap,
                                                         String fieldTypeId, int dppInstanceId, String userEmail) {
@@ -22,7 +22,7 @@ public class ParticipantDataTestUtil {
                 .withDdpParticipantId(ddpParticipantId)
                 .withDdpInstanceId(dppInstanceId)
                 .withFieldTypeId(fieldTypeId)
-                .withData(gson.toJson(dataMap))
+                .withData(ObjectMapperSingleton.writeValueAsString(dataMap))
                 .withLastChanged(System.currentTimeMillis())
                 .withChangedBy(userEmail).build();
 

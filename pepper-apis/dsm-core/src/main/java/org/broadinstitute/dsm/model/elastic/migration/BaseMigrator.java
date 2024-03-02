@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
@@ -35,7 +34,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     }
 
     protected void exportParticipantRecords(Map<String, Object> participantRecords, BulkExportFacade bulkExportFacade) {
-        participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
+        participantRecords = replaceLegacyPIDs(participantRecords);
         logger.info("Creating {} bulk upsert with {} participants for study {} with index {}",
                 entity, participantRecords.size(), realm, index);
         long totalExported = 0;
@@ -67,22 +66,25 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         return bulkExportFacade.size() != 0 && bulkExportFacade.size() % BATCH_LIMIT == 0;
     }
 
-    private Map<String, Object> replaceLegacyAltPidKeysWithGuids(Map<String, Object> participantRecords) {
-        participantRecords = new ConcurrentHashMap<>(participantRecords);
-        List<String> legacyAltPids =
-                participantRecords.keySet().stream().filter(ParticipantUtil::isLegacyAltPid).collect(Collectors.toList());
-        Map<String, String> guidsByLegacyAltPids = elasticSearch.getGuidsByLegacyAltPids(index, legacyAltPids);
-        for (Map.Entry<String, String> entry : guidsByLegacyAltPids.entrySet()) {
-            String legacyAltPid = entry.getKey();
-            if (!participantRecords.containsKey(legacyAltPid)) {
+    private Map<String, Object> replaceLegacyPIDs(Map<String, Object> participantRecords) {
+        Map<String, Object> ptpRecords = new ConcurrentHashMap<>(participantRecords);
+        List<String> legacyPIDs =
+                ptpRecords.keySet().stream().filter(ParticipantUtil::isLegacyAltPid).toList();
+
+        // TODO: Get this once at the beginning of the migration/export
+        Map<String, String> legacyPIDToGuid = elasticSearch.getGuidsByLegacyAltPids(index, legacyPIDs);
+
+        for (Map.Entry<String, String> entry : legacyPIDToGuid.entrySet()) {
+            String legacyPID = entry.getKey();
+            if (!ptpRecords.containsKey(legacyPID)) {
                 continue;
             }
-            Object obj = participantRecords.get(legacyAltPid);
+            Object obj = ptpRecords.get(legacyPID);
             String guid = entry.getValue();
-            participantRecords.put(guid, obj);
-            participantRecords.remove(legacyAltPid);
+            ptpRecords.put(guid, obj);
+            ptpRecords.remove(legacyPID);
         }
-        return participantRecords;
+        return ptpRecords;
     }
 
     protected abstract void transformObject(Object object);

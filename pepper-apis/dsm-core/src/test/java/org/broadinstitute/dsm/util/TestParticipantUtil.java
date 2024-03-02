@@ -2,16 +2,15 @@ package org.broadinstitute.dsm.util;
 
 import java.time.Instant;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.model.elastic.Profile;
 
 @Slf4j
 public class TestParticipantUtil {
     private static final ParticipantDao participantDao = new ParticipantDao();
-    private static final Gson gson = new Gson();
 
     public static String genDDPParticipantId(String baseName) {
         return String.format("%s_%d_ABCDEFGHIJKLMNOP", baseName, Instant.now().toEpochMilli()).substring(0, 20);
@@ -29,6 +28,23 @@ public class TestParticipantUtil {
         return participantDto;
     }
 
+    /**
+     * Create a participant with provided ES profile
+     */
+    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
+                                                                DDPInstanceDto ddpInstanceDto, String esIndex) {
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
+        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+
+        ElasticTestUtil.createParticipant(esIndex, participant);
+        profile.setGuid(ddpParticipantId);
+        ElasticTestUtil.addParticipantProfile(esIndex, profile);
+        return participant;
+    }
+
+    /**
+     * Create a participant with a standard profile in ES
+     */
     public static ParticipantDto createParticipantWithEsProfile(String participantBaseName,
                                                                 DDPInstanceDto ddpInstanceDto, String esIndex) {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
@@ -78,5 +94,18 @@ public class TestParticipantUtil {
         return createParticipantWithEsData(participantBaseName, ddpInstanceDto, esIndex, dob, null,
                 "elastic/participantProfile.json", "elastic/participantDsm.json",
                 "elastic/lmsActivitiesSharedLearningIneligible.json");
+    }
+
+    /**
+     * Create a profile with a unique HRUID (GUID assignment left to caller), and email constructed from first and
+     * last name.
+     */
+    public static Profile createProfile(String firstName, String lastName, int uniqueDigits) {
+        Profile profile = new Profile();
+        profile.setEmail(String.format("%s%s@broad.org", firstName, lastName));
+        profile.setFirstName(firstName);
+        profile.setLastName(lastName);
+        profile.setHruid(String.format("P%03dNU", uniqueDigits));
+        return profile;
     }
 }

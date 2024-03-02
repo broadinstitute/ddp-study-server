@@ -3,13 +3,11 @@ package org.broadinstitute.dsm.service.adminoperation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -17,21 +15,51 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
-import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
+import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
+import org.broadinstitute.dsm.service.participantdata.DuplicateParticipantData;
+import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
+import org.broadinstitute.dsm.util.ParticipantUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
- * AdminOperation service to asynchronously fix various ParticipantData issues
+ * AdminOperation service to asynchronously fix various ParticipantData issues.
+ * </p>
+ * The operation requires a fixupType attribute. The supported fixup types are:
+ * - atcpGenomicId: remove duplicate genomic IDs and participant exit statuses
+ * - atcpLegacyPid: for the ddp_participant_id field, replace legacy PIDs with GUIDs. Report errors
+ *   if records with legacy PIDs have the same field type ID as records with GUIDs.
  */
 @Slf4j
-public class ParticipantDataFixupService implements AdminOperation {
-    private static final Gson gson = new Gson();
+public class ParticipantDataFixupService extends ParticipantAdminOperationService {
     protected List<String> validRealms = List.of("atcp");
+    protected List<String> validFixups = List.of(FixupType.AT_GENOMIC_ID.label, FixupType.AT_LEGACY_ID.label);
     private boolean forceFlag = false;
     private DDPInstance ddpInstance;
     private Map<String, List<ParticipantData>> participantDataByPtpId;
+    private FixupType fixupType;
+    private boolean dryRun;
+
+    protected enum FixupType {
+        AT_GENOMIC_ID("atcpGenomicId"),
+        AT_LEGACY_ID("atcpLegacyId");
+
+        public final String label;
+
+        private FixupType(String label) {
+            this.label = label;
+        }
+
+        public static FixupType valueOfLabel(String label) {
+            for (FixupType fixupType : values()) {
+                if (fixupType.label.equals(label)) {
+                    return fixupType;
+                }
+            }
+            return null;
+        }
+    }
 
     /**
      * Validate input and retrieve participant data, during synchronous part of operation handling
@@ -42,19 +70,22 @@ public class ParticipantDataFixupService implements AdminOperation {
      * @param payload    request body, if any, as ParticipantDataFixupRequest
      */
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
-        // this class currently only supports AT realm
-        if (!validRealms.contains(realm.toLowerCase())) {
-            throw new DsmInternalError("Invalid realm for ParticipantDataFixupService: " + realm);
-        }
+        ddpInstance = getDDPInstance(realm, validRealms);
 
-        String fixupType = attributes.get("fixupType");
-        if (StringUtils.isBlank(fixupType)) {
+        String fixupTypeArg = attributes.get("fixupType");
+        if (StringUtils.isBlank(fixupTypeArg)) {
             throw new DSMBadRequestException("Missing required attribute 'fixupType'");
         }
 
-        // for now, this is the only fixup available
-        if (!fixupType.equalsIgnoreCase("atcpGenomicId")) {
-            throw new DSMBadRequestException("Invalid fixupType: " + fixupType);
+        if (!validFixups.contains(fixupTypeArg)) {
+            throw new DSMBadRequestException(
+                    "Invalid fixupType: %s. Valid fixup types: %s".formatted(fixupType, validFixups));
+        }
+        fixupType = FixupType.valueOfLabel(fixupTypeArg);
+
+        dryRun = isRequiredDryRun(attributes);
+        if (fixupType == FixupType.AT_LEGACY_ID && !dryRun) {
+            throw new DSMBadRequestException("dryRun argument required for fixupType: %s".formatted(fixupType));
         }
 
         if (attributes.containsKey("force")) {
@@ -65,40 +96,21 @@ public class ParticipantDataFixupService implements AdminOperation {
             forceFlag = true;
         }
 
-        ddpInstance = DDPInstance.getDDPInstance(realm);
-        if (ddpInstance == null) {
-            throw new DsmInternalError("Invalid realm: " + realm);
-        }
-        if (StringUtils.isEmpty(ddpInstance.getParticipantIndexES())) {
-            throw new DsmInternalError("No ES participant index for study " + realm);
-        }
-
-        ParticipantDataDao dataDao = new ParticipantDataDao();
-        participantDataByPtpId = new HashMap<>();
-
         // handle optional list of ptps
         if (!StringUtils.isBlank(payload)) {
-            ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
-            List<String> participants = req.getParticipants();
-            for (String participantId: participants) {
-                List<ParticipantData> ptpData = dataDao.getParticipantData(participantId);
-                if (ptpData.isEmpty()) {
-                    throw new DSMBadRequestException("Invalid participant ID: " + participantId);
-                }
-                participantDataByPtpId.put(participantId, ptpData);
-            }
+            participantDataByPtpId = getParticipantData(payload);
         } else {
-            throw new DSMBadRequestException("Missing required payload");
-            /* TODO: it feels too easy to inadvertently forget to include the payload, so for now we will require it.
-            // Keeping the code in case that becomes untenable -DC
+            if (fixupType != FixupType.AT_LEGACY_ID) {
+                //TODO: it feels too easy to inadvertently forget to include the payload, so for now we will require it.
+                throw new DSMBadRequestException("Missing required payload");
+            }
             // get study participants and their data
             // Implementation note: we can either gather all the ptp data now (fewer queries, larger memory footprint),
             // or just gather the ptp IDs here and query for ptp data separately (more queries, smaller memory footprint)
             // At the time of implementation ptps per study were reasonably small (~100) and ptp data size was not large
             List<ParticipantData> dataList =
-                    dataDao.getParticipantDataByInstanceId(ddpInstance.getDdpInstanceIdAsInt());
+                    participantDataDao.getParticipantDataByInstanceId(ddpInstance.getDdpInstanceIdAsInt());
             participantDataByPtpId = dataList.stream().collect(Collectors.groupingBy(ParticipantData::getRequiredDdpParticipantId));
-            */
         }
     }
 
@@ -108,23 +120,30 @@ public class ParticipantDataFixupService implements AdminOperation {
      * @param operationId ID for reporting results
      */
     public void run(int operationId) {
-        List<UpdateLog> updateLog = new ArrayList<>();
+        List<UpdateLog> updateLog;
 
-        // for each participant attempt an update and log results
-        for (var entry: participantDataByPtpId.entrySet()) {
-            updateLog.add(updateParticipant(entry.getKey(), entry.getValue()));
+        if (fixupType == FixupType.AT_GENOMIC_ID) {
+            updateLog = new ArrayList<>();
+            // for each participant attempt an update and log results
+            for (var entry: participantDataByPtpId.entrySet()) {
+                updateLog.add(updateGenomicId(entry.getKey(), entry.getValue()));
+            }
+        } else if (fixupType == FixupType.AT_LEGACY_ID) {
+            updateLog = fixupLegacyPidData(participantDataByPtpId, ddpInstance.getParticipantIndexES());
+        } else {
+            throw new DsmInternalError("Invalid fixupType: " + fixupType);
         }
 
         // update job log record
         try {
-            String json = gson.toJson(updateLog);
+            String json = ObjectMapperSingleton.writeValueAsString(updateLog);
             AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED, json);
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
         }
     }
 
-    protected UpdateLog updateParticipant(String ddpParticipantId, List<ParticipantData> participantDataList) {
+    protected UpdateLog updateGenomicId(String ddpParticipantId, List<ParticipantData> participantDataList) {
         if (participantDataList.isEmpty()) {
             return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA.name());
         }
@@ -135,9 +154,9 @@ public class ParticipantDataFixupService implements AdminOperation {
 
         try {
             Set<Integer> genomeIdToDelete =
-                    getRecordsToDelete(participantDataList, ATDefaultValues.GENOME_STUDY_FIELD_TYPE);
+                    getRecordsToDelete(participantDataList, ATParticipantDataService.AT_GROUP_GENOME_STUDY);
             Set<Integer> exitToDelete =
-                    getRecordsToDelete(participantDataList, ATDefaultValues.AT_PARTICIPANT_EXIT);
+                    getRecordsToDelete(participantDataList, ATParticipantDataService.AT_PARTICIPANT_EXIT);
             log.info("Found {} genomic IDs and {} exit statuses to delete for participant {}",
                     genomeIdToDelete.size(), exitToDelete.size(), ddpParticipantId);
 
@@ -154,7 +173,7 @@ public class ParticipantDataFixupService implements AdminOperation {
                     .collect(Collectors.toMap(ParticipantData::getParticipantDataId, pd -> pd));
             updateParticipantDataList(idToData, genomeIdToDelete);
             updateParticipantDataList(idToData, exitToDelete);
-            WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,
+            ElasticSearchService.updateEsParticipantData(ddpParticipantId,
                     new ArrayList<>(idToData.values()), ddpInstance);
         } catch (Exception e) {
             String msg = String.format("Exception in ParticipantDataFixupService.run for participant %s: %s",
@@ -212,5 +231,70 @@ public class ParticipantDataFixupService implements AdminOperation {
         }
         ParticipantDataDao dataDao = new ParticipantDataDao();
         participantDataIds.forEach(dataDao::delete);
+    }
+
+    protected List<UpdateLog> fixupLegacyPidData(Map<String, List<ParticipantData>> participantDataMap,
+                                                 String esIndex) {
+        ElasticSearchService elasticSearchService = new ElasticSearchService();
+        Map<String, String> ptpIdToLegacyPid = elasticSearchService.getLegacyPidsByGuid(esIndex);
+
+        List<UpdateLog> updateLog = new ArrayList<>();
+        for (var entry: participantDataMap.entrySet()) {
+            updateLog.add(updateLegacyPid(entry.getKey(), entry.getValue(), ptpIdToLegacyPid));
+        }
+        return updateLog;
+    }
+
+    protected UpdateLog updateLegacyPid(String ddpParticipantId, List<ParticipantData> participantDataList,
+                                        Map<String, String> ptpIdToLegacyPid) {
+        UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
+
+        // we will find data attributed to legacy PIDs via the ptp GUID (see below)
+        if (!ParticipantUtil.isGuid(ddpParticipantId)) {
+            return updateLog;
+        }
+        if (participantDataList.isEmpty()) {
+            updateLog.setStatus(UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA.name());
+            return updateLog;
+        }
+
+        String legacyPid = ptpIdToLegacyPid.get(ddpParticipantId);
+        if (StringUtils.isBlank(legacyPid)) {
+            return updateLog;
+        }
+
+        // see if there are any records with legacy PID
+        List<ParticipantData> ptpData = participantDataDao.getParticipantData(legacyPid);
+        if (participantDataList.isEmpty()) {
+            return updateLog;
+        }
+
+        // check for overlapping field type IDs
+        Set<String> fieldTypeIds = participantDataList.stream()
+                .map(ParticipantData::getRequiredFieldTypeId)
+                .collect(Collectors.toSet());
+
+        Set<String> legacyFieldTypeIds = ptpData.stream()
+                .map(ParticipantData::getRequiredFieldTypeId)
+                .collect(Collectors.toSet());
+
+        fieldTypeIds.retainAll(legacyFieldTypeIds);
+        if (fieldTypeIds.isEmpty()) {
+            return updateLog;
+        }
+
+        log.info("Overlapping field type IDs between legacy and GUID records: {}", fieldTypeIds);
+
+        List<DuplicateParticipantData> duplicateData = new ArrayList<>();
+        fieldTypeIds.forEach(fieldTypeId -> {
+            List<ParticipantData> duplicates = new ArrayList<>(participantDataList.stream()
+                    .filter(pd -> pd.getRequiredFieldTypeId().equals(fieldTypeId)).toList());
+            duplicates.addAll(ptpData.stream()
+                    .filter(pd -> pd.getRequiredFieldTypeId().equals(fieldTypeId)).toList());
+
+            duplicateData.addAll(ParticipantDataService.handleDuplicateRecords(duplicates));
+        });
+        updateLog.setDuplicateParticipantData(duplicateData);
+        return updateLog;
     }
 }
