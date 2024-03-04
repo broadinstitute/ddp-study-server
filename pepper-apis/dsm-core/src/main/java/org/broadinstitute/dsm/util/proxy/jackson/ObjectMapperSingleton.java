@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,17 +13,25 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 
 public class ObjectMapperSingleton {
 
+    private static final ObjectMapper objectMapperInstance = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+    private static final ObjectMapper nonNullObjectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
     private ObjectMapperSingleton() {
     }
 
     public static ObjectMapper instance() {
-        return Helper.objectMapperInstance;
+        return objectMapperInstance;
     }
 
     public static <T> T readValue(String content, TypeReference<T> typeReference) {
         try {
             content = ObjectMapperSingleton.getContent(content, typeReference);
-            return Helper.objectMapperInstance.readValue(content, typeReference);
+            return objectMapperInstance.readValue(content, typeReference);
         } catch (com.fasterxml.jackson.core.JsonParseException e) {
             throw new JsonParseException(e.getMessage());
         } catch (Exception e) {
@@ -46,16 +55,19 @@ public class ObjectMapperSingleton {
     public static String writeValueAsString(Object value) {
         value = Objects.isNull(value) ? Map.of() : value;
         try {
-            return Helper.objectMapperInstance.writeValueAsString(value);
+            return objectMapperInstance.writeValueAsString(value);
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new JsonProcessingException(e.getMessage());
         }
     }
 
-    private static class Helper {
-        private static final ObjectMapper objectMapperInstance = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public static String writeValueAsString(Object value, boolean includeNullValues) {
+        ObjectMapper objectMapper = includeNullValues ? objectMapperInstance : nonNullObjectMapper;
+        value = Objects.isNull(value) ? Map.of() : value;
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new JsonProcessingException(e.getMessage());
+        }
     }
-
-
 }

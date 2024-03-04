@@ -212,7 +212,7 @@ public class ReferralSourceService implements AdminOperation {
                             .withDdpParticipantId(ddpParticipantId)
                             .withDdpInstanceId(participantData.getDdpInstanceId())
                             .withFieldTypeId(RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE)
-                            .withData(ObjectMapperSingleton.writeValueAsString(props))
+                            .withData(ObjectMapperSingleton.writeValueAsString(props, false))
                             .withLastChanged(System.currentTimeMillis())
                             .withChangedBy(userId).build());
         } catch (JsonProcessingException | ClassCastException e) {

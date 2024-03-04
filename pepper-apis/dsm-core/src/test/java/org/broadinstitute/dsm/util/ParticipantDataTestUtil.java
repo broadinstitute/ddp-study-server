@@ -22,7 +22,7 @@ public class ParticipantDataTestUtil {
                 .withDdpParticipantId(ddpParticipantId)
                 .withDdpInstanceId(dppInstanceId)
                 .withFieldTypeId(fieldTypeId)
-                .withData(ObjectMapperSingleton.writeValueAsString(dataMap))
+                .withData(ObjectMapperSingleton.writeValueAsString(dataMap, false))
                 .withLastChanged(System.currentTimeMillis())
                 .withChangedBy(userEmail).build();
 

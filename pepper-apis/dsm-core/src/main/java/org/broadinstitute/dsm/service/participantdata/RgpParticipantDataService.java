@@ -80,7 +80,7 @@ public class RgpParticipantDataService {
                         .withDdpParticipantId(ddpParticipantId)
                         .withDdpInstanceId(ddpInstanceId)
                         .withFieldTypeId(RGP_PARTICIPANTS_FIELD_TYPE)
-                        .withData(ObjectMapperSingleton.writeValueAsString(columnsWithDefaultOptions))
+                        .withData(ObjectMapperSingleton.writeValueAsString(columnsWithDefaultOptions, false))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(SystemUtil.SYSTEM).build();
 
@@ -197,7 +197,7 @@ public class RgpParticipantDataService {
                         .withDdpParticipantId(ddpParticipantId)
                         .withDdpInstanceId(participantData.getDdpInstanceId())
                         .withFieldTypeId(participantData.getRequiredFieldTypeId())
-                        .withData(ObjectMapperSingleton.writeValueAsString(dataMap))
+                        .withData(ObjectMapperSingleton.writeValueAsString(dataMap, false))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(SystemUtil.SYSTEM).build());
         ParticipantDataService.updateEsParticipantData(ddpParticipantId, instance);

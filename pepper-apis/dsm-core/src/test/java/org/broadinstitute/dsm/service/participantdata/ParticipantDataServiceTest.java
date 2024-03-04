@@ -51,7 +51,7 @@ public class ParticipantDataServiceTest {
                 .withParticipantDataId(participantDataId)
                 .withDdpParticipantId(ddpParticipantId)
                 .withFieldTypeId(fieldTypeId)
-                .withData(ObjectMapperSingleton.writeValueAsString(dataMap))
+                .withData(ObjectMapperSingleton.writeValueAsString(dataMap, false))
                 .build();
     }
 }
