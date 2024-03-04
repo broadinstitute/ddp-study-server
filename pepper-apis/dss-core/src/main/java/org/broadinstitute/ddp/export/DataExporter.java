@@ -632,15 +632,15 @@ public class DataExporter {
                 studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
         BulkRequest bulkRequest = new BulkRequest().timeout("2m");
-        BulkRequest bulkRequest2 = null;
+        BulkRequest bulkRequestOS2 = null;
         boolean osteoParticipantStructuredIndex = false;
         if (index.contains(PARTICIPANTS_STRUCTURED_OSTEO_INDEX)) {
             //update osteo2 index too
-            bulkRequest2 = new BulkRequest().timeout("2m");
+            bulkRequestOS2 = new BulkRequest().timeout("2m");
             osteoParticipantStructuredIndex = true;
         }
         boolean isOsteoParticipantStructuredIndex = osteoParticipantStructuredIndex;
-        BulkRequest finalBulkRequest = bulkRequest2;
+        BulkRequest finalBulkRequestOS2 = bulkRequestOS2;
 
         participantRecords.forEach((key, value) -> {
             UpdateRequest updateRequest = new UpdateRequest()
@@ -651,18 +651,18 @@ public class DataExporter {
             bulkRequest.add(updateRequest);
 
             if (isOsteoParticipantStructuredIndex) {
-                UpdateRequest updateRequest2 = new UpdateRequest()
+                UpdateRequest updateRequestOS2 = new UpdateRequest()
                         .index(CMI_OSTEO2_INDEX)
                         .id(key)
                         .doc(value, XContentType.JSON)
                         .docAsUpsert(true);
-                finalBulkRequest.add(updateRequest2);
+                finalBulkRequestOS2.add(updateRequestOS2);
             }
         });
 
-        if (finalBulkRequest != null) {
+        if (finalBulkRequestOS2 != null) {
             log.info("exporting {} participant records to index participants_structured.cmi.cmi-osteo2", participantRecords.size());
-            BulkResponse bulkResponse2 = esClient.bulk(finalBulkRequest, RequestOptions.DEFAULT);
+            BulkResponse bulkResponse2 = esClient.bulk(finalBulkRequestOS2, RequestOptions.DEFAULT);
             if (bulkResponse2.hasFailures()) {
                 log.error(bulkResponse2.buildFailureMessage());
             }
