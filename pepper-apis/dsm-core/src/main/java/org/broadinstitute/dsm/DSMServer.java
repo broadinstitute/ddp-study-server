@@ -599,7 +599,6 @@ public class DSMServer {
         });
 
         //DSM internal routes
-        EventUtil eventUtil = new EventUtil();
         NotificationUtil notificationUtil = new NotificationUtil(cfg);
 
         setupPubSub(cfg, notificationUtil);
@@ -710,6 +709,7 @@ public class DSMServer {
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
         patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new GsonResponseTransformer());
 
+        EventUtil eventUtil = new EventUtil();
         setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
 
         //TODO - redo with pubsub
@@ -863,7 +863,8 @@ public class DSMServer {
 
         patch(UI_ROOT + RoutePath.ASSIGN_PARTICIPANT_REQUEST,
                 new AssignParticipantRoute(cfg.getString(ApplicationConfigConstants.GET_DDP_PARTICIPANT_ID),
-                        cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil), new GsonResponseTransformer());
+                        cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil),
+                new GsonResponseTransformer());
 
         ViewFilterRoute viewFilterRoute = new ViewFilterRoute(patchUtil);
         //gets filter names for user for this realm (shared filters and user's filters
@@ -968,7 +969,8 @@ public class DSMServer {
         SomaticResultUploadService somaticResultUploadService = SomaticResultUploadService.fromConfig(cfg);
         post(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE,
                 new PostSomaticResultUploadRoute(somaticResultUploadService), new GsonResponseTransformer());
-        delete(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService), new GsonResponseTransformer());
+        delete(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService),
+                new GsonResponseTransformer());
         get(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE,
                 new GetSomaticResultsRoute(somaticResultUploadService), new GsonResponseTransformer());
         post(UI_ROOT + RoutePath.TRIGGER_SOMATIC_SURVEY,
@@ -991,7 +993,8 @@ public class DSMServer {
         KitTypeRoute kitTypeRoute = new KitTypeRoute(kitUtil);
         get(UI_ROOT + RoutePath.KIT_TYPES_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
                 new GsonResponseTransformer());
-        get(UI_ROOT + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute, new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
+                new GsonResponseTransformer());
         get(UI_ROOT + RoutePath.CARRIERS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new CarrierServiceRoute(),
                 new GsonResponseTransformer());
 
@@ -1017,7 +1020,8 @@ public class DSMServer {
         }
 
         FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
-        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService),
+                new GsonResponseTransformer());
 
         post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new GsonResponseTransformer());
 
