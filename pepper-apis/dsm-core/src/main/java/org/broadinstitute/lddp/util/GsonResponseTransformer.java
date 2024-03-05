@@ -3,7 +3,7 @@ package org.broadinstitute.lddp.util;
 import com.google.gson.Gson;
 import spark.ResponseTransformer;
 
-public class JsonTransformer implements ResponseTransformer {
+public class GsonResponseTransformer implements ResponseTransformer {
 
     private Gson gson = new Gson();
 

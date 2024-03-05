@@ -55,7 +55,8 @@ public class ElasticSearchService {
     }
 
     /**
-     * Return a list of all participant guids in a participant ES index
+     * Return a map of participant guids to legacy PIDs for a participant ES index. This map only contians entries
+     * for participants that have a legacy PID.
      */
     public Map<String, String> getLegacyPidsByGuid(String esIndex) {
         SearchRequest searchRequest = new SearchRequest(esIndex);
@@ -78,7 +79,12 @@ public class ElasticSearchService {
         participants.forEach(participant -> {
             if (participant.getProfile().isPresent()) {
                 Profile profile = participant.getProfile().get();
-                if (StringUtils.isNotBlank(profile.getGuid()) && StringUtils.isNotBlank(profile.getLegacyAltPid())) {
+                String participantGuid = profile.getGuid();
+                if (StringUtils.isNotBlank(participantGuid) && StringUtils.isNotBlank(profile.getLegacyAltPid())) {
+                    if (guidToPid.containsKey(participantGuid)) {
+                        throw new DsmInternalError("Duplicate participant GUID in Profile: %s, index: %s"
+                                .formatted(participantGuid, esIndex));
+                    }
                     guidToPid.put(profile.getGuid(), profile.getLegacyAltPid());
                 }
             }

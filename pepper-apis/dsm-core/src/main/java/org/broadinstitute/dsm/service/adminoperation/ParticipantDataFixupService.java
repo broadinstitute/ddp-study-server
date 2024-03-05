@@ -30,11 +30,19 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  * - atcpGenomicId: remove duplicate genomic IDs and participant exit statuses
  * - atcpLegacyPid: for the ddp_participant_id field, replace legacy PIDs with GUIDs. Report errors
  *   if records with legacy PIDs have the same field type ID as records with GUIDs.
+ * </p>
+ * The operation requires a dryRun attribute. If true, no data is changed but the UpdateLog will report
+ * what would have been done.
+ * </p>
+ * For the atcpGenomicId fixup, the operation has an optional force attribute. If true, the operation will
+ * delete records with duplicate field type IDs even if they have multiple data map entries.
+ * </p>
+ * The operation payload is a ParticipantListRequest (required for atcpGenomicId). If not present, all participants
+ * in the realm are considered.
  */
 @Slf4j
 public class ParticipantDataFixupService extends ParticipantAdminOperationService {
     protected List<String> validRealms = List.of("atcp");
-    protected List<String> validFixups = List.of(FixupType.AT_GENOMIC_ID.label, FixupType.AT_LEGACY_ID.label);
     private boolean forceFlag = false;
     private DDPInstance ddpInstance;
     private Map<String, List<ParticipantData>> participantDataByPtpId;
@@ -77,11 +85,11 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
             throw new DSMBadRequestException("Missing required attribute 'fixupType'");
         }
 
-        if (!validFixups.contains(fixupTypeArg)) {
-            throw new DSMBadRequestException(
-                    "Invalid fixupType: %s. Valid fixup types: %s".formatted(fixupType, validFixups));
-        }
         fixupType = FixupType.valueOfLabel(fixupTypeArg);
+        if (fixupType == null) {
+            throw new DSMBadRequestException(
+                    "Invalid fixupType: %s. Valid fixup types: %s".formatted(fixupType, FixupType.values()));
+        }
 
         dryRun = isRequiredDryRun(attributes);
         if (fixupType == FixupType.AT_LEGACY_ID && !dryRun) {

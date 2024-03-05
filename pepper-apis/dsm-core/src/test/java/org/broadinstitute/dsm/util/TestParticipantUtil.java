@@ -102,7 +102,7 @@ public class TestParticipantUtil {
      */
     public static Profile createProfile(String firstName, String lastName, int uniqueDigits) {
         Profile profile = new Profile();
-        profile.setEmail(String.format("%s%s@broad.org", firstName, lastName));
+        profile.setEmail(String.format("%s%s@broad.dev", firstName, lastName));
         profile.setFirstName(firstName);
         profile.setLastName(lastName);
         profile.setHruid(String.format("P%03dNU", uniqueDigits));

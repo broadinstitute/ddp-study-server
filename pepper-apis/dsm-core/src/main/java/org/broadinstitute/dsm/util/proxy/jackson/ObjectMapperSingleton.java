@@ -14,8 +14,7 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 public class ObjectMapperSingleton {
 
     private static final ObjectMapper objectMapperInstance = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private static final ObjectMapper nonNullObjectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)

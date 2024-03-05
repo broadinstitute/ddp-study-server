@@ -66,6 +66,9 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         return bulkExportFacade.size() != 0 && bulkExportFacade.size() % BATCH_LIMIT == 0;
     }
 
+    /**
+     * For records that have a legacy PID, get the corresponding GUID and replace the key in the map
+     */
     private Map<String, Object> replaceLegacyPIDs(Map<String, Object> participantRecords) {
         Map<String, Object> ptpRecords = new ConcurrentHashMap<>(participantRecords);
         List<String> legacyPIDs =
