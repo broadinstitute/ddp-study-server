@@ -8,25 +8,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
+import org.broadinstitute.dsm.service.participantdata.DuplicateParticipantData;
 import org.broadinstitute.dsm.service.participantdata.FamilyIdProvider;
+import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.RgpFamilyIdProvider;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
  * Service to initialize RGP participant data for participants that have not yet been initialized.
@@ -39,9 +38,8 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
  * results.
  */
 @Slf4j
-public class ParticipantInitService implements AdminOperation {
+public class ParticipantInitService extends ParticipantAdminOperationService {
 
-    private static final Gson gson = new Gson();
     protected List<String> validRealms = List.of("rgp");
     private DDPInstance ddpInstance;
     private Map<String, Map<String, Object>> esParticipants;
@@ -56,33 +54,13 @@ public class ParticipantInitService implements AdminOperation {
      * @param payload    request body, if any, as ParticipantDataFixupRequest
      */
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
-        if (!validRealms.contains(realm.toLowerCase())) {
-            throw new DsmInternalError("Invalid realm for ParticipantInitService: " + realm);
-        }
-
-        ddpInstance = DDPInstance.getDDPInstance(realm);
-        if (ddpInstance == null) {
-            throw new DsmInternalError("Invalid realm: " + realm);
-        }
-
-        String esIndex = ddpInstance.getParticipantIndexES();
-        if (StringUtils.isEmpty(esIndex)) {
-            throw new DsmInternalError("No ES participant index for study " + realm);
-        }
+        ddpInstance = getDDPInstance(realm, validRealms);
 
         // require dryRun since the user cannot specify a participant list
-        String dryRun = attributes.get("dryRun");
-        if (StringUtils.isBlank(dryRun)) {
-            throw new DSMBadRequestException("Missing required attribute 'dryRun'");
-        }
-
-        if (!dryRun.equalsIgnoreCase("true") && !dryRun.equalsIgnoreCase("false")) {
-            throw new DSMBadRequestException("Invalid dryRun parameter ('true' or 'false' accepted): " + dryRun);
-        }
-        isDryRun = Boolean.parseBoolean(dryRun);
+        isDryRun = isRequiredDryRun(attributes);
 
         esParticipants =
-                ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), esIndex);
+                ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
         log.info("Found {} participants in ES for instance {}", esParticipants.size(), ddpInstance.getName());
     }
 
@@ -104,7 +82,7 @@ public class ParticipantInitService implements AdminOperation {
 
         // update job log record
         try {
-            String json = gson.toJson(updateLog);
+            String json = ObjectMapperSingleton.writeValueAsString(updateLog);
             AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED, json);
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
@@ -161,13 +139,15 @@ public class ParticipantInitService implements AdminOperation {
     protected static ParticipantData getProbandRgpData(List<ParticipantData> ptpData, UpdateLog updateLog) {
         List<ParticipantData> probandData = ptpData.stream()
                 .filter(data -> MEMBER_TYPE_SELF.equals(data.getDataMap().get(MEMBER_TYPE)))
-                .collect(Collectors.toList());
+                .toList();
         if (probandData.isEmpty()) {
             updateLog.setError("Participant has RGP data but no proband record");
             return null;
         }
         if (probandData.size() > 1) {
-            updateLog.setError(String.format("Participant has %d RGP proband records", probandData.size()));
+            log.info("Participant has {} RGP proband records", probandData.size());
+            List<DuplicateParticipantData> duplicateData = ParticipantDataService.handleDuplicateRecords(probandData);
+            updateLog.setDuplicateParticipantData(duplicateData);
             return null;
         }
 

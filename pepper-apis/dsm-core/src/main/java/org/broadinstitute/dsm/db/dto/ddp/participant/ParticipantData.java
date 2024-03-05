@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm.db.dto.ddp.participant;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -11,8 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +46,8 @@ public class ParticipantData {
     @JsonIgnore
     private String changedBy;
     // We cache the json data map to avoid deserializing it multiple times.
-    // TODO: This caching should be done elsewhere since this is a DTO this field is getting serialized.
+    // TODO: This caching should be done elsewhere since this is a DTO this field is getting serialized by non-Jackson
+    //  serializers (Gson). -DC
     @JsonIgnore
     private Map<String, String> cachedDataMap;
 
@@ -136,10 +133,7 @@ public class ParticipantData {
         if (StringUtils.isBlank(data)) {
             return null;
         }
-        Type type = new TypeToken<HashMap<String, String>>() {
-        }.getType();
-        Gson gson = new Gson();
-        cachedDataMap = gson.fromJson(data, type);
+        cachedDataMap = ObjectMapperSingleton.readValue(data, new TypeReference<>() {});
         return cachedDataMap;
     }
 

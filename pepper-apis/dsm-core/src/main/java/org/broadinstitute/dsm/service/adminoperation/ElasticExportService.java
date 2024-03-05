@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -14,6 +13,7 @@ import org.broadinstitute.dsm.model.elastic.migration.StudyMigrator;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.util.ParticipantUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
  * AdminOperation service to asynchronously export DSM data to ElasticSearch for a set of participants
@@ -21,7 +21,6 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 
 @Slf4j
 public class ElasticExportService implements AdminOperation {
-    private static final Gson gson = new Gson();
     private DDPInstance ddpInstance;
     private List<String> ddpParticipantIds = new ArrayList<>();
 
@@ -70,7 +69,7 @@ public class ElasticExportService implements AdminOperation {
 
         // update job log record
         try {
-            String json = gson.toJson(exportLogs);
+            String json = ObjectMapperSingleton.writeValueAsString(exportLogs);
             AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED,
                     json);
         } catch (Exception e) {

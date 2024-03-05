@@ -125,7 +125,7 @@ public class ParticipantData {
                         .withDdpParticipantId(this.ddpParticipantId)
                         .withDdpInstanceId(this.ddpInstanceId)
                         .withFieldTypeId(this.fieldTypeId)
-                        .withData(ObjectMapperSingleton.writeValueAsString(this.data))
+                        .withData(ObjectMapperSingleton.writeValueAsString(this.data, false))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(userEmail)
                         .build();

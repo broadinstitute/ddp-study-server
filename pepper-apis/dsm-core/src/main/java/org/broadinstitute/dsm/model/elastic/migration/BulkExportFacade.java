@@ -41,7 +41,6 @@ public class BulkExportFacade {
     private UpdateRequest createRequest(Map<String, Object> mapToUpsert, String docId) {
         UpdateRequest updateRequest = new UpdateRequest(index, docId);
         updateRequest.doc(mapToUpsert);
-        log.info("TEMP: Update map {}", mapToUpsert);
         return updateRequest;
     }
 

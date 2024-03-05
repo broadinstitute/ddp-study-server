@@ -24,14 +24,14 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.pubsub.WorkflowStatusUpdate;
+import org.broadinstitute.dsm.service.participantdata.ATParticipantDataTestUtil;
+import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.KitShippingTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
-import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -49,6 +49,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     private static int participantCounter = 0;
     private static MedicalRecordTestUtil medicalRecordTestUtil;
     private static KitShippingTestUtil kitShippingTestUtil;
+    private static ATParticipantDataTestUtil atParticipantDataUtil;
     private static final Map<String, Map<String, Integer>> participantDataInfo = new HashMap<>();
 
     @BeforeClass
@@ -58,6 +59,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
         medicalRecordTestUtil = new MedicalRecordTestUtil();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, instanceName);
+        atParticipantDataUtil = new ATParticipantDataTestUtil(ddpInstanceDto.getDdpInstanceId());
     }
 
     @AfterClass
@@ -147,23 +149,15 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         int instanceId = ddpInstanceDto.getDdpInstanceId();
 
         // create random participant data
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("REGISTRATION_TYPE", "Self");
-        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
-                dataMap, "AT_GROUP_MISCELLANEOUS", instanceId, TEST_USER);
+        atParticipantDataUtil.createMiscellaneousParticipantData(ddpParticipantId);
+        atParticipantDataUtil.createEligibilityParticipantData(ddpParticipantId);
 
         Map<String, Integer> ptpDataInfo = new HashMap<>();
         ptpDataInfo.put("AT_GROUP_MISCELLANEOUS", 1);
-
-        dataMap.clear();
-        dataMap.put("ELIGIBILITY", "1");
-        ParticipantDataTestUtil.createParticipantData(ddpParticipantId,
-                dataMap, "AT_GROUP_ELIGIBILITY", instanceId, TEST_USER);
-
         ptpDataInfo.put("AT_GROUP_ELIGIBILITY", 1);
         participantDataInfo.put(ddpParticipantId, ptpDataInfo);
 
-        WorkflowStatusUpdate.updateEsParticipantData(ddpParticipantId,
+        ParticipantDataService.updateEsParticipantData(ddpParticipantId,
                 DDPInstance.getDDPInstance(ddpInstanceDto.getInstanceName()));
     }
 

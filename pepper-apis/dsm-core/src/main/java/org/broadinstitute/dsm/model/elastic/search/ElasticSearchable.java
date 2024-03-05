@@ -41,10 +41,6 @@ public interface ElasticSearchable {
 
     }
 
-    default Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
-        return Map.of();
-    }
-
     default ReplicationResponse.ShardInfo createDocumentById(String index, String docId, Map<String, Object> data) {
         return new ReplicationResponse.ShardInfo();
     }

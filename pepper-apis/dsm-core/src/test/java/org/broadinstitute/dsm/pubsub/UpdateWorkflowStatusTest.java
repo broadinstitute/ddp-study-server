@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.AT_PARTICIPANT_EXIT;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_FIELD_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_GROUP_GENOME_STUDY;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_PARTICIPANT_EXIT;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,11 +23,11 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
-import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
+import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -185,15 +185,14 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
 
         try {
             // add default values
-            ATDefaultValues atDefaultValues = new ATDefaultValues();
-            boolean updated = atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
+            boolean updated = ATParticipantDataService.generateDefaultData(instanceName, ddpParticipantId);
             Assert.assertTrue(updated);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Exception from generateDefaults: " + e.getMessage());
         }
 
-        List<String> otherFieldTypes = List.of(GENOME_STUDY_FIELD_TYPE, AT_PARTICIPANT_EXIT);
+        List<String> otherFieldTypes = List.of(AT_GROUP_GENOME_STUDY, AT_PARTICIPANT_EXIT);
         verifyWorkflowParticipantData(ddpParticipantId, fieldTypeId, "Registered", otherFieldTypes);
         verifyDefaultElasticData(ddpParticipantId, fieldTypeId, "Registered", otherFieldTypes);
 
