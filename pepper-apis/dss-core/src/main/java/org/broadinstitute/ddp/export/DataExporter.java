@@ -156,6 +156,8 @@ public class DataExporter {
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static final Map<String, String> emailStore = new HashMap<>();
+    public static final String CMI_OSTEO2_INDEX = "participants_structured.cmi.cmi-osteo2";
+    public static final String PARTICIPANTS_STRUCTURED_OSTEO_INDEX = "participants_structured.cmi.cmi-osteo";
 
     private final Config cfg;
     private final Gson gson;
@@ -630,7 +632,17 @@ public class DataExporter {
                 studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
         BulkRequest bulkRequest = new BulkRequest().timeout("2m");
+        BulkRequest bulkRequestOS2 = null;
+        boolean osteoParticipantStructuredIndex = false;
+        if (index.contains(PARTICIPANTS_STRUCTURED_OSTEO_INDEX)) {
+            //update osteo2 index too
+            bulkRequestOS2 = new BulkRequest().timeout("2m");
+            osteoParticipantStructuredIndex = true;
+        }
+        boolean isOsteoParticipantStructuredIndex = osteoParticipantStructuredIndex;
+        BulkRequest finalBulkRequestOS2 = bulkRequestOS2;
 
+        BulkRequest finalBulkRequestOS = bulkRequestOS2;
         participantRecords.forEach((key, value) -> {
             UpdateRequest updateRequest = new UpdateRequest()
                     .index(index)
@@ -638,10 +650,26 @@ public class DataExporter {
                     .doc(value, XContentType.JSON)
                     .docAsUpsert(true);
             bulkRequest.add(updateRequest);
+
+            if (isOsteoParticipantStructuredIndex) {
+                UpdateRequest updateRequestOS2 = new UpdateRequest()
+                        .index(CMI_OSTEO2_INDEX)
+                        .id(key)
+                        .doc(value, XContentType.JSON)
+                        .docAsUpsert(true);
+                finalBulkRequestOS.add(updateRequestOS2);
+            }
         });
 
-        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+        if (finalBulkRequestOS2 != null) {
+            log.info("exporting {} participant records to index {}", participantRecords.size(), CMI_OSTEO2_INDEX);
+            BulkResponse bulkResponse2 = esClient.bulk(finalBulkRequestOS2, RequestOptions.DEFAULT);
+            if (bulkResponse2.hasFailures()) {
+                log.error(bulkResponse2.buildFailureMessage());
+            }
+        }
 
+        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
         if (bulkResponse.hasFailures()) {
             log.error(bulkResponse.buildFailureMessage());
         }
