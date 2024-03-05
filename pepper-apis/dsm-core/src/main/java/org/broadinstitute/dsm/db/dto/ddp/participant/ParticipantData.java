@@ -133,7 +133,7 @@ public class ParticipantData {
         if (StringUtils.isBlank(data)) {
             return null;
         }
-        cachedDataMap = ObjectMapperSingleton.readValue(data, new TypeReference<Map<String, String>>() {});
+        cachedDataMap = ObjectMapperSingleton.readValue(data, new TypeReference<>() {});
         return cachedDataMap;
     }
 
