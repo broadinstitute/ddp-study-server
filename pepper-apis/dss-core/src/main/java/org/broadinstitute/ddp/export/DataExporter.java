@@ -642,6 +642,7 @@ public class DataExporter {
         boolean isOsteoParticipantStructuredIndex = osteoParticipantStructuredIndex;
         BulkRequest finalBulkRequestOS2 = bulkRequestOS2;
 
+        BulkRequest finalBulkRequestOS = bulkRequestOS2;
         participantRecords.forEach((key, value) -> {
             UpdateRequest updateRequest = new UpdateRequest()
                     .index(index)
@@ -656,12 +657,12 @@ public class DataExporter {
                         .id(key)
                         .doc(value, XContentType.JSON)
                         .docAsUpsert(true);
-                finalBulkRequestOS2.add(updateRequestOS2);
+                finalBulkRequestOS.add(updateRequestOS2);
             }
         });
 
         if (finalBulkRequestOS2 != null) {
-            log.info("exporting {} participant records to index participants_structured.cmi.cmi-osteo2", participantRecords.size());
+            log.info("exporting {} participant records to index {}", participantRecords.size(), CMI_OSTEO2_INDEX);
             BulkResponse bulkResponse2 = esClient.bulk(finalBulkRequestOS2, RequestOptions.DEFAULT);
             if (bulkResponse2.hasFailures()) {
                 log.error(bulkResponse2.buildFailureMessage());
