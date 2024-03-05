@@ -120,6 +120,27 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     }
 
     /**
+     * Export data to ES for all study participants
+     *
+     * @param exportLogs  list export logs to append to
+     */
+    public void export(List<ExportLog> exportLogs) {
+        ExportLog exportLog = new ExportLog(entity);
+        exportLogs.add(exportLog);
+        try {
+            Map<String, Object> dataByRealm = getDataByRealm();
+            if (dataByRealm.isEmpty()) {
+                exportLog.setStatus(ExportLog.Status.NO_PARTICIPANTS);
+                return;
+            }
+            exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLog));
+        } catch (Exception e) {
+            exportLog.setError(e.getMessage());
+        }
+    }
+
+
+    /**
      * Export data to ES for a list of participants
      *
      * @param exportLogs  list export logs to append to

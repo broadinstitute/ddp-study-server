@@ -18,11 +18,12 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 /**
  * AdminOperation service to asynchronously export DSM data to ElasticSearch for a set of participants
  */
-
 @Slf4j
 public class ElasticExportService implements AdminOperation {
     private DDPInstance ddpInstance;
     private List<String> ddpParticipantIds = new ArrayList<>();
+    private boolean verifyElasticData = false;
+    private boolean exportAll = false;
 
     /**
      * Validate input and retrieve participant data, during synchronous part of operation handling
@@ -41,20 +42,44 @@ public class ElasticExportService implements AdminOperation {
         if (StringUtils.isEmpty(esIndex)) {
             throw new DsmInternalError("No ES participant index for study " + realm);
         }
-        if (StringUtils.isBlank(payload)) {
-            throw new DSMBadRequestException("No participant IDs provided");
+
+        if (attributes.containsKey("verifyData")) {
+            String force = attributes.get("verifyData");
+            if (!StringUtils.isBlank(force)) {
+                throw new DSMBadRequestException("Invalid 'verifyData' attribute: not expecting a value");
+            }
+            verifyElasticData = true;
         }
 
-        ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
-        ddpParticipantIds = req.getParticipants();
-        List<String> badIds = new ArrayList<>();
-        for (String ddpParticipantId: ddpParticipantIds) {
-            if (!ParticipantUtil.isGuid(ddpParticipantId)) {
-                badIds.add(ddpParticipantId);
+        // make users be explicit to avoid inadvertently exporting all data by omitting participant IDs
+        if (attributes.containsKey("exportAll")) {
+            String force = attributes.get("exportAll");
+            if (!StringUtils.isBlank(force)) {
+                throw new DSMBadRequestException("Invalid 'exportAll' attribute: not expecting a value");
             }
+            exportAll = true;
         }
-        if (!badIds.isEmpty()) {
-            throw new DSMBadRequestException("Invalid participant IDs: " + String.join(", ", badIds));
+
+        if (verifyElasticData && exportAll) {
+            throw new DSMBadRequestException("Cannot specify both 'verifyData' and 'exportAll' attributes");
+        }
+
+        if (!verifyElasticData && !exportAll) {
+            if (StringUtils.isBlank(payload)) {
+                throw new DSMBadRequestException("No participant IDs provided");
+            }
+
+            ParticipantListRequest req = ParticipantListRequest.fromJson(payload);
+            ddpParticipantIds = req.getParticipants();
+            List<String> badIds = new ArrayList<>();
+            for (String ddpParticipantId : ddpParticipantIds) {
+                if (!ParticipantUtil.isGuid(ddpParticipantId)) {
+                    badIds.add(ddpParticipantId);
+                }
+            }
+            if (!badIds.isEmpty()) {
+                throw new DSMBadRequestException("Invalid participant IDs: " + String.join(", ", badIds));
+            }
         }
     }
 
@@ -65,7 +90,11 @@ public class ElasticExportService implements AdminOperation {
      */
     public void run(int operationId) {
         List<ExportLog> exportLogs = new ArrayList<>();
-        exportParticipants(ddpParticipantIds, ddpInstance.getName(), exportLogs);
+        if (verifyElasticData) {
+
+        } else {
+            exportParticipants(ddpParticipantIds, ddpInstance.getName(), exportLogs);
+        }
 
         // update job log record
         try {
@@ -80,14 +109,35 @@ public class ElasticExportService implements AdminOperation {
     protected static void exportParticipants(List<String> ddpParticipantIds, String realm,
                                              List<ExportLog> exportLogs) {
         try {
-            // export participant data to ES
-            StudyMigrator.migrateParticipants(ddpParticipantIds, realm, exportLogs);
+            if (ddpParticipantIds.isEmpty()) {
+                StudyMigrator.migrate(realm, exportLogs);
+            } else {
+                StudyMigrator.migrateParticipants(ddpParticipantIds, realm, exportLogs);
+            }
         } catch (Exception e) {
-            log.error("Error migrating participant data to ES: {}", e.toString());
+            log.error("Error exporting participant data to ES: {}", e.toString());
             ExportLog exportLog = new ExportLog("<No entity>");
             exportLog.setError(e.toString());
             // exceptions should be caught lower, so also log this
             log.error("Exception from StudyMigrator.migrateParticipants: {}", e.toString(), e);
         }
     }
+
+    protected static void verifyElasticData(List<String> ddpParticipantIds, String realm,
+                                            List<ExportLog> exportLogs) {
+        try {
+            if (ddpParticipantIds.isEmpty()) {
+                StudyMigrator.migrate(realm, exportLogs);
+            } else {
+                StudyMigrator.migrateParticipants(ddpParticipantIds, realm, exportLogs);
+            }
+        } catch (Exception e) {
+            log.error("Error exporting participant data to ES: {}", e.toString());
+            ExportLog exportLog = new ExportLog("<No entity>");
+            exportLog.setError(e.toString());
+            // exceptions should be caught lower, so also log this
+            log.error("Exception from StudyMigrator.migrateParticipants: {}", e.toString(), e);
+        }
+    }
+
 }

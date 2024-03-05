@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.CohortTagTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
@@ -161,12 +162,14 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         kitShippingTestUtil.createTestKitShipping(os2BothPtp, os2DdpInstanceDto);
 
         // do an OS1 export
+        List<ExportLog> exportLogs = new ArrayList<>();
         try {
-            StudyMigrator.migrate(os1InstanceName);
+            StudyMigrator.migrate(os1InstanceName, exportLogs);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyExportLogs(exportLogs);
 
         // should be onc history for OS1 only participant
         String os1DdpPtpId = os1Ptp.getDdpParticipantIdOrThrow();
@@ -182,20 +185,22 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
         // do an OS2 export
         try {
-            StudyMigrator.migrate(os2InstanceName);
+            StudyMigrator.migrate(os2InstanceName, exportLogs);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyExportLogs(exportLogs);
         verifyMigrated(os1Ptp, os2Ptp, os1BothPtp, os2BothPtp);
 
         // do another OS1 export
         try {
-            StudyMigrator.migrate(os1InstanceName);
+            StudyMigrator.migrate(os1InstanceName, exportLogs);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyExportLogs(exportLogs);
         verifyMigrated(os1Ptp, os2Ptp, os1BothPtp, os2BothPtp);
     }
 
@@ -216,6 +221,16 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         verifyKitShipping(os1DdpPtpId);
         verifyKitShipping(os2DdpPtpId);
         verifyKitShipping(os1BothDdpPtpId);
+    }
+
+    private void verifyExportLogs(List<ExportLog> exportLogs) {
+        List<ExportLog> errorLogs = exportLogs.stream()
+                .filter(log -> log.getStatus().equals(ExportLog.Status.ERROR)).toList();
+        Assert.assertEquals(0, errorLogs.size());
+
+        List<ExportLog> failureLogs = exportLogs.stream()
+                .filter(log -> log.getStatus().equals(ExportLog.Status.FAILURES)).toList();
+        Assert.assertEquals(0, failureLogs.size());
     }
 
     private void verifyCohortTags() {

@@ -16,7 +16,12 @@ import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 @Slf4j
 public class StudyMigrator {
 
-    public static void migrate(String studyName) {
+    /**
+     * Export study data to ES for a list of participants
+     *
+     * @param exportLogs  list export logs to append to (can be null if not using export logs)
+     */
+    public static void migrate(String studyName, List<ExportLog> exportLogs) {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(studyName)
                 .orElseThrow(() -> new DSMBadRequestException("DDP instance not found for study " + studyName));
         String index = ddpInstanceDto.getEsParticipantIndex();
@@ -29,7 +34,7 @@ public class StudyMigrator {
                 new OncHistoryDetailsMigrator(index, studyName),
                 new OncHistoryMigrator(index, studyName),
                 new ParticipantDataMigrator(index, studyName),
-                AdditionalParticipantMigratorFactory.of(index, studyName),
+                //!! TEMP AdditionalParticipantMigratorFactory.of(index, studyName),
                 new ParticipantMigrator(index, studyName),
                 new KitRequestShippingMigrator(index, studyName),
                 new TissueMigrator(index, studyName),
