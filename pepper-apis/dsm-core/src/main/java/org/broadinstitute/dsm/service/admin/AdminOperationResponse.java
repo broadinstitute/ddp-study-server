@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.service.admin;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -11,6 +10,7 @@ import lombok.Data;
 /**
  * Provides structure for admin operation result requests
  */
+@Data
 public class AdminOperationResponse {
 
     private List<AdminOperationResult> results;

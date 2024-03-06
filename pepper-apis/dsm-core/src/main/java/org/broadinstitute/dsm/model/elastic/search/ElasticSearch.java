@@ -20,6 +20,8 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
@@ -156,24 +158,6 @@ public class ElasticSearch implements ElasticSearchable {
         return searchHitIndex.substring(dotIndex + 1);
     }
 
-    /**
-     * returns a list of all the guids in one ES index
-     *
-     * @param esParticipantsIndex the ES index to get all participants from
-     */
-    public List<String> getAllParticipantsInIndex(String esParticipantsIndex) {
-        ElasticSearch es = getAllParticipantsDataByInstanceIndex(esParticipantsIndex);
-        List<String> participantIds = new ArrayList<>();
-        for (ElasticSearchParticipantDto elasticSearchParticipantDto : es.esParticipants) {
-            if (elasticSearchParticipantDto.getProfile().isPresent()
-                    && StringUtils.isNotBlank(elasticSearchParticipantDto.getProfile().get().getGuid())) {
-                participantIds.add(elasticSearchParticipantDto.getProfile().get().getGuid());
-            }
-        }
-        logger.info("Got {} participant ids from index (getAllParticipantsInIndex)", esParticipantsIndex);
-        return participantIds;
-    }
-
     @Override
     public ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to) {
         if (StringUtils.isBlank(esParticipantsIndex)) {
@@ -214,7 +198,6 @@ public class ElasticSearch implements ElasticSearchable {
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
         SearchResponse response;
-        logger.info("Collecting ES data from index " + esIndex);
         try {
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -247,16 +230,15 @@ public class ElasticSearch implements ElasticSearchable {
         return getParticipantsByRangeAndFilter(esParticipantsIndex, from, to, queryBuilder, null);
     }
 
-    public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder,
+    public ElasticSearch getParticipantsByRangeAndFilter(String esIndex, int from, int to, AbstractQueryBuilder queryBuilder,
                                                          String instanceName) {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data from index " + esParticipantsIndex);
+        SearchRequest searchRequest = new SearchRequest(esIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;
-            SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esParticipantsIndex));
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             //just osteo2
             if (StudyPostFilter.NEW_OSTEO_INSTANCE_NAME.equals(instanceName)) {
@@ -268,12 +250,14 @@ public class ElasticSearch implements ElasticSearchable {
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
+            // this is likely a bad query, so log it
+            logger.error("Error getting ES participants for instance %s. Query: %s".formatted(esIndex, searchRequest));
+            throw new DsmInternalError("Error getting ES participants for instance " + esIndex, e);
         }
-        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
+        List<ElasticSearchParticipantDto> participants = parseSourceMaps(response.getHits().getHits());
         logger.info("Got {} participants from ES for instance {} (getParticipantsByRangeAndFilter)",
-                esParticipants.size(), esParticipantsIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
+                participants.size(), esIndex);
+        return new ElasticSearch(participants, response.getHits().getTotalHits().value);
     }
 
     private AbstractQueryBuilder addOsteo2Filter(AbstractQueryBuilder queryBuilder) {
@@ -370,7 +354,6 @@ public class ElasticSearch implements ElasticSearchable {
         return boolQuery;
     }
 
-    @Override
     public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
         logger.info("Collecting ES data from index {} for {} legacy participant IDs",
                 esParticipantsIndex, legacyAltPids.size());

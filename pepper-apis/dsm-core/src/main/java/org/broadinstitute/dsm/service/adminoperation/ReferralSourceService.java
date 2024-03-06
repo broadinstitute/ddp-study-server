@@ -13,9 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -32,6 +29,8 @@ import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
+import org.broadinstitute.dsm.util.proxy.jackson.JsonProcessingException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
@@ -43,7 +42,6 @@ public class ReferralSourceService implements AdminOperation {
 
     private static final String RGP_REALM = "RGP";
     protected static final String NA_REF_SOURCE = "NA";
-    private static final Gson gson = new Gson();
     private String userId;
     private String esIndex;
     private Map<String, List<ParticipantData>> participantDataByPtpId;
@@ -130,7 +128,7 @@ public class ReferralSourceService implements AdminOperation {
 
         // update job log record
         try {
-            String json = gson.toJson(updateLog);
+            String json = ObjectMapperSingleton.writeValueAsString(updateLog);
             AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED, json);
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
@@ -214,22 +212,22 @@ public class ReferralSourceService implements AdminOperation {
                             .withDdpParticipantId(ddpParticipantId)
                             .withDdpInstanceId(participantData.getDdpInstanceId())
                             .withFieldTypeId(RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE)
-                            .withData(gson.toJson(props))
+                            .withData(ObjectMapperSingleton.writeValueAsString(props, false))
                             .withLastChanged(System.currentTimeMillis())
                             .withChangedBy(userId).build());
-        } catch (JsonSyntaxException | JsonIOException | ClassCastException e) {
+        } catch (JsonProcessingException | ClassCastException e) {
             throw new DsmInternalError("Invalid data format " + msg, e);
         }
         return true;
     }
 
-    protected static Map<String, String> getDataMap(ParticipantData participantData) throws JsonSyntaxException {
+    protected static Map<String, String> getDataMap(ParticipantData participantData) throws JsonParseException {
         Optional<String> data = participantData.getData();
         if (data.isEmpty() || StringUtils.isEmpty(data.get())) {
             return Collections.emptyMap();
         }
 
-        return gson.fromJson(data.get(), Map.class);
+        return ObjectMapperSingleton.readValue(data.get(), new TypeReference<Map<String, String>>() {});
     }
 
     private List<Activities> getParticipantActivities(String ddpParticipantId, String esIndex) {

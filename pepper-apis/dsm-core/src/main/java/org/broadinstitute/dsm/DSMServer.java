@@ -146,6 +146,7 @@ import org.broadinstitute.dsm.route.somaticresults.PostSomaticResultUploadRoute;
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
+import org.broadinstitute.dsm.route.util.JacksonResponseTransformer;
 import org.broadinstitute.dsm.security.Auth0Util;
 import org.broadinstitute.dsm.service.FileDownloadService;
 import org.broadinstitute.dsm.service.SomaticResultUploadService;
@@ -169,7 +170,7 @@ import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
-import org.broadinstitute.lddp.util.JsonTransformer;
+import org.broadinstitute.lddp.util.GsonResponseTransformer;
 import org.broadinstitute.lddp.util.Utility;
 import org.quartz.CronTrigger;
 import org.quartz.Job;
@@ -598,32 +599,31 @@ public class DSMServer {
         });
 
         //DSM internal routes
-        EventUtil eventUtil = new EventUtil();
         NotificationUtil notificationUtil = new NotificationUtil(cfg);
 
         setupPubSub(cfg, notificationUtil);
 
-        get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
-        get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
-        get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
+        get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new GsonResponseTransformer());
+        get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new GsonResponseTransformer());
+        get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new GsonResponseTransformer());
 
         //Juniper routes
-        post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new JsonTransformer());
+        post(DSM_ROOT + RoutePath.SHIP_KIT_ENDPOINT, new JuniperShipKitRoute(), new GsonResponseTransformer());
 
         StatusKitRoute statusKitRoute = new StatusKitRoute();
-        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new JsonTransformer());
-        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new JsonTransformer());
-        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new JsonTransformer());
-        post(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new JsonTransformer());
+        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_STUDY, statusKitRoute, new GsonResponseTransformer());
+        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_JUNIPER_KIT_ID, statusKitRoute, new GsonResponseTransformer());
+        get(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_PARTICIPANT_ID, statusKitRoute, new GsonResponseTransformer());
+        post(DSM_ROOT + RoutePath.KIT_STATUS_ENDPOINT_KIT_IDS, statusKitRoute, new GsonResponseTransformer());
 
 
         if (!cfg.getBoolean(IS_PRODUCTION)) {
             get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
-                    new JsonTransformer());
+                    new GsonResponseTransformer());
 
             get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT, new CreateClinicalDummyKitRoute(
-                    new OncHistoryDetailDaoImpl()), new JsonTransformer());
-            get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
+                    new OncHistoryDetailDaoImpl()), new GsonResponseTransformer());
+            get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new GsonResponseTransformer());
         }
 
 
@@ -633,12 +633,12 @@ public class DSMServer {
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
-        get(appRoute + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
+        get(appRoute + RoutePath.DRUG_LIST_REQUEST, drugRoute, new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.DRUG_LIST_REQUEST, drugRoute, new GsonResponseTransformer());
 
         CancerRoute cancerRoute = new CancerRoute();
-        get(appRoute + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new JsonTransformer());
+        get(appRoute + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new GsonResponseTransformer());
 
         auth0Util = new Auth0Util(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS),
@@ -677,7 +677,7 @@ public class DSMServer {
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
         );
-        post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new GsonResponseTransformer());
 
         KitUtil kitUtil = new KitUtil();
 
@@ -707,8 +707,9 @@ public class DSMServer {
         setupSomaticUploadRoutes(cfg);
 
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
-        patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new GsonResponseTransformer());
 
+        EventUtil eventUtil = new EventUtil();
         setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
 
         //TODO - redo with pubsub
@@ -721,14 +722,14 @@ public class DSMServer {
                 heapDumper.dumpHeapToBucket(gcpName + "_dsm_heapdumps");
                 return null;
             }
-        }, new JsonTransformer());
+        }, new GsonResponseTransformer());
         logger.info("Finished setting up DSM custom routes and jobs...");
     }
 
     private void setupCohortTagRoutes() {
-        post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
-        post(UI_ROOT + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new JsonTransformer());
-        delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new GsonResponseTransformer());
+        delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new GsonResponseTransformer());
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {
@@ -807,196 +808,199 @@ public class DSMServer {
 
     private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util,
                                      @NonNull String auth0Domain) {
-        get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new GsonResponseTransformer());
 
-        post(UI_ROOT + RoutePath.FINAL_SCAN_REQUEST, new KitFinalScanRoute(), new JsonTransformer());
-        post(UI_ROOT + RoutePath.RGP_FINAL_SCAN_REQUEST, new RGPKitFinalScanRoute(), new JsonTransformer());
-        post(UI_ROOT + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new JsonTransformer());
-        post(UI_ROOT + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new JsonTransformer());
-        post(UI_ROOT + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new JsonTransformer());
-        post(UI_ROOT + RoutePath.INITIAL_SCAN_REQUEST, new KitInitialScanRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.FINAL_SCAN_REQUEST, new KitFinalScanRoute(), new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.RGP_FINAL_SCAN_REQUEST, new RGPKitFinalScanRoute(), new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.INITIAL_SCAN_REQUEST, new KitInitialScanRoute(), new GsonResponseTransformer());
 
         KitDeactivationRoute kitDeactivationRoute = new KitDeactivationRoute(notificationUtil);
-        patch(UI_ROOT + RoutePath.DEACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.ACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.DEACTIVATE_KIT_REQUEST, kitDeactivationRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.ACTIVATE_KIT_REQUEST, kitDeactivationRoute, new GsonResponseTransformer());
 
-        patch(UI_ROOT + RoutePath.AUTHORIZE_KIT, new KitAuthorizationRoute(), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.AUTHORIZE_KIT, new KitAuthorizationRoute(), new GsonResponseTransformer());
 
         KitExpressRoute kitExpressRoute = new KitExpressRoute(notificationUtil);
-        get(UI_ROOT + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.EXPRESS_KIT_REQUEST, kitExpressRoute, new GsonResponseTransformer());
 
         LabelSettingRoute labelSettingRoute = new LabelSettingRoute();
-        get(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new GsonResponseTransformer());
 
-        post(UI_ROOT + RoutePath.KIT_UPLOAD_REQUEST, new KitUploadRoute(notificationUtil), new JsonTransformer());
+        post(UI_ROOT + RoutePath.KIT_UPLOAD_REQUEST, new KitUploadRoute(notificationUtil), new GsonResponseTransformer());
 
         KitLabelRoute kitLabelRoute = new KitLabelRoute();
-        get(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new GsonResponseTransformer());
 
-        get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new GsonResponseTransformer());
 
         KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, auth0Domain);
-        get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.DISCARD_SHOW_UPLOAD, kitDiscardRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.DISCARD_CONFIRM, kitDiscardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.DISCARD_SHOW_UPLOAD, kitDiscardRoute, new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.DISCARD_CONFIRM, kitDiscardRoute, new GsonResponseTransformer());
     }
 
     //Routes used by medical record
     private void setupMedicalRecordRoutes(@NonNull Config cfg, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
         //Medical Record
-        get(UI_ROOT + RoutePath.ASSIGNEE_REQUEST, new AssigneeRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.ASSIGNEE_REQUEST, new AssigneeRoute(), new GsonResponseTransformer());
 
         InstitutionRoute institutionRoute = new InstitutionRoute();
-        post(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new GsonResponseTransformer());
 
         DownloadPDFRoute pdfRoute = new DownloadPDFRoute();
-        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.BUNDLE, pdfRoute, new JsonTransformer());
-        get(UI_ROOT + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.PDF, pdfRoute, new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.BUNDLE, pdfRoute, new GsonResponseTransformer());
+        get(UI_ROOT + DownloadPDFRoute.PDF, pdfRoute, new GsonResponseTransformer());
 
         patch(UI_ROOT + RoutePath.ASSIGN_PARTICIPANT_REQUEST,
                 new AssignParticipantRoute(cfg.getString(ApplicationConfigConstants.GET_DDP_PARTICIPANT_ID),
-                        cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil), new JsonTransformer());
+                        cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil),
+                new GsonResponseTransformer());
 
         ViewFilterRoute viewFilterRoute = new ViewFilterRoute(patchUtil);
         //gets filter names for user for this realm (shared filters and user's filters
-        get(UI_ROOT + RoutePath.GET_FILTERS, viewFilterRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.GET_DEFAULT_FILTERS, viewFilterRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_FILTERS, viewFilterRoute, new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.GET_DEFAULT_FILTERS, viewFilterRoute, new GsonResponseTransformer());
         //saves the current Filter Parameters with a name for future use
-        patch(UI_ROOT + RoutePath.SAVE_FILTER, viewFilterRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.FILTER_DEFAULT, viewFilterRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.SAVE_FILTER, viewFilterRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.FILTER_DEFAULT, viewFilterRoute, new GsonResponseTransformer());
 
         FilterRoute filterRoute = new FilterRoute();
         //returns List[] that is filtered based on the filterName
-        get(UI_ROOT + RoutePath.APPLY_FILTER, filterRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.FILTER_LIST, filterRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.APPLY_FILTER, filterRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.FILTER_LIST, filterRoute, new GsonResponseTransformer());
         //gets the participant to go to the tissue that was clicked on
-        get(UI_ROOT + RoutePath.GET_PARTICIPANT, new GetParticipantRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_PARTICIPANT, new GetParticipantRoute(), new GsonResponseTransformer());
 
         MedicalRecordLogRoute medicalRecordLogRoute = new MedicalRecordLogRoute();
-        get(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new GsonResponseTransformer());
 
-        get(UI_ROOT + RoutePath.LOOKUP, new LookupRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.LOOKUP, new LookupRoute(), new GsonResponseTransformer());
 
         FieldSettingsRoute fieldSettingsRoute = new FieldSettingsRoute();
-        get(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new GsonResponseTransformer());
 
-        get(UI_ROOT + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new JsonTransformer());
+        get(UI_ROOT + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new GsonResponseTransformer());
 
         post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
-        post(UI_ROOT + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.ONC_HISTORY_ROUTE, new OncHistoryUploadRoute(), new GsonResponseTransformer());
 
         get(UI_ROOT + RoutePath.ONC_HISTORY_TEMPLATE_ROUTE, new OncHistoryTemplateRoute());
     }
 
     private void setupMRAbstractionRoutes() {
         AbstractionFormControlRoute abstractionFormControlRoute = new AbstractionFormControlRoute();
-        get(UI_ROOT + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.ABSTRACTION_FORM_CONTROLS, abstractionFormControlRoute, new GsonResponseTransformer());
 
-        post(UI_ROOT + RoutePath.ABSTRACTION, new AbstractionRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.ABSTRACTION, new AbstractionRoute(), new GsonResponseTransformer());
     }
 
     private void setupMiscellaneousRoutes() {
         get(UI_ROOT + RoutePath.PHI_MANIFEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new PhiManifestReportRoute(),
-                new JsonTransformer());
+                new GsonResponseTransformer());
         MailingListRoute mailingListRoute = new MailingListRoute();
         get(UI_ROOT + RoutePath.MAILING_LIST_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, mailingListRoute,
-                new JsonTransformer());
+                new GsonResponseTransformer());
 
         ParticipantExitRoute participantExitRoute = new ParticipantExitRoute();
         get(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantExitRoute,
-                new JsonTransformer());
-        post(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST, participantExitRoute, new JsonTransformer());
+                new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST, participantExitRoute, new GsonResponseTransformer());
 
         TriggerSurveyRoute triggerSurveyRoute = new TriggerSurveyRoute();
         get(UI_ROOT + RoutePath.TRIGGER_SURVEY + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, triggerSurveyRoute,
-                new JsonTransformer());
-        post(UI_ROOT + RoutePath.TRIGGER_SURVEY, triggerSurveyRoute, new JsonTransformer());
+                new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.TRIGGER_SURVEY, triggerSurveyRoute, new GsonResponseTransformer());
 
         get(UI_ROOT + RoutePath.EVENT_TYPES + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new EventTypeRoute(),
-                new JsonTransformer());
+                new GsonResponseTransformer());
 
         ParticipantEventRoute participantEventRoute = new ParticipantEventRoute();
         get(UI_ROOT + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantEventRoute,
-                new JsonTransformer());
-        post(UI_ROOT + RoutePath.SKIP_PARTICIPANT_EVENTS, participantEventRoute, new JsonTransformer());
+                new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.SKIP_PARTICIPANT_EVENTS, participantEventRoute, new GsonResponseTransformer());
 
-        post(UI_ROOT + RoutePath.NDI_REQUEST, new NDIRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.NDI_REQUEST, new NDIRoute(), new GsonResponseTransformer());
 
         DrugListRoute drugListRoute = new DrugListRoute();
-        get(UI_ROOT + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new GsonResponseTransformer());
+        patch(UI_ROOT + RoutePath.FULL_DRUG_LIST_REQUEST, drugListRoute, new GsonResponseTransformer());
 
         AddFamilyMemberRoute addFamilyMemberRoute = new AddFamilyMemberRoute();
-        post(UI_ROOT + RoutePath.ADD_FAMILY_MEMBER, addFamilyMemberRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.ADD_FAMILY_MEMBER, addFamilyMemberRoute, new GsonResponseTransformer());
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
-        get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new GsonResponseTransformer());
     }
 
     private void setupAdminRoutes() {
         StudyRoleRoute studyRoleRoute = new StudyRoleRoute();
-        get(UI_ROOT + RoutePath.STUDY_ROLE, studyRoleRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.STUDY_ROLE, studyRoleRoute, new GsonResponseTransformer());
 
         UserRoleRoute userRoleRoute = new UserRoleRoute();
-        get(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
-        put(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new GsonResponseTransformer());
+        put(UI_ROOT + RoutePath.USER_ROLE, userRoleRoute, new GsonResponseTransformer());
 
         UserRoute userRoute = new UserRoute();
-        post(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
-        put(UI_ROOT + RoutePath.USER, userRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.USER, userRoute, new GsonResponseTransformer());
+        put(UI_ROOT + RoutePath.USER, userRoute, new GsonResponseTransformer());
 
         AdminOperationRoute adminOperationRoute = new AdminOperationRoute();
-        post(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JacksonResponseTransformer());
+        get(UI_ROOT + RoutePath.ADMIN_OPERATION, adminOperationRoute, new JacksonResponseTransformer());
     }
 
 
     private void setupSomaticUploadRoutes(@NonNull Config cfg) {
         SomaticResultUploadService somaticResultUploadService = SomaticResultUploadService.fromConfig(cfg);
         post(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE,
-                new PostSomaticResultUploadRoute(somaticResultUploadService), new JsonTransformer());
-        delete(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService), new JsonTransformer());
+                new PostSomaticResultUploadRoute(somaticResultUploadService), new GsonResponseTransformer());
+        delete(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE, new DeleteSomaticResultRoute(somaticResultUploadService),
+                new GsonResponseTransformer());
         get(UI_ROOT + RoutePath.SOMATIC_DOCUMENT_ROUTE,
-                new GetSomaticResultsRoute(somaticResultUploadService), new JsonTransformer());
+                new GetSomaticResultsRoute(somaticResultUploadService), new GsonResponseTransformer());
         post(UI_ROOT + RoutePath.TRIGGER_SOMATIC_SURVEY,
-                new TriggerSomaticResultSurveyRoute(somaticResultUploadService), new JsonTransformer());
+                new TriggerSomaticResultSurveyRoute(somaticResultUploadService), new GsonResponseTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
         DashboardRoute dashboardRoute = new DashboardRoute(kitUtil);
-        get(UI_ROOT + RoutePath.DASHBOARD_REQUEST, dashboardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.DASHBOARD_REQUEST, dashboardRoute, new GsonResponseTransformer());
         get(UI_ROOT + RoutePath.DASHBOARD_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
-                + RequestParameter.END, dashboardRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST, dashboardRoute, new JsonTransformer());
+                + RequestParameter.END, dashboardRoute, new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST, dashboardRoute, new GsonResponseTransformer());
         get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
-                + RequestParameter.END, dashboardRoute, new JsonTransformer());
+                + RequestParameter.END, dashboardRoute, new GsonResponseTransformer());
 
         AllowedRealmsRoute allowedRealmsRoute = new AllowedRealmsRoute();
-        get(UI_ROOT + RoutePath.ALLOWED_REALMS_REQUEST, allowedRealmsRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.STUDIES, allowedRealmsRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.ALLOWED_REALMS_REQUEST, allowedRealmsRoute, new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.STUDIES, allowedRealmsRoute, new GsonResponseTransformer());
 
         KitTypeRoute kitTypeRoute = new KitTypeRoute(kitUtil);
         get(UI_ROOT + RoutePath.KIT_TYPES_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
-                new JsonTransformer());
-        get(UI_ROOT + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute, new JsonTransformer());
+                new GsonResponseTransformer());
+        get(UI_ROOT + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
+                new GsonResponseTransformer());
         get(UI_ROOT + RoutePath.CARRIERS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new CarrierServiceRoute(),
-                new JsonTransformer());
+                new GsonResponseTransformer());
 
-        patch(UI_ROOT + RoutePath.PATCH, new PatchRoute(notificationUtil, patchUtil), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.PATCH, new PatchRoute(notificationUtil, patchUtil), new GsonResponseTransformer());
 
-        get(UI_ROOT + RoutePath.DASHBOARD, new NewDashboardRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.DASHBOARD, new NewDashboardRoute(), new GsonResponseTransformer());
     }
 
     private void setupPubSubPublisherRoutes(Config config) {
@@ -1004,29 +1008,30 @@ public class DSMServer {
         String dsmToDssTopicId = config.getString(GCP_PATH_DSM_DSS_TOPIC);
 
         EditParticipantPublisherRoute editParticipantPublisherRoute = new EditParticipantPublisherRoute(projectId, dsmToDssTopicId);
-        put(UI_ROOT + RoutePath.EDIT_PARTICIPANT, editParticipantPublisherRoute, new JsonTransformer());
+        put(UI_ROOT + RoutePath.EDIT_PARTICIPANT, editParticipantPublisherRoute, new GsonResponseTransformer());
 
         EditParticipantMessageReceiverRoute editParticipantMessageReceiverRoute = new EditParticipantMessageReceiverRoute();
-        get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new GsonResponseTransformer());
 
         String mercuryTopicId = config.getString(GCP_PATH_DSM_MERCURY_TOPIC);
         if (!config.getBoolean(IS_PRODUCTION)) {
             PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
-            post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+            post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new GsonResponseTransformer());
         }
 
         FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
-        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
+        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService),
+                new GsonResponseTransformer());
 
-        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
+        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new GsonResponseTransformer());
 
         GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(
                 new MercurySampleDao(), projectId, mercuryTopicId, new KitDao());
-        get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new GsonResponseTransformer());
 
         GetMercuryOrdersRoute getMercuryOrdersRoute = new GetMercuryOrdersRoute(
                 new MercurySampleDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
-        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new GsonResponseTransformer());
 
     }
 

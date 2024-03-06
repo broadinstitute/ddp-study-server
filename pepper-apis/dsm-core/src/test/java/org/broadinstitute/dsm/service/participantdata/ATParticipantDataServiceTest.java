@@ -1,10 +1,10 @@
-package org.broadinstitute.dsm.model.defaultvalues;
+package org.broadinstitute.dsm.service.participantdata;
 
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.AT_PARTICIPANT_EXIT;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.EXIT_STATUS;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_CPT_ID;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOME_STUDY_FIELD_TYPE;
-import static org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues.GENOMIC_ID_PREFIX;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_GROUP_GENOME_STUDY;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.AT_PARTICIPANT_EXIT;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.EXIT_STATUS;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.GENOME_STUDY_CPT_ID;
+import static org.broadinstitute.dsm.service.participantdata.ATParticipantDataService.GENOMIC_ID_PREFIX;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 @Slf4j
-public class ATDefaultValuesTest extends DbAndElasticBaseTest {
+public class ATParticipantDataServiceTest extends DbAndElasticBaseTest {
     private static final String instanceName = "atdefault";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
@@ -44,7 +44,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void setup() throws Exception {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/atcpMappings.json",
-        "elastic/atcpSettings.json");
+                "elastic/atcpSettings.json");
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
     }
 
@@ -71,38 +71,31 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
     @Test
     public void isSelfOrDependentParticipant() {
-        ATDefaultValues defaultValues = new ATDefaultValues();
-
         Activities esActivities = new Activities();
-        esActivities.setActivityCode(ATDefaultValues.ACTIVITY_CODE_REGISTRATION);
-        esActivities.setStatus(ATDefaultValues.COMPLETE);
+        esActivities.setActivityCode(ATParticipantDataService.ACTIVITY_CODE_REGISTRATION);
+        esActivities.setStatus(ATParticipantDataService.ACTIVITY_COMPLETE);
 
         Activities esActivities2 = new Activities();
-        esActivities2.setActivityCode(ATDefaultValues.ACTIVITY_CODE_REGISTRATION);
-        esActivities2.setStatus(ATDefaultValues.COMPLETE);
+        esActivities2.setActivityCode(ATParticipantDataService.ACTIVITY_CODE_REGISTRATION);
+        esActivities2.setStatus(ATParticipantDataService.ACTIVITY_COMPLETE);
 
         ElasticSearchParticipantDto participantDto = new ElasticSearchParticipantDto.Builder()
                 .withActivities(List.of(esActivities))
                 .build();
-
-        defaultValues.elasticSearchParticipantDto = participantDto;
-
-        Assert.assertTrue(defaultValues.isParticipantRegistrationComplete());
+        Assert.assertTrue(ATParticipantDataService.isParticipantRegistrationComplete(participantDto));
 
         participantDto.setActivities(List.of(esActivities2));
-
-        Assert.assertTrue(defaultValues.isParticipantRegistrationComplete());
+        Assert.assertTrue(ATParticipantDataService.isParticipantRegistrationComplete(participantDto));
     }
 
     @Test
     public void testSetDefaultValuesExceptionMessageWhenParticipantIdNotFound() {
         String nonexistentParticipantId = "NOT_REAL_ID";
-        ATDefaultValues atDefaultValues = new ATDefaultValues();
         try {
-            atDefaultValues.generateDefaults(instanceName, nonexistentParticipantId);
+            ATParticipantDataService.generateDefaultData(instanceName, nonexistentParticipantId);
         } catch (ESMissingParticipantDataException e) {
             Assert.assertTrue(String.format("Error message should include the queried participant id %s.  The "
-                    + "message given is %s", nonexistentParticipantId, e.getMessage()),
+                            + "message given is %s", nonexistentParticipantId, e.getMessage()),
                     e.getMessage().toUpperCase().contains("PARTICIPANT " + nonexistentParticipantId));
         }
     }
@@ -111,9 +104,8 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
     public void testSetDefaultValues() {
         ParticipantDto participant = createParticipant();
         String ddpParticipantId = participant.getRequiredDdpParticipantId();
-        ATDefaultValues atDefaultValues = new ATDefaultValues();
         try {
-            atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
+            ATParticipantDataService.generateDefaultData(instanceName, ddpParticipantId);
             Assert.fail("Should throw an exception when no ptp activities in ES");
         } catch (Exception e) {
             Assert.assertTrue(e instanceof ESMissingParticipantDataException);
@@ -126,7 +118,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
         fieldSettingsIds.add(fieldSettingsId);
 
         try {
-            boolean updated = atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
+            boolean updated = ATParticipantDataService.generateDefaultData(instanceName, ddpParticipantId);
             Assert.assertTrue(updated);
         } catch (Exception e) {
             e.printStackTrace();
@@ -138,11 +130,11 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
         try {
             // should not create additional genomic ids or exit statues
-            boolean updated = atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
+            boolean updated = ATParticipantDataService.generateDefaultData(instanceName, ddpParticipantId);
             Assert.assertFalse(updated);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Exception from generateDefaults: " + e.getMessage());
+            Assert.fail("Exception from generateDefaultData: " + e.getMessage());
         }
 
         verifyDefaultParticipantData(ddpParticipantId);
@@ -170,7 +162,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
             t2.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            Assert.fail("InterruptedException from generateDefaults: " + e.getMessage());
+            Assert.fail("InterruptedException from generateDefaultData: " + e.getMessage());
         }
 
         verifyDefaultParticipantData(ddpParticipantId);
@@ -194,7 +186,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
             Map<String, String> dataMap = ptpData.getDataMap();
             if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
                 Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
-            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
+            } else if (fieldType.equals(AT_GROUP_GENOME_STUDY)) {
                 Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
             } else {
                 Assert.fail("Unexpected field type: " + fieldType);
@@ -219,7 +211,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
             if (fieldType.equals(AT_PARTICIPANT_EXIT)) {
                 Assert.assertEquals("0", dataMap.get(EXIT_STATUS));
-            } else if (fieldType.equals(GENOME_STUDY_FIELD_TYPE)) {
+            } else if (fieldType.equals(AT_GROUP_GENOME_STUDY)) {
                 Assert.assertTrue(dataMap.get(GENOME_STUDY_CPT_ID).startsWith(GENOMIC_ID_PREFIX));
             } else {
                 Assert.fail("Unexpected field type: " + fieldType);
@@ -238,8 +230,7 @@ public class ATDefaultValuesTest extends DbAndElasticBaseTest {
 
         public void run() {
             try {
-                ATDefaultValues atDefaultValues = new ATDefaultValues();
-                atDefaultValues.generateDefaults(instanceName, ddpParticipantId);
+                ATParticipantDataService.generateDefaultData(instanceName, ddpParticipantId);
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error calling generateDefaults for {}", ddpParticipantId, e);

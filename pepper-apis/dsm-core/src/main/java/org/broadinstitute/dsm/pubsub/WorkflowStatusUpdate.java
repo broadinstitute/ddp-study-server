@@ -4,7 +4,6 @@ import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,10 +22,10 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
+import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
+import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -95,8 +94,7 @@ public class WorkflowStatusUpdate {
         if (isATStudy(studyGuid)) {
             log.info("Generating default values for ATCP participant: {}, workflow: {}, status: {}", ddpParticipantId,
                     workflow, status);
-            ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
-            basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
+            ATParticipantDataService.generateDefaultData(studyGuid, ddpParticipantId);
         }
     }
 
@@ -138,7 +136,7 @@ public class WorkflowStatusUpdate {
         }
 
         exportWorkflowToES(workflow, status, ddpParticipantId, instance, setting, participantDataList);
-        updateEsParticipantData(ddpParticipantId, instance);
+        ParticipantDataService.updateEsParticipantData(ddpParticipantId, instance);
     }
 
     private static boolean isATStudy(String studyGuid) {
@@ -257,30 +255,6 @@ public class WorkflowStatusUpdate {
             throw new DsmInternalError(String.format("Error updating participant data for participant %s in study %s",
                     participantId, studyGuid), e);
         }
-    }
-
-    // TODO: this deserves a better home but do not want to mix it with other ES util code until we clean that up -DC
-    /**
-     * Update ParticipantData entities in ElasticSearch based on participantData in the database
-     */
-    public static void updateEsParticipantData(String ddpParticipantId, DDPInstance instance) {
-        updateEsParticipantData(ddpParticipantId,
-                participantDataDao.getParticipantData(ddpParticipantId), instance);
-    }
-
-    /**
-     * Update ParticipantData entities in ElasticSearch based on participantData list provided.
-     * Note that participantDataList should be a list of ALL participant data for the participant.
-     */
-    public static void updateEsParticipantData(String ddpParticipantId, List<ParticipantData> participantDataList,
-                                               DDPInstance instance) {
-        ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
-        List<Map<String, Object>> transformedList =
-                objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
-        ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(),
-                new HashMap<>(Map.of(ESObjectConstants.DSM,
-                        new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
-        log.info("Updated DSM participantData in Elastic for {}", ddpParticipantId);
     }
 
     private static class WorkflowPayload {
