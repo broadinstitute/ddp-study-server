@@ -1,5 +1,5 @@
 service: pepper-api-spec
-runtime: python37
+runtime: python312
 
 # This setting will not matter except to prevent default automatic-scaling which prevents disabling
 # earlier versions of this service
