@@ -68,6 +68,7 @@ import org.jdbi.v3.core.Handle;
 @Slf4j
 public class UserDeleteService {
     private static final String REQUEST_TYPE = "_doc";
+    private static final String CMI_OSTEO = "CMI-OSTEO";
 
     private final RestHighLevelClient esClient;
 
@@ -75,6 +76,7 @@ public class UserDeleteService {
     private static final String LOG_MESSAGE_PREFIX__DELETE_FROM_TABLE = USER_DELETION_MESSAGE_PREFIX + ". From table(s): ";
     private static final String LOG_MESSAGE_PREFIX__DELETE_FROM_ES = USER_DELETION_MESSAGE_PREFIX + ". From ES indices: ";
     private static final String LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH = USER_DELETION_MESSAGE_PREFIX + ". Auth0 data";
+    private static final String CMI_OSTEO2_INDEX = "participants_structured.cmi.cmi-osteo2";
 
     private static final String EXCEPTION_MESSAGE_PREFIX__ERROR = "User [guid=%s] deletion is FAILED: ";
 
@@ -348,6 +350,14 @@ public class UserDeleteService {
                         .index(indexParticipantStructured)
                         .type(REQUEST_TYPE)
                         .id(user.getGuid()));
+
+                //if Osteo.. delete from Osteo2 index too
+                if (studyDto.getGuid().equalsIgnoreCase(CMI_OSTEO)) {
+                    bulkRequest.add(new DeleteRequest()
+                            .index(CMI_OSTEO2_INDEX)
+                            .type(REQUEST_TYPE)
+                            .id(user.getGuid()));
+                }
 
                 bulkRequest.add(new DeleteRequest()
                         .index(indexUsers)
