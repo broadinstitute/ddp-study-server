@@ -25,4 +25,9 @@ public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
                 recordsFromRealm, realm, records.size() - recordsFromRealm);
         return (Map) records;
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.ONC_HISTORY_DETAIL_ID;
+    }
 }

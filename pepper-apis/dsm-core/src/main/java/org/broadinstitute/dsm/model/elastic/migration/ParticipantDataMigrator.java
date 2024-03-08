@@ -22,4 +22,9 @@ public class ParticipantDataMigrator extends BaseCollectionMigrator {
         Map<String, List<ParticipantData>> participantDataByRealm = participantDataDao.getParticipantDataByRealm(realm);
         return (Map) participantDataByRealm;
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.PARTICIPANT_DATA_ID;
+    }
 }

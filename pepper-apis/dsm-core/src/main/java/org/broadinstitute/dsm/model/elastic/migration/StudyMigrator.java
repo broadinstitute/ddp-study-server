@@ -1,16 +1,18 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 
 @Slf4j
@@ -27,14 +29,16 @@ public class StudyMigrator {
         String index = ddpInstanceDto.getEsParticipantIndex();
 
         log.info("Starting migration of DSM data to ES index {} for study {}", index, studyName);
-        List<? extends Exportable> exportables = Arrays.asList(
-                //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
-                new DynamicFieldsMappingMigrator(index, studyName),
+        DynamicFieldsMappingMigrator dynamicFieldsMigrator = new DynamicFieldsMappingMigrator(index, studyName);
+        dynamicFieldsMigrator.export();
+
+        // TODO: use getMigators once this list is adjusted.  -DC
+        List<? extends BaseMigrator> exportables = Arrays.asList(
                 new MedicalRecordMigrator(index, studyName),
                 new OncHistoryDetailsMigrator(index, studyName),
                 new OncHistoryMigrator(index, studyName),
                 new ParticipantDataMigrator(index, studyName),
-                //!! TEMP AdditionalParticipantMigratorFactory.of(index, studyName),
+                AdditionalParticipantMigratorFactory.of(index, studyName),
                 new ParticipantMigrator(index, studyName),
                 new KitRequestShippingMigrator(index, studyName),
                 new TissueMigrator(index, studyName),
@@ -42,7 +46,12 @@ public class StudyMigrator {
                 new CohortTagMigrator(index, studyName, new CohortTagDaoImpl()),
                 new ClinicalOrderMigrator(index, studyName, new ClinicalOrderDao()),
                 new SomaticResultMigrator(index, studyName));
-        exportables.forEach(Exportable::export);
+        // TODO: A bit hacky but temporary -DC
+        if (exportLogs == null) {
+            exportables.forEach(BaseMigrator::export);
+        } else {
+            exportables.forEach(migrator -> migrator.export(exportLogs));
+        }
         log.info("Finished migration of DSM data to ES index {} for study {}", index, studyName);
     }
 
@@ -68,20 +77,46 @@ public class StudyMigrator {
 
         log.info("Migrating DSM data for {} participants to ES index {} for study {}",
                 ddpParticipantIds.size(), index, studyName);
-        List<? extends BaseMigrator> exportables = Arrays.asList(
-                new MedicalRecordMigrator(index, studyName),
-                new OncHistoryDetailsMigrator(index, studyName),
-                new OncHistoryMigrator(index, studyName),
-                new ParticipantDataMigrator(index, studyName),
-                new ParticipantMigrator(index, studyName),
-                new KitRequestShippingMigrator(index, studyName),
-                new TissueMigrator(index, studyName),
-                new SMIDMigrator(index, studyName),
-                new CohortTagMigrator(index, studyName, new CohortTagDaoImpl()),
-                new ClinicalOrderMigrator(index, studyName, new ClinicalOrderDao()),
-                new SomaticResultMigrator(index, studyName));
-        exportables.forEach(migrator -> migrator.exportParticipants(ddpParticipantIds, exportLogs));
+        getMigrators(index, studyName).forEach(migrator -> migrator.exportParticipants(ddpParticipantIds, exportLogs));
         log.info("Finished migrating DSM data for {} participants to ES index {} for study {}",
                 ddpParticipantIds.size(), index, studyName);
+    }
+
+    /**
+     * Verify DSM ES data for a realm/index
+     *
+     * @param ddpParticipantIds list of participant IDs to verify for (if empty, verify all participants)
+     * @param ptpToEsData ES DSM participant data by participant ID
+     * @param verifyFields true if differences in record fields should be logged
+     */
+    public static List<VerificationLog> verifyParticipants(List<String> ddpParticipantIds,
+                                                           Map<String, Map<String, Object>> ptpToEsData,
+                                                           DDPInstance ddpInstance, boolean verifyFields) {
+        String index = ddpInstance.getParticipantIndexES();
+        log.info("Verifying DSM data for {} participants in ES index {}",
+                ddpParticipantIds.isEmpty() ? "all" : ddpParticipantIds.size(), index);
+
+        List<VerificationLog> verificationLogs = new ArrayList<>();
+        getMigrators(index, ddpInstance.getName()).forEach(migrator ->
+                migrator.verifyParticipants(ddpParticipantIds, ptpToEsData, verificationLogs, verifyFields));
+
+        log.info("Finished verifying DSM data in ES index {}", index);
+        return verificationLogs;
+    }
+
+    private static List<? extends BaseMigrator> getMigrators(String index, String realm) {
+        return Arrays.asList(
+            new MedicalRecordMigrator(index, realm),
+            new OncHistoryDetailsMigrator(index, realm),
+            new OncHistoryMigrator(index, realm),
+            new ParticipantDataMigrator(index, realm),
+            new ParticipantMigrator(index, realm),
+            new KitRequestShippingMigrator(index, realm),
+            new TissueMigrator(index, realm),
+            new SMIDMigrator(index, realm),
+            new CohortTagMigrator(index, realm, new CohortTagDaoImpl()),
+            new ClinicalOrderMigrator(index, realm, new ClinicalOrderDao()),
+            new SomaticResultMigrator(index, realm)
+        );
     }
 }

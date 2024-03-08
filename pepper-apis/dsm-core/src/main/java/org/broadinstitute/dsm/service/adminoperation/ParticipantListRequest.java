@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.service.adminoperation;
 
 import java.util.List;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;

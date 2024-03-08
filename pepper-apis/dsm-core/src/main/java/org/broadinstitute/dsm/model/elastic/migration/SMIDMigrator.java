@@ -15,4 +15,9 @@ public class SMIDMigrator extends BaseCollectionMigrator {
     protected Map<String, Object> getDataByRealm() {
         return (Map) new TissueSMIDDao().getSmIdsByParticipantByStudy(realm);
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.SMID_PK;
+    }
 }

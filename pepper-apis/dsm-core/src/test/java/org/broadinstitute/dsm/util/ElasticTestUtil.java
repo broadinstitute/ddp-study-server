@@ -310,4 +310,13 @@ public class ElasticTestUtil {
     public static void addActivities(String esIndex, String ddpParticipantId, String activitiesJson) {
         ElasticSearchUtil.updateParticipant(ddpParticipantId, esIndex, activitiesJson);
     }
+
+    /**
+     * Remove a field from an existing DSM entity for a participant
+     */
+    public static void removeDsmField(String esIndex, String ddpParticipantId, String field) {
+        String script = String.format("ctx._source.dsm.remove('%s')", field);
+        UpsertPainless upsert = new UpsertPainless(esIndex, QueryBuilders.termsQuery("_id", ddpParticipantId));
+        upsert.export(script, Map.of(), field);
+    }
 }

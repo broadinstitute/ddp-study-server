@@ -17,4 +17,9 @@ public class SomaticResultMigrator extends BaseCollectionMigrator {
         Map<String, List<SomaticResultUpload>> somaticDocuments = SomaticResultUpload.getSomaticFileUploadDocuments(realm);
         return (Map) somaticDocuments;
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.SOMATIC_DOCUMENT_ID;
+    }
 }

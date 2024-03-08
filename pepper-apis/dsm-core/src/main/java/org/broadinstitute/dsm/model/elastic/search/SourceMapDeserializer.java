@@ -22,35 +22,41 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 public class SourceMapDeserializer implements Deserializer {
 
     private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
-    String outerProperty;
 
+    /**
+     * Deserialize a full ES participant document source map into an ElasticSearchParticipantDto
+     */
     public Optional<ElasticSearchParticipantDto> deserialize(Map<String, Object> sourceMap) {
         Map<String, Object> dsmLevel = (Map<String, Object>) sourceMap.get(ESObjectConstants.DSM);
-
-        if (Objects.isNull(dsmLevel)) {
-            return Optional.of(ObjectMapperSingleton.instance().convertValue(sourceMap, ElasticSearchParticipantDto.class));
-        }
-
-        Map<String, Object> updatedPropertySourceMap = updatePropertySourceMapIfSpecialCases(dsmLevel);
-        if (!updatedPropertySourceMap.isEmpty()) {
-            dsmLevel.putAll(updatedPropertySourceMap);
+        if (dsmLevel != null) {
+            transformDsmSourceMap(dsmLevel);
         }
 
         return Optional.of(ObjectMapperSingleton.instance().convertValue(sourceMap, ElasticSearchParticipantDto.class));
     }
 
+    /**
+     * Transforms DSM portion of ES source map to handle dynamic fields and other special cases, if needed
+     */
+    public void transformDsmSourceMap(Map<String, Object> sourceMap) {
+        Map<String, Object> updatedPropertySourceMap = updatePropertySourceMapIfSpecialCases(sourceMap);
+        if (!updatedPropertySourceMap.isEmpty()) {
+            sourceMap.putAll(updatedPropertySourceMap);
+        }
+    }
+
     private Map<String, Object> updatePropertySourceMapIfSpecialCases(Map<String, Object> dsmLevel) {
-        Map<String, Object> updatedPropertySourceMap = new HashMap<String, Object>();
+        Map<String, Object> updatedPropertySourceMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : dsmLevel.entrySet()) {
-            outerProperty = entry.getKey();
+            String outerProperty = entry.getKey();
             Object outerPropertyValue = entry.getValue();
             if (!hasSpecialCases(outerProperty)) {
                 continue;
             }
             if (outerPropertyValue instanceof List) {
                 List<Map<String, Object>> outerPropertyValues = (List<Map<String, Object>>) outerPropertyValue;
-                List<Map<String, Object>> updatedOuterPropertyValues = handleSpecialCases(outerPropertyValues);
-                ;
+                List<Map<String, Object>> updatedOuterPropertyValues =
+                        handleSpecialCases(outerPropertyValues, outerProperty);
                 if (!updatedOuterPropertyValues.isEmpty()) {
                     updatedPropertySourceMap.put(outerProperty, updatedOuterPropertyValues);
                 }
@@ -59,7 +65,7 @@ public class SourceMapDeserializer implements Deserializer {
                 Map<String, Object> updatedSingleOuterPropertyValue = new HashMap<>(singleOuterPropertyValue);
                 if (singleOuterPropertyValue.containsKey(ESObjectConstants.DYNAMIC_FIELDS)) {
                     updatedSingleOuterPropertyValue.put(ESObjectConstants.DYNAMIC_FIELDS,
-                            getDynamicFieldsValueAsJson(updatedSingleOuterPropertyValue));
+                            getDynamicFieldsValueAsJson(updatedSingleOuterPropertyValue, outerProperty));
                 }
 
                 updatedPropertySourceMap.put(outerProperty, updatedSingleOuterPropertyValue);
@@ -68,12 +74,13 @@ public class SourceMapDeserializer implements Deserializer {
         return updatedPropertySourceMap;
     }
 
-    private List<Map<String, Object>> handleSpecialCases(List<Map<String, Object>> outerPropertyValues) {
+    private List<Map<String, Object>> handleSpecialCases(List<Map<String, Object>> outerPropertyValues,
+                                                         String outerProperty) {
         List<Map<String, Object>> updatedOuterPropertyValues = new ArrayList<>();
         for (Map<String, Object> object : outerPropertyValues) {
             Map<String, Object> clonedMap = new HashMap<>(object);
             if (object.containsKey(ESObjectConstants.DYNAMIC_FIELDS)) {
-                clonedMap.put(ESObjectConstants.DYNAMIC_FIELDS, getDynamicFieldsValueAsJson(clonedMap));
+                clonedMap.put(ESObjectConstants.DYNAMIC_FIELDS, getDynamicFieldsValueAsJson(clonedMap, outerProperty));
             }
             if (object.containsKey(ESObjectConstants.FOLLOW_UPS)) {
                 clonedMap.put(ESObjectConstants.FOLLOW_UPS, convertFollowUpsJsonToList(clonedMap));
@@ -86,13 +93,13 @@ public class SourceMapDeserializer implements Deserializer {
         return updatedOuterPropertyValues;
     }
 
-    private List<Map<String, Object>> convertFollowUpsJsonToList(Map<String, Object> clonedMap) {
+    private static List<Map<String, Object>> convertFollowUpsJsonToList(Map<String, Object> clonedMap) {
         String followUps = (String) clonedMap.get(ESObjectConstants.FOLLOW_UPS);
-        return ObjectMapperSingleton.readValue(followUps, new TypeReference<List<Map<String, Object>>>() {
+        return ObjectMapperSingleton.readValue(followUps, new TypeReference<>() {
         });
     }
 
-    String getDynamicFieldsValueAsJson(Map<String, Object> clonedMap) {
+    protected String getDynamicFieldsValueAsJson(Map<String, Object> clonedMap, String outerProperty) {
         Map<String, Object> dynamicFields = (Map<String, Object>) clonedMap.get(ESObjectConstants.DYNAMIC_FIELDS);
         if (ESObjectConstants.PARTICIPANT_DATA.equals(outerProperty)) {
             dynamicFields = convertDynamicFieldsFromCamelCaseToPascalCase(dynamicFields);
@@ -100,7 +107,7 @@ public class SourceMapDeserializer implements Deserializer {
         return ObjectMapperSingleton.writeValueAsString(dynamicFields);
     }
 
-    String convertTestResultValueAsJson(Map<String, Object> clonedMap) {
+    protected static String convertTestResultValueAsJson(Map<String, Object> clonedMap) {
         return ObjectMapperSingleton.writeValueAsString(clonedMap.get(ESObjectConstants.KIT_TEST_RESULT));
     }
 
@@ -114,14 +121,14 @@ public class SourceMapDeserializer implements Deserializer {
     }
 
 
-    public String camelCaseToPascalSnakeCase(String camelCase) {
+    public static String camelCaseToPascalSnakeCase(String camelCase) {
         String[] words = camelCase.split(UPPER_CASE_REGEX.toString());
         String pascalSnakeCase =
                 Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(CamelCaseConverter.UNDERSCORE_SEPARATOR));
         return pascalSnakeCase;
     }
 
-    private boolean hasSpecialCases(String outerProperty) {
+    private static boolean hasSpecialCases(String outerProperty) {
         try {
             Field property = Dsm.class.getDeclaredField(outerProperty);
             Class<?> propertyType = getParameterizedType(property.getGenericType());
@@ -132,7 +139,7 @@ public class SourceMapDeserializer implements Deserializer {
         }
     }
 
-    Class<?> getParameterizedType(Type genericType) throws ClassNotFoundException {
+    protected static Class<?> getParameterizedType(Type genericType) throws ClassNotFoundException {
         String typeAsString = genericType.toString();
         String[] types = typeAsString.contains("<") ? typeAsString.split("<") : typeAsString.split("\\[L");
         if (types.length < 2) {
@@ -144,7 +151,7 @@ public class SourceMapDeserializer implements Deserializer {
         return Class.forName(parameterizedType);
     }
 
-    private boolean isDynamicField(Field field) {
+    private static boolean isDynamicField(Field field) {
         JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
         if (Objects.isNull(jsonProperty)) {
             return false;
@@ -153,9 +160,8 @@ public class SourceMapDeserializer implements Deserializer {
         }
     }
 
-    private boolean isTestResult(Field field) {
+    private static boolean isTestResult(Field field) {
         String fieldName = field.getName();
         return ESObjectConstants.KIT_TEST_RESULT.equals(fieldName);
     }
-
 }

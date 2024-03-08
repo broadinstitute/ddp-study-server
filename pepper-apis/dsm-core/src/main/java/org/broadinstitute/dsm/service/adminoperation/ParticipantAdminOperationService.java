@@ -28,6 +28,17 @@ public abstract class ParticipantAdminOperationService implements AdminOperation
         return Boolean.parseBoolean(dryRun);
     }
 
+    protected boolean isBooleanProperty(String property, Map<String, String> attributes) {
+        if (attributes.containsKey(property)) {
+            String prop = attributes.get(property);
+            if (!StringUtils.isBlank(prop)) {
+                throw new DSMBadRequestException("Invalid '%s' attribute: not expecting a value".formatted(property));
+            }
+            return true;
+        }
+        return false;
+    }
+
     protected DDPInstance getDDPInstance(String realm, List<String> validRealms) {
         if (!validRealms.contains(realm.toLowerCase())) {
             throw new DsmInternalError("Invalid realm for ParticipantDataFixupService: " + realm);

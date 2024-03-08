@@ -28,4 +28,9 @@ public class KitRequestShippingMigrator extends BaseCollectionMigrator {
                 recordsFromRealm, realm, kitRequests.size() - recordsFromRealm);
         return (Map) kitRequests;
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.DSM_KIT_REQUEST_ID;
+    }
 }

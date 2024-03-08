@@ -18,4 +18,8 @@ public class ClinicalOrderMigrator extends BaseCollectionMigrator {
         return (Map)  clinicalOrderDao.getOrdersForRealmMap(realm);
     }
 
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.MERCURY_SEQUENCING_ID;
+    }
 }

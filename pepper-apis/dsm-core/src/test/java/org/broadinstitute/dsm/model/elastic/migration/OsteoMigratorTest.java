@@ -50,6 +50,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private static String esIndex;
     private static int participantCounter;
     private static KitShippingTestUtil kitShippingTestUtil;
+    private static CohortTagTestUtil cohortTagTestUtil;
     private static final List<ParticipantDto> os1Participants = new ArrayList<>();
     private static final List<ParticipantDto> os2Participants = new ArrayList<>();
     private static MedicalRecordTestUtil medicalRecordTestUtil;
@@ -77,6 +78,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         ddpInstanceDao.updateEsParticipantIndex(os2DdpInstanceDto.getDdpInstanceId(), esIndex);
         medicalRecordTestUtil = new MedicalRecordTestUtil();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, baseInstanceName);
+        cohortTagTestUtil = new CohortTagTestUtil();
     }
 
     @AfterClass
@@ -87,17 +89,14 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
     @After
     public void deleteParticipantData() {
+        cohortTagTestUtil.tearDown();
         kitShippingTestUtil.tearDown();
         medicalRecordTestUtil.tearDown();
-        os1Participants.forEach(ptp -> {
-            CohortTagTestUtil.deleteTag(ptp.getDdpParticipantIdOrThrow(), OS1_TAG);
-            TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow());
-        });
+        os1Participants.forEach(ptp ->
+                TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow()));
         os1Participants.clear();
-        os2Participants.forEach(ptp -> {
-            CohortTagTestUtil.deleteTag(ptp.getDdpParticipantIdOrThrow(), OS2_TAG);
-            TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow());
-        });
+        os2Participants.forEach(ptp ->
+                TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow()));
         os2Participants.clear();
     }
 
@@ -266,13 +265,13 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
             participant = TestParticipantUtil.createParticipant(ddpParticipantId, os1DdpInstanceDto.getDdpInstanceId());
             os1Participants.add(participant);
             participants.add(participant);
-            CohortTagTestUtil.createTag(OS1_TAG, ddpParticipantId, os1DdpInstanceDto.getDdpInstanceId());
+            cohortTagTestUtil.createTag(OS1_TAG, ddpParticipantId, os1DdpInstanceDto.getDdpInstanceId());
         }
         if (cohort == Cohort.OS2 || cohort == Cohort.OS1_OS2) {
             participant = TestParticipantUtil.createParticipant(ddpParticipantId, os2DdpInstanceDto.getDdpInstanceId());
             os2Participants.add(participant);
             participants.add(participant);
-            CohortTagTestUtil.createTag(OS2_TAG, ddpParticipantId, os2DdpInstanceDto.getDdpInstanceId());
+            cohortTagTestUtil.createTag(OS2_TAG, ddpParticipantId, os2DdpInstanceDto.getDdpInstanceId());
         }
         // we use the OS2 ptp if the cohort is OS1_AND_OS2
         ElasticTestUtil.createParticipant(esIndex, participant);

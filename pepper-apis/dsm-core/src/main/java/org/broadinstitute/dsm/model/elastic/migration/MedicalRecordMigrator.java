@@ -24,4 +24,9 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
                 recordsFromRealm, realm, medicalRecords.size() - recordsFromRealm);
         return (Map) medicalRecords;
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.MEDICAL_RECORDS_ID;
+    }
 }

@@ -130,7 +130,8 @@ public class ElasticSearchUtil {
     private static Map<String, MappingMetadata> fieldMappings = null;
     private static boolean initialized = false;
 
-    private static void initialize() {
+    // TODO: made this public to ease the transition to ElasticSearchService. -DC
+    public static void initialize() {
         if (!initialized) {
             initClient();
             loadFieldMappings();
@@ -236,7 +237,8 @@ public class ElasticSearchUtil {
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
-    protected static SearchResponse search(SearchRequest searchRequest) {
+    // TODO: made this public to ease the transition to ElasticSearchService. -DC
+    public static SearchResponse search(SearchRequest searchRequest) {
         try {
             SearchResponse res = client.search(searchRequest, RequestOptions.DEFAULT);
             logger.info("ES search returned {}", res.getHits().getTotalHits());
