@@ -38,7 +38,7 @@ public class StudyMigrator {
                 new OncHistoryDetailsMigrator(index, studyName),
                 new OncHistoryMigrator(index, studyName),
                 new ParticipantDataMigrator(index, studyName),
-                AdditionalParticipantMigratorFactory.of(index, studyName),
+                //AdditionalParticipantMigratorFactory.of(index, studyName),
                 new ParticipantMigrator(index, studyName),
                 new KitRequestShippingMigrator(index, studyName),
                 new TissueMigrator(index, studyName),
