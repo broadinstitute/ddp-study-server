@@ -48,39 +48,33 @@ public class OncHistoryDetailPatch extends BasePatch {
         // TODO this method needs to be rewritten, but for now at least verify the input at the correct points -DC
         String parentId = patch.getParentId();
         String ddpParticipantId = patch.getDdpParticipantId();
+        if (StringUtils.isBlank(ddpParticipantId)) {
+            throw new DSMBadRequestException("DDP participant ID not provided for patch");
+        }
         String realm = patch.getRealm();
         if (StringUtils.isBlank(realm)) {
             throw new DSMBadRequestException("Realm not provided for patch");
         }
 
-        // TODO this code should be replaced by a call to OncHistoryDetail.verifyOrCreateInstitution, but that's
-        // a bit scary to do without some testing code in place -DC
+        // TODO: unclear if the parent ID should always be the participant ID (bad request if not), or if can
+        // be empty or a different ID. Once that is established we can clean up this code. -DC
         if (StringUtils.isNotBlank(parentId)) {
             mrID = MedicalRecordUtil.isInstitutionTypeInDB(parentId);
         }
         if (mrID == null) {
-            if (StringUtils.isBlank(ddpParticipantId)) {
-                throw new DSMBadRequestException("DDP participant ID not provided for patch");
-            }
-
-            logger.info("Medical record not found for participant {}, creating one", ddpParticipantId);
             Integer participantId = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
             if (participantId == null) {
                 throw new DSMBadRequestException("Participant does not exist. DDP participant ID=" + ddpParticipantId);
             }
-
-            // mr of that type doesn't exist yet, so create an institution and mr
-            MedicalRecordUtil.writeInstitution(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
-                    realm, true);
             patch.setParentId(participantId.toString());
-            mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
+
+            logger.info("Medical record not found for participant {}, creating one", ddpParticipantId);
+            mrID = OncHistoryDetail.verifyOrCreateMedicalRecord(participantId, ddpParticipantId, realm, true);
         }
-        if (mrID != null) {
-            oncHistoryDetailId = Integer.toString(OncHistoryDetail.createOncHistoryDetail(mrID, patch.getUser()));
-            logger.info("[OncHistoryDetailPatch] Created oncHistoryDetail record (ID={}) for participant {}, medicalRecordId={}",
-                    oncHistoryDetailId, ddpParticipantId, mrID);
-        }
-        // TODO this seems wrong because if oncHistoryDetailId is null at this point things will blow up later -DC
+
+        oncHistoryDetailId = Integer.toString(OncHistoryDetail.createOncHistoryDetail(mrID, patch.getUser()));
+        logger.info("[OncHistoryDetailPatch] Created oncHistoryDetail record (ID={}) for participant {}, medicalRecordId={}",
+                oncHistoryDetailId, ddpParticipantId, mrID);
         resultMap.put(ONC_HISTORY_DETAIL_ID, oncHistoryDetailId);
     }
 

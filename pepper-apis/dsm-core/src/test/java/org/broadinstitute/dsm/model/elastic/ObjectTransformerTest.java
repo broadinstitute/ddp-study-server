@@ -93,7 +93,7 @@ public class ObjectTransformerTest {
     @Test
     public void transformObjectToMap() {
         Participant participant = new Participant(
-                1L, "QWERTY", null,
+                1L, "QWERTY", 1, null,
                 null, "instance", "2020-10-28",
                 "2020-10-28", "2020-10-28", "2020-10-28",
                 "ptNotes", true, true,

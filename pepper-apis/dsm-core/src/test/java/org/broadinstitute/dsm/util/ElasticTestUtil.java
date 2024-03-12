@@ -154,7 +154,7 @@ public class ElasticTestUtil {
                 new ParticipantExportPayload(
                         participantDto.getRequiredParticipantId(),
                         participantDto.getRequiredDdpParticipantId(),
-                        ddpInstanceDto.getDdpInstanceId().toString(),
+                        ddpInstanceDto.getDdpInstanceId(),
                         ddpInstanceDto.getInstanceName(),
                         ddpInstanceDto
                 )
@@ -167,6 +167,7 @@ public class ElasticTestUtil {
             Map<String, Object> props = new HashMap<>();
             props.put("ddpParticipantId", ddpParticipantId);
             props.put("participantId", participantDto.getRequiredParticipantId());
+            props.put("ddpInstanceId", participantDto.getDdpInstanceId());
             props.put("created", participantDto.getLastChanged());
             Map<String, Object> parent = new HashMap<>();
             parent.put("participant", props);

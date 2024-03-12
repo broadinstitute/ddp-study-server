@@ -9,10 +9,9 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 @AllArgsConstructor
 public class ParticipantExportPayload {
 
-    private final long participantId;
+    private final int participantId;
     private final String ddpParticipantId;
-    private final String instanceId;
+    private final int instanceId;
     private final String instanceName;
     private final DDPInstanceDto ddpInstanceDto;
-
 }

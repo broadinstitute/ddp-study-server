@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.patch;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +60,11 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
     @After
     public void deleteParticipants() {
-        MedicalRecordTestUtil.deleteOncHistoryDetailRecords(testParticipant.getRequiredParticipantId());
+        int participantId = testParticipant.getRequiredParticipantId();
+        MedicalRecordTestUtil.deleteOncHistoryDetailRecords(participantId);
         medicalRecordTestUtil.tearDown();
         if (testParticipant != null) {
-            TestParticipantUtil.deleteParticipant(testParticipant.getParticipantIdOrThrow());
+            TestParticipantUtil.deleteParticipant(participantId);
             testParticipant = null;
         }
     }
@@ -72,6 +74,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("onchistorypatch");
         try {
             testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+            int participantId = testParticipant.getRequiredParticipantId();
             ElasticTestUtil.createParticipant(esIndex, testParticipant);
             medicalRecordTestUtil.createMedicalRecordBundle(testParticipant, ddpInstanceDto);
 
@@ -82,7 +85,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             Gson gson = new Gson();
             Patch patch = gson.fromJson(patchJson, Patch.class);
             patch.setDdpParticipantId(ddpParticipantId);
-            patch.setParentId(Integer.toString(testParticipant.getParticipantIdOrThrow()));
+            patch.setParentId(Integer.toString(participantId));
             patch.setRealm(instanceName);
             patch.setId(null);
 
@@ -90,8 +93,15 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             oncHistoryDetailPatch.setElasticSearchExportable(true);
             oncHistoryDetailPatch.doPatch();
 
-            // TODO: ElasticDataExportAdapter should probably force a refresh, but for now...
-            Thread.sleep(1000);
+            try {
+                // TODO: ElasticDataExportAdapter should probably force a refresh, but for now...
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                Assert.fail("Interrupted while waiting for ES refresh");
+            }
+
+            List<MedicalRecord> medRecords = MedicalRecord.getMedicalRecordsForParticipant(participantId);
+            Assert.assertEquals(2, medRecords.size());
             log.debug("Participant document with oncHistory patch: {}",
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
@@ -100,15 +110,23 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             Profile esProfile = esParticipant.getProfile().orElseThrow();
             Assert.assertEquals(profile.getHruid(), esProfile.getHruid());
 
+            // the patch medical record is not written to ES
             Dsm dsm = esParticipant.getDsm().orElseThrow();
-            List<MedicalRecord> medRecords = dsm.getMedicalRecord();
-            log.debug("Med records {}", medRecords);
-            Assert.assertEquals(2, medRecords.size());
+            List<MedicalRecord> esMedRecords = dsm.getMedicalRecord();
+            log.debug("ES med records {}", esMedRecords);
+            Assert.assertEquals(1, esMedRecords.size());
+            MedicalRecord esMedRecord = esMedRecords.get(0);
+
+            List<MedicalRecord> recs = medRecords.stream().filter(mr ->
+                    mr.getMedicalRecordId() == esMedRecord.getMedicalRecordId()).toList();
+            Assert.assertEquals(1, recs.size());
+            MedicalRecord specifiedMedRec = recs.get(0);
+            Assert.assertEquals("PHYSICIAN", specifiedMedRec.getType());
+            Assert.assertEquals("PHYSICIAN", esMedRecord.getType());
 
             List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
             Assert.assertEquals(1, oncHistoryDetailList.size());
             OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.get(0);
-            log.debug("Onc history detail {}", oncHistoryDetail);
 
             Map<String, String> patchMap = nameValuesToMap(patch.getNameValues());
             Assert.assertEquals(patchMap.get("oD.destructionPolicy"), oncHistoryDetail.getDestructionPolicy());

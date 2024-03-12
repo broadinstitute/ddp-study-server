@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.service.adminoperation;
 
+import static org.broadinstitute.dsm.util.MedicalRecordUtil.NOT_SPECIFIED;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,8 +61,8 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/atcpMappings.json",
-                "elastic/atcpSettings.json");
+        esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/osteo1Mappings.json",
+                "elastic/osteo1Settings.json");
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
         medicalRecordTestUtil = new MedicalRecordTestUtil();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, instanceName);
@@ -142,6 +144,37 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         verifyParticipant(ddpParticipantId);
         verifyMedicalRecordAndOncHistory(participant);
         verifyKitShipping(ddpParticipantId);
+    }
+
+    @Test
+    public void testExportNotSpecifiedMedicalRecord() {
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        // create a standard medical record with trimmings
+        createMedicalRecordAndOncHistory(participant);
+        // create a medical record with institution type NOT_SPECIFIED
+        medicalRecordTestUtil.createMedicalRecord(participant, ddpInstanceDto);
+
+        // verify the data is actually in ES
+        verifyMedicalRecordNotSpecified(participant);
+
+        // replace ES dsm with minimal data so we can verify the export
+        setMinimalEsDsm(ddpParticipantId);
+
+        List<ExportLog> exportLogs = new ArrayList<>();
+        ElasticExportService.exportParticipants(List.of(ddpParticipantId), ddpInstanceDto.getInstanceName(),
+                exportLogs);
+
+        try {
+            // TODO: need to wait for the export to complete. Fussing with the refresh policy did not resolve this.
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            Assert.fail("Interrupted while waiting for ES refresh");
+        }
+
+        verifyMedicalRecordNotSpecified(participant);
+        verifyExportLogs(exportLogs);
     }
 
     @Test
@@ -231,8 +264,6 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     }
 
     private void createParticipantData(String ddpParticipantId) {
-        int instanceId = ddpInstanceDto.getDdpInstanceId();
-
         // create random participant data
         atParticipantDataUtil.createMiscellaneousParticipantData(ddpParticipantId);
         atParticipantDataUtil.createEligibilityParticipantData(ddpParticipantId);
@@ -310,6 +341,33 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         Assert.assertEquals(oncHistory.get().getReviewed(), esOncHistory.getReviewed());
     }
 
+    private void verifyMedicalRecordNotSpecified(ParticipantDto participant) {
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+        ElasticSearchParticipantDto esParticipant =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+        log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        Dsm dsm = esParticipant.getDsm().orElseThrow();
+
+        List<OncHistoryDetail> esOncHistoryDetailList = dsm.getOncHistoryDetail();
+        Assert.assertEquals(1, esOncHistoryDetailList.size());
+        OncHistoryDetail esOncHistoryDetail = esOncHistoryDetailList.get(0);
+
+        // the medical record with institution type NOT_SPECIFIED for onc history is not exported
+        List<MedicalRecord> esMedicalRecords = dsm.getMedicalRecord();
+        Assert.assertEquals(1, esMedicalRecords.size());
+
+        int participantId = participant.getRequiredParticipantId();
+        List<MedicalRecord> medicalRecords = MedicalRecord.getMedicalRecordsForParticipant(participantId);
+        Assert.assertEquals(2, medicalRecords.size());
+
+        List<MedicalRecord> specifiedRecs = medicalRecords.stream().filter(medicalRecord ->
+                !medicalRecord.getType().equals(NOT_SPECIFIED)).toList();
+        Assert.assertEquals(1, specifiedRecs.size());
+        int specifiedRecId = specifiedRecs.get(0).getMedicalRecordId();
+        Assert.assertEquals(esOncHistoryDetail.getMedicalRecordId(), specifiedRecId);
+    }
+
     private void verifyKitShipping(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
@@ -318,10 +376,9 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         Dsm dsm = esParticipant.getDsm().orElseThrow();
         List<KitRequestShipping> kitRequests = dsm.getKitRequestShipping();
         log.debug("Found {} kit requests for ptp {}", kitRequests.size(), ddpParticipantId);
-        kitShippingTestUtil.getParticipantKitRequestIds(ddpParticipantId).forEach(kitRequestId -> {
-            Assert.assertTrue(kitRequests.stream()
-                    .anyMatch(kitRequest -> kitRequest.getDsmKitId().intValue() == kitRequestId));
-        });
+        kitShippingTestUtil.getParticipantKitRequestIds(ddpParticipantId).forEach(kitRequestId ->
+                Assert.assertTrue(kitRequests.stream().anyMatch(kitRequest ->
+                    kitRequest.getDsmKitId().intValue() == kitRequestId)));
     }
 
     private void verifyParticipant(String ddpParticipantId) {
@@ -343,5 +400,12 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
 
         Participant participant = dsm.getParticipant().orElseThrow();
         Assert.assertEquals(ddpParticipantId, participant.getDdpParticipantId());
+    }
+
+    private void verifyExportLogs(List<ExportLog> exportLogs) {
+        Assert.assertFalse(exportLogs.stream().anyMatch(log -> {
+            ExportLog.Status status = log.getStatus();
+            return status.equals(ExportLog.Status.FAILURES) || status.equals(ExportLog.Status.ERROR);
+        }));
     }
 }

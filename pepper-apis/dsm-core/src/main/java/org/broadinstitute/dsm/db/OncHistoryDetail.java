@@ -17,10 +17,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
@@ -40,9 +40,7 @@ import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,44 +228,9 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     public OncHistoryDetail() {
     }
 
+    @VisibleForTesting
     public OncHistoryDetail(long ddpInstanceId) {
         this.ddpInstanceId = ddpInstanceId;
-    }
-
-    public OncHistoryDetail(Integer oncHistoryDetailId, Integer medicalRecordId, String datePx, String typePx, String locationPx,
-                            String histology, String accessionNumber, String facility, String phone, String fax, String notes,
-                            String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
-                            String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
-                            String gender, String additionalValuesJson, String tissueProblemOption, String destructionPolicy,
-                            boolean unableObtainTissue) {
-        this.oncHistoryDetailId = oncHistoryDetailId;
-        this.medicalRecordId = medicalRecordId;
-        this.datePx = datePx;
-        this.typePx = typePx;
-        this.locationPx = locationPx;
-        this.histology = histology;
-        this.accessionNumber = accessionNumber;
-        this.facility = facility;
-        this.phone = phone;
-        this.fax = fax;
-        this.notes = notes;
-        this.request = request;
-        this.faxSent = faxSent;
-        this.faxSentBy = faxSentBy;
-        this.faxConfirmed = faxConfirmed;
-        this.faxSent2 = faxSent2;
-        this.faxSent2By = faxSent2By;
-        this.faxConfirmed2 = faxConfirmed2;
-        this.faxSent3 = faxSent3;
-        this.faxSent3By = faxSent3By;
-        this.faxConfirmed3 = faxConfirmed3;
-        this.tissueReceived = tissueReceived;
-        this.gender = gender;
-        this.additionalValuesJson = additionalValuesJson;
-        this.tissues = new ArrayList<>();
-        this.tissueProblemOption = tissueProblemOption;
-        this.destructionPolicy = destructionPolicy;
-        this.unableObtainTissue = unableObtainTissue;
     }
 
     public OncHistoryDetail(Integer oncHistoryDetailId, Integer medicalRecordId, String datePx, String typePx, String locationPx,
@@ -350,7 +313,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     }
 
     // TODO: there should be no need for the realm parameter -DC
-    public static OncHistoryDetail getOncHistoryDetail(@NonNull int oncHistoryDetailId, String realm) {
+    public static OncHistoryDetail getOncHistoryDetail(int oncHistoryDetailId, String realm) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
@@ -469,7 +432,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
         });
     }
 
-    public static int createOncHistoryDetail(@NonNull int medicalRecordId, @NonNull String changedBy) {
+    public static int createOncHistoryDetail(int medicalRecordId, String changedBy) {
         return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setInt(1, medicalRecordId);
@@ -497,6 +460,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     /**
      * Note: this method does not create all OncHistoryDetail fields. Add those fields as needed.
      */
+    @VisibleForTesting
     public static int createOncHistoryDetail(OncHistoryDetail oncHistoryDetail) {
         int medicalRecordId = oncHistoryDetail.getMedicalRecordId();
         return inTransaction(conn -> {
@@ -558,26 +522,17 @@ public class OncHistoryDetail implements HasDdpInstanceId {
      * Verify that a participant is associated with an institution of type NOT_SPECIFIED, and create that
      * institution and related medical record if the verification fails.
      *
-     * @param updateElastic true if ElasticSearch index should be updated with new institution data
-     *
+     * @param updateElastic true if ElasticSearch index should be updated with new medical record
      * @return medical record ID associated with the institution
      */
     public static int verifyOrCreateMedicalRecord(int participantId, String ddpParticipantId, String realm,
                                                   boolean updateElastic) {
-        Number mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
-        if (mrId == null) {
-            MedicalRecordUtil.writeInstitution(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED, realm,
-                    updateElastic);
-            Integer id = MedicalRecordUtil.getParticipantIdByDdpParticipantId(ddpParticipantId, realm);
-            if (id == null) {
-                throw new DsmInternalError("Error adding new institution for oncHistory. Participant ID: " + participantId);
-            }
-            mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
-            if (mrId == null) {
-                throw new DsmInternalError("Medical record ID not found for new record");
-            }
+        Integer mrId = MedicalRecordUtil.isInstitutionTypeInDB(Integer.toString(participantId));
+        if (mrId != null) {
+            return mrId;
         }
-        return mrId.intValue();
+        return MedicalRecordUtil.writeInstitution(participantId, ddpParticipantId, MedicalRecordUtil.NOT_SPECIFIED,
+                realm, updateElastic);
     }
 
     public static void updateDestructionPolicy(@NonNull String policy, @NonNull String facility, @NonNull String realm,
@@ -604,13 +559,11 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             String scriptText = String.format("if (ctx._source.dsm.oncHistoryDetail != null) "
                     + "{for (a in ctx._source.dsm.oncHistoryDetail) "
                     + "{if (a.facility == '%s') {a.destructionPolicy = '%s';}}}", facility, policy);
-            BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
             int instanceId = ddpInstance.getDdpInstanceId();
-            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.medicalRecord.ddpInstanceId", instanceId);
-            queryBuilder.must(QueryBuilders.nestedQuery("dsm.medicalRecord", qb, ScoreMode.None));
+            MatchQueryBuilder qb = new MatchQueryBuilder("dsm.participant.ddpInstanceId", instanceId);
 
             try {
-                UpsertPainless upsert = new UpsertPainless(null, index, null, queryBuilder);
+                UpsertPainless upsert = new UpsertPainless(null, index, null, qb);
                 upsert.export(scriptText, Collections.emptyMap(), "destructionPolicy");
             } catch (Exception e) {
                 String msg = String.format("Error updating ElasticSearch oncHistoryDetail destruction policy for index %s, "

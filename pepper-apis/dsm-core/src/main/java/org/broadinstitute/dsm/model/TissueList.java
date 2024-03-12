@@ -91,9 +91,12 @@ public class TissueList {
                                 rs.getString(DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.PARTICIPANT_ID);
                         String ddpParticipantId = rs.getString(
                                 DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DDP_PARTICIPANT_ID);
+                        int ddpInstanceId = rs.getInt(
+                                DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DDP_INSTANCE_ID);
                         String assigneeIdTissue = rs.getString(
                                 DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ASSIGNEE_ID_TISSUE);
-                        participantHashMap.put(ddpParticipantId, new Participant(participantId, ddpParticipantId, assigneeIdTissue));
+                        participantHashMap.put(ddpParticipantId,
+                                new Participant(participantId, ddpParticipantId, ddpInstanceId, assigneeIdTissue));
                         SmId tissueSmId = Tissue.getSMIds(rs);
                         Tissue tissue;
                         if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {

@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.Institution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +52,10 @@ public class MedicalRecordUtil {
                     + "AND NOT rec.deleted <=> 1 AND part.participant_id = ? AND inst.type = ?";
 
     public static int insertMedicalRecord(Connection conn, String institutionId, String ddpParticipantId,
-                                          String instanceName, String ddpInstitutionId, boolean updateElastic) {
+                                          String instanceName, Institution institution, boolean updateElastic) {
         int mrId = writeMedicalRecord(conn, institutionId);
-        // mrId can be null if medical record already exists
-        if (updateElastic) {
+        // don't write medical records that are just to enable onc history. See PEPPER-1370.
+        if (updateElastic && !institution.getType().equals(NOT_SPECIFIED)) {
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
             String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
             if (StringUtils.isBlank(participantGuid)) {
@@ -65,7 +66,8 @@ public class MedicalRecordUtil {
             medicalRecord.setDdpParticipantId(ddpParticipantId);
             medicalRecord.setInstitutionId(Integer.parseInt(institutionId));
             medicalRecord.setDdpInstanceId(ddpInstanceDto.getDdpInstanceId());
-            medicalRecord.setDdpInstitutionId(ddpInstitutionId);
+            medicalRecord.setDdpInstitutionId(institution.getId());
+            medicalRecord.setType(institution.getType());
 
             UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
                     ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid,
@@ -83,34 +85,31 @@ public class MedicalRecordUtil {
         if (conn == null) {
             throw new DsmInternalError("DB connection was null");
         }
-        int mrId;
-        try (PreparedStatement insertNewRecord = conn.prepareStatement(SQL_INSERT_MEDICAL_RECORD, Statement.RETURN_GENERATED_KEYS)) {
-            insertNewRecord.setString(1, institutionId);
-            insertNewRecord.setLong(2, System.currentTimeMillis());
-            insertNewRecord.setString(3, SystemUtil.SYSTEM);
-            int result = insertNewRecord.executeUpdate();
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MEDICAL_RECORD, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, institutionId);
+            stmt.setLong(2, System.currentTimeMillis());
+            stmt.setString(3, SystemUtil.SYSTEM);
+            int result = stmt.executeUpdate();
             if (result != 1) {
                 throw new DsmInternalError("Error inserting medical record: number of rows inserted was " + result);
             }
-            try (ResultSet rs = insertNewRecord.getGeneratedKeys()) {
-                if (!rs.next()) {
-                    throw new DsmInternalError("Error getting ID for new medical record");
-                }
-                mrId = rs.getInt(1);
+            ResultSet rs = stmt.getGeneratedKeys();
+            if (!rs.next()) {
+                throw new DsmInternalError("Error getting ID for new medical record");
             }
             logger.info("Added new medical record for institution with id {}", institutionId);
+            return rs.getInt(1);
         } catch (SQLException e) {
             throw new DsmInternalError("Error inserting medical record for institution " + institutionId, e);
         }
-        return mrId;
     }
 
-    public static void writeNewRecordIntoDb(Connection conn, String query, String id, String instanceId) {
+    public static void writeNewRecordIntoDb(Connection conn, String query, String ddpParticipantId, int instanceId) {
         if (conn != null) {
             long currentMilli = System.currentTimeMillis();
             try (PreparedStatement insertNewRecord = conn.prepareStatement(query)) {
-                insertNewRecord.setString(1, id);
-                insertNewRecord.setString(2, instanceId);
+                insertNewRecord.setString(1, ddpParticipantId);
+                insertNewRecord.setInt(2, instanceId);
                 insertNewRecord.setLong(3, currentMilli);
                 insertNewRecord.setString(4, SystemUtil.SYSTEM);
                 insertNewRecord.setLong(5, currentMilli);
@@ -118,9 +117,9 @@ public class MedicalRecordUtil {
                 int result = insertNewRecord.executeUpdate();
                 // 1 (inserted) or 2 (updated) is good
                 if (result == 2) {
-                    logger.info("Updated record for participant w/ id " + id);
+                    logger.info("Updated record for participant w/ id " + ddpParticipantId);
                 } else if (result == 1) {
-                    logger.info("Inserted new record for participant w/ id " + id);
+                    logger.info("Inserted new record for participant w/ id " + ddpParticipantId);
                 } else {
                     throw new RuntimeException("Error updating row");
                 }
@@ -132,31 +131,32 @@ public class MedicalRecordUtil {
         }
     }
 
-    public static int writeInstitution(int participantId, @NonNull String ddpParticipantId, @NonNull String type,
-                                       @NonNull String instanceName, boolean updateElastic) {
+    /**
+     * Create a new institution and medical record
+     *
+     * @return medical record ID
+     */
+    public static int writeInstitution(int participantId, String ddpParticipantId, String institutionType,
+                                       String instanceName, boolean updateElastic) {
         long currentMilli = System.currentTimeMillis();
         String ddpInstitutionId = java.util.UUID.randomUUID().toString();
         return inTransaction(conn -> {
             try (PreparedStatement insertInstitution = conn.prepareStatement(SQL_INSERT_INSTITUTION,
                     Statement.RETURN_GENERATED_KEYS)) {
                 insertInstitution.setString(1, ddpInstitutionId);
-                insertInstitution.setString(2, type);
+                insertInstitution.setString(2, institutionType);
                 insertInstitution.setInt(3, participantId);
                 insertInstitution.setLong(4, currentMilli);
                 insertInstitution.setLong(5, currentMilli);
                 int result = insertInstitution.executeUpdate();
-                // 1 (inserted) or 2 (updated) is good
-                if (result == 2) {
-                    logger.info("Updated institution for participant {}", participantId);
-                } else if (result == 1) {
+                if (result == 1) {
                     logger.info("Inserted new institution for participant {}", participantId);
-                    createInstitutionMedicalRecord(conn, insertInstitution, ddpParticipantId, instanceName,
-                            ddpInstitutionId, updateElastic);
+                    return createInstitutionMedicalRecord(conn, insertInstitution, ddpParticipantId, instanceName,
+                            new Institution(ddpInstitutionId, institutionType), updateElastic);
                 } else {
                     throw new DsmInternalError(String.format("Error inserting new institution for participant %s: "
                             + "wrong number of rows inserted %s", ddpParticipantId, result));
                 }
-                return result;
             } catch (SQLException e) {
                 throw new DsmInternalError("Error inserting new institution for participant " + ddpParticipantId, e);
             }
@@ -166,16 +166,17 @@ public class MedicalRecordUtil {
     /**
      * Returns created medical record ID
      */
-    public static Integer writeInstitution(@NonNull Connection conn, @NonNull String ddpParticipantId, @NonNull String instanceId,
-                                           @NonNull String ddpInstitutionId, @NonNull String type, String instanceName) {
+    public static Integer writeInstitution(@NonNull Connection conn, @NonNull String ddpParticipantId, int instanceId,
+                                           Institution institution, String instanceName) {
         Integer medicalRecordId = null;
         long currentMilli = System.currentTimeMillis();
+        String ddpInstitutionId = institution.getId();
         try (PreparedStatement insertInstitution = conn.prepareStatement(SQL_INSERT_INSTITUTION_WITH_DDP_PARTICIPANT_ID,
                 Statement.RETURN_GENERATED_KEYS)) {
             insertInstitution.setString(1, ddpInstitutionId);
-            insertInstitution.setString(2, type);
+            insertInstitution.setString(2, institution.getType());
             insertInstitution.setString(3, ddpParticipantId);
-            insertInstitution.setString(4, instanceId);
+            insertInstitution.setInt(4, instanceId);
             insertInstitution.setLong(5, currentMilli);
             insertInstitution.setLong(6, currentMilli);
             int result = insertInstitution.executeUpdate();
@@ -185,7 +186,7 @@ public class MedicalRecordUtil {
             } else if (result == 1) {
                 logger.info("Inserted new institution for participant {}", ddpParticipantId);
                 medicalRecordId = createInstitutionMedicalRecord(conn, insertInstitution, ddpParticipantId, instanceName,
-                        ddpInstitutionId, true);
+                        institution, true);
             } else {
                 throw new DsmInternalError("Error updating row");
             }
@@ -195,28 +196,29 @@ public class MedicalRecordUtil {
         return medicalRecordId;
     }
 
-    private static Integer createInstitutionMedicalRecord(@NonNull Connection conn, @NonNull PreparedStatement insertInstitution,
-                                                          @NonNull String ddpParticipantId, String instanceName,
-                                                          String ddpInstitutionId, boolean updateElastic) {
+    private static int createInstitutionMedicalRecord(Connection conn, PreparedStatement insertInstitution,
+                                                      String ddpParticipantId, String instanceName,
+                                                      Institution institution, boolean updateElastic) {
+        String errorMsg = "Error getting new institution id for participant " + ddpParticipantId;
         try (ResultSet rs = insertInstitution.getGeneratedKeys()) {
-            if (rs.next()) { //no next if no generated return key -> update of institution timestamp does not return new key
+            if (rs.next()) {
                 String institutionId = rs.getString(1);
                 if (StringUtils.isNotBlank(institutionId)) {
                     logger.info("Added institution with id {} for participant {}", institutionId, ddpParticipantId);
                     return MedicalRecordUtil.insertMedicalRecord(conn, institutionId, ddpParticipantId,
-                            instanceName, ddpInstitutionId, updateElastic);
+                            instanceName, institution, updateElastic);
                 }
             }
+            throw new DsmInternalError(errorMsg);
         } catch (SQLException e) {
-            throw new DsmInternalError("Error getting id of new institution for participant " + ddpParticipantId, e);
+            throw new DsmInternalError(errorMsg, e);
         }
-        return null;
     }
 
-    public static boolean isParticipantInDB(@NonNull Connection conn, @NonNull String participantId, @NonNull String instanceId) {
+    public static boolean isParticipantInDB(@NonNull Connection conn, @NonNull String participantId, int instanceId) {
         try (PreparedStatement checkParticipant = conn.prepareStatement(SQL_SELECT_PARTICIPANT_EXISTS)) {
             checkParticipant.setString(1, participantId);
-            checkParticipant.setString(2, instanceId);
+            checkParticipant.setInt(2, instanceId);
             try (ResultSet rs = checkParticipant.executeQuery()) {
                 if (rs.next()) {
                     if (rs.getInt(DBConstants.PARTICIPANT_COUNT) == 1) {
@@ -230,27 +232,27 @@ public class MedicalRecordUtil {
         return false;
     }
 
-    public static boolean isParticipantInDB(@NonNull String participantId, @NonNull String instanceId) {
+    public static boolean isParticipantInDB(@NonNull String participantId, int instanceId) {
         return inTransaction((conn) -> isParticipantInDB(conn, participantId, instanceId));
     }
 
 
-    public static boolean updateParticipant(@NonNull Connection conn, @NonNull String participantId, @NonNull String instanceId,
-                                            @NonNull long lastVersion, @NonNull String lastUpdated, @NonNull String userId) {
+    public static boolean updateParticipant(@NonNull Connection conn, @NonNull String ddpParticipantId, int instanceId,
+                                            long lastVersion, @NonNull String lastUpdated, @NonNull String userId) {
         try (PreparedStatement updateParticipant = conn.prepareStatement(SQL_UPDATE_PARTICIPANT)) {
             updateParticipant.setLong(1, lastVersion);
             updateParticipant.setString(2, lastUpdated);
             updateParticipant.setLong(3, System.currentTimeMillis());
             updateParticipant.setString(4, userId);
-            updateParticipant.setString(5, participantId);
-            updateParticipant.setString(6, instanceId);
+            updateParticipant.setString(5, ddpParticipantId);
+            updateParticipant.setInt(6, instanceId);
             updateParticipant.setLong(7, lastVersion);
             if (updateParticipant.executeUpdate() == 1) {
-                logger.info("Participant already existed; Updated participant w/ id " + participantId);
+                logger.info("Participant already existed; Updated participant with id {}", ddpParticipantId);
                 return true;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error updating participant ", e);
+            throw new DsmInternalError("Error updating participant ", e);
         }
         return false;
     }
