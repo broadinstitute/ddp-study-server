@@ -106,8 +106,7 @@ public class MedicalRecordTestUtil {
         InstitutionRequest institutionRequest =
                 new InstitutionRequest(bundleCounter, ddpParticipantId, List.of(institution), lastUpdated);
         List<Integer> medicalRecordIds = inTransaction(conn ->
-                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, ddpInstanceDto.getDdpInstanceId(),
-                        institutionRequest, ddpInstanceDto.getInstanceName()));
+                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, institutionRequest, ddpInstanceDto));
         participantBundleIds.add(participantDto.getRequiredParticipantId());
 
         Assert.assertEquals(1, medicalRecordIds.size());

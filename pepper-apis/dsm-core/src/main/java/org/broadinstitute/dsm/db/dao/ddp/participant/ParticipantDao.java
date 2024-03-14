@@ -6,9 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dao.util.DaoUtil;
 import org.broadinstitute.dsm.db.dao.util.ResultsBuilder;
@@ -36,6 +37,8 @@ public class ParticipantDao implements Dao<ParticipantDto> {
     private static final String SQL_FILTER_BY_DDP_INSTANCE_ID = "ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID = "SELECT * FROM ddp_participant WHERE "
             + SQL_FILTER_BY_DDP_PARTICIPANT_ID + " AND " + SQL_FILTER_BY_DDP_INSTANCE_ID + ";";
+    private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID =
+            "SELECT * FROM ddp_participant WHERE "+ SQL_FILTER_BY_DDP_PARTICIPANT_ID + ";";
 
     public static final String SQL_SELECT_BY_ID = "SELECT * FROM ddp_participant WHERE participant_id = ?;";
 
@@ -125,35 +128,44 @@ public class ParticipantDao implements Dao<ParticipantDto> {
         return Optional.ofNullable((String) simpleResult.resultValue);
     }
 
-    public Optional<ParticipantDto> getParticipantByDdpParticipantIdAndDdpInstanceId(@NonNull String ddpParticipantId, int ddpInstanceId) {
-        logger.info(String.format("Attempting to find participant with ddp_participant_id = %s and ddp_instance_id = %s in DB",
-                ddpParticipantId, ddpInstanceId));
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult executionResult = new SimpleResult();
+    public List<ParticipantDto> getParticipant(String ddpParticipantId) {
+        return inTransaction(conn -> {
+            List<ParticipantDto> participants = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID)) {
+                stmt.setString(1, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        participants.add(new ParticipantDao.BuildParticipant().build(rs));
+                    }
+                }
+            } catch (SQLException ex) {
+                throw new DsmInternalError("Error getting Participant %s".formatted(ddpParticipantId), ex);
+            }
+            return participants;
+        });
+    }
+
+    public Optional<ParticipantDto> getParticipantForInstance(String ddpParticipantId, int ddpInstanceId) {
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID)) {
                 stmt.setString(1, ddpParticipantId);
                 stmt.setInt(2, ddpInstanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        executionResult.resultValue = new ParticipantDao.BuildParticipant().build(rs);
+                        return Optional.of(new ParticipantDao.BuildParticipant().build(rs));
                     }
                 }
             } catch (SQLException ex) {
-                executionResult.resultException = ex;
+                throw new DsmInternalError("Error getting Participant for %s and instance %s"
+                        .formatted(ddpParticipantId, ddpInstanceId), ex);
             }
-            return executionResult;
+            return Optional.empty();
         });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting participant data with " + ddpParticipantId, results.resultException);
-        }
-        logger.info(String.format("Got participant with ddp_participant_id = %s and ddp_instance_id = %s",
-                ddpParticipantId, ddpInstanceId));
-        return Optional.ofNullable((ParticipantDto) results.resultValue);
     }
 
     private static class BuildParticipant implements ResultsBuilder {
 
-        public Object build(ResultSet rs) throws SQLException {
+        public ParticipantDto build(ResultSet rs) throws SQLException {
             return new ParticipantDto.Builder()
                     .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
                     .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
@@ -168,6 +180,4 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                     .build();
         }
     }
-
-
 }

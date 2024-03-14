@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD_OSTEO_INSTANCE_NAME;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE;
 import static org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants.MEMBER_TYPE_SELF;
 
@@ -13,17 +12,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
-import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
+import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
@@ -69,11 +66,8 @@ public class WorkflowStatusUpdate {
                 workflow, status, studyGuid, ddpParticipantId);
 
         if (isOsteoStatusUpdate(workflow, status)) {
-            Optional<DDPInstanceDto> ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
-            if (ddpInstanceDto.isEmpty()) {
-                throw new DsmInternalError(String.format("Could not find ddp_instance with instance_name %s", OLD_OSTEO_INSTANCE_NAME));
-            }
-            OsteoWorkflowStatusUpdate.of(ddpInstanceDto.get(), ddpParticipantId).update();
+            OsteoParticipantService osteoParticipantService = new OsteoParticipantService();
+            osteoParticipantService.initializeOsteo2Participant(ddpParticipantId);
             return;
         }
 

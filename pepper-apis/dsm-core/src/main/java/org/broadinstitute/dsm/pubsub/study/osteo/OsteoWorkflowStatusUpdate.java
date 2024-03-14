@@ -88,7 +88,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         if (isParticipantInDb) {
             logger.info(String.format("Updating values for existing participant in db for %s", NEW_OSTEO_INSTANCE_NAME));
             Optional<ParticipantDto> maybeOldOsteoParticipant = participantDao
-                    .getParticipantByDdpParticipantIdAndDdpInstanceId(ddpParticipantId, ddpInstanceId);
+                    .getParticipantForInstance(ddpParticipantId, ddpInstanceId);
             Optional<Integer> maybeOldOsteoParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getParticipantId);
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
                     .map(this::updateParticipantDto)
@@ -100,7 +100,8 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             maybeOldOsteoParticipantRecord.ifPresent(participantRecord -> maybeNewOsteoParticipantId
                     .ifPresent(participantId -> updateAndThenSaveNewParticipantRecord(participantRecord, participantId)));
             List<MedicalRecord> newOsteoMedicalRecords = maybeNewOsteoParticipantId
-                    .map(this::updateAndThenSaveInstitutionsAndMedicalRecords).orElseThrow();
+                    .map(newPtpId -> updateAndThenSaveInstitutionsAndMedicalRecords(maybeOldOsteoParticipantId.get(),
+                            newPtpId)).orElseThrow();
             String oldOsteoDdpParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getDdpParticipantId).orElseThrow();
             ElasticSearchParticipantDto esPtDto = elasticSearch
                     .getParticipantById(instance.getEsParticipantIndex(), oldOsteoDdpParticipantId);
@@ -148,11 +149,10 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         dsm.setNewOsteoParticipant(newOsteoPt);
     }
 
-    private List<MedicalRecord> updateAndThenSaveInstitutionsAndMedicalRecords(int newOsteoParticipantId) {
+    private List<MedicalRecord> updateAndThenSaveInstitutionsAndMedicalRecords(int oldOsteoParticipantId,
+                                                                               int newOsteoParticipantId) {
         List<MedicalRecord> newOsteoMedicalRecords = new ArrayList<>();
-        List<MedicalRecord> oldOsteoMedicalRecords = MedicalRecord.getMedicalRecordsByInstanceNameAndDdpParticipantId(
-                instance.getInstanceName(),
-                ddpParticipantId);
+        List<MedicalRecord> oldOsteoMedicalRecords = MedicalRecord.getMedicalRecordsForParticipant(oldOsteoParticipantId);
         oldOsteoMedicalRecords.forEach(medicalRecord -> {
             int newOsteoInstitutionId = updateAndThenSaveNewInstitution(newOsteoParticipantId, medicalRecord.getInstitutionId());
             medicalRecord.setInstitutionId(newOsteoInstitutionId);

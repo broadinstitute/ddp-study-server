@@ -32,6 +32,7 @@ import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantExit;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.LookupResponse;
@@ -1239,8 +1240,10 @@ public class RouteTest extends TestHelper {
                 try {
                     inTransaction((conn) -> {
                         try {
-                            ddpMedicalRecordDataRequest.writeInstitutionBundle(conn, instanceId, participantInstitution,
-                                    instanceName);
+                            DDPInstanceDto instanceDto = new DDPInstanceDto.Builder()
+                                    .withInstanceName(instanceName)
+                                    .withDdpInstanceId(instanceId).build();
+                            DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, participantInstitution, instanceDto);
                         } catch (Exception e) {
                             throw new RuntimeException("medicalRecordLog ", e);
                         }
