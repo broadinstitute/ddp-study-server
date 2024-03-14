@@ -746,8 +746,12 @@ public class ElasticSearchUtil {
     public static void updateParticipant(@NonNull String ddpParticipantId, String index, String jsonProperty) {
         initialize();
         UpdateRequest updateRequest =
-                new UpdateRequest().index(index).id(ddpParticipantId).doc(jsonProperty, XContentType.JSON)
-                        .docAsUpsert(true).retryOnConflict(5);
+                new UpdateRequest().index(index)
+                        .id(ddpParticipantId)
+                        .doc(jsonProperty, XContentType.JSON)
+                        .docAsUpsert(true)
+                        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
+                        .retryOnConflict(5);
         try {
             UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
             logger.info("Updated ES index {} data for participant {} with response: {}", index, ddpParticipantId, updateResponse);
