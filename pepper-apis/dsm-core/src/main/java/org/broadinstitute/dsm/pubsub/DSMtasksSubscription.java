@@ -101,7 +101,7 @@ public class DSMtasksSubscription {
     }
 
     public static void migrateToES(ExportToES.ExportPayload exportPayload) {
-        StudyMigrator.migrate(exportPayload.getStudy());
+        StudyMigrator.migrate(exportPayload.getStudy(), null);
     }
 
     private static void generateStudyDefaultValues(AckReplyConsumer consumer, Map<String, String> attributesMap) {

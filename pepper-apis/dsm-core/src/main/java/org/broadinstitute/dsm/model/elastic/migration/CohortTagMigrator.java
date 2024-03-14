@@ -27,4 +27,9 @@ public class CohortTagMigrator extends BaseCollectionMigrator {
                 tagsFromRealm, realm, cohortTags.size() - tagsFromRealm);
         return (Map) cohortTags;
     }
+
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.DSM_COHORT_TAG_ID;
+    }
 }

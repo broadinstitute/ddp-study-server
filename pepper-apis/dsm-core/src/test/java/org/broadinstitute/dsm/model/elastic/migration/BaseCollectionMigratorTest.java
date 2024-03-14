@@ -63,5 +63,10 @@ public class BaseCollectionMigratorTest {
         protected Map<String, Object> getDataByRealm() {
             return Map.of();
         }
+
+        @Override
+        protected String getRecordIdFieldName() {
+            return null;
+        }
     }
 }

@@ -23,10 +23,13 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.migration.VerificationLog;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataTestUtil;
 import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.CohortTagTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
@@ -42,6 +45,7 @@ import org.junit.Test;
 @Slf4j
 public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     private static final String TEST_USER = "TEST_USER";
+    private static final String OS1_TAG = "OS1";
     private static final String instanceName = "elasticexport";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
@@ -50,6 +54,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     private static MedicalRecordTestUtil medicalRecordTestUtil;
     private static KitShippingTestUtil kitShippingTestUtil;
     private static ATParticipantDataTestUtil atParticipantDataUtil;
+    private static CohortTagTestUtil cohortTagTestUtil;
     private static final Map<String, Map<String, Integer>> participantDataInfo = new HashMap<>();
 
     @BeforeClass
@@ -60,6 +65,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         medicalRecordTestUtil = new MedicalRecordTestUtil();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, instanceName);
         atParticipantDataUtil = new ATParticipantDataTestUtil(ddpInstanceDto.getDdpInstanceId());
+        cohortTagTestUtil = new CohortTagTestUtil();
     }
 
     @AfterClass
@@ -70,6 +76,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
 
     @After
     public void deleteParticipantData() {
+        cohortTagTestUtil.tearDown();
         kitShippingTestUtil.tearDown();
         medicalRecordTestUtil.tearDown();
 
@@ -100,7 +107,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         verifyKitShipping(ddpParticipantId);
 
         // replace ES dsm with minimal data so we can verify the export
-        updateEsDsm(ddpParticipantId);
+        setMinimalEsDsm(ddpParticipantId);
 
         List<ExportLog> exportLogs = new ArrayList<>();
         ElasticExportService.exportParticipants(List.of(ddpParticipantId), ddpInstanceDto.getInstanceName(),
@@ -135,6 +142,84 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         verifyParticipant(ddpParticipantId);
         verifyMedicalRecordAndOncHistory(participant);
         verifyKitShipping(ddpParticipantId);
+    }
+
+    @Test
+    public void testVerifyElasticData() {
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        // give this ptp a bunch of data
+        createParticipantData(ddpParticipantId);
+        createMedicalRecordAndOncHistory(participant);
+        createMedicalRecordAndOncHistory(participant);
+        kitShippingTestUtil.createTestKitShipping(participant, ddpInstanceDto);
+
+        List<VerificationLog> verificationLogs = ElasticExportService.verifyElasticData(List.of(ddpParticipantId),
+                DDPInstance.getDDPInstance(instanceName), false);
+        log.debug("Verification logs: (not verifyFields) {} ", verificationLogs);
+        Assert.assertTrue(verificationLogs.stream()
+                .filter(log -> !log.getStatus().equals(VerificationLog.VerificationStatus.VERIFIED))
+                .findAny().isEmpty());
+
+        // add DB data that is not in ES
+        cohortTagTestUtil.createTag(OS1_TAG, ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+
+        // remove ES data that is in DB
+        ElasticTestUtil.removeDsmField(esIndex, ddpParticipantId, ESObjectConstants.PARTICIPANT);
+
+        // add ES data that is not in DB
+        OncHistoryDetail rec = new OncHistoryDetail.Builder()
+                .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
+                .withMedicalRecordId(1)
+                .withFacility("Office")
+                .withDestructionPolicy("12")
+                .withChangedBy(TEST_USER)
+                .build();
+        ElasticTestUtil.createOncHistoryDetail(esIndex, rec, participant.getRequiredDdpParticipantId());
+
+        verificationLogs = ElasticExportService.verifyElasticData(List.of(ddpParticipantId),
+                DDPInstance.getDDPInstance(instanceName), false);
+        log.debug("Verification logs (not verifyFields): {}", verificationLogs);
+
+        verificationLogs.forEach(log -> {
+            VerificationLog.VerificationStatus status = log.getStatus();
+            String entity = log.getEntity();
+            if (entity.equals(ESObjectConstants.PARTICIPANT)) {
+                Assert.assertEquals(VerificationLog.VerificationStatus.ES_ENTITY_MISMATCH, status);
+                Assert.assertEquals(1, log.getDbOnlyEntityIds().size());
+                Assert.assertTrue(log.getEsOnlyEntityIds().isEmpty());
+            } else if (entity.equals(ESObjectConstants.COHORT_TAG)) {
+                Assert.assertEquals(VerificationLog.VerificationStatus.ES_ENTITY_MISMATCH, status);
+                Assert.assertEquals(1, log.getDbOnlyEntityIds().size());
+                Assert.assertTrue(log.getEsOnlyEntityIds().isEmpty());
+            } else if (entity.equals(ESObjectConstants.ONC_HISTORY_DETAIL)) {
+                Assert.assertEquals(VerificationLog.VerificationStatus.ES_ENTITY_MISMATCH, status);
+                Assert.assertEquals(1, log.getEsOnlyEntityIds().size());
+                Assert.assertTrue(log.getDbOnlyEntityIds().isEmpty());
+            } else {
+                Assert.assertEquals(VerificationLog.VerificationStatus.VERIFIED, status);
+            }
+        });
+    }
+
+    @Test
+    public void testVerifyElasticDataVerifyFields() {
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        // give this ptp a bunch of data
+        createParticipantData(ddpParticipantId);
+        createMedicalRecordAndOncHistory(participant);
+        createMedicalRecordAndOncHistory(participant);
+        kitShippingTestUtil.createTestKitShipping(participant, ddpInstanceDto);
+
+        List<VerificationLog> verificationLogs = ElasticExportService.verifyElasticData(List.of(ddpParticipantId),
+                DDPInstance.getDDPInstance(instanceName), true);
+        log.debug("Verification logs (verifyFields): {}", verificationLogs);
+        Assert.assertEquals(9, verificationLogs.size());
+        // TODO: verifyFields mode is not ready for prime tie without a bit more work, so asserting characteristics of the
+        // output is not very useful at this time. Follow-up work: PEPPER-1369
     }
 
     private ParticipantDto createParticipant() {
@@ -175,7 +260,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
         medicalRecordTestUtil.createOrUpdateOncHistory(participantDto, TEST_USER, esIndex);
     }
 
-    private void updateEsDsm(String ddpParticipantId) {
+    private void setMinimalEsDsm(String ddpParticipantId) {
         Dsm dsm = new Dsm();
         Participant participant = new Participant();
         participant.setDdpParticipantId(ddpParticipantId);

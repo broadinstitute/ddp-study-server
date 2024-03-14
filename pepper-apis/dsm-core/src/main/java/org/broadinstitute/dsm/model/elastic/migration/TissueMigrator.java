@@ -16,4 +16,8 @@ public class TissueMigrator extends BaseCollectionMigrator {
         return (Map) new TissueDao().getTissuesByStudy(realm);
     }
 
+    @Override
+    protected String getRecordIdFieldName() {
+        return ESObjectConstants.TISSUE_ID;
+    }
 }

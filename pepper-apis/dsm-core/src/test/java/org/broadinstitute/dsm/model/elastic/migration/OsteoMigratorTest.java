@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.adminoperation.ExportLog;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.CohortTagTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
@@ -49,6 +50,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private static String esIndex;
     private static int participantCounter;
     private static KitShippingTestUtil kitShippingTestUtil;
+    private static CohortTagTestUtil cohortTagTestUtil;
     private static final List<ParticipantDto> os1Participants = new ArrayList<>();
     private static final List<ParticipantDto> os2Participants = new ArrayList<>();
     private static MedicalRecordTestUtil medicalRecordTestUtil;
@@ -76,6 +78,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         ddpInstanceDao.updateEsParticipantIndex(os2DdpInstanceDto.getDdpInstanceId(), esIndex);
         medicalRecordTestUtil = new MedicalRecordTestUtil();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, baseInstanceName);
+        cohortTagTestUtil = new CohortTagTestUtil();
     }
 
     @AfterClass
@@ -86,17 +89,14 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
     @After
     public void deleteParticipantData() {
+        cohortTagTestUtil.tearDown();
         kitShippingTestUtil.tearDown();
         medicalRecordTestUtil.tearDown();
-        os1Participants.forEach(ptp -> {
-            CohortTagTestUtil.deleteTag(ptp.getDdpParticipantIdOrThrow(), OS1_TAG);
-            TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow());
-        });
+        os1Participants.forEach(ptp ->
+                TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow()));
         os1Participants.clear();
-        os2Participants.forEach(ptp -> {
-            CohortTagTestUtil.deleteTag(ptp.getDdpParticipantIdOrThrow(), OS2_TAG);
-            TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow());
-        });
+        os2Participants.forEach(ptp ->
+                TestParticipantUtil.deleteParticipant(ptp.getParticipantId().orElseThrow()));
         os2Participants.clear();
     }
 
@@ -161,12 +161,14 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         kitShippingTestUtil.createTestKitShipping(os2BothPtp, os2DdpInstanceDto);
 
         // do an OS1 export
+        List<ExportLog> exportLogs = new ArrayList<>();
         try {
-            StudyMigrator.migrate(os1InstanceName);
+            StudyMigrator.migrate(os1InstanceName, exportLogs);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyExportLogs(exportLogs);
 
         // should be onc history for OS1 only participant
         String os1DdpPtpId = os1Ptp.getDdpParticipantIdOrThrow();
@@ -182,20 +184,22 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
         // do an OS2 export
         try {
-            StudyMigrator.migrate(os2InstanceName);
+            StudyMigrator.migrate(os2InstanceName, exportLogs);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyExportLogs(exportLogs);
         verifyMigrated(os1Ptp, os2Ptp, os1BothPtp, os2BothPtp);
 
         // do another OS1 export
         try {
-            StudyMigrator.migrate(os1InstanceName);
+            StudyMigrator.migrate(os1InstanceName, exportLogs);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception exporting to ES" + e);
         }
+        verifyExportLogs(exportLogs);
         verifyMigrated(os1Ptp, os2Ptp, os1BothPtp, os2BothPtp);
     }
 
@@ -216,6 +220,16 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         verifyKitShipping(os1DdpPtpId);
         verifyKitShipping(os2DdpPtpId);
         verifyKitShipping(os1BothDdpPtpId);
+    }
+
+    private void verifyExportLogs(List<ExportLog> exportLogs) {
+        List<ExportLog> errorLogs = exportLogs.stream()
+                .filter(log -> log.getStatus().equals(ExportLog.Status.ERROR)).toList();
+        Assert.assertEquals(0, errorLogs.size());
+
+        List<ExportLog> failureLogs = exportLogs.stream()
+                .filter(log -> log.getStatus().equals(ExportLog.Status.FAILURES)).toList();
+        Assert.assertEquals(0, failureLogs.size());
     }
 
     private void verifyCohortTags() {
@@ -251,13 +265,13 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
             participant = TestParticipantUtil.createParticipant(ddpParticipantId, os1DdpInstanceDto.getDdpInstanceId());
             os1Participants.add(participant);
             participants.add(participant);
-            CohortTagTestUtil.createTag(OS1_TAG, ddpParticipantId, os1DdpInstanceDto.getDdpInstanceId());
+            cohortTagTestUtil.createTag(OS1_TAG, ddpParticipantId, os1DdpInstanceDto.getDdpInstanceId());
         }
         if (cohort == Cohort.OS2 || cohort == Cohort.OS1_OS2) {
             participant = TestParticipantUtil.createParticipant(ddpParticipantId, os2DdpInstanceDto.getDdpInstanceId());
             os2Participants.add(participant);
             participants.add(participant);
-            CohortTagTestUtil.createTag(OS2_TAG, ddpParticipantId, os2DdpInstanceDto.getDdpInstanceId());
+            cohortTagTestUtil.createTag(OS2_TAG, ddpParticipantId, os2DdpInstanceDto.getDdpInstanceId());
         }
         // we use the OS2 ptp if the cohort is OS1_AND_OS2
         ElasticTestUtil.createParticipant(esIndex, participant);
