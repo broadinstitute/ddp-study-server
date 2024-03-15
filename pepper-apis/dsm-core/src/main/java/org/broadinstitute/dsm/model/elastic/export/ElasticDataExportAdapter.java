@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class ElasticDataExportAdapter extends BaseExporter {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticDataExportAdapter.class);
-    private WriteRequest.RefreshPolicy refreshPolicy = WriteRequest.RefreshPolicy.NONE;
+    private WriteRequest.RefreshPolicy refreshPolicy = WriteRequest.RefreshPolicy.IMMEDIATE;
 
     @Override
     public void export() {

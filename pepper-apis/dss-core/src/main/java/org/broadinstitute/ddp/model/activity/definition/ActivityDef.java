@@ -14,6 +14,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -22,6 +23,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
+@Slf4j
 public abstract class ActivityDef {
 
     @NotNull
@@ -175,7 +177,9 @@ public abstract class ActivityDef {
         if (translatedNames != null && !translatedNames.isEmpty()) {
             this.translatedNames = translatedNames;
         } else {
-            throw new IllegalArgumentException("Need at least one name translation");
+            log.warn("Name translation missing for activity : {} .. versionTag: {} .. study: {} .. ignoring ",
+                    activityCode, versionTag, studyGuid);
+            //throw new IllegalArgumentException("Need at least one name translation");
         }
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
