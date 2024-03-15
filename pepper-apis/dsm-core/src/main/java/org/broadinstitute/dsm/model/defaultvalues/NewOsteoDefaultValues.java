@@ -8,15 +8,11 @@ import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
  */
 public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
 
-    public NewOsteoDefaultValues() {
-    }
-
     @Override
     protected boolean setDefaultData(String ddpParticipantId) {
         if (elasticSearchParticipantDto.getDsm().isEmpty()) {
             throw new ESMissingParticipantDataException("Participant dsm ES data missing");
         }
-
         OsteoParticipantService osteoParticipantService = new OsteoParticipantService();
         osteoParticipantService.setOsteo2DefaultData(ddpParticipantId, elasticSearchParticipantDto);
         return true;

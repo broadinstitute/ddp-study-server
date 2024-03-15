@@ -47,7 +47,7 @@ public class ParticipantRecordPatch extends BasePatch {
         ParticipantDto participantDto =
                 new ParticipantDto.Builder(Integer.parseInt(ddpInstance.getDdpInstanceId()), System.currentTimeMillis())
                         .withDdpParticipantId(patch.getParentId())
-                        .withLastVersion(0)
+                        .withLastVersion(0L)
                         .withLastVersionDate("")
                         .withChangedBy(patch.getUser())
                         .build();

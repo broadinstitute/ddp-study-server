@@ -74,7 +74,7 @@ public class MedicalRecordServiceTest extends DbAndElasticBaseTest {
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
         ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto);
         participants.add(participant);
         return participant;
     }

@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.service.participant;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +24,15 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.SystemUtil;
+
 
 @Slf4j
 public class OsteoParticipantService {
     public static final String OSTEO1_INSTANCE_NAME = "Osteo";
     public static final String OSTEO2_INSTANCE_NAME = "osteo2";
+    public static final String OSTEO1_COHORT_TAG_NAME = "OS";
     public static final String OSTEO2_COHORT_TAG_NAME = "OS PE-CGS";
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final ParticipantDao participantDao = new ParticipantDao();
@@ -78,7 +83,7 @@ public class OsteoParticipantService {
     /**
      * Copy osteo1 participant data to osteo2 for osteo1 participant who consented to OS PE-CGS (OS2/osteo2)
      */
-    public void initializeOsteo2Participant(String ddpParticipantId) {
+    public void initializeReconsentedParticipant(String ddpParticipantId) {
         log.info("Creating new {} participant data for existing {} participant {}",
                 osteo2Instance.getInstanceName(), osteo1Instance.getInstanceName(), ddpParticipantId);
 
@@ -90,19 +95,29 @@ public class OsteoParticipantService {
                         .formatted(ddpParticipantId, osteo1Instance.getInstanceName())));
         int osteo1ParticipantId = osteo1Participant.getRequiredParticipantId();
 
-        // there should already be ES DSM data in osteo2 and osteo1 index for this participant
-        Dsm osteo2Dsm =
-                elasticSearchService.getRequiredDsmData(ddpParticipantId, osteo2Instance.getEsParticipantIndex());
+        // there should already be ES DSM data in osteo1 index for this participant
         Dsm osteo1Dsm =
                 elasticSearchService.getRequiredDsmData(ddpParticipantId, osteo1Instance.getEsParticipantIndex());
         Participant esParticipant = osteo1Dsm.getParticipant().orElseThrow(() ->
                 new DsmInternalError("ES Participant data missing for participant %s".formatted(ddpParticipantId)));
 
+        // there *should* be ES DSM data for osteo2, but make it if not
+        ElasticSearchParticipantDto osteo2EsParticipant =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo2Instance.getEsParticipantIndex(),
+                        ddpParticipantId);
+        Optional<Dsm> dsm = osteo2EsParticipant.getDsm();
+        Dsm osteo2Dsm = dsm.orElseGet(Dsm::new);
+
+        // there should not be osteo2 Participant, MedicalRecord or ParticipantRecord yet
+        // if the Participant does not exist, the other data will not exist either
+        if (participantDao.getParticipantForInstance(ddpParticipantId, osteo2Instance.getDdpInstanceId()).isPresent()) {
+            throw new DsmInternalError("Participant %s already exists for instance %s"
+                    .formatted(ddpParticipantId, osteo2Instance.getInstanceName()));
+        }
+
         // start copying participant data
         int osteo2InstanceId = osteo2Instance.getDdpInstanceId();
-        ParticipantDto osteo2Participant = osteo1Participant.clone();
-        osteo2Participant.setDdpInstanceId(osteo2InstanceId);
-        int osteo2ParticipantId = participantDao.create(osteo2Participant);
+        int osteo2ParticipantId = copyParticipant(osteo1Participant, osteo2InstanceId);
 
         // TODO: we should probably get DSM participant data directly from the DB instead of ES, but the Participant
         // class needs to be updated to support that. And if the osteo1 ES data is out of sync with the DB, we should
@@ -126,10 +141,24 @@ public class OsteoParticipantService {
         cohortTag.setCohortTagId(newCohortTagId);
 
         List<CohortTag> cohortTags = osteo2Dsm.getCohortTag();
+        if (cohortTags.isEmpty()) {
+            cohortTags = new ArrayList<>();
+        }
         cohortTags.add(cohortTag);
         osteo2Dsm.setCohortTag(cohortTags);
 
         ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Instance.getEsParticipantIndex());
+    }
+
+    private int copyParticipant(ParticipantDto osteo1Participant, int osteo2InstanceId) {
+        // do not copy any user IDs and related data from osteo1
+        ParticipantDto participantDto = new ParticipantDto.Builder(osteo2InstanceId, System.currentTimeMillis())
+                .withDdpParticipantId(osteo1Participant.getDdpParticipantIdOrThrow())
+                .withLastVersion(osteo1Participant.getLastVersion().orElse(null))
+                .withLastVersionDate(osteo1Participant.getLastVersionDate().orElse(null))
+                .withReleaseCompleted(osteo1Participant.getReleaseCompleted().orElse(null))
+                .withChangedBy(SystemUtil.SYSTEM).build();
+        return participantDao.create(participantDto);
     }
 
     private List<MedicalRecord> copyMedicalRecords(int osteo1ParticipantId, int osteo2ParticipantId,

@@ -110,7 +110,7 @@ public class OncHistoryDao implements Dao<OncHistoryDto> {
         }
     }
 
-    public Map<String, OncHistoryDto> getOncHistoryByParticipant(String study) {
+    public static Map<String, OncHistoryDto> getOncHistoryByParticipant(String study) {
         return inTransaction(conn -> {
             Map<String, OncHistoryDto> oncHistories = new HashMap<>();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_BY_STUDY)) {

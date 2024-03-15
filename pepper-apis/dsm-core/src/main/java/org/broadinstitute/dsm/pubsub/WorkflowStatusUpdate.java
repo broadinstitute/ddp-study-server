@@ -67,7 +67,7 @@ public class WorkflowStatusUpdate {
 
         if (isOsteoStatusUpdate(workflow, status)) {
             OsteoParticipantService osteoParticipantService = new OsteoParticipantService();
-            osteoParticipantService.initializeOsteo2Participant(ddpParticipantId);
+            osteoParticipantService.initializeReconsentedParticipant(ddpParticipantId);
             return;
         }
 

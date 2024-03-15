@@ -36,6 +36,8 @@ import org.junit.Assert;
  */
 @Slf4j
 public class MedicalRecordTestUtil {
+    private static final ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
+    private static final DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
     private final Map<Integer, List<Integer>> participantToMedicalRecordId = new HashMap<>();
     private final Map<Integer, List<Integer>> participantToOncHistoryDetailId = new HashMap<>();
     private final Map<Integer, Integer> participantToOncHistoryId = new HashMap<>();
@@ -86,7 +88,6 @@ public class MedicalRecordTestUtil {
         MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
         MedicalRecord medicalRecord = medicalRecordDao.get(medicalRecordId).get();
         medicalRecordDao.delete(medicalRecordId);
-        DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
         ddpInstitutionDao.delete(medicalRecord.getInstitutionId());
     }
 
@@ -120,15 +121,25 @@ public class MedicalRecordTestUtil {
         List<MedicalRecord> medRecords = MedicalRecord.getMedicalRecordsForParticipant(participantId);
         medRecords.forEach(medRecord -> MedicalRecordTestUtil.deleteMedicalRecord(medRecord.getMedicalRecordId()));
 
-        ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
         Optional<ParticipantRecordDto> recordDto = participantRecordDao
                 .getParticipantRecordByParticipantId(participantId);
         recordDto.ifPresent(participantRecordDto -> participantRecordDao
                 .delete(participantRecordDto.getParticipantRecordId().orElseThrow()));
     }
 
+    /**
+     * Deletes all MedicalRecords, Institutions and ParticipantRecords for a DDP instance
+     */
+    public static void deleteInstanceMedicalRecordBundles(DDPInstanceDto ddpInstanceDto) {
+        List<MedicalRecord> medicalRecords = MedicalRecord.getMedicalRecords(ddpInstanceDto.getInstanceName())
+                .values().stream().flatMap(List::stream).toList();
+        List<Integer> participantIds = medicalRecords.stream().map(MedicalRecordTestUtil::getInstitution)
+                .map(DDPInstitutionDto::getParticipantId).toList();
+
+        participantIds.forEach(MedicalRecordTestUtil::deleteMedicalRecordBundle);
+    }
+
     public static DDPInstitutionDto getInstitution(MedicalRecord medicalRecord) {
-        DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
         return ddpInstitutionDao.get(medicalRecord.getInstitutionId()).orElseThrow();
     }
 
