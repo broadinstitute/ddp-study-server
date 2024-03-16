@@ -46,6 +46,7 @@ public class DDPMedicalRecordDataRequest {
 
     public void requestAndWriteParticipantInstitutions() {
         new MedicalRecordService().requestParticipantInstitutions();
+
     }
 
     // TODO: these methods should be moved to MedicalRecordService. They are under test now indirectly via

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -319,6 +320,7 @@ public class MedicalRecord implements HasDdpInstanceId {
         });
     }
 
+    @VisibleForTesting
     public static List<MedicalRecord> getMedicalRecordsForParticipant(int participantId) {
         return inTransaction(conn -> {
             List<MedicalRecord> medicalRecords = new ArrayList<>();
