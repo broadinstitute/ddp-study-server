@@ -170,6 +170,9 @@ public class ElasticSearchService {
                         ddpParticipantId, index)));
     }
 
+    /**
+     * Update DSM data for a participant in the given index
+     */
     public static void updateDsm(String ddpParticipantId, Dsm dsm, String index) {
         Map<String, Object> dsmAsMap = ObjectMapperSingleton.instance().convertValue(dsm, Map.class);
         ElasticSearchUtil.updateRequest(ddpParticipantId, index,

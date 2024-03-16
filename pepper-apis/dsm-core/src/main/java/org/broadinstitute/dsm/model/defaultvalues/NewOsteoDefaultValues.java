@@ -10,11 +10,12 @@ public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
 
     @Override
     protected boolean setDefaultData(String ddpParticipantId) {
-        if (elasticSearchParticipantDto.getDsm().isEmpty()) {
-            throw new ESMissingParticipantDataException("Participant dsm ES data missing");
+        if (elasticSearchParticipantDto.getDsm().isEmpty() || elasticSearchParticipantDto.getActivities().isEmpty()) {
+            throw new ESMissingParticipantDataException(String.format("Participant %s does not yet have DSM data and "
+                    + "activities in ES", ddpParticipantId));
         }
         OsteoParticipantService osteoParticipantService = new OsteoParticipantService();
-        osteoParticipantService.setOsteo2DefaultData(ddpParticipantId, elasticSearchParticipantDto);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, elasticSearchParticipantDto);
         return true;
     }
 }

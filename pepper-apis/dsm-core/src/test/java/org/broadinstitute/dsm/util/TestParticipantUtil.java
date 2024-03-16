@@ -43,7 +43,7 @@ public class TestParticipantUtil {
         return participant;
     }
 
-    // TODO: remove this call signature. -DC
+    // TODO: deprecated call signature. -DC
     /**
      * Create a participant with a standard profile in ES
      */

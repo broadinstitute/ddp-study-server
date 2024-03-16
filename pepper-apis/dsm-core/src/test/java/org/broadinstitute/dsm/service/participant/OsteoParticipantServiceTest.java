@@ -6,16 +6,18 @@ import static org.broadinstitute.dsm.service.participant.OsteoParticipantService
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -86,13 +88,31 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         ParticipantDto participant = createParticipant(osteo2InstanceDto);
         String ddpParticipantId = participant.getRequiredDdpParticipantId();
 
+        ElasticTestUtil.addActivitiesFromFile(osteo2EsIndex, "elastic/osteo2Activities.json", ddpParticipantId);
+
         ElasticSearchParticipantDto esParticipantDto =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(osteo2EsIndex, ddpParticipantId);
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
-        osteoParticipantService.setOsteo2DefaultData(ddpParticipantId, esParticipantDto);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
         verifyCohortTag(ddpParticipantId, OSTEO2_COHORT_TAG_NAME, osteo2InstanceDto);
+    }
+
+    @Test
+    public void testCreateOsteo1DefaultData() {
+        ParticipantDto participant = createParticipant(osteo1InstanceDto);
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        ElasticTestUtil.addActivitiesFromFile(osteo1EsIndex, "elastic/osteo1Activities.json", ddpParticipantId);
+
+        ElasticSearchParticipantDto esParticipantDto =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo1EsIndex, ddpParticipantId);
+
+        OsteoParticipantService osteoParticipantService =
+                new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
+        verifyCohortTag(ddpParticipantId, OSTEO1_COHORT_TAG_NAME, osteo1InstanceDto);
     }
 
     @Test
@@ -216,5 +236,14 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         Optional<ParticipantRecordDto> participantRecord =
                 participantRecordDao.getParticipantRecordByParticipantId(participantId);
         Assert.assertTrue(participantRecord.isPresent());
+
+        Optional<OncHistory> oh = dsm.getOncHistory();
+        Assert.assertTrue(oh.isPresent());
+        OncHistory esOncHistory = oh.get();
+
+        Optional<OncHistoryDto> oncHistory = OncHistoryDao.getByParticipantId(participantId);
+        Assert.assertTrue(oncHistory.isPresent());
+        Assert.assertEquals(oncHistory.get().getCreated(), esOncHistory.getCreated());
+        Assert.assertEquals(oncHistory.get().getReviewed(), esOncHistory.getReviewed());
     }
 }

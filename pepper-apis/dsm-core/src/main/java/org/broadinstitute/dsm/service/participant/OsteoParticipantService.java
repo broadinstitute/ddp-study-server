@@ -21,9 +21,13 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
+import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
+import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 
@@ -61,23 +65,57 @@ public class OsteoParticipantService {
     }
 
     /**
-     * Set default values for newly registered OS PE-CGS (OS2/osteo2) participant (not re-consented osteo1 participant)
-     *
+     * Set default values for a newly registered osteo1/osteo2 participant (not re-consented osteo1 participant)
+     * NOTE: this code supports recreating OS1 participants in non-prod environments, since there are no new
+     *  OS1 registrations in prod
      * @param participantDto participant ElasticSearch data, including DSM entity
      */
-    public void setOsteo2DefaultData(String ddpParticipantId, ElasticSearchParticipantDto participantDto) {
-        // expecting participant to have a DSM entity
+    public void setOsteoDefaultData(String ddpParticipantId, ElasticSearchParticipantDto participantDto) {
+        if (isOsteo1Participant(participantDto)) {
+            createOsteoTag(participantDto, ddpParticipantId, osteo1Instance, OSTEO1_COHORT_TAG_NAME);
+        } else {
+            createOsteoTag(participantDto, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);
+        }
+    }
+
+    /**
+     * Return true if new participant registration is for OS1
+     */
+    protected boolean isOsteo1Participant(ElasticSearchParticipantDto participantDto) {
+        List<Activities> activities = participantDto.getActivities();
+        if (activities.isEmpty()) {
+            throw new DsmInternalError("Participant activities missing for participant "
+                    + participantDto.getParticipantId());
+        }
+        if (activityHasLaterVersion(activities, DDPActivityConstants.ACTIVITY_CONSENT)) {
+            return false;
+        }
+
+        if (activityHasLaterVersion(activities, DDPActivityConstants.ACTIVITY_PARENTAL_CONSENT)) {
+            return false;
+        }
+
+        return !activityHasLaterVersion(activities, DDPActivityConstants.ACTIVITY_CONSENT_ASSENT);
+    }
+
+    protected boolean activityHasLaterVersion(List<Activities> activities, String activityCode) {
+        return activities.stream().anyMatch(activity -> activityCode.equals(activity.getActivityCode())
+                && !activity.getActivityVersion().equals("v1"));
+    }
+
+    private static void createOsteoTag(ElasticSearchParticipantDto participantDto, String ddpParticipantId,
+                                       DDPInstanceDto osteoInstance, String tagName) {
+        // invariant: participant should have a DSM entity
         Dsm dsm = participantDto.getDsm().orElseThrow();
 
-        // add a cohort tag for the participant
         CohortTag newCohortTag =
-                new CohortTag(OSTEO2_COHORT_TAG_NAME, ddpParticipantId, osteo2Instance.getDdpInstanceId());
+                new CohortTag(tagName, ddpParticipantId, osteoInstance.getDdpInstanceId());
         int newCohortTagId = cohortTagDao.create(newCohortTag);
         newCohortTag.setCohortTagId(newCohortTagId);
 
         // new participant so this is the first tag
         dsm.setCohortTag(List.of(newCohortTag));
-        ElasticSearchService.updateDsm(ddpParticipantId, dsm, osteo2Instance.getEsParticipantIndex());
+        ElasticSearchService.updateDsm(ddpParticipantId, dsm, osteoInstance.getEsParticipantIndex());
     }
 
     /**
@@ -148,6 +186,9 @@ public class OsteoParticipantService {
         osteo2Dsm.setCohortTag(cohortTags);
 
         ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Instance.getEsParticipantIndex());
+
+        OncHistoryService.createEmptyOncHistory(osteo2ParticipantId, ddpParticipantId, SystemUtil.SYSTEM,
+                new OncHistoryElasticUpdater(osteo2Instance.getEsParticipantIndex()));
     }
 
     private int copyParticipant(ParticipantDto osteo1Participant, int osteo2InstanceId) {

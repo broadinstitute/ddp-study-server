@@ -45,7 +45,7 @@ public class DDPMedicalRecordDataRequest {
                     + "AND NOT rec.deleted <=> 1 AND rec.fax_sent is not null AND (log.type is null OR log.type = ?)";
 
     public void requestAndWriteParticipantInstitutions() {
-        MedicalRecordService.requestParticipantInstitutions();
+        new MedicalRecordService().requestParticipantInstitutions();
     }
 
     // TODO: these methods should be moved to MedicalRecordService. They are under test now indirectly via
@@ -54,7 +54,7 @@ public class DDPMedicalRecordDataRequest {
      * Writes new institutions to DB, creates new medical records for the institutions, creates new onc history records,
      * creates new participant records, and updates the medical record log. If the participant does not already
      * exist, a new participant is created.
-     * 
+     *
      * @return created medical record IDs
      */
     public static List<Integer> writeInstitutionBundle(@NonNull Connection conn, InstitutionRequest institutionRequest,
@@ -106,11 +106,14 @@ public class DDPMedicalRecordDataRequest {
                                                       int instanceId, String instanceName) {
         List<Integer> medicalRecordIds = new ArrayList<>();
         String ddpParticipantId = institutionRequest.getParticipantId();
-        Collection<Institution> institutions = institutionRequest.getInstitutions();
+        List<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
-            log.info("Participant {} has {} institutions}", ddpParticipantId, institutions.size());
+            log.info("Participant {} has {} institutions", ddpParticipantId, institutions.size());
             // TODO this should be rewritten to verify the DDP participant ID and get the participant ID to use in the following
-            // calls (which should be modified to use the participant ID instead of repeatedly looking it up -DC
+            // calls (which should be modified to use the participant ID instead of repeatedly doing SQL queries
+            // to get it) -DC
+            // TODO: OncHistory is created but not written to ES, but will be written on export. Use
+            //  OncHistoryService.createEmptyOncHistory. -DC
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_ONC_HISTORY, ddpParticipantId, instanceId);
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, ddpParticipantId, instanceId);
 

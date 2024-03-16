@@ -4,8 +4,11 @@ package org.broadinstitute.dsm.model.elastic.migration;
 import java.util.NoSuchElementException;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
+// TODO: Additional records are now obsolete. Keeping this until the conversion is complete and verified. -DC
+@Ignore
 public class AdditionalMedicalRecordsRetrieverTest {
 
     @Test
