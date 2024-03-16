@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
@@ -70,7 +71,7 @@ public class MedicalRecordTestUtil {
     }
 
     /**
-     * Creates a medical record and institution for a participant
+     * Creates a medical record and institution of type NOT_SPECIFIED for a participant
      *
      * @return medical record id
      */
@@ -105,7 +106,7 @@ public class MedicalRecordTestUtil {
         InstitutionRequest institutionRequest =
                 new InstitutionRequest(bundleCounter, ddpParticipantId, List.of(institution), lastUpdated);
         List<Integer> medicalRecordIds = inTransaction(conn ->
-                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, ddpInstanceDto.getDdpInstanceId().toString(),
+                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, ddpInstanceDto.getDdpInstanceId(),
                         institutionRequest, ddpInstanceDto.getInstanceName()));
         participantBundleIds.add(participantDto.getRequiredParticipantId());
 
@@ -125,6 +126,11 @@ public class MedicalRecordTestUtil {
                 .getParticipantRecordByParticipantId(participantId);
         recordDto.ifPresent(participantRecordDto -> participantRecordDao
                 .delete(participantRecordDto.getParticipantRecordId().orElseThrow()));
+    }
+
+    public static DDPInstitutionDto getInstitution(MedicalRecord medicalRecord) {
+        DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
+        return ddpInstitutionDao.get(medicalRecord.getInstitutionId()).orElseThrow();
     }
 
     public int createOncHistoryDetail(ParticipantDto participant, OncHistoryDetail rec, String esIndex) {

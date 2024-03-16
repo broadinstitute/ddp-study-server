@@ -17,6 +17,7 @@ import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.MercuryOrderTestUtil;
 import org.broadinstitute.dsm.util.SampleIdTestUtil;
 import org.broadinstitute.dsm.util.TissueTestUtil;
+import org.broadinstitute.lddp.handlers.util.Institution;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -111,7 +112,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         inTransaction(conn -> {
             medicalRecordId = MedicalRecordUtil.insertMedicalRecord(conn,
                     Integer.toString(institutionDto.getInstitutionId()), ddpParticipantId, studyInstanceName,
-                    institutionDto.getDdpInstitutionId(), false);
+                    new Institution(institutionDto.getDdpInstitutionId(), institutionDto.getType()), false);
             log.info("Created medical record {}", medicalRecordId);
 
             return null;

@@ -84,7 +84,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
     public void update() {
         logger.info(String.format("Running workflow updates for %s", NEW_OSTEO_INSTANCE_NAME));
         int ddpInstanceId = instance.getDdpInstanceId();
-        boolean isParticipantInDb = MedicalRecordUtil.isParticipantInDB(ddpParticipantId, String.valueOf(ddpInstanceId));
+        boolean isParticipantInDb = MedicalRecordUtil.isParticipantInDB(ddpParticipantId, ddpInstanceId);
         if (isParticipantInDb) {
             logger.info(String.format("Updating values for existing participant in db for %s", NEW_OSTEO_INSTANCE_NAME));
             Optional<ParticipantDto> maybeOldOsteoParticipant = participantDao

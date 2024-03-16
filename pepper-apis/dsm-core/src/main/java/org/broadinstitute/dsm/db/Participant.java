@@ -20,10 +20,9 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,11 +124,13 @@ public class Participant implements Cloneable {
     public Participant() {
     }
 
-    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
+    public Participant(Long participantId, String ddpParticipantId, int ddpInstanceId, String assigneeIdMr,
+                       String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr,
                        Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
         this.assigneeIdMr = assigneeIdMr;
         this.assigneeIdTissue = assigneeIdTissue;
         this.realm = instanceName;
@@ -144,29 +145,10 @@ public class Participant implements Cloneable {
         this.exitDate = exitDate;
     }
 
-    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, Integer ddpInstanceId, String assigneeIdTissue,
-                       String realm, String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr,
-                       Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
-        this.participantId = participantId;
-        this.ddpParticipantId = ddpParticipantId;
-        this.assigneeIdMr = assigneeIdMr;
-        this.ddpInstanceId = ddpInstanceId;
-        this.assigneeIdTissue = assigneeIdTissue;
-        this.realm = realm;
-        this.created = created;
-        this.reviewed = reviewed;
-        this.crSent = crSent;
-        this.crReceived = crReceived;
-        this.notes = notes;
-        this.minimalMr = minimalMr;
-        this.abstractionReady = abstractionReady;
-        this.additionalValuesJson = additionalValuesJson;
-        this.exitDate = exitDate;
-    }
-
     //For TissueList
-    public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
-        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null, null, null, null, null, null, false, false,
+    public Participant(String participantId, String ddpParticipantId, int ddpInstanceId, String assigneeIdTissue) {
+        this(Long.parseLong(participantId), ddpParticipantId, ddpInstanceId, null, assigneeIdTissue,
+                null, null, null, null, null, null, false, false,
                 null, null);
     }
 
@@ -190,48 +172,42 @@ public class Participant implements Cloneable {
                 assigneeTissue = assignees.get(assigneeIdTissue).getName();
             }
         }
-        Participant participant =
-                new Participant(rs.getLong(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID), assigneeMR,
-                        assigneeTissue, realm, rs.getString(DBConstants.ONC_HISTORY_CREATED),
-                        rs.getString(DBConstants.ONC_HISTORY_REVIEWED), rs.getString(DBConstants.CR_SENT),
-                        rs.getString(DBConstants.CR_RECEIVED),
-                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
-                        rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
-                        rs.getBoolean(
-                                DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
-                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
-                                + DBConstants.ADDITIONAL_VALUES_JSON), (Long) rs.getObject(DBConstants.EXIT_DATE));
-        return participant;
+        return new Participant(
+            rs.getLong(DBConstants.PARTICIPANT_ID),
+            rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+            rs.getInt(DBConstants.DDP_INSTANCE_ID),
+            assigneeMR, assigneeTissue, realm,
+            rs.getString(DBConstants.ONC_HISTORY_CREATED),
+            rs.getString(DBConstants.ONC_HISTORY_REVIEWED),
+            rs.getString(DBConstants.CR_SENT),
+            rs.getString(DBConstants.CR_RECEIVED),
+            rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
+            rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
+            rs.getBoolean(
+                    DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
+            rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
+                    + DBConstants.ADDITIONAL_VALUES_JSON),
+            (Long) rs.getObject(DBConstants.EXIT_DATE));
     }
 
-    public static Map<String, Participant> getParticipants(@NonNull String realm) {
-        return getParticipants(realm, null);
-    }
-
-    public static Map<String, Participant> getParticipants(@NonNull String realm, String queryAddition) {
-        logger.info("Collection participant information");
-        Map<String, Participant> participants = new HashMap<>();
+    public static Map<String, Participant> getParticipants(String realm) {
         HashMap<String, Assignee> assignees = Assignee.getAssigneeMap(realm);
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_PARTICIPANT, queryAddition))) {
+        return inTransaction(conn -> {
+            Map<String, Participant> participants = new HashMap<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_PARTICIPANT)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        participants.put(rs.getString(DBConstants.DDP_PARTICIPANT_ID), getParticipant(assignees, realm, rs));
+                        participants.put(
+                                rs.getString(DBConstants.DDP_PARTICIPANT_ID), getParticipant(assignees, realm, rs));
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError("Error getting participants for realm " + realm, ex);
             }
-            return dbVals;
+            logger.info("Got {} participants from DSM DB for {}", participants.size(), realm);
+            return participants;
         });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of participants ", results.resultException);
-        }
-        logger.info("Got " + participants.size() + " participants in DSM DB for " + realm);
-        return participants;
     }
 
     public Boolean isMinimalMr() {

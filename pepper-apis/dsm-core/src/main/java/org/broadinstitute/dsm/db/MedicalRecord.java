@@ -16,11 +16,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
@@ -37,17 +38,16 @@ import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.MedicalInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @TableName(name = DBConstants.DDP_MEDICAL_RECORD, alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
         primaryKey = DBConstants.MEDICAL_RECORD_ID, columnPrefix = "")
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Slf4j
 public class MedicalRecord implements HasDdpInstanceId {
 
-    public static final String SQL_SELECT_MEDICAL_RECORD = "SELECT p.ddp_participant_id, p.ddp_instance_id, "
+    private static final String SQL_SELECT_BASE = "SELECT p.ddp_participant_id, p.ddp_instance_id, "
             + "inst.institution_id, inst.ddp_institution_id, inst.type, inst.participant_id, "
             + "m.medical_record_id, m.name, m.contact, m.phone, m.fax, m.fax_sent, m.fax_sent_by, m.fax_confirmed, m.fax_sent_2, "
             + "m.fax_sent_2_by, "
@@ -55,28 +55,33 @@ public class MedicalRecord implements HasDdpInstanceId {
             + "m.mr_document_file_names, m.no_action_needed, "
             + "m.mr_problem, m.mr_problem_text, m.unable_obtain, m.unable_obtain_text, m.duplicate, m.followup_required, "
             + "m.followup_required_text, m.international, m.cr_required, m.pathology_present, "
-            + "m.notes, m.additional_values_json, (SELECT sum(log.comments is null and log.type = \"DATA_REVIEW\") as reviewMedicalRecord"
+            + "m.notes, m.additional_values_json, "
+            + "(SELECT sum(log.comments is null and log.type = \"DATA_REVIEW\") as reviewMedicalRecord"
             + " FROM ddp_medical_record rec2 LEFT JOIN ddp_medical_record_log log on (rec2.medical_record_id = log.medical_record_id) "
-            + "WHERE rec2.institution_id = inst.institution_id) as reviewMedicalRecord "
-            + "FROM ddp_institution inst LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
+            + " WHERE rec2.institution_id = inst.institution_id) as reviewMedicalRecord ";
+
+    public static final String SQL_SELECT_MEDICAL_RECORD = SQL_SELECT_BASE
+            + "FROM ddp_institution inst "
+            + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) "
-            + "WHERE ddp.instance_name = ? AND inst.type != 'NOT_SPECIFIED' AND NOT m.deleted <=> 1 ";
+            + "WHERE ddp.instance_name = ? AND NOT m.deleted <=> 1 ";
+
     public static final String SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED = "SELECT m.last_changed FROM ddp_institution inst "
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) WHERE p.participant_id = ?";
-    public static final String SQL_SELECT_PARTICIPANT_MEDICAL_RECORDS = "SELECT med.*, dp.ddp_participant_id, dp.ddp_instance_id, "
-            + "inst.institution_id, inst.ddp_institution_id, inst.type "
-            + "FROM ddp_medical_record med "
-            + "JOIN ddp_institution inst ON inst.institution_id = med.institution_id "
-            + "JOIN ddp_participant dp ON dp.participant_id = inst.participant_id "
-            + "WHERE dp.participant_id = ?";
-    public static final String SQL_ORDER_BY = " ORDER BY p.ddp_participant_id, inst.ddp_institution_id ASC";
-    private static final Logger logger = LoggerFactory.getLogger(MedicalRecord.class);
-    public static final String AND_DDP_PARTICIPANT_ID = " AND p.ddp_participant_id = '%s'";
-    public static final String AND_P_DDP_PARTICIPANT_ID_IN = " AND p.ddp_participant_id IN (?)";
-    public static final String QUESTION_MARK = "?";
+
+    public static final String SQL_SELECT_PARTICIPANT_MEDICAL_RECORDS = SQL_SELECT_BASE
+            + "FROM ddp_medical_record m "
+            + "JOIN ddp_institution inst ON inst.institution_id = m.institution_id "
+            + "JOIN ddp_participant p ON p.participant_id = inst.participant_id "
+            + "WHERE p.participant_id = ? AND NOT m.deleted <=> 1 ";
+
+    private static final String SQL_ORDER_BY = " ORDER BY p.ddp_participant_id, inst.ddp_institution_id ASC";
+    private static final String AND_DDP_PARTICIPANT_ID = " AND p.ddp_participant_id = '%s'";
+    private static final String INST_TYPE_NOT_SPECIFIED = " AND inst.type != 'NOT_SPECIFIED'";
+
     @ColumnName(DBConstants.MEDICAL_RECORD_ID)
     private int medicalRecordId;
     @ColumnName(DBConstants.INSTITUTION_ID)
@@ -224,7 +229,7 @@ public class MedicalRecord implements HasDdpInstanceId {
         this.noActionNeeded = noActionNeeded;
     }
 
-    public static MedicalRecord getMedicalRecord(@NonNull ResultSet rs) throws SQLException {
+    private static MedicalRecord getMedicalRecord(ResultSet rs) throws SQLException {
         MedicalRecord medicalRecord = new MedicalRecord(rs.getInt(DBConstants.MEDICAL_RECORD_ID), rs.getInt(DBConstants.INSTITUTION_ID),
                 rs.getString(DBConstants.DDP_INSTITUTION_ID), rs.getString(DBConstants.TYPE), rs.getString(DBConstants.NAME),
                 rs.getString(DBConstants.CONTACT), rs.getString(DBConstants.PHONE), rs.getString(DBConstants.FAX),
@@ -249,7 +254,10 @@ public class MedicalRecord implements HasDdpInstanceId {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
+                    SQL_SELECT_MEDICAL_RECORD
+                            + INST_TYPE_NOT_SPECIFIED
+                            + QueryExtension.BY_DDP_PARTICIPANT_ID
+                            + QueryExtension.BY_MEDICAL_RECORD_ID)) {
                 stmt.setString(1, realm);
                 stmt.setString(2, ddpParticipantId);
                 stmt.setString(3, medicalRecordId);
@@ -272,16 +280,25 @@ public class MedicalRecord implements HasDdpInstanceId {
         return (MedicalRecord) results.resultValue;
     }
 
-    public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm) {
-        return getMedicalRecords(realm, null);
+    /**
+     * Return all medical records for a given realm
+     */
+    public static Map<String, List<MedicalRecord>> getMedicalRecords(String realm) {
+        return getAllMedicalRecords(realm, SQL_SELECT_MEDICAL_RECORD + INST_TYPE_NOT_SPECIFIED);
     }
 
-    public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm, String queryAddition) {
-        Map<String, List<MedicalRecord>> medicalRecords = new HashMap<>();
-        SimpleResult results = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    DBUtil.getFinalQuery(SQL_SELECT_MEDICAL_RECORD, queryAddition) + SQL_ORDER_BY)) {
+    /**
+     * Return all medical records for a given realm, except those with institution type NOT_SPECIFIED
+     */
+    public static Map<String, List<MedicalRecord>> getMedicalRecords(String realm, String queryAddition) {
+        return getAllMedicalRecords(realm,
+                DBUtil.getFinalQuery(SQL_SELECT_MEDICAL_RECORD + INST_TYPE_NOT_SPECIFIED + SQL_ORDER_BY, queryAddition));
+    }
+
+    protected static Map<String, List<MedicalRecord>> getAllMedicalRecords(String realm, String query) {
+        return inTransaction(conn -> {
+            Map<String, List<MedicalRecord>> medicalRecords = new HashMap<>();
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -296,16 +313,11 @@ public class MedicalRecord implements HasDdpInstanceId {
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultException = ex;
+                throw new DsmInternalError("Error getting list of medical records for realm " + realm, ex);
             }
-            return dbVals;
+            log.info("Got {} participant medical records for realm {}", medicalRecords.size(), realm);
+            return medicalRecords;
         });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError("Error getting list of medical records for realm " + realm, results.resultException);
-        }
-        logger.info("Got {} participant medical records for realm {}", medicalRecords.size(), realm);
-        return medicalRecords;
     }
 
     public static List<MedicalRecord> getMedicalRecordsByInstanceNameAndDdpParticipantId(String instanceName, String ddpParticipantId) {
@@ -313,28 +325,23 @@ public class MedicalRecord implements HasDdpInstanceId {
                 .getOrDefault(ddpParticipantId, new ArrayList<>());
     }
 
+    @VisibleForTesting
     public static List<MedicalRecord> getMedicalRecordsForParticipant(int participantId) {
         return inTransaction(conn -> {
             List<MedicalRecord> medicalRecords = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_PARTICIPANT_MEDICAL_RECORDS)) {
                 stmt.setInt(1, participantId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    MedicalRecordDao.BuildMedicalRecord builder = new MedicalRecordDao.BuildMedicalRecord();
                     while (rs.next()) {
-                        medicalRecords.add(builder.build(rs));
+                        medicalRecords.add(getMedicalRecord(rs));
                     }
                 }
             } catch (SQLException e) {
                 throw new DsmInternalError("Error getting list of medical records for participant " + participantId, e);
             }
-            logger.info("Got {} medical records for participant {}", medicalRecords.size(), participantId);
+            log.info("Got {} medical records for participant {}", medicalRecords.size(), participantId);
             return medicalRecords;
         });
-    }
-
-    public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
-        String queryAddition = AND_P_DDP_PARTICIPANT_ID_IN.replace(QUESTION_MARK, DBUtil.participantIdsInClause(participantIds));
-        return getMedicalRecords(realm, queryAddition);
     }
 
     public static MedicalInfo getDDPInstitutionInfo(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId) {

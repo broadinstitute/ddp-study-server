@@ -38,7 +38,7 @@ public class SingleProcessorTest {
         generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), patch));
 
         Dsm esDsm = new Dsm();
-        esDsm.setParticipant(new Participant(2174L, null, null, null, null, null, null,
+        esDsm.setParticipant(new Participant(2174L, null, 1, null, null, null, null, null,
                 null, null, null, false, false, "{\"key\": \"oldVal\"}", 12874512387612L));
         BaseProcessor processor = new SingleProcessor();
         processor.setEsDsm(esDsm);
@@ -66,7 +66,7 @@ public class SingleProcessorTest {
         generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), patch));
 
         Dsm esDsm = new Dsm();
-        esDsm.setParticipant(new Participant(2174L, null, null, null, null, null, null,
+        esDsm.setParticipant(new Participant(2174L, null, 1, null, null, null, null, null,
                 null, null, null, false, false, "", 12874512387612L));
         BaseProcessor processor = new SingleProcessor();
         processor.setEsDsm(esDsm);

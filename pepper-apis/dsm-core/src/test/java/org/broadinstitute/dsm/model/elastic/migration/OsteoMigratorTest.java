@@ -71,7 +71,8 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         // TODO: revisit this -- DC
         os1InstanceName = OLD_OSTEO_INSTANCE_NAME;
         os2InstanceName = NEW_OSTEO_INSTANCE_NAME;
-        esIndex = ElasticTestUtil.createIndex(baseInstanceName, "elastic/lmsMappings.json", null);
+        esIndex = ElasticTestUtil.createIndex(baseInstanceName, "elastic/osteo1Mappings.json",
+                "elastic/osteo1Settings.json");
         // OS1 instance is not in the test DB, OS2 is
         os1DdpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(os1InstanceName, esIndex);
         os2DdpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(os2InstanceName).orElseThrow();
@@ -171,15 +172,15 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         verifyExportLogs(exportLogs);
 
         // should be onc history for OS1 only participant
-        String os1DdpPtpId = os1Ptp.getDdpParticipantIdOrThrow();
-        verifyOncHistory(os1DdpPtpId, List.of(os1Ptp.getParticipantIdOrThrow()));
+        String os1DdpPtpId = os1Ptp.getRequiredDdpParticipantId();
+        verifyOncHistory(os1DdpPtpId, List.of(os1Ptp.getRequiredParticipantId()));
         verifyKitShipping(os1DdpPtpId);
         // should be no onc history for OS2 only participant (not exported)
         //!!TODO
         // for OS1 participant consented to OS2 there are  two onc history records, one for each instance
-        String os1BothDdpPtpId = os1BothPtp.getDdpParticipantIdOrThrow();
+        String os1BothDdpPtpId = os1BothPtp.getRequiredDdpParticipantId();
         verifyOncHistory(os1BothDdpPtpId,
-                List.of(os1BothPtp.getParticipantIdOrThrow(), os2BothPtp.getParticipantIdOrThrow()));
+                List.of(os1BothPtp.getRequiredParticipantId(), os2BothPtp.getRequiredParticipantId()));
         verifyKitShipping(os1BothDdpPtpId);
 
         // do an OS2 export
@@ -205,17 +206,17 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
     private void verifyMigrated(ParticipantDto os1Ptp, ParticipantDto os2Ptp,
                                 ParticipantDto os1BothPtp, ParticipantDto os2BothPtp) {
-        String os1DdpPtpId = os1Ptp.getDdpParticipantIdOrThrow();
-        String os2DdpPtpId = os2Ptp.getDdpParticipantIdOrThrow();
-        String os1BothDdpPtpId = os1BothPtp.getDdpParticipantIdOrThrow();
+        String os1DdpPtpId = os1Ptp.getRequiredDdpParticipantId();
+        String os2DdpPtpId = os2Ptp.getRequiredDdpParticipantId();
+        String os1BothDdpPtpId = os1BothPtp.getRequiredDdpParticipantId();
 
         // should be onc history for OS2 only participant
-        verifyOncHistory(os2DdpPtpId, List.of(os2Ptp.getParticipantIdOrThrow()));
+        verifyOncHistory(os2DdpPtpId, List.of(os2Ptp.getRequiredParticipantId()));
         // should be onc history for OS1 only participant
-        verifyOncHistory(os1DdpPtpId, List.of(os1Ptp.getParticipantIdOrThrow()));
+        verifyOncHistory(os1DdpPtpId, List.of(os1Ptp.getRequiredParticipantId()));
         // for OS1 participant consented to OS2 there should be two onc history records, one for each instance
         verifyOncHistory(os1BothDdpPtpId,
-                List.of(os1BothPtp.getParticipantIdOrThrow(), os2BothPtp.getParticipantIdOrThrow()));
+                List.of(os1BothPtp.getRequiredParticipantId(), os2BothPtp.getRequiredParticipantId()));
 
         verifyKitShipping(os1DdpPtpId);
         verifyKitShipping(os2DdpPtpId);
@@ -235,7 +236,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private void verifyCohortTags() {
         try {
             os1Participants.forEach(ptp -> {
-                String ddpParticipantId = ptp.getDdpParticipantIdOrThrow();
+                String ddpParticipantId = ptp.getRequiredDdpParticipantId();
                 log.debug("ES participant record for {}: {}",  ddpParticipantId,
                         ElasticTestUtil.getParticipantDocumentAsString(esIndex,  ddpParticipantId));
                 List<CohortTag> cohortTags = getCohortTagsFromDoc(ddpParticipantId);
@@ -243,7 +244,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
                 Assert.assertTrue(cohortTags.stream().anyMatch(tag -> tag.getCohortTagName().equals(OS1_TAG)));
             });
             os2Participants.forEach(ptp -> {
-                String ddpParticipantId = ptp.getDdpParticipantIdOrThrow();
+                String ddpParticipantId = ptp.getRequiredDdpParticipantId();
                 log.debug("ES participant record for {}: {}",  ddpParticipantId,
                         ElasticTestUtil.getParticipantDocumentAsString(esIndex,  ddpParticipantId));
                 List<CohortTag> cohortTags = getCohortTagsFromDoc(ddpParticipantId);
@@ -290,8 +291,9 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
         List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
         Assert.assertEquals(participantIds.size(), oncHistoryDetailList.size());
 
-        List<MedicalRecord> medicalRecords = dsm.getMedicalRecord();
-        Assert.assertEquals(participantIds.size(), medicalRecords.size());
+        // the onc history medical records are of type NOT_SPECIFIED so will not be written to ES
+        List<MedicalRecord> esMedicalRecords = dsm.getMedicalRecord();
+        Assert.assertTrue(esMedicalRecords.isEmpty());
 
         participantIds.forEach(participantId -> {
             int medicalRecordId = medicalRecordTestUtil.getParticipantMedicalIds(participantId).get(0);
@@ -300,14 +302,12 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
                     .findFirst().orElseThrow();
             Assert.assertEquals(oncHistoryDetail.getOncHistoryDetailId(),
                     medicalRecordTestUtil.getParticipantOncHistoryDetailIds(participantId).get(0).intValue());
-            Assert.assertTrue(medicalRecords.stream()
-                    .anyMatch(rec -> rec.getMedicalRecordId() == medicalRecordId));
         });
     }
 
     private void createOncHistoryDetail(ParticipantDto participant, DDPInstanceDto instanceDto, int oncHistoryCount) {
-        String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
-        int participantId = participant.getParticipantIdOrThrow();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+        int participantId = participant.getRequiredParticipantId();
         int medicalRecordId = medicalRecordTestUtil.createMedicalRecord(participant, instanceDto);
         log.debug("Created medical record {} for participant {}", medicalRecordId, participantId);
 

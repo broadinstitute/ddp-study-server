@@ -15,7 +15,7 @@ public class NewOsteoParticipantExporter extends DefaultParticipantExporter {
         return new NewOsteoParticipant(
                 payload.getParticipantId(),
                 payload.getDdpParticipantId(),
-                Integer.parseInt(payload.getInstanceId())
+                payload.getInstanceId()
         );
     }
 

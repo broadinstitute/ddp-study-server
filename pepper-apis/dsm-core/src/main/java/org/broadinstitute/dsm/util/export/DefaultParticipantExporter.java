@@ -38,7 +38,7 @@ public class DefaultParticipantExporter implements Exportable {
     public Participant buildParticipantFromPayload(ParticipantExportPayload payload) {
         return new Participant(payload.getParticipantId(),
                 payload.getDdpParticipantId(),
-                Integer.parseInt(payload.getInstanceId())
+                payload.getInstanceId()
         );
     }
 

@@ -12,12 +12,12 @@ public class ElasticSearchParticipantExporterFactoryTest {
     @Test
     public void buildNewOsteoExporter() {
         Assert.assertTrue(ElasticSearchParticipantExporterFactory.fromPayload(
-                new ParticipantExportPayload(0, null, null, "osteo2", null)) instanceof NewOsteoParticipantExporter);
+                new ParticipantExportPayload(0, null, 0, "osteo2", null)) instanceof NewOsteoParticipantExporter);
     }
 
     @Test
     public void buildPlainExporter() {
         Assert.assertTrue(ElasticSearchParticipantExporterFactory.fromPayload(
-                new ParticipantExportPayload(0, null, null, "Any study other than osteo2", null)) instanceof DefaultParticipantExporter);
+                new ParticipantExportPayload(0, null, 0, "Any study other than osteo2", null)) instanceof DefaultParticipantExporter);
     }
 }
