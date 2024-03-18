@@ -78,7 +78,7 @@ public class KitDaoTest extends DbTxnBaseTest {
         ParticipantDto participantDto =
                 new ParticipantDto.Builder(ddpInstanceId, System.currentTimeMillis())
                         .withDdpParticipantId(PARTICIPANT_ID)
-                        .withLastVersion(0)
+                        .withLastVersion(0L)
                         .withLastVersionDate("")
                         .withChangedBy("SYSTEM")
                         .build();

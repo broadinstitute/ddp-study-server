@@ -9,4 +9,7 @@ public class DDPActivityConstants {
     public static final String DDP_ACTIVITY_STABLE_ID = "stableId";
     public static final String ACTIVITY_ENROLLMENT = "ENROLLMENT";
     public static final String ACTIVITY_ABOUT_YOU = "ABOUT_YOU";
+    public static final String ACTIVITY_CONSENT = "CONSENT";
+    public static final String ACTIVITY_PARENTAL_CONSENT = "PARENTAL_CONSENT";
+    public static final String ACTIVITY_CONSENT_ASSENT = "CONSENT_ASSENT";
 }

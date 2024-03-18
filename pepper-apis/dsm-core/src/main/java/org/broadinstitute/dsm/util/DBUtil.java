@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -38,24 +39,21 @@ public class DBUtil {
     }
 
     public static Long getBookmark(Connection conn, String bookmarkName) {
-        if (conn != null) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BOOKMARK, ResultSet.TYPE_SCROLL_SENSITIVE,
-                    ResultSet.CONCUR_READ_ONLY)) {
-                stmt.setString(1, bookmarkName);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    rs.last();
-                    int count = rs.getRow();
-                    rs.beforeFirst();
-                    if (count == 1 && rs.next()) {
-                        return rs.getLong(DBConstants.VALUE);
-                    }
-                    throw new RuntimeException("Error getting bookmark " + bookmarkName);
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BOOKMARK, ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_READ_ONLY)) {
+            stmt.setString(1, bookmarkName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.last();
+                int count = rs.getRow();
+                rs.beforeFirst();
+                if (count == 1 && rs.next()) {
+                    return rs.getLong(DBConstants.VALUE);
                 }
-            } catch (Exception ex) {
-                throw new RuntimeException("Error getting bookmark " + bookmarkName, ex);
             }
+            throw new DsmInternalError("Error getting bookmark " + bookmarkName);
+        } catch (Exception ex) {
+            throw new DsmInternalError("Error getting bookmark " + bookmarkName, ex);
         }
-        return null;
     }
 
     public static void updateBookmark(long value, String bookmarkName) {

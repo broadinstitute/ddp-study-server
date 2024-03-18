@@ -113,8 +113,8 @@ public class ParticipantDto implements Cloneable {
             return this;
         }
 
-        public Builder withLastVersion(long lastVersion) {
-            this.lastVersion = Optional.of(lastVersion);
+        public Builder withLastVersion(Long lastVersion) {
+            this.lastVersion = Optional.ofNullable(lastVersion);
             return this;
         }
 

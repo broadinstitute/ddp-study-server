@@ -320,11 +320,6 @@ public class MedicalRecord implements HasDdpInstanceId {
         });
     }
 
-    public static List<MedicalRecord> getMedicalRecordsByInstanceNameAndDdpParticipantId(String instanceName, String ddpParticipantId) {
-        return getMedicalRecords(instanceName, String.format(AND_DDP_PARTICIPANT_ID, ddpParticipantId))
-                .getOrDefault(ddpParticipantId, new ArrayList<>());
-    }
-
     @VisibleForTesting
     public static List<MedicalRecord> getMedicalRecordsForParticipant(int participantId) {
         return inTransaction(conn -> {

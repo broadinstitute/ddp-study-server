@@ -117,9 +117,9 @@ public class MedicalRecordUtil {
                 int result = insertNewRecord.executeUpdate();
                 // 1 (inserted) or 2 (updated) is good
                 if (result == 2) {
-                    logger.info("Updated record for participant w/ id " + ddpParticipantId);
+                    logger.info("Updated record for participant {} and instance {}", ddpParticipantId, instanceId);
                 } else if (result == 1) {
-                    logger.info("Inserted new record for participant w/ id " + ddpParticipantId);
+                    logger.info("Inserted record for participant {} and instance {}", ddpParticipantId, instanceId);
                 } else {
                     throw new RuntimeException("Error updating row");
                 }

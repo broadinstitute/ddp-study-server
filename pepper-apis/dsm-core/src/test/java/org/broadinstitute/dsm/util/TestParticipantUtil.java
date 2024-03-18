@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.util;
 import java.time.Instant;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -19,7 +20,7 @@ public class TestParticipantUtil {
     public static ParticipantDto createParticipant(String ddpParticipantId, int ddpInstanceId) {
         ParticipantDto participantDto = new ParticipantDto.Builder(ddpInstanceId, System.currentTimeMillis())
                 .withDdpParticipantId(ddpParticipantId)
-                .withLastVersion(0)
+                .withLastVersion(0L)
                 .withLastVersionDate("")
                 .withChangedBy("TEST_USER")
                 .build();
@@ -42,14 +43,24 @@ public class TestParticipantUtil {
         return participant;
     }
 
+    // TODO: deprecated call signature. -DC
     /**
      * Create a participant with a standard profile in ES
      */
     public static ParticipantDto createParticipantWithEsProfile(String participantBaseName,
                                                                 DDPInstanceDto ddpInstanceDto, String esIndex) {
+        return createParticipantWithEsProfile(participantBaseName, ddpInstanceDto);
+    }
+
+    /**
+     * Create a participant with a standard profile in ES
+     */
+    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName,
+                                                                DDPInstanceDto ddpInstanceDto) {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
         ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
 
+        String esIndex = ddpInstanceDto.getEsParticipantIndex();
         ElasticTestUtil.createParticipant(esIndex, participant);
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
                 ddpParticipantId);
@@ -60,6 +71,12 @@ public class TestParticipantUtil {
         if (participantId >= 0) {
             participantDao.delete(participantId);
         }
+    }
+
+    public static void deleteInstanceParticipants(DDPInstanceDto ddpInstanceDto) {
+        Participant.getParticipants(ddpInstanceDto.getInstanceName()).values().stream()
+                .map(Participant::getParticipantId)
+                .forEach(id -> deleteParticipant(id.intValue()));
     }
 
     private static ParticipantDto createParticipantWithEsData(String participantBaseName, DDPInstanceDto ddpInstanceDto,

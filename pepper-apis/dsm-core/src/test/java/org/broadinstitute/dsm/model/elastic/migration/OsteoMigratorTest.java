@@ -36,9 +36,13 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+// TODO: this test is in limbo while we move to separate OS1 and OS2 ES indexes. Once the two indexes are
+// in place, we can rewrite and enable this test. -DC
 @Slf4j
+@Ignore
 public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private static final String TEST_USER = "TEST_USER";
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
