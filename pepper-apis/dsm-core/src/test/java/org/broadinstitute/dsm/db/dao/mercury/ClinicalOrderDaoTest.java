@@ -90,7 +90,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         ParticipantDto participantDto =
                 new ParticipantDto.Builder(testKitUtil.ddpInstanceId, System.currentTimeMillis())
                         .withDdpParticipantId(ddpParticipantId)
-                        .withLastVersion(0)
+                        .withLastVersion(0L)
                         .withLastVersionDate("")
                         .withChangedBy("SYSTEM")
                         .build();

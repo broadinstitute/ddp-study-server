@@ -39,7 +39,7 @@ public class DDPRequestJob implements Job {
             DDPMedicalRecordDataRequest medicalRecordDataRequest = new DDPMedicalRecordDataRequest();
             medicalRecordDataRequest.requestAndWriteParticipantInstitutions();
         } catch (Exception e) {
-            logger.error("Some error occurred while doing medical record stuff ", e);
+            logger.error("Exception processing DDPMedicalRecordDataRequest", e);
         }
         //deactivate kit requests which meet special behavior
         if (notificationUtil != null) {

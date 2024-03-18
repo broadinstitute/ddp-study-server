@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,22 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecordLog;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.service.medicalrecord.MedicalRecordService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
 import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DDPMedicalRecordDataRequest {
 
     public static final String SQL_INSERT_ONC_HISTORY =
@@ -38,7 +34,6 @@ public class DDPMedicalRecordDataRequest {
             "INSERT INTO ddp_participant_record SET participant_id = (SELECT participant_id FROM ddp_participant "
                     + "WHERE ddp_participant_id = ? and ddp_instance_id = ?), last_changed = ?, changed_by = ? ON DUPLICATE KEY "
                     + "UPDATE last_changed = ?, changed_by = ?";
-    private static final Logger logger = LoggerFactory.getLogger(DDPMedicalRecordDataRequest.class);
     private static final String SQL_INSERT_MEDICAL_RECORD_LOG =
             "INSERT INTO ddp_medical_record_log SET medical_record_id = ?, type = ?, last_changed = ?";
     private static final String SQL_SELECT_MEDICAL_RECORD_LOG =
@@ -49,62 +44,27 @@ public class DDPMedicalRecordDataRequest {
                     + "WHERE part.ddp_participant_id = ? AND part.ddp_instance_id = ? "
                     + "AND NOT rec.deleted <=> 1 AND rec.fax_sent is not null AND (log.type is null OR log.type = ?)";
 
-    // Requesting 'new' DDPKitRequests and write them into ddp_kit_request
     public void requestAndWriteParticipantInstitutions() {
-        requestFromDDPs();
+        new MedicalRecordService().requestParticipantInstitutions();
+
     }
 
-    public void requestFromDDPs() {
-        try {
-            List<DDPInstance> ddpInstances = DDPInstance.getDDPInstanceListWithRole(DBConstants.HAS_MEDICAL_RECORD_ENDPOINTS);
-            if (ddpInstances != null) {
-                inTransaction((conn) -> {
-                    for (DDPInstance ddpInstance : ddpInstances) {
-                        if (ddpInstance.isHasRole()) {
-                            Long value = DBUtil.getBookmark(conn, ddpInstance.getDdpInstanceId());
-                            if (value != null && value != -1) {
-                                String dsmRequest = ddpInstance.getBaseUrl() + RoutePath.DDP_PARTICIPANT_INSTITUTIONS + "/" + value;
-                                try {
-                                    InstitutionRequest[] institutionRequests =
-                                            DDPRequestUtil.getResponseObject(InstitutionRequest[].class, dsmRequest, ddpInstance.getName(),
-                                                    ddpInstance.isHasAuth0Token());
-                                    if (institutionRequests != null && institutionRequests.length > 0) {
-                                        logger.info(
-                                                "Got " + institutionRequests.length + " InstitutionRequests for " + ddpInstance.getName());
-                                        for (InstitutionRequest institutionRequest : institutionRequests) {
-                                            try {
-                                                writeInstitutionBundle(conn, ddpInstance.getDdpInstanceIdAsInt(),
-                                                        institutionRequest, ddpInstance.getName());
-                                                value = Math.max(value, institutionRequest.getId());
-                                            } catch (Exception e) {
-                                                logger.error("Failed to insert participant for mr into db ", e);
-                                            }
-                                        }
-                                        DBUtil.updateBookmark(conn, value, ddpInstance.getDdpInstanceId());
-                                    }
-                                } catch (Exception e) {
-                                    logger.error("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), e);
-                                }
-                            } else {
-                                logger.error("Couldn't get maxParticipantId for ddpInstance " + ddpInstance.getName());
-                            }
-                        }
-                    }
-                    return null;
-                });
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error getting participant information ", e);
-        }
-    }
-
+    // TODO: these methods should be moved to MedicalRecordService. They are under test now indirectly via
+    //  MedicalRecordTestUtil, and I did a bit of refactoring, but I want to clean them up before moving. -DC
     /**
-     * Returns created medical record IDs
+     * Writes new institutions to DB, creates new medical records for the institutions, creates new onc history records,
+     * creates new participant records, and updates the medical record log. If the participant does not already
+     * exist, a new participant is created.
+     *
+     * @return created medical record IDs
      */
-    public static List<Integer> writeInstitutionBundle(@NonNull Connection conn, int instanceId,
-                                                       InstitutionRequest institutionRequest, String instanceName) {
-        List<Integer> medicalRecordIds = new ArrayList<>();
+    public static List<Integer> writeInstitutionBundle(@NonNull Connection conn, InstitutionRequest institutionRequest,
+                                                       DDPInstanceDto ddpInstanceDto) {
+        int instanceId = ddpInstanceDto.getDdpInstanceId();
+        String instanceName = ddpInstanceDto.getInstanceName();
         String ddpParticipantId = institutionRequest.getParticipantId();
+
+        List<Integer> medicalRecordIds = new ArrayList<>();
         if (MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, instanceId)) {
             //participant already exists
             if (MedicalRecordUtil.updateParticipant(conn, ddpParticipantId, instanceId, institutionRequest.getId(),
@@ -126,7 +86,6 @@ public class DDPMedicalRecordDataRequest {
                             .withLastVersionDate(institutionRequest.getLastUpdated())
                             .withChangedBy(SystemUtil.SYSTEM).build();
             int participantId = new ParticipantDao().create(participantDto);
-            DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
             ElasticSearchParticipantExporterFactory.fromPayload(
                     new ParticipantExportPayload(
                             participantId,
@@ -148,11 +107,14 @@ public class DDPMedicalRecordDataRequest {
                                                       int instanceId, String instanceName) {
         List<Integer> medicalRecordIds = new ArrayList<>();
         String ddpParticipantId = institutionRequest.getParticipantId();
-        Collection<Institution> institutions = institutionRequest.getInstitutions();
+        List<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
-            logger.info("Participant {} has {} institutions}", ddpParticipantId, institutions.size());
+            log.info("Participant {} has {} institutions", ddpParticipantId, institutions.size());
             // TODO this should be rewritten to verify the DDP participant ID and get the participant ID to use in the following
-            // calls (which should be modified to use the participant ID instead of repeatedly looking it up -DC
+            // calls (which should be modified to use the participant ID instead of repeatedly doing SQL queries
+            // to get it) -DC
+            // TODO: OncHistory is created but not written to ES, but will be written on export. Use
+            //  OncHistoryService.createEmptyOncHistory. -DC
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_ONC_HISTORY, ddpParticipantId, instanceId);
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, ddpParticipantId, instanceId);
 
@@ -161,7 +123,7 @@ public class DDPMedicalRecordDataRequest {
                         institution, instanceName));
             }
         } else {
-            logger.info("Institution list was empty for participant {}", ddpParticipantId);
+            log.info("Institution list was empty for participant {}", ddpParticipantId);
         }
         return medicalRecordIds;
     }
@@ -176,7 +138,7 @@ public class DDPMedicalRecordDataRequest {
                 if (result != 1) {
                     throw new RuntimeException("Error updating row");
                 }
-                logger.info("Added medical record log for medical record w/ id " + medicalRecordId);
+                log.info("Added medical record log for medical record w/ id " + medicalRecordId);
             } catch (SQLException e) {
                 throw new RuntimeException("Error inserting new medical record ", e);
             }

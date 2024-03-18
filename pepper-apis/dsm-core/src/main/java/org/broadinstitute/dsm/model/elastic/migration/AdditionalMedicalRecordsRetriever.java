@@ -17,12 +17,14 @@ class AdditionalMedicalRecordsRetriever extends AdditionalRecordsRetriever<Medic
     }
 
     static Optional<AdditionalMedicalRecordsRetriever> fromRealm(String realm) {
+/*
         if  (OLD_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalMedicalRecordsRetriever(NEW_OSTEO_INSTANCE_NAME));
         }
         if (NEW_OSTEO_INSTANCE_NAME.equalsIgnoreCase(realm)) {
             return Optional.of(new AdditionalMedicalRecordsRetriever(OLD_OSTEO_INSTANCE_NAME));
         }
+*/
         return Optional.empty();
     }
 

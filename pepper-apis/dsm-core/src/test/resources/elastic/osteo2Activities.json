@@ -1,0 +1,379 @@
+[
+  {
+    "activityCode": "PREQUAL",
+    "activityVersion": "v1",
+    "questionsAnswers": [
+      {
+        "stableId": "PREQUAL_SELF_DESCRIBE",
+        "answer": [
+          "DIAGNOSED"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST",
+        "PREQUAL_SELF_DESCRIBE": [
+          "DIAGNOSED"
+        ]
+      },
+      {
+        "stableId": "SELF_CURRENT_AGE",
+        "answer": 25,
+        "SELF_CURRENT_AGE": 25,
+        "questionType": "NUMERIC"
+      },
+      {
+        "SELF_COUNTRY": [
+          "US"
+        ],
+        "stableId": "SELF_COUNTRY",
+        "answer": [
+          "US"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "SELF_STATE",
+        "answer": [
+          "NH"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "SELF_STATE": [
+          "NH"
+        ],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "UJ4TANM6U9",
+    "attributes": {
+    },
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "CONSENT",
+    "activityVersion": "v1",
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "CONSENT_BLOOD",
+        "CONSENT_BLOOD": true,
+        "answer": true,
+        "questionType": "BOOLEAN"
+      },
+      {
+        "stableId": "CONSENT_TISSUE",
+        "CONSENT_TISSUE": true,
+        "answer": true,
+        "questionType": "BOOLEAN"
+      },
+      {
+        "stableId": "CONSENT_FIRSTNAME",
+        "answer": "Jane",
+        "questionType": "TEXT",
+        "CONSENT_FIRSTNAME": "Jane"
+      },
+      {
+        "stableId": "CONSENT_LASTNAME",
+        "CONSENT_LASTNAME": "Smith",
+        "answer": "Smith",
+        "questionType": "TEXT"
+      },
+      {
+        "date": "1997-10-10",
+        "dateFields": {
+          "month": 10,
+          "year": 1977,
+          "day": 10
+        },
+        "stableId": "CONSENT_DOB",
+        "CONSENT_DOB": "1977-10-10",
+        "answer": "1977-10-10",
+        "questionType": "DATE"
+      }
+    ],
+    "guid": "ZRX0SOS19A",
+    "attributes": {
+    },
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "CONSENT",
+    "activityVersion": "v2",
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "CONSENT_BLOOD",
+        "CONSENT_BLOOD": true,
+        "answer": true,
+        "questionType": "BOOLEAN"
+      },
+      {
+        "stableId": "CONSENT_TISSUE",
+        "CONSENT_TISSUE": true,
+        "answer": true,
+        "questionType": "BOOLEAN"
+      },
+      {
+        "stableId": "CONSENT_FIRSTNAME",
+        "answer": "Jane",
+        "questionType": "TEXT",
+        "CONSENT_FIRSTNAME": "Jane"
+      },
+      {
+        "stableId": "CONSENT_LASTNAME",
+        "CONSENT_LASTNAME": "Smith",
+        "answer": "Smith",
+        "questionType": "TEXT"
+      },
+      {
+        "date": "1977-10-10",
+        "dateFields": {
+          "month": 10,
+          "year": 1977,
+          "day": 10
+        },
+        "stableId": "CONSENT_DOB",
+        "CONSENT_DOB": "1977-10-10",
+        "answer": "1977-10-10",
+        "questionType": "DATE"
+      }
+    ],
+    "guid": "L047UVGARA",
+    "attributes": {
+    },
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "CONSENT_ADDENDUM",
+    "activityVersion": "v2",
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "SOMATIC_CONSENT_TUMOR",
+        "SOMATIC_CONSENT_TUMOR": true,
+        "answer": true,
+        "questionType": "BOOLEAN"
+      },
+      {
+        "stableId": "SOMATIC_CONSENT_PARTICIPANT_SIGNATURE",
+        "answer": "Jane Smith",
+        "SOMATIC_CONSENT_PARTICIPANT_SIGNATURE": "Jane Smith",
+        "questionType": "TEXT"
+      }
+    ],
+    "guid": "5OU9EPJFB9",
+    "attributes": {
+    },
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "GERMLINE_CONSENT_ADDENDUM",
+    "activityVersion": "v2",
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "ADDENDUM_CONSENT_BOOL",
+        "answer": true,
+        "questionType": "BOOLEAN",
+        "ADDENDUM_CONSENT_BOOL": true
+      },
+      {
+        "stableId": "ADDENDUM_CONSENT_SINGATURE",
+        "answer": "Jane Smith",
+        "ADDENDUM_CONSENT_SINGATURE": "Jane Smith",
+        "questionType": "TEXT"
+      }
+    ],
+    "guid": "4BL78M6KWK",
+    "attributes": {
+      "DDP_KIT_REQUEST_ID": "IS1K0W9T6E",
+      "DDP_KIT_REASON_TYPE": "NORMAL"
+    },
+    "status": "COMPLETE"
+  },
+  {
+    "activityCode": "FAMILY_HISTORY_SELF_CHILD",
+    "completedAt": null,
+    "activityVersion": "v1",
+    "parentInstanceGuid": "GRDD72T7MQ",
+    "questionsAnswers": [
+      {
+        "stableId": "FH_CHILD_ALIAS",
+        "answer": "Joe",
+        "FH_CHILD_ALIAS": "Joe",
+        "questionType": "TEXT"
+      },
+      {
+        "stableId": "FH_CHILD_SEX_AT_BIRTH",
+        "answer": [
+          "MALE"
+        ],
+        "groupedOptions": {
+        },
+        "FH_CHILD_SEX_AT_BIRTH": [
+          "MALE"
+        ],
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FH_CHILD_LIVING",
+        "answer": [
+          "YES"
+        ],
+        "FH_CHILD_LIVING": [
+          "YES"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FH_CHILD_AGE_RANGE",
+        "answer": [
+          "10-14"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST",
+        "FH_CHILD_AGE_RANGE": [
+          "10-14"
+        ]
+      },
+      {
+        "stableId": "FH_CHILD_HAD_CANCER",
+        "answer": [
+          "NO"
+        ],
+        "FH_CHILD_HAD_CANCER": [
+          "NO"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "YITI6D6HXV",
+    "attributes": {
+    },
+    "status": "IN_PROGRESS"
+  },
+  {
+    "activityCode": "FAMILY_HISTORY_SELF_GRANDPARENT",
+    "activityVersion": "v1",
+    "parentInstanceGuid": "GRDD72T7MQ",
+    "questionsAnswers": [
+       {
+        "stableId": "FAMILY_SIDE_Q_1",
+        "answer": [
+          "PARENT2"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "FAMILY_SIDE_Q_1": [
+          "PARENT2"
+        ],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FH_GRANDPARENT_SEX_AT_BIRTH",
+        "FH_GRANDPARENT_SEX_AT_BIRTH": [
+          "MALE"
+        ],
+        "answer": [
+          "MALE"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      },
+      {
+        "stableId": "FH_GRANDPARENT_LIVING",
+        "answer": [
+          "NO"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST",
+        "FH_GRANDPARENT_LIVING": [
+          "NO"
+        ]
+      },
+      {
+        "stableId": "FH_GRANDPARENT_AGE_RANGE",
+        "answer": [
+          "85-89"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST",
+        "FH_GRANDPARENT_AGE_RANGE": [
+          "85-89"
+        ]
+      },
+      {
+        "stableId": "FH_GRANDPARENT_HAD_CANCER",
+        "FH_GRANDPARENT_HAD_CANCER": [
+          "NO"
+        ],
+        "answer": [
+          "NO"
+        ],
+        "groupedOptions": {
+        },
+        "optionDetails": [],
+        "nestedOptions": {
+        },
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "KA15ZNEXW0",
+    "attributes": {
+    },
+    "status": "IN_PROGRESS"
+  },
+  {
+    "activityCode": "FAMILY_HISTORY_SELF",
+    "activityVersion": "v2",
+    "parentInstanceGuid": null,
+    "questionsAnswers": [],
+    "guid": "GRDD72T7MQ",
+    "attributes": {
+    },
+    "status": "COMPLETE"
+  }
+]

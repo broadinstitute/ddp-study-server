@@ -1,0 +1,110 @@
+[
+  {
+    "activityCode": "PREQUAL",
+    "activityVersion": "v1",
+    "guid": "I9MORP2IUP",
+    "parentInstanceGuid": null,
+    "status": "COMPLETE",
+    "questionsAnswers": [
+      {
+        "answer": [
+          "CHILD_DIAGNOSED"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "PREQUAL_SELF_DESCRIBE",
+        "PREQUAL_SELF_DESCRIBE": [
+          "CHILD_DIAGNOSED"
+        ]
+      },
+      {
+        "answer": 14,
+        "questionType": "NUMERIC",
+        "stableId": "CHILD_CURRENT_AGE",
+        "CHILD_CURRENT_AGE": 14
+      },
+      {
+        "answer": [
+          "US"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "CHILD_COUNTRY",
+        "CHILD_COUNTRY": [
+          "US"
+        ]
+      },
+      {
+        "answer": [
+          "CA"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "CHILD_STATE",
+        "CHILD_STATE": [
+          "CA"
+        ]
+      }
+    ],
+    "attributes": {}
+  },
+  {
+    "activityCode": "CONSENT_ASSENT",
+    "activityVersion": "v1",
+    "guid": "NZF2YIHMEH",
+    "parentInstanceGuid": null,
+    "status": "COMPLETE",
+    "questionsAnswers": [
+      {
+        "answer": true,
+        "questionType": "BOOLEAN",
+        "stableId": "CONSENT_ASSENT_BLOOD",
+        "CONSENT_ASSENT_BLOOD": true
+      },
+      {
+        "answer": false,
+        "questionType": "BOOLEAN",
+        "stableId": "CONSENT_ASSENT_TISSUE",
+        "CONSENT_ASSENT_TISSUE": false
+      },
+      {
+        "date": "2002-09-01",
+        "dateFields": {
+          "year": 2002,
+          "month": 9,
+          "day": 1
+        },
+        "answer": "2002-9-01",
+        "questionType": "DATE",
+        "stableId": "CONSENT_ASSENT_CHILD_DOB",
+        "CONSENT_ASSENT_CHILD_DOB": "2002-09-01"
+      },
+      {
+        "answer": [
+          "PARENT"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "CONSENT_ASSENT_RELATIONSHIP",
+        "CONSENT_ASSENT_RELATIONSHIP": [
+          "PARENT"
+        ]
+      },
+      {
+        "answer": "Joe Broad",
+        "questionType": "TEXT",
+        "stableId": "CONSENT_ASSENT_CHILD_SIGNATURE",
+        "CONSENT_ASSENT_CHILD_SIGNATURE": "Joe Broad"
+      }
+    ],
+    "attributes": {}
+  }
+]

@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
@@ -31,5 +32,10 @@ public class CohortTagTestUtil {
         cohortTag.setCohortTagId(id);
         cohortIds.add(id);
         return cohortTag;
+    }
+
+    public static void deleteInstanceTags(String instanceName) {
+        Map<String, List<CohortTag>> ptpToTags = cohortTagDao.getCohortTagsByInstanceName(instanceName);
+        ptpToTags.values().forEach(tagList -> tagList.forEach(tag -> cohortTagDao.delete(tag.getCohortTagId())));
     }
 }

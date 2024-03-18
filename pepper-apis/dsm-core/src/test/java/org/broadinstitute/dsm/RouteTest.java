@@ -32,6 +32,7 @@ import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantExit;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.LookupResponse;
@@ -444,6 +445,7 @@ public class RouteTest extends TestHelper {
         File generatedPDF = new File(OUTPUT_FOLDER, "Test_" + inFile);
         Assert.assertTrue(generatedPDF.exists());
     }
+
     @Ignore("Permissions")
     @Test
     public void editMedicalRecordRequestMR() throws Exception {
@@ -676,8 +678,8 @@ public class RouteTest extends TestHelper {
 
         String userId = DBTestUtil.getTester("THE UNIT TESTER 1");
         HttpResponse response =
-                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/ndiRequest?userId=" + userId), fileContent, testUtil.buildAuthHeaders(userId))
-                        .returnResponse();
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/ndiRequest?userId=" + userId), fileContent,
+                                testUtil.buildAuthHeaders(userId)).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String content = new Gson().fromJson(DDPRequestUtil.getContentAsString(response), String.class);
 
@@ -790,7 +792,8 @@ public class RouteTest extends TestHelper {
     public void changeUserSettings() throws Exception {
         String userId = DBTestUtil.getTester("THE UNIT TESTER 1");
         HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "userSettings?userId=" + userId),
-                "{\"rowsOnPage\": 10, \"rowSet0\": 5, \"rowSet1\": 10, \"rowSet2\": 15} ", testUtil.buildAuthHeaders(userId)).returnResponse();
+                "{\"rowsOnPage\": 10, \"rowSet0\": 5, \"rowSet1\": 10, \"rowSet2\": 15} ",
+                testUtil.buildAuthHeaders(userId)).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         List strings = new ArrayList<>();
         strings.add("THE UNIT TESTER 1");
@@ -801,7 +804,8 @@ public class RouteTest extends TestHelper {
 
         //change value again, just to check if it really was changed
         response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "userSettings?userId=" + userId),
-                "{\"rowsOnPage\": 30, \"rowSet0\": 10, \"rowSet1\": 20, \"rowSet2\": 30}", testUtil.buildAuthHeaders(userId)).returnResponse();
+                "{\"rowsOnPage\": 30, \"rowSet0\": 10, \"rowSet1\": 20, \"rowSet2\": 30}",
+                testUtil.buildAuthHeaders(userId)).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         Assert.assertEquals("30", DBTestUtil.getStringFromQuery(SELECT_USER_SETTING, strings, "rows_on_page"));
         Assert.assertEquals("10", DBTestUtil.getStringFromQuery(SELECT_USER_SETTING, strings, "rows_set_0"));
@@ -1042,7 +1046,8 @@ public class RouteTest extends TestHelper {
 
         HttpResponse response = TestUtil.perform(Request.Post(
                         DSM_BASE_URL + "/ui/" + "triggerSurvey?realm=" + TEST_DDP + "&userId=" + assigneeId
-                                + "&surveyName=test-consent&surveyType=REPEATING&isFileUpload=false"), json, testUtil.buildAuthHeaders(assigneeId))
+                                + "&surveyName=test-consent&surveyType=REPEATING&isFileUpload=false"), json,
+                        testUtil.buildAuthHeaders(assigneeId))
                 .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         Gson gson2 = new GsonBuilder().create();
@@ -1239,8 +1244,10 @@ public class RouteTest extends TestHelper {
                 try {
                     inTransaction((conn) -> {
                         try {
-                            ddpMedicalRecordDataRequest.writeInstitutionBundle(conn, instanceId, participantInstitution,
-                                    instanceName);
+                            DDPInstanceDto instanceDto = new DDPInstanceDto.Builder()
+                                    .withInstanceName(instanceName)
+                                    .withDdpInstanceId(instanceId).build();
+                            DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, participantInstitution, instanceDto);
                         } catch (Exception e) {
                             throw new RuntimeException("medicalRecordLog ", e);
                         }
@@ -1400,7 +1407,8 @@ public class RouteTest extends TestHelper {
 
         String json = "{\"path\": \"1_" + nameInBucket + "\"}";
         response =
-                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "showUpload?realm=" + TEST_DDP), json, testUtil.buildAuthHeaders(userId))
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "showUpload?realm=" + TEST_DDP), json,
+                                testUtil.buildAuthHeaders(userId))
                         .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -1476,7 +1484,7 @@ public class RouteTest extends TestHelper {
                 org.broadinstitute.dsm.util.DBUtil.updateBookmark(conn, currentMaxParticipantId,
                         INSTANCE_ID); //set it back to the bookmark before testing
                 return null;
-            }catch(Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });

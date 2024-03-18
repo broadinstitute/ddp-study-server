@@ -12,6 +12,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
@@ -36,6 +37,8 @@ import org.junit.Assert;
  */
 @Slf4j
 public class MedicalRecordTestUtil {
+    private static final ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
+    private static final DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
     private final Map<Integer, List<Integer>> participantToMedicalRecordId = new HashMap<>();
     private final Map<Integer, List<Integer>> participantToOncHistoryDetailId = new HashMap<>();
     private final Map<Integer, Integer> participantToOncHistoryId = new HashMap<>();
@@ -86,7 +89,6 @@ public class MedicalRecordTestUtil {
         MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
         MedicalRecord medicalRecord = medicalRecordDao.get(medicalRecordId).get();
         medicalRecordDao.delete(medicalRecordId);
-        DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
         ddpInstitutionDao.delete(medicalRecord.getInstitutionId());
     }
 
@@ -99,15 +101,13 @@ public class MedicalRecordTestUtil {
     public int createMedicalRecordBundle(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {
         bundleCounter++;
         String ddpParticipantId = participantDto.getRequiredDdpParticipantId();
-        String ddpInstitutionId = String.format("%s_%d_GUID", ddpParticipantId, bundleCounter);
-        Institution institution = new Institution(ddpInstitutionId, "PHYSICIAN");
+        Institution institution = createInstitution(ddpParticipantId, bundleCounter);
         String lastUpdated = Long.toString(System.currentTimeMillis());
 
         InstitutionRequest institutionRequest =
                 new InstitutionRequest(bundleCounter, ddpParticipantId, List.of(institution), lastUpdated);
         List<Integer> medicalRecordIds = inTransaction(conn ->
-                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, ddpInstanceDto.getDdpInstanceId(),
-                        institutionRequest, ddpInstanceDto.getInstanceName()));
+                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, institutionRequest, ddpInstanceDto));
         participantBundleIds.add(participantDto.getRequiredParticipantId());
 
         Assert.assertEquals(1, medicalRecordIds.size());
@@ -121,16 +121,28 @@ public class MedicalRecordTestUtil {
         List<MedicalRecord> medRecords = MedicalRecord.getMedicalRecordsForParticipant(participantId);
         medRecords.forEach(medRecord -> MedicalRecordTestUtil.deleteMedicalRecord(medRecord.getMedicalRecordId()));
 
-        ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
         Optional<ParticipantRecordDto> recordDto = participantRecordDao
                 .getParticipantRecordByParticipantId(participantId);
         recordDto.ifPresent(participantRecordDto -> participantRecordDao
                 .delete(participantRecordDto.getParticipantRecordId().orElseThrow()));
     }
 
+    /**
+     * Deletes all MedicalRecords, Institutions and ParticipantRecords for a DDP instance
+     */
+    public static void deleteInstanceMedicalRecordBundles(DDPInstanceDto ddpInstanceDto) {
+        Participant.getParticipants(ddpInstanceDto.getInstanceName()).values().stream()
+                .map(Participant::getParticipantId)
+                .forEach(id -> deleteMedicalRecordBundle(id.intValue()));
+    }
+
     public static DDPInstitutionDto getInstitution(MedicalRecord medicalRecord) {
-        DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
         return ddpInstitutionDao.get(medicalRecord.getInstitutionId()).orElseThrow();
+    }
+
+    public static Institution createInstitution(String ddpParticipantId, int ordinal) {
+        String ddpInstitutionId = String.format("INST_%s_%03d", ddpParticipantId, ordinal);
+        return new Institution(ddpInstitutionId, "PHYSICIAN");
     }
 
     public int createOncHistoryDetail(ParticipantDto participant, OncHistoryDetail rec, String esIndex) {

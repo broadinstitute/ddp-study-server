@@ -160,6 +160,27 @@ public class ElasticSearchService {
     }
 
     /**
+     * Get DSM data for a single participant in the given index, throwing an exception if DSM data is missing
+     */
+    public Dsm getRequiredDsmData(String ddpParticipantId, String index) {
+        ElasticSearchParticipantDto esParticipant =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(index, ddpParticipantId);
+        return esParticipant.getDsm().orElseThrow(() ->
+                new DsmInternalError("ES dsm data missing for participant %s and index %s".formatted(
+                        ddpParticipantId, index)));
+    }
+
+    /**
+     * Update DSM data for a participant in the given index
+     */
+    public static void updateDsm(String ddpParticipantId, Dsm dsm, String index) {
+        Map<String, Object> dsmAsMap = ObjectMapperSingleton.instance().convertValue(dsm, Map.class);
+        ElasticSearchUtil.updateRequest(ddpParticipantId, index,
+                new HashMap<>(Map.of(ESObjectConstants.DSM, dsmAsMap)));
+        log.info("Updated DSM data in Elastic for {}", ddpParticipantId);
+    }
+
+    /**
      * Update ParticipantData entities in ElasticSearch based on participantData list provided.
      * Note that participantDataList should be a list of ALL participant data for the participant.
      */
