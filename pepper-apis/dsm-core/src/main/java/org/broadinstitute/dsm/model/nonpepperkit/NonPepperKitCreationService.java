@@ -59,6 +59,7 @@ public class NonPepperKitCreationService {
 
         return validateAndInsertNonPepperKit(kitRequestSettings, juniperKitRequest, easyPostUtil, ddpInstance, kitType, kitTypeName);
     }
+
     /**
      * Attempts to validate the juniperKitRequest received from Juniper, get an easy post id for its address and
      * insert in the DB if all checks pass
@@ -71,10 +72,11 @@ public class NonPepperKitCreationService {
      * @param kitTypeName the specific name of the request kit type
      *
      * @return an instance of KitResponse, either as an error or KitStatus
-     **/
-    private KitResponse validateAndInsertNonPepperKit(@NonNull KitRequestSettings kitRequestSettings, @NonNull JuniperKitRequest juniperKitRequest,
-                                                         @NonNull EasyPostUtil easyPostUtil, DDPInstance ddpInstance,
-                                                         KitType kitType, String kitTypeName) {
+     */
+    private KitResponse validateAndInsertNonPepperKit(@NonNull KitRequestSettings kitRequestSettings,
+                                                      @NonNull JuniperKitRequest juniperKitRequest,
+                                                      @NonNull EasyPostUtil easyPostUtil, DDPInstance ddpInstance,
+                                                      KitType kitType, String kitTypeName) {
         //let's validate the participant's address
         //to validate the address, first we need create the Address instance
         String name = "";

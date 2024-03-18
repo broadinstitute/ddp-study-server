@@ -29,7 +29,6 @@ public class DeliveryAddress {
     private String zip = "";
     private String country = "";
     private String phone = "";
-    private boolean empty = true;
     private boolean valid = false;
 
     public DeliveryAddress(String street1, String street2, String city, String state, String zip, String country) {
@@ -39,8 +38,10 @@ public class DeliveryAddress {
         this.state = state;
         this.zip = zip;
         this.country = country;
+    }
 
-        empty = (StringUtils.isBlank(this.street1))
+    public boolean isEmpty() {
+        return (StringUtils.isBlank(this.street1))
                 && (StringUtils.isBlank(this.street2))
                 && (StringUtils.isBlank(this.city))
                 && (StringUtils.isBlank(this.state))
@@ -55,11 +56,15 @@ public class DeliveryAddress {
         this.phone = phone;
     }
 
+    /** Uses easyPost services to determine whether an address
+     * appears to be a legitimate address that can be shipped to.
+     * Returns true if the address is valid for delivery, and false otherwise.
+     */
     public boolean validate() {
         valid = false;
 
         //don't bother to call EasyPost if we just have an empty address...
-        if (!empty) {
+        if (!isEmpty()) {
             Map<String, Object> addressFields = new HashMap<>();
             addressFields.put("name", name);
             addressFields.put("street1", street1);
@@ -102,6 +107,8 @@ public class DeliveryAddress {
                     phone = address.getPhone();
                 }
             } catch (Exception ex) {
+                // todo arz figure out proper error handling
+                valid = false;
                 logger.error(LOG_PREFIX + "An error occurred during address verification of " + address.prettyPrint(), ex);
             }
         } else {

@@ -127,7 +127,7 @@ public class EasyPostUtil {
         if (StringUtils.isNotBlank(apiKey)) {
             return new EasyPostUtil(apiKey);
         } else {
-            throw new RuntimeException("No EasyPost api key was found");
+            throw new DsmInternalError("No EasyPost api key was found for instance " + instanceName);
         }
     }
 
