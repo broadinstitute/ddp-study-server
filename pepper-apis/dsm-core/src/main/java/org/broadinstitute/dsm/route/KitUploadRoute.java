@@ -167,8 +167,8 @@ public class KitUploadRoute extends RequestHandler {
                 // if the kit type has sub kits > like for testBoston
                 boolean kitHasSubKits = kitRequestSettings.getHasSubKits() != 0;
 
-                logger.info("Setup EasyPost...");
-                EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
+                logger.debug("Setup EasyPost...");
+                EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
 
                 Map<String, KitRequest> invalidAddressList =
                         checkAddress(kitUploadObjects, kitRequestSettings.getPhone(), skipAddressValidation.get(), easyPostUtil);

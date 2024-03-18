@@ -150,7 +150,8 @@ public class QuartzExternalShipperTest extends TestHelper {
         GBFRequestUtil shipper = new GBFRequestUtil();
         ArrayList<KitRequest> kitRequests = shipper.getKitRequestsNotDone(15);
         Map<Integer, KitRequestSettings> kitRequestSettingsMap = KitRequestSettings.getKitRequestSettings("15");
-        shipper.orderKitRequests(kitRequests, new EasyPostUtil("testboston"), kitRequestSettingsMap.get(11), null);
+        shipper.orderKitRequests(kitRequests, EasyPostUtil.fromInstanceName("testboston"),
+                kitRequestSettingsMap.get(11), null);
 
 
         String externalOrderNumber1 = DBTestUtil.getQueryDetail(CHECK_EXTERNAL_SHIPPER_REQUEST, "00004", "external_order_number");

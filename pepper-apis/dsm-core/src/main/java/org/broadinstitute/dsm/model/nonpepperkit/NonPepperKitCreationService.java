@@ -71,7 +71,7 @@ public class NonPepperKitCreationService {
      * @param kitTypeName the specific name of the request kit type
      *
      * @return an instance of KitResponse, either as an error or KitStatus
-     * **/
+     **/
     private KitResponse validateAndInsertNonPepperKit(@NonNull KitRequestSettings kitRequestSettings, @NonNull JuniperKitRequest juniperKitRequest,
                                                          @NonNull EasyPostUtil easyPostUtil, DDPInstance ddpInstance,
                                                          KitType kitType, String kitTypeName) {

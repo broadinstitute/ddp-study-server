@@ -174,7 +174,7 @@ public class KitUtil {
 
         for (KitRequestCreateLabel kitLabel : kitsLabelTriggered) {
             if (!hasEasyPostUtil) {
-                easyPostUtil = new EasyPostUtil(kitLabel.getInstanceName());
+                easyPostUtil = EasyPostUtil.fromInstanceName(kitLabel.getInstanceName());
             }
             Address toAddress = null;
             try {
@@ -472,7 +472,7 @@ public class KitUtil {
             if (ddpInstance.isHasRole()) {
                 //get list of kits for given ddp
                 List<KitRequestShipping> kitRequestShippingList = getKitRequestsToCheckStatus(ddpInstance.getName());
-                EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
+                EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
                 SimpleResult results = inTransaction((conn) -> {
 
                     DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
