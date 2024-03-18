@@ -62,8 +62,7 @@ public class JuniperShipKitRoute implements Route {
                         studyGuid);
             }
 
-            log.info("Setup EasyPost...");
-            EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
+            EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
             KitResponse kitResponse =
                     this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getKitType(), easyPostUtil,
                             ddpInstance);

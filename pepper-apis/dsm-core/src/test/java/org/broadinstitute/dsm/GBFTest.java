@@ -151,7 +151,8 @@ public class GBFTest extends TestHelper {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(9);
         ArrayList<KitRequest> kitRequests = gbf.getKitRequestsNotDone(9, query);
         HashMap<Integer, KitRequestSettings> krs = KitRequestSettings.getKitRequestSettings("9");
-        gbf.orderKitRequests(kitRequests, new EasyPostUtil(ddpInstance.getName()), krs.values().iterator().next(), null);
+        gbf.orderKitRequests(kitRequests, EasyPostUtil.fromInstanceName(ddpInstance.getName()),
+                krs.values().iterator().next(), null);
 
 
     }
@@ -286,7 +287,7 @@ public class GBFTest extends TestHelper {
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS);
         ArrayList<KitRequest> kitsToOrder = new ArrayList<>();
 
-        EasyPostUtil easyPostUtil = new EasyPostUtil(null, "x");
+        EasyPostUtil easyPostUtil = new EasyPostUtil("x");
         Map<String, Map<String, Object>> elasticMap =
                 ElasticSearchUtil.getDDPParticipantsFromES(instance.getName(), instance.getParticipantIndexES());
 

@@ -14,10 +14,12 @@ import com.easypost.model.Parcel;
 import com.easypost.model.Rate;
 import com.easypost.model.Shipment;
 import com.easypost.model.ShipmentMessage;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.exception.CarrierRejectionException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
@@ -30,6 +32,15 @@ import org.broadinstitute.lddp.util.DeliveryAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Although various constructors that use apiKeys implies
+ * that each new object will use a particular apiKey, that is not
+ * the case.  In reality, apiKey is used
+ * as a static singleton via {@link EasyPost#apiKey}.
+ * It's likely that DSM is
+ * using different apiKeys under load, when setting up
+ * kits for different realms/projects/clients.
+ */
 public class EasyPostUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(EasyPostUtil.class);
@@ -76,22 +87,47 @@ public class EasyPostUtil {
     private final String restrictionComments = "restriction_comments";
     private final String customsItems = "customs_items";
 
-    public EasyPostUtil(@NonNull String instanceName) {
-        String apiKey = DSMServer.getDDPEasypostApiKey(instanceName);
+    /**
+     * Creates a new one, setting singleton {@link EasyPost#apiKey}
+     * to the given apikey.  Beware that other instantiations
+     * will overwrite {@link EasyPost#apiKey} out from under you,
+     * resulting in validation and postage purchase calls using
+     * an unexpected api key.
+     */
+    public EasyPostUtil(String apiKey) {
         if (StringUtils.isNotBlank(apiKey)) {
             EasyPost.apiKey = apiKey;
-            logger.info("Setup of EasyPost api key");
         } else {
-            throw new RuntimeException("No EasyPost api key was found");
+            throw new DsmInternalError("No apiKey given, cannot communicate with EasyPost.");
         }
     }
 
-    public EasyPostUtil(String instanceName, String apiKey) {
+    /**
+     * Only use this for tests.
+     * Creates a new one, setting singleton {@link EasyPost#apiKey}
+     * to the api key from typesafe config. Beware that other instantiations
+     * will overwrite {@link EasyPost#apiKey} out from under you,
+     * resulting in validation and postage purchase calls using
+     * an unexpected api key.
+     */
+    @VisibleForTesting
+    public static EasyPostUtil initializeEasyPostFromTypeSafeConfig() {
+        return new EasyPostUtil(ConfigManager.getInstance().getConfig().getString("easyPostApiKey"));
+    }
+
+    /**
+     * Creates a new one, setting singleton {@link EasyPost#apiKey}
+     * to the api key found in the database for instanceName. Beware that other instantiations
+     * will overwrite {@link EasyPost#apiKey} out from under you,
+     * resulting in validation and postage purchase calls using
+     * an unexpected api key.
+     */
+    public static EasyPostUtil fromInstanceName(@NonNull String instanceName) {
+        String apiKey = DSMServer.getDDPEasypostApiKey(instanceName);
         if (StringUtils.isNotBlank(apiKey)) {
-            EasyPost.apiKey = apiKey;
-            logger.info("Setup of EasyPost api key");
+            return new EasyPostUtil(apiKey);
         } else {
-            throw new RuntimeException("No EasyPost api key was found");
+            throw new DsmInternalError("No EasyPost api key was found for instance " + instanceName);
         }
     }
 
@@ -228,7 +264,7 @@ public class EasyPostUtil {
         return Address.create(toAddressMap);
     }
 
-    public Address createAddressWithoutValidation(@NonNull String name, @NonNull String street1, @NonNull String street2,
+    public Address createAddressWithoutValidation(@NonNull String name, @NonNull String street1, String street2,
                                                   @NonNull String city, @NonNull String zip, @NonNull String state,
                                                   @NonNull String country, @NonNull String phone) throws EasyPostException {
         Map<String, Object> fromAddressMap = new HashMap<>();

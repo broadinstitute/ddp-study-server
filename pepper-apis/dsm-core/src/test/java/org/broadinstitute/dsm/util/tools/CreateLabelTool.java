@@ -38,7 +38,7 @@ public class CreateLabelTool {
         participant.setCountry("US");
 
         try {
-            EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
+            EasyPostUtil easyPostUtil = new EasyPostUtil(apiKey);
             Address toAddress = easyPostUtil.createAddress(participant, "413-404-9083");// pegah's email
             Address returnAddress =
                     easyPostUtil.createAddressWithoutValidation("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge",
@@ -58,7 +58,7 @@ public class CreateLabelTool {
         String apiKey = "API_KEY_EASYPOST";
         String easyPostAddressId = "ADDRESS_ID";
         try {
-            EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
+            EasyPostUtil easyPostUtil = new EasyPostUtil(apiKey);
             Address address = easyPostUtil.getAddress(easyPostAddressId);
             logger.info(address.getName());
         } catch (EasyPostException e) {
@@ -79,7 +79,7 @@ public class CreateLabelTool {
         participant.setState("MA");
         participant.setCountry("USA");
         try {
-            EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
+            EasyPostUtil easyPostUtil = new EasyPostUtil(apiKey);
             Address address = easyPostUtil.createAddress(participant, "617-714-8952");
             Address veri = address.verify(apiKey);
             logger.info(veri.getName());

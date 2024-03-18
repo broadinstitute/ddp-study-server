@@ -412,7 +412,7 @@ public class RouteTestSample extends TestHelper {
 
     public Address easyPost(String instanceId, String instanceName, DDPParticipant participant, boolean notFEDEX2DAY) throws Exception {
         HashMap<Integer, KitRequestSettings> carrierServiceMap = KitRequestSettings.getKitRequestSettings(instanceId);
-        EasyPostUtil easyPostUtil = new EasyPostUtil(instanceName);
+        EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(instanceName);
         Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952");
         Address returnAddress =
                 easyPostUtil.createAddressWithoutValidation("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge", "02141",
@@ -608,7 +608,7 @@ public class RouteTestSample extends TestHelper {
         strings.add("1_3");
         String easypostToId = DBTestUtil.getStringFromQuery(KIT_QUERY, strings, "easypost_to_id");
         Assert.assertNotNull(easypostToId); //changed from before were label was bought when kitrequest was added to db
-        EasyPostUtil easyPostUtil = new EasyPostUtil(TEST_DDP);
+        EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(TEST_DDP);
         Shipment shipment = easyPostUtil.getShipment(easypostToId);
         Address address = shipment.getFromAddress();
         Assert.assertEquals("6177147395", address.getPhone());
@@ -907,7 +907,7 @@ public class RouteTestSample extends TestHelper {
 
         String shipmentId = DBTestUtil.getStringFromQuery(DBTestUtil.CHECK_KIT_BY_TYPE, strings, "easypost_to_id");
         Assert.assertNotNull(shipmentId);
-        EasyPostUtil easyPostUtil = new EasyPostUtil(ddpName);
+        EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpName);
         Shipment shipment = easyPostUtil.getShipment(shipmentId);
         Rate rate = shipment.getSelectedRate();
         Assert.assertEquals(carrierId, rate.getCarrierAccountId());
@@ -1699,7 +1699,7 @@ public class RouteTestSample extends TestHelper {
                 strings, "count(*)");
         Assert.assertEquals(Integer.parseInt(kitsBeforeUpload) + Integer.parseInt(noReturnKits), kits.length);
 
-        EasyPostUtil easyPostUtil = new EasyPostUtil(DDP_PROMISE);
+        EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(DDP_PROMISE);
         for (KitRequest kit : kits) {
             if (kit.getParticipantId().equals("00004") || kit.getParticipantId().equals("00003")) {
                 Assert.assertTrue(kit.getExternalOrderNumber().equals("ORD3343") || kit.getExternalOrderNumber().equals("ORD3344"));
@@ -1900,7 +1900,7 @@ public class RouteTestSample extends TestHelper {
                 "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id "
                         + "and ddp_participant_id = ?", "BILLING_TEST", "easypost_to_id");
 
-        EasyPostUtil easyPostUtil = new EasyPostUtil(TEST_DDP);
+        EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(TEST_DDP);
         Shipment shipment = easyPostUtil.getShipment(shippingId);
         Map<String, Object> options = shipment.getOptions();
         if (options != null) {
@@ -1931,7 +1931,7 @@ public class RouteTestSample extends TestHelper {
                 "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id "
                         + "and ddp_participant_id = ?", "BILLING_TEST_2", "easypost_to_id");
 
-        EasyPostUtil easyPostUtil = new EasyPostUtil(TEST_DDP_2);
+        EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(TEST_DDP_2);
         Shipment shipment = easyPostUtil.getShipment(shippingId);
         Map<String, Object> options = shipment.getOptions();
         if (options != null) {
