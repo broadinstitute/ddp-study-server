@@ -67,12 +67,6 @@ public class StudyMigrator {
         }
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(studyName)
                 .orElseThrow(() -> new DSMBadRequestException("DDP instance not found for study " + studyName));
-        // TODO: I'm not sure how these studies work (or don't work) for StudyMigrator.migrate, so not supporting
-        // them here until I can figure that out. Specifically, I'm unsure why 'AdditionalParticipantMigratorFactory' is
-        // part of that export. -DC
-        if (List.of("OSTEO", "OSTEO2").contains(studyName.toUpperCase())) {
-            throw new DSMBadRequestException("Study is not supported for participant migration: " + studyName);
-        }
         String index = ddpInstanceDto.getEsParticipantIndex();
 
         log.info("Migrating DSM data for {} participants to ES index {} for study {}",
