@@ -1,0 +1,57 @@
+[
+  {
+    "activityCode": "PREQUAL",
+    "activityVersion": "v1",
+    "guid": "I9MORP2IUP",
+    "parentInstanceGuid": null,
+    "status": "COMPLETE",
+    "questionsAnswers": [
+      {
+        "answer": [
+          "CHILD_DIAGNOSED"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "PREQUAL_SELF_DESCRIBE",
+        "PREQUAL_SELF_DESCRIBE": [
+          "CHILD_DIAGNOSED"
+        ]
+      },
+      {
+        "answer": 14,
+        "questionType": "NUMERIC",
+        "stableId": "CHILD_CURRENT_AGE",
+        "CHILD_CURRENT_AGE": 14
+      },
+      {
+        "answer": [
+          "US"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "CHILD_COUNTRY",
+        "CHILD_COUNTRY": [
+          "US"
+        ]
+      },
+      {
+        "answer": [
+          "CA"
+        ],
+        "optionDetails": [],
+        "groupedOptions": {},
+        "nestedOptions": {},
+        "questionType": "PICKLIST",
+        "stableId": "CHILD_STATE",
+        "CHILD_STATE": [
+          "CA"
+        ]
+      }
+    ],
+    "attributes": {}
+  }
+]
