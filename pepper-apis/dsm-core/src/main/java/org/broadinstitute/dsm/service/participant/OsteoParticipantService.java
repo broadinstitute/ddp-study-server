@@ -81,7 +81,12 @@ public class OsteoParticipantService {
     }
 
     /**
-     * Return true if new participant registration is for OS1
+     * Return true if new participant registration is for OS1.
+     * The criteria for OS1 participant is:
+     * 1. Has consent activity
+     * 2. Does not have any consent activity with version > v1
+     * So if a participant has no consent activities when this code is called,
+     * they are considered OS2 participant.
      */
     protected boolean isOsteo1Participant(ElasticSearchParticipantDto participantDto) {
         List<Activities> activities = participantDto.getActivities();
