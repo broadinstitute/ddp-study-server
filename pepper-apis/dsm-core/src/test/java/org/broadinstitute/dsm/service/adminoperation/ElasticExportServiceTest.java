@@ -27,6 +27,7 @@ import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.migration.VerificationLog;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataTestUtil;
 import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -234,6 +235,24 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
                 Assert.assertEquals(VerificationLog.VerificationStatus.VERIFIED, status);
             }
         });
+    }
+
+    @Test
+    public void testVerifyElasticDataNoESDocument() {
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        createParticipantData(ddpParticipantId);
+        createMedicalRecordAndOncHistory(participant);
+
+        // DB has data but no ES document
+        ElasticSearchService.deleteParticipantDocument(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+
+        List<VerificationLog> verificationLogs = ElasticExportService.verifyElasticData(List.of(ddpParticipantId),
+                DDPInstance.getDDPInstance(instanceName), false);
+        log.debug("Verification logs: (not verifyFields) {} ", verificationLogs);
+        verificationLogs.forEach(vLog ->
+                Assert.assertEquals(VerificationLog.VerificationStatus.NO_ES_DOCUMENT, vLog.getStatus()));
     }
 
     @Test
