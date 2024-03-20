@@ -21,12 +21,12 @@ import org.elasticsearch.client.RestHighLevelClient;
 public class BulkExportFacade {
     private final String index;
     private final BulkRequest bulkRequest;
-    private final ExportLog exportLog;
+    private final ExportLogger exportLogger;
 
 
-    public BulkExportFacade(String index, ExportLog exportLog) {
+    public BulkExportFacade(String index, ExportLogger exportLogger) {
         this.index = index;
-        this.exportLog = exportLog;
+        this.exportLogger = exportLogger;
         this.bulkRequest = new BulkRequest();
     }
 
@@ -53,10 +53,10 @@ public class BulkExportFacade {
         try {
             BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
             List<String> successIds = Arrays.stream(bulkResponse.getItems()).filter(res -> !res.isFailed())
-                    .map(BulkItemResponse::getId).collect(Collectors.toList());
+                    .map(BulkItemResponse::getId).toList();
             List<String> failureIds = Arrays.stream(bulkResponse.getItems())
                     .filter(BulkItemResponse::isFailed)
-                    .map(BulkItemResponse::getId).collect(Collectors.toList());
+                    .map(BulkItemResponse::getId).toList();
             int exportedCount = successIds.size();
             log.info("Upserted data for {} participants with {} failures", exportedCount, failureIds.size());
             updateExportLog(bulkResponse, successIds, failureIds);
@@ -67,10 +67,14 @@ public class BulkExportFacade {
     }
 
     private void updateExportLog(BulkResponse bulkResponse, List<String> successIds, List<String> failureIds) {
-        if (exportLog != null) {
+        if (exportLogger.useExportLog()) {
+            ExportLog exportLog = new ExportLog(exportLogger.getEntity());
+            exportLogger.addLog(exportLog);
             exportLog.setParticipantCount(bulkRequest.requests().size());
             exportLog.setExportedCount(successIds.size());
-            exportLog.setSuccessIds(successIds);
+            if (exportLogger.recordSuccessIds()) {
+                exportLog.setSuccessIds(successIds);
+            }
             exportLog.setFailureIds(failureIds);
             if (bulkResponse.hasFailures()) {
                 exportLog.setMessage(bulkResponse.buildFailureMessage());
@@ -79,7 +83,8 @@ public class BulkExportFacade {
                 exportLog.setStatus(ExportLog.Status.NO_FAILURES);
             }
         } else if (bulkResponse.hasFailures()) {
-            log.error(bulkResponse.buildFailureMessage());
+            log.error("Failures while exporting %s: %s".formatted(
+                    exportLogger.getEntity(), bulkResponse.buildFailureMessage()));
         }
     }
 

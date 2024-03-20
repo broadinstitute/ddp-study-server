@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.service.participant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,7 @@ public class OsteoParticipantService {
      */
     public void setOsteoDefaultData(String ddpParticipantId, ElasticSearchParticipantDto participantDto) {
         if (isOsteo1Participant(participantDto)) {
+            log.info("Creating an osteo1 cohort tag for participant {}", ddpParticipantId);
             createOsteoTag(participantDto, ddpParticipantId, osteo1Instance, OSTEO1_COHORT_TAG_NAME);
         } else {
             createOsteoTag(participantDto, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);
@@ -79,7 +81,12 @@ public class OsteoParticipantService {
     }
 
     /**
-     * Return true if new participant registration is for OS1
+     * Return true if new participant registration is for OS1.
+     * The criteria for OS1 participant is:
+     * 1. Has consent activity
+     * 2. Does not have any consent activity with version > v1
+     * So if a participant has no consent activities when this code is called,
+     * they are considered OS2 participant.
      */
     protected boolean isOsteo1Participant(ElasticSearchParticipantDto participantDto) {
         List<Activities> activities = participantDto.getActivities();
@@ -87,10 +94,12 @@ public class OsteoParticipantService {
             throw new DsmInternalError("Participant activities missing for participant "
                     + participantDto.getParticipantId());
         }
+        if (!hasConsentActivity(activities)) {
+            return false;
+        }
         if (activityHasLaterVersion(activities, DDPActivityConstants.ACTIVITY_CONSENT)) {
             return false;
         }
-
         if (activityHasLaterVersion(activities, DDPActivityConstants.ACTIVITY_PARENTAL_CONSENT)) {
             return false;
         }
@@ -101,6 +110,12 @@ public class OsteoParticipantService {
     protected boolean activityHasLaterVersion(List<Activities> activities, String activityCode) {
         return activities.stream().anyMatch(activity -> activityCode.equals(activity.getActivityCode())
                 && !activity.getActivityVersion().equals("v1"));
+    }
+
+    protected boolean hasConsentActivity(List<Activities> activities) {
+        Set<String> consentActivityCodes = Set.of(DDPActivityConstants.ACTIVITY_CONSENT,
+                DDPActivityConstants.ACTIVITY_PARENTAL_CONSENT, DDPActivityConstants.ACTIVITY_CONSENT_ASSENT);
+        return activities.stream().anyMatch(activity -> consentActivityCodes.contains(activity.getActivityCode()));
     }
 
     private static void createOsteoTag(ElasticSearchParticipantDto participantDto, String ddpParticipantId,

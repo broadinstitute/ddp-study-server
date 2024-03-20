@@ -5,6 +5,7 @@ import static org.broadinstitute.dsm.service.participant.OsteoParticipantService
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,8 @@ import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
+import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
+import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
@@ -113,6 +116,30 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
         osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
         verifyCohortTag(ddpParticipantId, OSTEO1_COHORT_TAG_NAME, osteo1InstanceDto);
+    }
+
+    @Test
+    public void testCreateOsteo1DefaultDataNoConsent() {
+        ParticipantDto participant = createParticipant(osteo1InstanceDto);
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        ElasticTestUtil.addActivitiesFromFile(osteo1EsIndex, "elastic/osteoActivitiesNoConsent.json", ddpParticipantId);
+
+        ElasticSearchParticipantDto esParticipantDto =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo1EsIndex, ddpParticipantId);
+
+        OsteoParticipantService osteoParticipantService =
+                new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
+
+        // when no consent, an osteo2 cohort tag should be created
+        CohortTagDao cohortTagDao = new CohortTagDaoImpl();
+        Map<String, List<CohortTag>> ptpToTags = cohortTagDao.getCohortTagsByInstanceName(osteo2InstanceName);
+        Assert.assertEquals(1, ptpToTags.size());
+        List<CohortTag> tags = ptpToTags.get(ddpParticipantId);
+        Assert.assertNotNull(tags);
+        Assert.assertEquals(1, tags.size());
+        Assert.assertEquals(OSTEO2_COHORT_TAG_NAME, tags.get(0).getCohortTagName());
     }
 
     @Test
