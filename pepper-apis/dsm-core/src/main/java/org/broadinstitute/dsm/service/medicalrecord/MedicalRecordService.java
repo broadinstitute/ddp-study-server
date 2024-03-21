@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.service.medicalrecord;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -9,6 +10,9 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.service.participant.ParticipantService;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPMedicalRecordDataRequest;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
@@ -87,7 +91,7 @@ public class MedicalRecordService {
                             req.getId(), ddpInstance.getName());
                     continue;
                 }
-                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, req,
+                writeInstitutionBundle(conn, req,
                         ddpInstanceProvider.getEffectiveInstance(ddpInstance, req.getParticipantId()));
                 // Note: we could update the sequence number once at the end, but that makes the error handling
                 // more complex, so we update it for each request. The updates should be fast.
@@ -95,5 +99,41 @@ public class MedicalRecordService {
             }
             return true;
         });
+    }
+
+    /**
+     * Writes new institutions to DB, creates new medical records for the institutions, creates new onc history records,
+     * creates new participant records, and updates the medical record log. If the participant does not already
+     * exist, a new participant is created.
+     *
+     * @return created medical record IDs
+     */
+    public static List<Integer> writeInstitutionBundle(Connection conn, InstitutionRequest institutionRequest,
+                                                       DDPInstance ddpInstance) {
+        int instanceId = ddpInstance.getDdpInstanceIdAsInt();
+        String ddpParticipantId = institutionRequest.getParticipantId();
+
+        ParticipantDao participantDao = new ParticipantDao();
+        Optional<ParticipantDto> ptp = participantDao.getParticipantForInstance(ddpParticipantId, instanceId);
+
+        List<Integer> medicalRecordIds;
+        if (ptp.isPresent()) {
+            ParticipantDto participant = ptp.get();
+            ParticipantService.updateLastVersion(participant.getParticipantIdOrThrow(), institutionRequest.getId(),
+                    institutionRequest.getLastUpdated(), conn);
+            medicalRecordIds = DDPMedicalRecordDataRequest.writeInstitutionInfo(conn, institutionRequest, participant, ddpInstance);
+
+            // participant lastVersion changed so update medical record log
+            DDPMedicalRecordDataRequest.updateMedicalRecordLog(conn, ddpParticipantId, instanceId);
+        } else {
+            ParticipantDto participantDto = ParticipantService.createParticipant(ddpParticipantId,
+                    institutionRequest.getId(), institutionRequest.getLastUpdated(), ddpInstance, conn);
+            medicalRecordIds = DDPMedicalRecordDataRequest.writeInstitutionInfo(conn, institutionRequest, participantDto, ddpInstance);
+        }
+        return medicalRecordIds;
+    }
+
+    public static List<Integer> writeInstitutionBundle(InstitutionRequest institutionRequest, DDPInstance ddpInstance) {
+        return inTransaction(conn -> writeInstitutionBundle(conn, institutionRequest, ddpInstance));
     }
 }

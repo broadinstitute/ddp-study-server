@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.ddp.participant;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +30,10 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                     + "assignee_id_mr, assignee_id_tissue, last_changed, changed_by) VALUES (?,?,?,?,?,?,?,?,?) "
                     + "ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
+    private static final String SQL_UPDATE_PARTICIPANT_LAST_VERSION =
+            "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? "
+                    + "WHERE participant_id = ?";
+
     private static final String SQL_SELECT_PARTICIPANT_FROM_COLLABORATOR_ID = "SELECT p.ddp_participant_id from ddp_participant p "
             + "left join ddp_kit_request req on (req.ddp_participant_id = p.ddp_participant_id) "
             + "where req.bsp_collaborator_participant_id = ? and req.ddp_instance_id = ? ";
@@ -38,7 +43,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
     private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID = "SELECT * FROM ddp_participant WHERE "
             + SQL_FILTER_BY_DDP_PARTICIPANT_ID + " AND " + SQL_FILTER_BY_DDP_INSTANCE_ID + ";";
     private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID =
-            "SELECT * FROM ddp_participant WHERE "+ SQL_FILTER_BY_DDP_PARTICIPANT_ID + ";";
+            "SELECT * FROM ddp_participant WHERE " + SQL_FILTER_BY_DDP_PARTICIPANT_ID + ";";
 
     public static final String SQL_SELECT_BY_ID = "SELECT * FROM ddp_participant WHERE participant_id = ?;";
 
@@ -50,39 +55,36 @@ public class ParticipantDao implements Dao<ParticipantDto> {
 
     @Override
     public int create(ParticipantDto participantDto) {
-        SimpleResult simpleResult = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult(-1);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, participantDto.getDdpParticipantId().orElse(null));
-                stmt.setObject(2, participantDto.getLastVersion().orElse(null));
-                stmt.setString(3, participantDto.getLastVersionDate().orElse(null));
-                stmt.setInt(4, participantDto.getDdpInstanceId());
-                stmt.setObject(5, participantDto.getReleaseCompleted().orElse(null));
-                stmt.setObject(6, participantDto.getAssigneeIdMr().orElse(null));
-                stmt.setObject(7, participantDto.getAssigneeIdTissue().orElse(null));
-                stmt.setObject(8, participantDto.getAssigneeIdTissue().orElse(null));
-                stmt.setLong(8, participantDto.getLastChanged());
-                stmt.setObject(9, participantDto.getChangedBy().orElse(null));
-                stmt.setLong(10, participantDto.getLastChanged());
-                stmt.setObject(11, participantDto.getChangedBy().orElse(null));
-                stmt.executeUpdate();
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
+        return inTransaction(conn -> create(participantDto, conn));
+    }
+
+    public int create(ParticipantDto participantDto, Connection conn) {
+        String ddpParticipantId = participantDto.getRequiredDdpParticipantId();
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, ddpParticipantId);
+            stmt.setObject(2, participantDto.getLastVersion().orElse(null));
+            stmt.setString(3, participantDto.getLastVersionDate().orElse(null));
+            stmt.setInt(4, participantDto.getDdpInstanceId());
+            stmt.setObject(5, participantDto.getReleaseCompleted().orElse(null));
+            stmt.setObject(6, participantDto.getAssigneeIdMr().orElse(null));
+            stmt.setObject(7, participantDto.getAssigneeIdTissue().orElse(null));
+            stmt.setObject(8, participantDto.getAssigneeIdTissue().orElse(null));
+            stmt.setLong(8, participantDto.getLastChanged());
+            stmt.setObject(9, participantDto.getChangedBy().orElse(null));
+            stmt.setLong(10, participantDto.getLastChanged());
+            stmt.setObject(11, participantDto.getChangedBy().orElse(null));
+            stmt.executeUpdate();
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (!rs.next()) {
+                    throw new DsmInternalError("Error inserting Participant with id: " + ddpParticipantId);
                 }
-            } catch (SQLException sqle) {
-                dbVals.resultException = sqle;
+                logger.info("Created participant with id {} for instance {}", ddpParticipantId,
+                        participantDto.getDdpInstanceId());
+                return rs.getInt(1);
             }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new DsmInternalError("Error inserting participant with id: " + participantDto.getDdpParticipantIdOrThrow(),
-                    simpleResult.resultException);
+        } catch (SQLException e) {
+            throw new DsmInternalError("Error inserting Participant with id: " + ddpParticipantId, e);
         }
-        logger.info("Created participant with ddp_participant_id {} for instance {}",
-                participantDto.getDdpParticipantIdOrThrow(), participantDto.getDdpInstanceId());
-        return (int) simpleResult.resultValue;
     }
 
     @Override
@@ -178,6 +180,34 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                     .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
                     .withChangedBy(rs.getString(DBConstants.CHANGED_BY))
                     .build();
+        }
+    }
+
+    /**
+     * Update participant last version number and last version date
+     */
+    public static void updateParticipantLastVersion(int participantId, long lastVersion,
+                                                    String lastVersionDate, String userId) {
+        inTransaction(conn -> {
+            updateParticipantLastVersion(conn, participantId, lastVersion, lastVersionDate, userId);
+            return null;
+        });
+    }
+
+    public static void updateParticipantLastVersion(Connection conn, int participantId, long lastVersion,
+                                                    String lastVersionDate, String userId) {
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_PARTICIPANT_LAST_VERSION)) {
+            stmt.setLong(1, lastVersion);
+            stmt.setString(2, lastVersionDate);
+            stmt.setLong(3, System.currentTimeMillis());
+            stmt.setString(4, userId);
+            stmt.setInt(5, participantId);
+            if (stmt.executeUpdate() != 1) {
+                throw new DsmInternalError("Error updating participant %s: Participant not found"
+                        .formatted(participantId));
+            }
+        } catch (SQLException e) {
+            throw new DsmInternalError("Error updating participant " + participantId, e);
         }
     }
 }

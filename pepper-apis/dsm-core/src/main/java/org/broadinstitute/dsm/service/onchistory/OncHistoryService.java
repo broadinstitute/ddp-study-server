@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
@@ -16,6 +18,7 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 
+@Slf4j
 public class OncHistoryService {
 
     /**
@@ -56,16 +59,28 @@ public class OncHistoryService {
     }
 
     /**
-     * Create an OncHistory record, but do not set the created date, and update ES
+     * Create an OncHistory record, but do not set the created date, and update ES.
+     * If OncHistory record already exists for participant, do nothing.
+     * @return id of new or existing OncHistory record
+     */
+    public static int createEmptyOncHistory(int participantId, String ddpParticipantId, DDPInstance ddpInstance) {
+        return createEmptyOncHistory(participantId, ddpParticipantId, SystemUtil.SYSTEM,
+                new OncHistoryElasticUpdater(ddpInstance.getParticipantIndexES()));
+    }
+
+    /**
+     * Create an OncHistory record, but do not set the created date, and update ES.
+     * If OncHistory record already exists for participant, do nothing.
+     * @return id of new or existing OncHistory record
      */
     public static int createEmptyOncHistory(int participantId, String ddpParticipantId, String userId,
                                             OncHistoryElasticUpdater elasticUpdater) {
-        OncHistoryDto oncHistoryDto;
         Optional<OncHistoryDto> res = OncHistoryDao.getByParticipantId(participantId);
         if (res.isPresent()) {
-            throw new DsmInternalError("OncHistory record already exists for participant " + participantId);
+            log.info("OncHistory record already exists for participant " + participantId);
+            return res.get().getOncHistoryId();
         }
-        oncHistoryDto = new OncHistoryDto.Builder()
+        OncHistoryDto oncHistoryDto = new OncHistoryDto.Builder()
                 .withParticipantId(participantId)
                 .withChangedBy(userId)
                 .withLastChangedNow().build();

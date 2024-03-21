@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
@@ -116,6 +117,27 @@ public class DDPInstance {
         this.researchProject = researchProject;
         this.mercuryOrderCreator = mercuryOrderCreator;
         this.displayName = displayName;
+    }
+
+    @VisibleForTesting
+    public DDPInstance(int ddpInstanceId, String name) {
+        this.ddpInstanceId = Integer.toString(ddpInstanceId);
+        this.name = name;
+        this.baseUrl = null;
+        this.collaboratorIdPrefix = null;
+        this.hasRole = false;
+        this.daysMrAttentionNeeded = 0;
+        this.daysTissueAttentionNeeded = 0;
+        this.hasAuth0Token = false;
+        this.notificationRecipient = null;
+        this.migratedDDP = false;
+        this.billingReference = null;
+        this.participantIndexES = null;
+        this.activityDefinitionIndexES = null;
+        this.usersIndexES = null;
+        this.researchProject = null;
+        this.mercuryOrderCreator = null;
+        this.displayName = null;
     }
 
     /**

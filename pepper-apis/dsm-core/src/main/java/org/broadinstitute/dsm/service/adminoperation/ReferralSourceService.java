@@ -110,9 +110,9 @@ public class ReferralSourceService implements AdminOperation {
             try {
                 UpdateLog.UpdateStatus status = updateReferralSource(ddpParticipantId, entry.getValue(),
                         getParticipantActivities(ddpParticipantId, esIndex));
-                updateLog.add(new UpdateLog(ddpParticipantId, status.name()));
+                updateLog.add(new UpdateLog(ddpParticipantId, status));
             } catch (Exception e) {
-                updateLog.add(new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(), e.toString()));
+                updateLog.add(new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR, e.toString()));
 
                 String msg = String.format("Exception in ReferralSourceService.run for participant %s: %s", ddpParticipantId, e);
                 // many of these exceptions will require investigation, but conservatively we will just log
