@@ -21,6 +21,7 @@ public class VerificationLog {
         VERIFIED,
         ES_DATA_MISMATCH,
         ES_ENTITY_MISMATCH,
+        NO_ES_DOCUMENT,
         ERROR
     }
 

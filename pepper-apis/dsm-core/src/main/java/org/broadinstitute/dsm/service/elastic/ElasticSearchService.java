@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.service.elastic;
 
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.search;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +22,13 @@ import org.broadinstitute.dsm.model.elastic.search.SourceMapDeserializer;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -193,5 +199,27 @@ public class ElasticSearchService {
                 new HashMap<>(Map.of(ESObjectConstants.DSM,
                         new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
         log.info("Updated DSM participantData in Elastic for {}", ddpParticipantId);
+    }
+
+    /**
+     * Delete a participant document from the given index
+     * @param docId the document ID (aka participant GUID)
+     */
+    public static void deleteParticipantDocument(String docId, String index) {
+        try {
+            DeleteRequest request = new DeleteRequest(index, docId);
+            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+            DeleteResponse deleteResponse =
+                    ElasticSearchUtil.getClientInstance().delete(request, RequestOptions.DEFAULT);
+            ReplicationResponse.ShardInfo shardInfo = deleteResponse.getShardInfo();
+            if (shardInfo.getFailed() > 0) {
+                String msg = (shardInfo.getFailures()[0]).reason();
+                throw new DsmInternalError("Failed to delete ES participant document %s for index %s: %s"
+                        .formatted(docId, index, msg));
+            }
+        } catch (ElasticsearchException | IOException e) {
+            throw new DsmInternalError("Error deleting ES participant document %s for index %s"
+                    .formatted(docId, index), e);
+        }
     }
 }

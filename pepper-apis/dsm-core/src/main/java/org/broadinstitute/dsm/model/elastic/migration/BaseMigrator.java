@@ -121,11 +121,12 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     @Override
     public void export() {
+        ExportLogger exportLogger = new ExportLogger(entity);
         Map<String, Object> dataByRealm = getDataByRealm();
         if (dataByRealm.isEmpty()) {
             return;
         }
-        exportParticipantRecords(dataByRealm, new BulkExportFacade(index, null));
+        exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLogger));
     }
 
     /**
@@ -134,17 +135,16 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
      * @param exportLogs  list export logs to append to
      */
     public void export(List<ExportLog> exportLogs) {
-        ExportLog exportLog = new ExportLog(entity);
-        exportLogs.add(exportLog);
+        ExportLogger exportLogger = new ExportLogger(exportLogs, entity);
         try {
             Map<String, Object> dataByRealm = getDataByRealm();
             if (dataByRealm.isEmpty()) {
-                exportLog.setStatus(ExportLog.Status.NO_PARTICIPANTS);
+                exportLogger.setEntityStatus(ExportLog.Status.NO_PARTICIPANTS);
                 return;
             }
-            exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLog));
+            exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLogger));
         } catch (Exception e) {
-            exportLog.setError(e.getMessage());
+            exportLogger.setEntityError(e.getMessage());
         }
     }
 
@@ -154,17 +154,16 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
      * @param exportLogs  list export logs to append to
      */
     public void exportParticipants(List<String> ddpParticipantIds, List<ExportLog> exportLogs) {
-        ExportLog exportLog = new ExportLog(entity);
-        exportLogs.add(exportLog);
+        ExportLogger exportLogger = new ExportLogger(exportLogs, entity, true);
         try {
             Map<String, Object> dataByRealm = getParticipantData(ddpParticipantIds);
             if (dataByRealm.isEmpty()) {
-                exportLog.setStatus(ExportLog.Status.NO_PARTICIPANTS);
+                exportLogger.setEntityStatus(ExportLog.Status.NO_PARTICIPANTS);
                 return;
             }
-            exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLog));
+            exportParticipantRecords(dataByRealm, new BulkExportFacade(index, exportLogger));
         } catch (Exception e) {
-            exportLog.setError(e.getMessage());
+            exportLogger.setEntityError(e.getMessage());
         }
     }
 
@@ -218,6 +217,12 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         participantRecords.forEach((ddpParticipantId, participantDetails) -> {
             transformObject(participantDetails);
             Map<String, Object> esDataMap = ptpToEsData.get(ddpParticipantId);
+            if (esDataMap == null) {
+                VerificationLog verificationLog = new VerificationLog(ddpParticipantId, entity);
+                verificationLog.setStatus(VerificationLog.VerificationStatus.NO_ES_DOCUMENT);
+                verificationLogs.add(verificationLog);
+                return;
+            }
             verificationLogs.addAll(verifyElasticData(ddpParticipantId, esDataMap, verifyFields));
         });
     }
