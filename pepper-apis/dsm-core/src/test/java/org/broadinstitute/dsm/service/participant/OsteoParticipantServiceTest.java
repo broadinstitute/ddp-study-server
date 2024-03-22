@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
@@ -50,6 +51,8 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
     private static MedicalRecordTestUtil medicalRecordTestUtil;
     private static CohortTagTestUtil cohortTagTestUtil;
     private static final ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
+    private static final ParticipantDao participantDao = new ParticipantDao();
+
 
 
     @BeforeClass
@@ -185,6 +188,34 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         }
 
         verifyOsteo2Participant(participant, 2);
+    }
+
+    @Test
+    public void testInitializeReconsentedParticipantNoParticipant() {
+        Dsm dsm = new Dsm();
+        dsm.setHasConsentedToBloodDraw(true);
+
+        // make a ptp with no Participant record in osteo1
+        String ddpParticipantId = TestParticipantUtil.createMinimalParticipant(osteo1InstanceDto, participantCounter++);
+        ElasticTestUtil.addParticipantDsm(osteo1EsIndex, dsm, ddpParticipantId);
+
+        // setup osteo2 ptp
+        ElasticTestUtil.addParticipantProfileFromFile(osteo2EsIndex, "elastic/participantProfile.json",
+                ddpParticipantId);
+        ElasticTestUtil.addParticipantDsm(osteo2EsIndex, dsm, ddpParticipantId);
+
+        try {
+            OsteoParticipantService osteoParticipantService =
+                    new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
+            osteoParticipantService.initializeReconsentedParticipant(ddpParticipantId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Failed to initialize reconsented participant: " + e.getMessage());
+        }
+
+        // when no osteo1 Participant record, initializeReconsentedParticipant is a no-op
+        List<ParticipantDto> participants = participantDao.getParticipant(ddpParticipantId);
+        Assert.assertTrue(participants.isEmpty());
     }
 
     private ParticipantDto setupOsteo1Participant() {

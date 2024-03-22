@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
@@ -38,7 +37,6 @@ public class OsteoParticipantService {
     public static final String OSTEO2_INSTANCE_NAME = "osteo2";
     public static final String OSTEO1_COHORT_TAG_NAME = "OS";
     public static final String OSTEO2_COHORT_TAG_NAME = "OS PE-CGS";
-    private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final ParticipantDao participantDao = new ParticipantDao();
     private static final ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
     private static final DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
@@ -136,16 +134,21 @@ public class OsteoParticipantService {
      * Copy osteo1 participant data to osteo2 for osteo1 participant who consented to OS PE-CGS (OS2/osteo2)
      */
     public void initializeReconsentedParticipant(String ddpParticipantId) {
-        log.info("Creating new {} participant data for existing {} participant {}",
-                osteo2Instance.getName(), osteo1Instance.getName(), ddpParticipantId);
+        log.info("Initializing re-consented osteo participant {}", ddpParticipantId);
 
         // ensure we can get what we need before committing anything
         int osteo1InstanceId = osteo1Instance.getDdpInstanceIdAsInt();
-        ParticipantDto osteo1Participant = participantDao
-                .getParticipantForInstance(ddpParticipantId, osteo1InstanceId)
-                .orElseThrow(() -> new DsmInternalError("Participant %s not found for instance %s"
-                        .formatted(ddpParticipantId, osteo1Instance.getName())));
+        Optional<ParticipantDto> osteo1Ptp = participantDao
+                .getParticipantForInstance(ddpParticipantId, osteo1InstanceId);
+        if (osteo1Ptp.isEmpty()) {
+            log.info("Participant {} record not found for instance {}. Skipping re-consent initialization.",
+                    ddpParticipantId, osteo1Instance.getName());
+            return;
+        }
+        ParticipantDto osteo1Participant = osteo1Ptp.get();
         int osteo1ParticipantId = osteo1Participant.getRequiredParticipantId();
+        log.info("Creating new {} participant data for existing {} participant {}",
+                osteo2Instance.getName(), osteo1Instance.getName(), ddpParticipantId);
 
         // there should already be ES DSM data in osteo1 index for this participant
         Dsm osteo1Dsm =
