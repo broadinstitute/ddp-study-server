@@ -29,14 +29,24 @@ public class TestParticipantUtil {
         return participantDto;
     }
 
+    // TODO: deprecated call signature. -DC
     /**
      * Create a participant with provided ES profile
      */
     public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
                                                                 DDPInstanceDto ddpInstanceDto, String esIndex) {
+        return createParticipantWithEsProfile(participantBaseName, profile, ddpInstanceDto);
+    }
+
+    /**
+     * Create a participant with provided ES profile
+     */
+    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
+                                                                DDPInstanceDto ddpInstanceDto) {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
         ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
 
+        String esIndex = ddpInstanceDto.getEsParticipantIndex();
         ElasticTestUtil.createParticipant(esIndex, participant);
         profile.setGuid(ddpParticipantId);
         ElasticTestUtil.addParticipantProfile(esIndex, profile);
@@ -65,6 +75,17 @@ public class TestParticipantUtil {
         ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
                 ddpParticipantId);
         return participant;
+    }
+
+    /**
+     * Create a participant with only an ES profile and no participant data in DSM
+     */
+    public static String createMinimalParticipant(DDPInstanceDto ddpInstanceDto, int participantOrdinal) {
+        String baseName = String.format("%s_%d", ddpInstanceDto.getInstanceName(), participantOrdinal);
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
+        ElasticTestUtil.addParticipantProfileFromFile(ddpInstanceDto.getEsParticipantIndex(),
+                "elastic/participantProfile.json", ddpParticipantId);
+        return ddpParticipantId;
     }
 
     public static void deleteParticipant(int participantId) {

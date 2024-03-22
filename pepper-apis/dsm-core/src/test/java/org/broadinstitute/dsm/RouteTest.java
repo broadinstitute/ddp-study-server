@@ -28,11 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.broadinstitute.dsm.db.Assignee;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantExit;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.LookupResponse;
@@ -40,6 +40,7 @@ import org.broadinstitute.dsm.model.TissueListWrapper;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
+import org.broadinstitute.dsm.service.medicalrecord.MedicalRecordService;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPMedicalRecordDataRequest;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
@@ -1244,10 +1245,8 @@ public class RouteTest extends TestHelper {
                 try {
                     inTransaction((conn) -> {
                         try {
-                            DDPInstanceDto instanceDto = new DDPInstanceDto.Builder()
-                                    .withInstanceName(instanceName)
-                                    .withDdpInstanceId(instanceId).build();
-                            DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, participantInstitution, instanceDto);
+                            DDPInstance ddpInstance = new DDPInstance(instanceId, instanceName);
+                            MedicalRecordService.writeInstitutionBundle(conn, participantInstitution, ddpInstance);
                         } catch (Exception e) {
                             throw new RuntimeException("medicalRecordLog ", e);
                         }

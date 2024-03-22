@@ -29,9 +29,6 @@ public class MedicalRecordUtil {
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
 
     public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
-    private static final String SQL_UPDATE_PARTICIPANT =
-            "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? "
-                    + "WHERE ddp_participant_id = ? AND ddp_instance_id = ? AND last_version != ?";
     private static final String SQL_INSERT_INSTITUTION_WITH_DDP_PARTICIPANT_ID =
             "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id "
                     + "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE "
@@ -236,26 +233,6 @@ public class MedicalRecordUtil {
         return inTransaction((conn) -> isParticipantInDB(conn, participantId, instanceId));
     }
 
-
-    public static boolean updateParticipant(@NonNull Connection conn, @NonNull String ddpParticipantId, int instanceId,
-                                            long lastVersion, @NonNull String lastUpdated, @NonNull String userId) {
-        try (PreparedStatement updateParticipant = conn.prepareStatement(SQL_UPDATE_PARTICIPANT)) {
-            updateParticipant.setLong(1, lastVersion);
-            updateParticipant.setString(2, lastUpdated);
-            updateParticipant.setLong(3, System.currentTimeMillis());
-            updateParticipant.setString(4, userId);
-            updateParticipant.setString(5, ddpParticipantId);
-            updateParticipant.setInt(6, instanceId);
-            updateParticipant.setLong(7, lastVersion);
-            if (updateParticipant.executeUpdate() == 1) {
-                logger.info("Participant already existed; Updated participant with id {}", ddpParticipantId);
-                return true;
-            }
-        } catch (SQLException e) {
-            throw new DsmInternalError("Error updating participant ", e);
-        }
-        return false;
-    }
 
     public static Integer isInstitutionTypeInDB(@NonNull String participantId) {
         Integer institutionId = isInstitutionTypeInDB(participantId, NOT_SPECIFIED);

@@ -6,6 +6,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.service.adminoperation.ElasticExportService;
+import org.broadinstitute.dsm.service.adminoperation.MedicalRecordInitService;
 import org.broadinstitute.dsm.service.adminoperation.ParticipantDataFixupService;
 import org.broadinstitute.dsm.service.adminoperation.ParticipantInitService;
 import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
@@ -22,7 +23,8 @@ public class AdminOperationService {
         SYNC_REFERRAL_SOURCE,
         FIXUP_PARTICIPANT_DATA,
         ELASTIC_EXPORT,
-        PARTICIPANT_INIT
+        PARTICIPANT_INIT,
+        MEDICAL_RECORD_INIT
     }
 
     private final String userId;
@@ -50,6 +52,9 @@ public class AdminOperationService {
                 break;
             case PARTICIPANT_INIT:
                 adminOperation = new ParticipantInitService();
+                break;
+            case MEDICAL_RECORD_INIT:
+                adminOperation = new MedicalRecordInitService();
                 break;
             default:
                 throw new DSMBadRequestException("Invalid operation type ID: " + operationTypeId);

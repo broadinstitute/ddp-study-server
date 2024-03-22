@@ -74,6 +74,14 @@ public class ParticipantDto implements Cloneable {
         this.assigneeIdTissue = Optional.ofNullable(assigneeIdTissue);
     }
 
+    public void setLastChangedNow() {
+        this.lastChanged = System.currentTimeMillis();
+    }
+
+    public void setChangedBy(String userId) {
+        this.changedBy = Optional.ofNullable(userId);
+    }
+
     @Override
     public ParticipantDto clone() {
         try {
@@ -99,6 +107,10 @@ public class ParticipantDto implements Cloneable {
         public Builder(int ddpInstanceId, long lastChanged) {
             this.ddpInstanceId = ddpInstanceId;
             this.lastChanged = lastChanged;
+        }
+
+        public Builder(int ddpInstanceId) {
+            this(ddpInstanceId, System.currentTimeMillis());
         }
 
         public Builder() {}

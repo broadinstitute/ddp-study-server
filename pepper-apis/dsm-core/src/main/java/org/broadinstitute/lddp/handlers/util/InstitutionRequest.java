@@ -2,6 +2,9 @@ package org.broadinstitute.lddp.handlers.util;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+
 public class InstitutionRequest {
     private long id; //submissionId of survey
     private String participantId; //UUID (alt pid)
@@ -50,5 +53,17 @@ public class InstitutionRequest {
         this.institutions = institutions;
     }
 
+    public static void verify(InstitutionRequest institutionRequest) {
+        if (StringUtils.isBlank(institutionRequest.getParticipantId())) {
+            throw new DSMBadRequestException("Missing required participantId in institution request");
+        }
+        if (StringUtils.isBlank(institutionRequest.getLastUpdated())) {
+            throw new DSMBadRequestException("Missing required lastUpdated in institution request");
+        }
+        if (institutionRequest.getInstitutions().isEmpty()) {
+            throw new DSMBadRequestException("Missing required institutions in institution request");
+        }
+        institutionRequest.getInstitutions().forEach(Institution::verify);
+    }
 }
 
