@@ -490,10 +490,10 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
                                  JdbiActivityInstanceStatus jdbiActivityInstanceStatus, ActivityInstanceDto activityDto,
                                  long userId, long studyId, String agreementStableId) throws Exception {
 
-        String guid = answerAgreementQuestion(agreementStableId, participantGuid, activityDto.getGuid(),
+        answerAgreementQuestion(agreementStableId, participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        guid = getMedicalProviderGuid(handle);
+        String guid = getMedicalProviderGuid(handle);
         MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
         medicalProviderDao.insert(new MedicalProviderDto(
                 null,
