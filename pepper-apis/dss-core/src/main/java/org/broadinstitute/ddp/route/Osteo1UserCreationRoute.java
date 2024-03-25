@@ -82,10 +82,15 @@ import java.util.Set;
 
 import static spark.Spark.halt;
 
+/**
+ * Creates & enrolls an Osteo#1 user
+ * Create user, auth0 user, create and fills prequal, consent & release v1 activity instances
+ * Depending on birthDate passed, current age is calculated and self, pediatric (<7 or >=/7) activities are created
+ */
 @Slf4j
 public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPayload> {
     private final TaskPublisher taskPublisher;
-    private long ddpCreatedAt = Instant.parse("2022-07-09T15:35:00Z").toEpochMilli(); //TEST from config
+    private long ddpCreatedAt = Instant.parse("2022-07-09T15:35:00Z").toEpochMilli(); //default v1 activity created date
     private String auth0ClientId = null;
 
     public Osteo1UserCreationRoute(TaskPublisher taskPublisher) {
@@ -326,20 +331,20 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
         //populate PREQUAL answers
         List<SelectedPicklistOption> options = new ArrayList<>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
-        String guid = answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
+        answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
                 options, answerDao);
 
-        guid = answerNumericQuestion("SELF_CURRENT_AGE", participantGuid, activityDto.getGuid(),
+        answerNumericQuestion("SELF_CURRENT_AGE", participantGuid, activityDto.getGuid(),
                 age, answerDao);
 
         List<SelectedPicklistOption> optionsCountry = new ArrayList<>();
         options.add(new SelectedPicklistOption("US"));
-        guid = answerPickListQuestion("SELF_COUNTRY", participantGuid, activityDto.getGuid(),
+        answerPickListQuestion("SELF_COUNTRY", participantGuid, activityDto.getGuid(),
                 optionsCountry, answerDao);
 
         List<SelectedPicklistOption> optionsState = new ArrayList<>();
         options.add(new SelectedPicklistOption("MA"));
-        guid = answerPickListQuestion("SELF_STATE", participantGuid, activityDto.getGuid(),
+        answerPickListQuestion("SELF_STATE", participantGuid, activityDto.getGuid(),
                 optionsState, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 500,
@@ -351,20 +356,20 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
         //populate Pediatric PREQUAL answers
         List<SelectedPicklistOption> options = new ArrayList<>();
         options.add(new SelectedPicklistOption("CHILD_DIAGNOSED"));
-        String guid = answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
+        answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
                 options, answerDao);
 
-        guid = answerNumericQuestion("CHILD_CURRENT_AGE", participantGuid, activityDto.getGuid(),
+        answerNumericQuestion("CHILD_CURRENT_AGE", participantGuid, activityDto.getGuid(),
                 age, answerDao);
 
         List<SelectedPicklistOption> optionsCountry = new ArrayList<>();
         options.add(new SelectedPicklistOption("US"));
-        guid = answerPickListQuestion("CHILD_COUNTRY", participantGuid, activityDto.getGuid(),
+        answerPickListQuestion("CHILD_COUNTRY", participantGuid, activityDto.getGuid(),
                 optionsCountry, answerDao);
 
         List<SelectedPicklistOption> optionsState = new ArrayList<>();
         options.add(new SelectedPicklistOption("MA"));
-        guid = answerPickListQuestion("CHILD_STATE", participantGuid, activityDto.getGuid(),
+        answerPickListQuestion("CHILD_STATE", participantGuid, activityDto.getGuid(),
                 optionsState, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
@@ -375,22 +380,22 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
     private void populateSelfConsent(String participantGuid, AnswerDao answerDao, JdbiActivityInstanceStatus jdbiActivityInstanceStatus,
                                      ActivityInstanceDto activityDto, LocalDate dob) throws Exception {
         //populate CONSENT answers
-        String guid = answerTextQuestion("CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
+        answerTextQuestion("CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
                 "sign consent", answerDao);
 
-        guid = answerDateQuestion("CONSENT_DOB", participantGuid, activityDto.getGuid(),
+        answerDateQuestion("CONSENT_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
 
-        guid = answerBooleanQuestion("CONSENT_BLOOD", participantGuid, activityDto.getGuid(),
+        answerBooleanQuestion("CONSENT_BLOOD", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        guid = answerBooleanQuestion("CONSENT_TISSUE", participantGuid, activityDto.getGuid(),
+        answerBooleanQuestion("CONSENT_TISSUE", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        guid = answerTextQuestion("CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
+        answerTextQuestion("CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
                 "OS1 user fn", answerDao);
 
-        guid = answerTextQuestion("CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
+        answerTextQuestion("CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
                 "lastName1", answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
