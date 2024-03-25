@@ -177,8 +177,12 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 var pair = signUpNewOperator(response, handle, study, auth0UserId.get(),
                         payload, clientConfig, mgmtClient);
                 operatorUser = pair.getOperatorUser();
-                triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
-                publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
+                if (!payload.skipTriggerEvents()) {
+                    triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
+                    publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
+                } else {
+                    log.info("---skipping triggering events and pubsub---");
+                }
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 log.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);

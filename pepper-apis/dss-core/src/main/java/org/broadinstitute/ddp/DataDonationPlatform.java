@@ -139,6 +139,7 @@ import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
+import org.broadinstitute.ddp.route.Osteo1UserCreationRoute;
 import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
@@ -530,6 +531,7 @@ public class DataDonationPlatform {
 
         post(API.DSM_NOTIFICATION, new ReceiveDsmNotificationRoute(), jsonSerializer);
         post(API.DSM_TERMINATE_USER, new DsmExitUserRoute(), responseSerializer);
+        post(API.OSTEO1_USERS, new Osteo1UserCreationRoute(new TaskPubSubPublisher()), responseSerializer);
 
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);

@@ -59,9 +59,18 @@ public class UserRegistrationPayload {
     @SerializedName("timeZone")
     private String timeZone;
 
+    //only used for Osteo1 user cretaion
+    private boolean skipTriggerEvents = false;
+
     public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
                                    String studyGuid, String auth0Domain, String tempUserGuid, String mode) {
         this(auth0UserId, auth0ClientId, studyGuid, auth0Domain, tempUserGuid, mode, null);
+    }
+
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
+                                   String studyGuid, String auth0Domain, String tempUserGuid, boolean skipEvents) {
+        this(auth0UserId, auth0ClientId, studyGuid, auth0Domain, tempUserGuid, null, null);
+        this.skipTriggerEvents = skipEvents;
     }
 
     public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
@@ -128,6 +137,10 @@ public class UserRegistrationPayload {
 
     public String getLanguageCode() {
         return languageCode;
+    }
+
+    public boolean skipTriggerEvents() {
+        return skipTriggerEvents;
     }
 
     public UserRegistrationPayload setLanguageCode(String languageCode) {

@@ -39,6 +39,4 @@ public class UserCreationPayload {
     @SerializedName("birthDate")
     private LocalDate birthDate;
 
-    @SerializedName("centerId")
-    private String centerId;
 }
