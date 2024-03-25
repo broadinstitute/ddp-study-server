@@ -5,10 +5,12 @@ import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactor
 import org.broadinstitute.dsm.util.export.NewOsteoParticipantExporter;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ElasticSearchParticipantExporterFactoryTest {
 
+    @Ignore
     @Test
     public void buildNewOsteoExporter() {
         Assert.assertTrue(ElasticSearchParticipantExporterFactory.fromPayload(

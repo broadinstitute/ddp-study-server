@@ -146,4 +146,5 @@
     <include file="liquibase/rgp/PEPPER-833_rgp_kit_display_name.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1204_dsm_delete.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1205_remove_deleted_columns.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-1335_osteo2_es_index.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

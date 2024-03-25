@@ -9,17 +9,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecordLog;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.service.medicalrecord.MedicalRecordService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
-import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.broadinstitute.lddp.handlers.util.Institution;
 import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 
@@ -51,65 +47,20 @@ public class DDPMedicalRecordDataRequest {
 
     // TODO: these methods should be moved to MedicalRecordService. They are under test now indirectly via
     //  MedicalRecordTestUtil, and I did a bit of refactoring, but I want to clean them up before moving. -DC
-    /**
-     * Writes new institutions to DB, creates new medical records for the institutions, creates new onc history records,
-     * creates new participant records, and updates the medical record log. If the participant does not already
-     * exist, a new participant is created.
-     *
-     * @return created medical record IDs
-     */
-    public static List<Integer> writeInstitutionBundle(@NonNull Connection conn, InstitutionRequest institutionRequest,
-                                                       DDPInstanceDto ddpInstanceDto) {
-        int instanceId = ddpInstanceDto.getDdpInstanceId();
-        String instanceName = ddpInstanceDto.getInstanceName();
-        String ddpParticipantId = institutionRequest.getParticipantId();
-
-        List<Integer> medicalRecordIds = new ArrayList<>();
-        if (MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, instanceId)) {
-            //participant already exists
-            if (MedicalRecordUtil.updateParticipant(conn, ddpParticipantId, instanceId, institutionRequest.getId(),
-                    institutionRequest.getLastUpdated(), SystemUtil.SYSTEM)) {
-                medicalRecordIds = writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
-                //participant lastVersion changed
-                Collection<Integer> allMedicalRecordIds = getMedicalRecordIds(conn, ddpParticipantId, instanceId);
-                if (!allMedicalRecordIds.isEmpty()) {
-                    for (Integer medicalRecordId : allMedicalRecordIds) {
-                        writingMedicalRecordLogIntoDb(conn, medicalRecordId);
-                    }
-                }
-            }
-        } else {
-            ParticipantDto participantDto =
-                    new ParticipantDto.Builder(instanceId, System.currentTimeMillis())
-                            .withDdpParticipantId(ddpParticipantId)
-                            .withLastVersion(institutionRequest.getId())
-                            .withLastVersionDate(institutionRequest.getLastUpdated())
-                            .withChangedBy(SystemUtil.SYSTEM).build();
-            int participantId = new ParticipantDao().create(participantDto);
-            ElasticSearchParticipantExporterFactory.fromPayload(
-                    new ParticipantExportPayload(
-                            participantId,
-                            ddpParticipantId,
-                            instanceId,
-                            instanceName,
-                            ddpInstanceDto
-                    )
-            ).export();
-            medicalRecordIds = writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
-        }
-        return medicalRecordIds;
-    }
 
     /**
      * Returns created medical record IDs
      */
-    private static List<Integer> writeInstitutionInfo(Connection conn, InstitutionRequest institutionRequest,
-                                                      int instanceId, String instanceName) {
+    public static List<Integer> writeInstitutionInfo(Connection conn, InstitutionRequest institutionRequest,
+                                                     ParticipantDto participantDto, DDPInstance ddpInstance) {
         List<Integer> medicalRecordIds = new ArrayList<>();
-        String ddpParticipantId = institutionRequest.getParticipantId();
+        String ddpParticipantId = participantDto.getRequiredDdpParticipantId();
+        int instanceId = ddpInstance.getDdpInstanceIdAsInt();
+
         List<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
-            log.info("Participant {} has {} institutions", ddpParticipantId, institutions.size());
+            log.info("Creating medical record bundle for participant {} with {} institutions", ddpParticipantId,
+                    institutions.size());
             // TODO this should be rewritten to verify the DDP participant ID and get the participant ID to use in the following
             // calls (which should be modified to use the participant ID instead of repeatedly doing SQL queries
             // to get it) -DC
@@ -120,12 +71,21 @@ public class DDPMedicalRecordDataRequest {
 
             for (Institution institution : institutions) {
                 medicalRecordIds.add(MedicalRecordUtil.writeInstitution(conn, ddpParticipantId, instanceId,
-                        institution, instanceName));
+                        institution, ddpInstance.getName()));
             }
         } else {
             log.info("Institution list was empty for participant {}", ddpParticipantId);
         }
         return medicalRecordIds;
+    }
+
+    public static void updateMedicalRecordLog(Connection conn, String ddpParticipantId, int instanceId) {
+        Collection<Integer> allMedicalRecordIds = getMedicalRecordIds(conn, ddpParticipantId, instanceId);
+        if (!allMedicalRecordIds.isEmpty()) {
+            for (Integer medicalRecordId : allMedicalRecordIds) {
+                writingMedicalRecordLogIntoDb(conn, medicalRecordId);
+            }
+        }
     }
 
     private static void writingMedicalRecordLogIntoDb(Connection conn, Integer medicalRecordId) {

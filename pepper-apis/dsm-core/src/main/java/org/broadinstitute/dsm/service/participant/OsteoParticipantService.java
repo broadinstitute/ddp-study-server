@@ -7,16 +7,15 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
@@ -27,7 +26,6 @@ import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
-import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -39,16 +37,15 @@ public class OsteoParticipantService {
     public static final String OSTEO2_INSTANCE_NAME = "osteo2";
     public static final String OSTEO1_COHORT_TAG_NAME = "OS";
     public static final String OSTEO2_COHORT_TAG_NAME = "OS PE-CGS";
-    private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final ParticipantDao participantDao = new ParticipantDao();
     private static final ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
     private static final DDPInstitutionDao ddpInstitutionDao = new DDPInstitutionDao();
     private static final MedicalRecordDao medicalRecordDao = new MedicalRecordDao();
     private static final CohortTagDao cohortTagDao = new CohortTagDaoImpl();
     @Getter
-    private final DDPInstanceDto osteo1Instance;
+    private final DDPInstance osteo1Instance;
     @Getter
-    private final DDPInstanceDto osteo2Instance;
+    private final DDPInstance osteo2Instance;
     private final List<String> osteoInstanceNames;
     private final ElasticSearchService elasticSearchService;
 
@@ -59,8 +56,8 @@ public class OsteoParticipantService {
     public OsteoParticipantService(String osteo1InstanceName, String osteo2InstanceName) {
         // these are like invariant properties in non-test contexts, so not expecting the throw
         // (and thus fine to initialize them in the constructor)
-        osteo1Instance = ddpInstanceDao.getDDPInstanceByInstanceName(osteo1InstanceName).orElseThrow();
-        osteo2Instance = ddpInstanceDao.getDDPInstanceByInstanceName(osteo2InstanceName).orElseThrow();
+        osteo1Instance = DDPInstance.getDDPInstance(osteo1InstanceName);
+        osteo2Instance = DDPInstance.getDDPInstance(osteo2InstanceName);
         osteoInstanceNames = List.of(osteo1InstanceName.toLowerCase(), osteo2InstanceName.toLowerCase());
         elasticSearchService = new ElasticSearchService();
     }
@@ -119,57 +116,62 @@ public class OsteoParticipantService {
     }
 
     private static void createOsteoTag(ElasticSearchParticipantDto participantDto, String ddpParticipantId,
-                                       DDPInstanceDto osteoInstance, String tagName) {
+                                       DDPInstance osteoInstance, String tagName) {
         // invariant: participant should have a DSM entity
         Dsm dsm = participantDto.getDsm().orElseThrow();
 
         CohortTag newCohortTag =
-                new CohortTag(tagName, ddpParticipantId, osteoInstance.getDdpInstanceId());
+                new CohortTag(tagName, ddpParticipantId, osteoInstance.getDdpInstanceIdAsInt());
         int newCohortTagId = cohortTagDao.create(newCohortTag);
         newCohortTag.setCohortTagId(newCohortTagId);
 
         // new participant so this is the first tag
         dsm.setCohortTag(List.of(newCohortTag));
-        ElasticSearchService.updateDsm(ddpParticipantId, dsm, osteoInstance.getEsParticipantIndex());
+        ElasticSearchService.updateDsm(ddpParticipantId, dsm, osteoInstance.getParticipantIndexES());
     }
 
     /**
      * Copy osteo1 participant data to osteo2 for osteo1 participant who consented to OS PE-CGS (OS2/osteo2)
      */
     public void initializeReconsentedParticipant(String ddpParticipantId) {
-        log.info("Creating new {} participant data for existing {} participant {}",
-                osteo2Instance.getInstanceName(), osteo1Instance.getInstanceName(), ddpParticipantId);
+        log.info("Initializing re-consented osteo participant {}", ddpParticipantId);
 
         // ensure we can get what we need before committing anything
-        int osteo1InstanceId = osteo1Instance.getDdpInstanceId();
-        ParticipantDto osteo1Participant = participantDao
-                .getParticipantForInstance(ddpParticipantId, osteo1InstanceId)
-                .orElseThrow(() -> new DsmInternalError("Participant %s not found for instance %s"
-                        .formatted(ddpParticipantId, osteo1Instance.getInstanceName())));
+        int osteo1InstanceId = osteo1Instance.getDdpInstanceIdAsInt();
+        Optional<ParticipantDto> osteo1Ptp = participantDao
+                .getParticipantForInstance(ddpParticipantId, osteo1InstanceId);
+        if (osteo1Ptp.isEmpty()) {
+            log.info("Participant {} record not found for instance {}. Skipping re-consent initialization.",
+                    ddpParticipantId, osteo1Instance.getName());
+            return;
+        }
+        ParticipantDto osteo1Participant = osteo1Ptp.get();
         int osteo1ParticipantId = osteo1Participant.getRequiredParticipantId();
+        log.info("Creating new {} participant data for existing {} participant {}",
+                osteo2Instance.getName(), osteo1Instance.getName(), ddpParticipantId);
 
         // there should already be ES DSM data in osteo1 index for this participant
         Dsm osteo1Dsm =
-                elasticSearchService.getRequiredDsmData(ddpParticipantId, osteo1Instance.getEsParticipantIndex());
+                elasticSearchService.getRequiredDsmData(ddpParticipantId, osteo1Instance.getParticipantIndexES());
         Participant esParticipant = osteo1Dsm.getParticipant().orElseThrow(() ->
                 new DsmInternalError("ES Participant data missing for participant %s".formatted(ddpParticipantId)));
 
         // there *should* be ES DSM data for osteo2, but make it if not
         ElasticSearchParticipantDto osteo2EsParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo2Instance.getEsParticipantIndex(),
+                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo2Instance.getParticipantIndexES(),
                         ddpParticipantId);
         Optional<Dsm> dsm = osteo2EsParticipant.getDsm();
         Dsm osteo2Dsm = dsm.orElseGet(Dsm::new);
 
         // there should not be osteo2 Participant, MedicalRecord or ParticipantRecord yet
         // if the Participant does not exist, the other data will not exist either
-        if (participantDao.getParticipantForInstance(ddpParticipantId, osteo2Instance.getDdpInstanceId()).isPresent()) {
+        if (participantDao.getParticipantForInstance(ddpParticipantId, osteo2Instance.getDdpInstanceIdAsInt()).isPresent()) {
             throw new DsmInternalError("Participant %s already exists for instance %s"
-                    .formatted(ddpParticipantId, osteo2Instance.getInstanceName()));
+                    .formatted(ddpParticipantId, osteo2Instance.getName()));
         }
 
         // start copying participant data
-        int osteo2InstanceId = osteo2Instance.getDdpInstanceId();
+        int osteo2InstanceId = osteo2Instance.getDdpInstanceIdAsInt();
         int osteo2ParticipantId = copyParticipant(osteo1Participant, osteo2InstanceId);
 
         // TODO: we should probably get DSM participant data directly from the DB instead of ES, but the Participant
@@ -200,10 +202,8 @@ public class OsteoParticipantService {
         cohortTags.add(cohortTag);
         osteo2Dsm.setCohortTag(cohortTags);
 
-        ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Instance.getEsParticipantIndex());
-
-        OncHistoryService.createEmptyOncHistory(osteo2ParticipantId, ddpParticipantId, SystemUtil.SYSTEM,
-                new OncHistoryElasticUpdater(osteo2Instance.getEsParticipantIndex()));
+        ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Instance.getParticipantIndexES());
+        OncHistoryService.createEmptyOncHistory(osteo2ParticipantId, ddpParticipantId, osteo2Instance);
     }
 
     private int copyParticipant(ParticipantDto osteo1Participant, int osteo2InstanceId) {
@@ -246,10 +246,10 @@ public class OsteoParticipantService {
      */
     public boolean isOnlyOsteo1Participant(String ddpParticipantId) {
         List<ParticipantDto> recs = participantDao.getParticipant(ddpParticipantId);
-        return recs.size() == 1 && recs.get(0).getDdpInstanceId() == osteo1Instance.getDdpInstanceId();
+        return recs.size() == 1 && recs.get(0).getDdpInstanceId() == osteo1Instance.getDdpInstanceIdAsInt();
     }
 
-    public boolean isOsteoInstance(DDPInstanceDto ddpInstanceDto) {
-        return osteoInstanceNames.contains(ddpInstanceDto.getInstanceName());
+    public boolean isOsteoInstance(DDPInstance ddpInstance) {
+        return osteoInstanceNames.contains(ddpInstance.getName());
     }
 }

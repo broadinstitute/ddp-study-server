@@ -153,11 +153,11 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
 
     protected UpdateLog updateGenomicId(String ddpParticipantId, List<ParticipantData> participantDataList) {
         if (participantDataList.isEmpty()) {
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA.name());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA);
         }
         // no duplicates
         if (participantDataList.size() == 1) {
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED);
         }
 
         try {
@@ -169,7 +169,7 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
                     genomeIdToDelete.size(), exitToDelete.size(), ddpParticipantId);
 
             if (genomeIdToDelete.isEmpty() && exitToDelete.isEmpty()) {
-                return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
+                return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED);
             }
 
             // remove records from DB
@@ -194,9 +194,9 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
             } else {
                 log.warn(msg);
             }
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(), e.toString());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR, e.toString());
         }
-        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.UPDATED.name());
+        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.UPDATED);
     }
 
     private Set<Integer> getRecordsToDelete(List<ParticipantData> participantDataList, String fieldTypeId) {
@@ -255,14 +255,14 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
 
     protected UpdateLog updateLegacyPid(String ddpParticipantId, List<ParticipantData> participantDataList,
                                         Map<String, String> ptpIdToLegacyPid) {
-        UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
+        UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED);
 
         // we will find data attributed to legacy PIDs via the ptp GUID (see below)
         if (!ParticipantUtil.isGuid(ddpParticipantId)) {
             return updateLog;
         }
         if (participantDataList.isEmpty()) {
-            updateLog.setStatus(UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA.name());
+            updateLog.setStatus(UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA);
             return updateLog;
         }
 

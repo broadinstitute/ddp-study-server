@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 
 /**
  * Provides various operations on DDP instances for a given context.
@@ -22,7 +21,7 @@ public interface DDPInstanceProvider {
      * Convert a DDPInstance to a DDPInstanceDto, and perhaps return a different instance based on current instance
      * and participant.
      */
-    DDPInstanceDto getEffectiveInstance(DDPInstance ddpInstance, String ddpParticipantId);
+    DDPInstance getEffectiveInstance(DDPInstance ddpInstance, String ddpParticipantId);
 
     /**
      * Get the sequence number for the last participant institution request stored for the given instance.

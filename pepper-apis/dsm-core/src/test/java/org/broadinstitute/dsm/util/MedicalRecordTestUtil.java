@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
@@ -24,6 +25,7 @@ import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
+import org.broadinstitute.dsm.service.medicalrecord.MedicalRecordService;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryElasticUpdater;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -106,8 +108,9 @@ public class MedicalRecordTestUtil {
 
         InstitutionRequest institutionRequest =
                 new InstitutionRequest(bundleCounter, ddpParticipantId, List.of(institution), lastUpdated);
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceDto.getDdpInstanceId());
         List<Integer> medicalRecordIds = inTransaction(conn ->
-                DDPMedicalRecordDataRequest.writeInstitutionBundle(conn, institutionRequest, ddpInstanceDto));
+                MedicalRecordService.writeInstitutionBundle(conn, institutionRequest, ddpInstance));
         participantBundleIds.add(participantDto.getRequiredParticipantId());
 
         Assert.assertEquals(1, medicalRecordIds.size());

@@ -28,16 +28,16 @@ public class UpdateLog {
     }
 
     private final String ddpParticipantId;
-    private String status;
+    private UpdateStatus status;
     private String message;
     private List<DuplicateParticipantData> duplicateParticipantData;
 
-    public UpdateLog(String ddpParticipantId, String status) {
+    public UpdateLog(String ddpParticipantId, UpdateStatus status) {
         this.ddpParticipantId = ddpParticipantId;
         this.status = status;
     }
 
-    public UpdateLog(String ddpParticipantId, String status, String message) {
+    public UpdateLog(String ddpParticipantId, UpdateStatus status, String message) {
         this.ddpParticipantId = ddpParticipantId;
         this.status = status;
         this.message = message;
@@ -45,11 +45,11 @@ public class UpdateLog {
 
     public void setError(String message) {
         this.message = message;
-        this.status = UpdateStatus.ERROR.name();
+        this.status = UpdateStatus.ERROR;
     }
 
     public void setDuplicateParticipantData(List<DuplicateParticipantData> duplicateData) {
         this.duplicateParticipantData = duplicateData;
-        this.status = UpdateStatus.DUPLICATE_PARTICIPANT_DATA.name();
+        this.status = UpdateStatus.DUPLICATE_PARTICIPANT_DATA;
     }
 }

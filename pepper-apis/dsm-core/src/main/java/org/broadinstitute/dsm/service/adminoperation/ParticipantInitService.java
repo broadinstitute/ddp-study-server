@@ -95,7 +95,7 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
         ParticipantData probandData = null;
         List<ParticipantData> ptpData = RgpParticipantDataService.getRgpParticipantData(ddpParticipantId);
         if (!ptpData.isEmpty()) {
-            UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name());
+            UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR);
             probandData = getProbandRgpData(ptpData, updateLog);
             if (probandData == null) {
                 return updateLog;
@@ -105,10 +105,10 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
         Optional<Dsm> dsm = esParticipant.getDsm();
         if (dsm.isPresent() && StringUtils.isNotBlank(dsm.get().getFamilyId())) {
             if (probandData == null) {
-                return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(),
+                return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR,
                         "Participant has family ID in ES but no RGP data");
             }
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED.name());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED);
         }
 
         // participant has no family ID in ES
@@ -120,7 +120,7 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
             return createDefaultData(ddpParticipantId, esParticipant, ddpInstance, familyIdProvider, isDryRun);
         } catch (ESMissingParticipantDataException e) {
             // no profile
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA.name());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA);
         } catch (Exception e) {
             String msg = String.format("Exception in ParticipantInitService.run for participant %s: %s",
                     ddpParticipantId, e);
@@ -132,7 +132,7 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
             } else {
                 log.warn(msg);
             }
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(), e.toString());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR, e.toString());
         }
     }
 
@@ -169,7 +169,7 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
         } else {
             RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipant, ddpInstance, familyIdProvider);
         }
-        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.UPDATED.name());
+        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.UPDATED);
     }
 
     /**
@@ -180,12 +180,12 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
                                                 boolean isDryRun) {
         String familyId = probandData.getDataMap().get(FAMILY_ID);
         if (StringUtils.isBlank(familyId)) {
-            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR.name(),
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR,
                     "Participant has proband RGP data that does not contain a family ID");
         }
         if (!isDryRun) {
             RgpParticipantDataService.insertEsFamilyId(esIndex, ddpParticipantId, Long.parseLong(familyId));
         }
-        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED.name());
+        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED);
     }
 }

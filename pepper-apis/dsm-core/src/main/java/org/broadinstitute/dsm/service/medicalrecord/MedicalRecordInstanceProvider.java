@@ -6,15 +6,12 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBUtil;
 
 public class MedicalRecordInstanceProvider implements DDPInstanceProvider {
-    protected static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     protected static final BookmarkDao bookmarkDao = new BookmarkDao();
 
     /**
@@ -26,22 +23,17 @@ public class MedicalRecordInstanceProvider implements DDPInstanceProvider {
     }
 
     /**
-     * Convert a DDPInstance to a DDPInstanceDto.
-     * If this the provided instance is an osteo instance and the participant is only in osteo1,
+     * If the provided instance is an osteo instance and the participant is only in osteo1,
      * return the osteo1 instance
      */
     @Override
-    public DDPInstanceDto getEffectiveInstance(DDPInstance ddpInstance, String ddpParticipantId) {
-        // no special handling for throw since this is an invariant
-        DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(ddpInstance.getName())
-                .orElseThrow();
-
+    public DDPInstance getEffectiveInstance(DDPInstance ddpInstance, String ddpParticipantId) {
         OsteoParticipantService osteoParticipantService = new OsteoParticipantService();
-        if (osteoParticipantService.isOsteoInstance(ddpInstanceDto)
+        if (osteoParticipantService.isOsteoInstance(ddpInstance)
                 && osteoParticipantService.isOnlyOsteo1Participant(ddpParticipantId)) {
             return osteoParticipantService.getOsteo1Instance();
         }
-        return ddpInstanceDto;
+        return ddpInstance;
     }
 
     @Override

@@ -77,7 +77,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
     @Test
     public void testInitParticipantOnlyProfile() {
         // make ptp with ES profile and no participant ES DSM data
-        initParticipant(createMinimalParticipant());
+        initParticipant(TestParticipantUtil.createMinimalParticipant(ddpInstanceDto, participantCounter++));
     }
 
     @Test
@@ -100,7 +100,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         esParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
-        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
     }
 
     @Test
@@ -118,7 +118,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
 
-        Assert.assertEquals(UpdateLog.UpdateStatus.ERROR.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
         Assert.assertTrue(updateLog.getMessage().contains("Participant has family ID in ES but no RGP data"));
     }
 
@@ -143,7 +143,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         esParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(familyId), false);
-        Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
         rgpParticipantDataTestUtil.verifyDefaultElasticData(ddpParticipantId, familyId, Collections.emptyMap());
     }
 
@@ -157,27 +157,16 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         int familyId = 100;
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(familyId), false);
-        Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED, updateLog.getStatus());
         rgpParticipantDataTestUtil.verifyDefaultData(ddpParticipantId, familyId);
     }
 
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
         ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto);
         participants.add(participant);
         return participant;
-    }
-
-    /**
-     * Create a participant with only an ES profile and no participant data in DSM
-     */
-    private String createMinimalParticipant() {
-        String baseName = String.format("%s_%d", instanceName, participantCounter++);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
-        ElasticTestUtil.addParticipantProfileFromFile(esIndex, "elastic/participantProfile.json",
-                ddpParticipantId);
-        return ddpParticipantId;
     }
 
     private static void removeEsFamilyId(String esIndex, String ddpParticipantId) {

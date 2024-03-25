@@ -108,7 +108,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         fixupService.validRealms = List.of(instanceName);
         fixupService.initialize(TEST_USER, instanceName, attributes, reqJson);
         UpdateLog updateLog = fixupService.updateGenomicId(ddpParticipantId, ptpData);
-        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
 
         ATParticipantDataService.insertGenomicIdForParticipant(ddpParticipantId, "GUID_1", instanceId);
         ATParticipantDataService.insertExitStatusForParticipant(ddpParticipantId, instanceId);
@@ -116,7 +116,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         // now have the correct number of genomic IDs and exit statuses
         updateLog = fixupService.updateGenomicId(ddpParticipantId,
                 dataDao.getParticipantData(ddpParticipantId));
-        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
         verifyParticipantData(ddpParticipantId);
 
         ATParticipantDataService.insertGenomicIdForParticipant(ddpParticipantId, "GUID_2", instanceId);
@@ -125,7 +125,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         // now have extra genomic IDs and exit statuses
         updateLog = fixupService.updateGenomicId(ddpParticipantId,
                 dataDao.getParticipantData(ddpParticipantId));
-        Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED.name(), updateLog.getStatus());
+        Assert.assertEquals(UpdateLog.UpdateStatus.UPDATED, updateLog.getStatus());
         verifyParticipantData(ddpParticipantId);
     }
 
@@ -168,7 +168,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
                 .map(UpdateLog::getDdpParticipantId).collect(Collectors.toSet());
         Assert.assertEquals(Set.of(ddpParticipantId, legacyPid1), ddpParticipantIds);
         updateLog.stream().map(UpdateLog::getStatus).forEach(status ->
-                Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), status));
+                Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, status));
 
         // ptp with ptp data and legacy pid and overlapping legacy ptp data
         Map<String, String> genomeStudyDataMap = new HashMap<>();
@@ -195,7 +195,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         Assert.assertEquals(2, updateLog.size());
         updateLog.forEach(log -> {
             if (log.getDdpParticipantId().equals(ddpParticipantId)) {
-                Assert.assertEquals(UpdateLog.UpdateStatus.DUPLICATE_PARTICIPANT_DATA.name(), log.getStatus());
+                Assert.assertEquals(UpdateLog.UpdateStatus.DUPLICATE_PARTICIPANT_DATA, log.getStatus());
                 List<DuplicateParticipantData> duplicateData = log.getDuplicateParticipantData();
                 Assert.assertEquals(2, duplicateData.size());
 
@@ -215,7 +215,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
                     }
                 });
             } else {
-                Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED.name(), log.getStatus());
+                Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, log.getStatus());
             }
         });
     }
@@ -223,7 +223,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
     private ParticipantDto createParticipant() {
         String baseName = String.format("%s_%d", instanceName, participantCounter++);
         ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto, esIndex);
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, ddpInstanceDto);
         participants.add(participant);
         return participant;
     }
@@ -235,7 +235,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         String legacyPid = "%s_%d".formatted(legacyPidBase, participantCounter);
         profile.setLegacyAltPid(legacyPid);
         ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(baseName, profile, ddpInstanceDto, esIndex);
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, profile, ddpInstanceDto);
         participants.add(participant);
         return new ImmutablePair<>(participant, legacyPid);
     }

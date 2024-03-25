@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
 
 
@@ -19,16 +18,12 @@ public class TestMedicalRecordInstanceProvider extends MedicalRecordInstanceProv
     }
 
     @Override
-    public DDPInstanceDto getEffectiveInstance(DDPInstance ddpInstance, String ddpParticipantId) {
-        // no special handling for throw since this is an invariant
-        DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(ddpInstance.getName())
-                .orElseThrow();
-
-        if (osteoParticipantService.isOsteoInstance(ddpInstanceDto)
+    public DDPInstance getEffectiveInstance(DDPInstance ddpInstance, String ddpParticipantId) {
+        if (osteoParticipantService.isOsteoInstance(ddpInstance)
                 && osteoParticipantService.isOnlyOsteo1Participant(ddpParticipantId)) {
             return osteoParticipantService.getOsteo1Instance();
         }
-        return ddpInstanceDto;
+        return ddpInstance;
     }
 
     @Override
