@@ -180,8 +180,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 if (!payload.skipTriggerEvents()) {
                     triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
                     publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
-                } else {
-                    log.info("---skipping triggering events and pubsub---");
                 }
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {

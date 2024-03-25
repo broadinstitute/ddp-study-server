@@ -22,7 +22,6 @@ public class UserCreationPayload {
     @SerializedName("email")
     private String email;
 
-    @NotEmpty
     @SerializedName("studyGuid")
     private String studyGuid;
 

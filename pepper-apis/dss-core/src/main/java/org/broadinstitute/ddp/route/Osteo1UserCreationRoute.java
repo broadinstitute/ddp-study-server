@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -104,7 +105,8 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
 
     @Override
     public Object handle(Request request, Response response, UserCreationPayload payload) throws Exception {
-        String studyGuid = payload.getStudyGuid();
+        String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
+        payload.setStudyGuid(studyGuid);
         Config cfg = ConfigManager.getInstance().getConfig();
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         if (!cfg.hasPath(ConfigFile.ALLOW_OS1_USER_CREATION) || !cfg.getBoolean(ConfigFile.ALLOW_OS1_USER_CREATION)) {
@@ -487,7 +489,7 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
         String guid = answerAgreementQuestion(agreementStableId, participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        getMedicalProviderGuid(handle);
+        guid = getMedicalProviderGuid(handle);
         MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
         medicalProviderDao.insert(new MedicalProviderDto(
                 null,
@@ -506,7 +508,7 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
                 null
         ));
 
-        getMedicalProviderGuid(handle);
+        guid = getMedicalProviderGuid(handle);
         medicalProviderDao.insert(new MedicalProviderDto(
                 null,
                 guid,
