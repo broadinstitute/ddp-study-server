@@ -253,17 +253,20 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (finalSelf) {
                 populatePrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
-                populateSelfConsent(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, consentDto, birthDate);
+                populateSelfConsent(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
+                        payload.getFirstName(), payload.getLastName());
                 populateRelease(handle, newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, releaseDto,
                         newUser.getId(), studyDto.getId(), "RELEASE_SELF_AGREEMENT");
             } else if (finalParental) {
                 populatePedPrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
-                populateParentalConsent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate);
+                populateParentalConsent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
+                        payload.getFirstName(), payload.getLastName());
                 populateRelease(handle, govUserGuid, answerDao, jdbiActivityInstanceStatus, releaseDto, governedUser.getId(),
                         studyDto.getId(), "RELEASE_MINOR_AGREEMENT");
             } else if (finalPed7plus) {
                 populatePedPrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
-                populateConsentAssent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate);
+                populateConsentAssent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
+                        payload.getFirstName(), payload.getLastName());
                 populateRelease(handle, govUserGuid, answerDao, jdbiActivityInstanceStatus, releaseDto, governedUser.getId(),
                         studyDto.getId(), "RELEASE_MINOR_AGREEMENT");
             }
@@ -374,16 +377,16 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
         answerPickListQuestion("CHILD_STATE", participantGuid, activityDto.getGuid(),
                 optionsState, answerDao);
 
-        jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
+        jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 500,
                 activityDto.getParticipantId());
     }
 
 
     private void populateSelfConsent(String participantGuid, AnswerDao answerDao, JdbiActivityInstanceStatus jdbiActivityInstanceStatus,
-                                     ActivityInstanceDto activityDto, LocalDate dob) throws Exception {
+                                     ActivityInstanceDto activityDto, LocalDate dob, String firstName, String lastName) throws Exception {
         //populate CONSENT answers
         answerTextQuestion("CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
-                "sign consent", answerDao);
+                "sign consent ", answerDao);
 
         answerDateQuestion("CONSENT_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
@@ -395,20 +398,21 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
                 true, answerDao);
 
         answerTextQuestion("CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
-                "OS1 user fn", answerDao);
+                firstName, answerDao);
 
         answerTextQuestion("CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
-                "lastName1", answerDao);
+                lastName, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
                 activityDto.getParticipantId());
     }
 
     private void populateParentalConsent(String participantGuid, AnswerDao answerDao, JdbiActivityInstanceStatus jdbiActivityInstanceStatus,
-                                         ActivityInstanceDto activityDto, LocalDate dob) throws Exception {
+                                         ActivityInstanceDto activityDto, LocalDate dob,
+                                         String firstName, String lastName) throws Exception {
         //populate CONSENT answers
         answerTextQuestion("PARENTAL_CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
-                "sign consent", answerDao);
+                "signature parental consent", answerDao);
 
         answerDateQuestion("PARENTAL_CONSENT_CHILD_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
@@ -426,10 +430,10 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
                 "lastName1", answerDao);
 
         answerTextQuestion("PARENTAL_CONSENT_CHILD_FIRSTNAME", participantGuid, activityDto.getGuid(),
-                "OS1 Child fn", answerDao);
+                firstName, answerDao);
 
         answerTextQuestion("PARENTAL_CONSENT_CHILD_LASTNAME", participantGuid, activityDto.getGuid(),
-                "ChildlastName1", answerDao);
+                lastName, answerDao);
 
         List<SelectedPicklistOption> optionsRelation = new ArrayList<>();
         optionsRelation.add(new SelectedPicklistOption("PARENT"));
@@ -442,7 +446,7 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
 
     private void populateConsentAssent(String participantGuid, AnswerDao answerDao,
                                        JdbiActivityInstanceStatus jdbiActivityInstanceStatus, ActivityInstanceDto activityDto,
-                                       LocalDate dob) throws Exception {
+                                       LocalDate dob, String firstName, String lastName) throws Exception {
         //populate CONSENT_ASSENT answers
         answerDateQuestion("CONSENT_ASSENT_CHILD_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
@@ -454,16 +458,16 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
                 true, answerDao);
 
         answerTextQuestion("CONSENT_ASSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
-                "OS1 user fn", answerDao);
+                "OS1 user parent fn", answerDao);
 
         answerTextQuestion("CONSENT_ASSENT_LASTNAME", participantGuid, activityDto.getGuid(),
-                "lastName1", answerDao);
+                "parent lastName1", answerDao);
 
         answerTextQuestion("CONSENT_ASSENT_CHILD_FIRSTNAME", participantGuid, activityDto.getGuid(),
-                "OS1 Child fn", answerDao);
+                firstName, answerDao);
 
         answerTextQuestion("CONSENT_ASSENT_CHILD_LASTNAME", participantGuid, activityDto.getGuid(),
-                "ChildlastName1", answerDao);
+                lastName, answerDao);
 
         List<SelectedPicklistOption> optionsRelation = new ArrayList<>();
         optionsRelation.add(new SelectedPicklistOption("PARENT"));
