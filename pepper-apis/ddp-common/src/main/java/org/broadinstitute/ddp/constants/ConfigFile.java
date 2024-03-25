@@ -140,7 +140,6 @@ public class ConfigFile {
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
     public static final String EMAIL_PATTERN_DENY_LIST = "emailPatternDenyList";
     public static final String ALLOW_OS1_USER_CREATION = "allowOsteo1UserCreation";
-    public static final String OS1_USER_CREATION_TS = "osteo1UserCreationTS";
     public static final String OS1_USER_DEFAULT_PWD = "osteo1UserDefaultPwd";
     public static final String OSTEO_AUTH0_CLIENT_ID = "osteoClientId";
 

@@ -59,7 +59,7 @@ public class UserRegistrationPayload {
     @SerializedName("timeZone")
     private String timeZone;
 
-    //only used for Osteo1 user cretaion
+    //only used for Osteo1 user creation
     private boolean skipTriggerEvents = false;
 
     public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
