@@ -95,7 +95,7 @@ public class Osteo1ParticipantCreator {
         this.auth0ClientId = auth0ClientId;
     }
 
-    public UserCreationResponse createOsteo1User(Request request, Response response, UserCreationPayload payload)
+    public UserCreationResponse createOsteo1User(Handle handle, Request request, Response response, UserCreationPayload payload)
             throws Exception {
         String studyGuid = payload.getStudyGuid();
         Config cfg = ConfigManager.getInstance().getConfig();
@@ -141,128 +141,126 @@ public class Osteo1ParticipantCreator {
         String finalReleaseGuid = releaseGuid;
         boolean finalParental = parental;
         boolean finalPed7plus = ped7plus;
-        return TransactionWrapper.withTxn(handle -> {
 
-            Auth0Util auth0Util = new Auth0Util(auth0Domain);
+        Auth0Util auth0Util = new Auth0Util(auth0Domain);
 
-            //CreateTempUser
-            CreateTemporaryUserPayload tempUserPayload = new CreateTemporaryUserPayload(auth0ClientId, auth0Domain);
-            CreateTemporaryUserRoute createTempUserRoute = new CreateTemporaryUserRoute();
-            CreateTemporaryUserResponse tempUserResp = (CreateTemporaryUserResponse) createTempUserRoute.handle(
-                    request, response, tempUserPayload);
-            String tempUserGuid = tempUserResp.getUserGuid();
+        //CreateTempUser
+        CreateTemporaryUserPayload tempUserPayload = new CreateTemporaryUserPayload(auth0ClientId, auth0Domain);
+        CreateTemporaryUserRoute createTempUserRoute = new CreateTemporaryUserRoute();
+        CreateTemporaryUserResponse tempUserResp = (CreateTemporaryUserResponse) createTempUserRoute.handle(
+                request, response, tempUserPayload);
+        String tempUserGuid = tempUserResp.getUserGuid();
 
-            //create Auth0 user
-            com.auth0.json.mgmt.users.User newAuth0User = auth0Util.createAuth0User(
-                    payload.getEmail(), os1DefaultPwd, mgmtClient.getToken());
-            mgmtClient.setUserGuidForAuth0User(newAuth0User.getId(), auth0ClientId, tempUserGuid);
+        //create Auth0 user
+        com.auth0.json.mgmt.users.User newAuth0User = auth0Util.createAuth0User(
+                payload.getEmail(), os1DefaultPwd, mgmtClient.getToken());
+        mgmtClient.setUserGuidForAuth0User(newAuth0User.getId(), auth0ClientId, tempUserGuid);
 
-            //register user
-            long now = Instant.now().toEpochMilli();
-            PexInterpreter interpreter = new TreeWalkInterpreter();
-            UserRegistrationPayload userRegPayload = new UserRegistrationPayload(newAuth0User.getId(),
-                    auth0ClientId, payload.getStudyGuid(), auth0Domain,
-                    tempUserGuid, true);
-            if (finalSelf) {
-                userRegPayload.setFirstName(payload.getFirstName());
-                userRegPayload.setLastName(payload.getLastName());
-            } else {
-                userRegPayload.setFirstName(payload.getFirstName() + "-proxy");
-                userRegPayload.setLastName(payload.getLastName() + "-proxy");
-            }
+        //register user
+        long now = Instant.now().toEpochMilli();
+        PexInterpreter interpreter = new TreeWalkInterpreter();
+        UserRegistrationPayload userRegPayload = new UserRegistrationPayload(newAuth0User.getId(),
+                auth0ClientId, payload.getStudyGuid(), auth0Domain,
+                tempUserGuid, true);
+        if (finalSelf) {
+            userRegPayload.setFirstName(payload.getFirstName());
+            userRegPayload.setLastName(payload.getLastName());
+        } else {
+            userRegPayload.setFirstName(payload.getFirstName() + "-proxy");
+            userRegPayload.setLastName(payload.getLastName() + "-proxy");
+        }
 
-            UserRegistrationRoute userRegistrationRoute = new UserRegistrationRoute(interpreter, new TaskPubSubPublisher());
-            UserRegistrationResponse responseReg = (UserRegistrationResponse) userRegistrationRoute.handle(
-                    request, response, userRegPayload);
+        UserRegistrationRoute userRegistrationRoute = new UserRegistrationRoute(interpreter, new TaskPubSubPublisher());
+        UserRegistrationResponse responseReg = (UserRegistrationResponse) userRegistrationRoute.handle(
+                request, response, userRegPayload);
 
-            UserDao userDao = handle.attach(UserDao.class);
-            User newUser = userDao.findUserByGuidOrAltPid(responseReg.getDdpUserGuid()).get();
-            String userGuid = newUser.getGuid();
-            UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
-            UserProfile userProfile = userProfileDao.findProfileByUserGuid(userGuid).get();
+        UserDao userDao = handle.attach(UserDao.class);
+        User newUser = userDao.findUserByGuidOrAltPid(responseReg.getDdpUserGuid()).get();
+        String userGuid = newUser.getGuid();
+        UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
+        UserProfile userProfile = userProfileDao.findProfileByUserGuid(userGuid).get();
 
-            //create PREQUAL, CONSENT & MEDICAL_RELEASE
-            ActivityInstanceDto prequalDto = createActivityInstance(handle, "PREQUAL", studyGuid, userGuid, ddpCreatedAt);
-            ActivityInstanceDto consentDto = null;
-            ActivityInstanceDto releaseDto = null;
-            if (finalSelf) {
-                consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, userGuid, ddpCreatedAt);
-                releaseDto = createActivityInstance(handle, finalReleaseGuid, studyGuid, userGuid, ddpCreatedAt);
-            }
-            newUser.setEmail(payload.getEmail());
+        //create PREQUAL, CONSENT & MEDICAL_RELEASE
+        ActivityInstanceDto prequalDto = createActivityInstance(handle, "PREQUAL", studyGuid, userGuid, ddpCreatedAt);
+        ActivityInstanceDto consentDto = null;
+        ActivityInstanceDto releaseDto = null;
+        if (finalSelf) {
+            consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, userGuid, ddpCreatedAt);
+            releaseDto = createActivityInstance(handle, finalReleaseGuid, studyGuid, userGuid, ddpCreatedAt);
+        }
+        newUser.setEmail(payload.getEmail());
 
-            //if governed user, create governed user
-            UserRegistrationResponse governedUserRegResponse = null;
-            String govUserGuid = null;
-            User governedUser = null;
-            if (!finalSelf) {
-                GovernedUserRegistrationPayload governedUserRegPayload = new GovernedUserRegistrationPayload(
-                        "en", payload.getFirstName(), payload.getLastName(), null);
-                governedUserRegResponse = registerGovernedUser(handle, governedUserRegPayload, birthDate, studyGuid,
-                        newUser.getGuid(), auth0ClientId);
-                govUserGuid = governedUserRegResponse.getDdpUserGuid();
-                governedUser = userDao.findUsersAndProfilesByGuids(Set.of(govUserGuid)).findFirst().get();
-                consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, govUserGuid, ddpCreatedAt);
-                releaseDto = createActivityInstance(handle, finalReleaseGuid, studyGuid, govUserGuid, ddpCreatedAt);
-            }
+        //if governed user, create governed user
+        UserRegistrationResponse governedUserRegResponse = null;
+        String govUserGuid = null;
+        User governedUser = null;
+        if (!finalSelf) {
+            GovernedUserRegistrationPayload governedUserRegPayload = new GovernedUserRegistrationPayload(
+                    "en", payload.getFirstName(), payload.getLastName(), null);
+            governedUserRegResponse = registerGovernedUser(handle, governedUserRegPayload, birthDate, studyGuid,
+                    newUser.getGuid(), auth0ClientId);
+            govUserGuid = governedUserRegResponse.getDdpUserGuid();
+            governedUser = userDao.findUsersAndProfilesByGuids(Set.of(govUserGuid)).findFirst().get();
+            consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, govUserGuid, ddpCreatedAt);
+            releaseDto = createActivityInstance(handle, finalReleaseGuid, studyGuid, govUserGuid, ddpCreatedAt);
+        }
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
-            JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
-            JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
+        JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
+        JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
 
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            if (finalSelf) {
-                populatePrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
-                populateSelfConsent(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
-                        payload.getFirstName(), payload.getLastName());
-                populateRelease(handle, newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, releaseDto,
-                        newUser.getId(), studyDto.getId(), "RELEASE_SELF_AGREEMENT");
-            } else if (finalParental) {
-                populatePedPrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
-                populateParentalConsent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
-                        payload.getFirstName(), payload.getLastName());
-                populateRelease(handle, govUserGuid, answerDao, jdbiActivityInstanceStatus, releaseDto, governedUser.getId(),
-                        studyDto.getId(), "RELEASE_MINOR_AGREEMENT");
-            } else if (finalPed7plus) {
-                populatePedPrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
-                populateConsentAssent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
-                        payload.getFirstName(), payload.getLastName());
-                populateRelease(handle, govUserGuid, answerDao, jdbiActivityInstanceStatus, releaseDto, governedUser.getId(),
-                        studyDto.getId(), "RELEASE_MINOR_AGREEMENT");
-            }
-            jdbiActivityInstance.updateIsReadonlyByGuid(true, consentDto.getGuid());
-            jdbiActivityInstance.updateIsReadonlyByGuid(true, releaseDto.getGuid());
-            log.debug("prequal instanceID: {} .. guid: {} .. act: {} ", prequalDto.getId(), prequalDto.getGuid(),
-                    prequalDto.getActivityCode());
-            log.debug("consent instanceID: {} .. guid: {} .. act: {}", consentDto.getId(), consentDto.getGuid(),
-                    consentDto.getActivityCode());
-            log.debug("release instanceID: {} .. guid: {} .. act: {}", releaseDto.getId(), releaseDto.getGuid(),
-                    releaseDto.getActivityCode());
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (finalSelf) {
+            populatePrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
+            populateSelfConsent(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
+                    payload.getFirstName(), payload.getLastName());
+            populateRelease(handle, newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, releaseDto,
+                    newUser.getId(), studyDto.getId(), "RELEASE_SELF_AGREEMENT");
+        } else if (finalParental) {
+            populatePedPrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
+            populateParentalConsent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
+                    payload.getFirstName(), payload.getLastName());
+            populateRelease(handle, govUserGuid, answerDao, jdbiActivityInstanceStatus, releaseDto, governedUser.getId(),
+                    studyDto.getId(), "RELEASE_MINOR_AGREEMENT");
+        } else if (finalPed7plus) {
+            populatePedPrequal(newUser.getGuid(), answerDao, jdbiActivityInstanceStatus, prequalDto, Long.valueOf(age));
+            populateConsentAssent(govUserGuid, answerDao, jdbiActivityInstanceStatus, consentDto, birthDate,
+                    payload.getFirstName(), payload.getLastName());
+            populateRelease(handle, govUserGuid, answerDao, jdbiActivityInstanceStatus, releaseDto, governedUser.getId(),
+                    studyDto.getId(), "RELEASE_MINOR_AGREEMENT");
+        }
+        jdbiActivityInstance.updateIsReadonlyByGuid(true, consentDto.getGuid());
+        jdbiActivityInstance.updateIsReadonlyByGuid(true, releaseDto.getGuid());
+        log.debug("prequal instanceID: {} .. guid: {} .. act: {} ", prequalDto.getId(), prequalDto.getGuid(),
+                prequalDto.getActivityCode());
+        log.debug("consent instanceID: {} .. guid: {} .. act: {}", consentDto.getId(), consentDto.getGuid(),
+                consentDto.getActivityCode());
+        log.debug("release instanceID: {} .. guid: {} .. act: {}", releaseDto.getId(), releaseDto.getGuid(),
+                releaseDto.getActivityCode());
 
-            DataExportDao dataExportDao = handle.attach(DataExportDao.class);
-            dataExportDao.queueDataSync(newUser.getId());
-            if (governedUser != null) {
-                dataExportDao.queueDataSync(govUserGuid);
-                publishRegisteredPubSubMessage(govUserGuid, userGuid);
-            } else {
-                publishRegisteredPubSubMessage(userGuid, userGuid);
-            }
+        DataExportDao dataExportDao = handle.attach(DataExportDao.class);
+        dataExportDao.queueDataSync(newUser.getId());
+        if (governedUser != null) {
+            dataExportDao.queueDataSync(govUserGuid);
+            publishRegisteredPubSubMessage(govUserGuid, userGuid);
+        } else {
+            publishRegisteredPubSubMessage(userGuid, userGuid);
+        }
 
-            //now create new CONSENT
-            if (finalSelf) {
-                consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, userGuid, now);
-            } else {
-                consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, govUserGuid, now);
-            }
-            log.debug("created latest CONSENT : {} .. activityCode: {}", consentDto.getGuid(), consentDto.getActivityCode());
+        //now create new CONSENT
+        if (finalSelf) {
+            consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, userGuid, now);
+        } else {
+            consentDto = createActivityInstance(handle, finalConsentGuid, studyGuid, govUserGuid, now);
+        }
+        log.debug("created latest CONSENT : {} .. activityCode: {}", consentDto.getGuid(), consentDto.getActivityCode());
 
-            if (finalSelf) {
-                return new UserCreationResponse(newUser, userProfile);
-            } else {
-                governedUser.setEmail(payload.getEmail());
-                return new UserCreationResponse(governedUser, governedUser.getProfile());
-            }
-        });
+        if (finalSelf) {
+            return new UserCreationResponse(newUser, userProfile);
+        } else {
+            governedUser.setEmail(payload.getEmail());
+            return new UserCreationResponse(governedUser, governedUser.getProfile());
+        }
     }
 
     private void publishRegisteredPubSubMessage(String studyGuid, String participantGuid) {

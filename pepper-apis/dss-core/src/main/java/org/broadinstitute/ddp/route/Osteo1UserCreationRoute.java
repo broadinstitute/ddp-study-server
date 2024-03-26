@@ -91,7 +91,7 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
 
             Osteo1ParticipantCreator osteo1ParticipantCreator = null;
             osteo1ParticipantCreator = new Osteo1ParticipantCreator(taskPublisher,mgmtClient, auth0ClientId);
-            return  osteo1ParticipantCreator.createOsteo1User(request, response, payload);
+            return  osteo1ParticipantCreator.createOsteo1User(handle, request, response, payload);
         });
     }
 
