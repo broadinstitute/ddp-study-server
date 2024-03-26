@@ -531,7 +531,9 @@ public class DataDonationPlatform {
 
         post(API.DSM_NOTIFICATION, new ReceiveDsmNotificationRoute(), jsonSerializer);
         post(API.DSM_TERMINATE_USER, new DsmExitUserRoute(), responseSerializer);
-        post(API.OSTEO1_USERS, new Osteo1UserCreationRoute(new TaskPubSubPublisher()), responseSerializer);
+        if (cfg.getBoolean(ConfigFile.ALLOW_OS1_USER_CREATION)) {
+            post(API.OSTEO1_USERS, new Osteo1UserCreationRoute(new TaskPubSubPublisher()), responseSerializer);
+        }
 
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);
