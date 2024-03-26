@@ -89,9 +89,8 @@ public class Osteo1UserCreationRoute extends ValidatedJsonInputRoute<UserCreatio
                 throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, error);
             }
 
-            Osteo1ParticipantCreator osteo1ParticipantCreator = null;
-            osteo1ParticipantCreator = new Osteo1ParticipantCreator(taskPublisher,mgmtClient, auth0ClientId);
-            return  osteo1ParticipantCreator.createOsteo1User(handle, request, response, payload);
+            Osteo1ParticipantCreator osteo1ParticipantCreator = new Osteo1ParticipantCreator(taskPublisher, mgmtClient, auth0ClientId);
+            return osteo1ParticipantCreator.createOsteo1User(handle, request, response, payload);
         });
     }
 

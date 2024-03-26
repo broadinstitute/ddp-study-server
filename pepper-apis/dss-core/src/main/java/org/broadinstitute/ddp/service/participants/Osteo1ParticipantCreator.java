@@ -9,7 +9,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -42,15 +41,8 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.users.models.EmailAddress;
 import org.broadinstitute.ddp.json.users.requests.UserCreationPayload;
 import org.broadinstitute.ddp.json.users.responses.UserCreationResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -66,6 +58,7 @@ import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.DateTimeUtils;
 import org.broadinstitute.ddp.util.I18nUtil;
+import org.broadinstitute.ddp.util.QuestionAnswersUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
 import spark.Request;
@@ -294,20 +287,20 @@ public class Osteo1ParticipantCreator {
         //populate PREQUAL answers
         List<SelectedPicklistOption> options = new ArrayList<>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
-        answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
                 options, answerDao);
 
-        answerNumericQuestion("SELF_CURRENT_AGE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerNumericQuestion("SELF_CURRENT_AGE", participantGuid, activityDto.getGuid(),
                 age, answerDao);
 
         List<SelectedPicklistOption> optionsCountry = new ArrayList<>();
         options.add(new SelectedPicklistOption("US"));
-        answerPickListQuestion("SELF_COUNTRY", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("SELF_COUNTRY", participantGuid, activityDto.getGuid(),
                 optionsCountry, answerDao);
 
         List<SelectedPicklistOption> optionsState = new ArrayList<>();
         options.add(new SelectedPicklistOption("MA"));
-        answerPickListQuestion("SELF_STATE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("SELF_STATE", participantGuid, activityDto.getGuid(),
                 optionsState, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 500,
@@ -319,20 +312,20 @@ public class Osteo1ParticipantCreator {
         //populate Pediatric PREQUAL answers
         List<SelectedPicklistOption> options = new ArrayList<>();
         options.add(new SelectedPicklistOption("CHILD_DIAGNOSED"));
-        answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, activityDto.getGuid(),
                 options, answerDao);
 
-        answerNumericQuestion("CHILD_CURRENT_AGE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerNumericQuestion("CHILD_CURRENT_AGE", participantGuid, activityDto.getGuid(),
                 age, answerDao);
 
         List<SelectedPicklistOption> optionsCountry = new ArrayList<>();
         options.add(new SelectedPicklistOption("US"));
-        answerPickListQuestion("CHILD_COUNTRY", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("CHILD_COUNTRY", participantGuid, activityDto.getGuid(),
                 optionsCountry, answerDao);
 
         List<SelectedPicklistOption> optionsState = new ArrayList<>();
         options.add(new SelectedPicklistOption("MA"));
-        answerPickListQuestion("CHILD_STATE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("CHILD_STATE", participantGuid, activityDto.getGuid(),
                 optionsState, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 500,
@@ -343,22 +336,22 @@ public class Osteo1ParticipantCreator {
     private void populateSelfConsent(String participantGuid, AnswerDao answerDao, JdbiActivityInstanceStatus jdbiActivityInstanceStatus,
                                      ActivityInstanceDto activityDto, LocalDate dob, String firstName, String lastName) throws Exception {
         //populate CONSENT answers
-        answerTextQuestion("CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
                 "sign consent ", answerDao);
 
-        answerDateQuestion("CONSENT_DOB", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerDateQuestion("CONSENT_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
 
-        answerBooleanQuestion("CONSENT_BLOOD", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerBooleanQuestion("CONSENT_BLOOD", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        answerBooleanQuestion("CONSENT_TISSUE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerBooleanQuestion("CONSENT_TISSUE", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        answerTextQuestion("CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
                 firstName, answerDao);
 
-        answerTextQuestion("CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
                 lastName, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
@@ -369,33 +362,33 @@ public class Osteo1ParticipantCreator {
                                          ActivityInstanceDto activityDto, LocalDate dob,
                                          String firstName, String lastName) throws Exception {
         //populate CONSENT answers
-        answerTextQuestion("PARENTAL_CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("PARENTAL_CONSENT_SIGNATURE", participantGuid, activityDto.getGuid(),
                 "signature parental consent", answerDao);
 
-        answerDateQuestion("PARENTAL_CONSENT_CHILD_DOB", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerDateQuestion("PARENTAL_CONSENT_CHILD_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
 
-        answerBooleanQuestion("PARENTAL_CONSENT_BLOOD", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerBooleanQuestion("PARENTAL_CONSENT_BLOOD", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        answerBooleanQuestion("PARENTAL_CONSENT_TISSUE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerBooleanQuestion("PARENTAL_CONSENT_TISSUE", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        answerTextQuestion("PARENTAL_CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("PARENTAL_CONSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
                 "OS1 user fn", answerDao);
 
-        answerTextQuestion("PARENTAL_CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("PARENTAL_CONSENT_LASTNAME", participantGuid, activityDto.getGuid(),
                 "lastName1", answerDao);
 
-        answerTextQuestion("PARENTAL_CONSENT_CHILD_FIRSTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("PARENTAL_CONSENT_CHILD_FIRSTNAME", participantGuid, activityDto.getGuid(),
                 firstName, answerDao);
 
-        answerTextQuestion("PARENTAL_CONSENT_CHILD_LASTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("PARENTAL_CONSENT_CHILD_LASTNAME", participantGuid, activityDto.getGuid(),
                 lastName, answerDao);
 
         List<SelectedPicklistOption> optionsRelation = new ArrayList<>();
         optionsRelation.add(new SelectedPicklistOption("PARENT"));
-        answerPickListQuestion("PARENTAL_CONSENT_RELATIONSHIP", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("PARENTAL_CONSENT_RELATIONSHIP", participantGuid, activityDto.getGuid(),
                 optionsRelation, answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
@@ -406,33 +399,33 @@ public class Osteo1ParticipantCreator {
                                        JdbiActivityInstanceStatus jdbiActivityInstanceStatus, ActivityInstanceDto activityDto,
                                        LocalDate dob, String firstName, String lastName) throws Exception {
         //populate CONSENT_ASSENT answers
-        answerDateQuestion("CONSENT_ASSENT_CHILD_DOB", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerDateQuestion("CONSENT_ASSENT_CHILD_DOB", participantGuid, activityDto.getGuid(),
                 new DateValue(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth()), answerDao);
 
-        answerBooleanQuestion("CONSENT_ASSENT_BLOOD", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerBooleanQuestion("CONSENT_ASSENT_BLOOD", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        answerBooleanQuestion("CONSENT_ASSENT_TISSUE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerBooleanQuestion("CONSENT_ASSENT_TISSUE", participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
-        answerTextQuestion("CONSENT_ASSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_ASSENT_FIRSTNAME", participantGuid, activityDto.getGuid(),
                 "OS1 user parent fn", answerDao);
 
-        answerTextQuestion("CONSENT_ASSENT_LASTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_ASSENT_LASTNAME", participantGuid, activityDto.getGuid(),
                 "parent lastName1", answerDao);
 
-        answerTextQuestion("CONSENT_ASSENT_CHILD_FIRSTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_ASSENT_CHILD_FIRSTNAME", participantGuid, activityDto.getGuid(),
                 firstName, answerDao);
 
-        answerTextQuestion("CONSENT_ASSENT_CHILD_LASTNAME", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_ASSENT_CHILD_LASTNAME", participantGuid, activityDto.getGuid(),
                 lastName, answerDao);
 
         List<SelectedPicklistOption> optionsRelation = new ArrayList<>();
         optionsRelation.add(new SelectedPicklistOption("PARENT"));
-        answerPickListQuestion("CONSENT_ASSENT_RELATIONSHIP", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerPickListQuestion("CONSENT_ASSENT_RELATIONSHIP", participantGuid, activityDto.getGuid(),
                 optionsRelation, answerDao);
 
-        answerTextQuestion("CONSENT_ASSENT_CHILD_SIGNATURE", participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerTextQuestion("CONSENT_ASSENT_CHILD_SIGNATURE", participantGuid, activityDto.getGuid(),
                 "sign consent", answerDao);
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 1000,
@@ -448,7 +441,7 @@ public class Osteo1ParticipantCreator {
                                  JdbiActivityInstanceStatus jdbiActivityInstanceStatus, ActivityInstanceDto activityDto,
                                  long userId, long studyId, String agreementStableId) throws Exception {
 
-        answerAgreementQuestion(agreementStableId, participantGuid, activityDto.getGuid(),
+        QuestionAnswersUtil.answerAgreementQuestion(agreementStableId, participantGuid, activityDto.getGuid(),
                 true, answerDao);
 
         String guid = getMedicalProviderGuid(handle);
@@ -490,71 +483,6 @@ public class Osteo1ParticipantCreator {
 
         jdbiActivityInstanceStatus.insert(activityDto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 2000,
                 activityDto.getParticipantId());
-    }
-
-    public String answerTextQuestion(String pepperQuestionStableId,
-                                     String participantGuid,
-                                     String instanceGuid,
-                                     String value, AnswerDao answerDao) {
-        String guid = null;
-        if (value != null) {
-            Answer answer = new TextAnswer(null, pepperQuestionStableId, null, value);
-            guid = answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
-        }
-        return guid;
-    }
-
-    public String answerNumericQuestion(String pepperQuestionStableId,
-                                        String participantGuid,
-                                        String instanceGuid,
-                                        Long value, AnswerDao answerDao) {
-        String guid = null;
-        if (value != null) {
-            Answer answer = new NumericAnswer(null, pepperQuestionStableId, null, value);
-            guid = answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
-        }
-        return guid;
-    }
-
-    public String answerBooleanQuestion(String pepperQuestionStableId,
-                                        String participantGuid,
-                                        String instanceGuid,
-                                        Boolean value, AnswerDao answerDao) throws Exception {
-        if (value != null) {
-            Answer answer = new BoolAnswer(null, pepperQuestionStableId, null, value);
-            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
-        }
-        return null;
-    }
-
-    public String answerAgreementQuestion(String pepperQuestionStableId,
-                                          String participantGuid,
-                                          String instanceGuid,
-                                          Boolean value, AnswerDao answerDao) throws Exception {
-        if (value != null) {
-            Answer answer = new AgreementAnswer(null, pepperQuestionStableId, null, value);
-            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
-        }
-        return null;
-    }
-
-    public String answerPickListQuestion(String questionStableId, String participantGuid, String instanceGuid,
-                                         List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
-        Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
-        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
-    }
-
-    public String answerDateQuestion(String pepperQuestionStableId, String participantGuid, String instanceGuid,
-                                     DateValue value, AnswerDao answerDao) {
-
-        Answer answer = new DateAnswer(null, pepperQuestionStableId, null, null, null, null);
-        if (value != null) {
-            answer = new DateAnswer(null, pepperQuestionStableId, null,
-                    value.getYear(),
-                    value.getMonth(),
-                    value.getDay());
-        }
-        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
     private UserRegistrationResponse registerGovernedUser(Handle handle, GovernedUserRegistrationPayload payload, LocalDate birthDate,
