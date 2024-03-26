@@ -531,7 +531,7 @@ public class DataDonationPlatform {
 
         post(API.DSM_NOTIFICATION, new ReceiveDsmNotificationRoute(), jsonSerializer);
         post(API.DSM_TERMINATE_USER, new DsmExitUserRoute(), responseSerializer);
-        if (cfg.getBoolean(ConfigFile.ALLOW_OS1_USER_CREATION)) {
+        if (cfg.hasPath(ConfigFile.ALLOW_OS1_USER_CREATION) && cfg.getBoolean(ConfigFile.ALLOW_OS1_USER_CREATION)) {
             post(API.OSTEO1_USERS, new Osteo1UserCreationRoute(new TaskPubSubPublisher()), responseSerializer);
         }
 
