@@ -49,6 +49,9 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         */ 
         final var requestorClientId = auth.getClient();
         final var domain = auth.getDomain();
+        if (payload.getStudyGuid() == null) {
+            throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Invalid StudyGuid");
+        }
         final var studyGuid = new Guid(payload.getStudyGuid());
         final EmailAddress email;
         

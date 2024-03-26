@@ -23,6 +23,7 @@
                 {{if $i}},{{end}}"{{ $email }}"
             {{end}}
     ],
+    "allowOsteo1UserCreation": {{$conf.Data.allowOsteo1UserCreation}},
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
@@ -31,6 +32,8 @@
         "dsmDomain": "{{$auth0.dsmDomain}}",
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}",
+        "osteoClientId": "{{$auth0.osteoClientId}}",
+        "osteo1UserDefaultPwd": "{{$auth0.osteo1UserDefaultPwd}}",
         "ipAllowList": [
             {{range $i, $ip := $conf.Data.auth0.ipAllowList}}
                 {{if $i}},{{end}}"{{ $ip }}"

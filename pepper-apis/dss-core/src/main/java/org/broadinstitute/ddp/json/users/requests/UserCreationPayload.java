@@ -22,7 +22,6 @@ public class UserCreationPayload {
     @SerializedName("email")
     private String email;
 
-    @NotEmpty
     @SerializedName("studyGuid")
     private String studyGuid;
 
@@ -39,6 +38,4 @@ public class UserCreationPayload {
     @SerializedName("birthDate")
     private LocalDate birthDate;
 
-    @SerializedName("centerId")
-    private String centerId;
 }
