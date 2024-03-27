@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
