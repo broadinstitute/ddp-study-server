@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -332,7 +333,9 @@ public class IntegrationTestSuite {
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         DataDonationPlatform.main(new String[] {});
 
-        log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
+        synchronized (DataDonationPlatform.isReady) {
+            log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
+        }
     }
 
     private static void waitForServer(int millisecs) {

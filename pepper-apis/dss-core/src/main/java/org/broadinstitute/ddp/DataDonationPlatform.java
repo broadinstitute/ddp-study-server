@@ -225,7 +225,7 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
-    private static final AtomicBoolean isReady = new AtomicBoolean(false);
+    public static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static final int DEFAULT_BOOT_WAIT_SECS = 30;
 
 
