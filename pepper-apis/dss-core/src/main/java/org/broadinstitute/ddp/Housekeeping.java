@@ -39,6 +39,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
@@ -196,7 +197,31 @@ public class Housekeeping {
         }
     }
 
+    public static void registerAppEngineCallbacks() {
+        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
+            log.info("Received GAE start request [{}]", request.url());
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
+
+        Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            log.info("Received GAE stop request [{}]", request.url());
+            Spark.stop();
+            Spark.awaitStop();
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
+    }
+
+
     public static void main(String[] args) {
+        String envPort = System.getenv(ENV_PORT);
+        if (envPort != null) {
+            // We're likely in an GAE environment, so respond to the start hook before starting main event loop.
+            startupSpark(envPort);
+        }
+        // make sure we return quickly from gae _ah/start calls
+        registerAppEngineCallbacks();
         start(args, null);
     }
 
@@ -273,22 +298,12 @@ public class Housekeeping {
             }
         });
 
-        synchronized (startupMonitor) {
-            startupMonitor.notify();
-        }
-
         PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         PubSubMessageBuilder messageBuilder = new PubSubMessageBuilder(cfg);
         StackdriverMetricsTracker heartbeatMonitor;
 
         heartbeatMonitor = new StackdriverMetricsTracker(StackdriverCustomMetric.HOUSEKEEPING_CYCLES,
                 PointsReducerFactory.buildMaxPointReducer());
-
-        String envPort = System.getenv(ENV_PORT);
-        if (envPort != null) {
-            // We're likely in an GAE environment, so respond to the start hook before starting main event loop.
-            respondToGAEStartHook(envPort);
-        }
 
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
@@ -623,37 +638,10 @@ public class Housekeeping {
         consumer.accept(newSubscriber);
     }
 
-    private static void respondToGAEStartHook(String envPort) {
-        var receivedPing = new AtomicBoolean(false);
-
+    private static void startupSpark(String envPort) {
         Spark.port(Integer.parseInt(envPort));
-        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            receivedPing.set(true);
-            response.status(200);
-            return "";
-        });
         Spark.awaitInitialization();
-        log.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
-
-        long startMillis = Instant.now().toEpochMilli();
-        while (!receivedPing.get()) {
-            if (Instant.now().toEpochMilli() - startMillis > SLEEP_MILLIS) {
-                break;
-            }
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                log.warn("Wait interrupted", e);
-            }
-        }
-
-        Spark.stop();
-        Spark.awaitStop();
-        if (receivedPing.get()) {
-            log.info("Received ping from GAE, proceeding with Housekeeping startup");
-        } else {
-            log.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
-        }
+        log.info("Started HTTP server on port {}", envPort);
     }
 
     private static boolean isTimeForLogging(long lastLogTime) {

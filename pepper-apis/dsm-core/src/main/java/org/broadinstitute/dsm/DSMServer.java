@@ -231,7 +231,7 @@ public class DSMServer {
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
-        // immediately lock isReady so that ah/start route will wait
+        // immediately lock isReady so that if we want, we can have GAE start request wait
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
@@ -450,15 +450,16 @@ public class DSMServer {
     }
 
     private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
-        // Block until isReady is available, with an optional timeout to prevent
-        // instance for sitting around too long in a nonresponsive state.  There is a
-        // judgement call to be made here to allow for lengthy liquibase migrations during boot.
-        logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
-        get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
+        get(RoutePath.GAE.START_ENDPOINT, (request, response) -> {
+            logger.info("Received GAE start request [{}]", request.url());
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
 
         get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
-            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
-            //flush out any pending GA events
+            logger.info("Received GAE stop request [{}]", request.url());
+            Spark.stop();
+            Spark.awaitStop();
             response.status(HttpStatus.SC_OK);
             return "";
         });
