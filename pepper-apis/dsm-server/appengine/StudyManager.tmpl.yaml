@@ -13,7 +13,7 @@ network:
   name: managed
   instance_tag: study-manager
 
-entrypoint: java -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=study-manager,-cprof_cpu_use_per_thread_timers=true,-logtostderr -Xmx1640m -Dlog4j.configurationFile=log4j.xml -Dio.grpc.netty.shaded.io.netty.transport.noNative=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -jar DSMServer.jar
+entrypoint: java -Xmx1640m -Dlog4j.configurationFile=log4j.xml -Dio.grpc.netty.shaded.io.netty.transport.noNative=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -jar DSMServer.jar
 
 env_variables:
   TCELL_AGENT_HOST_IDENTIFIER: study-manager
