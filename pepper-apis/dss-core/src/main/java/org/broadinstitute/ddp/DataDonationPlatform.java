@@ -225,9 +225,8 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
+    // used by tests to ensure that boot has completed
     public static final AtomicBoolean isReady = new AtomicBoolean(false);
-    private static final int DEFAULT_BOOT_WAIT_SECS = 30;
-
 
     /**
      * Stop the server using the default wait time.
