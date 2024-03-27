@@ -307,6 +307,7 @@ public class DataDonationPlatform {
         }
         threadPool(-1, -1, requestThreadTimeout);
         JettyConfig.setupJetty(preferredSourceIPHeader);
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         registerAppEngineCallbacks();
 
         if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
@@ -316,7 +317,6 @@ public class DataDonationPlatform {
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
