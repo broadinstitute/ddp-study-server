@@ -307,6 +307,8 @@ public class DataDonationPlatform {
         }
         threadPool(-1, -1, requestThreadTimeout);
         JettyConfig.setupJetty(preferredSourceIPHeader);
+        //@TODO figure out how to do this only at deployment time.
+        CacheService.getInstance().resetAllCaches();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         registerAppEngineCallbacks();
 
@@ -315,8 +317,6 @@ public class DataDonationPlatform {
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
             LiquibaseUtil.releaseResources();
         }
-        //@TODO figure out how to do this only at deployment time.
-        CacheService.getInstance().resetAllCaches();
 
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
