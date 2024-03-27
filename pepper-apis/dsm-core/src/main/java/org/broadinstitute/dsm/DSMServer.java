@@ -449,7 +449,7 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
+    private static void registerAppEngineStartupCallback() {
         get(RoutePath.GAE.START_ENDPOINT, (request, response) -> {
             logger.info("Received GAE start request [{}]", request.url());
             response.status(HttpStatus.SC_OK);
@@ -505,15 +505,11 @@ public class DSMServer {
         if (appEnginePort != null) {
             port = Integer.parseInt(appEnginePort);
         }
-        long bootTimeoutSeconds = DEFAULT_BOOT_WAIT.getSeconds();
-        if (config.hasPath(ApplicationConfigConstants.BOOT_TIMEOUT)) {
-            bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
-        }
 
         logger.info("Using port {}", port);
         port(port);
 
-        registerAppEngineStartupCallback(bootTimeoutSeconds);
+        registerAppEngineStartupCallback();
 
         setupDB(config);
 
