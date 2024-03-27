@@ -449,7 +449,7 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback() {
+    private static void registerAppEngineCallbacks() {
         get(RoutePath.GAE.START_ENDPOINT, (request, response) -> {
             logger.info("Received GAE start request [{}]", request.url());
             response.status(HttpStatus.SC_OK);
@@ -509,7 +509,7 @@ public class DSMServer {
         logger.info("Using port {}", port);
         port(port);
 
-        registerAppEngineStartupCallback();
+        registerAppEngineCallbacks();
 
         setupDB(config);
 
