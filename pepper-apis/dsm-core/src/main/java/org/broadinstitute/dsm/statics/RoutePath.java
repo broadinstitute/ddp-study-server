@@ -155,6 +155,5 @@ public class RoutePath {
 
     public static final class GAE {
         public static final String STOP_ENDPOINT = "/_ah/stop";
-        public static final String START_ENDPOINT = "/_ah/start";
     }
 }
