@@ -26,6 +26,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -225,8 +226,9 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
-    // used by tests to ensure that boot has completed
-    public static final AtomicBoolean isReady = new AtomicBoolean(false);
+    private static final AtomicBoolean isReady = new AtomicBoolean(false);
+    private static final int DEFAULT_BOOT_WAIT_SECS = 30;
+
 
     /**
      * Stop the server using the default wait time.
@@ -296,9 +298,15 @@ public class DataDonationPlatform {
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
-        // start responding to GAE _ah/start commands as soon as we can,
-        // even if that means we accept traffic before we've done
-        // cache cleanup and possibly lengthy liquibase updates
+        if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
+            log.info("Running liquibase migrations in StudyServer against database");
+            LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
+            LiquibaseUtil.releaseResources();
+        }
+        //@TODO figure out how to do this only at deployment time.
+        CacheService.getInstance().resetAllCaches();
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
+
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));
         } else {
@@ -306,16 +314,11 @@ public class DataDonationPlatform {
         }
         threadPool(-1, -1, requestThreadTimeout);
         JettyConfig.setupJetty(preferredSourceIPHeader);
-        //@TODO figure out how to do this only at deployment time.
-        CacheService.getInstance().resetAllCaches();
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
-        registerAppEngineCallbacks();
 
-        if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
-            log.info("Running liquibase migrations in StudyServer against database");
-            LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
-            LiquibaseUtil.releaseResources();
-        }
+        // The first route mapping call will also initialize the Spark server. Make that first call
+        // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
+        // only once server has fully booted.
+        registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
 
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
@@ -622,17 +625,31 @@ public class DataDonationPlatform {
         }
     }
 
-    public static void registerAppEngineCallbacks() {
+    private static void registerAppEngineCallbacks(long bootWaitSecs) {
         get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            log.info("Received GAE start request [{}]", request.url());
-            response.status(HttpStatus.SC_OK);
+            log.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            long startedMillis = Instant.now().toEpochMilli();
+
+            var status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
+            var waitForBoot = new Thread(() -> {
+                synchronized (isReady) {
+                    if (isReady.get()) {
+                        status.set(HttpStatus.SC_OK);
+                    }
+                }
+            });
+            waitForBoot.start();
+            waitForBoot.join(bootWaitSecs * 1000);
+
+            long elapsed = Instant.now().toEpochMilli() - startedMillis;
+            log.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
+            response.status(status.get());
             return "";
         });
 
         get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            log.info("Received GAE stop request [{}]", request.url());
-            Spark.stop();
-            Spark.awaitStop();
+            log.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+
             response.status(HttpStatus.SC_OK);
             return "";
         });

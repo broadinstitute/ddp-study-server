@@ -332,9 +332,7 @@ public class IntegrationTestSuite {
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         DataDonationPlatform.main(new String[] {});
 
-        synchronized (DataDonationPlatform.isReady) {
-            log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
-        }
+        log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
     }
 
     private static void waitForServer(int millisecs) {
