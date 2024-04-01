@@ -172,6 +172,7 @@ public class Osteo1ParticipantCreator {
         String userGuid = newUser.getGuid();
         UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
         UserProfile userProfile = userProfileDao.findProfileByUserGuid(userGuid).get();
+        userProfile = updateProfile(handle, userProfile, payload.getBirthDate());
 
         //create PREQUAL, CONSENT & MEDICAL_RELEASE
         ActivityInstanceDto prequalDto = createActivityInstance(handle, "PREQUAL", studyGuid, userGuid, ddpCreatedAt);
@@ -554,4 +555,19 @@ public class Osteo1ParticipantCreator {
         log.info("Initialized user profile for user with guid {}", user.getGuid());
     }
 
+    private UserProfile updateProfile(Handle handle, UserProfile userProfile, LocalDate birthDate) {
+        UserProfile profileUpd = UserProfile.builder()
+                .userId(userProfile.getUserId())
+                .firstName(userProfile.getFirstName())
+                .lastName(userProfile.getLastName())
+                .preferredLangId(userProfile.getPreferredLangId())
+                .preferredLangCode(null)
+                .timeZone(userProfile.getTimeZone())
+                .birthDate(birthDate)
+                .build();
+
+        var profileDao = handle.attach(UserProfileDao.class);
+        return profileDao.updateProfile(profileUpd);
+
+    }
 }
