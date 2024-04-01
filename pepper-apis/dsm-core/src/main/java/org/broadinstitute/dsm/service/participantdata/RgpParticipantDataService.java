@@ -25,6 +25,7 @@ import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -46,6 +47,8 @@ public class RgpParticipantDataService {
                                          DDPInstance instance, FamilyIdProvider familyIdProvider) {
         // expecting ptp has a profile
         if (esParticipantDto.getProfile().isEmpty()) {
+            // TODO: temporary diagnostic
+            logParticipantDocument(ddpParticipantId, instance.getParticipantIndexES());
             throw new ESMissingParticipantDataException("Participant does not yet have profile in ES");
         }
         Profile esProfile = esParticipantDto.getProfile().get();
@@ -156,6 +159,8 @@ public class RgpParticipantDataService {
 
         // expecting ptp has a profile and has completed the enrollment activity
         if (esParticipantDto.getProfile().isEmpty() || esParticipantDto.getActivities().isEmpty()) {
+            // TODO: temporary diagnostic
+            logParticipantDocument(ddpParticipantId, esIndex);
             throw new ESMissingParticipantDataException(
                     String.format("Participant %s does not yet have profile and activities in ES", ddpParticipantId));
         }
@@ -239,5 +244,16 @@ public class RgpParticipantDataService {
                     .findFirst();
             return phoneAnswer.map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER)).orElse("");
         }).orElse("");
+    }
+
+    // TODO: remove this method after debugging is complete. -DC
+    private static void logParticipantDocument(String ddpParticipantId, String esIndex) {
+        Optional<String> ptpDoc =
+                ElasticSearchService.getParticipantDocumentAsString(ddpParticipantId, esIndex);
+        if (ptpDoc.isEmpty()) {
+            log.warn("ES document not found for participant {}", ddpParticipantId);
+        } else {
+            log.warn("ES document found for participant {}\n{}", ddpParticipantId, ptpDoc.get());
+        }
     }
 }

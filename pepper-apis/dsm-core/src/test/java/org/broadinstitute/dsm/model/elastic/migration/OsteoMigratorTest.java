@@ -23,6 +23,7 @@ import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.adminoperation.ExportLog;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.CohortTagTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
@@ -332,7 +333,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     }
 
     private List<CohortTag> getCohortTagsFromDoc(String ddpParticipantId) {
-        Map<String, Object> sourceMap = ElasticTestUtil.getParticipantDocument(esIndex,  ddpParticipantId);
+        Map<String, Object> sourceMap = ElasticSearchService.getParticipantDocument(ddpParticipantId, esIndex);
         Assert.assertNotNull(sourceMap);
         Map<String, Object> dsmProp = (Map<String, Object>) sourceMap.get(ESObjectConstants.DSM);
         Assert.assertNotNull(dsmProp);
