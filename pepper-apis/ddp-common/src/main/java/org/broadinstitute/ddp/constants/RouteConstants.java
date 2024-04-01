@@ -154,6 +154,7 @@ public class RouteConstants {
                 PathParam.USER_GUID
         );
 
+        public static final String OSTEO1_USERS = DSM_STUDY + "/osteo1user";
         public static final String DSM_TERMINATE_USER = fmt(
                 DSM_STUDY + "/exitparticipantrequest/%s",
                 PathParam.USER_GUID

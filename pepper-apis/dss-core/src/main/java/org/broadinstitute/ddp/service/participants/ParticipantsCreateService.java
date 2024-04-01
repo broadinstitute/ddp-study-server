@@ -38,7 +38,6 @@ public class ParticipantsCreateService {
     * @see <a href="https://github.com/apache/commons-validator/blob/42a07afd5144105483d18f87e07f5e5dcb6802e8/src/main/java/org/apache/commons/validator/routines/EmailValidator.java#L40-L51">apache/commons-validator EmailValidator.java</a>
      * @param email the email for the new participant.
      * @param studyGuid the study to register the participant into. may be null.
-     * @param centerGuid the center to register the participant with. may be null.
      * @return the created participant
      * @throws ParticipantsServiceError if an error occurs during user creation
      * @throws StudiesServiceError if an error occurs during user registration
