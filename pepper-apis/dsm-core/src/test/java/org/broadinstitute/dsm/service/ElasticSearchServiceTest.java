@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
@@ -108,6 +109,22 @@ public class ElasticSearchServiceTest extends DbAndElasticBaseTest {
             OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.get(0);
             Assert.assertEquals(medicalRecord.getMedicalRecordId(), oncHistoryDetail.getMedicalRecordId());
         });
+    }
+
+    @Test
+    public void testGetParticipantDocumentAsString() {
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId = participant.getRequiredDdpParticipantId();
+
+        Optional<String> ptpDoc = ElasticSearchService.getParticipantDocumentAsString(ddpParticipantId, esIndex);
+        Assert.assertTrue(ptpDoc.isPresent());
+        String ptpDocStr = ptpDoc.get();
+        Assert.assertTrue(ptpDocStr.contains("\"profile\":{"));
+        Assert.assertTrue(ptpDocStr.contains(ddpParticipantId));
+
+        // bogus participant ID
+        ElasticSearchService.getParticipantDocumentAsString(TestParticipantUtil.genDDPParticipantId("bogus"),
+                esIndex).ifPresent(doc -> Assert.fail("Should not have found participant document"));
     }
 
     private ParticipantDto createParticipant() {
