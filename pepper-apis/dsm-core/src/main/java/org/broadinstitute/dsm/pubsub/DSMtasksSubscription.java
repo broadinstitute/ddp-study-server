@@ -128,11 +128,13 @@ public class DSMtasksSubscription {
         } catch (ESMissingParticipantDataException e) {
             // retry until ES data shows up, or we reach max wait
             retryPerParticipant.merge(participantGuid, 1, Integer::sum);
-            if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
+            int tryNum = retryPerParticipant.get(participantGuid);
+            if (tryNum == MAX_RETRY) {
                 retryPerParticipant.remove(participantGuid);
                 consumer.ack();
                 throw e;
             } else {
+                logger.info("Waiting for missing ES data, try number {}: {}", tryNum, e.toString());
                 consumer.nack();
             }
         }

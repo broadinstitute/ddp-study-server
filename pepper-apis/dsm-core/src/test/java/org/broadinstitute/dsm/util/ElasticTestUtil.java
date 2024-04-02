@@ -18,12 +18,11 @@ import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainless;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
@@ -128,25 +127,7 @@ public class ElasticTestUtil {
     }
 
     public static String getParticipantDocumentAsString(String index, String ddpParticipantId) {
-        return _getParticipantDocument(index, ddpParticipantId).getSourceAsString();
-    }
-
-    public static Map<String, Object> getParticipantDocument(String index, String ddpParticipantId) {
-        return _getParticipantDocument(index, ddpParticipantId).getSource();
-    }
-
-    private static GetResponse _getParticipantDocument(String index, String ddpParticipantId) {
-        GetResponse res = null;
-        try {
-            RestHighLevelClient client = ElasticSearchUtil.getClientInstance();
-
-            GetRequest getRequest = new GetRequest().index(index).id(ddpParticipantId);
-            res = client.get(getRequest, RequestOptions.DEFAULT);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Unexpected exception getting document for participant " + ddpParticipantId);
-        }
-        return res;
+        return ElasticSearchService.getParticipantDocumentAsString(ddpParticipantId, index).orElseThrow();
     }
 
     public static void addDsmParticipant(ParticipantDto participantDto, DDPInstanceDto ddpInstanceDto) {

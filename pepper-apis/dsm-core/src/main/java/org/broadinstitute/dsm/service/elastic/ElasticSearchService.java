@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,8 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest;
@@ -174,6 +177,38 @@ public class ElasticSearchService {
         return esParticipant.getDsm().orElseThrow(() ->
                 new DsmInternalError("ES dsm data missing for participant %s and index %s".formatted(
                         ddpParticipantId, index)));
+    }
+
+    /**
+     * Get participant document as a string
+     */
+    public static Optional<String> getParticipantDocumentAsString(String ddpParticipantId, String index) {
+        GetResponse res = _getParticipantDocument(index, ddpParticipantId);
+        if (!res.isExists()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(res.getSourceAsString());
+    }
+
+    /**
+     * Get participant document as an object map
+     */
+    public static Map<String, Object> getParticipantDocument(String ddpParticipantId, String index) {
+        GetResponse res = _getParticipantDocument(index, ddpParticipantId);
+        if (!res.isExists()) {
+            throw new DsmInternalError("Participant document %s not found in index %s".formatted(ddpParticipantId, index));
+        }
+        return res.getSource();
+    }
+
+    private static GetResponse _getParticipantDocument(String index, String ddpParticipantId) {
+        try {
+            GetRequest getRequest = new GetRequest().index(index).id(ddpParticipantId);
+            return ElasticSearchUtil.getClientInstance().get(getRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            throw new DsmInternalError("Error getting ES participant document %s for index %s"
+                    .formatted(ddpParticipantId, index), e);
+        }
     }
 
     /**
