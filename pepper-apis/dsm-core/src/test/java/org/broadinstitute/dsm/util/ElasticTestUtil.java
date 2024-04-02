@@ -224,6 +224,28 @@ public class ElasticTestUtil {
         }
     }
 
+    public static Profile addParticipantProfile(String esIndex, String ddpParticipantId, String shortId, String firstName,
+                                               String lastName, String email, String fileName) {
+        Gson gson = new Gson();
+        try {
+            String profileJson = TestUtil.readFile(fileName);
+            profileJson.replace("<shortId>", shortId);
+            profileJson.replace("<firstName>", firstName);
+            profileJson.replace("<lastName>", lastName);
+            profileJson.replace("<email>", email);
+            profileJson.replace("<guid>", ddpParticipantId);
+            profileJson.replace("<now>", String.valueOf(System.currentTimeMillis()));
+            Profile profile = gson.fromJson(profileJson, Profile.class);
+            profile.setGuid(ddpParticipantId);
+            addParticipantProfile(esIndex, profile);
+            return profile;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
+            return null;
+        }
+    }
+
     public static Address addParticipantAddressFromFile(String esIndex, String fileName, String ddpParticipantId) {
         Gson gson = new Gson();
         try {
@@ -319,5 +341,22 @@ public class ElasticTestUtil {
         String script = String.format("ctx._source.dsm.remove('%s')", field);
         UpsertPainless upsert = new UpsertPainless(esIndex, QueryBuilders.termsQuery("_id", ddpParticipantId));
         upsert.export(script, Map.of(), field);
+    }
+
+    public static void addParticipantDsmFromFile(String esIndex, String fileName, String ddpParticipantId) {
+        Gson gson = new Gson();
+        try {
+            String dsmJson = TestUtil.readFile(fileName);
+            Dsm dsm = gson.fromJson(dsmJson, Dsm.class);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> valueMap = mapper.convertValue(dsm, Map.class);
+            Map<String, Object> dsmMap = Map.of("dsm", valueMap);
+            ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, dsmMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+//            Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
+        }
+
     }
 }
