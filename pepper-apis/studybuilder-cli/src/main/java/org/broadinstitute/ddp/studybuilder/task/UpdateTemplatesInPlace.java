@@ -14,6 +14,11 @@ import java.util.stream.Collectors;
 import com.typesafe.config.Config;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -82,6 +87,8 @@ public class UpdateTemplatesInPlace implements CustomTask {
     private Config studyCfg;
     private Config varsCfg;
     private List<String> variablesToSkip;
+    private boolean eventTemplatesOnly = false;
+    private String eventTemplatesOnlyParam;
 
     public UpdateTemplatesInPlace(List<String> variablesToSkip) {
         this.variablesToSkip = variablesToSkip;
@@ -101,10 +108,27 @@ public class UpdateTemplatesInPlace implements CustomTask {
         User admin = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, admin.getId());
 
-        traverseStudySettings(handle, studyDto.getId());
-        traverseKitConfigurations(handle, studyDto.getId());
         traverseEventConfigurations(handle, studyDto.getId());
-        traverseActivities(handle, studyDto.getId(), activityBuilder);
+        if (!eventTemplatesOnly) {
+            traverseStudySettings(handle, studyDto.getId());
+            traverseKitConfigurations(handle, studyDto.getId());
+            traverseActivities(handle, studyDto.getId(), activityBuilder);
+        }
+    }
+
+    @Override
+    public void consumeArguments(String[] args) throws ParseException {
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(new Options(), args);
+        String[] positional = cmd.getArgs();
+        if (positional.length == 1) {
+            String param = positional[0];
+            this.eventTemplatesOnly = param.equalsIgnoreCase("eventTemplatesOnly");
+            if (!this.eventTemplatesOnly) {
+                //invalid argument passed
+                throw new ParseException("Invalid argument passed: {} " + param);
+            }
+        }
     }
 
     private void traverseStudySettings(Handle handle, long studyId) {
@@ -196,20 +220,33 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
+
     // Best-effort attempt at making a unique identifier for event configuration.
     // watch out for scenarios where diff events might end up with same unique identifier
     // ex:- trigger and order are same but diff pre/cancel expressions !
     private String hashEvent(Config eventCfg) {
-        return String.format("%s-%d",
+        String key = String.format("%s-%d",
                 EventBuilder.triggerAsStr(eventCfg.getConfig("trigger")),
                 eventCfg.getInt("order"));
+        if (eventCfg.hasPath("preconditionExpr")) {
+            int hashCode = eventCfg.getString("preconditionExpr").hashCode();
+            key = String.format("%s-%d", key, hashCode);
+        }
+
+        return key;
     }
 
     // Best-effort attempt at making a unique identifier for event configuration.
     private String hashEvent(Handle handle, EventConfiguration eventConfig) {
-        return String.format("%s-%d",
+        String key = String.format("%s-%d",
                 EventBuilder.triggerAsStr(handle, eventConfig.getEventTrigger()),
                 eventConfig.getExecutionOrder());
+        if (eventConfig.getPreconditionExpression() != null) {
+            int hashCode = eventConfig.getPreconditionExpression().hashCode();
+            key = String.format("%s-%d", key, hashCode);
+        }
+
+        return key;
     }
 
     // Note: This assumes that what's in the database and in the configuration files are the same in terms of structure.

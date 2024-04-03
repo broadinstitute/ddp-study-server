@@ -4,6 +4,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.Connection;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
@@ -12,6 +13,7 @@ import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
 import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 
+@Slf4j
 public class ParticipantService {
     private static final ParticipantDao participantDao = new ParticipantDao();
 
@@ -42,6 +44,8 @@ public class ParticipantService {
                         DDPInstanceDao.of().getDDPInstanceByInstanceName(ddpInstance.getName()).orElseThrow()
                 )
         ).export();
+        log.info("Created participant with id {} for ddpParticipantId {} in instance {}", id, ddpParticipantId,
+                ddpInstance.getName());
         return participantDto;
     }
 

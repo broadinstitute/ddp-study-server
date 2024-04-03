@@ -59,8 +59,8 @@ public class DDPMedicalRecordDataRequest {
 
         List<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
-            log.info("Creating medical record bundle for participant {} with {} institutions", ddpParticipantId,
-                    institutions.size());
+            log.info("Creating medical record bundle for participant {} with {} institutions for instance {}",
+                    ddpParticipantId, institutions.size(), ddpInstance.getName());
             // TODO this should be rewritten to verify the DDP participant ID and get the participant ID to use in the following
             // calls (which should be modified to use the participant ID instead of repeatedly doing SQL queries
             // to get it) -DC
