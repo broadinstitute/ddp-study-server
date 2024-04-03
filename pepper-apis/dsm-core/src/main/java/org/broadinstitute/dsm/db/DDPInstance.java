@@ -335,6 +335,11 @@ public class DDPInstance {
         return (String) resultsGroup.resultValue;
     }
 
+    /**
+     * Get all DDP instances that have a role
+     * Note: The list of instances is not filtered by the role, it just provides a field 'isHasRole' that indicates
+     * if the instance has the role. TODO: Filter the list by the role, since callers expect that.
+     */
     public static List<DDPInstance> getDDPInstanceListWithRole(@NonNull String role) {
         List<DDPInstance> ddpInstances = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {

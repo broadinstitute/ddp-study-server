@@ -19,7 +19,8 @@ public class MedicalRecordInstanceProvider implements DDPInstanceProvider {
      */
     @Override
     public List<DDPInstance> getApplicableInstances() {
-        return DDPInstance.getDDPInstanceListWithRole(DBConstants.HAS_MEDICAL_RECORD_ENDPOINTS);
+        return DDPInstance.getDDPInstanceListWithRole(DBConstants.HAS_MEDICAL_RECORD_ENDPOINTS).stream()
+                .filter(DDPInstance::isHasRole).toList();
     }
 
     /**
