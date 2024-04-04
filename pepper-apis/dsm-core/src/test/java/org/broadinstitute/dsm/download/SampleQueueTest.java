@@ -31,8 +31,6 @@ import spark.QueryParamsMap;
 public class SampleQueueTest extends DbAndElasticBaseTest {
 
     private static final String instanceName = "download_test_instance";
-    private static final String groupName = "download_test_group";
-    static String userEmail = "downloadUser@unittest.dev";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
     private static String guid = "PT_SAMPLE_QUEUE_TEST";
