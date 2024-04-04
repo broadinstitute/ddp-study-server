@@ -206,17 +206,17 @@ public class ElasticTestUtil {
     }
 
     public static Profile addParticipantProfile(String esIndex, String ddpParticipantId, String shortId, String firstName,
-                                               String lastName, String email, String fileName) {
-        Gson gson = new Gson();
+                                               String lastName, String email) {
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            String profileJson = TestUtil.readFile(fileName);
-            profileJson.replace("<shortId>", shortId);
-            profileJson.replace("<firstName>", firstName);
-            profileJson.replace("<lastName>", lastName);
-            profileJson.replace("<email>", email);
-            profileJson.replace("<guid>", ddpParticipantId);
-            profileJson.replace("<now>", String.valueOf(System.currentTimeMillis()));
-            Profile profile = gson.fromJson(profileJson, Profile.class);
+            String profileJson = TestUtil.readFile("elastic/participantProfile.json");
+            profileJson = profileJson.replace("<shortId>", shortId);
+            profileJson = profileJson.replace("<firstName>", firstName);
+            profileJson = profileJson.replace("<lastName>", lastName);
+            profileJson = profileJson.replace("<email>", email);
+            profileJson = profileJson.replace("<guid>", ddpParticipantId);
+            profileJson = profileJson.replace("<now>", String.valueOf(System.currentTimeMillis()));
+            Profile profile = objectMapper.readValue(profileJson, Profile.class);
             profile.setGuid(ddpParticipantId);
             addParticipantProfile(esIndex, profile);
             return profile;

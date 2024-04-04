@@ -53,7 +53,6 @@ import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitShippingIds;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.model.at.SampleQueue;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
 import org.broadinstitute.dsm.model.elastic.Dsm;
@@ -1708,28 +1707,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             return (String) results.resultValue;
         }
     }
-
-    public static Object getSampleQueueValue(Map<String, Object> kit) {
-        return isStringValuePresent(kit.get("externalOrderStatus")) ? kit.get("externalOrderStatus") :
-                isStringValuePresent(kit.get("deactivatedDate")) ? SampleQueue.DEACTIVATED.uiText :
-                        isStringValuePresent(kit.get("receiveDate")) ? SampleQueue.RECEIVED.uiText :
-                                isStringValuePresent(kit.get("scanDate")) ? SampleQueue.SENT.uiText :
-                                        isStringValuePresent(kit.get("error")) && Boolean.parseBoolean(kit.get("error").toString()) ?
-                                                SampleQueue.ERROR.uiText : SampleQueue.QUEUE.uiText;
-    }
-
-    /**
-     * Checks if an object retrieved from Elasticsearch (or similar) is non-null and has content.
-     * Designed for strings, this method checks for non-empty and non-blank (whitespace-only) strings.
-     *
-     * @param value The object to check for validity, which can be any type.
-     * @return {@code true} if the object is not null and not empty (for strings);
-     *         {@code false} otherwise.
-     */
-    private static boolean isStringValuePresent(Object value) {
-        return value != null && !value.toString().trim().isEmpty();
-    }
-
 
     public Boolean getError() {
         if (Objects.isNull(error)) {

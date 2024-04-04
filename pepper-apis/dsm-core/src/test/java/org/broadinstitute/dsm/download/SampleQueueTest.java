@@ -9,20 +9,20 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
-import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.service.download.DownloadParticipantListService;
+import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.QueryParamsMap;
@@ -33,35 +33,30 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
     private static final String instanceName = "download_test_instance";
     private static final String groupName = "download_test_group";
     static String userEmail = "downloadUser@unittest.dev";
-    static int userId;
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
     private static String guid = "PT_SAMPLE_QUEUE_TEST";
     private static ParticipantDto participantDto = null;
     private DownloadParticipantListService downloadParticipantListService = new DownloadParticipantListService();
-    static UserAdminTestUtil userAdminTestUtil = new UserAdminTestUtil();
 
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        userAdminTestUtil.createRealmAndStudyGroup(instanceName, instanceName, "downloadTest", groupName, esIndex);
-        ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(userAdminTestUtil.getDdpInstanceId()).orElseThrow(() -> new RuntimeException("DDP instance not found"));
+        ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(guid);
         String shortId = "PT_SHORT";
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, participantDto);
-        ElasticTestUtil.addParticipantProfile(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic", "lastName", "email", "elastic/participantProfile.json");
+        ElasticTestUtil.addParticipantProfile(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic", "lastName", "email");
         ElasticTestUtil.addParticipantDsmFromFile(esIndex, "elastic/dsmWithKitRequestShipping.json", ddpParticipantId);
         log.debug("ES participant record with DSM for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-        userId = userAdminTestUtil.createTestUser(userEmail, List.of("pt_list_view"));
     }
 
     @AfterClass
     public static void cleanUp() {
         TestParticipantUtil.deleteParticipant(participantDto.getParticipantId().get());
-        userAdminTestUtil.deleteTestUser(userId);
-        userAdminTestUtil.deleteGeneratedData();
+        DdpInstanceGroupTestUtil.deleteInstance(ddpInstanceDto);
         ElasticTestUtil.deleteIndex(esIndex);
     }
 
@@ -109,10 +104,10 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
                 ((Map<String, Object>) downloadList.get(0).getEsDataAsMap().get("dataAsMap")).get("dsm")).get("kitRequestShipping"));
         assertNotNull(kitRequestShippings);
         assertEquals(5, kitRequestShippings.size());
-        assertCorrectSampleQueueValue(kitRequestShippings);
+        assertSampleQueueValue(kitRequestShippings);
     }
 
-    private void assertCorrectSampleQueueValue(List<Object> kitRequestShippings) {
+    private void assertSampleQueueValue(List<Object> kitRequestShippings) {
         kitRequestShippings.forEach(kitRequestShipping -> {
             Map<String, Object> kitRequestShippingMap = (Map<String, Object>) kitRequestShipping;
             assertNotNull(kitRequestShippingMap.get("sampleQueue"));
@@ -125,8 +120,10 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
                 assertEquals("GP manual Label", kitRequestShippingMap.get("sampleQueue"));
             } else if (kitRequestShippingMap.get("ddpLabel").equals("newKit")) {
                 assertEquals("Waiting on GP", kitRequestShippingMap.get("sampleQueue"));
-            }else if (kitRequestShippingMap.get("ddpLabel").equals("shippedKit")) {
+            } else if (kitRequestShippingMap.get("ddpLabel").equals("shippedKit")) {
                 assertEquals("Shipped", kitRequestShippingMap.get("sampleQueue"));
+            } else {
+                Assert.fail();
             }
         });
     }
@@ -153,7 +150,7 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
 
         QueryParamsMap nestedUserIdQueryParamsMap = mock(QueryParamsMap.class);
         when(mainQueryParamsMap.get("userId")).thenReturn(nestedUserIdQueryParamsMap);
-        when(nestedUserIdQueryParamsMap.value()).thenReturn(userId + "");
+        when(nestedUserIdQueryParamsMap.value()).thenReturn("6");
 
         QueryParamsMap nestedFileFormatQueryParamsMap = mock(QueryParamsMap.class);
         when(mainQueryParamsMap.get("fileFormat")).thenReturn(nestedFileFormatQueryParamsMap);
@@ -169,7 +166,8 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
     private ManualFilterParticipantList getFilterFromFile(String fileName){
         try {
             String filterJson = TestUtil.readFile(fileName);
-            ManualFilterParticipantList filterable = new Gson().fromJson(filterJson, ManualFilterParticipantList.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ManualFilterParticipantList filterable = objectMapper.readValue(filterJson, ManualFilterParticipantList.class);
             return filterable;
         } catch (Exception e) {
             throw new RuntimeException(e);
