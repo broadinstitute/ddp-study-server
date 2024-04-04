@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -166,8 +166,7 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
     private ManualFilterParticipantList getFilterFromFile(String fileName){
         try {
             String filterJson = TestUtil.readFile(fileName);
-            ObjectMapper objectMapper = new ObjectMapper();
-            ManualFilterParticipantList filterable = objectMapper.readValue(filterJson, ManualFilterParticipantList.class);
+            ManualFilterParticipantList filterable = new Gson().fromJson(filterJson, ManualFilterParticipantList.class);
             return filterable;
         } catch (Exception e) {
             throw new RuntimeException(e);
