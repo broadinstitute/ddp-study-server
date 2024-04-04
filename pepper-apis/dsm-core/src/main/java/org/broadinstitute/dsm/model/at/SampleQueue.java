@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.model.at;
 
+/**
+ * Enum for the different statuses a sample can have
+ * The corresponding field in the frontend is also called sampleQueue
+ */
 public enum SampleQueue {
 
     DEACTIVATED("Deactivated"),
