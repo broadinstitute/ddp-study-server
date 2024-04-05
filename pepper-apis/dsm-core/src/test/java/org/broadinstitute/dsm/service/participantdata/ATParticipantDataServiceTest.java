@@ -96,7 +96,7 @@ public class ATParticipantDataServiceTest extends DbAndElasticBaseTest {
         } catch (ESMissingParticipantDataException e) {
             Assert.assertTrue(String.format("Error message should include the queried participant id %s.  The "
                             + "message given is %s", nonexistentParticipantId, e.getMessage()),
-                    e.getMessage().toUpperCase().contains("PARTICIPANT " + nonexistentParticipantId));
+                    e.getMessage().contains("Participant document %s not found".formatted(nonexistentParticipantId)));
         }
     }
 

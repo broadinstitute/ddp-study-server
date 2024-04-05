@@ -17,8 +17,8 @@ import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -31,7 +31,7 @@ import org.junit.Test;
 
 @Slf4j
 public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
-
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final String instanceName = "ohdetailpatch";
     private static String esIndex;
@@ -106,7 +106,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             ElasticSearchParticipantDto esParticipant =
-                     ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                    elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
             Profile esProfile = esParticipant.getProfile().orElseThrow();
             Assert.assertEquals(profile.getHruid(), esProfile.getHruid());
 

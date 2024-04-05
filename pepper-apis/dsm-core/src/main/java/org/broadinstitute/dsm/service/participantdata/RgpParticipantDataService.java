@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +35,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 public class RgpParticipantDataService {
     public static final String RGP_PARTICIPANTS_FIELD_TYPE = "RGP_PARTICIPANTS";
     protected static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
 
     /**
      * Create default data for an RGP participant. Expects an ES profile to exist for the participant.
@@ -47,9 +47,8 @@ public class RgpParticipantDataService {
                                          DDPInstance instance, FamilyIdProvider familyIdProvider) {
         // expecting ptp has a profile
         if (esParticipantDto.getProfile().isEmpty()) {
-            // TODO: temporary diagnostic
-            logParticipantDocument(ddpParticipantId, instance.getParticipantIndexES());
-            throw new ESMissingParticipantDataException("Participant does not yet have profile in ES");
+            throw new ESMissingParticipantDataException("Participant %s does not yet have profile in ES"
+                    .formatted(ddpParticipantId));
         }
         Profile esProfile = esParticipantDto.getProfile().get();
         log.info("Got ES profile of participant: {}", esProfile.getGuid());
@@ -143,6 +142,12 @@ public class RgpParticipantDataService {
         }
     }
 
+    /**
+     * Update default data for an RGP participant. Expects an ES profile an activities to exist for the participant.
+     *
+     * @throws ESMissingParticipantDataException if the participant does not have an ES profile and activities. Can be
+     *                                          used by callers to retry after waiting for the ES profile to be created.
+     */
     public static void updateWithExtractedData(String ddpParticipantId, String studyGuid) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceByGuid(studyGuid);
         if (ddpInstance == null) {
@@ -154,13 +159,14 @@ public class RgpParticipantDataService {
             throw new DsmInternalError("No ES participant index for study " + studyGuid);
         }
 
-        ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+        Optional<ElasticSearchParticipantDto> esParticipant =
+                elasticSearchService.getParticipantDocumentById(ddpParticipantId, esIndex);
+        ElasticSearchParticipantDto esParticipantDto = esParticipant.orElseThrow(() ->
+                new ESMissingParticipantDataException("Participant %s does not have an ES document"
+                    .formatted(ddpParticipantId)));
 
         // expecting ptp has a profile and has completed the enrollment activity
         if (esParticipantDto.getProfile().isEmpty() || esParticipantDto.getActivities().isEmpty()) {
-            // TODO: temporary diagnostic
-            logParticipantDocument(ddpParticipantId, esIndex);
             throw new ESMissingParticipantDataException(
                     String.format("Participant %s does not yet have profile and activities in ES", ddpParticipantId));
         }
@@ -190,8 +196,7 @@ public class RgpParticipantDataService {
         List<ParticipantData> participantDataList = participantDataDao.getParticipantData(ddpParticipantId);
 
         return participantDataList.stream().filter(participantDataDto ->
-                RGP_PARTICIPANTS_FIELD_TYPE.equals(participantDataDto.getRequiredFieldTypeId()))
-                .collect(Collectors.toList());
+                RGP_PARTICIPANTS_FIELD_TYPE.equals(participantDataDto.getRequiredFieldTypeId())).toList();
     }
 
     protected static void updateParticipantData(String ddpParticipantId, ParticipantData participantData,
@@ -244,16 +249,5 @@ public class RgpParticipantDataService {
                     .findFirst();
             return phoneAnswer.map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER)).orElse("");
         }).orElse("");
-    }
-
-    // TODO: remove this method after debugging is complete. -DC
-    private static void logParticipantDocument(String ddpParticipantId, String esIndex) {
-        Optional<String> ptpDoc =
-                ElasticSearchService.getParticipantDocumentAsString(ddpParticipantId, esIndex);
-        if (ptpDoc.isEmpty()) {
-            log.warn("ES document not found for participant {}", ddpParticipantId);
-        } else {
-            log.warn("ES document found for participant {}\n{}", ddpParticipantId, ptpDoc.get());
-        }
     }
 }

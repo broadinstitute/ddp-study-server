@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -72,6 +73,48 @@ public class ElasticSearchService {
         }
         log.info("Got {} participant ids from index (getAllParticipantGuids)", participantIds.size());
         return participantIds;
+    }
+
+    /**
+     * Get a single participant document based on participant GUID. Throw an exception if document is not found.
+     */
+    public ElasticSearchParticipantDto getRequiredParticipantDocumentById(String ddpParticipantId, String index) {
+        return getParticipantDocumentById(ddpParticipantId, index)
+                .orElseThrow(() -> new ESMissingParticipantDataException("Participant document %s not found in index %s"
+                        .formatted(ddpParticipantId, index)));
+    }
+
+    /**
+     * Get a single participant document based on participant GUID
+     */
+    public Optional<ElasticSearchParticipantDto> getParticipantDocumentById(String ddpParticipantId, String index) {
+        return getSingleParticipantDocument(ddpParticipantId, ElasticSearchUtil.PROFILE_GUID, index);
+    }
+
+    /**
+     * Get a single participant document based on a field value match
+     *
+     * @param id value to match
+     * @param matchField field to match against
+     */
+    public Optional<ElasticSearchParticipantDto> getSingleParticipantDocument(String id, String matchField, String index) {
+        SearchRequest searchRequest = new SearchRequest(index);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchQuery(matchField, id));
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse response = search(searchRequest);
+        log.info("ES search on index {}, match {} on {}", index, matchField, id);
+        SearchHits hits = response.getHits();
+        int numHits = hits.getHits().length;
+        if (numHits == 0) {
+            return Optional.empty();
+        }
+        if (numHits > 1) {
+            throw new DsmInternalError("Multiple hits for match %s on %s in index %s"
+                    .formatted(id, matchField, index));
+        }
+        return Optional.of(elasticSearch.parseSourceMap(hits.getAt(0).getSourceAsMap(), id));
     }
 
     /**
@@ -172,8 +215,7 @@ public class ElasticSearchService {
      * Get DSM data for a single participant in the given index, throwing an exception if DSM data is missing
      */
     public Dsm getRequiredDsmData(String ddpParticipantId, String index) {
-        ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(index, ddpParticipantId);
+        ElasticSearchParticipantDto esParticipant = getRequiredParticipantDocumentById(ddpParticipantId, index);
         return esParticipant.getDsm().orElseThrow(() ->
                 new DsmInternalError("ES dsm data missing for participant %s and index %s".formatted(
                         ddpParticipantId, index)));

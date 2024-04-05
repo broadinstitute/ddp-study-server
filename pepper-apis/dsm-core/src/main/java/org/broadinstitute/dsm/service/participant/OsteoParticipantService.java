@@ -27,7 +27,6 @@ import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 
 
@@ -157,9 +156,9 @@ public class OsteoParticipantService {
                 new DsmInternalError("ES Participant data missing for participant %s".formatted(ddpParticipantId)));
 
         // there *should* be ES DSM data for osteo2, but make it if not
+        String osteo2Index = osteo2Instance.getParticipantIndexES();
         ElasticSearchParticipantDto osteo2EsParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo2Instance.getParticipantIndexES(),
-                        ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, osteo2Index);
         Optional<Dsm> dsm = osteo2EsParticipant.getDsm();
         Dsm osteo2Dsm = dsm.orElseGet(Dsm::new);
 
@@ -202,7 +201,7 @@ public class OsteoParticipantService {
         cohortTags.add(cohortTag);
         osteo2Dsm.setCohortTag(cohortTags);
 
-        ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Instance.getParticipantIndexES());
+        ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Index);
         OncHistoryService.createEmptyOncHistory(osteo2ParticipantId, ddpParticipantId, osteo2Instance);
     }
 
