@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataTestUtil;
 import org.broadinstitute.dsm.service.participantdata.TestFamilyIdProvider;
@@ -30,6 +31,7 @@ import org.junit.Test;
 
 @Slf4j
 public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static final String instanceName = "rgpinit";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
@@ -90,14 +92,14 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         rgpParticipantDataTestUtil.loadFieldSettings(ddpInstanceDto.getDdpInstanceId());
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
 
         // create RGP participant data
         int familyId = 100;
         RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(familyId));
 
-        esParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+        esParticipantDto = elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
         Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
@@ -113,7 +115,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         ElasticTestUtil.addParticipantDsm(esIndex, dsm, ddpParticipantId);
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
 
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
@@ -132,7 +134,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         rgpParticipantDataTestUtil.loadFieldSettings(ddpInstanceDto.getDdpInstanceId());
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
 
         // create RGP participant data
         int familyId = 1000;
@@ -140,7 +142,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
                 new TestFamilyIdProvider(familyId));
         removeEsFamilyId(esIndex, ddpParticipantId);
 
-        esParticipantDto = ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+        esParticipantDto = elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(familyId), false);
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
@@ -152,7 +154,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         rgpParticipantDataTestUtil.loadFieldSettings(ddpInstanceDto.getDdpInstanceId());
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
 
         int familyId = 100;
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
@@ -178,7 +180,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
             ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, esMap);
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Error removing family ID from ES: " + e.toString());
+            Assert.fail("Error removing family ID from ES: " + e);
         }
     }
 }

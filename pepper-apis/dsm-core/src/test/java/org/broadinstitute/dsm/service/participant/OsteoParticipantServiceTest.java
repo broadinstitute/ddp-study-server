@@ -25,9 +25,9 @@ import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.CohortTagTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -52,7 +52,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
     private static CohortTagTestUtil cohortTagTestUtil;
     private static final ParticipantRecordDao participantRecordDao = new ParticipantRecordDao();
     private static final ParticipantDao participantDao = new ParticipantDao();
-
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
 
 
     @BeforeClass
@@ -97,7 +97,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         ElasticTestUtil.addActivitiesFromFile(osteo2EsIndex, "elastic/osteo2Activities.json", ddpParticipantId);
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo2EsIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, osteo2EsIndex);
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
@@ -113,7 +113,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         ElasticTestUtil.addActivitiesFromFile(osteo1EsIndex, "elastic/osteo1Activities.json", ddpParticipantId);
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo1EsIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, osteo1EsIndex);
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
@@ -129,7 +129,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         ElasticTestUtil.addActivitiesFromFile(osteo1EsIndex, "elastic/osteoActivitiesNoConsent.json", ddpParticipantId);
 
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(osteo1EsIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, osteo1EsIndex);
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
@@ -248,7 +248,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
     private void verifyParticipant(String ddpParticipantId, DDPInstanceDto ddpInstanceDto) {
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -264,7 +264,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
     private void verifyCohortTag(String ddpParticipantId, String tag, DDPInstanceDto ddpInstanceDto) {
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -279,7 +279,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
 
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
