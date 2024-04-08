@@ -44,7 +44,8 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(guid);
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, participantDto);
-        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic", "lastName", "email");
+        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic",
+                "lastName", "email");
         ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShipping.json", ddpParticipantId, "1990-10-10", null);
         log.debug("ES participant record with DSM for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
