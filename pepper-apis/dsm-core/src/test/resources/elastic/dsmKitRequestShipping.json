@@ -1,4 +1,8 @@
-{"kitRequestShipping" : [
+{
+  "dateOfBirth" : "<dateOfBirth>",
+  "dateOfMajority" : "<dateOfMajority>",
+  "hasConsentedToTissueSample" : true,
+  "kitRequestShipping" : [
         {
           "deactivationReason" : "testDeactivate-1711539726740",
           "ddpLabel" : "deactivatedKit",

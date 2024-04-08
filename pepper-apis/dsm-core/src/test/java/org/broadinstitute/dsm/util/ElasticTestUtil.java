@@ -205,11 +205,11 @@ public class ElasticTestUtil {
         }
     }
 
-    public static Profile addParticipantProfile(String esIndex, String ddpParticipantId, String shortId, String firstName,
+    public static void addParticipantProfileFromTemplate(String esIndex, String ddpParticipantId, String shortId, String firstName,
                                                String lastName, String email) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            String profileJson = TestUtil.readFile("elastic/participantProfile.json");
+            String profileJson = TestUtil.readFile("elastic/participantProfileTemplate.json");
             profileJson = profileJson.replace("<shortId>", shortId);
             profileJson = profileJson.replace("<firstName>", firstName);
             profileJson = profileJson.replace("<lastName>", lastName);
@@ -219,11 +219,9 @@ public class ElasticTestUtil {
             Profile profile = objectMapper.readValue(profileJson, Profile.class);
             profile.setGuid(ddpParticipantId);
             addParticipantProfile(esIndex, profile);
-            return profile;
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
-            return null;
         }
     }
 

@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.common.net.MediaType;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
@@ -13,15 +11,10 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
 public class DownloadParticipantListRoute extends RequestHandler {
-
-    private static final Logger logger = LoggerFactory.getLogger(DownloadParticipantListRoute.class);
-    private DownloadParticipantListService downloadParticipantListService = new DownloadParticipantListService();
 
     /**
      * Generates a file for download.  When removing the feature-flag-export-new role, processRequestNew should
@@ -38,13 +31,9 @@ public class DownloadParticipantListRoute extends RequestHandler {
             response.status(403);
             return UserErrorMessages.NO_RIGHTS;
         }
-        DDPInstance instance = DDPInstance.getDDPInstance(realm);
-
-        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.isHumanReadable(), params.isOnlyMostRecent(), null);
         setResponseHeaders(response, realm + "_export.zip");
         Filterable filterable = FilterFactory.of(request);
-        return downloadParticipantListService.createParticipantDownloadZip(filterable, params, parser, request.queryMap(), response);
+        return DownloadParticipantListService.createParticipantDownloadZip(filterable, params, realm, request.queryMap(), payload, response);
     }
 
     protected void setResponseHeaders(Response response, String filename) {

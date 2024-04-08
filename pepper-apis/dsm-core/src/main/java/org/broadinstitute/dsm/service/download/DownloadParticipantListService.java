@@ -6,7 +6,6 @@ import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,7 +14,7 @@ import java.util.zip.ZipOutputStream;
 
 import com.netflix.servo.util.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.at.SampleQueue;
 import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
@@ -24,23 +23,22 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantExp
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedDeserializer;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
-import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
+import org.broadinstitute.dsm.model.participant.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import spark.QueryParamsMap;
 import spark.Response;
 
 @Slf4j
-
 public class DownloadParticipantListService {
     /**
      * Fetches participant data from Elasticsearch based on the given filter and query parameters.
      * returns a list of ParticipantWrapperDto objects
      */
     @VisibleForTesting
-    public List<ParticipantWrapperDto> fetchParticipantEsData(Filterable filter, QueryParamsMap queryParamsMap) {
+    public static List<ParticipantWrapperDto> fetchParticipantEsData(Filterable filter, QueryParamsMap queryParamsMap) {
         List<ParticipantWrapperDto> allResults = new ArrayList<>();
         int currentFrom = DEFAULT_FROM;
         int currentTo = MAX_RESULT_SIZE;
@@ -62,9 +60,9 @@ public class DownloadParticipantListService {
         return allResults;
     }
 
-    private void setSampleQueue(ParticipantWrapperDto participantWrapperDto){
+    private static void setSampleQueue(ParticipantWrapperDto participantWrapperDto){
         UnparsedESParticipantDto participantDto = (UnparsedESParticipantDto) participantWrapperDto.getEsData();
-        Map<String, List> dsmData =  (HashMap<String, List>) participantDto.getDataAsMap().get(DSM);
+        Map<String, List> dsmData =  (Map<String, List>) participantDto.getDataAsMap().get(DSM);
         if (dsmData != null && dsmData.get("kitRequestShipping") != null) {
             ((List<Map<String, Object>>) dsmData.get("kitRequestShipping"))
                     .forEach(kit -> kit.put("sampleQueue", getSampleQueueValue(kit)));
@@ -80,7 +78,7 @@ public class DownloadParticipantListService {
      * @param kit The kit in form of a Map<String, Object>, which is the form that kit data is pulled from ES
      * @return The kit's status
      * */
-    private Object getSampleQueueValue(Map<String, Object> kit) {
+    private static Object getSampleQueueValue(Map<String, Object> kit) {
         if (isStringValuePresent(kit.get("externalOrderStatus"))) {
             return kit.get("externalOrderStatus");
         }
@@ -111,10 +109,29 @@ public class DownloadParticipantListService {
         return value != null && !value.toString().trim().isEmpty();
     }
 
-    public Object createParticipantDownloadZip(Filterable filterable, DownloadParticipantListParams params, TabularParticipantParser parser,
-                                               QueryParamsMap queryParamsMap, Response response) {
+    /**
+     * This method creates a zip file containing a tabular export of participant data and a data dictionary.
+     * The export is based on the given filterable object, and query parameters and download parameters
+     * are used to determine the format and content of the export.
+     * The method creates a ZipOutputStream on the response and writes the tabular export and data dictionary to it.
+     *
+     * @param filterable the filters to use for fetching participant data from Elasticsearch.
+     * @param downloadParticipantListParams the parameters for the download, such as the file format, human readability,
+     *               and whether to only include the most recent  activitydata.
+     * @param realm the name of the DDP instance to use for the export.
+     * @param queryParamsMap the query parameters to use for the export.
+     * @param downloadParticipantListPayload the payload containing the column names to include in the export.
+     * @param response the response object to write the zip file to.
+     * */
+    public static Object createParticipantDownloadZip(Filterable filterable, DownloadParticipantListParams downloadParticipantListParams,
+                                                      String realm, QueryParamsMap queryParamsMap,
+                                                      DownloadParticipantListPayload downloadParticipantListPayload, Response response) {
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, queryParamsMap);
         log.info("Beginning parse of " + participants.size() + " participants");
+        DDPInstance instance = DDPInstance.getDDPInstance(realm);
+
+        TabularParticipantParser parser = new TabularParticipantParser(downloadParticipantListPayload.getColumnNames(), instance,
+                downloadParticipantListParams.isHumanReadable(), downloadParticipantListParams.isOnlyMostRecent(), null);
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
         List<Map<String, Object>> participantEsDataMaps = participants.stream().map(dto ->
                 ((UnparsedESParticipantDto) dto.getEsData()).getDataAsMap()).collect(Collectors.toList());
@@ -124,7 +141,7 @@ public class DownloadParticipantListService {
         try {
             zos = new ZipOutputStream(response.raw().getOutputStream());
             TabularParticipantExporter participantExporter = TabularParticipantExporter.getExporter(exportConfigs,
-                    participantValueMaps, params.getFileFormat());
+                    participantValueMaps, downloadParticipantListParams.getFileFormat());
             ZipEntry participantFile = new ZipEntry(participantExporter.getExportFilename());
             zos.putNextEntry(participantFile);
             participantExporter.export(zos);

@@ -28,25 +28,24 @@ import org.junit.Test;
 import spark.QueryParamsMap;
 
 @Slf4j
-public class SampleQueueTest extends DbAndElasticBaseTest {
+public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
 
     private static final String instanceName = "download_test_instance";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
     private static String guid = "PT_SAMPLE_QUEUE_TEST";
     private static ParticipantDto participantDto = null;
-    private DownloadParticipantListService downloadParticipantListService = new DownloadParticipantListService();
+    private static String shortId = "PT_SHORT";
 
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(guid);
-        String shortId = "PT_SHORT";
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, participantDto);
-        ElasticTestUtil.addParticipantProfile(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic", "lastName", "email");
-        ElasticTestUtil.addParticipantDsmFromFile(esIndex, "elastic/dsmWithKitRequestShipping.json", ddpParticipantId);
+        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic", "lastName", "email");
+        ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShipping.json", ddpParticipantId, "1990-10-10", null);
         log.debug("ES participant record with DSM for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
     }
@@ -63,35 +62,35 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
         ManualFilterParticipantList filterable = getFilterFromFile("elastic/filterWithSampleQueueColumn.json");
 
         QueryParamsMap queryParamsMap = buildMockQueryParams(true, true, "xlsx");
-        List<ParticipantWrapperDto> downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        List<ParticipantWrapperDto> downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, true, "xlsx");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(true, false, "xlsx");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, false, "xlsx");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(true, true, "tsv");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, true, "tsv");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(true, false, "tsv");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, false, "tsv");
-        downloadList = downloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
     }
 
@@ -164,6 +163,7 @@ public class SampleQueueTest extends DbAndElasticBaseTest {
     private ManualFilterParticipantList getFilterFromFile(String fileName){
         try {
             String filterJson = TestUtil.readFile(fileName);
+            filterJson = filterJson.replace(":shortId", shortId);
             ManualFilterParticipantList filterable = new Gson().fromJson(filterJson, ManualFilterParticipantList.class);
             return filterable;
         } catch (Exception e) {

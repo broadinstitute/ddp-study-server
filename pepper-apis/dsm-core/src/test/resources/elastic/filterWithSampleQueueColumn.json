@@ -183,6 +183,25 @@
       "searchable": true
     }
   ],
-  "filters": [],
+  "filters": [
+    {
+      "parentName": "profile",
+      "filter1": {
+        "name": "hruid",
+        "value": ":shortId"
+      },
+      "exactMatch": true,
+      "selectedOptions": null,
+      "type": "TEXT",
+      "empty": false,
+      "notEmpty": false,
+      "participantColumn": {
+        "display": "Short ID",
+        "name": "hruid",
+        "tableAlias": "data",
+        "object": "profile"
+      }
+    }
+  ],
   "parent": "participantList"
 }
