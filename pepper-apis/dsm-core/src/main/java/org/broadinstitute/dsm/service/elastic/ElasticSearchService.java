@@ -122,37 +122,60 @@ public class ElasticSearchService {
      * for participants that have a legacy PID.
      */
     public Map<String, String> getLegacyPidsByGuid(String esIndex) {
+        Map<String, String> guidToPid = new HashMap<>();
+
         SearchRequest searchRequest = new SearchRequest(esIndex);
-        SearchResponse response;
         try {
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.existsQuery(ElasticSearchUtil.PROFILE_LEGACYALTPID));
-            searchRequest.source(searchSourceBuilder);
-            response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.query(QueryBuilders.existsQuery(ElasticSearchUtil.PROFILE_LEGACYALTPID));
+            searchRequest.source(sourceBuilder);
+
+            int batchSize = 1000;
+            int batchNumber = 0;
+            while (true) {
+                sourceBuilder.size(batchSize);
+                sourceBuilder.from(batchNumber * batchSize);
+                searchRequest.source(sourceBuilder);
+                if (addLegacyPidHits(search(searchRequest), guidToPid, esIndex) == 0) {
+                    break;
+                }
+                batchNumber++;
+            }
         } catch (Exception e) {
             // this is likely due to a bad query, so log it
             log.error("Error getting ES participant legacy PIDs: index %s, query: %s"
                     .formatted(esIndex, searchRequest));
             throw new DsmInternalError("Error getting ES participants for instance " + esIndex, e);
         }
-        List<ElasticSearchParticipantDto> participants = elasticSearch.parseSourceMaps(response.getHits().getHits());
-        log.info("Got {} participants from ES index {} (getLegacyPidsByGuid)", participants.size(), esIndex);
+        log.info("Got {} participants from ES index {} (getLegacyPidsByGuid)", guidToPid.size(), esIndex);
+        return guidToPid;
+    }
 
-        Map<String, String> guidToPid = new HashMap<>();
-        participants.forEach(participant -> {
+    protected int addLegacyPidHits(SearchResponse response, Map<String, String> guidToPid, String esIndex) {
+        SearchHits hits = response.getHits();
+        int numHits = hits.getHits().length;
+        for (int i = 0; i < numHits; i++) {
+            SearchHit hit = hits.getAt(i);
+            String ddpParticipantId = hit.getId();
+            ElasticSearchParticipantDto participant =
+                    elasticSearch.parseSourceMap(hit.getSourceAsMap(), ddpParticipantId);
             if (participant.getProfile().isPresent()) {
                 Profile profile = participant.getProfile().get();
                 String participantGuid = profile.getGuid();
-                if (StringUtils.isNotBlank(participantGuid) && StringUtils.isNotBlank(profile.getLegacyAltPid())) {
-                    if (guidToPid.containsKey(participantGuid)) {
+                if (!participantGuid.equals(ddpParticipantId)) {
+                    throw new DsmInternalError("Participant GUID does not match document ID: %s, %s. Index: %s"
+                            .formatted(participantGuid, ddpParticipantId, esIndex));
+                }
+                if (StringUtils.isNotBlank(profile.getLegacyAltPid())) {
+                    if (guidToPid.containsKey(ddpParticipantId)) {
                         throw new DsmInternalError("Duplicate participant GUID in Profile: %s, index: %s"
                                 .formatted(participantGuid, esIndex));
                     }
-                    guidToPid.put(profile.getGuid(), profile.getLegacyAltPid());
+                    guidToPid.put(ddpParticipantId, profile.getLegacyAltPid());
                 }
             }
-        });
-        return guidToPid;
+        }
+        return numHits;
     }
 
     /**
@@ -176,7 +199,7 @@ public class ElasticSearchService {
                 sourceBuilder.size(batchSize);
                 sourceBuilder.from(batchNumber * batchSize);
                 searchRequest.source(sourceBuilder);
-                if (addHits(search(searchRequest), esData) == 0) {
+                if (addDsmHits(search(searchRequest), esData) == 0) {
                     break;
                 }
                 batchNumber++;
@@ -188,7 +211,7 @@ public class ElasticSearchService {
         return esData;
     }
 
-    protected int addHits(SearchResponse response, Map<String, Map<String, Object>> esData) {
+    protected int addDsmHits(SearchResponse response, Map<String, Map<String, Object>> esData) {
         SearchHits hits = response.getHits();
         int numHits = hits.getHits().length;
         for (int i = 0; i < numHits; i++) {
