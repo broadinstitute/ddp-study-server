@@ -26,8 +26,6 @@ references:
                       /home/circleci/repo/pepper-apis
   docs-path: &docs-path
                /home/circleci/repo/pepper-apis/docs
-  api-spec-path: &api-spec-path
-                   /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
                    /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
@@ -830,26 +828,6 @@ commands:
             fi
 
 jobs:
-  build-api-docs-job:
-    executor:
-      name: build-deploy-executor
-    working_directory: *repo_path
-    parameters:
-      spec_dir:
-        type: string
-        default: *api-spec-path
-    steps:
-      - run: echo "Doing build-api-docs-job << pipeline.parameters.api-docs >>"
-      - when:
-          condition: << pipeline.parameters.api-docs >>
-          steps:
-            - checkout
-            - run:
-                name: Build docs
-                command: |
-                  cd << parameters.spec_dir >>
-                  ./build.sh documentation
-
   dsm-compile-and-run-tests-job:
     executor:
       name: test-executor
@@ -1107,35 +1085,6 @@ jobs:
           module: dsm-server
       - deploy-dsm-jar
 
-  build-deploy-docs-job:
-    executor:
-      name: build-deploy-executor
-    working_directory: *api-spec-path
-    parameters:
-      pepper_apis_path:
-        type: string
-        default: *pepper_apis_path
-    steps:
-      - run:
-          name: Remove recursively << parameters.pepper_apis_path >>
-          command: |
-            rm -r << parameters.pepper_apis_path >>
-      - checkout:
-          path: *repo_path
-      - run:
-          name: Build docs
-          command: ./build.sh documentation
-      - setup-shared-env
-      - set-deployment-env
-      - auth-gcp-service-account
-      - run:
-          name: Deploy docs website
-          command: |
-            set -u
-            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deploy/app.yaml
-      - delete-old-service-versions:
-          deploy_dir: deploy
-
 parameters:
   on_demand:
     type: boolean
@@ -1143,7 +1092,7 @@ parameters:
 
   project:
     type: enum
-    enum: ["dss", "dsm","api-docs", "nothing"]
+    enum: ["dss", "dsm", "nothing"]
     default: "dss"
 
   action:
@@ -1158,10 +1107,6 @@ parameters:
   test_parallelism:
     type: integer
     default: 1
-
-  api-docs:
-    type: boolean
-    default: false
 
   dsm:
     type: boolean
@@ -1180,16 +1125,6 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
-      - build-api-docs-job
-
-  # Build and deploy API docs
-  api-docs-build-test-deploy-workflow:
-    when:
-      and:
-        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
-        - << pipeline.parameters.api-docs >>
-    jobs:
-      - build-deploy-docs-job
 
   # Build , run all tests, and immediately deploy DSS. Currently used in develop branch and dev environment
   dss-build-test-deploy-workflow:
@@ -1241,7 +1176,6 @@ workflows:
         - << pipeline.parameters.dss >>
     jobs:
       - deploy-dss-stored-jar-job
-      - build-deploy-docs-job
 
   # DSM build and test and then store the jar in a bucket for later deployment
   dsm-build-test-store-workflow:
