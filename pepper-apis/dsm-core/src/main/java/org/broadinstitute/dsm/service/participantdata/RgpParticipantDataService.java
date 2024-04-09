@@ -18,6 +18,7 @@ import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
@@ -26,7 +27,6 @@ import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.service.adminoperation.ReferralSourceService;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -126,20 +126,11 @@ public class RgpParticipantDataService {
     }
 
     public static void insertEsFamilyId(String esIndex, String ddpParticipantId, long familyId) {
-        try {
-            Map<String, Object> esMap =
-                    ElasticSearchUtil.getObjectsMap(esIndex, ddpParticipantId, ESObjectConstants.DSM);
-            Map<String, Object> dsmMap = (Map<String, Object>) esMap.get(ESObjectConstants.DSM);
-            if (dsmMap == null) {
-                dsmMap = new HashMap<>();
-                esMap.put(ESObjectConstants.DSM, dsmMap);
-            }
-            dsmMap.put(ESObjectConstants.FAMILY_ID, familyId);
-            ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, esMap);
-            log.info("Family id for participant {} successfully added to ES", ddpParticipantId);
-        } catch (Exception e) {
-            throw new DsmInternalError("Could not insert family id for participant: " + ddpParticipantId, e);
-        }
+        Optional<Dsm> esDsm = elasticSearchService.getDsmData(ddpParticipantId, esIndex);
+        Dsm dsm = esDsm.orElse(new Dsm());
+        dsm.setFamilyId(Long.toString(familyId));
+        ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
+        log.info("Family id for participant {} successfully added to ES", ddpParticipantId);
     }
 
     /**

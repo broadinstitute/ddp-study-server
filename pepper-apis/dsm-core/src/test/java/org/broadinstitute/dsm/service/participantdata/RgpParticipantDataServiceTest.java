@@ -17,6 +17,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -156,6 +157,15 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
 
         RgpParticipantDataService.insertEsFamilyId(esIndex, ddpParticipantId, familyId);
         rgpParticipantDataTestUtil.verifyDefaultElasticData(ddpParticipantId, familyId, Collections.emptyMap());
+
+        try {
+            // ptp who does not have an ES document
+            RgpParticipantDataService.insertEsFamilyId(esIndex, "bogus", familyId);
+            Assert.fail("Expected exception not thrown");
+        } catch (Exception e) {
+            Assert.assertEquals(ESMissingParticipantDataException.class, e.getClass());
+            Assert.assertTrue(e.getMessage().contains("Participant document"));
+        }
     }
 
     private String createParticipant() {
