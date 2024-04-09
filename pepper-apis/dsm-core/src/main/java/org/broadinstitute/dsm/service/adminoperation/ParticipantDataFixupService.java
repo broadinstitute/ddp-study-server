@@ -48,6 +48,7 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
     private Map<String, List<ParticipantData>> participantDataByPtpId;
     private FixupType fixupType;
     private boolean dryRun;
+    private boolean participantsProvided = false;
 
     protected enum FixupType {
         AT_GENOMIC_ID("atcpGenomicId"),
@@ -104,8 +105,10 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
             forceFlag = true;
         }
 
+        participantsProvided = !StringUtils.isBlank(payload);
+
         // handle optional list of ptps
-        if (!StringUtils.isBlank(payload)) {
+        if (participantsProvided) {
             participantDataByPtpId = getParticipantData(payload);
         } else {
             if (fixupType != FixupType.AT_LEGACY_ID) {
@@ -144,6 +147,11 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
 
         // update job log record
         try {
+            // unless targeting specific participants, strip out the no update cases since they bloat
+            // the logs and don't add much value at large scales
+            if (!participantsProvided) {
+                updateLog.removeIf(log -> log.getStatus().equals(UpdateLog.UpdateStatus.NOT_UPDATED));
+            }
             String json = ObjectMapperSingleton.writeValueAsString(updateLog);
             AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED, json);
         } catch (Exception e) {
@@ -245,6 +253,7 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
                                                  String esIndex) {
         ElasticSearchService elasticSearchService = new ElasticSearchService();
         Map<String, String> ptpIdToLegacyPid = elasticSearchService.getLegacyPidsByGuid(esIndex);
+        log.info("Found {} legacy PIDs for {} participants", ptpIdToLegacyPid.size(), participantDataMap.size());
 
         List<UpdateLog> updateLog = new ArrayList<>();
         for (var entry: participantDataMap.entrySet()) {
@@ -270,12 +279,14 @@ public class ParticipantDataFixupService extends ParticipantAdminOperationServic
         if (StringUtils.isBlank(legacyPid)) {
             return updateLog;
         }
+        log.info("Found legacy ID {} for participant {}", legacyPid, ddpParticipantId);
 
         // see if there are any records with legacy PID
         List<ParticipantData> ptpData = participantDataDao.getParticipantData(legacyPid);
         if (participantDataList.isEmpty()) {
             return updateLog;
         }
+        log.info("Found {} records for participant {} with legacy PID {}", ptpData.size(), ddpParticipantId, legacyPid);
 
         // check for overlapping field type IDs
         Set<String> fieldTypeIds = participantDataList.stream()
