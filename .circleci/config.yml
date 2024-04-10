@@ -12,7 +12,7 @@ parameters:
     default: false
   project:
     type: enum
-    enum: ["dss", "dsm", "nothing"]
+    enum: ["dss", "dsm","api-docs", "nothing"]
     default: "nothing"
   action:
     type: enum
@@ -28,7 +28,7 @@ workflows:
     jobs:
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
-          parameters: '{"action":"build-test-deploy","dss": true}'
+          parameters: '{"action":"build-test-deploy","dss": true,"api-docs": false}'
 
   build-test-workflow:
     description: |
@@ -47,6 +47,8 @@ workflows:
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* test_parallelism 15
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
+            # don't bother keepign openapidocs up to date
+            # pepper-apis/docs/.* api-docs true
 
   branch-triggered-workflow:
     description: Will initiate workflows based on updates to branches
@@ -65,6 +67,8 @@ workflows:
             pepper-apis/pom.xml dss true
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
+            # don't bother keeping openapi docs up to date
+            # pepper-apis/docs/.* api-docs true
             pepper-apis/config/.* dss true
             pepper-apis/dsm-server/appengine/StudyManager.tmpl.yaml dsm true
           filters:
@@ -77,7 +81,7 @@ workflows:
       # Only DSS projects and API docs affected!
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
-          parameters: '{"action":"build-test-store","dss": true}'
+          parameters: '{"action":"build-test-store","dss": true,"api-docs": false}'
           filters:
             branches:
               only:
@@ -92,7 +96,7 @@ workflows:
       # Only DSS is affected. DSM handled separately in workflows below
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
-          parameters: '{"action":"retrieve-deploy","dss": true}'
+          parameters: '{"action":"retrieve-deploy","dss": true,"api-docs": false}'
           filters:
             branches:
               only:
