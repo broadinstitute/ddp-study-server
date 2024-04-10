@@ -3,6 +3,8 @@ package org.broadinstitute.dsm.util;
 import java.time.Instant;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -86,6 +88,25 @@ public class TestParticipantUtil {
         ElasticTestUtil.addParticipantProfileFromFile(ddpInstanceDto.getEsParticipantIndex(),
                 "elastic/participantProfile.json", ddpParticipantId);
         return ddpParticipantId;
+    }
+
+    /**
+     * Create a participant with a legacy PID profile in ES
+     *
+     * @param baseName base name for the participant and legacy PID
+     * @param participantOrdinal ordinal for the participant ID and legacy PID
+     * @return a pair of the participant DTO and the legacy PID
+     */
+    public static Pair<ParticipantDto, String> createLegacyParticipant(String baseName, int participantOrdinal,
+                                                                        DDPInstanceDto ddpInstanceDto) {
+        String ptpBase = String.format("%s_%d", baseName, participantOrdinal);
+        Profile profile = TestParticipantUtil.createProfile("Joe", "Participant%d".formatted(participantOrdinal),
+                participantOrdinal);
+        String legacyPid = "PID_%s_%d".formatted(baseName, participantOrdinal);
+        profile.setLegacyAltPid(legacyPid);
+        ParticipantDto participant =
+                TestParticipantUtil.createParticipantWithEsProfile(ptpBase, profile, ddpInstanceDto);
+        return new ImmutablePair<>(participant, legacyPid);
     }
 
     public static void deleteParticipant(int participantId) {

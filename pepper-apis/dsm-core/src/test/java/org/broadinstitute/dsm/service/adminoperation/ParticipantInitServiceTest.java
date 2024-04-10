@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
@@ -147,6 +148,22 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
                 new TestFamilyIdProvider(familyId), false);
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
         rgpParticipantDataTestUtil.verifyDefaultElasticData(ddpParticipantId, familyId, Collections.emptyMap());
+    }
+
+    @Test
+    public void testInitParticipantWithLegacyPid() {
+        Pair<ParticipantDto, String> ptpToLegacyId =
+                TestParticipantUtil.createLegacyParticipant(instanceName, participantCounter++, ddpInstanceDto);
+        participants.add(ptpToLegacyId.getLeft());
+        String ddpParticipantId = ptpToLegacyId.getLeft().getRequiredDdpParticipantId();
+        String legacyPid = ptpToLegacyId.getRight();
+
+        ElasticSearchParticipantDto esParticipantDto =
+                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+        UpdateLog updateLog = ParticipantInitService.initParticipant(legacyPid, esParticipantDto, ddpInstance,
+                new TestFamilyIdProvider(100), false);
+        Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
+        Assert.assertTrue(updateLog.getMessage().contains("Legacy participant, skipping"));
     }
 
     private void initParticipant(String ddpParticipantId) {
