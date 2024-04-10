@@ -36,7 +36,5 @@ entrypoint: java -Xmx1640m -Dio.grpc.netty.shaded.io.netty.transport.noNative=fa
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
   config_file: application.conf
-  TCELL_AGENT_HOST_IDENTIFIER: study-server
-  TCELL_AGENT_CACHE_DIR: /tmp
 {{end}}
 {{end}}

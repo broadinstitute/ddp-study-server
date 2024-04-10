@@ -13,7 +13,6 @@ network:
 
 manual_scaling:
   instances: 1
-# todo arz give housekeeping and backends different app names for tcell
 
 {{if and (or (eq $environment "prod") (eq $environment "staging") (eq $environment "dev") (eq $environment "test")) (eq $gae "true") }}
 entrypoint: java -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=housekeeping,-cprof_cpu_use_per_thread_timers=true,-logtostderr -Xmx1340m -Dio.grpc.netty.shaded.io.netty.transport.noNative=false -jar Housekeeping.jar
@@ -24,7 +23,5 @@ entrypoint: java -Xmx1640m -Dio.grpc.netty.shaded.io.netty.transport.noNative=fa
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
   config_file: application.conf
-  TCELL_AGENT_HOST_IDENTIFIER: housekeeping
-  TCELL_AGENT_CACHE_DIR: /tmp
 {{end}}
 {{end}}

@@ -1,13 +1,6 @@
 version: 2.1
 
 references:
-  tcell_dir: &tcell_dir
-               tcell
-  # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
-  tcell_gcp_path: &tcell_gcp_path
-                    gs://ddp-tcell/tcell-1.11.0.tar.gz
-  tcell_config_file: &tcell_config_file
-                       tcell_agent.config
   ci_support_image: &ci_support_image
                       broadinstitute/study-server-build:2023-03-28C
   root_path: &root_path
@@ -75,30 +68,6 @@ executors:
       - image: *ci_support_image
 
 commands:
-  install-tcell:
-    parameters:
-      tcell_gcp_path:
-        type: string
-        default: *tcell_gcp_path
-    steps:
-      - run:
-          name: Download tcell files from bucket
-          command: |
-            TCELL_GCP_PATH='<<parameters.tcell_gcp_path>>'
-            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-            TAR_FILE_URL=`gsutil ls $TCELL_GCP_PATH | sort -r | head -1`
-
-            if [ -z $TAR_FILE_URL ]
-            then
-              echo "Could not find tcell archive ${TCELL_GCP_PATH}"
-              exit 1
-            fi
-            TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
-            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
-
-            # untarring will create a "tcell" dir
-            tar --no-same-owner -xvf $TAR_FILE_PATH
-
   build-jar:
     description: Build jar
     parameters:
@@ -301,12 +270,6 @@ commands:
       deploy_dir:
         type: string
         default: deployment-assets
-      tcell_dir:
-        type: string
-        default: *tcell_dir
-      tcell_config_file:
-        type: string
-        default: *tcell_config_file
       jar_base_name:
         type: string
         default: DSMServer
@@ -317,17 +280,12 @@ commands:
       - set-deployment-env
       - auth-gcp-service-account
       - render-secrets:
-          secret_name: study-manager-tcell
-          output_file: << parameters.tcell_config_file >>
-      - render-secrets:
           secret_name: study-manager-config
           output_file: << parameters.app_config_file >>
-      - install-tcell
       - run:
           name: gather deployment assets
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
-            TCELL_DIR='<<parameters.tcell_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
@@ -336,8 +294,6 @@ commands:
             cat ../dsm-server/appengine/StudyManager.tmpl.yaml \
               | sed "s/{{project_id}}/broad-ddp-${ENVIRONMENT}/g" \
               > << parameters.jar_base_name >>.yaml
-            cp -r ../$TCELL_DIR .
-            cp ../<< parameters.tcell_config_file >> $TCELL_DIR
             pwd
             ls -l
       - deploy-app-to-gae:
@@ -359,9 +315,6 @@ commands:
       deploy_dir:
         type: string
         default: deployment-assets
-      tcell_dir:
-        type: string
-        default: *tcell_dir
       deploy_config_file_dir:
         type: string
         default: '../src/appengine'
@@ -369,18 +322,14 @@ commands:
       - set-deployment-env
       - render-configs:
           application: <<parameters.application>>
-      - install-tcell
       - run:
           name: Gather deployment assets
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
-            TCELL_DIR='<<parameters.tcell_dir>>'
             DEPLOY_CONFIG_FILE_DIR='<<parameters.deploy_config_file_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
-            cp -r ../$TCELL_DIR .
-            cp ../output-config/tcell_agent.config $TCELL_DIR
             cp "../<< parameters.module >>/target/<<parameters.jar_base_name>>.jar" .
             cp "$DEPLOY_CONFIG_FILE_DIR/<<parameters.jar_base_name>>.yaml" .
             cp ../output-config/application.conf .

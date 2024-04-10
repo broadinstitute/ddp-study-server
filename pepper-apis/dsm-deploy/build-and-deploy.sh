@@ -28,9 +28,5 @@ mvn -Dcheckstyle.skip=true -f ../pom.xml dependency:copy-dependencies -DoutputDi
 cp ../target/DSMServer.jar .
 cp ../src/main/resources/logback.xml .
 
-echo "=> downloading and configuring tcell"
-gsutil cat gs://ddp-tcell/tcell-1.11.0.tar.gz | tar -xf -
-gcloud --project=${PROJECT_ID} secrets versions access latest --secret="study-manager-tcell" > tcell/tcell_agent.config
-
 # echo "=> deploying to appengine"
 # gcloud --project=${PROJECT_ID} app deploy -q --stop-previous-version --promote StudyManager.yaml
