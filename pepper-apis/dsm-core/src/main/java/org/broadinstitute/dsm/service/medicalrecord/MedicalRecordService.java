@@ -95,6 +95,7 @@ public class MedicalRecordService {
                         ddpInstanceProvider.getEffectiveInstance(ddpInstance, req.getParticipantId()));
                 // Note: we could update the sequence number once at the end, but that makes the error handling
                 // more complex, so we update it for each request. The updates should be fast.
+                log.info("Updating instance sequence number to {}. Sequence start was {}", seqNumber, seqStart);
                 ddpInstanceProvider.updateInstanceSequenceNumber(ddpInstance, seqNumber, conn);
             }
             return true;
