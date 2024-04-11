@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.download;
+package org.broadinstitute.dsm.service.download;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -16,7 +16,6 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
-import org.broadinstitute.dsm.service.download.DownloadParticipantListService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -161,7 +160,7 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         return mainQueryParamsMap;
     }
 
-    private ManualFilterParticipantList getFilterFromFile(String fileName){
+    private ManualFilterParticipantList getFilterFromFile(String fileName) {
         try {
             String filterJson = TestUtil.readFile(fileName);
             filterJson = filterJson.replace(":shortId", shortId);

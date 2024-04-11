@@ -38,7 +38,7 @@ public class DownloadParticipantListService {
      * returns a list of ParticipantWrapperDto objects
      */
     @VisibleForTesting
-    public static List<ParticipantWrapperDto> fetchParticipantEsData(Filterable filter, QueryParamsMap queryParamsMap) {
+    protected static List<ParticipantWrapperDto> fetchParticipantEsData(Filterable filter, QueryParamsMap queryParamsMap) {
         List<ParticipantWrapperDto> allResults = new ArrayList<>();
         int currentFrom = DEFAULT_FROM;
         int currentTo = MAX_RESULT_SIZE;
@@ -60,7 +60,7 @@ public class DownloadParticipantListService {
         return allResults;
     }
 
-    private static void setSampleQueue(ParticipantWrapperDto participantWrapperDto){
+    private static void setSampleQueue(ParticipantWrapperDto participantWrapperDto) {
         UnparsedESParticipantDto participantDto = (UnparsedESParticipantDto) participantWrapperDto.getEsData();
         Map<String, List> dsmData =  (Map<String, List>) participantDto.getDataAsMap().get(DSM);
         if (dsmData != null && dsmData.get("kitRequestShipping") != null) {
@@ -75,7 +75,7 @@ public class DownloadParticipantListService {
      * Checks the given kit for a value that can be used to determine its status in the sample queue.
      * The order of precedence is: externalOrderStatus, deactivatedDate, receiveDate, scanDate, error.
      *
-     * @param kit The kit in form of a Map<String, Object>, which is the form that kit data is pulled from ES
+     * @param kit The kit in form of a Map < String, Object >, which is the form that kit data is pulled from ES
      * @return The kit's status
      * */
     private static Object getSampleQueueValue(Map<String, Object> kit) {
@@ -103,7 +103,7 @@ public class DownloadParticipantListService {
      *
      * @param value The object to check for validity, which can be any type.
      * @return {@code true} if the object is not null and not empty (for strings);
-     * {@code false} otherwise.
+     *      {@code false} otherwise.
      */
     private static boolean isStringValuePresent(Object value) {
         return value != null && !value.toString().trim().isEmpty();
