@@ -168,7 +168,9 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
             ManualFilterParticipantList filterable = new Gson().fromJson(filterJson, ManualFilterParticipantList.class);
             return filterable;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            Assert.fail("Failed to read filter from file "+fileName);
         }
+        return null;
     }
 }

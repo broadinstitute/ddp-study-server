@@ -205,6 +205,11 @@ public class ElasticTestUtil {
         }
     }
 
+    /**
+     * Adds a participant profile with every field filled to your desire data
+     * This method can help with testing when you need to create a participant with a specific profile and filter on that without
+     * having to create a new separate json file for the profile
+     */
     public static void addParticipantProfileFromTemplate(String esIndex, String ddpParticipantId, String shortId, String firstName,
                                                String lastName, String email) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -320,22 +325,5 @@ public class ElasticTestUtil {
         String script = String.format("ctx._source.dsm.remove('%s')", field);
         UpsertPainless upsert = new UpsertPainless(esIndex, QueryBuilders.termsQuery("_id", ddpParticipantId));
         upsert.export(script, Map.of(), field);
-    }
-
-    public static void addParticipantDsmFromFile(String esIndex, String fileName, String ddpParticipantId) {
-        Gson gson = new Gson();
-        try {
-            String dsmJson = TestUtil.readFile(fileName);
-            Dsm dsm = gson.fromJson(dsmJson, Dsm.class);
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> valueMap = mapper.convertValue(dsm, Map.class);
-            Map<String, Object> dsmMap = Map.of("dsm", valueMap);
-            ElasticSearchUtil.updateRequest(ddpParticipantId, esIndex, dsmMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-//            Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
-        }
-
     }
 }
