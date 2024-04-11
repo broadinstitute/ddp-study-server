@@ -33,9 +33,9 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     private static final String instanceName = "download_test_instance";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
-    private static String guid = "PT_SAMPLE_QUEUE_TEST";
+    private static final String guid = "PT_SAMPLE_QUEUE_TEST";
     private static ParticipantDto participantDto = null;
-    private static String shortId = "PT_SHORT";
+    private static final String shortId = "PT_SHORT";
 
     @BeforeClass
     public static void doFirst() {
@@ -53,7 +53,7 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
 
     @AfterClass
     public static void cleanUp() {
-        TestParticipantUtil.deleteParticipant(participantDto.getParticipantId().get());
+        TestParticipantUtil.deleteParticipant(participantDto.getParticipantId().orElseThrow());
         DdpInstanceGroupTestUtil.deleteInstance(ddpInstanceDto);
         ElasticTestUtil.deleteIndex(esIndex);
     }
@@ -61,7 +61,7 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     @Test
     public void testDataDownloadFromElastic() {
         ManualFilterParticipantList filterable = getFilterFromFile("elastic/filterWithSampleQueueColumn.json");
-
+        Assert.assertNotNull(filterable);
         QueryParamsMap queryParamsMap = buildMockQueryParams(true, true, "xlsx");
         List<ParticipantWrapperDto> downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         assertDownloadList(downloadList);
