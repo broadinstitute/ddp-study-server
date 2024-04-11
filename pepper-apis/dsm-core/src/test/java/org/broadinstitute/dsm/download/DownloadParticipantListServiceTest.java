@@ -155,8 +155,8 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         when(nestedFileFormatQueryParamsMap.value()).thenReturn(fileFormat);
 
         QueryParamsMap nestedFiltersQueryParamsMap = mock(QueryParamsMap.class);
-        when(mainQueryParamsMap.get("filters")).thenReturn(nestedFileFormatQueryParamsMap);
-        when(nestedFileFormatQueryParamsMap.value()).thenReturn("[]");
+        when(mainQueryParamsMap.get("filters")).thenReturn(nestedFiltersQueryParamsMap);
+        when(nestedFiltersQueryParamsMap.value()).thenReturn("[]");
 
         return mainQueryParamsMap;
     }
@@ -169,7 +169,7 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
             return filterable;
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Failed to read filter from file "+fileName);
+            Assert.fail("Failed to read filter from file " + fileName);
         }
         return null;
     }
