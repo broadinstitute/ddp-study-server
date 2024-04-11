@@ -130,7 +130,7 @@ public class DSMtasksSubscription {
             retryPerParticipant.merge(participantGuid, 1, Integer::sum);
             int tryNum = retryPerParticipant.get(participantGuid);
             if (tryNum == MAX_RETRY) {
-                logger.warn("Exhausted retries waiting for missing ES data for participant {}: {}", participantGuid, e);
+                logger.warn("Exhausted retries waiting for missing ES data for participant {}", participantGuid, e);
                 retryPerParticipant.remove(participantGuid);
                 consumer.ack();
                 throw e;
