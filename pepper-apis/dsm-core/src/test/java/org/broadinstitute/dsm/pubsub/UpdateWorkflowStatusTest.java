@@ -245,7 +245,7 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
     private void verifyDefaultElasticData(String ddpParticipantId, String registrationFieldTypeId,
                                           String registrationStatus, List<String> otherFieldTypes) {
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));

@@ -197,7 +197,7 @@ public class ATParticipantDataServiceTest extends DbAndElasticBaseTest {
 
     private void verifyDefaultElasticData(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

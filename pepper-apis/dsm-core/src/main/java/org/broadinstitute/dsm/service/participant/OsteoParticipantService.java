@@ -158,7 +158,7 @@ public class OsteoParticipantService {
         // there *should* be ES DSM data for osteo2, but make it if not
         String osteo2Index = osteo2Instance.getParticipantIndexES();
         ElasticSearchParticipantDto osteo2EsParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, osteo2Index);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, osteo2Index);
         Optional<Dsm> dsm = osteo2EsParticipant.getDsm();
         Dsm osteo2Dsm = dsm.orElseGet(Dsm::new);
 

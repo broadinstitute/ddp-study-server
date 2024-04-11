@@ -46,7 +46,7 @@ public class ATParticipantDataService {
         }
 
         return createDefaultData(ddpParticipantId,
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex), instance);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex), instance);
     }
 
     /**

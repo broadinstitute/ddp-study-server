@@ -87,7 +87,7 @@ public class RgpParticipantDataTestUtil {
     public void verifyDefaultElasticData(String ddpParticipantId, int familyId,
                                          Map<String, String> expectedDataMap) {
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -108,7 +108,7 @@ public class RgpParticipantDataTestUtil {
 
     public void verifyWorkflows(String ddpParticipantId, Set<String> workflowNames) {
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 

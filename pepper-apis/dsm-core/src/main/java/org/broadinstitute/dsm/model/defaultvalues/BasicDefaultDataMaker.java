@@ -30,7 +30,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
         }
 
         Optional<ElasticSearchParticipantDto> esParticipant =
-                elasticSearchService.getParticipantDocumentById(participantId, esIndex);
+                elasticSearchService.getParticipantDocument(participantId, esIndex);
         if (esParticipant.isEmpty()) {
             throw new ESMissingParticipantDataException("Participant %s does not have an ES document"
                     .formatted(participantId));

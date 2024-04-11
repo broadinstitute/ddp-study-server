@@ -79,8 +79,8 @@ public class ElasticSearchService {
     /**
      * Get a single participant document based on participant GUID. Throw an exception if document is not found.
      */
-    public ElasticSearchParticipantDto getRequiredParticipantDocumentById(String ddpParticipantId, String index) {
-        return getParticipantDocumentById(ddpParticipantId, index)
+    public ElasticSearchParticipantDto getRequiredParticipantDocument(String ddpParticipantId, String index) {
+        return getParticipantDocument(ddpParticipantId, index)
                 .orElseThrow(() -> new ESMissingParticipantDataException("Participant document %s not found in index %s"
                         .formatted(ddpParticipantId, index)));
     }
@@ -88,19 +88,8 @@ public class ElasticSearchService {
     /**
      * Get a single participant document based on participant GUID
      */
-    public Optional<ElasticSearchParticipantDto> getParticipantDocumentById(String ddpParticipantId, String index) {
+    public Optional<ElasticSearchParticipantDto> getParticipantDocument(String ddpParticipantId, String index) {
         return getSingleParticipantDocument(ddpParticipantId, ElasticSearchUtil.PROFILE_GUID, index);
-    }
-
-    /**
-     * Get a single participant document based on a field value match
-     *
-     * @param id value to match
-     * @param matchField field to match against
-     */
-    public Optional<ElasticSearchParticipantDto> getSingleParticipantDocument(String id, String matchField,
-                                                                              String index) {
-        return getSingleParticipantDocument(id, matchField, null, index);
     }
 
     public boolean participantDocumentExists(String ddpParticipantId, String index) {
@@ -113,6 +102,17 @@ public class ElasticSearchService {
             throw new DsmInternalError("Error checking if participant document exists for %s, index: %s"
                     .formatted(ddpParticipantId, index), e);
         }
+    }
+
+    /**
+     * Get a single participant document based on a field value match
+     *
+     * @param id value to match
+     * @param matchField field to match against
+     */
+    public Optional<ElasticSearchParticipantDto> getSingleParticipantDocument(String id, String matchField,
+                                                                              String index) {
+        return getSingleParticipantDocument(id, matchField, null, index);
     }
 
     /**
@@ -304,7 +304,7 @@ public class ElasticSearchService {
     /**
      * Get participant document as an object map
      */
-    public static Map<String, Object> getParticipantDocument(String ddpParticipantId, String index) {
+    public static Map<String, Object> getParticipantDocumentAsMap(String ddpParticipantId, String index) {
         GetResponse res = _getParticipantDocument(index, ddpParticipantId);
         if (!res.isExists()) {
             throw new DsmInternalError("Participant document %s not found in index %s".formatted(ddpParticipantId, index));

@@ -106,7 +106,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
                     ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 
             ElasticSearchParticipantDto esParticipant =
-                    elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                    elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
             Profile esProfile = esParticipant.getProfile().orElseThrow();
             Assert.assertEquals(profile.getHruid(), esProfile.getHruid());
 

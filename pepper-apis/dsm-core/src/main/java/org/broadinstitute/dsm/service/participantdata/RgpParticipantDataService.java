@@ -151,7 +151,7 @@ public class RgpParticipantDataService {
         }
 
         Optional<ElasticSearchParticipantDto> esParticipant =
-                elasticSearchService.getParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getParticipantDocument(ddpParticipantId, esIndex);
         ElasticSearchParticipantDto esParticipantDto = esParticipant.orElseThrow(() ->
                 new ESMissingParticipantDataException("Participant %s does not have an ES document"
                     .formatted(ddpParticipantId)));

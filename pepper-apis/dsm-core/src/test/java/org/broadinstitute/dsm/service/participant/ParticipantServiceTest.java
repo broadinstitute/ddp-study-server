@@ -80,7 +80,7 @@ public class ParticipantServiceTest extends DbAndElasticBaseTest {
         String ddpParticipantId = participantDto.getRequiredDdpParticipantId();
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

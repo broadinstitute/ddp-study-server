@@ -116,7 +116,7 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
 
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceByGuid(instanceName);
         ElasticSearchParticipantDto esParticipantDto =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         int familyId = 1000;
         RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipantDto, ddpInstance,

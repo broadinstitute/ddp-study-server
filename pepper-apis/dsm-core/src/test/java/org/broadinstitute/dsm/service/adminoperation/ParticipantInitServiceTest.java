@@ -93,14 +93,14 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         rgpParticipantDataTestUtil.loadFieldSettings(ddpInstanceDto.getDdpInstanceId());
 
         ElasticSearchParticipantDto esParticipantDto =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         // create RGP participant data
         int familyId = 100;
         RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(familyId));
 
-        esParticipantDto = elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+        esParticipantDto = elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
         Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
@@ -116,7 +116,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         ElasticTestUtil.addParticipantDsm(esIndex, dsm, ddpParticipantId);
 
         ElasticSearchParticipantDto esParticipantDto =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
@@ -135,7 +135,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         rgpParticipantDataTestUtil.loadFieldSettings(ddpInstanceDto.getDdpInstanceId());
 
         ElasticSearchParticipantDto esParticipantDto =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         // create RGP participant data
         int familyId = 1000;
@@ -143,7 +143,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
                 new TestFamilyIdProvider(familyId));
         removeEsFamilyId(esIndex, ddpParticipantId);
 
-        esParticipantDto = elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+        esParticipantDto = elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(familyId), false);
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
@@ -159,7 +159,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         String legacyPid = ptpToLegacyId.getRight();
 
         ElasticSearchParticipantDto esParticipantDto =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         UpdateLog updateLog = ParticipantInitService.initParticipant(legacyPid, esParticipantDto, ddpInstance,
                 new TestFamilyIdProvider(100), false);
         Assert.assertEquals(UpdateLog.UpdateStatus.NOT_UPDATED, updateLog.getStatus());
@@ -171,7 +171,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
         rgpParticipantDataTestUtil.loadFieldSettings(ddpInstanceDto.getDdpInstanceId());
 
         ElasticSearchParticipantDto esParticipantDto =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         int familyId = 100;
         UpdateLog updateLog = ParticipantInitService.initParticipant(ddpParticipantId, esParticipantDto, ddpInstance,

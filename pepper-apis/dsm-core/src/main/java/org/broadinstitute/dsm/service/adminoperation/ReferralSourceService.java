@@ -231,7 +231,7 @@ public class ReferralSourceService implements AdminOperation {
     }
 
     private List<Activities> getParticipantActivities(String ddpParticipantId, String esIndex) {
-        return elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex).getActivities();
+        return elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex).getActivities();
     }
 
     /**

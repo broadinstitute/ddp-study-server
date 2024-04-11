@@ -103,7 +103,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
 
             ElasticSearchParticipantDto esParticipant =
-                    elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                    elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
             Dsm dsm = esParticipant.getDsm().orElseThrow();
 
             List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();

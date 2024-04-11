@@ -321,7 +321,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     private void verifyMedicalRecordAndOncHistory(ParticipantDto participant) {
         String ddpParticipantId = participant.getRequiredDdpParticipantId();
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -363,7 +363,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
     private void verifyMedicalRecordNotSpecified(ParticipantDto participant) {
         String ddpParticipantId = participant.getRequiredDdpParticipantId();
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -389,7 +389,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
 
     private void verifyKitShipping(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -402,7 +402,7 @@ public class ElasticExportServiceTest extends DbAndElasticBaseTest {
 
     private void verifyParticipant(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocumentById(ddpParticipantId, esIndex);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
