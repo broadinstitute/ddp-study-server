@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
@@ -38,7 +39,7 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 /**
- * This class has methods to set up a Juniper study in DSM database.
+ * This class has methods to set up a study in DSM database that has the needed configuration to send out kits
  * It creates the instance, group, instance_role, kit_type, carrier,
  * kit_dimensions, kit_return and ddp_kit_request_settings for the
  * newly created study.
@@ -51,7 +52,8 @@ import org.broadinstitute.lddp.db.SimpleResult;
  *When done, call deleteJuniperInstanceAndSettings() to delete everything
  */
 @Slf4j
-public class JuniperSetupUtil {
+@Getter
+public class DDPInstanceWithKitSetupUtil {
     private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE instance_role_id = ?;";
@@ -65,41 +67,48 @@ public class JuniperSetupUtil {
     private static final String INSERT_DDP_KIT_REQUEST_SETTINGS =
             "INSERT INTO ddp_kit_request_settings (ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id) "
                     + " VALUES (?, ?, ?, ?, ?) ;";
+
+    private static final String INSERT_EVENT_TYPE =
+            "INSERT INTO event_type (ddp_instance_id, event_name, event_description, kit_type_id, event_type) "
+                    + " VALUES (?, ?, ?, ?, ?) ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id = ?";
     private static final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
-    public static String ddpGroupId;
-    public static String ddpInstanceId;
-    public static String ddpInstanceGroupId;
-    public static String instanceRoleId;
-    public static String ddpInstanceRoleId;
-    private static String kitTypeId;
-    private static String kitDimensionId;
-    private static String kitReturnId;
-    private static String carrierId;
-    private static String ddpKitRequestSettingsId;
-    private static String instanceName;
-    private static String groupName;
-    private static String studyGuid;
-    private static String displayName;
-    private static String collaboratorPrefix;
-    private static String userWithKitShippingAccess;
+    private String ddpGroupId;
+    private int ddpInstanceId;
+    private String ddpInstanceGroupId;
+    private String instanceRoleId;
+    private String ddpInstanceRoleId;
+    private Integer kitTypeId;
+    private String kitDimensionId;
+    private String kitReturnId;
+    private String carrierId;
+    private String ddpKitRequestSettingsId;
+    private String instanceName;
+    private String groupName;
+    private String studyGuid;
+    private String displayName;
+    private String collaboratorPrefix;
+    private String userWithKitShippingAccess;
+    private String esIndex = null;
 
     private static NotificationUtil notificationUtil;
-    public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix, String groupName) {
+    public DDPInstanceWithKitSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix,
+                                       String groupName, String esIndex) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.displayName = displayName;
         this.collaboratorPrefix = collaboratorPrefix;
         this.groupName = groupName;
+        this.esIndex = esIndex;
     }
 
-    public void setupJuniperInstanceAndSettings() {
+    public void setupInstanceAndSettings() {
         //everything should get inserted in one transaction
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
-                ddpInstanceId = String.valueOf(adminUtil.getDdpInstanceId());
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, esIndex);
+                ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = String.valueOf(adminUtil.getStudyGroupId());
                 instanceRoleId = getInstanceRole(conn);
                 ddpInstanceRoleId = createDdpInstanceRole(conn);
@@ -119,12 +128,12 @@ public class JuniperSetupUtil {
             return simpleResult;
         });
         if (results.resultException != null) {
-            log.error("Error creating juniper data ", results.resultException);
-            deleteJuniperInstanceAndSettings();
+            log.error("Error creating data ", results.resultException);
+            deleteInstanceAndSettings();
         }
     }
 
-    public static void deleteJuniperInstanceAndSettings() {
+    public void deleteInstanceAndSettings() {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
@@ -158,7 +167,20 @@ public class JuniperSetupUtil {
         }
     }
 
-    public static void deleteJuniperKit(String ddpKitRequestId) {
+    private static void delete(Connection conn, String tableName, String primaryColumn, int id) {
+        try (PreparedStatement stmt = conn.prepareStatement("DELETE from " + tableName + " WHERE " + primaryColumn + " = ? ;")) {
+            stmt.setInt(1, id);
+            try {
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException("Error deleting from " + tableName, e);
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error deleting ", ex);
+        }
+    }
+
+    public static void deleteKit(String ddpKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             String dsmKitRequestId;
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
@@ -189,7 +211,7 @@ public class JuniperSetupUtil {
     public static void deleteKitsArray(List<String> kitIds) {
         for (String kitId : kitIds) {
             try {
-                deleteJuniperKit(kitId);
+                deleteKit(kitId);
             } catch (Exception e) {
                 log.error("unable to delete kitId {}", kitId, e);
             } finally {
@@ -199,15 +221,15 @@ public class JuniperSetupUtil {
 
     }
 
-    private static String getPrimaryKey(ResultSet rs, String table) throws SQLException {
+    private String getPrimaryKey(ResultSet rs, String table) throws SQLException {
         if (rs.next()) {
             return rs.getString(1);
         } else {
-            throw new DsmInternalError(String.format("Unable to set up data in %s for juniper, going to role back transaction", table));
+            throw new DsmInternalError(String.format("Unable to set up data in %s, going to role back transaction", table));
         }
     }
 
-    public static void changeKitToQueue(JuniperKitRequest juniperKitRequest, EasyPostUtil mockEasyPostUtil) {
+    public void changeKitToQueue(JuniperKitRequest juniperKitRequest, EasyPostUtil mockEasyPostUtil) {
         KitRequestShipping[] kitRequests =
                 KitRequestShipping.getKitRequestsByRealm(instanceName, "uploaded", "SALIVA").toArray(new KitRequestShipping[1]);
         Optional<KitRequestShipping> kitWeWantToChange = Arrays.stream(kitRequests)
@@ -224,7 +246,7 @@ public class JuniperSetupUtil {
 
     }
 
-    public static List<ScanResult> changeKitToSent(JuniperKitRequest juniperTestKit) {
+    public List<ScanResult> changeKitToSent(JuniperKitRequest juniperTestKit) {
         List<SentAndFinalScanPayload> scanPayloads = new ArrayList<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
         SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(juniperTestKit.getDdpLabel(), "SOME_RANDOM_KIT_LABEL");
@@ -236,7 +258,19 @@ public class JuniperSetupUtil {
         return scanResultList;
     }
 
-    private static String generateUserEmail() {
+    public List<ScanResult> changeKitRequestShippingToSent(KitRequestShipping kitRequestShipping, String kitLabel) {
+        List<SentAndFinalScanPayload> scanPayloads = new ArrayList<>();
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
+        SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(kitRequestShipping.getDdpLabel(), kitLabel);
+        scanPayloads.add(sentAndFinalScanPayload);
+        List<ScanResult> scanResultList = new ArrayList<>();
+        KitPayload kitPayload = new KitPayload(scanPayloads, Integer.parseInt(userWithKitShippingAccess), ddpInstanceDto);
+        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
+        scanResultList.addAll(kitFinalScanUseCase.get());
+        return scanResultList;
+    }
+
+    private String generateUserEmail() {
         return "JuniperTest-" + System.currentTimeMillis() + "@broad.dev";
     }
 
@@ -262,8 +296,8 @@ public class JuniperSetupUtil {
             return ddpKitRequestSettingsId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, ddpInstanceId);
-        stmt.setString(2, kitTypeId);
+        stmt.setInt(1, ddpInstanceId);
+        stmt.setInt(2, kitTypeId);
         stmt.setString(3, kitReturnId);
         stmt.setString(4, carrierId);
         stmt.setString(5, kitDimensionId);
@@ -302,14 +336,14 @@ public class JuniperSetupUtil {
         return getPrimaryKey(rs, "kit_dimension");
     }
 
-    private String getKitTypeId(Connection conn) throws SQLException {
-        if (StringUtils.isNotBlank(kitTypeId)) {
+    private int getKitTypeId(Connection conn) throws SQLException {
+        if (kitTypeId != null) {
             return kitTypeId;
         }
         PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_TYPE_ID);
         stmt.setString(1, "SALIVA");
         ResultSet rs = stmt.executeQuery();
-        return getPrimaryKey(rs, "kit_type");
+        return Integer.parseInt(getPrimaryKey(rs, "kit_type"));
     }
 
     private String getInstanceRole(Connection conn) throws SQLException {
@@ -326,12 +360,44 @@ public class JuniperSetupUtil {
             return ddpInstanceRoleId;
         }
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
-        stmt.setString(1, ddpInstanceId);
+        stmt.setInt(1, ddpInstanceId);
         stmt.setString(2, instanceRoleId);
         stmt.setString(3, instanceRoleId);
         stmt.executeUpdate();
         ResultSet rs = stmt.getGeneratedKeys();
         return getPrimaryKey(rs, "ddp_instance_role");
     }
+
+    public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription) throws SQLException {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult simpleResult = new SimpleResult();
+            try {
+                PreparedStatement stmt = conn.prepareStatement(INSERT_EVENT_TYPE, Statement.RETURN_GENERATED_KEYS);
+                stmt.setInt(1, ddpInstanceId);
+                stmt.setString(2, eventName);
+                stmt.setString(3, eventDescription);
+                stmt.setInt(4, kitTypeId);//
+                stmt.setString(5, eventType);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                simpleResult.resultException = e;
+            }
+            return simpleResult;
+        });
+    }
+
+//    public int createKitRequestShipping(ParticipantDto participant) {
+//        String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
+//        String collaboratorId = String.format("%s_%s_%d_ABCDEFGHIJKLMNOP", collaboratorPrefix, participant.getParticipantId(),
+//                Instant.now().toEpochMilli()).substring(0, 20);
+////        String ddpLabel =  KitRequestShipping.generateDdpLabelID();
+//        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
+//        String kitReqestIdStr = KitRequestShipping.writeRequest(ddpInstanceId, kitTypeId, participant.getDdpParticipantIdOrThrow(),
+//                collaboratorId, "test", testUser, "test", "", "test",
+//                false, "test", ddpInstance, kitTypeDto.getKitTypeName(), dsmKitRequestId);
+//        log.info("Created kit request with id {} for ptp {}", kitRequestId, ddpParticipantId);
+//        return kitRequestId;
+//
+//}
 
 }

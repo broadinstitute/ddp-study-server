@@ -23,6 +23,10 @@ public class EventDao implements Dao<EventDto> {
             + "EVENT_ID, EVENT_DATE_CREATED, EVENT_TYPE, DDP_INSTANCE_ID, DSM_KIT_REQUEST_ID, DDP_PARTICIPANT_ID, EVENT_TRIGGERED "
             + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DDP_PARTICIPANT_ID = ? AND EVENT_TRIGGERED = 1";
 
+    private static String GET_TRIGGERED_EVENT_QUEUE_BY_EVENT_TYPE_AND_KIT_REQUEST_ID = "SELECT "
+            + "EVENT_ID, EVENT_DATE_CREATED, EVENT_TYPE, DDP_INSTANCE_ID, DSM_KIT_REQUEST_ID, DDP_PARTICIPANT_ID, EVENT_TRIGGERED "
+            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1";
+
     @Override
     public int create(EventDto eventDto) {
         return 0;
@@ -60,6 +64,32 @@ public class EventDao implements Dao<EventDto> {
 
         if (results.resultException != null) {
             logger.error("Couldn't get triggered event for participant " + ddpParticipantId, results.resultException);
+        }
+        return Optional.ofNullable((Boolean) results.resultValue);
+    }
+
+    public Optional<Boolean> hasTriggeredEventByEventTypeAndDsmKitId(@NotNull String eventType, @NonNull int dsmKitRequestId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(GET_TRIGGERED_EVENT_QUEUE_BY_EVENT_TYPE_AND_KIT_REQUEST_ID,
+                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+                stmt.setString(1, eventType);
+                stmt.setInt(2, dsmKitRequestId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    rs.last();
+                    int count = rs.getRow();
+                    if (count > 0) {
+                        dbVals.resultValue = true;
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            logger.error("Couldn't get triggered event for kit with dsmKitRequestId " + dsmKitRequestId, results.resultException);
         }
         return Optional.ofNullable((Boolean) results.resultValue);
     }
