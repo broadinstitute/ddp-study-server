@@ -1180,7 +1180,8 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
-      - build-api-docs-job
+      # don't build openapi docs
+      # - build-api-docs-job
 
   # Build and deploy API docs
   api-docs-build-test-deploy-workflow:
@@ -1241,7 +1242,8 @@ workflows:
         - << pipeline.parameters.dss >>
     jobs:
       - deploy-dss-stored-jar-job
-      - build-deploy-docs-job
+      # don't build open API docs
+      # - build-deploy-docs-job
 
   # DSM build and test and then store the jar in a bucket for later deployment
   dsm-build-test-store-workflow:
