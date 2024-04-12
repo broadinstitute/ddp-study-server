@@ -200,6 +200,7 @@ public class Housekeeping {
         LogUtil.addAppEngineEnvVarsToMDC();
         SparkBootUtil.startSparkServer();
         start(args, null);
+        System.exit(0);
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
@@ -481,7 +482,6 @@ public class Housekeeping {
                 log.error("Failed to shutdown PubSubTask API", e);
             }
         }
-
         log.info("Housekeeping is shutting down");
     }
 

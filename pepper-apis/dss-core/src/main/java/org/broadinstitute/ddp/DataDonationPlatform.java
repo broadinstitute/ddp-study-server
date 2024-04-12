@@ -268,6 +268,7 @@ public class DataDonationPlatform {
             log.error("Could not start ddp", e);
             shutdown();
         }
+        System.exit(0);
     }
 
     private static void start() throws MalformedURLException {
