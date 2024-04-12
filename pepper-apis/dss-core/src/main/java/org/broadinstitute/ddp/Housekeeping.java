@@ -200,7 +200,6 @@ public class Housekeeping {
         LogUtil.addAppEngineEnvVarsToMDC();
         SparkBootUtil.startSparkServer();
         start(args, null);
-        System.exit(0);
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
