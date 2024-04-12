@@ -39,8 +39,8 @@ public class GetDsmDrugSuggestionsRoute implements Route {
 
         List<DrugSuggestion> drugSuggestions = drugStore.getDrugList().stream().map(
                 drug -> new DrugSuggestion(
-                    new Drug(drug.getName(), null),
-                    new ArrayList<>(
+                        new Drug(drug.getName(), null),
+                        new ArrayList<>(
                             List.of(new PatternMatch(0, drug.getName().length()))
                     )
                 )

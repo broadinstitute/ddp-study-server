@@ -56,7 +56,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
             + " where form_section__block_id = :id")
     int[] bulkUpdateRevisionIdsByIds(@Bind("id") List<Long> membershipIds,
                                      @Bind("revisionId") long[] revisionIds);
-    
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryOrderedFormBlockDtosBySectionIdsAndInstanceGuid")
     @RegisterConstructorMapper(FormBlockDto.class)
@@ -72,7 +72,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
      * @return mapping of section id to list of block data
      *
      * @deprecated Not used anywhere except tests. It was used for {@link ActivityInstance} reading until
-     *    {@link ActivityInstanceFromDefinitionBuilder} was implemented
+     *      {@link ActivityInstanceFromDefinitionBuilder} was implemented
      */
     default Map<Long, List<FormBlockDto>> findOrderedFormBlockDtosForSections(List<Long> sectionIds, String instanceGuid) {
         return findOrderedFormBlocksForSectionsAndInstance(sectionIds, instanceGuid).stream()
@@ -83,7 +83,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
      * Find ordered {@link FormBlockDto}.
      *
      * @deprecated Not used anywhere except tests. It was used for {@link ActivityInstance} reading until
-     *    {@link ActivityInstanceFromDefinitionBuilder} was implemented
+     *      {@link ActivityInstanceFromDefinitionBuilder} was implemented
      */
     @Deprecated
     default List<FormBlockDto> findOrderedFormBlockDtosForSection(long sectionId, String instanceGuid) {
@@ -91,7 +91,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
                 .getOrDefault(sectionId, new ArrayList<>());
     }
 
-    
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryOrderedFormBlockDtosBySectionIdsAndTimestamp")
     @RegisterConstructorMapper(FormBlockDto.class)

@@ -54,7 +54,7 @@ public enum EnrollmentStatusType {
      *                 for any number of reasons.  If false, participant is not
      *                 considered withdrawn.
      * @param shouldMarkActivitiesAsReadOnly If true, client code will see
-     * {@link ActivityInstance#isReadonly()} as true, regardless of underlying table value.
+     *      {@link ActivityInstance#isReadonly()} as true, regardless of underlying table value.
      *                                       If false, no override will be made.
      * @param isDSMVisible If true, DSM calls to get information about the participant should
      *                     return information.  If false, such calls should return not data.

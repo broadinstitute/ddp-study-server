@@ -35,7 +35,6 @@ public interface JdbiMessage extends SqlObject {
      * <p>This is different from the event-based "ignoreAfter" number, which is used to
      * restrict how many occurrences of an event should be processed.
      * @param ddpEventId id of the event to check
-     * @return
      */
     default boolean shouldProcessMessage(String ddpEventId) {
         Optional<Integer> lock = lockIfShouldProcess(ddpEventId);
