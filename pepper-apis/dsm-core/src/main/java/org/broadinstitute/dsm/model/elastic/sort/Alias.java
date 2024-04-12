@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -7,9 +10,6 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-
-import java.util.Arrays;
-import java.util.Objects;
 
 @Getter
 public enum Alias {
@@ -92,7 +92,8 @@ public enum Alias {
 
     public static Alias of(ParticipantColumn column) {
         Alias esAlias;
-        if (Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null) {
+        if (Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null
+                && !isDsmEntity(column.getTableAlias())) {
             esAlias = Alias.of(column.getObject());
         } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(column.getObject())) {
             esAlias = ACTIVITIES;
@@ -116,4 +117,9 @@ public enum Alias {
     private static Alias ofOrNull(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).orNull();
     }
+
+    private static boolean isDsmEntity(String tableAlias) {
+        return !Alias.DATA.value.equals(tableAlias) && !Alias.PROFILE.value.equals(tableAlias);
+    }
+
 }
