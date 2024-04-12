@@ -1,0 +1,207 @@
+{
+  "columnNames": [
+    {
+      "participantColumn": {
+        "display": "DDP",
+        "name": "ddp",
+        "tableAlias": "data"
+      },
+      "type": "TEXT",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Short ID",
+        "name": "hruid",
+        "tableAlias": "data",
+        "object": "profile"
+      },
+      "type": "TEXT",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": "P88XLU",
+      "value2": null,
+      "empty": false,
+      "notEmpty": false,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "First Name",
+        "name": "firstName",
+        "tableAlias": "data",
+        "object": "profile"
+      },
+      "type": "TEXT",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Last Name",
+        "name": "lastName",
+        "tableAlias": "data",
+        "object": "profile"
+      },
+      "type": "TEXT",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Status",
+        "name": "status",
+        "tableAlias": "data"
+      },
+      "type": "OPTIONS",
+      "options": [
+        {
+          "name": "REGISTERED",
+          "value": "Registered"
+        },
+        {
+          "name": "EXITED_BEFORE_ENROLLMENT",
+          "value": "Exited before Enrollment"
+        },
+        {
+          "name": "EXITED_AFTER_ENROLLMENT",
+          "value": "Exited after Enrollment"
+        },
+        {
+          "name": "ENROLLED",
+          "value": "Enrolled"
+        },
+        {
+          "name": "CONSENT_SUSPENDED",
+          "value": "Lost to Followup"
+        }
+      ],
+      "exactMatch": true,
+      "filter1": null,
+      "selectedOptions": [
+        false
+      ],
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Collaborator Participant ID",
+        "name": "bspCollaboratorParticipantId",
+        "tableAlias": "k"
+      },
+      "type": "TEXT",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "MF code",
+        "name": "kitLabel",
+        "tableAlias": "k"
+      },
+      "type": "TEXT",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Sample Sent",
+        "name": "scanDate",
+        "tableAlias": "k"
+      },
+      "type": "DATE",
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Status",
+        "name": "sampleQueue",
+        "tableAlias": "k"
+      },
+      "type": "OPTIONS",
+      "options": [
+        {
+          "name": "queue",
+          "value": "Waiting on GP"
+        },
+        {
+          "name": "error",
+          "value": "GP manual Label"
+        },
+        {
+          "name": "deactivated",
+          "value": "Deactivated"
+        },
+        {
+          "name": "shipped",
+          "value": "Shipped"
+        },
+        {
+          "name": "received",
+          "value": "Received"
+        }
+      ],
+      "filter2": null,
+      "range": false,
+      "exactMatch": true,
+      "filter1": null,
+      "selectedOptions": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "value1": null,
+      "value2": null,
+      "sortAsc": true,
+      "empty": false,
+      "notEmpty": false,
+      "singleOption": true,
+      "searchable": true
+    }
+  ],
+  "filters": [
+    {
+      "parentName": "profile",
+      "filter1": {
+        "name": "hruid",
+        "value": ":shortId"
+      },
+      "exactMatch": true,
+      "selectedOptions": null,
+      "type": "TEXT",
+      "empty": false,
+      "notEmpty": false,
+      "participantColumn": {
+        "display": "Short ID",
+        "name": "hruid",
+        "tableAlias": "data",
+        "object": "profile"
+      }
+    }
+  ],
+  "parent": "participantList"
+}

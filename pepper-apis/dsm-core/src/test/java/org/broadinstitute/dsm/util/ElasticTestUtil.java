@@ -205,6 +205,31 @@ public class ElasticTestUtil {
         }
     }
 
+    /**
+     * Adds a participant profile with every field filled to your desire data
+     * This method can help with testing when you need to create a participant with a specific profile and filter on that without
+     * having to create a new separate json file for the profile
+     */
+    public static void addParticipantProfileFromTemplate(String esIndex, String ddpParticipantId, String shortId, String firstName,
+                                               String lastName, String email) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String profileJson = TestUtil.readFile("elastic/participantProfileTemplate.json");
+            profileJson = profileJson.replace("<shortId>", shortId);
+            profileJson = profileJson.replace("<firstName>", firstName);
+            profileJson = profileJson.replace("<lastName>", lastName);
+            profileJson = profileJson.replace("<email>", email);
+            profileJson = profileJson.replace("<guid>", ddpParticipantId);
+            profileJson = profileJson.replace("<now>", String.valueOf(System.currentTimeMillis()));
+            Profile profile = objectMapper.readValue(profileJson, Profile.class);
+            profile.setGuid(ddpParticipantId);
+            addParticipantProfile(esIndex, profile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
+        }
+    }
+
     public static Address addParticipantAddressFromFile(String esIndex, String fileName, String ddpParticipantId) {
         Gson gson = new Gson();
         try {
