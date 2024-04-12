@@ -176,15 +176,13 @@ public class IntegrationTestSuite {
 
     public static void startupTestServer(boolean isCacheDisabled) {
         bootAppServer(isCacheDisabled);
-        waitForServer(1000);
+        waitForServer(2000); // todo arz use health check instead
     }
 
     private static void insertTestData() {
-        log.warn("Inserting test data!!!!");
         RouteTestUtil.setupDatabasePool();
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
-        log.warn("Test data has been inserted!!!!");
     }
 
     private static List<Class> ignoredClasses() {

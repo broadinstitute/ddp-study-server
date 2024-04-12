@@ -295,11 +295,6 @@ public class DataDonationPlatform {
         CacheService.getInstance().resetAllCaches();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);;
 
-        // The first route mapping call will also initialize the Spark server. Make that first call
-        // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
-        // only once server has fully booted.
-        registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
-
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
         PexInterpreter interpreter = new TreeWalkInterpreter();
