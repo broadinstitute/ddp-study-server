@@ -27,10 +27,10 @@ import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
@@ -47,6 +47,7 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
     public static final String memberTypeFieldTypeId = basename;
     private static final UserDao userDao = new UserDao();
     private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static Gson gson;
     private static UserDto userDto;
     private static DDPInstanceDto ddpInstanceDto;
@@ -244,7 +245,8 @@ public class UpdateWorkflowStatusTest extends DbAndElasticBaseTest {
     private void verifyDefaultElasticData(String ddpParticipantId, String registrationFieldTypeId,
                                           String registrationStatus, List<String> otherFieldTypes) {
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
+
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

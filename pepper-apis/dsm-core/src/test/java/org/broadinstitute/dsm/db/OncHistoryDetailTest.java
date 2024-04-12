@@ -11,8 +11,8 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -24,7 +24,7 @@ import org.junit.Test;
 
 @Slf4j
 public class OncHistoryDetailTest extends DbAndElasticBaseTest {
-
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static final String TEST_USER = "TEST_USER";
     private static DDPInstanceDto ddpInstanceDto;
     private static String instanceName;
@@ -103,7 +103,7 @@ public class OncHistoryDetailTest extends DbAndElasticBaseTest {
             Assert.assertEquals("3", updateRec3.getColumnValues().get("destruction_policy"));
 
             ElasticSearchParticipantDto esParticipant =
-                    ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                    elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
             Dsm dsm = esParticipant.getDsm().orElseThrow();
 
             List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();

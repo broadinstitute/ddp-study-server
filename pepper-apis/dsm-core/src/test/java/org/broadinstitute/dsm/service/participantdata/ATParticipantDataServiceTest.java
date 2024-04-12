@@ -20,8 +20,8 @@ import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
@@ -34,6 +34,7 @@ import org.junit.Test;
 
 @Slf4j
 public class ATParticipantDataServiceTest extends DbAndElasticBaseTest {
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static final String instanceName = "atdefault";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
@@ -96,7 +97,7 @@ public class ATParticipantDataServiceTest extends DbAndElasticBaseTest {
         } catch (ESMissingParticipantDataException e) {
             Assert.assertTrue(String.format("Error message should include the queried participant id %s.  The "
                             + "message given is %s", nonexistentParticipantId, e.getMessage()),
-                    e.getMessage().toUpperCase().contains("PARTICIPANT " + nonexistentParticipantId));
+                    e.getMessage().contains("Participant document %s not found".formatted(nonexistentParticipantId)));
         }
     }
 
@@ -196,7 +197,7 @@ public class ATParticipantDataServiceTest extends DbAndElasticBaseTest {
 
     private void verifyDefaultElasticData(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

@@ -13,13 +13,14 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.junit.Assert;
 
 @Slf4j
 public class RgpParticipantDataTestUtil {
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private final String esIndex;
     private static final List<Integer> fieldSettingsIds = new ArrayList<>();
 
@@ -37,7 +38,7 @@ public class RgpParticipantDataTestUtil {
             fieldSettingsIds.clear();
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Error in tearDown " + e.toString());
+            Assert.fail("Error in tearDown " + e);
         }
     }
 
@@ -86,7 +87,7 @@ public class RgpParticipantDataTestUtil {
     public void verifyDefaultElasticData(String ddpParticipantId, int familyId,
                                          Map<String, String> expectedDataMap) {
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -107,7 +108,7 @@ public class RgpParticipantDataTestUtil {
 
     public void verifyWorkflows(String ddpParticipantId, Set<String> workflowNames) {
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
 

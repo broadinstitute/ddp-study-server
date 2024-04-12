@@ -17,14 +17,15 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.FieldSettingsTestUtil;
 import org.broadinstitute.dsm.util.ParticipantDataTestUtil;
@@ -38,6 +39,7 @@ import org.junit.Test;
 
 @Slf4j
 public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static final String instanceName = "rgpservice";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
@@ -114,7 +116,7 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
 
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceByGuid(instanceName);
         ElasticSearchParticipantDto esParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
 
         int familyId = 1000;
         RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipantDto, ddpInstance,
@@ -135,7 +137,7 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
         expectedDataMap.put(FamilyMemberConstants.PHONE, "6177147395");
         expectedDataMap.put(DBConstants.REFERRAL_SOURCE_ID, "MORE_THAN_ONE");
 
-        rgpParticipantDataTestUtil.verifyParticipantData(ddpParticipantId, expectedDataMap);
+        RgpParticipantDataTestUtil.verifyParticipantData(ddpParticipantId, expectedDataMap);
         rgpParticipantDataTestUtil.verifyDefaultElasticData(ddpParticipantId, familyId, expectedDataMap);
         rgpParticipantDataTestUtil.verifyWorkflows(ddpParticipantId, workflowNames);
     }
@@ -155,6 +157,15 @@ public class RgpParticipantDataServiceTest extends DbAndElasticBaseTest {
 
         RgpParticipantDataService.insertEsFamilyId(esIndex, ddpParticipantId, familyId);
         rgpParticipantDataTestUtil.verifyDefaultElasticData(ddpParticipantId, familyId, Collections.emptyMap());
+
+        try {
+            // ptp who does not have an ES document
+            RgpParticipantDataService.insertEsFamilyId(esIndex, "bogus", familyId);
+            Assert.fail("Expected exception not thrown");
+        } catch (Exception e) {
+            Assert.assertEquals(ESMissingParticipantDataException.class, e.getClass());
+            Assert.assertTrue(e.getMessage().contains("Participant document"));
+        }
     }
 
     private String createParticipant() {

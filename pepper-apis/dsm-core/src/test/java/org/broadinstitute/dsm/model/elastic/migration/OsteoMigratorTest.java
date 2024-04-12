@@ -15,7 +15,6 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -27,7 +26,6 @@ import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.CohortTagTestUtil;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.KitShippingTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
@@ -47,7 +45,7 @@ import org.junit.Test;
 public class OsteoMigratorTest extends DbAndElasticBaseTest {
     private static final String TEST_USER = "TEST_USER";
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
-    private static final OncHistoryDetailDaoImpl oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static DDPInstanceDto os1DdpInstanceDto;
     private static DDPInstanceDto os2DdpInstanceDto;
     private static String os1InstanceName;
@@ -288,7 +286,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
     private void verifyOncHistory(String ddpParticipantId, List<Integer> participantIds) {
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);;
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();
@@ -333,7 +331,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
     }
 
     private List<CohortTag> getCohortTagsFromDoc(String ddpParticipantId) {
-        Map<String, Object> sourceMap = ElasticSearchService.getParticipantDocument(ddpParticipantId, esIndex);
+        Map<String, Object> sourceMap = ElasticSearchService.getParticipantDocumentAsMap(ddpParticipantId, esIndex);
         Assert.assertNotNull(sourceMap);
         Map<String, Object> dsmProp = (Map<String, Object>) sourceMap.get(ESObjectConstants.DSM);
         Assert.assertNotNull(dsmProp);
@@ -345,7 +343,7 @@ public class OsteoMigratorTest extends DbAndElasticBaseTest {
 
     private void verifyKitShipping(String ddpParticipantId) {
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);;
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

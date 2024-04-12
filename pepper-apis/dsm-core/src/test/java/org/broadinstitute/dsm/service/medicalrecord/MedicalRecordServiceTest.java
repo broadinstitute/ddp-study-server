@@ -16,9 +16,9 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -33,6 +33,7 @@ import org.junit.Test;
 
 @Slf4j
 public class MedicalRecordServiceTest extends DbAndElasticBaseTest {
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     public static final String osteo1InstanceName = "osteo1test";
     public static final String osteo2InstanceName = "osteo2test";
     private static DDPInstanceDto osteo1InstanceDto;
@@ -124,7 +125,7 @@ public class MedicalRecordServiceTest extends DbAndElasticBaseTest {
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
 
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);;
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

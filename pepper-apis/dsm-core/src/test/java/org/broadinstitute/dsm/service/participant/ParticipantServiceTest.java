@@ -11,8 +11,8 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.After;
@@ -29,6 +29,7 @@ public class ParticipantServiceTest extends DbAndElasticBaseTest {
     private static DDPInstance ddpInstance;
     private static int participantCounter = 0;
     private static final ParticipantDao participantDao = new ParticipantDao();
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -79,7 +80,7 @@ public class ParticipantServiceTest extends DbAndElasticBaseTest {
         String ddpParticipantId = participantDto.getRequiredDdpParticipantId();
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
         ElasticSearchParticipantDto esParticipant =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
         Dsm dsm = esParticipant.getDsm().orElseThrow();

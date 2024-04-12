@@ -20,7 +20,7 @@ import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 
 @Slf4j
 public class ATParticipantDataService {
@@ -33,6 +33,7 @@ public class ATParticipantDataService {
     public static final String AT_GROUP_GENOME_STUDY = "AT_GROUP_GENOME_STUDY";
     public static final String EXIT_STATUS = "EXITSTATUS";
     protected static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
 
     public static boolean generateDefaultData(String studyGuid, String ddpParticipantId) {
         DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
@@ -45,7 +46,7 @@ public class ATParticipantDataService {
         }
 
         return createDefaultData(ddpParticipantId,
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId), instance);
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex), instance);
     }
 
     /**

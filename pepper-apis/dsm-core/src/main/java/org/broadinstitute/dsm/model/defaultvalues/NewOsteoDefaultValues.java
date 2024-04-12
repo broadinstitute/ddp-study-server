@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
 
 /**
@@ -9,13 +10,13 @@ import org.broadinstitute.dsm.service.participant.OsteoParticipantService;
 public class NewOsteoDefaultValues extends BasicDefaultDataMaker {
 
     @Override
-    protected boolean setDefaultData(String ddpParticipantId) {
-        if (elasticSearchParticipantDto.getDsm().isEmpty() || elasticSearchParticipantDto.getActivities().isEmpty()) {
+    protected boolean setDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant) {
+        if (esParticipant.getDsm().isEmpty() || esParticipant.getActivities().isEmpty()) {
             throw new ESMissingParticipantDataException(String.format("Participant %s does not yet have DSM data and "
                     + "activities in ES", ddpParticipantId));
         }
         OsteoParticipantService osteoParticipantService = new OsteoParticipantService();
-        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, elasticSearchParticipantDto);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipant);
         return true;
     }
 }
