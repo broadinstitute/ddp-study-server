@@ -107,7 +107,6 @@ public class ActivityResponseCollector {
      *
      * @param instance the participant's activity instance
      * @param supplier the supplier that gives data for embedded components
-     * @return
      */
     private Map<String, String> records(ActivityResponse instance, ComponentDataSupplier supplier,
                                         boolean isEmpty, String defaultRecordValue) {
