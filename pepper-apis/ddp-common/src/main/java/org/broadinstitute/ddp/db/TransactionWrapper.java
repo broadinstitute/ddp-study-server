@@ -390,9 +390,9 @@ public class TransactionWrapper {
      * @param <X>      Type of exception thrown by callback
      * @param callback Accepts a handle  @throws X exception thrown by callback
      * @throws DDPException if error getting a raw connection
-     * {@link #withTxn(HandleCallback)}
-     * <p>Use a jdbc connection within a transaction.  If more than one database has been
-     * initialized, an exception is thrown.</p>
+     *      {@link #withTxn(HandleCallback)}
+     *      <p>Use a jdbc connection within a transaction.  If more than one database has been
+     *      initialized, an exception is thrown.</p>
      */
     public static <R, X extends Exception> R inTransaction(ConnectionConsumer<R, X> callback) throws X {
         // temporary code to detect long-running connections

@@ -22,7 +22,6 @@ public class PointsReducerFactory {
     /**
      * Sums the value of the points and sets the time
      * for the point to be the average of the start times
-     * @return
      */
     public static BinaryOperator<Point> buildSumReducer() {
         return (Point point, Point point2) -> {
