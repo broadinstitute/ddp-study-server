@@ -807,11 +807,12 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static Map<String, Object> getObjectsMap(RestHighLevelClient client, String index, String id, String object) throws Exception {
+    public static Map<String, Object> getObjectsMap(RestHighLevelClient client, String index, String id, String object)
+            throws IOException {
         String[] includes = new String[] {object};
         String[] excludes = Strings.EMPTY_ARRAY;
         FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includes, excludes);
-        GetRequest getRequest = new GetRequest().index(index).type("_doc").id(id).fetchSourceContext(fetchSourceContext);
+        GetRequest getRequest = new GetRequest().index(index).id(id).fetchSourceContext(fetchSourceContext);
 
         GetResponse getResponse = null;
         if (client.exists(getRequest, RequestOptions.DEFAULT)) {
@@ -820,7 +821,7 @@ public class ElasticSearchUtil {
         return getResponse != null ? getResponse.getSourceAsMap() : Collections.emptyMap();
     }
 
-    public static Map<String, Object> getObjectsMap(String index, String id, String object) throws Exception {
+    public static Map<String, Object> getObjectsMap(String index, String id, String object) throws IOException {
         initialize();
         return getObjectsMap(client, index, id, object);
     }

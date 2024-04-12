@@ -77,9 +77,9 @@ public class WorkflowStatusUpdate {
         }
 
         if (isRGPEnrollment(studyGuid, workflow, status)) {
-            log.info("Creating participant data for participant {} in study {} via workflow {} with status {}",
+            log.info("Updating participant data for participant {} in study {} via workflow {} with status {}",
                     ddpParticipantId, studyGuid, workflow, status);
-            updateRGP(ddpParticipantId, studyGuid);
+            RgpParticipantDataService.updateWithExtractedData(ddpParticipantId, studyGuid);
             return;
         }
 
@@ -240,15 +240,6 @@ public class WorkflowStatusUpdate {
 
     public static boolean isProband(Map<String, String> dataMap) {
         return dataMap.containsKey(MEMBER_TYPE) && dataMap.get(MEMBER_TYPE).equals(MEMBER_TYPE_SELF);
-    }
-
-    protected static void updateRGP(String participantId, String studyGuid) {
-        try {
-            RgpParticipantDataService.updateWithExtractedData(participantId, studyGuid);
-        } catch (Exception e) {
-            throw new DsmInternalError(String.format("Error updating participant data for participant %s in study %s",
-                    participantId, studyGuid), e);
-        }
     }
 
     private static class WorkflowPayload {
