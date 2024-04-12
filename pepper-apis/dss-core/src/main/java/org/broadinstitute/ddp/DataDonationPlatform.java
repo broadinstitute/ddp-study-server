@@ -14,9 +14,7 @@ import static spark.Spark.delete;
 import static spark.Spark.internalServerError;
 import static spark.Spark.notFound;
 import static spark.Spark.options;
-import static spark.Spark.port;
 import static spark.Spark.stop;
-import static spark.Spark.threadPool;
 
 import java.net.MalformedURLException;
 import java.time.Instant;
@@ -61,8 +59,8 @@ import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
-import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
@@ -205,7 +203,6 @@ import spark.route.HttpMethod;
 public class DataDonationPlatform {
     public static final String MDC_STUDY = "Study";
     public static final String MDC_ROUTE_CLASS = "RouteClass";
-    public static final String PORT = "PORT";
 
     private static final String HTTP_METHOD__GET = "GET";
     private static final String HTTP_METHOD__PUT = "PUT";
@@ -259,6 +256,7 @@ public class DataDonationPlatform {
     }
 
     public static void main(String[] args) {
+        LogUtil.addAppEngineEnvVarsToMDC();
         try {
             synchronized (isReady) {
                 start();
@@ -275,22 +273,10 @@ public class DataDonationPlatform {
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
-        int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
         String sendGridEventsVerificationKey = cfg.hasPath(EVENTS_VERIFICATION_KEY)
                 ? cfg.getString(EVENTS_VERIFICATION_KEY) : null;
         String auth0LogEventsToken = cfg.hasPath(AUTH0_LOG_EVENTS_TOKEN) ? cfg.getString(AUTH0_LOG_EVENTS_TOKEN) : null;
-
-        // app engine's port env var wins
-        int configFilePort = cfg.getInt(ConfigFile.PORT);
-
-        // GAE specifies port to use via environment variable
-        String appEnginePort = System.getenv(PORT);
-
-        String preferredSourceIPHeader = null;
-        if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
-            preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
-        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         TransactionWrapper.init(
@@ -305,15 +291,7 @@ public class DataDonationPlatform {
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
-
-        if (appEnginePort != null) {
-            port(Integer.parseInt(appEnginePort));
-        } else {
-            port(configFilePort);
-        }
-        threadPool(-1, -1, requestThreadTimeout);
-        JettyConfig.setupJetty(preferredSourceIPHeader);
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);;
 
         // The first route mapping call will also initialize the Spark server. Make that first call
         // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond

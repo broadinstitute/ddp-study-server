@@ -87,6 +87,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.FileUploadNotificationJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.CreateKitEventAction;
@@ -197,6 +198,7 @@ public class Housekeeping {
     }
 
     public static void main(String[] args) {
+        LogUtil.addAppEngineEnvVarsToMDC();
         start(args, null);
     }
 
