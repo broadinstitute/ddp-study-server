@@ -44,7 +44,6 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.customexport.housekeeping.schedule.CustomExportJob;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -114,7 +113,6 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
-import spark.Spark;
 
 @Slf4j
 public class Housekeeping {
