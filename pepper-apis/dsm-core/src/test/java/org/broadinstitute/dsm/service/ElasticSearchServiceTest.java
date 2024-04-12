@@ -95,7 +95,8 @@ public class ElasticSearchServiceTest extends DbAndElasticBaseTest {
         Assert.assertEquals(ddpParticipantId1, esParticipant.getProfile().get().getGuid());
         Assert.assertTrue(esParticipant.getDsm().isPresent());
 
-        Assert.assertTrue(elasticSearchService.getParticipantDocument("bogus", esIndex).isEmpty());
+        Assert.assertTrue(elasticSearchService.getParticipantDocument(TestParticipantUtil.genDDPParticipantId("bogus"), esIndex)
+                .isEmpty());
     }
 
     @Test

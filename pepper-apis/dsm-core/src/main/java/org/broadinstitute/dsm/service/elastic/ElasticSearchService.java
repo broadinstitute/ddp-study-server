@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.service.elastic;
 
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.PROFILE_GUID;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.PROFILE_LEGACYALTPID;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.search;
 
 import java.io.IOException;
@@ -23,6 +25,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.SourceMapDeserializer;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -89,7 +92,8 @@ public class ElasticSearchService {
      * Get a single participant document based on participant GUID
      */
     public Optional<ElasticSearchParticipantDto> getParticipantDocument(String ddpParticipantId, String index) {
-        return getSingleParticipantDocument(ddpParticipantId, ElasticSearchUtil.PROFILE_GUID, index);
+        String matchField = ParticipantUtil.isGuid(ddpParticipantId) ? PROFILE_GUID : PROFILE_LEGACYALTPID;
+        return getSingleParticipantDocument(ddpParticipantId, matchField, index);
     }
 
     public boolean participantDocumentExists(String ddpParticipantId, String index) {
@@ -158,7 +162,7 @@ public class ElasticSearchService {
         SearchRequest searchRequest = new SearchRequest(esIndex);
         try {
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-            sourceBuilder.query(QueryBuilders.existsQuery(ElasticSearchUtil.PROFILE_LEGACYALTPID));
+            sourceBuilder.query(QueryBuilders.existsQuery(PROFILE_LEGACYALTPID));
             searchRequest.source(sourceBuilder);
 
             int batchSize = 1000;
@@ -283,7 +287,7 @@ public class ElasticSearchService {
                     .formatted(ddpParticipantId, index));
         }
         Optional<ElasticSearchParticipantDto> esParticipant =
-                getSingleParticipantDocument(ddpParticipantId, ElasticSearchUtil.PROFILE_GUID, "dsm.*", index);
+                getSingleParticipantDocument(ddpParticipantId, PROFILE_GUID, "dsm.*", index);
         if (esParticipant.isEmpty()) {
             return Optional.empty();
         }
