@@ -39,6 +39,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
@@ -199,6 +200,7 @@ public class Housekeeping {
 
     public static void main(String[] args) {
         LogUtil.addAppEngineEnvVarsToMDC();
+        SparkBootUtil.startSparkServer();
         start(args, null);
     }
 
@@ -286,11 +288,6 @@ public class Housekeeping {
         heartbeatMonitor = new StackdriverMetricsTracker(StackdriverCustomMetric.HOUSEKEEPING_CYCLES,
                 PointsReducerFactory.buildMaxPointReducer());
 
-        String envPort = System.getenv(ENV_PORT);
-        if (envPort != null) {
-            // We're likely in an GAE environment, so respond to the start hook before starting main event loop.
-            respondToGAEStartHook(envPort);
-        }
 
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
@@ -623,39 +620,6 @@ public class Housekeeping {
 
         // All set, pass new subscriber downstream.
         consumer.accept(newSubscriber);
-    }
-
-    private static void respondToGAEStartHook(String envPort) {
-        var receivedPing = new AtomicBoolean(false);
-
-        Spark.port(Integer.parseInt(envPort));
-        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            receivedPing.set(true);
-            response.status(200);
-            return "";
-        });
-        Spark.awaitInitialization();
-        log.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
-
-        long startMillis = Instant.now().toEpochMilli();
-        while (!receivedPing.get()) {
-            if (Instant.now().toEpochMilli() - startMillis > SLEEP_MILLIS) {
-                break;
-            }
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                log.warn("Wait interrupted", e);
-            }
-        }
-
-        Spark.stop();
-        Spark.awaitStop();
-        if (receivedPing.get()) {
-            log.info("Received ping from GAE, proceeding with Housekeeping startup");
-        } else {
-            log.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
-        }
     }
 
     private static boolean isTimeForLogging(long lastLogTime) {

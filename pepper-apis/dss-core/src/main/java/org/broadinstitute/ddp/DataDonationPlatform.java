@@ -31,6 +31,7 @@ import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -257,6 +258,7 @@ public class DataDonationPlatform {
 
     public static void main(String[] args) {
         LogUtil.addAppEngineEnvVarsToMDC();
+        SparkBootUtil.startSparkServer();
         try {
             synchronized (isReady) {
                 start();
