@@ -24,7 +24,7 @@ public class RouteConstants {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;
 
-        public static final String HEALTH_CHECK = "/" + VERSION + "/healthcheck";
+        public static final String HEALTH_CHECK = "/" + VERSION + "healthcheck";
         public static final String DEPLOYED_VERSION = BASE + "/version";
         public static final String INTERNAL_ERROR = "/error";
 

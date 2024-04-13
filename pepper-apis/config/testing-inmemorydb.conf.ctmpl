@@ -85,8 +85,6 @@
     "elasticsearchBatchSize": 100,
     "healthcheckPassword": "{{$testingConf.Data.healthcheckPassword}}",
     "easyPostApiKey": "{{$testingConf.Data.easyPostApiKey}}",
-    # by default, boot in-processs for testing.  change rendered .conf file manually for local development
-    "bootTestAppInSeparateProcess": false,
     "apiBaseUrl": "http://localhost:5555",
     "baseTestUrl": "http://localhost:5556",
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",

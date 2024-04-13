@@ -279,32 +279,13 @@ public class IntegrationTestSuite {
     private static void bootAppServer(boolean isCacheDisabled, long bootWaitMillis) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
-        boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
 
         Map<String, String> serverArgs = new HashMap<>();
         serverArgs.put("config.file", RouteTestUtil.getConfigFilePath());
         serverArgs.put("cachingDisabled", isCacheDisabled + "");
 
-        int bootTimeoutSeconds = 30;
         log.info("Starting app on port {}", port);
-
-        if (spawnProcess) {
-            if (isDebugEnabled()) {
-                log.warn("You're running in debug mode but the server side is running in a separate process.  "
-                        + "You will need to set the debug port for the server side separately and connect "
-                        + "the debugger in a separate remote session.  Alternatively, run the server side in-process");
-            }
-            try {
-                // todo arz parameterize/environment-ize debug port
-                JavaProcessSpawner.spawnMainInSeparateProcess(DataDonationPlatform.class,
-                        IntegrationTestSuite.class, bootTimeoutSeconds);
-            } catch (IOException e) {
-                log.error("App starter failed.", e);
-            }
-        } else {
-            runDdpServer(isCacheDisabled);
-        }
-        waitForServer(bootWaitMillis);
+        runDdpServer(isCacheDisabled, bootWaitMillis);
     }
 
     private static boolean isDebugEnabled() {
@@ -324,12 +305,12 @@ public class IntegrationTestSuite {
         return isDebugOn;
     }
 
-    private static void runDdpServer(boolean isCachingDisabled) {
+    private static void runDdpServer(boolean isCachingDisabled, long waitForBootMills) {
         long startTime = System.currentTimeMillis();
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         DataDonationPlatform.main(new String[] {});
-
+        waitForServer(waitForBootMills);
         log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
     }
 
@@ -348,7 +329,7 @@ public class IntegrationTestSuite {
         long waitDuration = Instant.now().toEpochMilli() - waitStart;
         try {
             waiter.join(millis);
-            log.info("Server started up after {}ms", waitDuration);
+            log.info("Server started up after {}ms wait", waitDuration);
         } catch (InterruptedException e) {
             log.info("Server startup wait of {}ms timed out after {}ms", millis, waitDuration, e);
         }
