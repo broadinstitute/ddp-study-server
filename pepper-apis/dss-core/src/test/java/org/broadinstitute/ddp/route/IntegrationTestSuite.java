@@ -341,16 +341,17 @@ public class IntegrationTestSuite {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    log.info("Waiting for startup...", e);
+                    log.info("Waiting for server startup...", e);
                 }
             } while (!DataDonationPlatform.isReadyForTraffic);
         });
         waiter.start();
+        long waitDuration = Instant.now().toEpochMilli() - waitStart;
         try {
             waiter.join(millisecs);
-            log.info("Server started up after {}ms", (Instant.now().toEpochMilli()  - waitStart));
+            log.info("Server started up after {}ms", waitDuration);
         } catch (InterruptedException e) {
-            log.info("Boot wait of {}ms timed out.", millisecs, e);
+            log.info("Server startup wait of {}ms timed out after {}", millisecs, waitDuration, e);
         }
     }
 
