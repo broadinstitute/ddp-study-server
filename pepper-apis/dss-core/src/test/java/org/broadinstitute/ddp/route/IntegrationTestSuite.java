@@ -9,6 +9,7 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TES
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -176,7 +177,7 @@ public class IntegrationTestSuite {
 
     public static void startupTestServer(boolean isCacheDisabled) {
         bootAppServer(isCacheDisabled);
-        waitForServer(2000); // todo arz use health check instead
+        waitForServer(5000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
     }
 
     private static void insertTestData() {
@@ -334,11 +335,22 @@ public class IntegrationTestSuite {
     }
 
     private static void waitForServer(int millisecs) {
+        long waitStart = Instant.now().toEpochMilli();
+        Thread waiter = new Thread(() -> {
+            do {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    log.info("Waiting for startup...", e);
+                }
+            } while (!DataDonationPlatform.isReadyForTraffic);
+        });
+        waiter.start();
         try {
-            log.info("Pausing for {}ms for server to stabilize", millisecs);
-            Thread.sleep(millisecs);
+            waiter.join(millisecs);
+            log.info("Server started up after {}ms", (Instant.now().toEpochMilli()  - waitStart));
         } catch (InterruptedException e) {
-            log.info("Wait interrupted", e);
+            log.info("Boot wait of {}ms timed out.", millisecs, e);
         }
     }
 

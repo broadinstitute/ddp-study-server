@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -224,9 +225,12 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
+    // todo arz remove isReady
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static final int DEFAULT_BOOT_WAIT_SECS = 30;
 
+    @VisibleForTesting
+    public static boolean isReadyForTraffic = false;
 
     /**
      * Stop the server using the default wait time.
@@ -581,6 +585,7 @@ public class DataDonationPlatform {
         awaitInitialization();
         startRedisPingThread();
 
+        isReadyForTraffic = true;
         log.info("ddp startup complete");
     }
 
@@ -601,6 +606,7 @@ public class DataDonationPlatform {
     }
 
     private static void registerAppEngineCallbacks(long bootWaitSecs) {
+        // todo arz remove startup, rename to just handle stop
         get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
             log.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
             long startedMillis = Instant.now().toEpochMilli();
