@@ -176,8 +176,7 @@ public class IntegrationTestSuite {
     }
 
     public static void startupTestServer(boolean isCacheDisabled) {
-        bootAppServer(isCacheDisabled);
-        waitForServer(5000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        bootAppServer(isCacheDisabled, 5000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
     }
 
     private static void insertTestData() {
@@ -277,7 +276,7 @@ public class IntegrationTestSuite {
         TransactionWrapper.reset();
     }
 
-    private static void bootAppServer(boolean isCacheDisabled) {
+    private static void bootAppServer(boolean isCacheDisabled, long bootWaitMillis) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
         boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
@@ -305,7 +304,7 @@ public class IntegrationTestSuite {
         } else {
             runDdpServer(isCacheDisabled);
         }
-
+        waitForServer(bootWaitMillis);
     }
 
     private static boolean isDebugEnabled() {
@@ -334,7 +333,7 @@ public class IntegrationTestSuite {
         log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
     }
 
-    private static void waitForServer(int millisecs) {
+    private static void waitForServer(long millis) {
         long waitStart = Instant.now().toEpochMilli();
         Thread waiter = new Thread(() -> {
             do {
@@ -348,10 +347,10 @@ public class IntegrationTestSuite {
         waiter.start();
         long waitDuration = Instant.now().toEpochMilli() - waitStart;
         try {
-            waiter.join(millisecs);
+            waiter.join(millis);
             log.info("Server started up after {}ms", waitDuration);
         } catch (InterruptedException e) {
-            log.info("Server startup wait of {}ms timed out after {}", millisecs, waitDuration, e);
+            log.info("Server startup wait of {}ms timed out after {}ms", millis, waitDuration, e);
         }
     }
 
