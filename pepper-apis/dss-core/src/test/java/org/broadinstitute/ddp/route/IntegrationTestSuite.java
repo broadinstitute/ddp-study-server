@@ -175,7 +175,7 @@ public class IntegrationTestSuite {
     }
 
     public static void startupTestServer(boolean isCacheDisabled) {
-        bootAppServer(isCacheDisabled, 2000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        bootAppServer(isCacheDisabled, 30_000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
     }
 
     private static void insertTestData() {

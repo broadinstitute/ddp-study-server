@@ -85,7 +85,7 @@ public class ElasticExporter {
             dsmBackend = new ElasticExporter();
             dsmBackend.configureServer(cfg);
             isReady.set(true);
-            logger.info("DSM SparkBootUtil Complete");
+            logger.info("DSM Startup Complete");
         }
     }
     private void configureServer(@NonNull Config config) {
