@@ -9,7 +9,6 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TES
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -332,6 +331,13 @@ public class IntegrationTestSuite {
     }
 
     private static void waitForServer(long millis) {
+        try {
+            log.info("Pausing for {}ms for server to stabilize", millis);
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            log.info("Wait interrupted", e);
+        }
+        /*
         // todo arz revert to simpler sleep?
         long waitStart = Instant.now().toEpochMilli();
         Thread waiter = new Thread(() -> {
@@ -351,6 +357,7 @@ public class IntegrationTestSuite {
         } catch (InterruptedException e) {
             log.info("Server startup wait of {}ms timed out after {}ms", millis, waitDuration, e);
         }
+         */
     }
 
     /**
