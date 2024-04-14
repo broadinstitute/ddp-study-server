@@ -176,7 +176,7 @@ public class IntegrationTestSuite {
     }
 
     public static void startupTestServer(boolean isCacheDisabled) {
-        bootAppServer(isCacheDisabled, 5000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        bootAppServer(isCacheDisabled, 1000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
     }
 
     private static void insertTestData() {
@@ -279,13 +279,30 @@ public class IntegrationTestSuite {
     private static void bootAppServer(boolean isCacheDisabled, long bootWaitMillis) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
+        boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
 
         Map<String, String> serverArgs = new HashMap<>();
         serverArgs.put("config.file", RouteTestUtil.getConfigFilePath());
         serverArgs.put("cachingDisabled", isCacheDisabled + "");
 
+        int bootTimeoutSeconds = 30;
         log.info("Starting app on port {}", port);
-        runDdpServer(isCacheDisabled, bootWaitMillis);
+
+        if (spawnProcess) {
+            if (isDebugEnabled()) {
+                log.warn("You're running in debug mode but the server side is running in a separate process.  "
+                        + "You will need to set the debug port for the server side separately and connect "
+                        + "the debugger in a separate remote session.  Alternatively, run the server side in-process");
+            }
+            try {
+                JavaProcessSpawner.spawnMainInSeparateProcess(DataDonationPlatform.class,
+                        IntegrationTestSuite.class, bootTimeoutSeconds * 1000);
+            } catch (IOException e) {
+                log.error("App starter failed.", e);
+            }
+        } else {
+            runDdpServer(isCacheDisabled, bootWaitMillis);
+        }
     }
 
     private static boolean isDebugEnabled() {
@@ -315,6 +332,7 @@ public class IntegrationTestSuite {
     }
 
     private static void waitForServer(long millis) {
+        // todo arz revert to simpler sleep?
         long waitStart = Instant.now().toEpochMilli();
         Thread waiter = new Thread(() -> {
             do {
