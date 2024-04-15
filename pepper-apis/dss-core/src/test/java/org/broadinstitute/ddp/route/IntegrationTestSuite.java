@@ -164,7 +164,6 @@ public class IntegrationTestSuite {
         if (!isTestServerRunning()) {
             startupTestServer(isCachingDisabled);
         }
-        insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         callCounter += 1;
@@ -330,6 +329,7 @@ public class IntegrationTestSuite {
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         try {
+            insertTestData();
             DataDonationPlatform.start(() ->
                     log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms"));
         } catch (MalformedURLException e) {
@@ -393,7 +393,6 @@ public class IntegrationTestSuite {
     public static void main(String[] args) {
         initializeDatabase();
         startupTestServer(true);
-        insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
     }
 
