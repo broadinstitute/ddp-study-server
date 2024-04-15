@@ -23,10 +23,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -225,13 +222,6 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
-    // todo arz remove isReady
-    private static final AtomicBoolean isReady = new AtomicBoolean(false);
-    private static final int DEFAULT_BOOT_WAIT_SECS = 30;
-
-    @VisibleForTesting
-    public static boolean isReadyForTraffic = false;
-
     /**
      * Stop the server using the default wait time.
      */
@@ -261,20 +251,19 @@ public class DataDonationPlatform {
     }
 
     public static void main(String[] args) {
-        LogUtil.addAppEngineEnvVarsToMDC();
-        SparkBootUtil.startSparkServer();
         try {
-            synchronized (isReady) {
-                start();
-                isReady.set(true);
-            }
+            start(() -> log.info("Boot complete"));
         } catch (Exception e) {
             log.error("Could not start ddp", e);
             shutdown();
         }
     }
 
-    private static void start() throws MalformedURLException {
+    // todo arz pass in callback that is called when startup is complete, use this
+    // in testing
+    public static void start(BootDoneCallback callback) throws MalformedURLException {
+        LogUtil.addAppEngineEnvVarsToMDC();
+        SparkBootUtil.startSparkServer();
         long start = System.currentTimeMillis();
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
@@ -610,8 +599,8 @@ public class DataDonationPlatform {
         log.info((System.currentTimeMillis() - start) + " after redis");
 
 
-        isReadyForTraffic = true;
-        log.info("ddp startup complete");
+        log.info("ddp startup complete after " + (System.currentTimeMillis() - start) + "ms");
+        callback.onBootComplete();
     }
 
     private static void startRedisPingThread() {
@@ -631,27 +620,7 @@ public class DataDonationPlatform {
     }
 
     private static void registerAppEngineCallbacks(long bootWaitSecs) {
-        // todo arz remove startup, rename to just handle stop
-        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            log.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
-            long startedMillis = Instant.now().toEpochMilli();
-
-            var status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
-            var waitForBoot = new Thread(() -> {
-                synchronized (isReady) {
-                    if (isReady.get()) {
-                        status.set(HttpStatus.SC_OK);
-                    }
-                }
-            });
-            waitForBoot.start();
-            waitForBoot.join(bootWaitSecs * 1000);
-
-            long elapsed = Instant.now().toEpochMilli() - startedMillis;
-            log.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
-            response.status(status.get());
-            return "";
-        });
+        // todo arz remove startup, rename to just handle sto
 
         get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             log.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
@@ -778,6 +747,12 @@ public class DataDonationPlatform {
 
     private static void initSqlCommands(Config sqlConfig) {
         DBUtils.loadDaoSqlCommands(sqlConfig);
+    }
+
+    @FunctionalInterface
+    public interface BootDoneCallback {
+
+        void onBootComplete();
     }
 
 }

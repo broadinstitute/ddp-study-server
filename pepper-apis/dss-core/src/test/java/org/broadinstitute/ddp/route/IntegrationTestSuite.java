@@ -9,6 +9,7 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TES
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,6 +52,7 @@ import org.broadinstitute.ddp.util.JavaProcessSpawner;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -327,38 +329,12 @@ public class IntegrationTestSuite {
         long startTime = System.currentTimeMillis();
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
-        DataDonationPlatform.main(new String[] {});
-        waitForServer(waitForBootMills);
-        log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
-    }
-
-    private static void waitForServer(long millis) {
-        /*
         try {
-            log.info("Pausing for {}ms for server to stabilize", millis);
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            log.info("Wait interrupted", e);
-        }
-       */
-        // todo arz revert to simpler sleep?
-        long waitStart = System.currentTimeMillis();
-        Thread waiter = new Thread(() -> {
-            do {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    log.info("Waiting for server startup...", e);
-                }
-            } while (!DataDonationPlatform.isReadyForTraffic);
-        });
-        waiter.start();
-        long waitDuration = System.currentTimeMillis() - waitStart;
-        try {
-            waiter.join(millis);
-            log.info("Server started up after {}ms wait", waitDuration);
-        } catch (InterruptedException e) {
-            log.info("Server startup wait of {}ms timed out after {}ms", millis, waitDuration, e);
+            DataDonationPlatform.start(() ->
+                    log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms"));
+        } catch (MalformedURLException e) {
+            log.error("Could not start server", e);
+            Assert.fail("Could not start server");
         }
     }
 
