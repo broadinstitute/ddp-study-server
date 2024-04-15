@@ -296,6 +296,7 @@ public class DataDonationPlatform {
             log.info("Running liquibase migrations in StudyServer against database");
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
             LiquibaseUtil.releaseResources();
+            log.info((System.currentTimeMillis() - start) + " ms for liquibase");
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();

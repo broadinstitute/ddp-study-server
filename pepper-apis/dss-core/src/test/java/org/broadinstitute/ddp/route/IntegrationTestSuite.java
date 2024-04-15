@@ -333,15 +333,16 @@ public class IntegrationTestSuite {
     }
 
     private static void waitForServer(long millis) {
+        /*
         try {
             log.info("Pausing for {}ms for server to stabilize", millis);
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             log.info("Wait interrupted", e);
         }
-        /*
+       */
         // todo arz revert to simpler sleep?
-        long waitStart = Instant.now().toEpochMilli();
+        long waitStart = System.currentTimeMillis();
         Thread waiter = new Thread(() -> {
             do {
                 try {
@@ -352,14 +353,13 @@ public class IntegrationTestSuite {
             } while (!DataDonationPlatform.isReadyForTraffic);
         });
         waiter.start();
-        long waitDuration = Instant.now().toEpochMilli() - waitStart;
+        long waitDuration = System.currentTimeMillis() - waitStart;
         try {
             waiter.join(millis);
             log.info("Server started up after {}ms wait", waitDuration);
         } catch (InterruptedException e) {
             log.info("Server startup wait of {}ms timed out after {}ms", millis, waitDuration, e);
         }
-         */
     }
 
     /**
