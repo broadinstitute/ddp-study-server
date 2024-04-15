@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
@@ -329,9 +330,13 @@ public class IntegrationTestSuite {
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         try {
-            insertTestData();
-            DataDonationPlatform.start(() ->
-                    log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms"));
+            DataDonationPlatform.start(() -> {
+                log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms");
+                log.info("inserting shared test data");
+                insertTestData(); // this was being called AFTER ddp.start, resulting in many tests not finding the
+                // data they need.  This bug was obscured by a lengthy (30s) pause.  With an explicit callback,
+                // after ddp starts, it became clear.
+            });
         } catch (MalformedURLException e) {
             log.error("Could not start server", e);
             Assert.fail("Could not start server");
