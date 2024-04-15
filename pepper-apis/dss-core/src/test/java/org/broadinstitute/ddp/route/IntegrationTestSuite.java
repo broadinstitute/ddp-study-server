@@ -182,7 +182,7 @@ public class IntegrationTestSuite {
     }
 
     private static void insertTestData() {
-        RouteTestUtil.setupDatabasePool();
+        //RouteTestUtil.setupDatabasePool();
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
     }
