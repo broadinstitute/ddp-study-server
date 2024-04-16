@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -87,6 +89,20 @@ public class KitDiscard {
         this.userConfirm = userConfirm;
         this.discardUser = discardUser;
         this.discardDate = discardDate;
+    }
+
+    /**
+     * Note: These are just arbitrary fields used for testing. This class and constituents need a lot of work,
+     * so just this for now.
+     */
+    @VisibleForTesting
+    @Builder
+    public KitDiscard(String kitRequestId, String kitType, String kitLabel, long exitDate, String path) {
+        this.kitRequestId = kitRequestId;
+        this.kitType = kitType;
+        this.kitLabel = kitLabel;
+        this.exitDate = exitDate;
+        this.path = path;
     }
 
     public static List<KitDiscard> getExitedKits(@NonNull String realm) {
