@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -55,7 +54,6 @@ public class KitDiscard {
     private String discardUser;
     private String discardDate;
     private String discard;
-    private File file;
     private String path;
     private String token;
 
