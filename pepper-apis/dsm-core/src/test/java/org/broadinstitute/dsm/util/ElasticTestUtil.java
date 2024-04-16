@@ -261,6 +261,7 @@ public class ElasticTestUtil {
             } else {
                 json = json.replace("\"dateOfMajority\" : \"<dateOfMajority>\",", "");
             }
+            json = json.replace(":guid", ddpParticipantId);
             Dsm dsm = gson.fromJson(json, Dsm.class);
             addParticipantDsm(esIndex, dsm, ddpParticipantId);
             return dsm;

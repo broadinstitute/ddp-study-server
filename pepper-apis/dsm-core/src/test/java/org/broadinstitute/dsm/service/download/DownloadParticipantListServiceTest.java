@@ -32,7 +32,7 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     private static final String instanceName = "download_test_instance";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
-    private static final String guid = "PT_SAMPLE_QUEUE_TEST";
+    private static String guid = "PT_SAMPLE_QUEUE_TEST";
     private static ParticipantDto participantDto = null;
     private static final String shortId = "PT_SHORT";
 
@@ -40,14 +40,14 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(guid);
-        participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        guid = TestParticipantUtil.genDDPParticipantId(guid);
+        participantDto = TestParticipantUtil.createParticipant(guid, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, participantDto);
-        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex,  ddpParticipantId, shortId, "testDataDownloadFromElastic",
+        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex,  guid, shortId, "testDataDownloadFromElastic",
                 "lastName", "email");
-        ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShipping.json", ddpParticipantId, "1990-10-10", null);
-        log.debug("ES participant record with DSM for {}: {}", ddpParticipantId,
-                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
+        ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShipping.json", guid, "1990-10-10", null);
+        log.debug("ES participant record with DSM for {}: {}", guid,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, guid));
     }
 
     @AfterClass
@@ -58,50 +58,96 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testDataDownloadFromElastic() {
+    public void testKitRequestShippingDownloadFromElastic() {
         ManualFilterParticipantList filterable = getFilterFromFile("elastic/filterWithSampleQueueColumn.json");
         Assert.assertNotNull(filterable);
         QueryParamsMap queryParamsMap = buildMockQueryParams(true, true, "xlsx");
         List<ParticipantWrapperDto> downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, true, "xlsx");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(true, false, "xlsx");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, false, "xlsx");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(true, true, "tsv");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, true, "tsv");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(true, false, "tsv");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
 
         queryParamsMap = buildMockQueryParams(false, false, "tsv");
         downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
-        assertDownloadList(downloadList);
+        assertKitRequestShipping(downloadList);
     }
 
-    private void assertDownloadList(List<ParticipantWrapperDto> downloadList) {
-        assertNotNull(downloadList);
-        assertEquals(1, downloadList.size());
+    @Test
+    public void testClinicalOrdersDownloadFromElastic() {
+        ManualFilterParticipantList filterable = getFilterFromFile("elastic/filtersWithClinicalOrderColumns.json");
+        Assert.assertNotNull(filterable);
+        QueryParamsMap queryParamsMap = buildMockQueryParams(true, true, "xlsx");
+        List<ParticipantWrapperDto> downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(false, true, "xlsx");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(true, false, "xlsx");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(false, false, "xlsx");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(true, true, "tsv");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(false, true, "tsv");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(true, false, "tsv");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+
+        queryParamsMap = buildMockQueryParams(false, false, "tsv");
+        downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        assertClinicalOrders(downloadList);
+    }
+
+    private void assertKitRequestShipping(List<ParticipantWrapperDto> downloadList) {
+
         List<Object> kitRequestShippings = ((List<Object>) ((Map<String, Object>)
                 ((Map<String, Object>) downloadList.get(0).getEsDataAsMap().get("dataAsMap")).get("dsm")).get("kitRequestShipping"));
         assertNotNull(kitRequestShippings);
         assertEquals(5, kitRequestShippings.size());
         assertSampleQueueValue(kitRequestShippings);
+    }
+
+    private void assertClinicalOrders(List<ParticipantWrapperDto> downloadList) {
+        assertNotNull(downloadList);
+        assertEquals(1, downloadList.size());
+        List<Object> clinicalOrders = ((List<Object>) ((Map<String, Object>)
+                ((Map<String, Object>) downloadList.get(0).getEsDataAsMap().get("dataAsMap")).get("dsm")).get("clinicalOrder"));
+        assertNotNull(clinicalOrders);
+        assertEquals(1, clinicalOrders.size());
+        assertClinicalOrderValue(clinicalOrders);
     }
 
     private void assertSampleQueueValue(List<Object> kitRequestShippings) {
@@ -122,6 +168,21 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
             } else {
                 Assert.fail();
             }
+        });
+    }
+
+    private void assertClinicalOrderValue(List<Object> clinicalOrders) {
+        clinicalOrders.forEach(clinicalOrder -> {
+            Map<String, Object> clinicalOrdersMap = (Map<String, Object>) clinicalOrder;
+            assertNotNull(clinicalOrdersMap.get("orderId"));
+            assertEquals("SOME_ORDER_ID", clinicalOrdersMap.get("orderId"));
+            assertEquals("APPROVED", clinicalOrdersMap.get("orderStatus"));
+            assertEquals(1711539726740L, clinicalOrdersMap.get("orderDate"));
+            assertNotNull(clinicalOrdersMap.get("ddpParticipantId"));
+            assertEquals(guid, clinicalOrdersMap.get("ddpParticipantId"));
+            assertNotNull(clinicalOrdersMap.get("barcode"));
+            assertEquals("kit-123456-7", clinicalOrdersMap.get("barcode"));
+            assertEquals("PDO-123456", clinicalOrdersMap.get("mercuryPdoId"));
         });
     }
 
