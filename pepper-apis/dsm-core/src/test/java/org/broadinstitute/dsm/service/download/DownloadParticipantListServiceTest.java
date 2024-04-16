@@ -110,7 +110,6 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         Assert.assertNotNull(columnNames);
         Assert.assertNotEquals(0, columnNames.size());
         QueryParamsMap queryParamsMap = buildMockQueryParams(true, true, "xlsx");
-        queryParamsMap = buildMockQueryParams(false, true, "xlsx");
         List<ParticipantWrapperDto> downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
         DownloadParticipantListParams downloadParticipantListParams = new DownloadParticipantListParams(queryParamsMap);
 
