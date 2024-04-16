@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.common.net.MediaType;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
@@ -15,6 +17,8 @@ import spark.Request;
 import spark.Response;
 
 public class DownloadParticipantListRoute extends RequestHandler {
+
+    DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
 
     /**
      * Generates a file for download.  When removing the feature-flag-export-new role, processRequestNew should
@@ -33,7 +37,10 @@ public class DownloadParticipantListRoute extends RequestHandler {
         }
         setResponseHeaders(response, realm + "_export.zip");
         Filterable filterable = FilterFactory.of(request);
-        return DownloadParticipantListService.createParticipantDownloadZip(filterable, params, realm, request.queryMap(), payload, response);
+        DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(realm)
+                .orElseThrow(() -> new IllegalArgumentException("No DDP instance found for realm " + realm));
+        return DownloadParticipantListService.createParticipantDownloadZip(filterable, params, ddpInstanceDto, request.queryMap(),
+                payload.getColumnNames(), response);
     }
 
     protected void setResponseHeaders(Response response, String filename) {

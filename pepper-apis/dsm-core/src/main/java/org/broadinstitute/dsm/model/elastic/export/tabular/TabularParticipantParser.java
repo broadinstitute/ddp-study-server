@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.export.WorkflowAndFamilyIdExporter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ParticipantColumn;
@@ -40,13 +40,13 @@ public class TabularParticipantParser {
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
     private Map<String, Map<String, Object>> activityDefs;
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean humanReadable, boolean onlyMostRecent,
+    public TabularParticipantParser(List<Filter> filters, DDPInstanceDto ddpInstanceDto, boolean humanReadable, boolean onlyMostRecent,
                                     Map<String, Map<String, Object>> activityDefs) {
         this.filters = filters;
         this.humanReadable = humanReadable;
         this.onlyMostRecent = onlyMostRecent;
         if (activityDefs == null) {
-            activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
+            activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstanceDto);
         }
         this.activityDefs = activityDefs;
     }

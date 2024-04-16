@@ -14,8 +14,9 @@ import java.util.zip.ZipOutputStream;
 
 import com.netflix.servo.util.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.at.SampleQueue;
 import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
@@ -25,7 +26,6 @@ import org.broadinstitute.dsm.model.elastic.search.UnparsedDeserializer;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
-import org.broadinstitute.dsm.model.participant.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import spark.QueryParamsMap;
@@ -33,6 +33,7 @@ import spark.Response;
 
 @Slf4j
 public class DownloadParticipantListService {
+
     /**
      * Fetches participant data from Elasticsearch based on the given filter and query parameters.
      * returns a list of ParticipantWrapperDto objects
@@ -118,19 +119,18 @@ public class DownloadParticipantListService {
      * @param filterable the filters to use for fetching participant data from Elasticsearch.
      * @param downloadParticipantListParams the parameters for the download, such as the file format, human readability,
      *               and whether to only include the most recent  activitydata.
-     * @param realm the name of the DDP instance to use for the export.
+     * @param ddpInstanceDto the DDP instance to download data from
      * @param queryParamsMap the query parameters to use for the export.
-     * @param downloadParticipantListPayload the payload containing the column names to include in the export.
+     * @param columnsNames  List of filters indicating the column names to include in the export.
      * @param response the response object to write the zip file to.
      * */
     public static Object createParticipantDownloadZip(Filterable filterable, DownloadParticipantListParams downloadParticipantListParams,
-                                                      String realm, QueryParamsMap queryParamsMap,
-                                                      DownloadParticipantListPayload downloadParticipantListPayload, Response response) {
+                                                      DDPInstanceDto ddpInstanceDto, QueryParamsMap queryParamsMap,
+                                                      List<Filter> columnsNames, Response response) {
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, queryParamsMap);
         log.info("Beginning parse of " + participants.size() + " participants");
-        DDPInstance instance = DDPInstance.getDDPInstance(realm);
 
-        TabularParticipantParser parser = new TabularParticipantParser(downloadParticipantListPayload.getColumnNames(), instance,
+        TabularParticipantParser parser = new TabularParticipantParser(columnsNames, ddpInstanceDto,
                 downloadParticipantListParams.isHumanReadable(), downloadParticipantListParams.isOnlyMostRecent(), null);
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
         List<Map<String, Object>> participantEsDataMaps = participants.stream().map(dto ->
