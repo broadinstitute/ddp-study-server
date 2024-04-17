@@ -41,10 +41,11 @@ public class ElasticTestUtil {
      * When creating an index for testing, it's best to start by extracting the mappings
      * and settings files from a known good ES instance and storing these files
      * in resources/elastic
+     *
      * @param mappingsFile curl -u -XGET --header 'Content-Type: application/json'
      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_mapping
      * @param settingsFile curl -u -XGET --header 'Content-Type: application/json'
-     *      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
+     *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
      */
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
         log.info("Creating test index for realm {}", realm);
@@ -211,7 +212,7 @@ public class ElasticTestUtil {
      * having to create a new separate json file for the profile
      */
     public static void addParticipantProfileFromTemplate(String esIndex, String ddpParticipantId, String shortId, String firstName,
-                                               String lastName, String email) {
+                                                         String lastName, String email) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             String profileJson = TestUtil.readFile("elastic/participantProfileTemplate.json");
@@ -247,7 +248,7 @@ public class ElasticTestUtil {
     /**
      * Add a DSM entity to the participant doc
      *
-     * @param dob date of birth to replace in DSM entity
+     * @param dob            date of birth to replace in DSM entity
      * @param dateOfMajority date of majority to replace in DSM entity
      */
     public static Dsm addDsmEntityFromFile(String esIndex, String fileName, String ddpParticipantId, String dob,
@@ -255,14 +256,13 @@ public class ElasticTestUtil {
         Gson gson = new Gson();
         try {
             String json = TestUtil.readFile(fileName);
-            json = json.replace("<dateOfBirth>", dob);
-            if (StringUtils.isNotBlank(dateOfMajority)) {
-                json = json.replace("<dateOfMajority>", dateOfMajority);
-            } else {
-                json = json.replace("\"dateOfMajority\" : \"<dateOfMajority>\",", "");
-            }
-            json = json.replace(":guid", ddpParticipantId);
             Dsm dsm = gson.fromJson(json, Dsm.class);
+            dsm.setDateOfBirth(dob);
+            if (StringUtils.isNotBlank(dateOfMajority)) {
+                dsm.setDateOfMajority(dateOfMajority);
+            } else {
+                dsm.setDateOfMajority(null);
+            }
             addParticipantDsm(esIndex, dsm, ddpParticipantId);
             return dsm;
         } catch (Exception e) {

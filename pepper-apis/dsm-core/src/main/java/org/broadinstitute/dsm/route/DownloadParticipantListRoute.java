@@ -28,8 +28,9 @@ public class DownloadParticipantListRoute extends RequestHandler {
         DownloadParticipantListPayload payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
         DownloadParticipantListParams params = new DownloadParticipantListParams(request.queryMap());
-
         String realm = RoutePath.getRealm(request);
+        DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(realm)
+                .orElseThrow(() -> new IllegalArgumentException("No DDP instance found for realm " + realm));
         String userIdReq = UserUtil.getUserId(request);
         if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdReq)) {
             response.status(403);
@@ -37,8 +38,6 @@ public class DownloadParticipantListRoute extends RequestHandler {
         }
         setResponseHeaders(response, realm + "_export.zip");
         Filterable filterable = FilterFactory.of(request);
-        DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(realm)
-                .orElseThrow(() -> new IllegalArgumentException("No DDP instance found for realm " + realm));
         return DownloadParticipantListService.createParticipantDownloadZip(filterable, params, ddpInstanceDto, request.queryMap(),
                 payload.getColumnNames(), response);
     }

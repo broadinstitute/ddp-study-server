@@ -41,21 +41,22 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     private static final String shortId = "PT_SHORT";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
-    private static String guid = "PT_SAMPLE_QUEUE_TEST";
+    private static String ddpParticipantId = "PT_SAMPLE_QUEUE_TEST";
     private static ParticipantDto participantDto = null;
 
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex);
-        guid = TestParticipantUtil.genDDPParticipantId(guid);
-        participantDto = TestParticipantUtil.createParticipant(guid, ddpInstanceDto.getDdpInstanceId());
+        ddpParticipantId = TestParticipantUtil.genDDPParticipantId(ddpParticipantId);
+        participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, participantDto);
-        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex, guid, shortId, "testDataDownloadFromElastic",
+        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex, ddpParticipantId, shortId, "testDataDownloadFromElastic",
                 "lastName", "email");
-        ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShippingClinicalOrders.json", guid, "1990-10-10", null);
-        log.debug("ES participant record with DSM for {}: {}", guid,
-                ElasticTestUtil.getParticipantDocumentAsString(esIndex, guid));
+        ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShippingClinicalOrders.json", ddpParticipantId, "1990-10-10",
+                null);
+        log.debug("ES participant record with DSM for {}: {}", ddpParticipantId,
+                ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
     }
 
     @AfterClass
@@ -128,6 +129,8 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
     }
 
     private void assertParticipantExporterMap(TabularParticipantExporter participantExporter) {
+        // matching the values with the values in the file elastic/filtersWithClinicalOrderColumns.json
+
         assertEquals(1, participantExporter.participantValueMaps.size());
         Map<String, String> participantValues = participantExporter.participantValueMaps.get(0);
         assertNotNull(participantValues);

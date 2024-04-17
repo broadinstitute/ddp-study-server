@@ -91,8 +91,7 @@ public enum Alias {
 
     public static Alias of(ParticipantColumn column) {
         Alias esAlias;
-        if (Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null
-                && !Alias.CL.name().equalsIgnoreCase(column.getTableAlias())) {
+        if (isValidObjectFieldForAlias(column)) {
             esAlias = Alias.of(column.getObject());
         } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(column.getObject())) {
             esAlias = ACTIVITIES;
@@ -108,6 +107,20 @@ public enum Alias {
 
     private static Alias ofOrNull(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).orNull();
+    }
+
+
+    /**
+     * checks if the column has an object field that can be used to determine the alias, which is true for all the columns with an
+     * object field (columns that are not from the DSM tables). The only exception is the columns related to Clinical Orders.
+     * Their object field is "dsm" but being a DSM-related columns, the table alias ("CL") should be used for alias.
+     *
+     * @param column the column to check
+     * @return true if the column is not from the DSM tables, false otherwise
+     */
+    private static boolean isValidObjectFieldForAlias(ParticipantColumn column) {
+        return Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null
+                && !Alias.CL.name().equalsIgnoreCase(column.getTableAlias());
     }
 
 }
