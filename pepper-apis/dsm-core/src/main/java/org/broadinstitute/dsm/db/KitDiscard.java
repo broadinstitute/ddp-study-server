@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -10,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -55,7 +56,6 @@ public class KitDiscard {
     private String discardUser;
     private String discardDate;
     private String discard;
-    private File file;
     private String path;
     private String token;
 
@@ -89,6 +89,20 @@ public class KitDiscard {
         this.userConfirm = userConfirm;
         this.discardUser = discardUser;
         this.discardDate = discardDate;
+    }
+
+    /**
+     * Note: These are just arbitrary fields used for testing. This class and constituents need a lot of work,
+     * so just this for now.
+     */
+    @VisibleForTesting
+    @Builder
+    public KitDiscard(String kitRequestId, String kitType, String kitLabel, long exitDate, String path) {
+        this.kitRequestId = kitRequestId;
+        this.kitType = kitType;
+        this.kitLabel = kitLabel;
+        this.exitDate = exitDate;
+        this.path = path;
     }
 
     public static List<KitDiscard> getExitedKits(@NonNull String realm) {
