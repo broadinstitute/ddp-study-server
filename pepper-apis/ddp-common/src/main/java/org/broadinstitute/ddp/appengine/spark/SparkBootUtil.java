@@ -26,8 +26,11 @@ public class SparkBootUtil {
      * DSM, DSS, and Housekeeping and starts a spark server on the appropriate port.
      * Also registers routes for _ah/start and _ah/stop that log the request and
      * return 200 immediately.
+     *
+     * @param stopRouteCallback an optional callback that is called
+     *                          when the _ah/stop route is called by GAE
      */
-    public static void startSparkServer() {
+    public static void startSparkServer(StopRouteCallback stopRouteCallback) {
         Config cfg = ConfigManager.getInstance().getConfig();
         String preferredSourceIPHeader = null;
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
@@ -56,10 +59,24 @@ public class SparkBootUtil {
             response.status(HttpStatus.SC_OK);
             return "";
         });
+
         Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             log.info("Received GAE stop request [{}]", request.url());
+            if (stopRouteCallback != null) {
+                stopRouteCallback.onStop();
+            }
             response.status(HttpStatus.SC_OK);
             return "";
         });
+    }
+
+    /**
+     * Called when the {@link org.broadinstitute.ddp.constants.RouteConstants.GAE#STOP_ENDPOINT}
+     * is called by the app engine dispatcher
+     */
+    @FunctionalInterface
+    public interface StopRouteCallback {
+
+        void onStop();
     }
 }
