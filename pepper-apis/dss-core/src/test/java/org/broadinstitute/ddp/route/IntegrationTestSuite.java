@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.MalformedURLException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -182,11 +184,9 @@ public class IntegrationTestSuite {
     }
 
     private static void insertTestData() {
-        log.warn("Inserting test data!!!!");
         RouteTestUtil.setupDatabasePool();
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
-        log.warn("Test data has been inserted!!!!");
     }
 
     private static List<Class> ignoredClasses() {
@@ -416,7 +416,32 @@ public class IntegrationTestSuite {
         initializeDatabase();
         startupTestServer(true);
         insertTestData();
+        // now start a separate service that circleCI can ping once
+        // all the test data has been loaded and client tests can run
+        new SingleUseServerSocket(5999);
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
+    }
+
+    /**
+     * Server socket that allows one connection
+     * and then closes
+     */
+    public static class SingleUseServerSocket {
+
+        public SingleUseServerSocket(int port) {
+            ServerSocket serverSocket = null;
+            try {
+                serverSocket = new ServerSocket(port);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try (Socket clientSocket = serverSocket.accept()) {
+                log.info("client connected, now closing");
+                serverSocket.close();
+            } catch (IOException e) {
+                log.error("socket error", e);
+            }
+        }
     }
 
 }

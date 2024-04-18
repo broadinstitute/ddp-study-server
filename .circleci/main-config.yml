@@ -702,7 +702,7 @@ commands:
             for i in `seq 1 << parameters.timeout >>`;
             # todo arz is this responding prematurely, leading to tests to start before server is truly ready?
             do
-              nc -z << parameters.server_address >> << parameters.port >> && echo Success connecting to << parameters.server_address >> << parameters.port >> after  [$i] cycles && exit 0
+              nc -z -v << parameters.server_address >> << parameters.port >> && echo Success connecting to << parameters.server_address >> << parameters.port >> after  [$i] cycles && exit 0
               echo -n .
               sleep 1
             done
@@ -716,12 +716,8 @@ commands:
           phase: exec:java
           additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
           background: true
-      - run:
-          name: Give dss server time to run liquibase
-          command: |
-            sleep 60
       - wait_for_server:
-          port: 5556
+          port: 5999
           timeout: 60
 
   compile-all-jars:
