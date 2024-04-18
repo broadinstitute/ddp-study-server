@@ -164,6 +164,7 @@ public class IntegrationTestSuite {
         if (!isTestServerRunning()) {
             startupTestServer(isCachingDisabled);
         }
+        insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         callCounter += 1;
@@ -176,15 +177,15 @@ public class IntegrationTestSuite {
     }
 
     public static void startupTestServer(boolean isCacheDisabled) {
-        log.info("TEST SERVER STARTUP");
         bootAppServer(isCacheDisabled, 20_000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
-        log.info("TEST SERVER STARTUP DONE");
     }
 
     private static void insertTestData() {
-        //RouteTestUtil.setupDatabasePool();
+        log.warn("Inserting test data!!!!");
+        RouteTestUtil.setupDatabasePool();
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
+        log.warn("Test data has been inserted!!!!");
     }
 
     private static List<Class> ignoredClasses() {
@@ -332,9 +333,10 @@ public class IntegrationTestSuite {
             DataDonationPlatform.start(() -> {
                 log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms");
                 log.info("inserting shared test data");
-                insertTestData(); // this was being called AFTER ddp.start, resulting in many tests not finding the
+                insertTestData(); // PR comment: this was being called AFTER ddp.start, resulting in many tests not finding the
                 // data they need.  This bug was obscured by a lengthy (30s) pause.  With an explicit callback,
-                // after ddp starts, it became clear.
+                // after ddp starts, it became clear that the insertion of this test data should happen
+                // before tests start
             });
         } catch (MalformedURLException e) {
             log.error("Could not start server", e);
@@ -382,9 +384,10 @@ public class IntegrationTestSuite {
 
         ) {
             httpClient.execute(new HttpGet(serverUrl));
+            log.info("Test server is running already");
             return true;
         } catch (HttpHostConnectException e) {
-            log.debug("Could not connect to server url. Must not be running");
+            log.info("Could not connect to server url. Must not be running");
             return false;
         } catch (IOException e) {
             String msg = "There was problem initializing CloseableHttpClient";
@@ -394,6 +397,10 @@ public class IntegrationTestSuite {
 
     }
 
+    /**
+     * Called by circleci when creating a dss backend
+     * to run tests against
+     */
     public static void main(String[] args) {
         initializeDatabase();
         startupTestServer(true);

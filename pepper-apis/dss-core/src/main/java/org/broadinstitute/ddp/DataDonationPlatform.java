@@ -259,8 +259,10 @@ public class DataDonationPlatform {
         }
     }
 
-    // todo arz pass in callback that is called when startup is complete, use this
-    // in testing
+    /**
+     * Start the study server backend.  The passed in callback will be called
+     * once all aspects of server boot are complete.
+     */
     public static void start(BootDoneCallback callback) throws MalformedURLException {
         LogUtil.addAppEngineEnvVarsToMDC();
         SparkBootUtil.startSparkServer();

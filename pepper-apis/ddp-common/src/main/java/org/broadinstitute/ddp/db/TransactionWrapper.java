@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -114,7 +115,8 @@ public class TransactionWrapper {
      * Should only be called during testing.
      */
     public static synchronized void reset() {
-        log.warn("reset() should only be called in the context of testing");
+        log.warn("reset() should only be called in the context of testing.  Call stack follows");
+        log.warn(Arrays.toString(Thread.currentThread().getStackTrace()).replace(',', '\n'));
         for (TransactionWrapper transactionWrapper : gTxnWrapper.values()) {
             try {
                 transactionWrapper.dataSource.close();

@@ -190,6 +190,7 @@ commands:
       - run:
           name: Setup test databases
           command: |
+            # todo arz run these locally to setup local db
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.studyserverdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
           environment: *DB_VARS
