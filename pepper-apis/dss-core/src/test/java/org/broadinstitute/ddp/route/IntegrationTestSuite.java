@@ -178,6 +178,7 @@ public class IntegrationTestSuite {
 
     public static void startupTestServer(boolean isCacheDisabled) {
         bootAppServer(isCacheDisabled);
+        waitForServer(1000);
     }
 
     private static void insertTestData() {
@@ -334,7 +335,7 @@ public class IntegrationTestSuite {
             DataDonationPlatform.start(() -> {
                 log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms");
                 log.info("inserting shared test data");
-                insertTestData(); // PR comment: this was being called AFTER ddp.start, resulting in many tests not finding the
+                // insertTestData(); // PR comment: this was being called AFTER ddp.start, resulting in many tests not finding the
                 // data they need.  This bug was obscured by a lengthy (30s) pause.  With an explicit callback,
                 // after ddp starts, it became clear that the insertion of this test data should happen
                 // before tests start
@@ -342,6 +343,15 @@ public class IntegrationTestSuite {
         } catch (MalformedURLException e) {
             log.error("Could not start server", e);
             Assert.fail("Could not start server");
+        }
+    }
+
+    private static void waitForServer(int millisecs) {
+        try {
+            log.info("Pausing for {}ms for server to stabilize", millisecs);
+            Thread.sleep(millisecs);
+        } catch (InterruptedException e) {
+            log.info("Wait interrupted", e);
         }
     }
 
