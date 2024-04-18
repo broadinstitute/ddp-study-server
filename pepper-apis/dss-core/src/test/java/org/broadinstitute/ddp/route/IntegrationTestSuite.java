@@ -177,7 +177,7 @@ public class IntegrationTestSuite {
     }
 
     public static void startupTestServer(boolean isCacheDisabled) {
-        bootAppServer(isCacheDisabled, 20_000); // todo arz use health check instead with cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        bootAppServer(isCacheDisabled);
     }
 
     private static void insertTestData() {
@@ -279,9 +279,10 @@ public class IntegrationTestSuite {
         TransactionWrapper.reset();
     }
 
-    private static void bootAppServer(boolean isCacheDisabled, long bootWaitMillis) {
+    private static void bootAppServer(boolean isCacheDisabled) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
+        // todo remove process spawner
         boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
 
         Map<String, String> serverArgs = new HashMap<>();
@@ -304,7 +305,7 @@ public class IntegrationTestSuite {
                 log.error("App starter failed.", e);
             }
         } else {
-            runDdpServer(isCacheDisabled, bootWaitMillis);
+            runDdpServer(isCacheDisabled);
         }
     }
 
@@ -325,7 +326,7 @@ public class IntegrationTestSuite {
         return isDebugOn;
     }
 
-    private static void runDdpServer(boolean isCachingDisabled, long waitForBootMills) {
+    private static void runDdpServer(boolean isCachingDisabled) {
         long startTime = System.currentTimeMillis();
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
