@@ -397,7 +397,7 @@ public class IntegrationTestSuite {
                 throw new RuntimeException(e);
             }
             try (Socket clientSocket = serverSocket.accept()) {
-                log.info("client connected, now closing");
+                log.info("CI/CD readiness port connected, now closing");
                 serverSocket.close();
             } catch (IOException e) {
                 log.error("socket error", e);
