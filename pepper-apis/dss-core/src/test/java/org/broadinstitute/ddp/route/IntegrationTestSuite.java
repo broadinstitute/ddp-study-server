@@ -7,8 +7,6 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_CLI
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TEST_USER_AUTH0_ID;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -50,7 +48,6 @@ import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.security.JWTConverterTest;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.DBTestContainer;
-import org.broadinstitute.ddp.util.JavaProcessSpawner;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
@@ -275,7 +272,6 @@ public class IntegrationTestSuite {
     }
 
     public static void tearDownSuiteServer() {
-        // todo(yufeng) figure out how to shutdown server running in separate process
         DataDonationPlatform.shutdown();
         TransactionWrapper.reset();
     }
@@ -283,48 +279,13 @@ public class IntegrationTestSuite {
     private static void bootAppServer(boolean isCacheDisabled) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
-        // todo remove process spawner
-        boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
-
         Map<String, String> serverArgs = new HashMap<>();
         serverArgs.put("config.file", RouteTestUtil.getConfigFilePath());
         serverArgs.put("cachingDisabled", isCacheDisabled + "");
 
-        int bootTimeoutSeconds = 30;
         log.info("Starting app on port {}", port);
 
-        if (spawnProcess) {
-            if (isDebugEnabled()) {
-                log.warn("You're running in debug mode but the server side is running in a separate process.  "
-                        + "You will need to set the debug port for the server side separately and connect "
-                        + "the debugger in a separate remote session.  Alternatively, run the server side in-process");
-            }
-            try {
-                JavaProcessSpawner.spawnMainInSeparateProcess(DataDonationPlatform.class,
-                        IntegrationTestSuite.class, bootTimeoutSeconds * 1000);
-            } catch (IOException e) {
-                log.error("App starter failed.", e);
-            }
-        } else {
-            runDdpServer(isCacheDisabled);
-        }
-    }
-
-    private static boolean isDebugEnabled() {
-        boolean isDebugOn = false;
-        RuntimeMXBean mxBean = ManagementFactory.getRuntimeMXBean();
-        if (mxBean != null) {
-            List<String> args = mxBean.getInputArguments();
-            if (args != null) {
-                for (String arg : args) {
-                    if (arg.contains(DEBUG_FLAG)) {
-                        isDebugOn = true;
-                        break;
-                    }
-                }
-            }
-        }
-        return isDebugOn;
+        runDdpServer(isCacheDisabled);
     }
 
     private static void runDdpServer(boolean isCachingDisabled) {
@@ -332,14 +293,7 @@ public class IntegrationTestSuite {
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         try {
-            DataDonationPlatform.start(() -> {
-                log.info("started server from test after " + (System.currentTimeMillis() - startTime) + " ms");
-                log.info("inserting shared test data");
-                // insertTestData(); // PR comment: this was being called AFTER ddp.start, resulting in many tests not finding the
-                // data they need.  This bug was obscured by a lengthy (30s) pause.  With an explicit callback,
-                // after ddp starts, it became clear that the insertion of this test data should happen
-                // before tests start
-            });
+            DataDonationPlatform.start();
         } catch (MalformedURLException e) {
             log.error("Could not start server", e);
             Assert.fail("Could not start server");

@@ -252,7 +252,7 @@ public class DataDonationPlatform {
 
     public static void main(String[] args) {
         try {
-            start(() -> log.info("Boot complete"));
+            start();
         } catch (Exception e) {
             log.error("Could not start ddp", e);
             shutdown();
@@ -260,10 +260,9 @@ public class DataDonationPlatform {
     }
 
     /**
-     * Start the study server backend.  The passed in callback will be called
-     * once all aspects of server boot are complete.
+     * Start the study server backend.
      */
-    public static void start(BootDoneCallback callback) throws MalformedURLException {
+    public static void start() throws MalformedURLException {
         LogUtil.addAppEngineEnvVarsToMDC();
         SparkBootUtil.startSparkServer();
         long start = System.currentTimeMillis();
@@ -602,7 +601,6 @@ public class DataDonationPlatform {
 
 
         log.info("ddp startup complete after " + (System.currentTimeMillis() - start) + "ms");
-        callback.onBootComplete();
     }
 
     private static void startRedisPingThread() {
