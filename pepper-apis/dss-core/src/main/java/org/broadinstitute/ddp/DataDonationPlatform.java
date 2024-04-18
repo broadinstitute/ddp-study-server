@@ -265,7 +265,6 @@ public class DataDonationPlatform {
     public static void start() throws MalformedURLException {
         LogUtil.addAppEngineEnvVarsToMDC();
         SparkBootUtil.startSparkServer();
-        long start = System.currentTimeMillis();
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
@@ -280,21 +279,15 @@ public class DataDonationPlatform {
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
-        log.info((System.currentTimeMillis() - start) + " ms for db queries");
 
         if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
             log.info("Running liquibase migrations in StudyServer against database");
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
             LiquibaseUtil.releaseResources();
-            log.info((System.currentTimeMillis() - start) + " ms for liquibase");
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
-
-        log.info((System.currentTimeMillis() - start) + " ms for caching");
-
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);;
-        log.info((System.currentTimeMillis() - start) + " apis db init");
 
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
@@ -305,8 +298,6 @@ public class DataDonationPlatform {
 
         var jsonSerializer = new NullableJsonTransformer();
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
-
-        log.info((System.currentTimeMillis() - start) + " pex init");
 
         if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND) && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
             int maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
@@ -323,7 +314,6 @@ public class DataDonationPlatform {
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
 
-        log.info((System.currentTimeMillis() - start) + " ms for error handling");
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
         beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter()),
@@ -360,11 +350,7 @@ public class DataDonationPlatform {
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
         post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
-        log.info((System.currentTimeMillis() - start) + " ms before es");
-
         RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
-
-        log.info((System.currentTimeMillis() - start) + " after es");
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
@@ -559,9 +545,6 @@ public class DataDonationPlatform {
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(esClient), responseSerializer);
 
-        log.info((System.currentTimeMillis() - start) + " before scheduler");
-
-
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
             // Setup DDP JobScheduler on server startup
@@ -580,8 +563,6 @@ public class DataDonationPlatform {
             log.info("DDP job scheduler is not set to run");
         }
 
-        log.info((System.currentTimeMillis() - start) + " after scheduler");
-
         setupApiActivityFilter();
 
         afterAfter(new MDCAttributeRemovalFilter(AddDDPAuthLoggingFilter.LOGGING_CLIENTID_PARAM,
@@ -592,15 +573,8 @@ public class DataDonationPlatform {
                 MDCLogBreadCrumbFilter.LOG_BREADCRUMB));
 
         awaitInitialization();
-
-        log.info((System.currentTimeMillis() - start) + " before redis");
-
         startRedisPingThread();
-
-        log.info((System.currentTimeMillis() - start) + " after redis");
-
-
-        log.info("ddp startup complete after " + (System.currentTimeMillis() - start) + "ms");
+        log.info("ddp startup complete");
     }
 
     private static void startRedisPingThread() {
@@ -747,12 +721,6 @@ public class DataDonationPlatform {
 
     private static void initSqlCommands(Config sqlConfig) {
         DBUtils.loadDaoSqlCommands(sqlConfig);
-    }
-
-    @FunctionalInterface
-    public interface BootDoneCallback {
-
-        void onBootComplete();
     }
 
 }
