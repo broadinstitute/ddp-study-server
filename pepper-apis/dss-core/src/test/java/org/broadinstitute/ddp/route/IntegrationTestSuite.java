@@ -364,16 +364,23 @@ public class IntegrationTestSuite {
 
     /**
      * Called by circleci when creating a dss backend
-     * to run tests against
+     * to run tests against.  Starting a test instance
+     * from scratch can take 30s or more, during which
+     * time most routes will not work properly.  To check
+     * for readiness, ping port 5999 with a utility
+     * like netcat.  When you can connect to port 5999,
+     * the instance is ready for traffic.  Note that
+     * this administrative port is only available for one
+     * connection.  After that, the port closes.
      */
     public static void main(String[] args) {
         initializeDatabase();
         startupTestServer(true);
         insertTestData();
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         // now start a separate service that circleCI can ping once
         // all the test data has been loaded and client tests can run
         new SingleUseServerSocket(5999);
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
     }
 
     /**
