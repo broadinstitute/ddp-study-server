@@ -405,6 +405,7 @@ public class IntegrationTestSuite {
     public static void main(String[] args) {
         initializeDatabase();
         startupTestServer(true);
+        insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
     }
 
