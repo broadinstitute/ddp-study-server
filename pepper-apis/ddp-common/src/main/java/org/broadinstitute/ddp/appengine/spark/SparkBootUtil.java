@@ -24,8 +24,8 @@ public class SparkBootUtil {
     /**
      * Reads configuration and environment settings common to
      * DSM, DSS, and Housekeeping and starts a spark server on the appropriate port.
-     * Also registers a route for _ah/start that logs the start request and
-     * returns 200 immediately.
+     * Also registers routes for _ah/start and _ah/stop that log the request and
+     * return 200 immediately.
      */
     public static void startSparkServer() {
         Config cfg = ConfigManager.getInstance().getConfig();
@@ -53,6 +53,11 @@ public class SparkBootUtil {
         Spark.port(port);
         Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
             log.info("Received GAE start request [{}]", request.url());
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
+        Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            log.info("Received GAE stop request [{}]", request.url());
             response.status(HttpStatus.SC_OK);
             return "";
         });

@@ -231,7 +231,7 @@ public class DSMServer {
 
     public static void main(String[] args) {
         LogUtil.addAppEngineEnvVarsToMDC();
-        SparkBootUtil.startSparkServer();
+        SparkBootUtil.startSparkServer();  // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
         synchronized (isReady) {
             try {
@@ -444,16 +444,6 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStopCallback(long bootTimeoutSeconds) {
-
-        get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
-            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
-            //flush out any pending GA events
-            response.status(HttpStatus.SC_OK);
-            return "";
-        });
-    }
-
     protected static void enableCORS(String allowedOrigins, String methods, String headers) {
         Spark.options("/*", (request, response) -> {
             String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
@@ -485,12 +475,6 @@ public class DSMServer {
     protected void configureServer(@NonNull Config config) {
         String env = config.getString("portal.environment");
         logger.info("Property source: {} ", env);
-        long bootTimeoutSeconds = DEFAULT_BOOT_WAIT.getSeconds();
-        if (config.hasPath(ApplicationConfigConstants.BOOT_TIMEOUT)) {
-            bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
-        }
-
-        registerAppEngineStopCallback(bootTimeoutSeconds);
 
         setupDB(config);
 

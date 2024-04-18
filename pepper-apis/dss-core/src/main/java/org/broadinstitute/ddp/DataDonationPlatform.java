@@ -263,9 +263,9 @@ public class DataDonationPlatform {
      * Start the study server backend.
      */
     public static void start() throws MalformedURLException {
-        LogUtil.addAppEngineEnvVarsToMDC();
-        SparkBootUtil.startSparkServer();
         LogbackConfigurationPrinter.printLoggingConfiguration();
+        LogUtil.addAppEngineEnvVarsToMDC();
+        SparkBootUtil.startSparkServer(); // respond GAE dispatcher endpoints as soon as possible
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
@@ -591,17 +591,6 @@ public class DataDonationPlatform {
         } catch (Exception e) {
             log.error("Redis connection validator thread has failed", e);
         }
-    }
-
-    private static void registerAppEngineCallbacks(long bootWaitSecs) {
-        // todo arz remove startup, rename to just handle sto
-
-        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            log.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
-
-            response.status(HttpStatus.SC_OK);
-            return "";
-        });
     }
 
     private static void setupApiActivityFilter() {

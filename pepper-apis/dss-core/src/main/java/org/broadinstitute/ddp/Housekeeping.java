@@ -198,7 +198,7 @@ public class Housekeeping {
 
     public static void main(String[] args) {
         LogUtil.addAppEngineEnvVarsToMDC();
-        SparkBootUtil.startSparkServer();
+        SparkBootUtil.startSparkServer();  // respond GAE dispatcher endpoints as soon as possible
         start(args, null);
     }
 
