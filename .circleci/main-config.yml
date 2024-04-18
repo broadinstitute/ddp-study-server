@@ -717,7 +717,7 @@ commands:
           additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
           background: true
       - wait_for_server:
-          port: 5999
+          port: 5999 # we're waiting for the post-liquibase port to open up, not the main spark port
           timeout: 60
 
   compile-all-jars:
