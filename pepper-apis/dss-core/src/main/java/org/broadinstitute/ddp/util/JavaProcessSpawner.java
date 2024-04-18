@@ -22,12 +22,12 @@ public class JavaProcessSpawner {
      *
      * @param classWithMainMethod The main class you want to run
      * @param sendLogsTo          class that will appear in the logs as the source of log statements
-     * @param bootTimeInMillis   initial pause (in seconds), needed because spinning up
+     * @param bootTimeInSeconds   initial pause (in seconds), needed because spinning up
      *                            an app takes a moment
      * @return The future result of the job
      * @throws IOException if there is an IOException
      */
-    public static Future<ProcessResult> spawnMainInSeparateProcess(Class classWithMainMethod, Class sendLogsTo, long bootTimeInMillis)
+    public static Future<ProcessResult> spawnMainInSeparateProcess(Class classWithMainMethod, Class sendLogsTo, int bootTimeInSeconds)
                 throws IOException {
         if (classWithMainMethod == null) {
             throw new IllegalArgumentException("class to spawn is required");
@@ -35,8 +35,8 @@ public class JavaProcessSpawner {
         if (sendLogsTo == null) {
             throw new IllegalArgumentException("logging class required.  Otherwise your logs will go into outer space.");
         }
-        if (bootTimeInMillis < 1) {
-            log.warn("With a boot wait time of " + bootTimeInMillis + ", clients of " + classWithMainMethod + " may discover that the"
+        if (bootTimeInSeconds < 1) {
+            log.warn("With a boot wait time of " + bootTimeInSeconds + ", clients of " + classWithMainMethod + " may discover that the"
                     + " process the need has not been started yet.");
         }
 
@@ -49,11 +49,11 @@ public class JavaProcessSpawner {
                 .redirectOutput(Slf4jStream.of(sendLogsTo).asInfo())
                 .redirectError(Slf4jStream.of(sendLogsTo).asError())
                 .readOutput(true)
-                .destroyOnExit().timeout(bootTimeInMillis, TimeUnit.MILLISECONDS).start().getFuture();
+                .destroyOnExit().timeout(bootTimeInSeconds, TimeUnit.SECONDS).start().getFuture();
 
         try {
-            log.info("Pausing for " + bootTimeInMillis + " ms while starting " + classWithMainMethod.getName());
-            Thread.sleep(bootTimeInMillis);
+            log.info("Pausing for " + bootTimeInSeconds + " seconds while starting " + classWithMainMethod.getName());
+            Thread.sleep(bootTimeInSeconds * 1000);
         } catch (InterruptedException e) {
             log.info("Spawned java class " + classWithMainMethod + " interrupted", e);
         }
