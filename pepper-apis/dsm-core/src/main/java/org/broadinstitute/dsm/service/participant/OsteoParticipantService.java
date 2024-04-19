@@ -127,9 +127,6 @@ public class OsteoParticipantService {
         cohortTag.setCohortTagId(newCohortTagId);
 
         List<CohortTag> cohortTags = dsm.getCohortTag();
-        if (cohortTags.isEmpty()) {
-            cohortTags = new ArrayList<>();
-        }
         cohortTags.add(cohortTag);
         dsm.setCohortTag(cohortTags);
 
