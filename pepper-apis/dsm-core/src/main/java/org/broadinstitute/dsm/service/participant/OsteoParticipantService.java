@@ -69,7 +69,6 @@ public class OsteoParticipantService {
      */
     public void setOsteoDefaultData(String ddpParticipantId, ElasticSearchParticipantDto participantDto) {
         if (isOsteo1Participant(participantDto)) {
-            log.info("Creating an osteo1 cohort tag for participant {}", ddpParticipantId);
             createOsteoTag(participantDto, ddpParticipantId, osteo1Instance, OSTEO1_COHORT_TAG_NAME);
         } else {
             createOsteoTag(participantDto, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);
@@ -118,49 +117,67 @@ public class OsteoParticipantService {
                                        DDPInstance osteoInstance, String tagName) {
         // invariant: participant should have a DSM entity
         Dsm dsm = participantDto.getDsm().orElseThrow();
+        createOteoTag(dsm, ddpParticipantId, osteoInstance, tagName);
+    }
 
-        CohortTag newCohortTag =
-                new CohortTag(tagName, ddpParticipantId, osteoInstance.getDdpInstanceIdAsInt());
-        int newCohortTagId = cohortTagDao.create(newCohortTag);
-        newCohortTag.setCohortTagId(newCohortTagId);
+    private static void createOteoTag(Dsm dsm, String ddpParticipantId, DDPInstance osteoInstance, String tagName) {
+        log.info("Creating {} cohort tag for participant {}", tagName, ddpParticipantId);
+        CohortTag cohortTag = new CohortTag(tagName, ddpParticipantId, osteoInstance.getDdpInstanceIdAsInt());
+        int newCohortTagId = cohortTagDao.create(cohortTag);
+        cohortTag.setCohortTagId(newCohortTagId);
 
-        // new participant so this is the first tag
-        dsm.setCohortTag(List.of(newCohortTag));
+        List<CohortTag> cohortTags = dsm.getCohortTag();
+        cohortTags.add(cohortTag);
+        dsm.setCohortTag(cohortTags);
+
         ElasticSearchService.updateDsm(ddpParticipantId, dsm, osteoInstance.getParticipantIndexES());
     }
 
     /**
-     * Copy osteo1 participant data to osteo2 for osteo1 participant who consented to OS PE-CGS (OS2/osteo2)
+     * For osteo1 participant who consented to OS PE-CGS (OS2/osteo2), create a osteo2 cohort tag,
+     * and copy osteo1 participant data to osteo2
      */
     public void initializeReconsentedParticipant(String ddpParticipantId) {
         log.info("Initializing re-consented osteo participant {}", ddpParticipantId);
 
-        // ensure we can get what we need before committing anything
-        int osteo1InstanceId = osteo1Instance.getDdpInstanceIdAsInt();
+        String osteo2Index = osteo2Instance.getParticipantIndexES();
+        Dsm osteo2Dsm = getParticipantDsm(ddpParticipantId, osteo2Index);
+        createOteoTag(osteo2Dsm, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);
+
         Optional<ParticipantDto> osteo1Ptp = participantDao
-                .getParticipantForInstance(ddpParticipantId, osteo1InstanceId);
+                .getParticipantForInstance(ddpParticipantId, osteo1Instance.getDdpInstanceIdAsInt());
         if (osteo1Ptp.isEmpty()) {
-            log.info("Participant {} record not found for instance {}. Skipping re-consent initialization.",
+            log.info("Participant {} record not found for instance {}. No re-consent participant data to copy.",
                     ddpParticipantId, osteo1Instance.getName());
             return;
         }
-        ParticipantDto osteo1Participant = osteo1Ptp.get();
-        int osteo1ParticipantId = osteo1Participant.getRequiredParticipantId();
-        log.info("Creating new {} participant data for existing {} participant {}",
-                osteo2Instance.getName(), osteo1Instance.getName(), ddpParticipantId);
+        copyOsteo1Data(osteo1Ptp.get(), ddpParticipantId, osteo2Dsm);
+    }
 
+    /**
+     * Get participant DSM ES data, or create it if missing
+     */
+    private Dsm getParticipantDsm(String ddpParticipantId, String esIndex) {
+        // there *should* be ES DSM data for osteo2, but make it if not
+        ElasticSearchParticipantDto esParticipant =
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
+        Optional<Dsm> dsm = esParticipant.getDsm();
+        return dsm.orElseGet(Dsm::new);
+    }
+
+    /**
+     * Copy osteo1 medical record bundle to osteo2 for existing osteo1 participant
+     */
+    private void copyOsteo1Data(ParticipantDto osteo1Participant, String ddpParticipantId, Dsm osteo2Dsm) {
+        log.info("Copying participant data for existing {} participant {} to {}",
+                osteo1Instance.getName(), ddpParticipantId, osteo2Instance.getName());
+
+        // ensure we can get what we need before copying and committing anything
         // there should already be ES DSM data in osteo1 index for this participant
         Dsm osteo1Dsm =
                 elasticSearchService.getRequiredDsmData(ddpParticipantId, osteo1Instance.getParticipantIndexES());
         Participant esParticipant = osteo1Dsm.getParticipant().orElseThrow(() ->
                 new DsmInternalError("ES Participant data missing for participant %s".formatted(ddpParticipantId)));
-
-        // there *should* be ES DSM data for osteo2, but make it if not
-        String osteo2Index = osteo2Instance.getParticipantIndexES();
-        ElasticSearchParticipantDto osteo2EsParticipant =
-                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, osteo2Index);
-        Optional<Dsm> dsm = osteo2EsParticipant.getDsm();
-        Dsm osteo2Dsm = dsm.orElseGet(Dsm::new);
 
         // there should not be osteo2 Participant, MedicalRecord or ParticipantRecord yet
         // if the Participant does not exist, the other data will not exist either
@@ -188,20 +205,9 @@ public class OsteoParticipantService {
                     participantRecordDao.create(clonedRecord);
                 });
 
-        osteo2Dsm.setMedicalRecord(copyMedicalRecords(osteo1ParticipantId, osteo2ParticipantId, osteo2InstanceId));
-
-        CohortTag cohortTag = new CohortTag(OSTEO2_COHORT_TAG_NAME, ddpParticipantId, osteo2InstanceId);
-        int newCohortTagId = cohortTagDao.create(cohortTag);
-        cohortTag.setCohortTagId(newCohortTagId);
-
-        List<CohortTag> cohortTags = osteo2Dsm.getCohortTag();
-        if (cohortTags.isEmpty()) {
-            cohortTags = new ArrayList<>();
-        }
-        cohortTags.add(cohortTag);
-        osteo2Dsm.setCohortTag(cohortTags);
-
-        ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Index);
+        osteo2Dsm.setMedicalRecord(copyMedicalRecords(osteo1Participant.getRequiredParticipantId(),
+                osteo2ParticipantId, osteo2InstanceId));
+        ElasticSearchService.updateDsm(ddpParticipantId, osteo2Dsm, osteo2Instance.getParticipantIndexES());
         OncHistoryService.createEmptyOncHistory(osteo2ParticipantId, ddpParticipantId, osteo2Instance);
     }
 
