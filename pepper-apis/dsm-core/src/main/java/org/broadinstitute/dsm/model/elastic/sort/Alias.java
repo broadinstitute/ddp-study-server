@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import java.util.Objects;
+
 import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -7,9 +9,6 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-
-import java.util.Arrays;
-import java.util.Objects;
 
 @Getter
 public enum Alias {
@@ -92,7 +91,7 @@ public enum Alias {
 
     public static Alias of(ParticipantColumn column) {
         Alias esAlias;
-        if (Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null) {
+        if (isValidObjectFieldForAlias(column)) {
             esAlias = Alias.of(column.getObject());
         } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(column.getObject())) {
             esAlias = ACTIVITIES;
@@ -106,14 +105,22 @@ public enum Alias {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
     }
 
-    public static Alias aliasByValue(String value) {
-        return Arrays.stream(Alias.values())
-                .filter(alias -> alias.value.equals(value))
-                .findFirst()
-                .orElse(ACTIVITIES);
-    }
-
     private static Alias ofOrNull(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).orNull();
     }
+
+
+    /**
+     * checks if the column has an object field that can be used to determine the alias, which is true for all the columns with an
+     * object field (columns that are not from the DSM tables). The only exception is the columns related to Clinical Orders.
+     * Their object field is "dsm" but being a DSM-related columns, the table alias ("CL") should be used for alias.
+     *
+     * @param column the column to check
+     * @return true if the column is not from the DSM tables, false otherwise
+     */
+    private static boolean isValidObjectFieldForAlias(ParticipantColumn column) {
+        return Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null
+                && !Alias.CL.name().equalsIgnoreCase(column.getTableAlias());
+    }
+
 }

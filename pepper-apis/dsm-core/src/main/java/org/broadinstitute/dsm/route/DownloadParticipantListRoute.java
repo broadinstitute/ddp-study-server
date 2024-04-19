@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.common.net.MediaType;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
@@ -16,6 +18,8 @@ import spark.Response;
 
 public class DownloadParticipantListRoute extends RequestHandler {
 
+    DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+
     /**
      * Generates a file for download.  When removing the feature-flag-export-new role, processRequestNew should
      * be renamed to processRequest, and the old 'processRequest' method should be deleted
@@ -24,8 +28,9 @@ public class DownloadParticipantListRoute extends RequestHandler {
         DownloadParticipantListPayload payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
         DownloadParticipantListParams params = new DownloadParticipantListParams(request.queryMap());
-
         String realm = RoutePath.getRealm(request);
+        DDPInstanceDto ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(realm)
+                .orElseThrow(() -> new IllegalArgumentException("No DDP instance found for realm " + realm));
         String userIdReq = UserUtil.getUserId(request);
         if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdReq)) {
             response.status(403);
@@ -33,7 +38,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
         }
         setResponseHeaders(response, realm + "_export.zip");
         Filterable filterable = FilterFactory.of(request);
-        return DownloadParticipantListService.createParticipantDownloadZip(filterable, params, realm, request.queryMap(), payload, response);
+        return DownloadParticipantListService.createParticipantDownloadZip(filterable, params, ddpInstanceDto, request.queryMap(),
+                payload.getColumnNames(), response);
     }
 
     protected void setResponseHeaders(Response response, String filename) {
