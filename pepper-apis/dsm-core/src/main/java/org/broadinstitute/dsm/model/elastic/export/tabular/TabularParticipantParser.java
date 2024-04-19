@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.export.WorkflowAndFamilyIdExporter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ParticipantColumn;
@@ -40,13 +40,13 @@ public class TabularParticipantParser {
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
     private Map<String, Map<String, Object>> activityDefs;
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean humanReadable, boolean onlyMostRecent,
+    public TabularParticipantParser(List<Filter> filters, DDPInstanceDto ddpInstanceDto, boolean humanReadable, boolean onlyMostRecent,
                                     Map<String, Map<String, Object>> activityDefs) {
         this.filters = filters;
         this.humanReadable = humanReadable;
         this.onlyMostRecent = onlyMostRecent;
         if (activityDefs == null) {
-            activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
+            activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstanceDto);
         }
         this.activityDefs = activityDefs;
     }
@@ -135,7 +135,7 @@ public class TabularParticipantParser {
      * @param column       the column from the Filter
      * @param activityDefs the schema loaded from ElasticSearch
      * @return the question schema corresponding to the given column, or null if it does not correspond to a question (e.g.
-     * it is a 'data' attribute)
+     *       it is a 'data' attribute)
      */
     private Map<String, Object> getDefForQuestion(ParticipantColumn column, Map<String, Map<String, Object>> activityDefs) {
         String activityName = column.getTableAlias();
@@ -174,7 +174,7 @@ public class TabularParticipantParser {
      * @param moduleConfigs        the moduleExportConfigs, such as returned from generateExportConfigs
      * @param participantEsDataMap the participantDto dataAsMap, as fetched from elasticSearch
      * @return a list of hashmaps suitable for turning into a table. The list will be of length 1, unless this is a study (RGP)
-     * with family members.  In that case, the list will have one map for each member.
+     *       with family members.  In that case, the list will have one map for each member.
      */
     private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs,
                                                                      Map<String, Object> participantEsDataMap) {
@@ -291,7 +291,7 @@ public class TabularParticipantParser {
      *
      * @param esDataAsMap elastic search data for a ParticipantDto, in map form.
      * @return a list of sub-participant data (a.k.a. RGP family members) associated with the given participant
-     * If none exist, a list with a single empty map will be returned
+     *       If none exist, a list with a single empty map will be returned
      */
     List<Map<String, Object>> getSubParticipants(Map<String, Object> esDataAsMap) {
         List<String> pathNames = Arrays.asList(ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA);
@@ -380,7 +380,7 @@ public class TabularParticipantParser {
         // in the module get stored in the same object.
         String objectName = moduleConfig.getQuestions().get(0).getColumn().getObject();
         if (objectName == null) {
-            // this handles some derived RGP columns like "#FIRSTNAME #LASTNAME.." that do not need to be exported
+            // this handles some derived RGP columns like "#FIRSTNAME #LASTNAME..." that do not need to be exported
             return Collections.singletonList(Collections.emptyMap());
         }
         // figure out whether we're dealing with subparticipants (RGP) or just data

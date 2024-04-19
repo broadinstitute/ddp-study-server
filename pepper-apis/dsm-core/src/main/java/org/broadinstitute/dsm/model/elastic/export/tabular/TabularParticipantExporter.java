@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -24,7 +25,9 @@ public abstract class TabularParticipantExporter {
     public static final String OPTION_DETAIL_DELIMITER = "_";
     protected List<ModuleExportConfig> moduleConfigs;
     protected String fileFormat;
-    protected List<Map<String, String>> participantValueMaps;
+
+    @VisibleForTesting
+    public List<Map<String, String>> participantValueMaps;
 
     /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
      * this map lets us add distinguishing names to columns from those objects.  e.g. profile.email will not
