@@ -205,7 +205,7 @@ public class CountAdditionalFilterStrategyTest {
         DashboardLabelFilterDto labelFilterDto = new DashboardLabelFilterDto.Builder().withEsFilterPath("profile.createdAt")
                 .withAdditionalFilter("AND profile.createdAt IS NOT NULL "
                         + "AND ( t.tissueType = 'review' OR t.tissueType = 'no' OR t.tissueType = 'bla' ) "
-                        + "OR JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = true"
+                        + "OR JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = true "
                         + "OR STR_TO_DATE(m.fax_sent,'%Y-%m-%d') = STR_TO_DATE('2021-12-17','%Y-%m-%d') "
                         + "AND JSON_CONTAINS ( k.test_result , JSON_OBJECT ( 'result' , 'result' ) ) ").build();
         DashboardLabelDto labelDto = new DashboardLabelDto.Builder().withDashboardLabelFilter(labelFilterDto).build();
