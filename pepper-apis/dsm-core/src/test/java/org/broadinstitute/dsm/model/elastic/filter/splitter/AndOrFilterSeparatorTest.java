@@ -61,6 +61,17 @@ public class AndOrFilterSeparatorTest {
     }
 
     @Test
+    public void handleSpecialCaseEndingWithOROperator() {
+        String filter =
+                "AND m.additional_values_json IS NOT NULL "
+                        + "AND JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' )  = "
+                        + "'TRY_AGAIN_MEDICAL_RECORD'";
+        Map<String, List<String>> stringListMap = new AndOrFilterSeparator(filter).parseFiltersByLogicalOperators();
+        Assert.assertEquals("JSON_EXTRACT ( m.additional_values_json , '$.tryAgain' )  = 'TRY_AGAIN_MEDICAL_RECORD'",
+                stringListMap.get("AND").get(0));
+    }
+
+    @Test
     public void testEmbeddedKeyword() {
         String filter = " AND CONSENT.CONSENT_TISSUE = true AND CONSENT_ADDENDUM.SOMATIC_CONSENT_ADDENDUM_TUMOR = true";
         Map<String, List<String>> stringListMap = new AndOrFilterSeparator(filter).parseFiltersByLogicalOperators();
