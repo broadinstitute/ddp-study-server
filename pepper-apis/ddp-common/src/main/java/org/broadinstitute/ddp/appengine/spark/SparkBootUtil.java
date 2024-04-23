@@ -47,6 +47,8 @@ public class SparkBootUtil {
             requestThreadTimeoutMillis = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         }
         JettyConfig.setupJetty(preferredSourceIPHeader);
+        // By default, spark threads spawned by an http request never time out, which can result
+        // in crashes under heavy load with long running http requests, so we set a timeout.
         threadPool(-1, -1, requestThreadTimeoutMillis);
 
         log.info("Starting spark on port {}", port);
