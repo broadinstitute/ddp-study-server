@@ -232,6 +232,21 @@ public class DSMServer {
     public static void main(String[] args) {
         //config without secrets
         Config cfg = ConfigFactory.load();
+        //secrets from vault in a config file
+        File vaultConfigInCwd = new File(VAULT_CONF);
+        File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
+        File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
+        logger.info("Reading config values from {}", vaultConfig.getAbsolutePath());
+
+        if (cfg.hasPath(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)) {
+            logger.warn("{} should be in environment-specific configuration, not static source code",
+                    ApplicationConfigConstants.EMAIL_NOTIFICATIONS);
+        }
+        cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
+
+        if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT) && StringUtils.isNotBlank(cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT))) {
+            System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT));
+        }
         LogUtil.addAppEngineEnvVarsToMDC();
         // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
@@ -239,22 +254,6 @@ public class DSMServer {
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
-                //secrets from vault in a config file
-                File vaultConfigInCwd = new File(VAULT_CONF);
-                File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
-                File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
-                logger.info("Reading config values from {}", vaultConfig.getAbsolutePath());
-
-                if (cfg.hasPath(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)) {
-                    logger.warn("{} should be in environment-specific configuration, not static source code",
-                            ApplicationConfigConstants.EMAIL_NOTIFICATIONS);
-                }
-                cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
-
-                if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT) && StringUtils.isNotBlank(cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT))) {
-                    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT));
-                }
-
                 new DSMConfig(cfg);
                 DSMServer server = new DSMServer();
                 server.configureServer(cfg);
