@@ -8,7 +8,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.logging.LogUtil;
-import org.slf4j.MDC;
 import spark.Spark;
 
 import static spark.Spark.threadPool;
@@ -59,14 +58,14 @@ public class SparkBootUtil {
         Spark.port(port);
         Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
             log.info("Received GAE start request [{}] for instance {} deployment {}", request.url(),
-                    MDC.get(LogUtil.GAE_INSTANCE), MDC.get(LogUtil.GAE_DEPLOYMENT_ID));
+                    System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             response.status(HttpStatus.SC_OK);
             return "";
         });
 
         Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
-                    MDC.get(LogUtil.GAE_INSTANCE), MDC.get(LogUtil.GAE_DEPLOYMENT_ID));
+                    System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             if (stopRouteCallback != null) {
                 stopRouteCallback.onStop();
             }
