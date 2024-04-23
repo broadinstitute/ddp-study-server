@@ -12,7 +12,7 @@ public class LogUtil {
     public static final String GAE_INSTANCE = "GAE_INSTANCE";
 
     public static void addAppEngineEnvVarsToMDC() {
-        MDC.put(GAE_DEPLOYMENT_ID, System.getenv(GAE_DEPLOYMENT_ID));
-        MDC.put(GAE_INSTANCE, System.getenv(GAE_INSTANCE));
+        MDC.put(GAE_DEPLOYMENT_ID, System.getProperty(GAE_DEPLOYMENT_ID));
+        MDC.put(GAE_INSTANCE, System.getProperty(GAE_INSTANCE));
     }
 }
