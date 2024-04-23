@@ -230,6 +230,8 @@ public class DSMServer {
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
+        //config without secrets
+        Config cfg = ConfigFactory.load();
         LogUtil.addAppEngineEnvVarsToMDC();
         // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
@@ -237,8 +239,6 @@ public class DSMServer {
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
-                //config without secrets
-                Config cfg = ConfigFactory.load();
                 //secrets from vault in a config file
                 File vaultConfigInCwd = new File(VAULT_CONF);
                 File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
