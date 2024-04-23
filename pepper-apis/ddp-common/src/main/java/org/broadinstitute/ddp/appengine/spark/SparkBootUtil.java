@@ -8,7 +8,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.logging.LogUtil;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.slf4j.MDC;
 import spark.Spark;
 
@@ -31,9 +30,9 @@ public class SparkBootUtil {
      *
      * @param stopRouteCallback an optional callback that is called
      *                          when the _ah/stop route is called by GAE
+     * @param cfg the config to use
      */
-    public static void startSparkServer(StopRouteCallback stopRouteCallback) {
-        Config cfg = ConfigManager.getInstance().getConfig();
+    public static void startSparkServer(StopRouteCallback stopRouteCallback, Config cfg) {
         String preferredSourceIPHeader = null;
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
