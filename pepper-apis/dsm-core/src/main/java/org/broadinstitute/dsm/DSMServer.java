@@ -9,10 +9,8 @@ import static spark.Spark.exception;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.patch;
-import static spark.Spark.port;
 import static spark.Spark.post;
 import static spark.Spark.put;
-import static spark.Spark.threadPool;
 
 import java.io.File;
 import java.time.Duration;
@@ -43,8 +41,10 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPInternalError;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
@@ -56,7 +56,6 @@ import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
-import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
@@ -231,7 +230,10 @@ public class DSMServer {
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
+        LogUtil.addAppEngineEnvVarsToMDC();
+        // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
+        SparkBootUtil.startSparkServer(null);
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
@@ -254,16 +256,10 @@ public class DSMServer {
                 }
 
                 new DSMConfig(cfg);
-
-                String preferredSourceIPHeader = null;
-                if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
-                    preferredSourceIPHeader = cfg.getString(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER);
-                }
-                JettyConfig.setupJetty(preferredSourceIPHeader);
                 DSMServer server = new DSMServer();
                 server.configureServer(cfg);
                 isReady.set(true);
-                logger.info("DSM Startup Complete");
+                logger.info("DSM SparkBootUtil Complete");
             } catch (Exception e) {
                 logger.error("Error starting DSM server {}", e.toString());
                 e.printStackTrace();
@@ -449,21 +445,6 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
-        // Block until isReady is available, with an optional timeout to prevent
-        // instance for sitting around too long in a nonresponsive state.  There is a
-        // judgement call to be made here to allow for lengthy liquibase migrations during boot.
-        logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
-        get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
-
-        get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
-            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
-            //flush out any pending GA events
-            response.status(HttpStatus.SC_OK);
-            return "";
-        });
-    }
-
     protected static void enableCORS(String allowedOrigins, String methods, String headers) {
         Spark.options("/*", (request, response) -> {
             String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
@@ -495,24 +476,6 @@ public class DSMServer {
     protected void configureServer(@NonNull Config config) {
         String env = config.getString("portal.environment");
         logger.info("Property source: {} ", env);
-        logger.info("Configuring the server...");
-        threadPool(-1, -1, 60000);
-        int port = config.getInt("portal.port");
-        String appEnginePort = System.getenv("PORT");
-
-        // if port is passed via env var, assume it's GAE and prefer this port
-        if (appEnginePort != null) {
-            port = Integer.parseInt(appEnginePort);
-        }
-        long bootTimeoutSeconds = DEFAULT_BOOT_WAIT.getSeconds();
-        if (config.hasPath(ApplicationConfigConstants.BOOT_TIMEOUT)) {
-            bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
-        }
-
-        logger.info("Using port {}", port);
-        port(port);
-
-        registerAppEngineStartupCallback(bootTimeoutSeconds);
 
         setupDB(config);
 

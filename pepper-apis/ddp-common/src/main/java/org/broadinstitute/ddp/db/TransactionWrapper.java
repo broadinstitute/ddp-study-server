@@ -114,7 +114,7 @@ public class TransactionWrapper {
      * Should only be called during testing.
      */
     public static synchronized void reset() {
-        log.warn("reset() should only be called in the context of testing");
+        log.warn("reset() should only be called in the context of testing.");
         for (TransactionWrapper transactionWrapper : gTxnWrapper.values()) {
             try {
                 transactionWrapper.dataSource.close();

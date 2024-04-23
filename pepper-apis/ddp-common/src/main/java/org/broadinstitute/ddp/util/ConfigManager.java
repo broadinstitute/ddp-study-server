@@ -173,7 +173,7 @@ public class ConfigManager {
         for (Map.Entry<String, String> override : overrides.entrySet()) {
             ConfigValue overrideValue = ConfigValueFactory.fromAnyRef(override.getValue(), "Overriding via " + this.getClass().getName());
             cfgWithOverride = cfgWithOverride.withValue(override.getKey(), overrideValue);
-            log.info("Overriding config value for key {}", override.getKey());
+            log.info("Overriding config value for key {} to {}", override.getKey(), override.getValue());
         }
         return cfgWithOverride;
     }

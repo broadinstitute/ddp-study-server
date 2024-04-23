@@ -39,11 +39,11 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.customexport.housekeeping.schedule.CustomExportJob;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -87,6 +87,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.FileUploadNotificationJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.CreateKitEventAction;
@@ -112,7 +113,6 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
-import spark.Spark;
 
 @Slf4j
 public class Housekeeping {
@@ -197,6 +197,9 @@ public class Housekeeping {
     }
 
     public static void main(String[] args) {
+        LogUtil.addAppEngineEnvVarsToMDC();
+        // respond GAE dispatcher endpoints as soon as possible
+        SparkBootUtil.startSparkServer(null);
         start(args, null);
     }
 
@@ -284,11 +287,6 @@ public class Housekeeping {
         heartbeatMonitor = new StackdriverMetricsTracker(StackdriverCustomMetric.HOUSEKEEPING_CYCLES,
                 PointsReducerFactory.buildMaxPointReducer());
 
-        String envPort = System.getenv(ENV_PORT);
-        if (envPort != null) {
-            // We're likely in an GAE environment, so respond to the start hook before starting main event loop.
-            respondToGAEStartHook(envPort);
-        }
 
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
@@ -484,7 +482,6 @@ public class Housekeeping {
                 log.error("Failed to shutdown PubSubTask API", e);
             }
         }
-
         log.info("Housekeeping is shutting down");
     }
 
@@ -621,39 +618,6 @@ public class Housekeeping {
 
         // All set, pass new subscriber downstream.
         consumer.accept(newSubscriber);
-    }
-
-    private static void respondToGAEStartHook(String envPort) {
-        var receivedPing = new AtomicBoolean(false);
-
-        Spark.port(Integer.parseInt(envPort));
-        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            receivedPing.set(true);
-            response.status(200);
-            return "";
-        });
-        Spark.awaitInitialization();
-        log.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
-
-        long startMillis = Instant.now().toEpochMilli();
-        while (!receivedPing.get()) {
-            if (Instant.now().toEpochMilli() - startMillis > SLEEP_MILLIS) {
-                break;
-            }
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                log.warn("Wait interrupted", e);
-            }
-        }
-
-        Spark.stop();
-        Spark.awaitStop();
-        if (receivedPing.get()) {
-            log.info("Received ping from GAE, proceeding with Housekeeping startup");
-        } else {
-            log.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
-        }
     }
 
     private static boolean isTimeForLogging(long lastLogTime) {

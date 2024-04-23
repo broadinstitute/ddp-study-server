@@ -7,8 +7,9 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_CLI
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TEST_USER_AUTH0_ID;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
+import java.net.MalformedURLException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,10 +48,10 @@ import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.security.JWTConverterTest;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.DBTestContainer;
-import org.broadinstitute.ddp.util.JavaProcessSpawner;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -180,11 +181,9 @@ public class IntegrationTestSuite {
     }
 
     private static void insertTestData() {
-        log.warn("Inserting test data!!!!");
         RouteTestUtil.setupDatabasePool();
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
-        log.warn("Test data has been inserted!!!!");
     }
 
     private static List<Class> ignoredClasses() {
@@ -273,7 +272,6 @@ public class IntegrationTestSuite {
     }
 
     public static void tearDownSuiteServer() {
-        // todo(yufeng) figure out how to shutdown server running in separate process
         DataDonationPlatform.shutdown();
         TransactionWrapper.reset();
     }
@@ -281,58 +279,25 @@ public class IntegrationTestSuite {
     private static void bootAppServer(boolean isCacheDisabled) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
-        boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
-
         Map<String, String> serverArgs = new HashMap<>();
         serverArgs.put("config.file", RouteTestUtil.getConfigFilePath());
         serverArgs.put("cachingDisabled", isCacheDisabled + "");
 
-        int bootTimeoutSeconds = 30;
         log.info("Starting app on port {}", port);
 
-        if (spawnProcess) {
-            if (isDebugEnabled()) {
-                log.warn("You're running in debug mode but the server side is running in a separate process.  "
-                        + "You will need to set the debug port for the server side separately and connect "
-                        + "the debugger in a separate remote session.  Alternatively, run the server side in-process");
-            }
-            try {
-                // todo arz parameterize/environment-ize debug port
-                JavaProcessSpawner.spawnMainInSeparateProcess(DataDonationPlatform.class,
-                        IntegrationTestSuite.class, bootTimeoutSeconds);
-            } catch (IOException e) {
-                log.error("App starter failed.", e);
-            }
-        } else {
-            runDdpServer(isCacheDisabled);
-        }
-
-    }
-
-    private static boolean isDebugEnabled() {
-        boolean isDebugOn = false;
-        RuntimeMXBean mxBean = ManagementFactory.getRuntimeMXBean();
-        if (mxBean != null) {
-            List<String> args = mxBean.getInputArguments();
-            if (args != null) {
-                for (String arg : args) {
-                    if (arg.contains(DEBUG_FLAG)) {
-                        isDebugOn = true;
-                        break;
-                    }
-                }
-            }
-        }
-        return isDebugOn;
+        runDdpServer(isCacheDisabled);
     }
 
     private static void runDdpServer(boolean isCachingDisabled) {
         long startTime = System.currentTimeMillis();
         log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
-        DataDonationPlatform.main(new String[] {});
-
-        log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
+        try {
+            DataDonationPlatform.start();
+        } catch (MalformedURLException e) {
+            log.error("Could not start server", e);
+            Assert.fail("Could not start server");
+        }
     }
 
     private static void waitForServer(int millisecs) {
@@ -384,9 +349,10 @@ public class IntegrationTestSuite {
 
         ) {
             httpClient.execute(new HttpGet(serverUrl));
+            log.info("Test server is running already");
             return true;
         } catch (HttpHostConnectException e) {
-            log.debug("Could not connect to server url. Must not be running");
+            log.info("Could not connect to server url. Must not be running");
             return false;
         } catch (IOException e) {
             String msg = "There was problem initializing CloseableHttpClient";
@@ -396,11 +362,47 @@ public class IntegrationTestSuite {
 
     }
 
+    /**
+     * Called by circleci when creating a dss backend
+     * to run tests against.  Starting a test instance
+     * from scratch can take 30s or more, during which
+     * time most routes will not work properly.  To check
+     * for readiness, ping port 5999 with a utility
+     * like netcat.  When you can connect to port 5999,
+     * the instance is ready for traffic.  Note that
+     * this administrative port is only available for one
+     * connection.  After that, the port closes.
+     */
     public static void main(String[] args) {
         initializeDatabase();
         startupTestServer(true);
         insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
+        // now start a separate service that circleCI can ping once
+        // all the test data has been loaded and client tests can run
+        new SingleUseServerSocket(5999);
+    }
+
+    /**
+     * Server socket that allows one connection
+     * and then closes
+     */
+    public static class SingleUseServerSocket {
+
+        public SingleUseServerSocket(int port) {
+            ServerSocket serverSocket = null;
+            try {
+                serverSocket = new ServerSocket(port);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try (Socket clientSocket = serverSocket.accept()) {
+                log.info("CI/CD readiness port connected, now closing");
+                serverSocket.close();
+            } catch (IOException e) {
+                log.error("socket error", e);
+            }
+        }
     }
 
 }
