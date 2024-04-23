@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -156,7 +157,7 @@ public class Dsm {
 
     public List<CohortTag> getCohortTag() {
         if (cohortTag == null) {
-            cohortTag = Collections.emptyList();
+            cohortTag = new ArrayList<>();
         }
         return cohortTag;
     }

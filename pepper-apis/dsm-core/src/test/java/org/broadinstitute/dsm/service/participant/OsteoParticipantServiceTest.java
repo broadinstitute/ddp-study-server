@@ -213,7 +213,8 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
             Assert.fail("Failed to initialize reconsented participant: " + e.getMessage());
         }
 
-        // when no osteo1 Participant record, initializeReconsentedParticipant is a no-op
+        // when no osteo1 Participant record, initializeReconsentedParticipant only creates a cohort tag
+        verifyCohortTag(ddpParticipantId, OSTEO2_COHORT_TAG_NAME, osteo2InstanceDto);
         List<ParticipantDto> participants = participantDao.getParticipant(ddpParticipantId);
         Assert.assertTrue(participants.isEmpty());
     }

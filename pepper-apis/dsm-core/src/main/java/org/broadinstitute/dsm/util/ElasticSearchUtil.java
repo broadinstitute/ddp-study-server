@@ -1384,10 +1384,10 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static Map<String, Map<String, Object>> getActivityDefinitions(@NonNull DDPInstance instance) {
+    public static Map<String, Map<String, Object>> getActivityDefinitions(@NonNull DDPInstanceDto instance) {
         initialize();
         Map<String, Map<String, Object>> esData = new HashMap<>();
-        String index = instance.getActivityDefinitionIndexES();
+        String index = instance.getEsActivityDefinitionIndex();
         if (StringUtils.isNotBlank(index)) {
             logger.info("Collecting activity definitions from ES");
             try {
@@ -1408,9 +1408,9 @@ public class ElasticSearchUtil {
                     i++;
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Couldn't get activity definition from ES for instance " + instance.getName(), e);
+                throw new RuntimeException("Couldn't get activity definition from ES for instance " + instance.getInstanceName(), e);
             }
-            logger.info("Got " + esData.size() + " activity definitions from ES for instance " + instance.getName());
+            logger.info("Got " + esData.size() + " activity definitions from ES for instance " + instance.getInstanceName());
         }
         return esData;
     }
