@@ -66,7 +66,8 @@ public class SparkBootUtil {
         });
 
         Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            log.info("Received GAE stop request [{}]", request.url());
+            log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
+                    MDC.get(LogUtil.GAE_INSTANCE), MDC.get(LogUtil.GAE_DEPLOYMENT_ID));
             if (stopRouteCallback != null) {
                 stopRouteCallback.onStop();
             }
