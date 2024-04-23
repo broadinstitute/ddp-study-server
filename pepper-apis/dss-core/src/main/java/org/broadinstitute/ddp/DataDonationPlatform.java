@@ -263,7 +263,8 @@ public class DataDonationPlatform {
     public static void start() throws MalformedURLException {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         LogUtil.addAppEngineEnvVarsToMDC();
-        SparkBootUtil.startSparkServer(null); // respond GAE dispatcher endpoints as soon as possible
+        // respond GAE dispatcher endpoints as soon as possible
+        SparkBootUtil.startSparkServer(null);
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 

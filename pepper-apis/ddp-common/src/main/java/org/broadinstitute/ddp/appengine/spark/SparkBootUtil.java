@@ -7,7 +7,9 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.jetty.JettyConfig;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.slf4j.MDC;
 import spark.Spark;
 
 import static spark.Spark.threadPool;
@@ -37,25 +39,26 @@ public class SparkBootUtil {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
         }
         int configFilePort = cfg.getInt(ConfigFile.PORT);
-        String appEnginePort = System.getenv(APPENGINE_PORT_ENV_VAR); // the port defined by app engine "wins"
-        int port = -1;
-        if (appEnginePort != null) {
-            port = Integer.parseInt(appEnginePort);
-        } else {
-            port = configFilePort;
-        }
+        String appEnginePort = System.getenv(APPENGINE_PORT_ENV_VAR);
+        int port = appEnginePort != null ? Integer.parseInt(appEnginePort) : configFilePort;
 
-        int requestThreadTimeout = 60000;
+        int requestThreadTimeoutMillis = 60000;
         if (cfg.hasPath(ConfigFile.THREAD_TIMEOUT)) {
-            requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
+            requestThreadTimeoutMillis = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         }
         JettyConfig.setupJetty(preferredSourceIPHeader);
-        threadPool(-1, -1, requestThreadTimeout);
+        threadPool(-1, -1, requestThreadTimeoutMillis);
 
         log.info("Starting spark on port {}", port);
+
+        // When running in GAE, it's important to respond to the _ah/start request
+        // as quickly as possible so that the GAE scheduler knows the app has started
+        // cleanly.  Otherwise, the GAE scheduler may start a runaway process of creating
+        // multiple instances as it tries to find one that works.
         Spark.port(port);
         Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            log.info("Received GAE start request [{}]", request.url());
+            log.info("Received GAE start request [{}] for instance {} deployment {}", request.url(),
+                    MDC.get(LogUtil.GAE_INSTANCE), MDC.get(LogUtil.GAE_DEPLOYMENT_ID));
             response.status(HttpStatus.SC_OK);
             return "";
         });

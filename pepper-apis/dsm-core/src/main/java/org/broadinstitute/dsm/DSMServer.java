@@ -231,8 +231,9 @@ public class DSMServer {
 
     public static void main(String[] args) {
         LogUtil.addAppEngineEnvVarsToMDC();
-        SparkBootUtil.startSparkServer(null);  // respond GAE dispatcher endpoints as soon as possible
+        // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
+        SparkBootUtil.startSparkServer(null);
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
