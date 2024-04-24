@@ -202,7 +202,7 @@ public class ClinicalKitDao {
                     eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(eventName, ddpParticipantId).orElse(false);
             if (!participantHasTriggeredEventByEventType) {
                 String type = eventTypeDto.getEventName();
-                EventUtil.triggerDDP(type, ddpInstance, ddpParticipantId);
+                EventUtil.triggerDDPForParticipantEvent(type, ddpInstance, ddpParticipantId);
             } else {
                 log.info("Participant " + ddpParticipantId + " was already triggered for event type " + eventName);
             }

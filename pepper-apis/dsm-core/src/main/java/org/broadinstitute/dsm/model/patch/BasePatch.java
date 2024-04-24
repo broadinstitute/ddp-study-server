@@ -217,7 +217,7 @@ public abstract class BasePatch {
                     eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(action.getName(), patch.getParentId()).orElse(false);
             if (!participantHasTriggeredEventByEventType) {
                 String type = eventTypeDto.getEventName();
-                EventUtil.triggerDDP(type, ddpInstance, patch.getParentId());
+                EventUtil.triggerDDPForParticipantEvent(type, ddpInstance, patch.getParentId());
             } else {
                 logger.info("Participant " + patch.getParentId() + " was already triggered for event type " + action.getName());
             }

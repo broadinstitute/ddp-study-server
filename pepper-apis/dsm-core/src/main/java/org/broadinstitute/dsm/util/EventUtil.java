@@ -11,6 +11,7 @@ import java.util.Collection;
 
 import com.sun.istack.NotNull;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ParticipantEvent;
 import org.broadinstitute.dsm.exception.DsmInternalError;
@@ -44,12 +45,9 @@ public class EventUtil {
                     + "AND kit.scan_date <= (UNIX_TIMESTAMP(NOW())-(eve.hours*60*60))*1000 "
                     + "AND kit.receive_date IS NULL AND kit.deactivated_date IS NULL AND realm.is_active = 1 AND queue.EVENT_TYPE IS NULL";
     private static final Logger logger = LoggerFactory.getLogger(EventUtil.class);
-    private static final String SQL_INSERT_KIT_EVENT =
+    private static final String SQL_INSERT_EVENT =
             "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, "
-                    + "DSM_KIT_REQUEST_ID = ?, EVENT_TRIGGERED = ?";
-    private static final String SQL_INSERT_PT_EVENT =
-            "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, "
-                    + "DDP_PARTICIPANT_ID = ?, EVENT_TRIGGERED = ?";
+                    + "DDP_PARTICIPANT_ID = ?, DSM_KIT_REQUEST_ID = ?, EVENT_TRIGGERED = ?";
 
     private static final int MAX_TRIES = 3;
 
@@ -58,7 +56,7 @@ public class EventUtil {
         boolean dssSuccessfullyTriggered = false;
         if (!ParticipantEvent.isParticipantEventSkipped(kitDDPNotification.getParticipantId(), kitDDPNotification.getEventName(),
                 kitDDPNotification.getDdpInstanceId())) {
-            dssSuccessfullyTriggered = triggerDDPByKitEvent(kitDDPNotification);
+            dssSuccessfullyTriggered = triggerDDPForKitEvent(kitDDPNotification);
         } else {
             logger.info("Participant event was skipped per data in participant_event table. DDP will not get triggered");
             //we also have to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
@@ -68,19 +66,19 @@ public class EventUtil {
     }
 
     //used in ClinicalKitDao and BasePatch class
-    public static void triggerDDP(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
+    public static void triggerDDPForParticipantEvent(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
         if (!ParticipantEvent.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
             triggerDDPWithEvent(eventName, ddpInstance, 0, ddpParticipantId, ddpParticipantId, ddpParticipantId);
         } else {
             logger.info("Participant event was skipped per data in participant_event table. DDP will not get triggered");
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
-            addKitEvent(eventName, ddpInstanceId, ddpParticipantId, false);
+            addParticipantEvent(eventName, ddpInstanceId, ddpParticipantId, false);
         }
-        addPTEvent(eventName, ddpInstanceId, ddpParticipantId, true);
+        addParticipantEvent(eventName, ddpInstanceId, ddpParticipantId, true);
     }
 
-    private static boolean triggerDDPByKitEvent(KitDDPNotification kitDDPNotification) {
+    private static boolean triggerDDPForKitEvent(KitDDPNotification kitDDPNotification) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(kitDDPNotification.getDdpInstanceId());
         return triggerDDPWithEvent(kitDDPNotification.getEventName(), ddpInstance,
                 kitDDPNotification.getDate() / 1000, kitDDPNotification.getParticipantId(),
@@ -98,40 +96,62 @@ public class EventUtil {
                 if (response == 200) {
                     return true;
                 }
-                logger.error("POST request to %s failed with response code %d, for participant %s about %s for dsm_kit_request_id %s in"
+                logger.warn("POST request to %s failed with response code %d, for participant %s about %s for dsm_kit_request_id %s in"
                                     + " try %d", ddpInstance.getName(), response, ddpParticipantId, eventType, eventInfo, tries);
 
             } catch (IOException e) {
-                logger.error("Failed to trigger %s to notify participant %s about %s for dsm_kit_request_id %s in try %d",
-                        ddpInstance.getName(), ddpParticipantId, eventType, eventInfo, tries);
+                logger.warn("Failed to trigger %s to notify participant %s about %s for dsm_kit_request_id %s in try %d".formatted(
+                        ddpInstance.getName(), ddpParticipantId, eventType, eventInfo, tries));
                 e.printStackTrace();
             }
             tries++;
         }
+        logger.error("DSM was unable to send the trigger to DSS for study %s,  participant %s, event type %s and event info %s, "
+                        + " exhausted all tries. Event will be added to the EVENT_QUEUE table",
+                ddpInstance.getName(), ddpParticipantId, eventType, eventInfo);
         return false;
     }
 
     public static void addKitEvent(@NonNull String name, @NonNull int ddpInstanceID, @NonNull String requestId, boolean trigger) {
-        addEvent(name, ddpInstanceID, requestId, trigger, SQL_INSERT_KIT_EVENT);
+        insertEvent(name, ddpInstanceID, null, requestId, trigger);
+
     }
 
-    public static void addPTEvent(@NonNull String name, @NonNull int instanceID, @NonNull String requestId, boolean trigger) {
-        addEvent(name, instanceID, requestId, trigger, SQL_INSERT_PT_EVENT);
+    public static void addParticipantEvent(@NonNull String name, @NonNull int instanceID, @NonNull String ddpParticipantId, boolean trigger) {
+        insertEvent(name, instanceID, ddpParticipantId, null, trigger);
     }
 
-    public static void addEvent(@NonNull String type, @NonNull int ddpInstanceID, @NonNull String requestId,
-                                boolean trigger, String query) {
+    public static void insertEvent(@NonNull String type, @NonNull int ddpInstanceID, String ddpParticipantId,
+                                   String dsmKitRequestId, boolean trigger) {
+        if (StringUtils.isBlank(ddpParticipantId) && StringUtils.isBlank(dsmKitRequestId)) {
+            throw new DsmInternalError(("Both ddpParticipantId and dsmKitRequestId cannot be null, unable to insert event for type %s and "
+                    + " instance %d").formatted(type, ddpInstanceID));
+        }
         SimpleResult result = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_EVENT)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setString(2, type);
                 stmt.setInt(3, ddpInstanceID);
-                stmt.setString(4, requestId);
-                stmt.setBoolean(5, trigger);
+                if (StringUtils.isNotBlank(ddpParticipantId)) {
+                    stmt.setString(4, ddpParticipantId);
+                } else {
+                    stmt.setNull(4, java.sql.Types.VARCHAR);
+                }
+                if (StringUtils.isNotBlank(dsmKitRequestId)) {
+                    stmt.setString(5, dsmKitRequestId);
+                } else {
+                    stmt.setNull(5, java.sql.Types.VARCHAR);
+                }
+                stmt.setString(5, dsmKitRequestId);
+                stmt.setBoolean(6, trigger);
                 int r = stmt.executeUpdate();
                 if (r != 1) {
-                    dbVals.resultException = new DsmInternalError("Error could not add event for kit request " + requestId);
+                    if (ddpParticipantId != null) {
+                        dbVals.resultException = new DsmInternalError("Error could not add event for participant " + ddpParticipantId);
+                    } else {
+                        dbVals.resultException = new DsmInternalError("Error could not add event for kit request " + dsmKitRequestId);
+                    }
                     return dbVals;
                 }
             } catch (SQLException e) {
@@ -140,7 +160,11 @@ public class EventUtil {
             return dbVals;
         });
         if (result.resultException != null) {
-            logger.error("Error adding event for kit request " + requestId, result.resultException);
+            if (ddpParticipantId != null) {
+                logger.error("Error adding event for participant " + ddpParticipantId, result.resultException);
+            } else {
+                logger.error("Error adding event for kit request " + dsmKitRequestId, result.resultException);
+            }
         }
     }
 
