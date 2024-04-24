@@ -67,7 +67,6 @@ public class EventUtil {
                 kitDDPNotification.getDsmKitRequestId(), dssSuccessfullyTriggered);
     }
 
-
     //used in ClinicalKitDao and BasePatch class
     public static void triggerDDP(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
@@ -112,9 +111,12 @@ public class EventUtil {
         return false;
     }
 
-    public static void addKitEvent(@NonNull String name, @NonNull int ddpInstanceID, @NonNull String requestId,
-                                boolean trigger) {
+    public static void addKitEvent(@NonNull String name, @NonNull int ddpInstanceID, @NonNull String requestId, boolean trigger) {
         addEvent(name, ddpInstanceID, requestId, trigger, SQL_INSERT_KIT_EVENT);
+    }
+
+    public static void addPTEvent(@NonNull String name, @NonNull int instanceID, @NonNull String requestId, boolean trigger) {
+        addEvent(name, instanceID, requestId, trigger, SQL_INSERT_PT_EVENT);
     }
 
     public static void addEvent(@NonNull String type, @NonNull int ddpInstanceID, @NonNull String requestId,
@@ -140,11 +142,6 @@ public class EventUtil {
         if (result.resultException != null) {
             logger.error("Error adding event for kit request " + requestId, result.resultException);
         }
-    }
-
-    public static void addPTEvent(@NonNull String name, @NonNull int instanceID, @NonNull String requestId,
-                                  boolean trigger) {
-        addEvent(name, instanceID, requestId, trigger, SQL_INSERT_PT_EVENT);
     }
 
     public void triggerReminder() {
