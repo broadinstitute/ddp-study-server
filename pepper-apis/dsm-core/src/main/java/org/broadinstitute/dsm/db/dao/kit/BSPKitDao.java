@@ -9,6 +9,7 @@ import java.util.Optional;
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.gp.BSPKit;
@@ -23,7 +24,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
             + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
             + "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? "
             + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
-    private final String SQL_SELECT_METADATA_FOR_KIT =
+    private static final String SQL_SELECT_METADATA_FOR_KIT =
             "select realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, collection_date, "
                     + "request.bsp_collaborator_participant_id,  realm.bsp_group,  realm.bsp_collection, "
                     + "realm.bsp_organism,  realm.notification_recipients,  request.ddp_participant_id, "
@@ -93,9 +94,10 @@ public class BSPKitDao implements Dao<BSPKitDto> {
         return Optional.ofNullable((BSPKitDto) results.resultValue);
     }
 
-    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver) {
-        TransactionWrapper.inTransaction(conn -> {
-            boolean firstTimeReceived = false;
+    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver,
+                                            DDPInstanceDto ddpInstanceDto) {
+        boolean firstTimeReceived = TransactionWrapper.inTransaction(conn -> {
+            boolean firstTime = false;
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateKitReceived)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setString(2, receiver);
@@ -104,16 +106,15 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                 if (result > 1) { // 1 row or 0 row updated is perfect
                     throw new DsmInternalError("Error updating kit w/label " + kitLabel + " (updated " + result + " rows)");
                 }
-                firstTimeReceived = result == 1;
+                firstTime = result == 1;
             } catch (Exception e) {
                 logger.error("Failed to set kit w/ label " + kitLabel + " as received ", e);
             }
-            if (triggerDDP) {
-                BSPKit bspKit = new BSPKit();
-                // TODO: this should not be in a DB transaction since it makes a call to an external service -DC
-                bspKit.triggerDDP(conn, bspKitDto, firstTimeReceived, kitLabel);
-            }
-            return firstTimeReceived;
+            return firstTime;
         });
+        if (triggerDDP) {
+            BSPKit bspKit = new BSPKit();
+            bspKit.triggerDDP(bspKitDto, firstTimeReceived, kitLabel);
+        }
     }
 }

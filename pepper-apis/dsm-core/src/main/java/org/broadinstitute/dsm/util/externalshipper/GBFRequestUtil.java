@@ -2,22 +2,6 @@ package org.broadinstitute.dsm.util.externalshipper;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -34,6 +18,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -495,12 +495,12 @@ public class GBFRequestUtil implements ExternalShipper {
                                 if (kitDeliveredNotification != null) {
                                     logger.info("Triggering DDP for kit 'DELIVERED' with external order number: "
                                             + kit.getExternalOrderNumber());
-                                    EventUtil.triggerDDP(conn, kitDeliveredNotification);
+                                    EventUtil.sendKitNotification(kitDeliveredNotification);
                                 } else {
                                     logger.error("delivered kitDDPNotification was null for " + kit.getExternalOrderNumber());
                                 }
                             }
-                            EventUtil.triggerDDP(conn, kitDDPNotification);
+                            EventUtil.sendKitNotification(kitDDPNotification);
                         } else {
                             logger.error("kitDDPNotification was null for " + kit.getExternalOrderNumber());
                         }

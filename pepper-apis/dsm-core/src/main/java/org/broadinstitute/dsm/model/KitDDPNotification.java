@@ -22,7 +22,7 @@ public class KitDDPNotification {
     private static final Logger logger = LoggerFactory.getLogger(KitDDPNotification.class);
     private final String participantId;
     private final String dsmKitRequestId;
-    private final String ddpInstanceId;
+    private final int ddpInstanceId;
     private final String instanceName;
     private final String baseUrl;
     private final String eventName;
@@ -32,7 +32,7 @@ public class KitDDPNotification {
     private final String uploadReason;
     private final String ddpKitRequestId;
 
-    public KitDDPNotification(String participantId, String dsmKitRequestId, String ddpInstanceId, String instanceName, String baseUrl,
+    public KitDDPNotification(String participantId, String dsmKitRequestId, int ddpInstanceId, String instanceName, String baseUrl,
                               String eventName, String eventType, long date, boolean hasAuth0Token, String uploadReason,
                               String ddpKitRequestId) {
         this.participantId = participantId;
@@ -60,7 +60,7 @@ public class KitDDPNotification {
                     if (count == expectedCount
                             && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
                         dbVals.resultValue = new KitDDPNotification(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID),
+                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                 rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
                                 rs.getString(DBConstants.EVENT_NAME), rs.getString(DBConstants.EVENT_TYPE),
                                 rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
@@ -95,7 +95,7 @@ public class KitDDPNotification {
                 rs.beforeFirst();
                 if (count == expectedCount && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
                     result = new KitDDPNotification(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                            rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID),
+                            rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                             rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
                             rs.getString(DBConstants.EVENT_NAME), rs.getString(DBConstants.EVENT_TYPE),
                             rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),

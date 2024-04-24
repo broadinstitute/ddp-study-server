@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.kit;
 
 import java.util.Optional;
 
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
@@ -47,11 +46,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL,
                 ddpLabel, 1);
         if (kitDDPNotification != null) {
-            TransactionWrapper.inTransaction(conn -> {
-                // TODO: this should not be in a DB transaction since it makes a call to an external service -DC
-                EventUtil.triggerDDP(conn, kitDDPNotification);
-                return null;
-            });
+            EventUtil.sendKitNotification(kitDDPNotification);
         }
         if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
             try {

@@ -23,7 +23,7 @@ import spark.Route;
 public class ClinicalKitsRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
-
+    private final ClinicalKitDao clinicalKitDao = new ClinicalKitDao();
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
@@ -72,7 +72,7 @@ public class ClinicalKitsRoute implements Route {
             clinicalKit.setSampleCollection(ClinicalKitDao.PECGS);
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitInfo.getRealm());
             clinicalKit.setNecessaryParticipantDataToClinicalKit(ddpParticipantId, ddpInstance);
-            ClinicalKitDao.ifTissueAccessionedTriggerDDP(ddpParticipantId, ddpInstance);
+            clinicalKitDao.triggerRequiredSamplesReceivedEvent(ddpParticipantId, ddpInstance);
             return clinicalKit;
         }
     }

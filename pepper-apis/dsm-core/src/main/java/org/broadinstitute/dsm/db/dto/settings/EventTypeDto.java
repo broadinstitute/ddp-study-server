@@ -6,7 +6,7 @@ import lombok.Getter;
 public class EventTypeDto {
 
     private int eventTypeId;
-    private String ddpInstanceId;
+    private int ddpInstanceId;
     private String instanceName;
     private String baseUrl;
     private Boolean auth0Token;
@@ -32,7 +32,7 @@ public class EventTypeDto {
     public static class Builder {
 
         private int eventTypeId;
-        private String ddpInstanceId;
+        private int ddpInstanceId;
         private String instanceName;
         private String baseUrl;
         private Boolean auth0Token;
@@ -42,7 +42,7 @@ public class EventTypeDto {
         private String eventType;
         private int hours;
 
-        public Builder(String ddpInstanceId) {
+        public Builder(int ddpInstanceId) {
             this.ddpInstanceId = ddpInstanceId;
         }
 

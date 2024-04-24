@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.model.patch;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -218,10 +216,8 @@ public abstract class BasePatch {
             boolean participantHasTriggeredEventByEventType =
                     eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(action.getName(), patch.getParentId()).orElse(false);
             if (!participantHasTriggeredEventByEventType) {
-                inTransaction((conn) -> {
-                    EventUtil.triggerDDP(conn, eventType, patch.getParentId());
-                    return null;
-                });
+                String type = eventTypeDto.getEventName();
+                EventUtil.triggerDDP(type, ddpInstance, patch.getParentId());
             } else {
                 logger.info("Participant " + patch.getParentId() + " was already triggered for event type " + action.getName());
             }

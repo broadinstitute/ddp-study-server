@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -80,6 +79,35 @@ public class ParticipantEvent {
         return skippedParticipantEvents;
     }
 
+    public static Collection<String> getSkippedParticipantEvents(@NonNull String ddpParticipantId, int instanceId) {
+        ArrayList<String> skippedEvents = new ArrayList();
+        SimpleResult result = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
+                stmt.setInt(1, instanceId);
+                stmt.setString(2, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        skippedEvents.add(rs.getString(DBConstants.EVENT));
+                    }
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        if (result.resultException != null) {
+            logger.error("Couldn't get skipped participant events for " + instanceId, result.resultException);
+        }
+        return skippedEvents;
+    }
+
+    public static boolean isParticipantEventSkipped(@NonNull String ddpParticipantId, @NonNull String eventType,
+                                                    int ddpInstanceId) {
+        Collection<String> skippedParticipantEvents = getSkippedParticipantEvents(ddpParticipantId, ddpInstanceId);
+        return skippedParticipantEvents.contains(eventType);
+    }
+
     public static void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,
                                             @NonNull DDPInstance instance, @NonNull String eventType) {
         SimpleResult results = inTransaction((conn) -> {
@@ -107,46 +135,5 @@ public class ParticipantEvent {
         if (results.resultException != null) {
             logger.error("Couldn't skip event for participant w/ ddpParticipantId " + ddpParticipantId, results.resultException);
         }
-    }
-
-    public static Collection<String> getParticipantEvent(@NonNull String ddpParticipantId, @NonNull String instanceId) {
-        ArrayList<String> skippedEvents = new ArrayList();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
-                stmt.setString(1, instanceId);
-                stmt.setString(2, ddpParticipantId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        skippedEvents.add(rs.getString(DBConstants.EVENT));
-                    }
-                }
-            } catch (Exception ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            logger.error("Couldn't exited participants for " + instanceId, results.resultException);
-        }
-        return skippedEvents;
-    }
-
-    public static Collection<String> getParticipantEvent(Connection conn, @NonNull String ddpParticipantId, @NonNull String instanceId) {
-        ArrayList<String> skippedEvents = new ArrayList();
-        try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
-            stmt.setString(1, instanceId);
-            stmt.setString(2, ddpParticipantId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    skippedEvents.add(rs.getString(DBConstants.EVENT));
-                }
-            }
-        } catch (Exception ex) {
-            logger.error("Couldn't get exited participants for " + instanceId, ex);
-        }
-
-        return skippedEvents;
     }
 }

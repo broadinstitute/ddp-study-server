@@ -85,14 +85,14 @@ public class GPReceivedKit {
     private static void updateKitAndExport(String kitLabel, BSPKitDao bspKitDao, BSPKitDto maybeBspKitQueryResult, boolean triggerDDP,
                                            String receiver) {
         long receivedDate = System.currentTimeMillis();
-        bspKitDao.setKitReceivedAndTriggerDDP(kitLabel, triggerDDP, maybeBspKitQueryResult, receiver);
+
+        DDPInstanceDto ddpInstanceDto =
+                new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
+        bspKitDao.setKitReceivedAndTriggerDDP(kitLabel, triggerDDP, maybeBspKitQueryResult, receiver, ddpInstanceDto);
 
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setReceiveDate(receivedDate);
         kitRequestShipping.setKitLabel(kitLabel);
-
-        DDPInstanceDto ddpInstanceDto =
-                new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
         if (StringUtils.isNotBlank(ddpInstanceDto.getEsParticipantIndex())) {
             try {

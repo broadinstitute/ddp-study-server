@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.gp;
 
-import java.sql.Connection;
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -42,14 +41,14 @@ public class BSPKit extends GPReceivedKit {
         }
     }
 
-    public void triggerDDP(Connection conn, @NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
+    public void triggerDDP(@NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
         try {
             if (bspKitInfo.isHasParticipantNotifications() && firstTimeReceived) {
                 KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
                         kitLabel, 1);
                 if (kitDDPNotification != null) {
-                    EventUtil.triggerDDP(conn, kitDDPNotification);
+                    EventUtil.sendKitNotification(kitDDPNotification);
                 }
             }
         } catch (Exception e) {

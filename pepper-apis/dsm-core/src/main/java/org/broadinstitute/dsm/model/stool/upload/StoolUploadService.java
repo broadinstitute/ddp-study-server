@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.stool.upload;
 
 import java.util.List;
 
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDto;
 import org.broadinstitute.dsm.files.parser.AbstractRecordsParser;
@@ -38,10 +37,7 @@ public class StoolUploadService {
                     stoolUploadDto.getMfBarcode(), 1);
             if (kitDDPNotification != null) {
                 logger.info("Triggering DDP to send emails");
-                TransactionWrapper.inTransaction(conn -> {
-                    EventUtil.triggerDDP(conn, kitDDPNotification);
-                    return null;
-                });
+                EventUtil.sendKitNotification(kitDDPNotification);
             } else {
                 logger.warn(String.format("No notification was found for barcode %s", stoolUploadDto.getMfBarcode()));
             }
