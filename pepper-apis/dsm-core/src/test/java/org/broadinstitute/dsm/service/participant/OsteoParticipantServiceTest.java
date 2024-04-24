@@ -5,7 +5,6 @@ import static org.broadinstitute.dsm.service.participant.OsteoParticipantService
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +15,6 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
-import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
-import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
@@ -102,7 +99,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
         osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
-        verifyCohortTag(ddpParticipantId, OSTEO2_COHORT_TAG_NAME, osteo2InstanceDto);
+        verifyCohortTags(ddpParticipantId, osteo2InstanceDto, List.of(OSTEO2_COHORT_TAG_NAME));
     }
 
     @Test
@@ -118,7 +115,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
         osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
-        verifyCohortTag(ddpParticipantId, OSTEO1_COHORT_TAG_NAME, osteo1InstanceDto);
+        verifyCohortTags(ddpParticipantId, osteo1InstanceDto, List.of(OSTEO1_COHORT_TAG_NAME));
     }
 
     @Test
@@ -128,6 +125,10 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
 
         ElasticTestUtil.addActivitiesFromFile(osteo1EsIndex, "elastic/osteoActivitiesNoConsent.json", ddpParticipantId);
 
+        // create a minimal participant profile in osteo2 that matches the profile in osteo1
+        ElasticTestUtil.addParticipantProfileFromFile(osteo2EsIndex,
+                "elastic/participantProfile.json", ddpParticipantId);
+
         ElasticSearchParticipantDto esParticipantDto =
                 elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, osteo1EsIndex);
 
@@ -136,13 +137,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
 
         // when no consent, an osteo2 cohort tag should be created
-        CohortTagDao cohortTagDao = new CohortTagDaoImpl();
-        Map<String, List<CohortTag>> ptpToTags = cohortTagDao.getCohortTagsByInstanceName(osteo2InstanceName);
-        Assert.assertEquals(1, ptpToTags.size());
-        List<CohortTag> tags = ptpToTags.get(ddpParticipantId);
-        Assert.assertNotNull(tags);
-        Assert.assertEquals(1, tags.size());
-        Assert.assertEquals(OSTEO2_COHORT_TAG_NAME, tags.get(0).getCohortTagName());
+        verifyCohortTags(ddpParticipantId, osteo2InstanceDto, List.of(OSTEO2_COHORT_TAG_NAME));
     }
 
     @Test
@@ -163,7 +158,9 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
             Assert.fail("Failed to initialize reconsented participant: " + e.getMessage());
         }
 
-        verifyOsteo2Participant(participant, 2);
+        List<String> tagNames = List.of(OSTEO1_COHORT_TAG_NAME, OSTEO2_COHORT_TAG_NAME);
+        verifyOsteo2Participant(participant, 2, tagNames);
+        verifyCohortTags(ddpParticipantId, osteo1InstanceDto, tagNames);
     }
 
     @Test
@@ -187,22 +184,28 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
             Assert.fail("Failed to initialize reconsented participant: " + e.getMessage());
         }
 
-        verifyOsteo2Participant(participant, 2);
+        List<String> tagNames = List.of(OSTEO1_COHORT_TAG_NAME, OSTEO2_COHORT_TAG_NAME);
+        verifyOsteo2Participant(participant, 2, tagNames);
+        verifyCohortTags(ddpParticipantId, osteo1InstanceDto, tagNames);
     }
 
     @Test
     public void testInitializeReconsentedParticipantNoParticipant() {
-        Dsm dsm = new Dsm();
-        dsm.setHasConsentedToBloodDraw(true);
-
         // make a ptp with no Participant record in osteo1
         String ddpParticipantId = TestParticipantUtil.createMinimalParticipant(osteo1InstanceDto, participantCounter++);
-        ElasticTestUtil.addParticipantDsm(osteo1EsIndex, dsm, ddpParticipantId);
+        // but with a couple of cohort
+        Dsm osteo1Dsm = new Dsm();
+        createCohortTag(OSTEO1_COHORT_TAG_NAME, ddpParticipantId, osteo1InstanceDto, osteo1Dsm);
+        createCohortTag("FOO", ddpParticipantId, osteo1InstanceDto, osteo1Dsm);
+
+        ElasticTestUtil.addParticipantDsm(osteo1EsIndex, osteo1Dsm, ddpParticipantId);
 
         // setup osteo2 ptp
         ElasticTestUtil.addParticipantProfileFromFile(osteo2EsIndex, "elastic/participantProfile.json",
                 ddpParticipantId);
-        ElasticTestUtil.addParticipantDsm(osteo2EsIndex, dsm, ddpParticipantId);
+        Dsm osteo2Dsm = new Dsm();
+        osteo2Dsm.setHasConsentedToBloodDraw(true);
+        ElasticTestUtil.addParticipantDsm(osteo2EsIndex, osteo2Dsm, ddpParticipantId);
 
         try {
             OsteoParticipantService osteoParticipantService =
@@ -213,8 +216,8 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
             Assert.fail("Failed to initialize reconsented participant: " + e.getMessage());
         }
 
-        // when no osteo1 Participant record, initializeReconsentedParticipant only creates a cohort tag
-        verifyCohortTag(ddpParticipantId, OSTEO2_COHORT_TAG_NAME, osteo2InstanceDto);
+        // when no osteo1 Participant record, initializeReconsentedParticipant only creates an osteo2 cohort tag
+        verifyCohortTags(ddpParticipantId, osteo2InstanceDto, List.of(OSTEO1_COHORT_TAG_NAME, "FOO", OSTEO2_COHORT_TAG_NAME));
         List<ParticipantDto> participants = participantDao.getParticipant(ddpParticipantId);
         Assert.assertTrue(participants.isEmpty());
     }
@@ -227,15 +230,16 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         medicalRecordTestUtil.createMedicalRecordBundle(participant, osteo1InstanceDto);
         medicalRecordTestUtil.createMedicalRecordBundle(participant, osteo1InstanceDto);
 
-        cohortTagTestUtil.createTag(OSTEO1_COHORT_TAG_NAME, ddpParticipantId, osteo1InstanceDto.getDdpInstanceId());
+        createCohortTag(OSTEO1_COHORT_TAG_NAME, ddpParticipantId, osteo1InstanceDto,
+                getParticipantEsDsm(ddpParticipantId, osteo1EsIndex));
         return participant;
     }
 
-    private void verifyOsteo2Participant(ParticipantDto participant, int medicalRecordsCount) {
+    private void verifyOsteo2Participant(ParticipantDto participant, int medicalRecordsCount, List<String> cohortTags) {
         String ddpParticipantId = participant.getRequiredDdpParticipantId();
         verifyParticipant(ddpParticipantId, osteo2InstanceDto);
         verifyMedicalRecords(participant, osteo2InstanceDto, medicalRecordsCount);
-        verifyCohortTag(ddpParticipantId, OSTEO2_COHORT_TAG_NAME, osteo2InstanceDto);
+        verifyCohortTags(ddpParticipantId, osteo2InstanceDto, cohortTags);
     }
 
     private ParticipantDto createParticipant(DDPInstanceDto ddpInstanceDto) {
@@ -246,13 +250,16 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         return participant;
     }
 
+    private void createCohortTag(String cohortTagName, String ddpParticipantId, DDPInstanceDto ddpInstanceDto, Dsm dsm) {
+        CohortTag cohortTag = cohortTagTestUtil.createTag(cohortTagName, ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        OsteoParticipantService.updateEsCohortTags(dsm, ddpParticipantId, cohortTag, ddpInstanceDto.getEsParticipantIndex());
+    }
+
     private void verifyParticipant(String ddpParticipantId, DDPInstanceDto ddpInstanceDto) {
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
-        ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-        Dsm dsm = esParticipant.getDsm().orElseThrow();
+        Dsm dsm = getParticipantEsDsm(ddpParticipantId, esIndex);
 
         Optional<Participant> ptp = dsm.getParticipant();
         Assert.assertTrue(ptp.isPresent());
@@ -262,28 +269,29 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         Assert.assertEquals(ddpInstanceDto.getDdpInstanceId(), participant.getDdpInstanceId());
     }
 
-    private void verifyCohortTag(String ddpParticipantId, String tag, DDPInstanceDto ddpInstanceDto) {
+    private void verifyCohortTags(String ddpParticipantId, DDPInstanceDto ddpInstanceDto, List<String> tags) {
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
-        ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
-        log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
+        log.debug("Verifying ES cohort tags for {}, instance {}: {}", ddpParticipantId, ddpInstanceDto.getInstanceName(),
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-        Dsm dsm = esParticipant.getDsm().orElseThrow();
+        Dsm dsm = getParticipantEsDsm(ddpParticipantId, esIndex);
 
-        List<CohortTag> tags = dsm.getCohortTag();
-        Assert.assertEquals(1, tags.size());
-        Assert.assertEquals(tag, tags.get(0).getCohortTagName());
+        List<CohortTag> esTags = dsm.getCohortTag();
+        Assert.assertEquals(tags.size(), esTags.size());
+        tags.forEach(tag -> {
+            Optional<CohortTag> esTag = esTags.stream()
+                    .filter(t -> tag.equals(t.getCohortTagName()))
+                    .findAny();
+            Assert.assertTrue(esTag.isPresent());
+        });
     }
 
     private void verifyMedicalRecords(ParticipantDto participant, DDPInstanceDto ddpInstanceDto, int count) {
         String ddpParticipantId = participant.getRequiredDdpParticipantId();
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
 
-        ElasticSearchParticipantDto esParticipant =
-                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
         log.debug("Verifying ES participant record for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
-        Dsm dsm = esParticipant.getDsm().orElseThrow();
+        Dsm dsm = getParticipantEsDsm(ddpParticipantId, esIndex);
 
         List<MedicalRecord> esMedicalRecords = dsm.getMedicalRecord();
         Assert.assertEquals(count, esMedicalRecords.size());
@@ -304,5 +312,11 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
         Assert.assertTrue(oncHistory.isPresent());
         Assert.assertEquals(oncHistory.get().getCreated(), esOncHistory.getCreated());
         Assert.assertEquals(oncHistory.get().getReviewed(), esOncHistory.getReviewed());
+    }
+
+    private Dsm getParticipantEsDsm(String ddpParticipantId, String esIndex) {
+        ElasticSearchParticipantDto esParticipant =
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
+        return esParticipant.getDsm().orElseThrow();
     }
 }
