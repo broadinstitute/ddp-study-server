@@ -27,6 +27,9 @@ public class CohortTagDaoImpl implements CohortTagDao {
     private static final String SQL_GET_TAGS_BY_INSTANCE_NAME = "SELECT * FROM cohort_tag WHERE ddp_instance_id = "
             + "(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
 
+    private static final String SQL_GET_PARTICIPANT_TAGS_BY_INSTANCE =
+            "SELECT * FROM cohort_tag WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
+
     public static final String SQL_DELETE_BY_NAME_AND_GUID = "DELETE FROM cohort_tag WHERE cohort_tag_name = ? AND ddp_participant_id = ?";
 
     public static final String SQL_SELECT_BY_NAME_AND_GUID = "SELECT * FROM cohort_tag WHERE cohort_tag_name = ? "
@@ -119,6 +122,24 @@ public class CohortTagDaoImpl implements CohortTagDao {
                     simpleResult.resultException);
         }
         return result;
+    }
+
+
+    public List<CohortTag> getParticipantCohortTags(String dppParticipantId, int ddpInstanceId) {
+        return inTransaction(conn -> {
+            List<CohortTag> cohortTags = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_PARTICIPANT_TAGS_BY_INSTANCE)) {
+                stmt.setString(1, dppParticipantId);
+                stmt.setInt(2, ddpInstanceId);
+                ResultSet resultSet = stmt.executeQuery();
+                while (resultSet.next()) {
+                    cohortTags.add(buildCohortTagFrom(resultSet));
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error getting cohort tags for instance, id=" + ddpInstanceId, e);
+            }
+            return cohortTags;
+        });
     }
 
     @Override

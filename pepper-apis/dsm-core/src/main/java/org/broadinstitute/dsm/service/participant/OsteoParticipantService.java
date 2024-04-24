@@ -117,20 +117,33 @@ public class OsteoParticipantService {
                                        DDPInstance osteoInstance, String tagName) {
         // invariant: participant should have a DSM entity
         Dsm dsm = participantDto.getDsm().orElseThrow();
-        createOteoTag(dsm, ddpParticipantId, osteoInstance, tagName);
+        createOsteoTag(dsm, ddpParticipantId, osteoInstance, tagName);
     }
 
-    private static void createOteoTag(Dsm dsm, String ddpParticipantId, DDPInstance osteoInstance, String tagName) {
-        log.info("Creating {} cohort tag for participant {}", tagName, ddpParticipantId);
+    /**
+     * Create a new cohort tag
+     * @param dsm ES DSM data to update with new tag
+     */
+    private static void createOsteoTag(Dsm dsm, String ddpParticipantId, DDPInstance osteoInstance, String tagName) {
+        log.info("Creating '{}' cohort tag for participant {} and instance {}",
+                tagName, ddpParticipantId, osteoInstance.getName());
         CohortTag cohortTag = new CohortTag(tagName, ddpParticipantId, osteoInstance.getDdpInstanceIdAsInt());
         int newCohortTagId = cohortTagDao.create(cohortTag);
         cohortTag.setCohortTagId(newCohortTagId);
 
+        updateEsCohortTags(dsm, ddpParticipantId, cohortTag, osteoInstance.getParticipantIndexES());
+    }
+
+    /**
+     * Update ES with new cohort tag
+     * @param dsm ES DSM data to update with new tag
+     */
+    protected static void updateEsCohortTags(Dsm dsm, String ddpParticipantId, CohortTag cohortTag, String esIndex) {
         List<CohortTag> cohortTags = dsm.getCohortTag();
         cohortTags.add(cohortTag);
         dsm.setCohortTag(cohortTags);
 
-        ElasticSearchService.updateDsm(ddpParticipantId, dsm, osteoInstance.getParticipantIndexES());
+        ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
     }
 
     /**
@@ -139,10 +152,15 @@ public class OsteoParticipantService {
      */
     public void initializeReconsentedParticipant(String ddpParticipantId) {
         log.info("Initializing re-consented osteo participant {}", ddpParticipantId);
-
         String osteo2Index = osteo2Instance.getParticipantIndexES();
+
+        // copy osteo1 cohort tags to osteo2, and add an osteo2 tag to both osteo1 and osteo2
         Dsm osteo2Dsm = getParticipantDsm(ddpParticipantId, osteo2Index);
-        createOteoTag(osteo2Dsm, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);
+        copyCohortTags(osteo2Dsm, ddpParticipantId);
+        createOsteoTag(osteo2Dsm, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);
+
+        Dsm osteo1Dsm = getParticipantDsm(ddpParticipantId, osteo1Instance.getParticipantIndexES());
+        createOsteoTag(osteo1Dsm, ddpParticipantId, osteo1Instance, OSTEO2_COHORT_TAG_NAME);
 
         Optional<ParticipantDto> osteo1Ptp = participantDao
                 .getParticipantForInstance(ddpParticipantId, osteo1Instance.getDdpInstanceIdAsInt());
@@ -244,6 +262,19 @@ public class OsteoParticipantService {
         DDPInstitutionDto clonedInstitution = institution.clone();
         clonedInstitution.setParticipantId(newOsteoParticipantId);
         return ddpInstitutionDao.create(clonedInstitution);
+    }
+
+    /**
+     * Copy cohort all tags from osteo1 to osteo2
+     * @param dsm osteo2 ES DSM data to update with new tags
+     */
+    private void copyCohortTags(Dsm dsm, String ddpParticipantId) {
+        List<CohortTag> cohortTags = cohortTagDao.getParticipantCohortTags(ddpParticipantId,
+                osteo1Instance.getDdpInstanceIdAsInt());
+        // Note: this may seem inefficient compared to a bulk process, but the likelihood of having
+        // more than one tag is low, and this is a rare operation
+        cohortTags.forEach(cohortTag ->
+                createOsteoTag(dsm, ddpParticipantId, osteo2Instance, cohortTag.getCohortTagName()));
     }
 
     /**
