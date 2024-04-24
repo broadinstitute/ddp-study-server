@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 public interface PdfDao extends SqlObject {
     static final Logger LOG = LoggerFactory.getLogger(PdfDao.class);
+
     @CreateSqlObject
     PdfSql getPdfSql();
 

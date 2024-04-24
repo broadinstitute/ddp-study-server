@@ -25,6 +25,7 @@ import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.RgpFamilyIdProvider;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
@@ -70,19 +71,19 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
      * @param operationId ID for reporting results
      */
     public void run(int operationId) {
-        List<UpdateLog> updateLog = new ArrayList<>();
+        List<UpdateLog> updateLogs = new ArrayList<>();
 
         ElasticSearch elasticSearch = new ElasticSearch();
         // for each participant attempt an update and log results
         for (var entry: esParticipants.entrySet()) {
-            updateLog.add(initParticipant(entry.getKey(),
+            updateLogs.add(initParticipant(entry.getKey(),
                     elasticSearch.parseSourceMap(entry.getValue(), entry.getKey()),
                     ddpInstance, new RgpFamilyIdProvider(), isDryRun));
         }
 
         // update job log record
         try {
-            String json = ObjectMapperSingleton.writeValueAsString(updateLog);
+            String json = ObjectMapperSingleton.writeValueAsString(updateLogs);
             AdminOperationRecord.updateOperationRecord(operationId, AdminOperationRecord.OperationStatus.COMPLETED, json);
         } catch (Exception e) {
             log.error("Error writing operation log: {}", e.toString());
@@ -92,9 +93,16 @@ public class ParticipantInitService extends ParticipantAdminOperationService {
     protected static UpdateLog initParticipant(String ddpParticipantId, ElasticSearchParticipantDto esParticipant,
                                                DDPInstance ddpInstance, FamilyIdProvider familyIdProvider,
                                                boolean isDryRun) {
+        // skip legacy participants since they are already initialized, and the code here, as is, does not handle them
+        if (!ParticipantUtil.isGuid(ddpParticipantId)) {
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.NOT_UPDATED,
+                    "Legacy participant, skipping");
+        }
+
         ParticipantData probandData = null;
         List<ParticipantData> ptpData = RgpParticipantDataService.getRgpParticipantData(ddpParticipantId);
         if (!ptpData.isEmpty()) {
+            // preset to error, but it may not be
             UpdateLog updateLog = new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ERROR);
             probandData = getProbandRgpData(ptpData, updateLog);
             if (probandData == null) {

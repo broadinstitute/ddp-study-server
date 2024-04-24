@@ -87,8 +87,8 @@ public class AIBuilderTestUtil {
             long titleTemplateId, String titleTemplateCode, String title,
             long bodyTemplateId, String bodyTemplateCode, String bodyText) {
         return new ContentBlockDef(
-            new Template(titleTemplateId, TemplateType.TEXT, titleTemplateCode, title, 1),
-            new Template(bodyTemplateId, TemplateType.TEXT, bodyTemplateCode, bodyText, 1)
+                new Template(titleTemplateId, TemplateType.TEXT, titleTemplateCode, title, 1),
+                new Template(bodyTemplateId, TemplateType.TEXT, bodyTemplateCode, bodyText, 1)
         );
     }
 

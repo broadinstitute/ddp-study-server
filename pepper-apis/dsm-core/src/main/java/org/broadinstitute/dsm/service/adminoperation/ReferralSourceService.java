@@ -26,9 +26,9 @@ import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.service.admin.AdminOperation;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
 import org.broadinstitute.dsm.util.proxy.jackson.JsonProcessingException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -39,7 +39,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  */
 @Slf4j
 public class ReferralSourceService implements AdminOperation {
-
+    private static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private static final String RGP_REALM = "RGP";
     protected static final String NA_REF_SOURCE = "NA";
     private String userId;
@@ -165,7 +165,7 @@ public class ReferralSourceService implements AdminOperation {
         // only need the RGP_PARTICIPANT_DATA type ParticipantData
         List<ParticipantData> rgpData = dataList.stream().filter(participantDataDto ->
                 participantDataDto.getRequiredFieldTypeId().equals(RgpParticipantDataService.RGP_PARTICIPANTS_FIELD_TYPE)
-        ).collect(Collectors.toList());
+        ).toList();
 
         if (rgpData.isEmpty()) {
             return UpdateLog.UpdateStatus.NO_PARTICIPANT_DATA;
@@ -231,7 +231,7 @@ public class ReferralSourceService implements AdminOperation {
     }
 
     private List<Activities> getParticipantActivities(String ddpParticipantId, String esIndex) {
-        return ElasticSearchUtil.getParticipantESDataByParticipantId(esIndex, ddpParticipantId).getActivities();
+        return elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex).getActivities();
     }
 
     /**

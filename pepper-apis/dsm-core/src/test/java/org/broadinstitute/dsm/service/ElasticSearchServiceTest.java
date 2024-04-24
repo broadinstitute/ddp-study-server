@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataTestUtil;
 import org.broadinstitute.dsm.service.participantdata.ParticipantDataService;
@@ -69,6 +70,33 @@ public class ElasticSearchServiceTest extends DbAndElasticBaseTest {
         participants.forEach(participantDto ->
                 TestParticipantUtil.deleteParticipant(participantDto.getParticipantId().orElseThrow()));
         participants.clear();
+    }
+
+    @Test
+    public void testGetParticipantDocumentById() {
+        // create a couple of participants with some DSM data
+        ParticipantDto participant = createParticipant();
+        String ddpParticipantId1 = participant.getRequiredDdpParticipantId();
+
+        createParticipantData(ddpParticipantId1);
+        createMedicalRecordAndOncHistory(participant);
+
+        participant = createParticipant();
+        String ddpParticipantId2 = participant.getRequiredDdpParticipantId();
+
+        createParticipantData(ddpParticipantId2);
+
+        ElasticSearchService elasticSearchService = new ElasticSearchService();
+
+        Optional<ElasticSearchParticipantDto> esPtp =
+                elasticSearchService.getParticipantDocument(ddpParticipantId1, esIndex);
+        Assert.assertTrue(esPtp.isPresent());
+        ElasticSearchParticipantDto esParticipant = esPtp.get();
+        Assert.assertEquals(ddpParticipantId1, esParticipant.getProfile().get().getGuid());
+        Assert.assertTrue(esParticipant.getDsm().isPresent());
+
+        Assert.assertTrue(elasticSearchService.getParticipantDocument(TestParticipantUtil.genDDPParticipantId("bogus"), esIndex)
+                .isEmpty());
     }
 
     @Test

@@ -807,11 +807,12 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static Map<String, Object> getObjectsMap(RestHighLevelClient client, String index, String id, String object) throws Exception {
+    public static Map<String, Object> getObjectsMap(RestHighLevelClient client, String index, String id, String object)
+            throws IOException {
         String[] includes = new String[] {object};
         String[] excludes = Strings.EMPTY_ARRAY;
         FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includes, excludes);
-        GetRequest getRequest = new GetRequest().index(index).type("_doc").id(id).fetchSourceContext(fetchSourceContext);
+        GetRequest getRequest = new GetRequest().index(index).id(id).fetchSourceContext(fetchSourceContext);
 
         GetResponse getResponse = null;
         if (client.exists(getRequest, RequestOptions.DEFAULT)) {
@@ -820,7 +821,7 @@ public class ElasticSearchUtil {
         return getResponse != null ? getResponse.getSourceAsMap() : Collections.emptyMap();
     }
 
-    public static Map<String, Object> getObjectsMap(String index, String id, String object) throws Exception {
+    public static Map<String, Object> getObjectsMap(String index, String id, String object) throws IOException {
         initialize();
         return getObjectsMap(client, index, id, object);
     }
@@ -1383,10 +1384,10 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static Map<String, Map<String, Object>> getActivityDefinitions(@NonNull DDPInstance instance) {
+    public static Map<String, Map<String, Object>> getActivityDefinitions(@NonNull DDPInstanceDto instance) {
         initialize();
         Map<String, Map<String, Object>> esData = new HashMap<>();
-        String index = instance.getActivityDefinitionIndexES();
+        String index = instance.getEsActivityDefinitionIndex();
         if (StringUtils.isNotBlank(index)) {
             logger.info("Collecting activity definitions from ES");
             try {
@@ -1407,9 +1408,9 @@ public class ElasticSearchUtil {
                     i++;
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Couldn't get activity definition from ES for instance " + instance.getName(), e);
+                throw new RuntimeException("Couldn't get activity definition from ES for instance " + instance.getInstanceName(), e);
             }
-            logger.info("Got " + esData.size() + " activity definitions from ES for instance " + instance.getName());
+            logger.info("Got " + esData.size() + " activity definitions from ES for instance " + instance.getInstanceName());
         }
         return esData;
     }

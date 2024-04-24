@@ -41,10 +41,11 @@ public class ElasticTestUtil {
      * When creating an index for testing, it's best to start by extracting the mappings
      * and settings files from a known good ES instance and storing these files
      * in resources/elastic
+     *
      * @param mappingsFile curl -u -XGET --header 'Content-Type: application/json'
      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_mapping
      * @param settingsFile curl -u -XGET --header 'Content-Type: application/json'
-     *      *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
+     *                     https://[...].cloud.es.io:9243/participants_structured.[umbrella/study]/_settings
      */
     public static String createIndex(String realm, String mappingsFile, String settingsFile) {
         log.info("Creating test index for realm {}", realm);
@@ -205,6 +206,31 @@ public class ElasticTestUtil {
         }
     }
 
+    /**
+     * Adds a participant profile with every field filled to your desire data
+     * This method can help with testing when you need to create a participant with a specific profile and filter on that without
+     * having to create a new separate json file for the profile
+     */
+    public static void addParticipantProfileFromTemplate(String esIndex, String ddpParticipantId, String shortId, String firstName,
+                                                         String lastName, String email) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String profileJson = TestUtil.readFile("elastic/participantProfileTemplate.json");
+            profileJson = profileJson.replace("<shortId>", shortId);
+            profileJson = profileJson.replace("<firstName>", firstName);
+            profileJson = profileJson.replace("<lastName>", lastName);
+            profileJson = profileJson.replace("<email>", email);
+            profileJson = profileJson.replace("<guid>", ddpParticipantId);
+            profileJson = profileJson.replace("<now>", String.valueOf(System.currentTimeMillis()));
+            Profile profile = objectMapper.readValue(profileJson, Profile.class);
+            profile.setGuid(ddpParticipantId);
+            addParticipantProfile(esIndex, profile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception creating profile for participant " + ddpParticipantId);
+        }
+    }
+
     public static Address addParticipantAddressFromFile(String esIndex, String fileName, String ddpParticipantId) {
         Gson gson = new Gson();
         try {
@@ -222,7 +248,7 @@ public class ElasticTestUtil {
     /**
      * Add a DSM entity to the participant doc
      *
-     * @param dob date of birth to replace in DSM entity
+     * @param dob            date of birth to replace in DSM entity
      * @param dateOfMajority date of majority to replace in DSM entity
      */
     public static Dsm addDsmEntityFromFile(String esIndex, String fileName, String ddpParticipantId, String dob,
@@ -230,13 +256,13 @@ public class ElasticTestUtil {
         Gson gson = new Gson();
         try {
             String json = TestUtil.readFile(fileName);
-            json = json.replace("<dateOfBirth>", dob);
-            if (StringUtils.isNotBlank(dateOfMajority)) {
-                json = json.replace("<dateOfMajority>", dateOfMajority);
-            } else {
-                json = json.replace("\"dateOfMajority\" : \"<dateOfMajority>\",", "");
-            }
             Dsm dsm = gson.fromJson(json, Dsm.class);
+            dsm.setDateOfBirth(dob);
+            if (StringUtils.isNotBlank(dateOfMajority)) {
+                dsm.setDateOfMajority(dateOfMajority);
+            } else {
+                dsm.setDateOfMajority(null);
+            }
             addParticipantDsm(esIndex, dsm, ddpParticipantId);
             return dsm;
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.participantdata.RgpFamilyIdProvider;
 import org.broadinstitute.dsm.service.participantdata.RgpParticipantDataService;
 
@@ -13,8 +14,8 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
      *                                         callers to retry after waiting for the ES profile to be created.
      */
     @Override
-    protected boolean setDefaultData(String ddpParticipantId) {
-        RgpParticipantDataService.createDefaultData(ddpParticipantId, elasticSearchParticipantDto, instance,
+    protected boolean setDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant) {
+        RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipant, instance,
                 new RgpFamilyIdProvider());
         return true;
     }

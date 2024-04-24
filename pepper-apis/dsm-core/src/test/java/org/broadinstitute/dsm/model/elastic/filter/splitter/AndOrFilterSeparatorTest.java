@@ -72,6 +72,18 @@ public class AndOrFilterSeparatorTest {
     }
 
     @Test
+    public void testEmbeddedKeyword() {
+        String filter = " AND CONSENT.CONSENT_TISSUE = true AND CONSENT_ADDENDUM.SOMATIC_CONSENT_ADDENDUM_TUMOR = true";
+        Map<String, List<String>> stringListMap = new AndOrFilterSeparator(filter).parseFiltersByLogicalOperators();
+
+        Assert.assertEquals(0, stringListMap.get("OR").size());
+        List<String> andFilters = stringListMap.get("AND");
+        Assert.assertEquals(2, andFilters.size());
+        Assert.assertEquals("CONSENT.CONSENT_TISSUE = true", andFilters.get(0));
+        Assert.assertEquals("CONSENT_ADDENDUM.SOMATIC_CONSENT_ADDENDUM_TUMOR = true", andFilters.get(1));
+    }
+
+    @Test
     public void handleAge() {
         String filter = "AND m.randValue <= 4";
         Map<String, List<String>> stringListMap = new AndOrFilterSeparator(filter).parseFiltersByLogicalOperators();

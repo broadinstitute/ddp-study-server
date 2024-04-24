@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.Filter;
@@ -11,24 +13,24 @@ import org.broadinstitute.dsm.model.Filter;
 //class to separate 'AND' or 'OR' conditions into type of Map<String, List<String>>
 public class AndOrFilterSeparator {
 
+    private static final String AND_OPERATOR = "AND";
+    private static final String OR_OPERATOR = "OR";
+    private static final String AND_MATCHER = "(^|\\s)(AND)\\s";
+    private static final String OR_MATCHER = "(^|\\s)(OR)\\s";
     private static final String GENERAL_REGEX = "([A-z]|\\W|\\w)+";
-
-    protected String orDsmAliasRegex = "(OR) " + getGeneralRegex();
-
-    protected String andDsmAliasRegex = "(AND) " + getGeneralRegex();
-
-    protected String getGeneralRegex() {
-        return GENERAL_REGEX;
-    }
-
+    protected static String orDsmAliasRegex = OR_MATCHER + GENERAL_REGEX;
+    protected static String andDsmAliasRegex = AND_MATCHER + GENERAL_REGEX;
     protected static final int AND_PATTERN_MATCHER_NUMBER = 7;
     protected static final int OR_PATTERN_MATCHER_NUMBER = 6;
     public static final int MINIMUM_STEP_FROM_OPERATOR = 3;
-
+    private final Pattern orMatcherPattern;
+    private final Pattern andMatcherPattern;
     private String filter;
 
     public AndOrFilterSeparator(String filter) {
         this.filter = filter;
+        this.andMatcherPattern = Pattern.compile(AND_MATCHER);
+        this.orMatcherPattern = Pattern.compile(OR_MATCHER);
     }
 
     public void setFilter(String filter) {
@@ -37,17 +39,17 @@ public class AndOrFilterSeparator {
 
     public Map<String, List<String>> parseFiltersByLogicalOperators() {
         Map<String, List<String>> filterByLogicalOperators =
-                new ConcurrentHashMap<>(Map.of(Filter.AND_TRIMMED, new ArrayList<>(), Filter.OR_TRIMMED, new ArrayList<>()));
-        int andIndex = filter.indexOf(Filter.AND_TRIMMED);
-        int orIndex = filter.indexOf(Filter.OR_TRIMMED);
+                new ConcurrentHashMap<>(Map.of(AND_OPERATOR, new ArrayList<>(), OR_OPERATOR, new ArrayList<>()));
+        int andIndex = getOperatorIndex(AND_OPERATOR, 0);
+        int orIndex = getOperatorIndex(OR_OPERATOR, 0);
         while (andIndex != -1 || orIndex != -1) {
             andIndex =
-                    findProperOperatorSplitterIndex(Filter.AND_TRIMMED, andIndex, AND_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
-            orIndex = findProperOperatorSplitterIndex(Filter.OR_TRIMMED, orIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
+                    findProperOperatorSplitterIndex(AND_OPERATOR, andIndex, AND_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
+            orIndex = findProperOperatorSplitterIndex(OR_OPERATOR, orIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
             if (andIndex != -1) {
-                andIndex = getIndex(filterByLogicalOperators, andIndex, Filter.AND_TRIMMED);
+                andIndex = getIndex(filterByLogicalOperators, andIndex, AND_OPERATOR);
             } else if (orIndex != -1) {
-                orIndex = getIndex(filterByLogicalOperators, orIndex, Filter.OR_TRIMMED);
+                orIndex = getIndex(filterByLogicalOperators, orIndex, OR_OPERATOR);
             }
         }
         handleSpecialCases(filterByLogicalOperators);
@@ -75,12 +77,12 @@ public class AndOrFilterSeparator {
 
     private int getIndex(Map<String, List<String>> filterByLogicalOperators, int index, String operator) {
 
-        int orPrecedeIndex = findNextOperatorIndex(Filter.OR_TRIMMED, index + MINIMUM_STEP_FROM_OPERATOR);
+        int orPrecedeIndex = findNextOperatorIndex(OR_OPERATOR, index + MINIMUM_STEP_FROM_OPERATOR);
         orPrecedeIndex =
-                findProperOperatorSplitterIndex(Filter.OR_TRIMMED, orPrecedeIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
+                findProperOperatorSplitterIndex(OR_OPERATOR, orPrecedeIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
 
-        int andPrecedeIndex = findNextOperatorIndex(Filter.AND_TRIMMED, index + MINIMUM_STEP_FROM_OPERATOR);
-        andPrecedeIndex = findProperOperatorSplitterIndex(Filter.AND_TRIMMED, andPrecedeIndex, AND_PATTERN_MATCHER_NUMBER,
+        int andPrecedeIndex = findNextOperatorIndex(AND_OPERATOR, index + MINIMUM_STEP_FROM_OPERATOR);
+        andPrecedeIndex = findProperOperatorSplitterIndex(AND_OPERATOR, andPrecedeIndex, AND_PATTERN_MATCHER_NUMBER,
                 MINIMUM_STEP_FROM_OPERATOR);
 
         // index = 5, 4 ,20
@@ -113,7 +115,7 @@ public class AndOrFilterSeparator {
     }
 
     private String getAliasRegexByOperator(String operator) {
-        return Filter.AND_TRIMMED.equals(operator) ? andDsmAliasRegex : orDsmAliasRegex;
+        return AND_OPERATOR.equals(operator) ? andDsmAliasRegex : orDsmAliasRegex;
     }
 
     private boolean isOperatorWrappedInParenthesis(int startIndex) {
@@ -125,7 +127,7 @@ public class AndOrFilterSeparator {
                 exists = true;
                 break;
             }
-            if (Filter.AND_TRIMMED.equals(filter.substring(i - 3, i)) || c == Filter.CLOSE_PARENTHESIS_CHAR) {
+            if (AND_OPERATOR.equals(filter.substring(i - 3, i)) || c == Filter.CLOSE_PARENTHESIS_CHAR) {
                 break;
             }
         }
@@ -133,16 +135,26 @@ public class AndOrFilterSeparator {
     }
 
     private int findNextOperatorIndex(String operator, int fromIndex) {
-        int index = filter.indexOf(operator, fromIndex);
+        int index = getOperatorIndex(operator, fromIndex);
         if (isOperatorWrappedInParenthesis(index)) {
             index = filter.indexOf(Filter.CLOSE_PARENTHESIS, index);
-            index = filter.indexOf(operator, index);
+            index = getOperatorIndex(operator, index);
         }
         return index;
     }
 
-    private boolean isMatches(int patternStartIndex, int patternEndIndex, String operator) {
-        return patternEndIndex < filter.length() && filter.substring(patternStartIndex, patternEndIndex).matches(operator);
+    private boolean isMatches(int patternStartIndex, int patternEndIndex, String operatorRegex) {
+        return patternEndIndex < filter.length() && filter.substring(patternStartIndex, patternEndIndex).matches(operatorRegex);
+    }
+
+    private int getOperatorIndex(String operator, int fromIndex) {
+        Pattern pattern = operator.equals(AND_OPERATOR) ? andMatcherPattern : orMatcherPattern;
+        Matcher matcher = pattern.matcher(filter.substring(fromIndex));
+        if (matcher.find()) {
+            String token = matcher.group();
+            return matcher.start() + fromIndex + token.indexOf(operator);
+        }
+        return -1;
     }
 
     private boolean isAndOrGreaterThanCurrentPosition(int index, int orPrecedeIndex, int andPrecedeIndex) {

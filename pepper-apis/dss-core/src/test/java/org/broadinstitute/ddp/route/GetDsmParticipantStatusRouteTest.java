@@ -68,7 +68,7 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
     public void testProcess_returnStatusInfo() throws IOException {
         var expected = new ParticipantStatus(1577404800L, 1577491200L,
                 1582848000L, 1583798400L, 1583798400L, List.of(
-                new ParticipantStatus.Sample("a", "BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
+                    new ParticipantStatus.Sample("a", "BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
         GetResponse getResponse = new GetResponse(new GetResult("index", "id", "id01", 0L,
                 1L, 1L, true,
                 new BytesArray("{\"workflows\":[{\"workflow\":\"ACCEPTANCE_STATUS\",\"status\":\"ACCEPTED\","

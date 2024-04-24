@@ -1,0 +1,89 @@
+{
+  "dateOfBirth" : "<dateOfBirth>",
+  "dateOfMajority" : "<dateOfMajority>",
+  "hasConsentedToTissueSample" : true,
+  "kitRequestShipping" : [
+        {
+          "deactivationReason" : "testDeactivate-1711539726740",
+          "ddpLabel" : "deactivatedKit",
+          "bspCollaboratorSampleId" : "SALIVA",
+          "dsmKitId" : 1,
+          "deactivatedDate" : 1711539727385,
+          "error" : false,
+          "bspCollaboratorParticipantId" : "shortId",
+          "createdBy" : "SYSTEM",
+          "kitRequiringTrackingScan" : false,
+          "kitTypeName" : "SALIVA",
+          "dsmKitRequestId" : 1
+        },
+        {
+          "ddpLabel" : "receivedKit",
+          "kitLabel" : "kit-d8e20913-7",
+          "bspCollaboratorSampleId" : "SALIVA_2",
+          "externalOrderDate" : 0,
+          "dsmKitId" : 2,
+          "receiveDate" : 1711539783348,
+          "error" : false,
+          "collectionDate" : "2024-03-27",
+          "bspCollaboratorParticipantId" : "shortId",
+          "scanDate" : 1711539774971,
+          "createdBy" : "161",
+          "kitRequiringTrackingScan" : false,
+          "uploadReason" : "null",
+          "kitTypeName" : "SALIVA",
+          "dsmKitRequestId" : 2,
+          "ddpKitRequestId" : "UPLOADED_LP7MA2DM7N50OFPJ3IEI",
+          "trackingId" : "trackingLabel-88a7e78c-6"
+        },
+        {
+          "ddpLabel" : "shippedKit",
+          "kitLabel" : "kit-123456-7",
+          "bspCollaboratorSampleId" : "SALIVA_3",
+          "externalOrderDate" : 0,
+          "dsmKitId" : 3,
+          "error" : false,
+          "collectionDate" : "2024-03-28",
+          "bspCollaboratorParticipantId" : "shortId",
+          "scanDate" : 1711539774971,
+          "createdBy" : "161",
+          "kitRequiringTrackingScan" : false,
+          "uploadReason" : "null",
+          "kitTypeName" : "SALIVA",
+          "dsmKitRequestId" : 3,
+          "ddpKitRequestId" : "UPLOADED_LP7MA2DM7N50OFPJHYTE"
+        },
+        {
+          "ddpLabel" : "newKit",
+          "bspCollaboratorSampleId" : "BLOOD",
+          "createdBy" : "SYSTEM",
+          "kitRequiringTrackingScan" : true,
+          "dsmKitId" : 4,
+          "kitTypeName" : "BLOOD",
+          "error" : false,
+          "dsmKitRequestId" : 4,
+          "bspCollaboratorParticipantId" : "shortId"
+        },
+        {
+          "ddpLabel" : "errorKit",
+          "bspCollaboratorSampleId" : "BLOOD",
+          "createdBy" : "SYSTEM",
+          "kitRequiringTrackingScan" : false,
+          "dsmKitId" : 5,
+          "kitTypeName" : "BLOOD",
+          "error" : true,
+          "dsmKitRequestId" : 5,
+          "bspCollaboratorParticipantId" : "shortId"
+        }
+      ],
+  "clinicalOrder": [
+    {
+      "orderId": "SOME_ORDER_ID",
+      "orderStatus": "APPROVED",
+      "orderDate": 1711539726740,
+      "barcode": "kit-123456-7",
+      "kitType": "1",
+      "dsmKitRequestId": 3,
+      "mercuryPdoId": "PDO-123456"
+    }
+  ]
+}

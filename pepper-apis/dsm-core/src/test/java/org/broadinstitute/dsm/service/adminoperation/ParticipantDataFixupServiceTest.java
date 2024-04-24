@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -20,7 +19,6 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataService;
 import org.broadinstitute.dsm.service.participantdata.ATParticipantDataTestUtil;
@@ -135,8 +133,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         createParticipant();
 
         // ptp with ptp data, legacy pid, and legacy ptp data (not overlapping with ptp data)
-        String legacyPidBase = "legacy";
-        Pair<ParticipantDto, String> ptpToLegacyId = createLegacyParticipant(legacyPidBase);
+        Pair<ParticipantDto, String> ptpToLegacyId = createLegacyParticipant();
         String ddpParticipantId = ptpToLegacyId.getLeft().getRequiredDdpParticipantId();
         String legacyPid1 = ptpToLegacyId.getRight();
         atParticipantDataUtil.createEligibilityParticipantData(ddpParticipantId);
@@ -189,7 +186,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         ptpDataMap.put(ddpParticipantId, ptpDataList);
 
         // add another ptp with a legacy pid to test the legacy ID lookup
-        createLegacyParticipant(legacyPidBase);
+        createLegacyParticipant();
 
         updateLog = fixupService.fixupLegacyPidData(ptpDataMap, esIndex);
         Assert.assertEquals(2, updateLog.size());
@@ -228,18 +225,12 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
         return participant;
     }
 
-    private Pair<ParticipantDto, String> createLegacyParticipant(String legacyPidBase) {
-        String baseName = String.format("%s_%d", instanceName, participantCounter++);
-        Profile profile = TestParticipantUtil.createProfile("Joe", "Participant%d".formatted(participantCounter),
-                participantCounter);
-        String legacyPid = "%s_%d".formatted(legacyPidBase, participantCounter);
-        profile.setLegacyAltPid(legacyPid);
-        ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(baseName, profile, ddpInstanceDto);
-        participants.add(participant);
-        return new ImmutablePair<>(participant, legacyPid);
+    private Pair<ParticipantDto, String> createLegacyParticipant() {
+        Pair<ParticipantDto, String> pair =
+                TestParticipantUtil.createLegacyParticipant(instanceName, participantCounter++, ddpInstanceDto);
+        participants.add(pair.getLeft());
+        return pair;
     }
-
 
     private void verifyParticipantData(String ddpParticipantId) {
         ParticipantDataDao dataDao = new ParticipantDataDao();

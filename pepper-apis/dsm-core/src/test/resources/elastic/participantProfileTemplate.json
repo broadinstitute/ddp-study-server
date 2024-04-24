@@ -1,0 +1,13 @@
+{
+  "firstName": "<firstName>",
+  "lastName": "<lastName>",
+  "createdAt": <now>,
+  "preferredLanguage": "en",
+  "legacyShortId": null,
+  "guid": "<guid>",
+  "hruid": "<shortId>",
+  "doNotContact": false,
+  "legacyAltPid": null,
+  "email": ":email"
+}
+
