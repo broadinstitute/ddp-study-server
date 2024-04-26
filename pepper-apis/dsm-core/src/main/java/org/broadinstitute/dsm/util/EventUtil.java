@@ -117,7 +117,8 @@ public class EventUtil {
 
     }
 
-    public static void addParticipantEvent(@NonNull String name, @NonNull int instanceID, @NonNull String ddpParticipantId, boolean trigger) {
+    public static void addParticipantEvent(@NonNull String name, @NonNull int instanceID, @NonNull String ddpParticipantId,
+                                           boolean trigger) {
         insertEvent(name, instanceID, ddpParticipantId, null, trigger);
     }
 

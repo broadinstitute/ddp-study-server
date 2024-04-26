@@ -33,6 +33,7 @@ public class EventsTest extends DbAndElasticBaseTest {
     private static DDPInstanceWithKitSetupUtil ddpInstanceWithKitSetupUtil;
     private static ParticipantDto participantDto;
     private static String ddpParticipantId;
+
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex("event_instance", "elastic/lmsMappings.json", null);
