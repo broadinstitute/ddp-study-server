@@ -63,8 +63,8 @@ public class EventsTest extends DbAndElasticBaseTest {
             utilities.when(() -> DDPRequestUtil.postRequest(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyBoolean()))
                     .thenReturn(200);
 
-            //assert that mocking is working
-            Assert.assertEquals(DDPRequestUtil.postRequest("", "", "", true)+"","200");
+            //assert that mocking is workingafter
+            assert DDPRequestUtil.postRequest("", "", "", true) == 200;
 
             int kitRequestId = kitShippingTestUtil.createTestKitShipping(participantDto, ddpInstanceDto, "SALIVA",
                     ddpInstanceWithKitSetupUtil.getKitTypeId());

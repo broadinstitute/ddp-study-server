@@ -20,27 +20,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-public class ParticipantEvent {
+public class SkippedParticipantEvent {
 
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantEvent.class);
+    private static final Logger logger = LoggerFactory.getLogger(SkippedParticipantEvent.class);
     private static String GET_PARTICIPANT_EVENT =
             "select event  from ddp_participant_event ev where ev.ddp_instance_id = ? "
                     + "and ev.ddp_participant_id = ?";
     private final String participantId;
+    /**
+     * The event type in this table is actually the event_name from the event_type table
+     */
     private final String eventType;
     private final String user;
     private final long date;
     private String shortId;
 
-    public ParticipantEvent(String participantId, String eventType, String user, long date) {
+    public SkippedParticipantEvent(String participantId, String eventType, String user, long date) {
         this.participantId = participantId;
         this.eventType = eventType;
         this.user = user;
         this.date = date;
     }
 
-    public static Collection<ParticipantEvent> getSkippedParticipantEvents(@NonNull String realm) {
-        ArrayList<ParticipantEvent> skippedParticipantEvents = new ArrayList();
+    public static Collection<SkippedParticipantEvent> getSkippedParticipantEvents(@NonNull String realm) {
+        ArrayList<SkippedParticipantEvent> skippedParticipantEvents = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -49,7 +52,7 @@ public class ParticipantEvent {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         skippedParticipantEvents.add(
-                                new ParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
+                                new SkippedParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
                                         rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
                     }
                 }
@@ -63,7 +66,7 @@ public class ParticipantEvent {
             logger.error("Couldn't get list of skipped participant events for " + realm, results.resultException);
         } else {
             DDPInstance instance = DDPInstance.getDDPInstance(realm);
-            for (ParticipantEvent skippedParticipant : skippedParticipantEvents) {
+            for (SkippedParticipantEvent skippedParticipant : skippedParticipantEvents) {
                 String sendRequest = instance.getBaseUrl() + RoutePath.DDP_PARTICIPANTS_PATH + "/" + skippedParticipant.getParticipantId();
                 try {
                     DDPParticipant ddpParticipant =

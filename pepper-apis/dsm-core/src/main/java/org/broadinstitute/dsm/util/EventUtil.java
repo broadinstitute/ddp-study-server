@@ -13,7 +13,7 @@ import com.sun.istack.NotNull;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.ParticipantEvent;
+import org.broadinstitute.dsm.db.SkippedParticipantEvent;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -54,7 +54,7 @@ public class EventUtil {
     //used in kit functionality classes
     public static void sendKitNotification(@NonNull KitDDPNotification kitDDPNotification) {
         boolean dssSuccessfullyTriggered = false;
-        if (!ParticipantEvent.isParticipantEventSkipped(kitDDPNotification.getParticipantId(), kitDDPNotification.getEventName(),
+        if (!SkippedParticipantEvent.isParticipantEventSkipped(kitDDPNotification.getParticipantId(), kitDDPNotification.getEventName(),
                 kitDDPNotification.getDdpInstanceId())) {
             dssSuccessfullyTriggered = triggerDDPForKitEvent(kitDDPNotification);
         } else {
@@ -68,8 +68,8 @@ public class EventUtil {
     //used in ClinicalKitDao and BasePatch class
     public static void triggerDDPForParticipantEvent(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
-        if (!ParticipantEvent.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
-            triggerDDPWithEvent(eventName, ddpInstance, 0, ddpParticipantId, ddpParticipantId, ddpParticipantId);
+        if (!SkippedParticipantEvent.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
+            triggerDDPWithEvent(eventName, ddpInstance, 0, ddpParticipantId, ddpParticipantId, null);
         } else {
             logger.info("Participant event was skipped per data in participant_event table. DDP will not get triggered");
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false

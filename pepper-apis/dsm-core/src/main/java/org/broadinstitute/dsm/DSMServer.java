@@ -20,23 +20,14 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.InstantiatingExecutorProvider;
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
-import com.google.cloud.pubsub.v1.MessageReceiver;
-import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.common.net.MediaType;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.google.pubsub.v1.ProjectSubscriptionName;
-import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
@@ -63,7 +54,6 @@ import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
-import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
@@ -110,7 +100,7 @@ import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
 import org.broadinstitute.dsm.route.NDIRoute;
 import org.broadinstitute.dsm.route.OncHistoryTemplateRoute;
 import org.broadinstitute.dsm.route.OncHistoryUploadRoute;
-import org.broadinstitute.dsm.route.ParticipantEventRoute;
+import org.broadinstitute.dsm.route.SkippedParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
@@ -891,10 +881,10 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.EVENT_TYPES + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new EventTypeRoute(),
                 new GsonResponseTransformer());
 
-        ParticipantEventRoute participantEventRoute = new ParticipantEventRoute();
-        get(UI_ROOT + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantEventRoute,
+        SkippedParticipantEventRoute skippedParticipantEventRoute = new SkippedParticipantEventRoute();
+        get(UI_ROOT + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, skippedParticipantEventRoute,
                 new GsonResponseTransformer());
-        post(UI_ROOT + RoutePath.SKIP_PARTICIPANT_EVENTS, participantEventRoute, new GsonResponseTransformer());
+        post(UI_ROOT + RoutePath.SKIP_PARTICIPANT_EVENTS, skippedParticipantEventRoute, new GsonResponseTransformer());
 
         post(UI_ROOT + RoutePath.NDI_REQUEST, new NDIRoute(), new GsonResponseTransformer());
 
