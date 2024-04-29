@@ -23,6 +23,7 @@ import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -58,11 +59,19 @@ public class LiquibaseUtil implements AutoCloseable {
 
     public static List<String> getDatabaseChangeLogLocks(Connection conn) throws SQLException {
         List<String> lockData = new ArrayList<>();
-        try (ResultSet rs = conn.prepareStatement(
+        try (ResultSet liquibaseTableExists = conn.prepareStatement(
+                "SELECT 1 FROM information_schema.TABLES WHERE TABLE_NAME = 'DATABASECHANGELOGLOCK' "
+                + " AND TABLE_SCHEMA = (SELECT DATABASE())").executeQuery()) {
+            if (liquibaseTableExists.next()) {
+                try (ResultSet rs = conn.prepareStatement(
                         "select concat(ID, ' ', LOCKED, ' ', LOCKGRANTED, ' ', LOCKEDBY) from DATABASECHANGELOGLOCK")
-                .executeQuery()) {
-            while (rs.next()) {
-                lockData.add(rs.getString(1)); // todo arz log lock details
+                        .executeQuery()) {
+                    while (rs.next()) {
+                        if (StringUtils.isNotBlank(rs.getString(1))) {
+                            lockData.add(rs.getString(1));
+                        }
+                    }
+                }
             }
         }
         return lockData;
