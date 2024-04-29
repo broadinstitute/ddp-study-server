@@ -247,7 +247,6 @@ public class DSMServer {
         // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
 
-        // todo arz factor out implementation
         SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
             public void onAhStop() {
                 logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
@@ -716,8 +715,6 @@ public class DSMServer {
         String mercuryDsmSubscriptionId = cfg.getString(GCP_PATH_MERCURY_DSM_SUB);
         String antivirusDsmSubscriptionId = cfg.getString(GCP_PATH_ANTI_VIRUS_SUB);
 
-        // todo arz PR comment about removing listener for covid test results
-
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         try {
@@ -1074,7 +1071,6 @@ public class DSMServer {
     }
 
     public static void shutdown() {
-        // todo arz log instance and deployment in all shutdowns
         logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
         // shutdown jobs
         if (scheduler != null) {

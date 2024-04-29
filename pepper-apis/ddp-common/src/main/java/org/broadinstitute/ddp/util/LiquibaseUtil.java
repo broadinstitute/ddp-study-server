@@ -51,12 +51,20 @@ public class LiquibaseUtil implements AutoCloseable {
         dataSource = new HikariDataSource(config);
     }
 
+    /**
+     * Writes a log entry per liquibase lock for each active
+     * liquibase lock
+     */
     public static void logDatabaseChangeLogLocks(Connection conn) throws SQLException {
         for (String databaseChangeLogLock : getDatabaseChangeLogLocks(conn)) {
             log.info("databasechangeloglock {}", databaseChangeLogLock);
         }
     }
 
+    /**
+     * Queries the database directly (bypassing liquibase conventions) and returns
+     * strings containing information about any currently active liquibase locks
+     */
     public static List<String> getDatabaseChangeLogLocks(Connection conn) throws SQLException {
         List<String> lockData = new ArrayList<>();
         try (ResultSet liquibaseTableExists = conn.prepareStatement(
@@ -178,8 +186,6 @@ public class LiquibaseUtil implements AutoCloseable {
         runMigrations(DSM_GLOBAL_MIGRATIONS, context);
     }
 
-
-    //todo arz move stat mgt up to main()
     /**
      * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
      *
