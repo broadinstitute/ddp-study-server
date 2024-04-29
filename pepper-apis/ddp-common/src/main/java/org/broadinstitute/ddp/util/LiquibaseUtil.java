@@ -100,9 +100,6 @@ public class LiquibaseUtil implements AutoCloseable {
         runLiquibase(dbUrl, db, LIQUIBASE_APP_CONTEXT);
     }
 
-    // todo have a singleton Liquibase and LiquibaseUtil to better handle termination-induced
-    // dbchangeloglock locks
-
     /**
      * Runs the global liquibase migrations against the given database url using a connection that's auto-closed
      *
