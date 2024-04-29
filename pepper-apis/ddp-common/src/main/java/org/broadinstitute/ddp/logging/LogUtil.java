@@ -15,4 +15,8 @@ public class LogUtil {
         MDC.put(GAE_DEPLOYMENT_ID, System.getProperty(GAE_DEPLOYMENT_ID));
         MDC.put(GAE_INSTANCE, System.getProperty(GAE_INSTANCE));
     }
+
+    public static String getAppEngineInstance() {
+        return System.getenv(GAE_INSTANCE);
+    }
 }

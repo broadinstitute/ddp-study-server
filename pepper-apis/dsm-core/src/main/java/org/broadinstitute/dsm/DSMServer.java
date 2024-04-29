@@ -13,34 +13,23 @@ import static spark.Spark.post;
 import static spark.Spark.put;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.Instant;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.InstantiatingExecutorProvider;
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
-import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.common.net.MediaType;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.google.pubsub.v1.ProjectSubscriptionName;
-import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPInternalError;
@@ -62,7 +51,6 @@ import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
-import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.pubsub.AntivirusScanningStatusListener;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
@@ -210,7 +198,6 @@ public class DSMServer {
     public static final String GCP_PATH_ANTI_VIRUS_SUB = "pubsub.antivirus_to_dsm_subscription";
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String GCP_PATH_PUBSUB_PROJECT_ID = "pubsub.projectId";
-    private static final String GCP_PATH_PUBSUB_SUB = "pubsub.subscription";
     private static final String GCP_PATH_DSM_DSS_SUB = "pubsub.dss_to_dsm_subscription";
     private static final String GCP_PATH_DSM_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     private static final String GCP_PATH_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
@@ -224,10 +211,19 @@ public class DSMServer {
             new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
     private static final String VAULT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
-    private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
     private static Auth0Util auth0Util;
+
+    private static Subscriber dssSubsciber;
+
+    private static Subscriber mercuryOrderSubscriber;
+
+    private static Subscriber dsmTasksSubscriber;
+
+    private static Subscriber antivirusSubscriber;
+
+    private static Scheduler scheduler;
 
     public static void main(String[] args) {
         //config without secrets
@@ -250,7 +246,20 @@ public class DSMServer {
         LogUtil.addAppEngineEnvVarsToMDC();
         // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
-        SparkBootUtil.startSparkServer(null, cfg.getConfig("portal"));
+
+        // todo arz factor out implementation
+        SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
+            public void onAhStop() {
+                logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+
+            public void onTerminate() {
+                logger.info("Terminating DSM instance", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+        },
+                cfg.getConfig("portal"));
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
@@ -494,6 +503,12 @@ public class DSMServer {
         //setup the mysql transaction/connection utility
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
+        try {
+            TransactionWrapper.useTxn(handle -> LiquibaseUtil.logDatabaseChangeLogLocks(handle.getConnection()));
+        } catch (SQLException e) {
+            throw new DsmInternalError("Could not query liquibase locks", e);
+        }
+
         logger.info("Running DB update...");
 
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
@@ -672,7 +687,7 @@ public class DSMServer {
         patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new GsonResponseTransformer());
 
         EventUtil eventUtil = new EventUtil();
-        setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
+        scheduler = setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
 
         //TODO - redo with pubsub
         JavaHeapDumper heapDumper = new JavaHeapDumper();
@@ -696,71 +711,36 @@ public class DSMServer {
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {
         String projectId = cfg.getString(GCP_PATH_PUBSUB_PROJECT_ID);
-        String subscriptionId = cfg.getString(GCP_PATH_PUBSUB_SUB);
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_DSM_DSS_SUB);
         String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_DSM_TASKS_SUB);
         String mercuryDsmSubscriptionId = cfg.getString(GCP_PATH_MERCURY_DSM_SUB);
         String antivirusDsmSubscriptionId = cfg.getString(GCP_PATH_ANTI_VIRUS_SUB);
 
-        logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
-
-        try {
-            // Instantiate an asynchronous message receiver.
-            MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
-                // Handle incoming message, then ack the received message.
-                try {
-                    TransactionWrapper.inTransaction(conn -> {
-                        PubSubLookUp.processCovidTestResults(conn, message, notificationUtil);
-                        logger.info("Processing the message finished");
-                        consumer.ack();
-                        return null;
-                    });
-
-                } catch (Exception ex) {
-                    logger.info("about to nack the message", ex);
-                    consumer.nack();
-                    ex.printStackTrace();
-                }
-            };
-
-            Subscriber subscriber = null;
-            ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
-            ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-            subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
-                    .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
-            try {
-                subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
-                logger.info("Started pubsub subscription receiver for {}", subscriptionId);
-            } catch (TimeoutException e) {
-                throw new DsmInternalError("Timed out while starting pubsub subscription " + subscriptionId, e);
-            }
-        } catch (Exception e) {
-            throw new DsmInternalError("Failed to get results from pubsub ", e);
-        }
+        // todo arz PR comment about removing listener for covid test results
 
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         try {
-            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
+            dssSubsciber = PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
+            dsmTasksSubscriber = DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
         } catch (Exception e) {
             throw new DsmInternalError("Error initializing DSMtasksSubscription", e);
         }
 
         try {
-            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
+            mercuryOrderSubscriber = MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
             logger.info("Setting up pupsub for somatic antivirus scanning {}/{}", projectId, antivirusDsmSubscriptionId);
-            AntivirusScanningStatusListener.subscribeToAntiVirusStatus(projectId, antivirusDsmSubscriptionId);
+            antivirusSubscriber = AntivirusScanningStatusListener.subscribeToAntiVirusStatus(projectId, antivirusDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -997,13 +977,14 @@ public class DSMServer {
 
     }
 
-    private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
-                           @NonNull EventUtil eventUtil) {
+    private Scheduler setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
+                                @NonNull EventUtil eventUtil) {
         String schedulerName = null;
+        Scheduler scheduler = null;
         if (cfg.getBoolean(ApplicationConfigConstants.QUARTZ_ENABLE_JOBS)) {
             logger.info("Setting up jobs");
             try {
-                Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+                scheduler = new StdSchedulerFactory().getScheduler();
                 schedulerName = scheduler.getSchedulerName();
                 createDDPRequestScheduledJobs(scheduler, DDPRequestJob.class, "DDPREQUEST_JOB",
                         cfg.getInt(ApplicationConfigConstants.QUARTZ_DDP_REQUEST_JOB_INTERVAL_SEC), new DDPRequestTriggerListener(),
@@ -1033,7 +1014,9 @@ public class DSMServer {
             } catch (Exception e) {
                 throw new DsmInternalError("Could not create scheduler ", e);
             }
+
         }
+        return scheduler;
     }
 
     private void startScheduler(Scheduler scheduler) throws SchedulerException {
@@ -1090,32 +1073,39 @@ public class DSMServer {
         });
     }
 
-    private static class ReadinessRoute implements Route {
-
-        private final long bootTimeoutSeconds;
-
-        public ReadinessRoute(long bootTimeoutSeconds) {
-            this.bootTimeoutSeconds = bootTimeoutSeconds;
+    public static void shutdown() {
+        // todo arz log instance and deployment in all shutdowns
+        logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
+        // shutdown jobs
+        if (scheduler != null) {
+            logger.info("Shutting down quartz.");
+            try {
+                scheduler.shutdown();
+            } catch (SchedulerException e) {
+                logger.error("Error shutting down quartz.", e);
+            }
         }
 
-        @Override
-        public Object handle(Request req, Response res) throws Exception {
-            AtomicInteger status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
-            long bootTime = Instant.now().toEpochMilli();
-            Thread waitForBoot = new Thread(() -> {
-                synchronized (isReady) {
-                    if (isReady.get()) {
-                        status.set(HttpStatus.SC_OK);
-                    }
-                }
-            });
-
-            waitForBoot.start();
-            waitForBoot.join(bootTimeoutSeconds * 1000);
-            logger.info("Responding to startup route after {}ms delay with {}", Instant.now().toEpochMilli() - bootTime, status.get());
-            res.status(status.get());
-            return "";
+        // shutdown pubsub
+        logger.info("Shutting down pubsub.");
+        if (dssSubsciber != null) {
+            dssSubsciber.stopAsync();
         }
+        if (mercuryOrderSubscriber != null) {
+            mercuryOrderSubscriber.stopAsync();
+        }
+        if (dsmTasksSubscriber != null) {
+            dsmTasksSubscriber.stopAsync();
+        }
+        if (antivirusSubscriber != null) {
+            antivirusSubscriber.stopAsync();
+        }
+
+        // shutdown db pool
+        logger.info("Shutting down db pool");
+        TransactionWrapper.reset();
+
+        // shutdown spark
+        Spark.stop();
     }
-
 }

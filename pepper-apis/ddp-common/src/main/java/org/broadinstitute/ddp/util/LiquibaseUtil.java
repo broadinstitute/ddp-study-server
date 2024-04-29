@@ -2,8 +2,12 @@ package org.broadinstitute.ddp.util;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.typesafe.config.Config;
 
@@ -46,6 +50,25 @@ public class LiquibaseUtil implements AutoCloseable {
         dataSource = new HikariDataSource(config);
     }
 
+    public static void logDatabaseChangeLogLocks(Connection conn) throws SQLException {
+        for (String databaseChangeLogLock : getDatabaseChangeLogLocks(conn)) {
+            log.info("databasechangeloglock {}", databaseChangeLogLock);
+        }
+    }
+
+    public static List<String> getDatabaseChangeLogLocks(Connection conn) throws SQLException {
+        List<String> lockData = new ArrayList<>();
+        try (ResultSet rs = conn.prepareStatement(
+                        "select concat(ID, ' ', LOCKED, ' ', LOCKGRANTED, ' ', LOCKEDBY) from DATABASECHANGELOGLOCK")
+                .executeQuery()) {
+            while (rs.next()) {
+                lockData.add(rs.getString(1)); // todo arz log lock details
+            }
+        }
+        return lockData;
+    }
+
+
     @Override
     public void close()  {
         if (dataSource != null) {
@@ -60,6 +83,9 @@ public class LiquibaseUtil implements AutoCloseable {
         runLiquibase(dbUrl, db, LIQUIBASE_APP_CONTEXT);
     }
 
+    // todo have a singleton Liquibase and LiquibaseUtil to better handle termination-induced
+    // dbchangeloglock locks
+
     /**
      * Runs the global liquibase migrations against the given database url using a connection that's auto-closed
      *
@@ -72,7 +98,7 @@ public class LiquibaseUtil implements AutoCloseable {
 
         try {
             try (LiquibaseUtil liquibaseUtil = new LiquibaseUtil(dbUrl)) {
-
+                LiquibaseUtil.logDatabaseChangeLogLocks(liquibaseUtil.dataSource.getConnection());
                 if (db == DB.APIS) {
                     liquibaseUtil.runPepperAPIsGlobalMigrations(context);
                 } else if (db == DB.HOUSEKEEPING) {
@@ -95,6 +121,7 @@ public class LiquibaseUtil implements AutoCloseable {
     public static void runChangeLog(String dbUrl, String changeLogFile) {
         try {
             try (LiquibaseUtil util = new LiquibaseUtil(dbUrl)) {
+                LiquibaseUtil.logDatabaseChangeLogLocks(util.dataSource.getConnection());
                 util.runMigrations(changeLogFile, LIQUIBASE_TEST_CONTEXT);
             }
         } catch (Exception e) {
@@ -142,6 +169,8 @@ public class LiquibaseUtil implements AutoCloseable {
         runMigrations(DSM_GLOBAL_MIGRATIONS, context);
     }
 
+
+    //todo arz move stat mgt up to main()
     /**
      * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
      *
@@ -151,7 +180,6 @@ public class LiquibaseUtil implements AutoCloseable {
         if (context == null || context.isEmpty()) {
             throw new RuntimeException("Liquibase context must be provided");
         }
-
         try (Liquibase liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(),
                 new JdbcConnection(dataSource.getConnection()))) {
             String tag = null;
