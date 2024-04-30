@@ -1332,11 +1332,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 if (kitRequestSettings.getHasCareOF() != 1) {
                     // aside form singular, all other studies should go here and proceed with normal label
                     toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
-                    return toAddress;
                 } else {
                     toAddress = getAddressForStudiesWithCareOfField(easyPostUtil, kitRequestSettings, participant, ddpInstanceDto);
                 }
             }
+        }
+        if (toAddress == null) {
+            throw new DsmInternalError("Couldn't get address for kit request");
         }
         return toAddress;
     }
