@@ -26,6 +26,10 @@ public class LabelCreationJob implements Job {
                 }
             } else if (labelCreationStarted < System.currentTimeMillis() - (SystemUtil.MILLIS_PER_HOUR)) {
                 logger.error("Label creation job is running for over 1 hour now, will reset the job. Please check the logs for errors");
+                // DSM is supposed to wait for 5 seconds for a carrier to respond, so in one hour DSM should be approx. able to
+                // create 720 labels. If we add the time it takes to process a kit after the carrier responds, we should be able to
+                // process about 500 kits in one hour. If we are still running after one hour, something was wrong, we will reset the job
+                // and so the next time the job runs, it will pick up the kits that were not processed.
                 DBUtil.updateBookmark(0, KitUtil.BOOKMARK_LABEL_CREATION_RUNNING);
             }
         } catch (Exception ex) {
