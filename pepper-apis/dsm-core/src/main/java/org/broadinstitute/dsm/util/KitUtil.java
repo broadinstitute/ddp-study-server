@@ -209,7 +209,7 @@ public class KitUtil {
                     }
                 } else {
                     // Generally this part of the code handles uploaded kits.
-                    // Uploaded kits have their address id set in time of kit creation. As part of the kit upload
+                    // Uploaded kits have their address id created and set in time of kit creation. As part of the kit upload
                     // DSM validates the address that is in the upload file and sets the address id if it is valid.
                     // So here in time of label creation we can use the address id to get the address from EasyPost and use it
                     // to buy the shipment.
@@ -217,10 +217,10 @@ public class KitUtil {
                             kitToCreateLabelFor.getAddressIdTo(), null, ddpInstanceDto);
                     //uploaded pt is missing collaborator ids -> possibly due to an old kit being from a migrated legacy study
                     if (kitToCreateLabelFor.getParticipantCollaboratorId() == null) {
-                        //checking if this part of the code ever happens
-                        logger.error("Had a kit without a collaborator participant id in need of a label, kit id {} in study {}",
-                                kitToCreateLabelFor.getDsmKitId(), kitToCreateLabelFor.getInstanceName());
-                        createCollaboratorPartiticpantId(kitToCreateLabelFor, ddpInstanceDto);
+                        //checking if this part of the code is ever reached
+                        logger.error("Error put in to check: Had a kit without a collaborator participant id in need of a label, "
+                                + "kit id {} in study {}", kitToCreateLabelFor.getDsmKitId(), kitToCreateLabelFor.getInstanceName());
+                        createCollaboratorParticipantId(kitToCreateLabelFor);
                     }
                 }
                 if (toAddress != null) {
@@ -242,23 +242,15 @@ public class KitUtil {
         DBUtil.updateBookmark(0, BOOKMARK_LABEL_CREATION_RUNNING);
     }
 
-    private static void createCollaboratorPartiticpantId(KitRequestCreateLabel kitToCreateLabelFor, DDPInstanceDto ddpInstanceDto) {
+    /**
+     * This method sets the collaborator participant id and collaborator sample id for a kit that is missing them
+     * This method is called for older kits that are migrated to Pepper and might not have the collaborator ids set, otherwise
+     * in the usual case the collaborator ids are set in time of kit creation or upload
+     * */
+    private static void createCollaboratorParticipantId(KitRequestCreateLabel kitToCreateLabelFor) {
         if (StringUtils.isNotBlank(kitToCreateLabelFor.getBaseURL())) {
             //DDP requested pt
-            DDPParticipant ddpParticipant = null;
-            if (StringUtils.isNotBlank(kitToCreateLabelFor.getParticipantIndexES())) {
-                Map<String, Map<String, Object>> participantsESData =
-                        ElasticSearchUtil.getDDPParticipantsFromES(kitToCreateLabelFor.getInstanceName(),
-                                kitToCreateLabelFor.getParticipantIndexES());
-                ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                        kitToCreateLabelFor.getDdpParticipantId());
-            } else {
-                //DDP requested pt
-                ddpParticipant = DDPParticipant.getDDPParticipant(kitToCreateLabelFor.getBaseURL(),
-                        kitToCreateLabelFor.getInstanceName(), kitToCreateLabelFor.getDdpParticipantId(),
-                        kitToCreateLabelFor.isHasAuth0Token());
-
-            }
+            DDPParticipant ddpParticipant = getDDPParticipantForMigratedKit(kitToCreateLabelFor);
             if (ddpParticipant != null) {
                 String collaboratorParticipantId =
                         KitRequestShipping.generateBspParticipantID(kitToCreateLabelFor.getCollaboratorIdPrefix(),
@@ -274,10 +266,30 @@ public class KitUtil {
                 } else {
                     updateCollaboratorIds(kitToCreateLabelFor, collaboratorParticipantId, bspCollaboratorSampleType);
                 }
+            } else {
+                logger.error(
+                        "Unable to generate DdpParticipant for participantId %s, will not be able to get collaborator ids for dsm kit id %s"
+                        .formatted(kitToCreateLabelFor.getDdpParticipantId(), kitToCreateLabelFor.getDsmKitId()));
             }
         } else {
-            logger.error("Kit of pt  " + kitToCreateLabelFor.getDdpParticipantId() + " w/ kit id "
-                    + kitToCreateLabelFor.getDsmKitId() + " is missing collaborator id");
+            logger.error("Unable to get collaborator ids participant id %s for dsm kit id %s "
+                    .formatted(kitToCreateLabelFor.getDdpParticipantId(), kitToCreateLabelFor.getDsmKitId()));
+        }
+    }
+
+    private static DDPParticipant getDDPParticipantForMigratedKit(KitRequestCreateLabel kitToCreateLabelFor) {
+        if (StringUtils.isNotBlank(kitToCreateLabelFor.getParticipantIndexES())) {
+            Map<String, Map<String, Object>> participantsESData =
+                    ElasticSearchUtil.getDDPParticipantsFromES(kitToCreateLabelFor.getInstanceName(),
+                            kitToCreateLabelFor.getParticipantIndexES());
+            return ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
+                    kitToCreateLabelFor.getDdpParticipantId());
+        } else {
+            //DDP requested pt
+            return DDPParticipant.getDDPParticipant(kitToCreateLabelFor.getBaseURL(),
+                    kitToCreateLabelFor.getInstanceName(), kitToCreateLabelFor.getDdpParticipantId(),
+                    kitToCreateLabelFor.isHasAuth0Token());
+
         }
     }
 

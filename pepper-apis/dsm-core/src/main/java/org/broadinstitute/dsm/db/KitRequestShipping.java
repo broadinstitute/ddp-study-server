@@ -1311,6 +1311,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return out.toString();
     }
 
+    /**
+     * This method is used to get the address where the kit should be sent to. If the addressId or the participant is not given,
+     * then it is a return label.
+     * In that case, the address is generated based on the return address settings in the kit request settings.
+     * */
     public static Address getToAddressId(@NonNull EasyPostUtil easyPostUtil, KitRequestSettings kitRequestSettings, String addressId,
                                          DDPParticipant participant, DDPInstanceDto ddpInstanceDto) throws EasyPostException {
         Address toAddress = null;
@@ -1328,22 +1333,34 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     // aside form singular, all other studies should go here and proceed with normal label
                     toAddress = easyPostUtil.createAddress(participant, kitRequestSettings.getPhone());
                     return toAddress;
+                } else {
+                    toAddress = getAddressForStudiesWithCareOfField(easyPostUtil, kitRequestSettings, participant, ddpInstanceDto);
                 }
-                toAddress = getAddressForStudiesWithCareOfField(easyPostUtil, kitRequestSettings, participant, ddpInstanceDto);
             }
         }
         return toAddress;
     }
 
+    /**
+     * This method is used to get the return address in Broad that kit should come back to.
+     * That address comes from KitRequestSettings. It is in the kit_return_information table and is collected as part of the
+     * kit request settings.
+     * */
     public static Address createReturnAddress(KitRequestSettings kitRequestSettings, EasyPostUtil easyPostUtil) throws EasyPostException {
         return easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
                 kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
                 kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
-
     }
 
+    /**
+     * Addresses are generated based on the addressId from where a kit should go to (given when the kit is uploaded) or the participant's
+     * address if the addressId is not given. If the addressId is not given and the participant is null, then it is a return label.
+     *
+     * @param addressId addressId from ddp_kit table in case of an uploaded kit
+     * @param participant participant object in case of a system generated kit
+     * @return true if it is a return label, false otherwise
+     */
     private static boolean isReturnAddress(String addressId, DDPParticipant participant) {
-        //if both are set to null then it is return label!
         return addressId == null && participant == null;
     }
 
