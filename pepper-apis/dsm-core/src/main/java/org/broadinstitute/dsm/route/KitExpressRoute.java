@@ -118,7 +118,7 @@ public class KitExpressRoute extends RequestHandler {
         } catch (Exception e) {
             errorMessage = "To: " + e.getMessage();
         }
-        errorMessage = KitUtil.messageBasedOnLocationAndInstance(errorMessage, ddpInstanceDto, toAddress);
+        errorMessage = KitUtil.checkResearchKitInClinicalStudies(errorMessage, ddpInstanceDto, toAddress);
         KitRequestShipping.updateKit(kitId, participantShipment, null, errorMessage, toAddress, true, ddpInstanceDto);
     }
 

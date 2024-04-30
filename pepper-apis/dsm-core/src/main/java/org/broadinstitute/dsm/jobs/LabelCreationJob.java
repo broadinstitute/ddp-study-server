@@ -24,11 +24,13 @@ public class LabelCreationJob implements Job {
                 if (!kitsLabelTriggered.isEmpty()) {
                     KitUtil.createLabel(kitsLabelTriggered, null);
                 }
-            } else if (labelCreationStarted < System.currentTimeMillis() - (SystemUtil.MILLIS_PER_HOUR * 2)) {
-                logger.error("Label creation job is running for over 2 hours now...");
+            } else if (labelCreationStarted < System.currentTimeMillis() - (SystemUtil.MILLIS_PER_HOUR)) {
+                logger.error("Label creation job is running for over 1 hour now, will reset the job. Please check the logs for errors");
+                DBUtil.updateBookmark(0, KitUtil.BOOKMARK_LABEL_CREATION_RUNNING);
             }
         } catch (Exception ex) {
             logger.error("Error running LabelCreationJob", ex);
+            DBUtil.updateBookmark(0, KitUtil.BOOKMARK_LABEL_CREATION_RUNNING);
         }
     }
 }

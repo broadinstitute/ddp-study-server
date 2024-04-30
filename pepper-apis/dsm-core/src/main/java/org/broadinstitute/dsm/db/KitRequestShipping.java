@@ -1043,7 +1043,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
     }
 
-    // update kit with label information
+    /** updates kit with information gathered during label creation, such as tracking code, label url, possible errors
+     * and address
+     * @param dsmKitId dsm_kit_id from ddp_kit table
+     * @param participantShipment Easypost Shipment object for this participant's kit
+     * @param returnShipment EasyPost Shipment object for this participant's return of the kit
+     * @param errorMessage  error message if any
+     * @param toAddress Easypost Address object for this participant's address
+     * @param isExpress boolean if this kit is express shipping
+     * @param ddpInstanceDto DDPInstanceDto object of the study that kit belongs to
+     */
     public static void updateKit(String dsmKitId, Shipment participantShipment, Shipment returnShipment, String errorMessage,
                                  Address toAddress, boolean isExpress, DDPInstanceDto ddpInstanceDto) {
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
@@ -1145,8 +1154,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     // update request with collaborator ids
-    public static void updateRequest(@NonNull KitRequestCreateLabel kit, @NonNull DDPParticipant participant, @NonNull KitType kitType,
-                                     @NonNull KitRequestSettings kitRequestSettings) {
+    public static void updateKitBspParticipantAndSampleId(@NonNull KitRequestCreateLabel kit, @NonNull DDPParticipant participant,
+                                                          @NonNull KitType kitType, @NonNull KitRequestSettings kitRequestSettings) {
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement updateStmt = conn.prepareStatement(SQL_UPDATE_KIT_REQUEST)) {
@@ -1303,13 +1312,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public static Address getToAddressId(@NonNull EasyPostUtil easyPostUtil, KitRequestSettings kitRequestSettings, String addressId,
-                                         DDPParticipant participant, DDPInstanceDto ddpInstanceDto) throws Exception {
+                                         DDPParticipant participant, DDPInstanceDto ddpInstanceDto) throws EasyPostException {
         Address toAddress = null;
-        if (addressId == null && participant == null) { //if both are set to null then it is return label!
-            toAddress =
-                    easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
-                            kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
-                            kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
+        if (isReturnAddress(addressId, participant)) {
+            try {
+                toAddress = createReturnAddress(kitRequestSettings, easyPostUtil);
+            } catch (EasyPostException e) {
+                logger.error("Couldn't generate return address for a kit for ddpInstance " + kitRequestSettings.getDdpInstanceId(), e);
+            }
         } else {
             if (StringUtils.isNotBlank(addressId)) {
                 toAddress = easyPostUtil.getAddress(addressId);
@@ -1323,6 +1333,18 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
         }
         return toAddress;
+    }
+
+    public static Address createReturnAddress(KitRequestSettings kitRequestSettings, EasyPostUtil easyPostUtil) throws EasyPostException {
+        return easyPostUtil.createAddressWithoutValidation(kitRequestSettings.getReturnName(), kitRequestSettings.getReturnStreet1(),
+                kitRequestSettings.getReturnStreet2(), kitRequestSettings.getReturnCity(), kitRequestSettings.getReturnZip(),
+                kitRequestSettings.getReturnState(), kitRequestSettings.getReturnCountry(), kitRequestSettings.getPhone());
+
+    }
+
+    private static boolean isReturnAddress(String addressId, DDPParticipant participant) {
+        //if both are set to null then it is return label!
+        return addressId == null && participant == null;
     }
 
     private static Address getAddressForStudiesWithCareOfField(@NonNull EasyPostUtil easyPostUtil, KitRequestSettings kitRequestSettings,
