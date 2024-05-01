@@ -31,7 +31,7 @@ public class SparkBootUtil {
      *                          when the _ah/stop route is called by GAE
      * @param cfg the config to use
      */
-    public static void startSparkServer(StopRouteCallback stopRouteCallback, Config cfg) {
+    public static void startSparkServer(AppEngineShutdown stopRouteCallback, Config cfg) {
         String preferredSourceIPHeader = null;
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
@@ -67,7 +67,7 @@ public class SparkBootUtil {
             log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             if (stopRouteCallback != null) {
-                stopRouteCallback.onStop();
+                stopRouteCallback.onAhStop();
             }
             response.status(HttpStatus.SC_OK);
             return "";
@@ -75,12 +75,24 @@ public class SparkBootUtil {
     }
 
     /**
-     * Called when the {@link org.broadinstitute.ddp.constants.RouteConstants.GAE#STOP_ENDPOINT}
-     * is called by the app engine dispatcher
+     * Methods called in response to different lifecycle events
+     * related to shutting down
      */
-    @FunctionalInterface
-    public interface StopRouteCallback {
+    public interface AppEngineShutdown {
 
-        void onStop();
+        /**
+         * Called when app engine _ah/stop route is called.
+         * AppEngine may call this repeatedly and give you
+         * more time to respond than {@link #onTerminate()}
+         */
+        void onAhStop();
+
+        /**
+         * Called when app engine forcibly stops
+         * the VM with a termination signal.  This is
+         * the last chance to do any cleanup
+         */
+        void onTerminate();
     }
+
 }

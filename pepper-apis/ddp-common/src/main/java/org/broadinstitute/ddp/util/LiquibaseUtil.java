@@ -2,8 +2,12 @@ package org.broadinstitute.ddp.util;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.typesafe.config.Config;
 
@@ -19,6 +23,7 @@ import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -46,6 +51,41 @@ public class LiquibaseUtil implements AutoCloseable {
         dataSource = new HikariDataSource(config);
     }
 
+    /**
+     * Writes a log entry per liquibase lock for each active
+     * liquibase lock
+     */
+    public static void logDatabaseChangeLogLocks(Connection conn) throws SQLException {
+        for (String databaseChangeLogLock : getDatabaseChangeLogLocks(conn)) {
+            log.info("databasechangeloglock {}", databaseChangeLogLock);
+        }
+    }
+
+    /**
+     * Queries the database directly (bypassing liquibase conventions) and returns
+     * strings containing information about any currently active liquibase locks
+     */
+    public static List<String> getDatabaseChangeLogLocks(Connection conn) throws SQLException {
+        List<String> lockData = new ArrayList<>();
+        try (ResultSet liquibaseTableExists = conn.prepareStatement(
+                "SELECT 1 FROM information_schema.TABLES WHERE TABLE_NAME = 'DATABASECHANGELOGLOCK' "
+                + " AND TABLE_SCHEMA = (SELECT DATABASE())").executeQuery()) {
+            if (liquibaseTableExists.next()) {
+                try (ResultSet rs = conn.prepareStatement(
+                        "select concat(ID, ' ', LOCKED, ' ', LOCKGRANTED, ' ', LOCKEDBY) from DATABASECHANGELOGLOCK")
+                        .executeQuery()) {
+                    while (rs.next()) {
+                        if (StringUtils.isNotBlank(rs.getString(1))) {
+                            lockData.add(rs.getString(1));
+                        }
+                    }
+                }
+            }
+        }
+        return lockData;
+    }
+
+
     @Override
     public void close()  {
         if (dataSource != null) {
@@ -72,7 +112,7 @@ public class LiquibaseUtil implements AutoCloseable {
 
         try {
             try (LiquibaseUtil liquibaseUtil = new LiquibaseUtil(dbUrl)) {
-
+                LiquibaseUtil.logDatabaseChangeLogLocks(liquibaseUtil.dataSource.getConnection());
                 if (db == DB.APIS) {
                     liquibaseUtil.runPepperAPIsGlobalMigrations(context);
                 } else if (db == DB.HOUSEKEEPING) {
@@ -95,6 +135,7 @@ public class LiquibaseUtil implements AutoCloseable {
     public static void runChangeLog(String dbUrl, String changeLogFile) {
         try {
             try (LiquibaseUtil util = new LiquibaseUtil(dbUrl)) {
+                LiquibaseUtil.logDatabaseChangeLogLocks(util.dataSource.getConnection());
                 util.runMigrations(changeLogFile, LIQUIBASE_TEST_CONTEXT);
             }
         } catch (Exception e) {
@@ -151,7 +192,6 @@ public class LiquibaseUtil implements AutoCloseable {
         if (context == null || context.isEmpty()) {
             throw new RuntimeException("Liquibase context must be provided");
         }
-
         try (Liquibase liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(),
                 new JdbcConnection(dataSource.getConnection()))) {
             String tag = null;
