@@ -24,6 +24,8 @@ public class SparkBootUtil {
 
     public static final String APPENGINE_PORT_ENV_VAR = "PORT";
 
+    private static int numShutdownAttempts = 0;
+
     /**
      * Reads configuration and environment settings common to
      * DSM, DSS, and Housekeeping and starts a spark server on the appropriate port.
@@ -74,8 +76,13 @@ public class SparkBootUtil {
                 // itself, so give spark a moment to respond to the current request
                 // before turning it off.  Otherwise, appengine may see the shutdown command
                 // as a failure
-                final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-                executor.schedule(() -> stopRouteCallback.onAhStop(), 2, TimeUnit.SECONDS);
+                if (numShutdownAttempts == 0) {
+                    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+                    executor.schedule(() -> stopRouteCallback.onAhStop(), 2, TimeUnit.SECONDS);
+                } else {
+                    log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
+                }
+                numShutdownAttempts++;
             }
             response.status(HttpStatus.SC_OK);
             return "";
