@@ -13,7 +13,8 @@ public class LogUtil {
 
     /**
      * Adds some app engine environment variables to {@link MDC}
-     * so that they can be referenced in logback.xml more easily.
+     * so that they can be referenced in
+     * @see <a href="https://logback.qos.ch/manual/mdc.html">logback</a>
      */
     public static void addAppEngineEnvVarsToMDC() {
         MDC.put(GAE_DEPLOYMENT_ID, System.getProperty(GAE_DEPLOYMENT_ID));
