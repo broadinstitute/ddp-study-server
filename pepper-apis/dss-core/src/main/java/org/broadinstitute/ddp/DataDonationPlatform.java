@@ -42,6 +42,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
+import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
 import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
@@ -220,31 +221,16 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
-    /**
-     * Stop the server using the default wait time.
-     */
-    public static void shutdown() {
-        shutdown(1000);
-    }
 
     /**
-     * Stop the Spark server and give it time to close.
-     *
-     * @param millisecs milliseconds to wait for Spark to close
+     * Shut down the dss server
      */
-    public static void shutdown(int millisecs) {
+    public static void shutdown() {
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, false);
         }
-
+        PubSubPublisherInitializer.shutdownPublishers();
         stop();
-        try {
-            log.info("Pausing for {}ms for server to stop", millisecs);
-            Thread.sleep(millisecs);
-        } catch (InterruptedException e) {
-            log.warn("Wait interrupted", e);
-        }
-
         log.info("ddp shutdown complete");
     }
 
@@ -265,7 +251,19 @@ public class DataDonationPlatform {
         LogUtil.addAppEngineEnvVarsToMDC();
         Config cfg = ConfigManager.getInstance().getConfig();
         // respond GAE dispatcher endpoints as soon as possible
-        SparkBootUtil.startSparkServer(null, cfg);
+        SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
+            @Override
+            public void onAhStop() {
+                log.info("Shutting down DSS instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+
+            @Override
+            public void onTerminate() {
+                log.info("Terminating DSS instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+        }, cfg);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
