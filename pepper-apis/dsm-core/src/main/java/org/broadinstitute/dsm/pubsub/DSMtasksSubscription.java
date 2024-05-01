@@ -36,7 +36,7 @@ public class DSMtasksSubscription {
     public static final int MAX_RETRY = 50;
     private static final Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
 
-    public static void subscribeDSMtasks(String projectId, String subscriptionId) {
+    public static Subscriber subscribeDSMtasks(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             // Handle incoming message, then ack the received message.
@@ -87,6 +87,7 @@ public class DSMtasksSubscription {
         } catch (TimeoutException e) {
             throw new DsmInternalError("Timed out while starting pubsub subscription for DSM tasks", e);
         }
+        return subscriber;
     }
 
     public static void doESExport(Map<String, String> attributesMap, String data) {

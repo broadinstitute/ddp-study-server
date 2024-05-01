@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public class AntivirusScanningStatusListener {
     private static final Logger logger = LoggerFactory.getLogger(AntivirusScanningStatusListener.class);
 
-    public static void subscribeToAntiVirusStatus(String projectId, String subscriptionId) {
+    public static Subscriber subscribeToAntiVirusStatus(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             // Handle incoming message, then ack the received message.
@@ -48,6 +48,7 @@ public class AntivirusScanningStatusListener {
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out while starting pubsub subscription for antivirus scanning status", e);
         }
+        return subscriber;
     }
 
     private static void processAntiVirusStatus(PubsubMessage message) {

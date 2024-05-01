@@ -23,11 +23,11 @@ public class PubSubResultMessageSubscription {
 
     private static final Logger logger = LoggerFactory.getLogger(PubSubResultMessageSubscription.class);
 
-    public static void dssToDsmSubscriber(String projectId, String subscriptionId) throws Exception {
-        subscribeWithFlowControlSettings(projectId, subscriptionId);
+    public static Subscriber dssToDsmSubscriber(String projectId, String subscriptionId) throws Exception {
+        return subscribeWithFlowControlSettings(projectId, subscriptionId);
     }
 
-    public static void subscribeWithFlowControlSettings(
+    public static Subscriber subscribeWithFlowControlSettings(
             String projectId, String subscriptionId) {
 
         // Instantiate an asynchronous message receiver.
@@ -78,7 +78,7 @@ public class PubSubResultMessageSubscription {
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out while starting pubsub subscription for edit participant", e);
         }
-
+        return subscriber;
     }
 
     public static String transformMessage(PubsubMessage pubsubMessage) {
