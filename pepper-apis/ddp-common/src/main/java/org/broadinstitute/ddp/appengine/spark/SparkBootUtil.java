@@ -90,6 +90,8 @@ public class SparkBootUtil {
                 log.error("Error during {}", request.url(), e);
             }
             response.status(HttpStatus.SC_OK);
+            log.info("Completing GAE stop request [{}] for instance {} deployment {}", request.url(),
+                    System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             return "";
         });
 
