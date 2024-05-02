@@ -492,10 +492,10 @@ public class Housekeeping {
 
     private static void shutdownPubSub() {
         pubsubConnectionManager.close();
-        if (fileScanResultSubscriber != null) {
+        if (fileScanResultSubscriber != null && fileScanResultSubscriber.isRunning()) {
             fileScanResultSubscriber.stopAsync();
         }
-        if (taskSubscriber != null) {
+        if (taskSubscriber != null && taskSubscriber.isRunning()) {
             taskSubscriber.stopAsync();
         }
         if (pubSubTaskConnectionService != null) {

@@ -227,7 +227,13 @@ public class DataDonationPlatform {
      */
     public static void shutdown() {
         if (scheduler != null) {
-            JobScheduler.shutdownScheduler(scheduler, false);
+            try {
+                if (!scheduler.isShutdown()) {
+                    JobScheduler.shutdownScheduler(scheduler, false);
+                }
+            } catch (SchedulerException e) {
+                log.error("Error checking scheduler status", e);
+            }
         }
         PubSubPublisherInitializer.shutdownPublishers();
         stop();
