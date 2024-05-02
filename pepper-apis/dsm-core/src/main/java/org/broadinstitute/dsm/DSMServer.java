@@ -1076,7 +1076,9 @@ public class DSMServer {
         if (scheduler != null) {
             logger.info("Shutting down quartz.");
             try {
-                scheduler.shutdown();
+                if (!scheduler.isShutdown()) {
+                    scheduler.shutdown();
+                }
             } catch (SchedulerException e) {
                 logger.error("Error shutting down quartz.", e);
             }
@@ -1085,16 +1087,24 @@ public class DSMServer {
         // shutdown pubsub
         logger.info("Shutting down pubsub.");
         if (dssSubsciber != null) {
-            dssSubsciber.stopAsync();
+            if (dssSubsciber.isRunning()) {
+                dssSubsciber.stopAsync();
+            }
         }
         if (mercuryOrderSubscriber != null) {
-            mercuryOrderSubscriber.stopAsync();
+            if (mercuryOrderSubscriber.isRunning()) {
+                mercuryOrderSubscriber.stopAsync();
+            }
         }
         if (dsmTasksSubscriber != null) {
-            dsmTasksSubscriber.stopAsync();
+            if (dsmTasksSubscriber.isRunning()) {
+                dsmTasksSubscriber.stopAsync();
+            }
         }
         if (antivirusSubscriber != null) {
-            antivirusSubscriber.stopAsync();
+            if (antivirusSubscriber.isRunning()) {
+                antivirusSubscriber.stopAsync();
+            }
         }
 
         // shutdown db pool
