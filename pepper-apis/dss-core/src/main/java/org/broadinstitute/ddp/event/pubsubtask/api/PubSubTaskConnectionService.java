@@ -89,7 +89,6 @@ public class PubSubTaskConnectionService {
         if (pubSubTaskResultPublisher != null) {
             try {
                 pubSubTaskResultPublisher.shutdown();
-                pubSubTaskResultPublisher.awaitTermination(PUBLISHER_AWAIT_TERMINATION_TIMEOUT_MIN, TimeUnit.MINUTES);
             } catch (Exception e) {
                 throw new PubSubTaskException(errorMsg("Failed to shutdown PubSubTask connection"), e);
             }

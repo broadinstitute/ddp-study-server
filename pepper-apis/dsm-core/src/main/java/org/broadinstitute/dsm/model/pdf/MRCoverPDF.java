@@ -59,11 +59,12 @@ public class MRCoverPDF {
         MedicalRecord medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), originalDownloadPDF.getDdpParticipantId(),
                 originalDownloadPDF.getMedicalRecordId());
         if (medicalRecord == null) {
-            log.info( String.format("No medical record was found for participant with guid %s, trying legacy id", originalDownloadPDF.getDdpParticipantId()));
+            log.info(String.format("No medical record was found for participant with guid %s, trying legacy id",
+                    originalDownloadPDF.getDdpParticipantId()));
             Profile participantProfile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(
                     ddpInstance.getParticipantIndexES(), originalDownloadPDF.getDdpParticipantId()).orElseThrow();
             if (StringUtils.isNotBlank(participantProfile.getLegacyAltPid())) {
-                log.info("Participant has legacy id "+ participantProfile.getLegacyAltPid());
+                log.info("Participant has legacy id " + participantProfile.getLegacyAltPid());
                 medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), participantProfile.getLegacyAltPid(),
                         originalDownloadPDF.getMedicalRecordId());
             }
