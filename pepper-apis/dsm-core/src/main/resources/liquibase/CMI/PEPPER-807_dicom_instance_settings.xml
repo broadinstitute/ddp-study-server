@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="PEPPER-807_lms_dicom_image_instance_settings" author="pegah">
-        <preConditions onFail="HALT">
+        <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">SELECT COUNT(*) FROM instance_settings WHERE ddp_instance_id in (select ddp_instance_id from ddp_instance where study_guid = 'cmi-lms' and instance_name ='cmi-lms')</sqlCheck>
         </preConditions>
         <update tableName="instance_settings">
@@ -16,7 +16,7 @@
     </changeSet>
 
     <changeSet id="PEPPER-807_OS2_dicom_image_instance_settings" author="pegah">
-        <preConditions onFail="HALT">
+        <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">SELECT COUNT(*) FROM instance_settings WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where study_guid = 'cmi-osteo' and instance_name = 'osteo2')</sqlCheck>
         </preConditions>
         <update tableName="instance_settings">
