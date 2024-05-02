@@ -74,7 +74,7 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
         Map<String, Map<String, Object>> esData =
-                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(),
                         orderPayload.getParticipantHruid());
 
         if (esData.size() == 1) {

@@ -259,8 +259,7 @@ public class Covid19OrderRegistrar {
 
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
         Map<String, Map<String, Object>> esData =
-                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
-                        participantHruid);
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), participantHruid);
 
         if (esData.size() == 1) {
             JsonObject data = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();

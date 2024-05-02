@@ -81,7 +81,7 @@ public class Covid19OrderRegistrarTest {
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
         Map<String, Map<String, Object>> esData =
-                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(),
                         participantHruid);
 
         if (esData.size() == 1) {
