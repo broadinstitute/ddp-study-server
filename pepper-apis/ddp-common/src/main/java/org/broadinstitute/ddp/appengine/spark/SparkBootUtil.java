@@ -26,6 +26,8 @@ public class SparkBootUtil {
 
     private static int numShutdownAttempts = 0;
 
+    private static final ScheduledThreadPoolExecutor delayedShutdownExecutor = new ScheduledThreadPoolExecutor(1);
+
     /**
      * Reads configuration and environment settings common to
      * DSM, DSS, and Housekeeping and starts a spark server on the appropriate port.
@@ -71,18 +73,21 @@ public class SparkBootUtil {
         Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
-            if (stopRouteCallback != null) {
-                // Handling the shutdown command will likely shut down spark
-                // itself, so give spark a moment to respond to the current request
-                // before turning it off.  Otherwise, appengine may see the shutdown command
-                // as a failure
-                if (numShutdownAttempts == 0) {
-                    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-                    executor.schedule(() -> stopRouteCallback.onAhStop(), 500, TimeUnit.MILLISECONDS);
-                } else {
-                    log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
+            try {
+                if (stopRouteCallback != null) {
+                    // Handling the shutdown command will likely shut down spark
+                    // itself, so give spark a moment to respond to the current request
+                    // before turning it off.  Otherwise, appengine may see the shutdown command
+                    // as a failure
+                    if (numShutdownAttempts == 0) {
+                        delayedShutdownExecutor.schedule(() -> stopRouteCallback.onAhStop(), 500, TimeUnit.MILLISECONDS);
+                    } else {
+                        log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
+                    }
+                    numShutdownAttempts++;
                 }
-                numShutdownAttempts++;
+            } catch (Exception e) {
+                log.error("Error during {}", request.url(), e);
             }
             response.status(HttpStatus.SC_OK);
             return "";
