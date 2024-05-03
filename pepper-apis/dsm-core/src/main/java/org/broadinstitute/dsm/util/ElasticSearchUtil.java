@@ -1786,4 +1786,18 @@ public class ElasticSearchUtil {
         }
         return dsmParticipant;
     }
+
+    public static Map<String, Object> getParticipantProfileByShortID(DDPInstance ddpInstance, String shortId) {
+        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
+                ddpInstance.getParticipantIndexES(), shortId);
+        if (esParticipantData.size() != 1) {
+            throw new DSMBadRequestException("Invalid participant short ID " + shortId);
+        }
+        Map<String, Object> ptp = esParticipantData.values().stream().findFirst().orElseThrow();
+        Map<String, Object> profile = (Map<String, Object>) ptp.get("profile");
+        if (profile == null) {
+            throw new DSMBadRequestException("No profile found for participant short ID " + shortId);
+        }
+        return profile;
+    }
 }
