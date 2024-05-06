@@ -396,7 +396,7 @@ public class KitUtil {
             logger.warn("Unable to buy return label for kit with dsm kit id " + dsmKitId, e);
             errorMessage += "Return: " + e.getMessage();
         }
-        errorMessage = checkResearchKitInClinicalStudies(errorMessage, ddpInstanceDto, toAddress);
+        errorMessage = checkResearchKitInClinicalStudies(errorMessage, ddpInstanceDto, toAddress, dsmKitId);
         KitRequestShipping.updateKit(dsmKitId, participantShipment, returnShipment, errorMessage, toAddress, false, ddpInstanceDto);
     }
 
@@ -734,10 +734,15 @@ public class KitUtil {
         return notShippedKits;
     }
 
-    public static String checkResearchKitInClinicalStudies(String errorMessage, DDPInstanceDto ddpInstanceDto, Address toAddress) {
+    public static String checkResearchKitInClinicalStudies(String errorMessage, DDPInstanceDto ddpInstanceDto, Address toAddress,
+                                                           String dsmKitId) {
         //adding error message if study is PE-CGS and Participant is CA or NY otherwise keep the old error message
         if (!ddpInstanceDto.getResearchProject().isEmpty() && StringUtils.isNotBlank(ddpInstanceDto.getResearchProject().get())) {
-            if (toAddress.getCountry().equals("CA") || toAddress.getState().equals("NY")) {
+            if (StringUtils.isBlank(toAddress.getCountry()) || StringUtils.isBlank(toAddress.getState())) {
+                logger.error("Address is missing country or state for kit with dsm kit id " + dsmKitId);
+                return errorMessage;
+            }
+            if ("CA".equals(toAddress.getCountry()) || "NY".equals(toAddress.getState())) {
                 return StringUtils.isNotBlank(errorMessage) ? PECGS_RESEARCH + " " + errorMessage : PECGS_RESEARCH;
             }
         }

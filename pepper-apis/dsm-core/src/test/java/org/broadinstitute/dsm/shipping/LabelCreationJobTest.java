@@ -46,6 +46,8 @@ public class LabelCreationJobTest extends DbAndElasticBaseTest {
     @Mock
     private KitRequestCreateLabel kitRequestCreateLabelMock;
 
+    private static final String dsmKitId = "TestKitId";
+
 
 
     @Before
@@ -92,29 +94,34 @@ public class LabelCreationJobTest extends DbAndElasticBaseTest {
         when(mockEasyPostAddress.getCountry()).thenReturn("CA");
         when(mockEasyPostAddress.getState()).thenReturn("ON");
         String oldErrorMessage = "Some error message";
-        String newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress);
+        String newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress, dsmKitId);
         assertEquals(KitUtil.PECGS_RESEARCH + " " + oldErrorMessage, newErrorMessage);
 
         when(mockEasyPostAddress.getCountry()).thenReturn("US");
         when(mockEasyPostAddress.getState()).thenReturn("NY");
-        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress);
+        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress, dsmKitId);
         assertEquals(KitUtil.PECGS_RESEARCH + " " + oldErrorMessage, newErrorMessage);
 
         when(mockEasyPostAddress.getCountry()).thenReturn("US");
         when(mockEasyPostAddress.getState()).thenReturn("MA");
-        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress);
+        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress, dsmKitId);
+        assertEquals(oldErrorMessage, newErrorMessage);
+
+        when(mockEasyPostAddress.getCountry()).thenReturn("US");
+        when(mockEasyPostAddress.getState()).thenReturn(null);
+        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress, dsmKitId);
         assertEquals(oldErrorMessage, newErrorMessage);
 
         oldErrorMessage = "";
         when(mockEasyPostAddress.getCountry()).thenReturn("US");
         when(mockEasyPostAddress.getState()).thenReturn("NY");
-        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress);
+        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress, dsmKitId);
         assertEquals(KitUtil.PECGS_RESEARCH, newErrorMessage);
 
         ddpInstanceDto = new DDPInstanceDto.Builder().withResearchProject(null).build();
         when(mockEasyPostAddress.getCountry()).thenReturn("US");
         when(mockEasyPostAddress.getState()).thenReturn("NY");
-        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress);
+        newErrorMessage = KitUtil.checkResearchKitInClinicalStudies(oldErrorMessage, ddpInstanceDto, mockEasyPostAddress, dsmKitId);
         assertEquals(oldErrorMessage, newErrorMessage);
 
     }
