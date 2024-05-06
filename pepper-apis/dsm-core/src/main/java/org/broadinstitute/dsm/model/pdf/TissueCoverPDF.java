@@ -35,7 +35,7 @@ public class TissueCoverPDF {
             for (int i = 0; i < originalDownloadPDF.oncHistoryIDs.size(); i++) {
                 OncHistoryDetail oncHistoryDetail =
                         OncHistoryDetail.getOncHistoryDetail(originalDownloadPDF.oncHistoryIDs.get(i), ddpInstance.getName());
-                // facility information is the same in all of the requests so only need to be set ones!
+                // facility information is the same in all the requests so only need to be set ones!
                 if (i == 0) {
                     valueMap.put(RequestPDFProcessor.FIELD_CONFIRMED_INSTITUTION_NAME, oncHistoryDetail.getFacility());
                     valueMap.put(RequestPDFProcessor.FIELD_CONFIRMED_PHONE, oncHistoryDetail.getPhone());
