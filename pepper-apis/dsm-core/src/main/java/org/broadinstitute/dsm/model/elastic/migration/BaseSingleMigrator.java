@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public abstract class BaseSingleMigrator extends BaseMigrator {
@@ -24,6 +25,11 @@ public abstract class BaseSingleMigrator extends BaseMigrator {
     @Override
     protected void transformObject(Object object) {
         transformedObject = getObjectTransformer().transformObjectToMap(object);
+    }
+
+    @Override
+    protected Object mergeObjects(Object object1, Object object2) {
+        throw new DsmInternalError("mergeObjects not supported for single migrators");
     }
 
     /**
