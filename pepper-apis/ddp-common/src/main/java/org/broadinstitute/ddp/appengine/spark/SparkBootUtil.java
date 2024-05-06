@@ -10,6 +10,9 @@ import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.logging.LogUtil;
 import spark.Spark;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import static spark.Spark.threadPool;
 
 /**
@@ -21,6 +24,8 @@ public class SparkBootUtil {
 
     public static final String APPENGINE_PORT_ENV_VAR = "PORT";
 
+    private static int numShutdownAttempts = 0;
+
     /**
      * Reads configuration and environment settings common to
      * DSM, DSS, and Housekeeping and starts a spark server on the appropriate port.
@@ -31,7 +36,7 @@ public class SparkBootUtil {
      *                          when the _ah/stop route is called by GAE
      * @param cfg the config to use
      */
-    public static void startSparkServer(StopRouteCallback stopRouteCallback, Config cfg) {
+    public static void startSparkServer(AppEngineShutdown stopRouteCallback, Config cfg) {
         String preferredSourceIPHeader = null;
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
@@ -67,20 +72,46 @@ public class SparkBootUtil {
             log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             if (stopRouteCallback != null) {
-                stopRouteCallback.onStop();
+                // Handling the shutdown command will likely shut down spark
+                // itself, so give spark a moment to respond to the current request
+                // before turning it off.  Otherwise, appengine may see the shutdown command
+                // as a failure
+                if (numShutdownAttempts == 0) {
+                    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+                    executor.schedule(() -> stopRouteCallback.onAhStop(), 500, TimeUnit.MILLISECONDS);
+                } else {
+                    log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
+                }
+                numShutdownAttempts++;
             }
             response.status(HttpStatus.SC_OK);
             return "";
         });
+
+        if (stopRouteCallback != null) {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopRouteCallback.onTerminate()));
+        }
     }
 
     /**
-     * Called when the {@link org.broadinstitute.ddp.constants.RouteConstants.GAE#STOP_ENDPOINT}
-     * is called by the app engine dispatcher
+     * Methods called in response to different lifecycle events
+     * related to shutting down
      */
-    @FunctionalInterface
-    public interface StopRouteCallback {
+    public interface AppEngineShutdown {
 
-        void onStop();
+        /**
+         * Called when app engine _ah/stop route is called.
+         * AppEngine may call this repeatedly and give you
+         * more time to respond than {@link #onTerminate()}
+         */
+        void onAhStop();
+
+        /**
+         * Called when app engine forcibly stops
+         * the VM with a termination signal.  This is
+         * the last chance to do any cleanup
+         */
+        void onTerminate();
     }
+
 }

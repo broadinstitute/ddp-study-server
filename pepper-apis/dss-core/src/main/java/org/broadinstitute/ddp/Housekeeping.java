@@ -113,6 +113,7 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
+import spark.Spark;
 
 @Slf4j
 public class Housekeeping {
@@ -183,6 +184,8 @@ public class Housekeeping {
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
     private static Subscriber fileScanResultSubscriber;
+    private static PubSubConnectionManager pubsubConnectionManager;
+    private static PubSubTaskConnectionService pubSubTaskConnectionService;
 
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
@@ -197,14 +200,26 @@ public class Housekeeping {
     }
 
     public static void main(String[] args) {
+        LogbackConfigurationPrinter.printLoggingConfiguration();
         LogUtil.addAppEngineEnvVarsToMDC();
         // respond GAE dispatcher endpoints as soon as possible
-        SparkBootUtil.startSparkServer(null, ConfigManager.getInstance().getConfig());
+        SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
+            @Override
+            public void onAhStop() {
+                log.info("Shutting down housekeeping instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+
+            @Override
+            public void onTerminate() {
+                log.info("Terminating housekeeping instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+        }, ConfigManager.getInstance().getConfig());
         start(args, null);
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
-        LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
@@ -237,7 +252,7 @@ public class Housekeeping {
         setupTaskReceiver(cfg, pubSubProject);
         setupFileScanResultReceiver(cfg, pubSubProject);
 
-        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
+        pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
         if (usePubSubEmulator) {
             ProjectTopicName projectTopicName = ProjectTopicName.of(pubSubProject,
                     cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC));
@@ -246,7 +261,7 @@ public class Housekeeping {
                     cfg.getString(ConfigFile.PUBSUB_TASKS_SUB));
             pubsubConnectionManager.createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
         }
-        PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
+        pubSubTaskConnectionService = new PubSubTaskConnectionService(
                 pubsubConnectionManager,
                 pubSubProject,
                 cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
@@ -464,17 +479,25 @@ public class Housekeeping {
                 log.info("Housekeeping interrupted during sleep", e);
             }
         }
-        pubsubConnectionManager.close();
-        if (fileScanResultSubscriber != null) {
-            fileScanResultSubscriber.stopAsync();
-        }
-        if (taskSubscriber != null) {
-            taskSubscriber.stopAsync();
-        }
+        shutdownPubSub();
+        shutdownQuartz();
+        log.info("Housekeeping is shutting down");
+    }
+
+    private static void shutdownQuartz() {
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
+    }
 
+    private static void shutdownPubSub() {
+        pubsubConnectionManager.close();
+        if (fileScanResultSubscriber != null && fileScanResultSubscriber.isRunning()) {
+            fileScanResultSubscriber.stopAsync();
+        }
+        if (taskSubscriber != null && taskSubscriber.isRunning()) {
+            taskSubscriber.stopAsync();
+        }
         if (pubSubTaskConnectionService != null) {
             try {
                 pubSubTaskConnectionService.destroy();
@@ -482,7 +505,6 @@ public class Housekeeping {
                 log.error("Failed to shutdown PubSubTask API", e);
             }
         }
-        log.info("Housekeeping is shutting down");
     }
 
     private static void setupScheduler(Config cfg) {
@@ -626,6 +648,23 @@ public class Housekeeping {
 
     private static void logException(Exception e) {
         log.error("Housekeeping error", e);
+    }
+
+    public static void shutdown() {
+        // halt the event loop
+        stop();
+
+        // stop pubsub
+        shutdownPubSub();
+
+        // stop quartz
+        shutdownQuartz();
+
+        // shut down db pool
+        TransactionWrapper.reset();
+
+        // stop spark
+        Spark.stop();
     }
 
     public static void stop() {
