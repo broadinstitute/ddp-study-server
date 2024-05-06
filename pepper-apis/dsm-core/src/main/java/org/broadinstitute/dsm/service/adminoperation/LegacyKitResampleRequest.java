@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.service.adminoperation;
 
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -11,6 +12,7 @@ import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Getter
+@AllArgsConstructor
 public class LegacyKitResampleRequest {
     String currentCollaboratorSampleId;
     String newCollaboratorSampleId;

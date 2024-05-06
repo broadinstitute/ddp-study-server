@@ -31,15 +31,6 @@ public class TestParticipantUtil {
         return participantDto;
     }
 
-    // TODO: deprecated call signature. -DC
-    /**
-     * Create a participant with provided ES profile
-     */
-    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
-                                                                DDPInstanceDto ddpInstanceDto, String esIndex) {
-        return createParticipantWithEsProfile(participantBaseName, profile, ddpInstanceDto);
-    }
-
     /**
      * Create a participant with provided ES profile
      */

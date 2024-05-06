@@ -42,16 +42,17 @@ import org.junit.Assert;
 import org.mockito.Mock;
 
 /**
+ * <p>
  * This class has methods to set up a study that uses kits in DSM database.
  * It creates the instance, group, instance_role, kit_type, carrier,
  * kit_dimensions, kit_return and ddp_kit_request_settings for the
  * newly created study.
  * It also contains methods to delete what was set up after tests are complete
- * <p>
+ * </p><p>
  * The usage is by first creating an instance of this class by declaring the desired instance name and study guid,
  * display name and collaborator prefix.
  * Then call setupStudyWithKitsInstanceAndSettings() for initiating all the config in database.
- * <p>
+ * </p>
  * When done, call deleteJuniperInstanceAndSettings() to delete everything
  */
 
@@ -408,7 +409,7 @@ public class TestKitUtil {
      * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
      *
      * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
-     ***/
+     **/
 
     public void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
                                        DDPInstance ddpInstance) {
@@ -470,6 +471,22 @@ public class TestKitUtil {
                 + "\"juniperStudyID\":\"Juniper-test-guid\"}";
 
         return new Gson().fromJson(json, JuniperKitRequest.class);
+    }
+
+    public String createKitRequestShipping(String ddpParticipantId, String collaboratorSampleId, String collaboratorParticipantId,
+                                        String ddpLabel, String ddpKitRequestId, String kitType, DDPInstance ddpInstance, String userId) {
+        KitRequestShipping kitRequestShipping = new KitRequestShipping();
+        kitRequestShipping.setDdpParticipantId(ddpParticipantId);
+        kitRequestShipping.setBspCollaboratorSampleId(collaboratorSampleId);
+        kitRequestShipping.setBspCollaboratorParticipantId(collaboratorParticipantId);
+        kitRequestShipping.setDdpLabel(ddpLabel);
+        kitRequestShipping.setDdpKitRequestId(ddpKitRequestId);
+        kitRequestShipping.setKitTypeName(kitType);
+        kitRequestShipping.setKitTypeId(String.valueOf(kitTypeId));
+
+        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), ddpKitRequestId, kitTypeId, ddpParticipantId, collaboratorParticipantId,
+                collaboratorSampleId, userId, null, null, null, false, null,
+                ddpInstance, kitTypeName, null);
     }
 
 }
