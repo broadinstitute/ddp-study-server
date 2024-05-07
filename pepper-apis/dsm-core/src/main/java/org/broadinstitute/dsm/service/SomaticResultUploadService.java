@@ -110,15 +110,18 @@ public class SomaticResultUploadService {
         long userIdLong = Long.parseLong(userId);
         String uploadBucket = getUploadsBucket(realm);
 
-
         SomaticResultUpload createdUpload = SomaticResultUpload.createFileUpload(realm, ddpParticipantId,
                 somaticResultMetaData.getFileName(), somaticResultMetaData.getMimeType(), uploadBucket, blobPath, userIdLong);
-
+        log.info("Created somatic result upload entry for {} to {} and {}", somaticResultMetaData.getFileName(),
+                uploadBucket, blobPath);
 
         URL signedURL = storageClient.generateSignedUrl(
                 signer, uploadBucket, blobPath,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 HttpMethod.PUT, new HashMap<>());
+        String url = signedURL.toString();
+        log.info("Generated signed URL for somatic result upload (truncated): {}, valid for {} minutes",
+                url.substring(0, url.length() - 20), maxSignedUrlMins);
 
         return new AuthorizeResult(AuthorizeResultType.OK, signedURL, createdUpload, somaticUploadSettings);
     }

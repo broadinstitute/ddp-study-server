@@ -72,17 +72,18 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
      * For records that have a legacy PID, get the corresponding GUID and replace the key in the map
      */
     private Map<String, Object> replaceLegacyPIDs(Map<String, Object> participantRecords) {
-        Map<String, Object> ptpRecords = new ConcurrentHashMap<>(participantRecords);
         List<String> legacyPIDs =
-                ptpRecords.keySet().stream().filter(ParticipantUtil::isLegacyAltPid).toList();
-
+                participantRecords.keySet().stream().filter(ParticipantUtil::isLegacyAltPid).toList();
         // TODO: Get this once at the beginning of the migration/export. -DC
         Map<String, String> legacyPIDToGuid = elasticSearch.getGuidsByLegacyAltPids(index, legacyPIDs);
 
-        // TODO: this is not correct, since records with legacy PIDs overwrite records with GUIDs, but
-        // since there are conflicts with the actual records we cannot merge them.
-        // We are working on understanding and resolving the conflicts, and likely eliminating records
-        // with legacy PIDs. -DC
+        return replaceLegacyPIDs(participantRecords, legacyPIDToGuid);
+    }
+
+    protected Map<String, Object> replaceLegacyPIDs(Map<String, Object> participantRecords,
+                                                    Map<String, String> legacyPIDToGuid) {
+        Map<String, Object> ptpRecords = new ConcurrentHashMap<>(participantRecords);
+
         for (Map.Entry<String, String> entry : legacyPIDToGuid.entrySet()) {
             String legacyPID = entry.getKey();
             if (!ptpRecords.containsKey(legacyPID)) {
@@ -90,6 +91,10 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             }
             Object obj = ptpRecords.get(legacyPID);
             String guid = entry.getValue();
+            Object guidObj = ptpRecords.get(guid);
+            if (guidObj != null) {
+                obj = mergeObjects(obj, guidObj);
+            }
             ptpRecords.put(guid, obj);
             ptpRecords.remove(legacyPID);
         }
@@ -101,6 +106,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     protected ObjectTransformer getObjectTransformer() {
         return objectTransformer;
     }
+
+    protected abstract Object mergeObjects(Object object1, Object object2);
 
     protected abstract Map<String, Object> getDataByRealm();
 
