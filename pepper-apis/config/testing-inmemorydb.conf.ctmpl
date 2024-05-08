@@ -215,7 +215,7 @@
     }
     "somatic": {
         "maxFileSize": 30000000,
-        "mediaTypes": "application/pdf,application/json"
+        "mediaTypes": "application/pdf,application/json",
         "realmToBucketMappings": [
             {"realm": "osteo2", "uploadBucket":"cmi-osteo2-uploaded-files"},
             {"realm": "cmi-lms", "uploadBucket":"cmi-lms-uploaded-files"},
