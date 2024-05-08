@@ -18,10 +18,10 @@ public class LegacyKitResampleList {
         try {
             req = ObjectMapperSingleton.instance().readValue(payload, LegacyKitResampleList.class);
         } catch (Exception e) {
-            throw new DSMBadRequestException("Invalid institution list request format. Payload: " + payload, e);
+            throw new DSMBadRequestException("Invalid resample list request format. Payload: " + payload, e);
         }
         if (req.resampleRequestList == null || req.resampleRequestList.isEmpty()) {
-            throw new DSMBadRequestException("Invalid institution list request. Empty institution list");
+            throw new DSMBadRequestException("Invalid resample list request. Empty institution list");
         }
         return req;
     }
