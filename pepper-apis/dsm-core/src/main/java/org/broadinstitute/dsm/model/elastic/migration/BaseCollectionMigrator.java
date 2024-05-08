@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
@@ -28,6 +29,11 @@ public abstract class BaseCollectionMigrator extends BaseMigrator {
     @Override
     protected void transformObject(Object object) {
         transformedList = getObjectTransformer().transformObjectCollectionToCollectionMap((List) object);
+    }
+
+    @Override
+    protected Object mergeObjects(Object object1, Object object2) {
+        return Stream.concat(((List)object1).stream(), ((List)object2).stream()).toList();
     }
 
     /**
