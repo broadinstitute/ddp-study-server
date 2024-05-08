@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -30,6 +31,7 @@ import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.jdbi.v3.core.Handle;
 
 @Slf4j
 @Data
@@ -123,6 +125,8 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             + "participant_id = (SELECT p.participant_id from ddp_participant p "
             + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "WHERE p.ddp_participant_id = ? AND ddp.instance_name= ?)";
+
+    private static final String HARD_DELETE_SOMATIC_DOCUMENT = "delete from somatic_documents where id = ?";
 
     public SomaticResultUpload() {}
 
@@ -310,6 +314,23 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             rs.getLong(DBConstants.DELETED_AT),
             rs.getBoolean(DBConstants.IS_VIRUS_FREE),
             rs.getLong(DBConstants.CREATED_DATE));
+    }
+
+    /**
+     * Only use this for testing.  Hard deletes the row.  For production code,
+     * we only soft delete, so please use other delete methods for normal operations.
+     */
+    @VisibleForTesting
+    public static void hardDeleteSomaticDocumentById(Handle handle, long id) {
+        try (PreparedStatement stmt = handle.getConnection().prepareStatement(HARD_DELETE_SOMATIC_DOCUMENT)) {
+            stmt.setLong(1, id);
+            int rowsDeleted = stmt.executeUpdate();
+            if (rowsDeleted != 1) {
+                throw new DsmInternalError("Deleted " + rowsDeleted + " rows for somatic document " + id);
+            }
+        } catch (SQLException e) {
+            throw new DsmInternalError("Error deleting somatic document " + id, e);
+        }
     }
 
     public static SomaticResultUpload createFileUpload(String realm, String ddpParticipantId, String fileName,
