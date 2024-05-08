@@ -217,7 +217,7 @@
         "realmToBucketMappings": [
             {"realm": "osteo2", "uploadBucket":"cmi-osteo2-uploaded-files"},
             {"realm": "cmi-lms", "uploadBucket":"cmi-lms-uploaded-files"},
-            {"realm": "somatic-upload-test", "uploadBucket":"cmi-lms-uploaded-files"}
+            {"realm": "somatic-upload-test", "uploadBucket":"cmi-lms-uploaded-files", "maxFileSize": 100000000L}
         ]
     }
 }
