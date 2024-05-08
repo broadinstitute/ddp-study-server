@@ -260,6 +260,9 @@ public class SomaticResultUpload implements HasDdpInstanceId {
         if (documents.isEmpty()) {
             throw new DSMBadRequestException("Bad request for document with id " + documentId);
         }
+        if (documents.get(0) == null) {
+            throw new DsmInternalError("somatic upload document is null for " + documentId);
+        }
         return documents.get(0);
     }
 

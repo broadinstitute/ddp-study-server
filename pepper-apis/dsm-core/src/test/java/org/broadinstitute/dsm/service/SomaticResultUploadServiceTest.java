@@ -67,6 +67,7 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
         SomaticResultUploadService.AuthorizeResult uploadAuth = somaticResultUploadSerivce.authorizeUpload(
                 instanceName, Integer.toString(testParticipant.getRequiredParticipantId()),
                 testParticipant.getRequiredDdpParticipantId(), uploadData);
+        Assert.assertNotNull(uploadAuth.getSomaticResultUpload());
         SomaticResultUpload deleteResult = somaticResultUploadSerivce.deleteUpload(
                 testParticipant.getRequiredParticipantId(), uploadAuth.getSomaticResultUpload().getSomaticDocumentId(),
                 instanceName);
