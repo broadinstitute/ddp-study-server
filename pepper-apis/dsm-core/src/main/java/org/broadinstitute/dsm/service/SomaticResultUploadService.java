@@ -95,6 +95,8 @@ public class SomaticResultUploadService {
                                            SomaticResultMetaData somaticResultMetaData) {
         FileValidator fileValidator = new FileValidator();
         if (somaticResultMetaData.getFileSize() > somaticUploadSettings.getMaxFileSize()) {
+            log.info("File " + somaticResultMetaData.getFileName() + " of size " + somaticResultMetaData.getFileSize()
+                    + " exceeds maximum file size " + somaticUploadSettings.getMaxFileSize());
             return new AuthorizeResult(AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM, null, null, somaticUploadSettings);
         }
         if (!somaticUploadSettings.getMimeTypes().contains(somaticResultMetaData.getMimeType())) {
