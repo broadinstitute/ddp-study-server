@@ -17,6 +17,7 @@ import com.easypost.model.Address;
 import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
 import com.easypost.model.TrackingDetail;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
@@ -172,96 +173,128 @@ public class KitUtil {
         DDPInstanceDto ddpInstanceDto = null;
         boolean hasEasyPostUtil = easyPostUtil != null;
 
-        for (KitRequestCreateLabel kitLabel : kitsLabelTriggered) {
+        for (KitRequestCreateLabel kitToCreateLabelFor : kitsLabelTriggered) {
             if (!hasEasyPostUtil) {
-                easyPostUtil = EasyPostUtil.fromInstanceName(kitLabel.getInstanceName());
+                try {
+                    easyPostUtil = EasyPostUtil.fromInstanceName(kitToCreateLabelFor.getInstanceName());
+                } catch (Exception e) {
+                    logger.error("Error creating EasyPostUtil for instance " + kitToCreateLabelFor.getInstanceName(), e);
+                    continue;
+                }
             }
             Address toAddress = null;
             try {
-                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabel.getInstanceName());
+                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitToCreateLabelFor.getInstanceName());
 
-                //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
                 ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
                         .withEsParticipantIndex(ddpInstance.getParticipantIndexES())
                         .withResearchProject(ddpInstance.getResearchProject()).build();
 
-                if (StringUtils.isBlank(kitLabel.getAddressIdTo())) {
-                    DDPParticipant ddpParticipant = getDDPParticipant(kitLabel.getDdpParticipantId(), ddpInstance);
+                if (StringUtils.isBlank(kitToCreateLabelFor.getAddressIdTo())) {
+                    // Generally this part of the code handles kits that are created by System and not uploaded. These kits
+                    // don't have an address id set for them yet so DSM needs to communicate with EasyPost to get an address id for their
+                    // address
+                    DDPParticipant ddpParticipant = getDDPParticipant(kitToCreateLabelFor.getDdpParticipantId(), ddpInstance);
                     if (ddpParticipant == null) {
-                        KitRequestShipping.deactivateKitRequest(Integer.parseInt(kitLabel.getDsmKitRequestId()),
-                                "Participant not found", null, SystemUtil.SYSTEM, ddpInstanceDto);
+                        KitRequestShipping.deactivateKitRequest(Integer.parseInt(kitToCreateLabelFor.getDsmKitRequestId()),
+                                "Participant was not found during label creation", null, SystemUtil.SYSTEM, ddpInstanceDto);
                         logger.error("Did not find participant {} for kit {}",
-                                kitLabel.getDdpParticipantId(), kitLabel.getDsmKitId());
+                                kitToCreateLabelFor.getDdpParticipantId(), kitToCreateLabelFor.getDsmKitId());
+                        continue;
                     } else {
-                        toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabel.getKitRequestSettings(),
+                        toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitToCreateLabelFor.getKitRequestSettings(),
                                 null, ddpParticipant, ddpInstanceDto);
-                        KitRequestShipping.updateRequest(kitLabel, ddpParticipant, kitLabel.getKitTyp(),
-                                kitLabel.getKitRequestSettings());
+                        KitRequestShipping.updateKitBspParticipantAndSampleId(kitToCreateLabelFor, ddpParticipant,
+                                kitToCreateLabelFor.getKitTyp(), kitToCreateLabelFor.getKitRequestSettings());
                     }
                 } else {
-                    // TODO: I believe this case does not exist, so setting this to trip alert if it ever does.
-                    // ideally we would remove this code or fix it - DC
-                    logger.error("Handling case where kit has an address id: assumed case would not occur: "
-                                   + "KitCreateLabel: {}", kitLabel);
-                    //uploaded pt
-                    toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitLabel.getKitRequestSettings(),
-                            kitLabel.getAddressIdTo(), null, ddpInstanceDto);
-                    //uploaded pt is missing collaborator ids -> due to migration and upload with wrong shortId
-                    if (kitLabel.getParticipantCollaboratorId() == null) {
-                        if (StringUtils.isNotBlank(kitLabel.getBaseURL())) {
-                            //DDP requested pt
-                            DDPParticipant ddpParticipant = null;
-                            if (StringUtils.isNotBlank(kitLabel.getParticipantIndexES())) {
-                                Map<String, Map<String, Object>> participantsESData =
-                                        ElasticSearchUtil.getDDPParticipantsFromES(kitLabel.getInstanceName(),
-                                                kitLabel.getParticipantIndexES());
-                                ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                                        kitLabel.getDdpParticipantId());
-                            } else {
-                                //DDP requested pt
-                                ddpParticipant = DDPParticipant.getDDPParticipant(kitLabel.getBaseURL(),
-                                        kitLabel.getInstanceName(), kitLabel.getDdpParticipantId(),
-                                        kitLabel.isHasAuth0Token());
-
-                            }
-                            if (ddpParticipant != null) {
-                                String collaboratorParticipantId =
-                                        KitRequestShipping.generateBspParticipantID(kitLabel.getCollaboratorIdPrefix(),
-                                                kitLabel.getKitRequestSettings().getCollaboratorParticipantLengthOverwrite(),
-                                                ddpParticipant.getShortId());
-                                String bspCollaboratorSampleType = kitLabel.getKitTyp().getKitTypeName();
-                                if (kitLabel.getKitRequestSettings().getCollaboratorSampleTypeOverwrite() != null) {
-                                    bspCollaboratorSampleType =
-                                            kitLabel.getKitRequestSettings().getCollaboratorSampleTypeOverwrite();
-                                }
-                                if (collaboratorParticipantId == null) {
-                                    logger.warn("CollaboratorParticipantId was too long " + ddpParticipant.getParticipantId());
-                                } else {
-                                    updateCollaboratorIds(kitLabel, collaboratorParticipantId, bspCollaboratorSampleType);
-                                }
-                            }
-                        } else {
-                            logger.error("Kit of pt  " + kitLabel.getDdpParticipantId() + " w/ kit id "
-                                    + kitLabel.getDsmKitId() + " is missing collaborator id");
-                        }
+                    // Generally this part of the code handles uploaded kits.
+                    // Uploaded kits have their address id created and set in time of kit creation. As part of the kit upload
+                    // DSM validates the address that is in the upload file and sets the address id if it is valid.
+                    // So here in time of label creation we can use the address id to get the address from EasyPost and use it
+                    // to buy the shipment.
+                    toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitToCreateLabelFor.getKitRequestSettings(),
+                            kitToCreateLabelFor.getAddressIdTo(), null, ddpInstanceDto);
+                    //uploaded pt is missing collaborator ids -> possibly due to an old kit being from a migrated legacy study
+                    if (kitToCreateLabelFor.getParticipantCollaboratorId() == null) {
+                        //checking if this part of the code is ever reached
+                        logger.error("Error put in to check: Had a kit without a collaborator participant id in need of a label, "
+                                + "kit id {} in study {}", kitToCreateLabelFor.getDsmKitId(), kitToCreateLabelFor.getInstanceName());
+                        createCollaboratorParticipantId(kitToCreateLabelFor);
+                    }
+                }
+                if (toAddress != null) {
+                    try {
+                        buyShipmentForKit(easyPostUtil, kitToCreateLabelFor.getDsmKitId(), kitToCreateLabelFor.getKitRequestSettings(),
+                                kitToCreateLabelFor.getKitTyp(), toAddress, kitToCreateLabelFor.getBillingReference(),
+                                ddpInstanceDto);
+                    } catch (Exception e) {
+                        logger.error("Error buying shipment for kit " + kitToCreateLabelFor.getParticipantCollaboratorId(), e);
                     }
                 }
             } catch (Exception e) {
                 // note error and skip ptp
                 logger.error("Error getting address for participant {} in study {} with kit ID {}",
-                        kitLabel.getDdpParticipantId(), kitLabel.getInstanceName(), kitLabel.getDsmKitId(), e);
-            }
-            if (toAddress != null) {
-                //TODO: why not pass toAddress? - DC
-                buyShipmentForKit(easyPostUtil, kitLabel.getDsmKitId(), kitLabel.getKitRequestSettings(),
-                        kitLabel.getKitTyp(), toAddress.getId(), kitLabel.getBillingReference(), ddpInstanceDto);
+                        kitToCreateLabelFor.getDdpParticipantId(), kitToCreateLabelFor.getInstanceName(), kitToCreateLabelFor.getDsmKitId(),
+                        e);
             }
         }
-
         DBUtil.updateBookmark(0, BOOKMARK_LABEL_CREATION_RUNNING);
     }
 
-    protected static DDPParticipant getDDPParticipant(String ddpParticipantId, DDPInstance ddpInstance) {
+    /**
+     * This method sets the collaborator participant id and collaborator sample id for a kit that is missing them
+     * This method is called for older kits that are migrated to Pepper and might not have the collaborator ids set, otherwise
+     * in the usual case the collaborator ids are set in time of kit creation or upload
+     * */
+    private static void createCollaboratorParticipantId(KitRequestCreateLabel kitToCreateLabelFor) {
+        if (StringUtils.isNotBlank(kitToCreateLabelFor.getBaseURL())) {
+            //DDP requested pt
+            DDPParticipant ddpParticipant = getDDPParticipantForMigratedKit(kitToCreateLabelFor);
+            if (ddpParticipant != null) {
+                String collaboratorParticipantId =
+                        KitRequestShipping.generateBspParticipantID(kitToCreateLabelFor.getCollaboratorIdPrefix(),
+                                kitToCreateLabelFor.getKitRequestSettings().getCollaboratorParticipantLengthOverwrite(),
+                                ddpParticipant.getShortId());
+                String bspCollaboratorSampleType = kitToCreateLabelFor.getKitTyp().getKitTypeName();
+                if (kitToCreateLabelFor.getKitRequestSettings().getCollaboratorSampleTypeOverwrite() != null) {
+                    bspCollaboratorSampleType =
+                            kitToCreateLabelFor.getKitRequestSettings().getCollaboratorSampleTypeOverwrite();
+                }
+                if (collaboratorParticipantId == null) {
+                    logger.error("CollaboratorParticipantId was too long " + ddpParticipant.getParticipantId());
+                } else {
+                    updateCollaboratorIds(kitToCreateLabelFor, collaboratorParticipantId, bspCollaboratorSampleType);
+                }
+            } else {
+                logger.error(
+                        "Unable to generate DdpParticipant for participantId %s, will not be able to get collaborator ids for dsm kit id %s"
+                        .formatted(kitToCreateLabelFor.getDdpParticipantId(), kitToCreateLabelFor.getDsmKitId()));
+            }
+        } else {
+            logger.error("Unable to get collaborator ids participant id %s for dsm kit id %s "
+                    .formatted(kitToCreateLabelFor.getDdpParticipantId(), kitToCreateLabelFor.getDsmKitId()));
+        }
+    }
+
+    private static DDPParticipant getDDPParticipantForMigratedKit(KitRequestCreateLabel kitToCreateLabelFor) {
+        if (StringUtils.isNotBlank(kitToCreateLabelFor.getParticipantIndexES())) {
+            Map<String, Map<String, Object>> participantsESData =
+                    ElasticSearchUtil.getDDPParticipantsFromES(kitToCreateLabelFor.getInstanceName(),
+                            kitToCreateLabelFor.getParticipantIndexES());
+            return ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
+                    kitToCreateLabelFor.getDdpParticipantId());
+        } else {
+            //DDP requested pt
+            return DDPParticipant.getDDPParticipant(kitToCreateLabelFor.getBaseURL(),
+                    kitToCreateLabelFor.getInstanceName(), kitToCreateLabelFor.getDdpParticipantId(),
+                    kitToCreateLabelFor.isHasAuth0Token());
+
+        }
+    }
+
+    @VisibleForTesting
+    public static DDPParticipant getDDPParticipant(String ddpParticipantId, DDPInstance ddpInstance) {
         Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(
                 ddpInstance, ElasticSearchUtil.BY_GUID + ddpParticipantId);
         if (participantESData == null || participantESData.isEmpty()) {
@@ -341,27 +374,29 @@ public class KitUtil {
 
     private static void buyShipmentForKit(@NonNull EasyPostUtil easyPostUtil, @NonNull String dsmKitId,
                                           @NonNull KitRequestSettings kitRequestSettings, @NonNull KitType kitType,
-                                          @NonNull String addressIdTo, String billingReference, DDPInstanceDto ddpInstanceDto) {
+                                          Address toAddress, String billingReference, DDPInstanceDto ddpInstanceDto) {
+        if (toAddress == null) {
+            throw new DsmInternalError("Address is null");
+        }
         String errorMessage = "";
         Shipment participantShipment = null;
         Shipment returnShipment = null;
-        Address toAddress = null;
         try {
-            toAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, addressIdTo, null, ddpInstanceDto);
             participantShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, false, toAddress);
         } catch (Exception e) {
+            logger.warn("Unable to buy shipment label for kit with dsm kit id " + dsmKitId, e);
             errorMessage += "To: " + e.getMessage();
         }
         try {
-            Address returnAddress = KitRequestShipping.getToAddressId(easyPostUtil, kitRequestSettings, null, null,
-                    ddpInstanceDto);
+            Address returnAddress = KitRequestShipping.createReturnAddress(kitRequestSettings, easyPostUtil);
             returnShipment =
                     KitRequestShipping.getShipment(easyPostUtil, billingReference, kitType, kitRequestSettings, true, returnAddress);
         } catch (Exception e) {
+            logger.warn("Unable to buy return label for kit with dsm kit id " + dsmKitId, e);
             errorMessage += "Return: " + e.getMessage();
         }
-        errorMessage = messageBasedOnLocationAndInstance(errorMessage, ddpInstanceDto, toAddress);
+        errorMessage = checkResearchKitInClinicalStudies(errorMessage, ddpInstanceDto, toAddress, dsmKitId);
         KitRequestShipping.updateKit(dsmKitId, participantShipment, returnShipment, errorMessage, toAddress, false, ddpInstanceDto);
     }
 
@@ -699,11 +734,16 @@ public class KitUtil {
         return notShippedKits;
     }
 
-    public static String messageBasedOnLocationAndInstance(String errorMessage, DDPInstanceDto ddpInstanceDto, Address toAddress) {
-        //overwriting error message if study is PE-CGS and Participant is CA or NY otherwise keep the old error message
+    public static String checkResearchKitInClinicalStudies(String errorMessage, DDPInstanceDto ddpInstanceDto, Address toAddress,
+                                                           String dsmKitId) {
+        //adding error message if study is PE-CGS and Participant is CA or NY otherwise keep the old error message
         if (!ddpInstanceDto.getResearchProject().isEmpty() && StringUtils.isNotBlank(ddpInstanceDto.getResearchProject().get())) {
-            if (toAddress.getCountry().equals("CA") || toAddress.getState().equals("NY")) {
-                return PECGS_RESEARCH;
+            if (StringUtils.isBlank(toAddress.getCountry()) || StringUtils.isBlank(toAddress.getState())) {
+                logger.error("Address is missing country or state for kit with dsm kit id " + dsmKitId);
+                return errorMessage;
+            }
+            if ("CA".equals(toAddress.getCountry()) || "NY".equals(toAddress.getState())) {
+                return StringUtils.isNotBlank(errorMessage) ? PECGS_RESEARCH + " " + errorMessage : PECGS_RESEARCH;
             }
         }
         return errorMessage;
