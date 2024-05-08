@@ -38,20 +38,22 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 /**
+ * <p>
  * This class has methods to set up a Juniper study in DSM database.
  * It creates the instance, group, instance_role, kit_type, carrier,
  * kit_dimensions, kit_return and ddp_kit_request_settings for the
  * newly created study.
  * It also contains methods to delete what was set up after tests are complete
- *
+ * </p>
+ * <p>
  * The usage is by first creating an instance of this class by declaring the desired instance name and study guid,
  * display name and collaborator prefix.
  * Then call setupJuniperInstanceAndSettings() for initiating all the config in database.
- *
  *When done, call deleteJuniperInstanceAndSettings() to delete everything
+ * </p>
  */
 @Slf4j
-public class JuniperSetupUtil {
+public class JuniperTestSetupUtil {
     private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE instance_role_id = ?;";
@@ -85,7 +87,8 @@ public class JuniperSetupUtil {
     private static String userWithKitShippingAccess;
 
     private static NotificationUtil notificationUtil;
-    public JuniperSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix, String groupName) {
+
+    public JuniperTestSetupUtil(String instanceName, String studyGuid, String displayName, String collaboratorPrefix, String groupName) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.displayName = displayName;
@@ -227,7 +230,8 @@ public class JuniperSetupUtil {
     public static List<ScanResult> changeKitToSent(JuniperKitRequest juniperTestKit) {
         List<SentAndFinalScanPayload> scanPayloads = new ArrayList<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
-        SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(juniperTestKit.getDdpLabel(), "SOME_RANDOM_KIT_LABEL");
+        SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(juniperTestKit.getDdpLabel(),
+                "SOME_RANDOM_KIT_LABEL");
         scanPayloads.add(sentAndFinalScanPayload);
         List<ScanResult> scanResultList = new ArrayList<>();
         KitPayload kitPayload = new KitPayload(scanPayloads, Integer.parseInt(userWithKitShippingAccess), ddpInstanceDto);
@@ -245,16 +249,14 @@ public class JuniperSetupUtil {
         String kitLabel = "SOME_RANDOM_KIT_LABEL";
         Optional<BSPKitDto> optionalBSPKitDto = bspKit.canReceiveKit(kitLabel);
         //kit does not exist in ddp_kit table
-        if (optionalBSPKitDto.isEmpty()) {
-           return;
+        if (!optionalBSPKitDto.isEmpty()) {
+            //check if kit is from a pt which is withdrawn
+            Optional<BSPKitStatus> result = bspKit.getKitStatus(optionalBSPKitDto.get(), notificationUtil);
+            if (result.isEmpty()) {
+                //kit found in ddp_kit table
+                bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, "BSP").orElseThrow();
+            }
         }
-        //check if kit is from a pt which is withdrawn
-        Optional<BSPKitStatus> result = bspKit.getKitStatus(optionalBSPKitDto.get(), notificationUtil);
-        if (!result.isEmpty()) {
-            return;
-        }
-        //kit found in ddp_kit table
-        bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, "BSP").orElseThrow();
     }
 
     private String createKitRequestSettingsInformation(Connection conn) throws SQLException {

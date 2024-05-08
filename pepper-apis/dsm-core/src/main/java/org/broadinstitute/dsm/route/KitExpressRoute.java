@@ -104,7 +104,7 @@ public class KitExpressRoute extends RequestHandler {
     }
 
     private void createExpressLabelToParticipant(@NonNull EasyPostUtil easyPostUtil, @NonNull KitRequestSettings kitRequestSettings,
-                                                 @NonNull KitType kitType, @NonNull String kitId, @NonNull String addressToId,
+                                                 @NonNull KitType kitType, @NonNull String dsmKitId, @NonNull String addressToId,
                                                  DDPInstanceDto ddpInstanceDto) {
         String errorMessage = "";
         Shipment participantShipment = null;
@@ -118,8 +118,8 @@ public class KitExpressRoute extends RequestHandler {
         } catch (Exception e) {
             errorMessage = "To: " + e.getMessage();
         }
-        errorMessage = KitUtil.messageBasedOnLocationAndInstance(errorMessage, ddpInstanceDto, toAddress);
-        KitRequestShipping.updateKit(kitId, participantShipment, null, errorMessage, toAddress, true, ddpInstanceDto);
+        errorMessage = KitUtil.checkResearchKitInClinicalStudies(errorMessage, ddpInstanceDto, toAddress, dsmKitId);
+        KitRequestShipping.updateKit(dsmKitId, participantShipment, null, errorMessage, toAddress, true, ddpInstanceDto);
     }
 
     private String getKitId(int kitRequestId) {
