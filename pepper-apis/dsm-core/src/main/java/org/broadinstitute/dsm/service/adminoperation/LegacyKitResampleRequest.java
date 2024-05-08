@@ -13,6 +13,10 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Getter
 @AllArgsConstructor
+/**
+ * Request to resample a kit for a participant with a legacy short ID
+ * The request is for resampling a kit from Pepper Guid and Hruid to their old legacy ids
+ */
 public class LegacyKitResampleRequest {
     String currentCollaboratorSampleId;
     String newCollaboratorSampleId;
@@ -24,12 +28,7 @@ public class LegacyKitResampleRequest {
         if (ddpInstance == null) {
             throw new DsmInternalError("DDP instance not found");
         }
-        if (StringUtils.isBlank(currentCollaboratorSampleId) || StringUtils.isBlank(newCollaboratorSampleId)
-                || StringUtils.isBlank(shortId) || StringUtils.isBlank(newCollaboratorParticipantId)) {
-            throw new DSMBadRequestException("Missing required fields in legacy kit resample request for currentCollaboratorSampleId %s "
-                    + " newCollaboratorSampleId %s, shortId %s, newCollaboratorParticipantId %s".formatted(currentCollaboratorSampleId,
-                    newCollaboratorSampleId, shortId, newCollaboratorParticipantId));
-        }
+        checkNotEmptyRequestFields();
         Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
                 ddpInstance.getParticipantIndexES(), shortId);
         if (esParticipantData.size() != 1) {
@@ -42,12 +41,34 @@ public class LegacyKitResampleRequest {
         }
         String legacyShortIdOnFile = profile.get("legacyShortId").toString();
         if (!legacyShortId.equals(legacyShortIdOnFile)) {
-            throw new DSMBadRequestException("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
-                    + " will not resample kit %s".formatted(legacyShortId, legacyShortIdOnFile, shortId, currentCollaboratorSampleId));
+            throw new DSMBadRequestException(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
+                    + " will not resample kit %s").formatted(legacyShortId, legacyShortIdOnFile, shortId, currentCollaboratorSampleId));
         }
         if (!kitRequestDao.hasKitRequestWithCollaboratorSampleId(currentCollaboratorSampleId, (String) profile.get("guid"))) {
             throw new DSMBadRequestException("Kit request not found for collaborator sample ID %s".formatted(currentCollaboratorSampleId));
         }
 
+    }
+
+    private void checkNotEmptyRequestFields() {
+        if (StringUtils.isBlank(currentCollaboratorSampleId)) {
+            throw new DSMBadRequestException("Missing required field: currentCollaboratorSampleId");
+        }
+
+        if (StringUtils.isBlank(newCollaboratorSampleId)) {
+            throw new DSMBadRequestException("Missing required field: newCollaboratorSampleId");
+        }
+
+        if (StringUtils.isBlank(shortId)) {
+            throw new DSMBadRequestException("Missing required field: shortId");
+        }
+
+        if (StringUtils.isBlank(newCollaboratorParticipantId)) {
+            throw new DSMBadRequestException("Missing required field: newCollaboratorParticipantId");
+        }
+
+        if (StringUtils.isBlank(legacyShortId)) {
+            throw new DSMBadRequestException("Missing required field: legacyShortId");
+        }
     }
 }

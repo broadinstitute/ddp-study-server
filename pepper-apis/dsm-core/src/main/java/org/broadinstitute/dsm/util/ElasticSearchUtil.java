@@ -1760,6 +1760,29 @@ public class ElasticSearchUtil {
         return null;
     }
 
+    /**
+     * Get the DSM participant object for a single participant from ES as a Map
+     * @param realm the realm
+     * @param participantIndex the participant index
+     * @param shortId the shortId of the participant
+     * @return the DSM participant object
+     */
+    public static Map<String, Object> getDsmParticipantForSingleParticipantFromES(String realm, String participantIndex, String shortId) {
+        Map<String, Object> dsm = getDsmForSingleParticipantFromES(realm, participantIndex, shortId);
+        Map<String, Object> dsmParticipant = (Map<String, Object>) dsm.get("participant");
+        if (dsmParticipant == null || dsmParticipant.isEmpty()) {
+            throw new DsmInternalError("ES returned empty dsm.participant object for shortId " + shortId);
+        }
+        return dsmParticipant;
+    }
+
+    /**
+     * Get the DSM object for a single participant from ES as a Map
+     * @param realm the realm
+     * @param participantIndex the participant index
+     * @param shortId the shortId of the participant
+     * @return the DSM participant object
+     */
     public static Map<String, Object> getDsmForSingleParticipantFromES(String realm, String participantIndex, String shortId) {
         Map<String, Map<String, Object>> ptpData;
         try {
@@ -1780,11 +1803,7 @@ public class ElasticSearchUtil {
         if (dsm == null || dsm.isEmpty()) {
             throw new DsmInternalError("ES returned empty dsm object for shortId " + shortId);
         }
-        Map<String, Object> dsmParticipant = (Map<String, Object>) dsm.get("participant");
-        if (dsmParticipant == null || dsmParticipant.isEmpty()) {
-            throw new DsmInternalError("ES returned empty dsm.participant object for shortId " + shortId);
-        }
-        return dsmParticipant;
+        return dsm;
     }
 
     public static Map<String, Object> getParticipantProfileByShortID(DDPInstance ddpInstance, String shortId) {

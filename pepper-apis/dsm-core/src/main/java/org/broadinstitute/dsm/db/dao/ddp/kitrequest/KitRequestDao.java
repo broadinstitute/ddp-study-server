@@ -50,8 +50,9 @@ public class KitRequestDao implements Dao<KitRequestDto> {
     public static final String SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID = " SELECT * FROM  ddp_kit_request r LEFT JOIN ddp_kit k "
             + " ON (r.dsm_kit_request_id = k.dsm_kit_request_id) WHERE bsp_collaborator_sample_id = ?";
     public static final String SQL_RESAMPLE_KIT = " UPDATE ddp_kit_request SET bsp_collaborator_sample_id = ?, ddp_participant_id = ?, "
-            + "bsp_collaborator_participant_id = ? WHERE dsm_kit_request_id in = "
-            + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE bsp_collaborator_sample_id = ?) AND dsm_kit_request_id <> 0";
+            + "bsp_collaborator_participant_id = ? WHERE dsm_kit_request_id in  "
+            + "(SELECT dsm_kit_request_id FROM (SELECT * FROM ddp_kit_request) as tbl WHERE bsp_collaborator_sample_id = ?) "
+            + "AND dsm_kit_request_id <> 0";
 
     public static final String BY_DDP_LABEL = " where ddp_label = ?";
 
@@ -133,7 +134,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_RESAMPLE_KIT)) {
                 stmt.setString(1, legacyKitResampleRequest.getNewCollaboratorSampleId());
                 stmt.setString(2, altPid);
-                stmt.setString(3, legacyKitResampleRequest.getNewCollaboratorSampleId());
+                stmt.setString(3, legacyKitResampleRequest.getNewCollaboratorParticipantId());
                 stmt.setString(4, legacyKitResampleRequest.getCurrentCollaboratorSampleId());
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows != 1) {
@@ -196,7 +197,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                 stmt.setString(1, collaboratorSampleId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = KitRequestShipping.getKitRequestShipping(rs);
+                        dbVals.resultValue = KitRequestShipping.getKitRequestShippingForResample(rs);
                     }
                     return dbVals;
                 } catch (SQLException e) {

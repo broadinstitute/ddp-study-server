@@ -7,6 +7,9 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 @Data
+/**
+ * List of requests to resample kits for participants with legacy short IDs
+ */
 public class LegacyKitResampleList {
     List<LegacyKitResampleRequest> resampleRequestList;
 

@@ -466,6 +466,33 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequestShipping;
     }
 
+    public static KitRequestShipping getKitRequestShippingForResample(@NonNull ResultSet rs) throws SQLException {
+        KitRequestShipping kitRequestShipping =
+                new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
+                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
+                        null, null, rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
+                        rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),
+                        rs.getString(DBConstants.DSM_TRACKING_TO), null, rs.getString(DBConstants.DSM_TRACKING_URL_TO),
+                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
+                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
+                        (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
+                        rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
+                        (Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), false,
+                        rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
+                        rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
+                        rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION),
+                        rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES),
+                        null, null, null);
+        kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+        kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
+        return kitRequestShipping;
+    }
+
     private static Map<String, List<KitRequestShipping>> getKitRequestsByKitId(@NonNull String realm, String target, Integer kitTypeId,
                                                                                boolean getAll) {
         Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
@@ -874,11 +901,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         });
     }
 
-    // called by
-    // 1. hourly job to add kit requests into db
-    // 2. kit upload
-    // 3. Juniper shipKit route
-    // 4. BSP and Mercury dummy kit routes in non-prod
+
+    /**
+     * Inserts kit in ddp_kit_request table and then ddp_kit table
+     * called by
+     *      1. hourly job to add kit requests into db
+     *      2. kit upload
+     *      3. Juniper shipKit route
+     *      4. BSP and Mercury dummy kit routes in non-prod
+     * @return dsm_kit_request_id of the new kit
+     * */
     public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,

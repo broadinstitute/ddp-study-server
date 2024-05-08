@@ -28,6 +28,7 @@ import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
@@ -79,7 +80,8 @@ public class TestKitUtil {
     private static final String INSERT_SUB_KITS_SETTINGS =
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
-    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
+    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request "
+            + " where ddp_kit_request_id like ? ";
     public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     private String kitTypeDisplayName;
     public Integer ddpGroupId;
@@ -484,9 +486,16 @@ public class TestKitUtil {
         kitRequestShipping.setKitTypeName(kitType);
         kitRequestShipping.setKitTypeId(String.valueOf(kitTypeId));
 
-        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), ddpKitRequestId, kitTypeId, ddpParticipantId, collaboratorParticipantId,
-                collaboratorSampleId, userId, null, null, null, false, null,
+        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), ddpKitRequestId, kitTypeId, ddpParticipantId,
+                collaboratorParticipantId, collaboratorSampleId, userId, null, null, null, false, null,
                 ddpInstance, kitTypeName, null);
     }
 
+    public void deleteKitRequestShipping(int dsmKitRequestId) {
+        TransactionWrapper.inTransaction(conn -> {
+            delete(conn, "ddp_kit", "dsm_kit_request_id", dsmKitRequestId);
+            delete(conn, "ddp_kit_request", "dsm_kit_request_id", dsmKitRequestId);
+            return null;
+        });
+    }
 }

@@ -227,7 +227,7 @@ public class ParticipantDataFixupServiceTest extends DbAndElasticBaseTest {
 
     private Pair<ParticipantDto, String> createLegacyParticipant() {
         Pair<ParticipantDto, String> pair =
-                TestParticipantUtil.createLegacyParticipant(instanceName, participantCounter++, ddpInstanceDto);
+                TestParticipantUtil.createLegacyParticipant(instanceName, participantCounter++, ddpInstanceDto, null, null, null);
         participants.add(pair.getLeft());
         return pair;
     }

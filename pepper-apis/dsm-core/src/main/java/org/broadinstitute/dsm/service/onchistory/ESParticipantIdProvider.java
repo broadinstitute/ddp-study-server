@@ -24,7 +24,8 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
      * @throws DSMBadRequestException when no participant ID is found for short ID
      */
     public int getParticipantIdForShortId(String shortId) {
-        Map<String, Object> dsmParticipant = ElasticSearchUtil.getDsmForSingleParticipantFromES(realm, participantIndex, shortId);
+        Map<String, Object> dsmParticipant = ElasticSearchUtil.getDsmParticipantForSingleParticipantFromES(realm, participantIndex,
+                shortId);
         Object participantID = dsmParticipant.get("participantId");
         if (participantID == null) {
             throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);

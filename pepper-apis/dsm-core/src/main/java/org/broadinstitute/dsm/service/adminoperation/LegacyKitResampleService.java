@@ -3,24 +3,33 @@ package org.broadinstitute.dsm.service.adminoperation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
-import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 @Slf4j
+@Data
+/**
+ * Admin Operation to resample kits for participants to their legacy short IDs
+ */
 public class LegacyKitResampleService extends ParticipantAdminOperationService {
     private DDPInstance ddpInstance;
     private LegacyKitResampleList legacyKitResampleList;
     private KitRequestDao kitRequestDao = new KitRequestDao();
+    private ElasticSearchService elasticSearchService = new ElasticSearchService();
 
     /**
      * Validate input and initialize operation, synchronously
@@ -69,28 +78,50 @@ public class LegacyKitResampleService extends ParticipantAdminOperationService {
     private UpdateLog resampleKit(LegacyKitResampleRequest legacyKitResampleRequest, DDPInstance ddpInstance) {
         Map<String, Object> participantProfile = ElasticSearchUtil.getParticipantProfileByShortID(ddpInstance,
                 legacyKitResampleRequest.getShortId());
-        String ddpParticipantId = participantProfile.get(DBConstants.DDP_PARTICIPANT_ID).toString();
+        String ddpParticipantId = participantProfile.get("guid").toString();
         String legacyParticipantId = participantProfile.get("legacyAltPid").toString();
         kitRequestDao.resampleKit(legacyKitResampleRequest, legacyParticipantId);
-        Map<String, Object> participantDsm = ElasticSearchUtil.getDsmForSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), legacyKitResampleRequest.getShortId());
         changeDataInEs(legacyKitResampleRequest.getCurrentCollaboratorSampleId(), legacyKitResampleRequest.getNewCollaboratorSampleId(),
-                participantDsm, ddpParticipantId, ddpInstance.getParticipantIndexES());
+                 ddpParticipantId, ddpInstance.getParticipantIndexES());
         return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
                 "Kit was resampled to " + legacyKitResampleRequest.getNewCollaboratorSampleId());
     }
 
-    private void changeDataInEs(String currentCollaboratorSampleId, String newCollaboratorSampleId, Map<String, Object>
-            participantDsm, String ddpParticipantId, String index) {
-        List<Map<String, Object>> kitRequests = (List<Map<String, Object>>) participantDsm.get("kitRequestShipping");
-        kitRequests.removeIf(stringObjectMap ->  currentCollaboratorSampleId.equals(stringObjectMap.get("bspCollaboratorSampleId")));
-        kitRequests.add(addNewKitRequestShippingToES(participantDsm, newCollaboratorSampleId));
-        participantDsm.put("kitRequestShipping", kitRequests);
-        ElasticSearchUtil.updateRequest(ddpParticipantId, index, participantDsm);
+    private void changeDataInEs(String currentCollaboratorSampleId, String newCollaboratorSampleId,
+                                String ddpParticipantId, String esIndex) {
+        Optional<ElasticSearchParticipantDto> maybeEsParticipant =
+                elasticSearchService.getParticipantDocument(ddpParticipantId, esIndex);
+        if (maybeEsParticipant.isEmpty()) {
+            throw new ESMissingParticipantDataException("Participant %s does not have an ES document"
+                    .formatted(ddpParticipantId));
+        }
+        ElasticSearchParticipantDto esParticipant = maybeEsParticipant.get();
+        Dsm dsm = new Dsm();
+        if (esParticipant.getDsm().isEmpty() || esParticipant.getActivities().isEmpty()) {
+            log.info(String.format("Participant %s does not yet have DSM data and "
+                    + "activities in ES", ddpParticipantId));
+
+        } else {
+            dsm = esParticipant.getDsm().get();
+        }
+        List<KitRequestShipping> kitRequestShippings = dsm.getKitRequestShipping();
+        if (kitRequestShippings != null) {
+            kitRequestShippings.removeIf(
+                    kitRequestShipping -> currentCollaboratorSampleId.equals(kitRequestShipping.getBspCollaboratorSampleId()));
+        } else {
+            kitRequestShippings = new ArrayList<>();
+        }
+        kitRequestShippings = addNewKitRequestShippingToESKitsList(newCollaboratorSampleId, kitRequestShippings);
+        dsm.setKitRequestShipping(kitRequestShippings);
+        ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
     }
 
-    private Map<String, Object> addNewKitRequestShippingToES(Map<String, Object> participantDsm, String newCollaboratorSampleId) {
+    private List<KitRequestShipping> addNewKitRequestShippingToESKitsList(String newCollaboratorSampleId,
+                                                                          List<KitRequestShipping> oldKits) {
+        List<KitRequestShipping> kitRequestShippings = new ArrayList<>();
+        oldKits.forEach(kitRequestShipping -> kitRequestShippings.add(kitRequestShipping));
         KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestWithCollaboratorSampleId(newCollaboratorSampleId);
-        return new ObjectMapper().convertValue(kitRequestShipping, Map.class);
+        kitRequestShippings.add(kitRequestShipping);
+        return kitRequestShippings;
     }
 }
