@@ -24,6 +24,17 @@ public class LegacyKitResampleRequest {
     String shortId;
     String legacyShortId;
 
+    /**
+     * Verify that the request is valid,
+     * that all the fields are present,
+     * that the participant exists in the ES with the given short ID,
+     * that the given legacy short ID matches the one on file,
+     * that the kit request exists for the given collaborator sample ID to resmaple,
+     * and also that the new collaborator sample ID does not already exist
+     *
+     * @param ddpInstance DDP instance for the request
+     * @param kitRequestDao DAO for kit requests
+     */
     public void verify(DDPInstance ddpInstance, KitRequestDao kitRequestDao) {
         if (ddpInstance == null) {
             throw new DsmInternalError("DDP instance not found");
@@ -44,12 +55,19 @@ public class LegacyKitResampleRequest {
             throw new DSMBadRequestException(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
                     + " will not resample kit %s").formatted(legacyShortId, legacyShortIdOnFile, shortId, currentCollaboratorSampleId));
         }
-        if (!kitRequestDao.hasKitRequestWithCollaboratorSampleId(currentCollaboratorSampleId, (String) profile.get("guid"))) {
+        if (!kitRequestDao.existsKitRequestWithCollaboratorSampleId(currentCollaboratorSampleId, (String) profile.get("guid"))) {
             throw new DSMBadRequestException("Kit request not found for collaborator sample ID %s".formatted(currentCollaboratorSampleId));
+        }
+        if (kitRequestDao.existsKitRequestWithCollaboratorSampleId(newCollaboratorSampleId, (String) profile.get("guid"))) {
+            throw new DSMBadRequestException("Kit request with the new collaboratorSampleId %s already exists!"
+                    .formatted(newCollaboratorSampleId));
         }
 
     }
 
+    /**
+     * Check that all required fields are present in the request
+     */
     private void checkNotEmptyRequestFields() {
         if (StringUtils.isBlank(currentCollaboratorSampleId)) {
             throw new DSMBadRequestException("Missing required field: currentCollaboratorSampleId");

@@ -128,12 +128,21 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return kitLabel;
     }
 
-    public void resampleKit(LegacyKitResampleRequest legacyKitResampleRequest, String altPid) {
+    /**
+     * Resamples a kit for a participant with a legacy short ID. The request is for resampling a kit from Pepper Guid and Hruid to their
+     * older legacy ids.
+     * The method updates the DSM database with the new collaborator sample id, collaborator participant id and also changes
+     * the ddp participant id to the legacy participant id. It does not  update the ES document at this point.
+     *
+     * @param legacyKitResampleRequest request to resample a kit for a participant with a legacy short ID
+     * @param legacyParticipantId legacy participant ID
+     * */
+    public void resampleKit(LegacyKitResampleRequest legacyKitResampleRequest, String legacyParticipantId) {
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_RESAMPLE_KIT)) {
                 stmt.setString(1, legacyKitResampleRequest.getNewCollaboratorSampleId());
-                stmt.setString(2, altPid);
+                stmt.setString(2, legacyParticipantId);
                 stmt.setString(3, legacyKitResampleRequest.getNewCollaboratorParticipantId());
                 stmt.setString(4, legacyKitResampleRequest.getCurrentCollaboratorSampleId());
                 int affectedRows = stmt.executeUpdate();
@@ -156,21 +165,30 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                 legacyKitResampleRequest.getNewCollaboratorSampleId()));
     }
 
-    public boolean hasKitRequestWithCollaboratorSampleId(String currentCollaboratorSampleId, String ddpParticipantId) {
+    /**
+     * Collaborator sample id is unique in DSM, so we can use it to find a kit request, and to verify if we can use a
+     * collaborator sample id to resample a kit. This method checks if a kit request with the given collaborator sample id
+     * already exists in DSM, and if it belongs to the given participant.
+     *
+     * @param collaboratorSampleId collaborator sample id to check
+     * @param ddpParticipantId participant id to check
+     * @return true if a kit request with the given collaborator sample id exists in DSM and belongs to the given participant
+     * */
+    public boolean existsKitRequestWithCollaboratorSampleId(String collaboratorSampleId, String ddpParticipantId) {
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID)) {
-                stmt.setString(1, currentCollaboratorSampleId);
+                stmt.setString(1, collaboratorSampleId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         if (ddpParticipantId.equals(rs.getString(DBConstants.DDP_PARTICIPANT_ID))) {
                             log.info("Kit request exists for collaborator sample id %s with dsm_kit_request_id %s "
-                                    .formatted(currentCollaboratorSampleId, rs.getString(DBConstants.DSM_KIT_REQUEST_ID)));
+                                    .formatted(collaboratorSampleId, rs.getString(DBConstants.DSM_KIT_REQUEST_ID)));
                             dbVals.resultValue = true;
                             return dbVals;
                         } else {
                             dbVals.resultException = new DSMBadRequestException("ddpParticipantId %s does not belong to sample with id %s"
-                                    .formatted(ddpParticipantId, currentCollaboratorSampleId));
+                                    .formatted(ddpParticipantId, collaboratorSampleId));
                             return dbVals;
                         }
                     }
@@ -185,7 +203,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
         if (results.resultException != null) {
             throw new DsmInternalError("Error checking if kit request exists for collaborator sample id "
-                    + currentCollaboratorSampleId, results.resultException);
+                    + collaboratorSampleId, results.resultException);
         }
         return (boolean) results.resultValue;
     }

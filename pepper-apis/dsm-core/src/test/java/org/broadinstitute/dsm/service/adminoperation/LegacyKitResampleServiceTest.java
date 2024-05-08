@@ -47,6 +47,7 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     private static List<String> createdKits = new ArrayList<>();
 
     private static LegacyKitResampleService legacyKitResampleService = new LegacyKitResampleService();
+    private static DDPInstance ddpInstance;
 
     @BeforeClass
     public static void doFirst() {
@@ -54,7 +55,6 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
         testKitUtil.setupInstanceAndSettings();
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         ddpInstanceDto.setEsParticipantIndex(esIndex);
         ddpInstanceDao.updateEsParticipantIndex(ddpInstanceDto.getDdpInstanceId(), esIndex);
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId(ddpParticipantId);
@@ -63,6 +63,7 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
         participantDto = legacyParticipantPair.getLeft();
         ElasticTestUtil.createParticipant(esIndex, participantDto);
         participants.add(participantDto);
+        ddpInstance = DDPInstance.getDDPInstance(instanceName);
         String dsmKitRequestId = testKitUtil.createKitRequestShipping(ddpParticipantId, oldCollaboratorSampleId,
                 oldCollaboratorParticipantId, null,  ddpKitRequestId, "SALIVA", ddpInstance, "100");
         createdKits.add(dsmKitRequestId);
@@ -87,7 +88,6 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     public void testVerify_notVerifyMissingOldCollaboratorSampleId() {
         LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(null,
                 newCollaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         try {
             wrongKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e) {
@@ -102,7 +102,6 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     public void testVerify_notVerifyMissingNewCollaboratorSampleId() {
         LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
                 null, newCollaboratorParticipantId, shortId, legacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         try {
             wrongKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e) {
@@ -117,7 +116,6 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     public void testVerify_notVerifyMissingShortId() {
         LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
                 newCollaboratorSampleId, newCollaboratorParticipantId, null, legacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         try {
             wrongKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e) {
@@ -132,7 +130,6 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     public void testVerify_notVerifyMissingNewCollaboratorParticipantId() {
         LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
                 newCollaboratorSampleId, null, shortId, legacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         try {
             wrongKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e) {
@@ -148,7 +145,6 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
         String wrongShortId = "WRONG_SHORT_ID";
         LegacyKitResampleRequest wrongParticipantLegacyKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
                 newCollaboratorSampleId, newCollaboratorParticipantId, wrongShortId, legacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         try {
             wrongParticipantLegacyKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e) {
@@ -159,11 +155,11 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testVerifynotVerifyWrongLegacyShortId() {
+    public void testVerify_notVerifyWrongLegacyShortId() {
         String wrongLegacyShortId = "WRONG_LEGACY_SHORT_ID";
         LegacyKitResampleRequest wrongLegacyIdLegacyKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
                 newCollaboratorSampleId, newCollaboratorParticipantId, shortId, wrongLegacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
+
         try {
             wrongLegacyIdLegacyKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e2) {
@@ -177,10 +173,28 @@ public class LegacyKitResampleServiceTest  extends DbAndElasticBaseTest {
     }
 
     @Test
+    public void testVerify_notVerifyDuplicateCollaboratorSampleID() {
+        String collaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
+        String dsmKitRequestId = testKitUtil.createKitRequestShipping(ddpParticipantId, collaboratorSampleId,
+                oldCollaboratorParticipantId, null,  "NEW_DDP_KIT", "SALIVA", ddpInstance, "100");
+        createdKits.add(dsmKitRequestId);
+        LegacyKitResampleRequest duplicateSampleIdRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
+                collaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
+        try {
+            duplicateSampleIdRequest.verify(ddpInstance, new KitRequestDao());
+        } catch (Exception e2) {
+            e2.printStackTrace();
+            Assert.assertEquals(("Kit request with the new collaboratorSampleId %s already exists!").formatted(collaboratorSampleId),
+                    e2.getMessage());
+            return;
+        }
+        Assert.fail("Should have thrown exception");
+    }
+
+    @Test
     public void testVerifyAndResample() {
         LegacyKitResampleRequest legacyKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId, newCollaboratorSampleId,
                 newCollaboratorParticipantId, shortId, legacyShortId);
-        DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceName);
         try {
             legacyKitResampleRequest.verify(ddpInstance, new KitRequestDao());
         } catch (Exception e) {
