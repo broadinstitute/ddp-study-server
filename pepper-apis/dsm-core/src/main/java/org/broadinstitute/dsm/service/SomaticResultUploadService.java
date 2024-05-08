@@ -22,6 +22,7 @@ import com.typesafe.config.Config;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -100,6 +101,9 @@ public class SomaticResultUploadService {
             return new AuthorizeResult(AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM, null, null, somaticUploadSettings);
         }
         if (!somaticUploadSettings.getMimeTypes().contains(somaticResultMetaData.getMimeType())) {
+            log.info("File " + somaticResultMetaData.getFileName() + " has unsupported mime type "
+                    + somaticResultMetaData.getMimeType() + ".  Supported mime types are "
+                    + StringUtils.join(somaticUploadSettings.getMaxFileSize(), ","));
             return new AuthorizeResult(AuthorizeResultType.MIME_TYPE_NOT_ALLOWED, null, null, somaticUploadSettings);
         }
         if (!fileValidator.isValidFileName("Validating file name",
