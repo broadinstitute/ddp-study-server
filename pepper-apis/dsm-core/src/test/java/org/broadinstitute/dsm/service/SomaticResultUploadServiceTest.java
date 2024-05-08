@@ -63,7 +63,7 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
     public void testDelete() {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("somaticupload");
         testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
-        SomaticResultMetaData uploadData = new SomaticResultMetaData("testFile.pdf", "application/pdf", 100L);
+        SomaticResultMetaData uploadData = new SomaticResultMetaData("testFile.pdf", "application/pdf", 1L);
         SomaticResultUploadService.AuthorizeResult uploadAuth = somaticResultUploadSerivce.authorizeUpload(
                 instanceName, Integer.toString(testParticipant.getRequiredParticipantId()),
                 testParticipant.getRequiredDdpParticipantId(), uploadData);
