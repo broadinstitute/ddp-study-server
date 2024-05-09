@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,7 +14,7 @@ public class BaseCollectionMigratorTest {
 
     @Test
     public void transformObject() {
-        BaseCollectionMigrator baseCollectionMigrator = new MockBaseCollectionMigrator("realm", "object");
+        BaseCollectionMigrator baseCollectionMigrator = new MockCollectionMigrator();
         baseCollectionMigrator.transformObject(mockOncHistoryDetail());
         Map<String, Object> objectMap = baseCollectionMigrator.transformedList.get(0);
         Object primaryId = objectMap.get("oncHistoryDetailId");
@@ -43,30 +42,5 @@ public class BaseCollectionMigratorTest {
                 null, null, "awdawddwa", null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null)));
         return fieldValue;
-    }
-
-    static class MockBaseCollectionMigrator extends BaseCollectionMigrator {
-
-        protected RestHighLevelClient clientInstance;
-
-        public MockBaseCollectionMigrator(String index, String realm, String object) {
-            super(index, realm, object);
-
-        }
-
-        public MockBaseCollectionMigrator(String realm, String object) {
-            super(null, realm, object);
-
-        }
-
-        @Override
-        protected Map<String, Object> getDataByRealm() {
-            return Map.of();
-        }
-
-        @Override
-        protected String getRecordIdFieldName() {
-            return null;
-        }
     }
 }
