@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.typesafe.config.Config;
-
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import liquibase.Contexts;

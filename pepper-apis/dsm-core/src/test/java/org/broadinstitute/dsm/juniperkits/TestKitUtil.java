@@ -89,7 +89,8 @@ public class TestKitUtil {
     private static final String INSERT_SUB_KITS_SETTINGS =
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
-    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
+    private static final String SELECT_DSM_KIT_REQUEST_ID =
+            "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
 
     private static final String INSERT_EVENT_TYPE =
             "INSERT INTO event_type (ddp_instance_id, event_name, event_description, kit_type_id, event_type) "
@@ -428,7 +429,7 @@ public class TestKitUtil {
      * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
      *
      * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
-     ***/
+     **/
 
     public void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
                                        DDPInstance ddpInstance) {

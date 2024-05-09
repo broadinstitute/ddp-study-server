@@ -30,7 +30,6 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;

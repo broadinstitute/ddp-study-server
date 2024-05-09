@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.events;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
