@@ -30,6 +30,8 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
     private static ParticipantDto testParticipant = null;
+    private static SomaticResultUploadService somaticResultUploadSerivce;
+    private static String ddpParticipantId;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -37,7 +39,7 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex, instanceName);
         Config loadedConfig = ConfigManager.getInstance().getConfig();
         somaticResultUploadSerivce = SomaticResultUploadService.fromConfig(loadedConfig);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("somaticupload");
+        ddpParticipantId = TestParticipantUtil.genDDPParticipantId("somaticupload");
         testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
     }
 
@@ -47,15 +49,13 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
             Assert.assertNotNull(testParticipant);
             TestParticipantUtil.deleteParticipant(testParticipant.getRequiredParticipantId());
             Assert.assertNotNull(ddpInstanceDto);
-            ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
+            DdpInstanceGroupTestUtil.deleteInstance(ddpInstanceDto);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception: " + e);
         }
         ElasticTestUtil.deleteIndex(esIndex);
     }
-
-    static SomaticResultUploadService somaticResultUploadSerivce;
 
     @Test
     public void test_authorizeValidRequest() {
@@ -67,14 +67,15 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
         SomaticResultMetaData uploadData = new SomaticResultMetaData("testFile.pdf", "application/pdf", 1L);
         SomaticResultUploadService.AuthorizeResult uploadAuth = somaticResultUploadSerivce.authorizeUpload(
                 instanceName, Integer.toString(testParticipant.getRequiredParticipantId()),
-                testParticipant.getRequiredDdpParticipantId(), uploadData);
+                ddpParticipantId, uploadData);
         Assert.assertEquals(SomaticResultUploadService.AuthorizeResultType.OK, uploadAuth.getAuthorizeResultType());
         Assert.assertNotNull(uploadAuth.getSomaticResultUpload());
         SomaticResultUpload deleteResult = somaticResultUploadSerivce.deleteUpload(
                 testParticipant.getRequiredParticipantId(), uploadAuth.getSomaticResultUpload().getSomaticDocumentId(),
                 instanceName);
-        long secondsSinceDeletion = Duration.between(Instant.ofEpochSecond(deleteResult.getDeletedAt()), Instant.now()).getSeconds();
         assertNotNull(deleteResult);
+        // verify that the soft delete happened by checking that there's a deletion time and a deleted by user id
+        long secondsSinceDeletion = Duration.between(Instant.ofEpochSecond(deleteResult.getDeletedAt()), Instant.now()).getSeconds();
         Assert.assertTrue(secondsSinceDeletion < 30);
         Assert.assertEquals(testParticipant.getRequiredParticipantId(), deleteResult.getDeletedByUserId().intValue());
         TransactionWrapper.useTxn(handle -> {
