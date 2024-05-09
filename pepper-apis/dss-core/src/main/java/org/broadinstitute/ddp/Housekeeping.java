@@ -39,11 +39,11 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.customexport.housekeeping.schedule.CustomExportJob;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -87,6 +87,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.FileUploadNotificationJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.CreateKitEventAction;
@@ -183,6 +184,8 @@ public class Housekeeping {
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
     private static Subscriber fileScanResultSubscriber;
+    private static PubSubConnectionManager pubsubConnectionManager;
+    private static PubSubTaskConnectionService pubSubTaskConnectionService;
 
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
@@ -197,11 +200,26 @@ public class Housekeeping {
     }
 
     public static void main(String[] args) {
+        LogbackConfigurationPrinter.printLoggingConfiguration();
+        LogUtil.addAppEngineEnvVarsToMDC();
+        // respond GAE dispatcher endpoints as soon as possible
+        SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
+            @Override
+            public void onAhStop() {
+                log.info("Shutting down housekeeping instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+
+            @Override
+            public void onTerminate() {
+                log.info("Terminating housekeeping instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+        }, ConfigManager.getInstance().getConfig());
         start(args, null);
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
-        LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
@@ -234,7 +252,7 @@ public class Housekeeping {
         setupTaskReceiver(cfg, pubSubProject);
         setupFileScanResultReceiver(cfg, pubSubProject);
 
-        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
+        pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
         if (usePubSubEmulator) {
             ProjectTopicName projectTopicName = ProjectTopicName.of(pubSubProject,
                     cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC));
@@ -243,7 +261,7 @@ public class Housekeeping {
                     cfg.getString(ConfigFile.PUBSUB_TASKS_SUB));
             pubsubConnectionManager.createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
         }
-        PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
+        pubSubTaskConnectionService = new PubSubTaskConnectionService(
                 pubsubConnectionManager,
                 pubSubProject,
                 cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
@@ -284,11 +302,6 @@ public class Housekeeping {
         heartbeatMonitor = new StackdriverMetricsTracker(StackdriverCustomMetric.HOUSEKEEPING_CYCLES,
                 PointsReducerFactory.buildMaxPointReducer());
 
-        String envPort = System.getenv(ENV_PORT);
-        if (envPort != null) {
-            // We're likely in an GAE environment, so respond to the start hook before starting main event loop.
-            respondToGAEStartHook(envPort);
-        }
 
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
@@ -466,17 +479,25 @@ public class Housekeeping {
                 log.info("Housekeeping interrupted during sleep", e);
             }
         }
-        pubsubConnectionManager.close();
-        if (fileScanResultSubscriber != null) {
-            fileScanResultSubscriber.stopAsync();
-        }
-        if (taskSubscriber != null) {
-            taskSubscriber.stopAsync();
-        }
+        shutdownPubSub();
+        shutdownQuartz();
+        log.info("Housekeeping is shutting down");
+    }
+
+    private static void shutdownQuartz() {
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
+    }
 
+    private static void shutdownPubSub() {
+        pubsubConnectionManager.close();
+        if (fileScanResultSubscriber != null && fileScanResultSubscriber.isRunning()) {
+            fileScanResultSubscriber.stopAsync();
+        }
+        if (taskSubscriber != null && taskSubscriber.isRunning()) {
+            taskSubscriber.stopAsync();
+        }
         if (pubSubTaskConnectionService != null) {
             try {
                 pubSubTaskConnectionService.destroy();
@@ -484,8 +505,6 @@ public class Housekeeping {
                 log.error("Failed to shutdown PubSubTask API", e);
             }
         }
-
-        log.info("Housekeeping is shutting down");
     }
 
     private static void setupScheduler(Config cfg) {
@@ -623,45 +642,29 @@ public class Housekeeping {
         consumer.accept(newSubscriber);
     }
 
-    private static void respondToGAEStartHook(String envPort) {
-        var receivedPing = new AtomicBoolean(false);
-
-        Spark.port(Integer.parseInt(envPort));
-        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            receivedPing.set(true);
-            response.status(200);
-            return "";
-        });
-        Spark.awaitInitialization();
-        log.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
-
-        long startMillis = Instant.now().toEpochMilli();
-        while (!receivedPing.get()) {
-            if (Instant.now().toEpochMilli() - startMillis > SLEEP_MILLIS) {
-                break;
-            }
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                log.warn("Wait interrupted", e);
-            }
-        }
-
-        Spark.stop();
-        Spark.awaitStop();
-        if (receivedPing.get()) {
-            log.info("Received ping from GAE, proceeding with Housekeeping startup");
-        } else {
-            log.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
-        }
-    }
-
     private static boolean isTimeForLogging(long lastLogTime) {
         return Instant.now().toEpochMilli() - lastLogTime > ERROR_LOG_QUIET_TIME;
     }
 
     private static void logException(Exception e) {
         log.error("Housekeeping error", e);
+    }
+
+    public static void shutdown() {
+        // halt the event loop
+        stop();
+
+        // stop pubsub
+        shutdownPubSub();
+
+        // stop quartz
+        shutdownQuartz();
+
+        // shut down db pool
+        TransactionWrapper.reset();
+
+        // stop spark
+        Spark.stop();
     }
 
     public static void stop() {

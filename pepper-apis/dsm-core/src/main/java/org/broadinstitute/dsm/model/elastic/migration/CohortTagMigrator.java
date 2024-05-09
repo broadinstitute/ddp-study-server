@@ -21,8 +21,9 @@ public class CohortTagMigrator extends BaseCollectionMigrator {
     protected Map<String, Object> getDataByRealm() {
         Map<String, List<CohortTag>> cohortTags = cohortTagDao.getCohortTagsByInstanceName(realm);
         int tagsFromRealm = cohortTags.size();
-        AdditionalCohortTagsRetriever.fromRealm(realm)
-                .ifPresent(retriever -> retriever.mergeRecords(cohortTags));
+        // TODO: Remove this via PEPPER-1339. -DC
+        //AdditionalCohortTagsRetriever.fromRealm(realm)
+        //        .ifPresent(retriever -> retriever.mergeRecords(cohortTags));
         log.info("Migrator retrieved {} cohort tags from realm {}, and {} additional tags",
                 tagsFromRealm, realm, cohortTags.size() - tagsFromRealm);
         return (Map) cohortTags;

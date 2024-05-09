@@ -30,6 +30,7 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,22 +71,22 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     Tracker mockShipmentTracker = mock(Tracker.class);
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
-    private static DDPInstanceWithKitSetupUtil juniperSetupUtil;
+    private static JuniperTestSetupUtil juniperTestSetupUtil;
 
     @BeforeClass
     public static void setupJuniperBefore() {
 
-        juniperSetupUtil =
-                new DDPInstanceWithKitSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group", null);
-        juniperSetupUtil.setupInstanceAndSettings();
+        juniperTestSetupUtil =
+                new JuniperTestSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group");
+        juniperTestSetupUtil.setupJuniperInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
 
     }
 
     @AfterClass
     public static void deleteJuniperInstance() {
-        juniperSetupUtil.deleteKitsArray(createdKitIds);
-        juniperSetupUtil.deleteInstanceAndSettings();
+        juniperTestSetupUtil.deleteKitsArray(createdKitIds);
+        juniperTestSetupUtil.deleteInstanceAndSettings();
     }
 
     @Before
@@ -101,16 +102,16 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
-        juniperSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
+        juniperTestSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
         juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
-        List<ScanResult> scanResultList = juniperSetupUtil.changeKitToSent(juniperTestKit);
+        List<ScanResult> scanResultList = juniperTestSetupUtil.changeKitToSent(juniperTestKit);
         Assert.assertFalse(
                 scanResultList.stream().filter(scanError -> scanError.hasError()).findAny().isPresent());
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
-        DDPInstanceWithKitSetupUtil.changeKitToReceived();
+        JuniperTestSetupUtil.changeKitToReceived();
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.RECEIVED.getValue());
 
@@ -139,7 +140,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
      * this method creates the juniperTestKitRequest in the database  by calling
      * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
      * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
-     * ***/
+     **/
 
     private void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest) {
         createdKitIds.add(juniperTestKitRequest.getJuniperKitId());
@@ -300,7 +301,8 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
             KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitType);
             Assert.fail();
         } catch (DsmInternalError e) {
-            Assert.assertTrue(e.getMessage().contains(String.format("No kit type was found for study %s with kit type name %s", instanceName, kitType)));
+            Assert.assertTrue(e.getMessage().contains(String.format("No kit type was found for study %s with kit type name %s",
+                    instanceName, kitType)));
             String json = "{ \"firstName\":\"P\","
                     + "\"lastName\":\"T\","
                     + "\"street1\":\"415 Main st\","

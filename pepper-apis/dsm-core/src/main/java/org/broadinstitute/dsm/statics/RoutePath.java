@@ -152,8 +152,4 @@ public class RoutePath {
     public enum RequestMethod {
         GET, PATCH, POST, PUT, DELETE
     }
-
-    public static final class GAE {
-        public static final String STOP_ENDPOINT = "/_ah/stop";
-    }
 }

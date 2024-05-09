@@ -25,16 +25,24 @@ import com.easypost.model.PostageLabel;
 import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
+import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -42,20 +50,23 @@ import org.junit.Assert;
 import org.mockito.Mock;
 
 /**
+ * <p>
  * This class has methods to set up a study that uses kits in DSM database.
  * It creates the instance, group, instance_role, kit_type, carrier,
  * kit_dimensions, kit_return and ddp_kit_request_settings for the
  * newly created study.
  * It also contains methods to delete what was set up after tests are complete
- * <p>
+ * </p><p>
  * The usage is by first creating an instance of this class by declaring the desired instance name and study guid,
  * display name and collaborator prefix.
  * Then call setupStudyWithKitsInstanceAndSettings() for initiating all the config in database.
- * <p>
+ * </p><p>
  * When done, call deleteJuniperInstanceAndSettings() to delete everything
+ * </p>
  */
 
 @Slf4j
+@Data
 public class TestKitUtil {
 
     private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
@@ -79,6 +90,10 @@ public class TestKitUtil {
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
     private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
+
+    private static final String INSERT_EVENT_TYPE =
+            "INSERT INTO event_type (ddp_instance_id, event_name, event_description, kit_type_id, event_type) "
+                    + " VALUES (?, ?, ?, ?, ?) ;";
     public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     private String kitTypeDisplayName;
     public Integer ddpGroupId;
@@ -97,6 +112,7 @@ public class TestKitUtil {
     private String studyGuid;
     private String collaboratorPrefix;
     private String userWithKitShippingAccess;
+    private String esIndex;
     @Getter
     @Mock
     EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
@@ -124,6 +140,8 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
+                delete(conn, "event_type", "ddp_instance_id", ddpInstanceId);
+                delete(conn, "EVENT_QUEUE", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "kit_return_information", "kit_return_id", kitReturnId);
                 delete(conn, "ddp_kit_request_settings", "ddp_kit_request_settings_id", ddpKitRequestSettingsId);
                 delete(conn, "carrier_service", "carrier_service_id", carrierId);
@@ -302,7 +320,7 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "kit_dimension");
     }
 
-    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
+    public Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
             throws SQLException {
         if (kitTypeId != null && isExistingKit) {
             return kitTypeId;
@@ -317,7 +335,9 @@ public class TestKitUtil {
             stmt.setString(2, displayName);
         }
         ResultSet rs = stmt.executeQuery();
-        Integer kitTypeId = getPrimaryKey(rs, "kit_type");
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
         if (kitTypeId == null) {
             kitTypeId = createKitType(conn, kitTypeName, displayName);
         }
@@ -471,5 +491,44 @@ public class TestKitUtil {
 
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }
+
+    public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult simpleResult = new SimpleResult();
+            try {
+                PreparedStatement stmt = conn.prepareStatement(INSERT_EVENT_TYPE, Statement.RETURN_GENERATED_KEYS);
+                stmt.setInt(1, ddpInstanceId);
+                stmt.setString(2, eventName);
+                stmt.setString(3, eventDescription);
+                stmt.setInt(4, kitTypeId);
+                stmt.setString(5, eventType);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                simpleResult.resultException = e;
+            }
+            return simpleResult;
+        });
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error creating event ", results.resultException);
+        }
+    }
+
+    public List<ScanResult> changeKitRequestShippingToSent(KitRequestShipping kitRequestShipping, String kitLabel) {
+        List<SentAndFinalScanPayload> scanPayloads = new ArrayList<>();
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
+        SentAndFinalScanPayload sentAndFinalScanPayload = new SentAndFinalScanPayload(kitRequestShipping.getDdpLabel(), kitLabel);
+        scanPayloads.add(sentAndFinalScanPayload);
+        List<ScanResult> scanResultList = new ArrayList<>();
+        KitPayload kitPayload = new KitPayload(scanPayloads, Integer.parseInt(userWithKitShippingAccess), ddpInstanceDto);
+        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDao());
+        scanResultList.addAll(kitFinalScanUseCase.get());
+        return scanResultList;
+    }
+
+    public void setEsIndex(String esIndex) {
+        this.esIndex = esIndex;
+        new DDPInstanceDao().updateEsParticipantIndex(ddpInstanceId, esIndex);
+    }
+
 
 }

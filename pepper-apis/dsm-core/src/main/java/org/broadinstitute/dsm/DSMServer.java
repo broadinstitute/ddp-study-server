@@ -9,21 +9,18 @@ import static spark.Spark.exception;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.patch;
-import static spark.Spark.port;
 import static spark.Spark.post;
 import static spark.Spark.put;
-import static spark.Spark.threadPool;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.Instant;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.common.net.MediaType;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -33,9 +30,10 @@ import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPInternalError;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
@@ -47,7 +45,6 @@ import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
-import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
@@ -201,7 +198,6 @@ public class DSMServer {
     public static final String GCP_PATH_ANTI_VIRUS_SUB = "pubsub.antivirus_to_dsm_subscription";
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String GCP_PATH_PUBSUB_PROJECT_ID = "pubsub.projectId";
-    private static final String GCP_PATH_PUBSUB_SUB = "pubsub.subscription";
     private static final String GCP_PATH_DSM_DSS_SUB = "pubsub.dss_to_dsm_subscription";
     private static final String GCP_PATH_DSM_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     private static final String GCP_PATH_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
@@ -215,45 +211,62 @@ public class DSMServer {
             new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
     private static final String VAULT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
-    private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
     private static Auth0Util auth0Util;
 
+    private static Subscriber dssSubsciber;
+
+    private static Subscriber mercuryOrderSubscriber;
+
+    private static Subscriber dsmTasksSubscriber;
+
+    private static Subscriber antivirusSubscriber;
+
+    private static Scheduler scheduler;
+
     public static void main(String[] args) {
+        //config without secrets
+        Config cfg = ConfigFactory.load();
+        //secrets from vault in a config file
+        File vaultConfigInCwd = new File(VAULT_CONF);
+        File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
+        File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
+        logger.info("Reading config values from {}", vaultConfig.getAbsolutePath());
+
+        if (cfg.hasPath(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)) {
+            logger.warn("{} should be in environment-specific configuration, not static source code",
+                    ApplicationConfigConstants.EMAIL_NOTIFICATIONS);
+        }
+        cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
+
+        if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT) && StringUtils.isNotBlank(cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT))) {
+            System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT));
+        }
+        LogUtil.addAppEngineEnvVarsToMDC();
+        // respond GAE dispatcher endpoints as soon as possible
         // immediately lock isReady so that ah/start route will wait
+
+        SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
+            public void onAhStop() {
+                logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+
+            public void onTerminate() {
+                logger.info("Terminating DSM instance", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+        },
+                cfg.getConfig("portal"));
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
-                //config without secrets
-                Config cfg = ConfigFactory.load();
-                //secrets from vault in a config file
-                File vaultConfigInCwd = new File(VAULT_CONF);
-                File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_CONF);
-                File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
-                logger.info("Reading config values from {}", vaultConfig.getAbsolutePath());
-
-                if (cfg.hasPath(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)) {
-                    logger.warn("{} should be in environment-specific configuration, not static source code",
-                            ApplicationConfigConstants.EMAIL_NOTIFICATIONS);
-                }
-                cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
-
-                if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT) && StringUtils.isNotBlank(cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT))) {
-                    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString(GCP_PATH_TO_SERVICE_ACCOUNT));
-                }
-
                 new DSMConfig(cfg);
-
-                String preferredSourceIPHeader = null;
-                if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
-                    preferredSourceIPHeader = cfg.getString(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER);
-                }
-                JettyConfig.setupJetty(preferredSourceIPHeader);
                 DSMServer server = new DSMServer();
                 server.configureServer(cfg);
                 isReady.set(true);
-                logger.info("DSM Startup Complete");
+                logger.info("DSM SparkBootUtil Complete");
             } catch (Exception e) {
                 logger.error("Error starting DSM server {}", e.toString());
                 e.printStackTrace();
@@ -439,21 +452,6 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
-        // Block until isReady is available, with an optional timeout to prevent
-        // instance for sitting around too long in a nonresponsive state.  There is a
-        // judgement call to be made here to allow for lengthy liquibase migrations during boot.
-        logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
-        get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
-
-        get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
-            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
-            //flush out any pending GA events
-            response.status(HttpStatus.SC_OK);
-            return "";
-        });
-    }
-
     protected static void enableCORS(String allowedOrigins, String methods, String headers) {
         Spark.options("/*", (request, response) -> {
             String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
@@ -485,24 +483,6 @@ public class DSMServer {
     protected void configureServer(@NonNull Config config) {
         String env = config.getString("portal.environment");
         logger.info("Property source: {} ", env);
-        logger.info("Configuring the server...");
-        threadPool(-1, -1, 60000);
-        int port = config.getInt("portal.port");
-        String appEnginePort = System.getenv("PORT");
-
-        // if port is passed via env var, assume it's GAE and prefer this port
-        if (appEnginePort != null) {
-            port = Integer.parseInt(appEnginePort);
-        }
-        long bootTimeoutSeconds = DEFAULT_BOOT_WAIT.getSeconds();
-        if (config.hasPath(ApplicationConfigConstants.BOOT_TIMEOUT)) {
-            bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
-        }
-
-        logger.info("Using port {}", port);
-        port(port);
-
-        registerAppEngineStartupCallback(bootTimeoutSeconds);
 
         setupDB(config);
 
@@ -521,6 +501,12 @@ public class DSMServer {
 
         //setup the mysql transaction/connection utility
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
+
+        try {
+            TransactionWrapper.useTxn(handle -> LiquibaseUtil.logDatabaseChangeLogLocks(handle.getConnection()));
+        } catch (SQLException e) {
+            throw new DsmInternalError("Could not query liquibase locks", e);
+        }
 
         logger.info("Running DB update...");
 
@@ -700,7 +686,7 @@ public class DSMServer {
         patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new GsonResponseTransformer());
 
         EventUtil eventUtil = new EventUtil();
-        setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
+        scheduler = setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
 
         //TODO - redo with pubsub
         JavaHeapDumper heapDumper = new JavaHeapDumper();
@@ -732,26 +718,26 @@ public class DSMServer {
         logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         try {
-            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
+            dssSubsciber = PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
+            dsmTasksSubscriber = DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
         } catch (Exception e) {
             throw new DsmInternalError("Error initializing DSMtasksSubscription", e);
         }
 
         try {
-            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
+            mercuryOrderSubscriber = MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
             logger.info("Setting up pupsub for somatic antivirus scanning {}/{}", projectId, antivirusDsmSubscriptionId);
-            AntivirusScanningStatusListener.subscribeToAntiVirusStatus(projectId, antivirusDsmSubscriptionId);
+            antivirusSubscriber = AntivirusScanningStatusListener.subscribeToAntiVirusStatus(projectId, antivirusDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -988,13 +974,14 @@ public class DSMServer {
 
     }
 
-    private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
-                           @NonNull EventUtil eventUtil) {
+    private Scheduler setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
+                                @NonNull EventUtil eventUtil) {
         String schedulerName = null;
+        Scheduler scheduler = null;
         if (cfg.getBoolean(ApplicationConfigConstants.QUARTZ_ENABLE_JOBS)) {
             logger.info("Setting up jobs");
             try {
-                Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+                scheduler = new StdSchedulerFactory().getScheduler();
                 schedulerName = scheduler.getSchedulerName();
                 createDDPRequestScheduledJobs(scheduler, DDPRequestJob.class, "DDPREQUEST_JOB",
                         cfg.getInt(ApplicationConfigConstants.QUARTZ_DDP_REQUEST_JOB_INTERVAL_SEC), new DDPRequestTriggerListener(),
@@ -1024,7 +1011,9 @@ public class DSMServer {
             } catch (Exception e) {
                 throw new DsmInternalError("Could not create scheduler ", e);
             }
+
         }
+        return scheduler;
     }
 
     private void startScheduler(Scheduler scheduler) throws SchedulerException {
@@ -1081,32 +1070,48 @@ public class DSMServer {
         });
     }
 
-    private static class ReadinessRoute implements Route {
-
-        private final long bootTimeoutSeconds;
-
-        public ReadinessRoute(long bootTimeoutSeconds) {
-            this.bootTimeoutSeconds = bootTimeoutSeconds;
-        }
-
-        @Override
-        public Object handle(Request req, Response res) throws Exception {
-            AtomicInteger status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
-            long bootTime = Instant.now().toEpochMilli();
-            Thread waitForBoot = new Thread(() -> {
-                synchronized (isReady) {
-                    if (isReady.get()) {
-                        status.set(HttpStatus.SC_OK);
-                    }
+    public static void shutdown() {
+        logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
+        // shutdown jobs
+        if (scheduler != null) {
+            logger.info("Shutting down quartz.");
+            try {
+                if (!scheduler.isShutdown()) {
+                    scheduler.shutdown();
                 }
-            });
-
-            waitForBoot.start();
-            waitForBoot.join(bootTimeoutSeconds * 1000);
-            logger.info("Responding to startup route after {}ms delay with {}", Instant.now().toEpochMilli() - bootTime, status.get());
-            res.status(status.get());
-            return "";
+            } catch (SchedulerException e) {
+                logger.error("Error shutting down quartz.", e);
+            }
         }
-    }
 
+        // shutdown pubsub
+        logger.info("Shutting down pubsub.");
+        if (dssSubsciber != null) {
+            if (dssSubsciber.isRunning()) {
+                dssSubsciber.stopAsync();
+            }
+        }
+        if (mercuryOrderSubscriber != null) {
+            if (mercuryOrderSubscriber.isRunning()) {
+                mercuryOrderSubscriber.stopAsync();
+            }
+        }
+        if (dsmTasksSubscriber != null) {
+            if (dsmTasksSubscriber.isRunning()) {
+                dsmTasksSubscriber.stopAsync();
+            }
+        }
+        if (antivirusSubscriber != null) {
+            if (antivirusSubscriber.isRunning()) {
+                antivirusSubscriber.stopAsync();
+            }
+        }
+
+        // shutdown db pool
+        logger.info("Shutting down db pool");
+        TransactionWrapper.reset();
+
+        // shutdown spark
+        Spark.stop();
+    }
 }

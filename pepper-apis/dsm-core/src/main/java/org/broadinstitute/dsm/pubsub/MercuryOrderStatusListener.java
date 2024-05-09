@@ -24,7 +24,7 @@ public class MercuryOrderStatusListener {
         throw new IllegalStateException("Utility class");
     }
 
-    public static void subscribeToOrderStatus(String projectId, String subscriptionId) {
+    public static Subscriber subscribeToOrderStatus(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             String messageId = message.getMessageId();
@@ -50,6 +50,7 @@ public class MercuryOrderStatusListener {
         } catch (TimeoutException e) {
             throw new DSMPubSubException("Timed out while starting pubsub subscription for mercury order status", e);
         }
+        return subscriber;
     }
 
     private static void processOrderStatus(PubsubMessage message) {

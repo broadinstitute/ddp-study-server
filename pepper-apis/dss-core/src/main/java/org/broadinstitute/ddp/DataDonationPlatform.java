@@ -14,9 +14,7 @@ import static spark.Spark.delete;
 import static spark.Spark.internalServerError;
 import static spark.Spark.notFound;
 import static spark.Spark.options;
-import static spark.Spark.port;
 import static spark.Spark.stop;
-import static spark.Spark.threadPool;
 
 import java.net.MalformedURLException;
 import java.time.Instant;
@@ -25,19 +23,16 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
@@ -47,6 +42,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
+import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
 import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
@@ -61,8 +57,8 @@ import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
-import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
@@ -205,7 +201,6 @@ import spark.route.HttpMethod;
 public class DataDonationPlatform {
     public static final String MDC_STUDY = "Study";
     public static final String MDC_ROUTE_CLASS = "RouteClass";
-    public static final String PORT = "PORT";
 
     private static final String HTTP_METHOD__GET = "GET";
     private static final String HTTP_METHOD__PUT = "PUT";
@@ -226,71 +221,61 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
-    private static final AtomicBoolean isReady = new AtomicBoolean(false);
-    private static final int DEFAULT_BOOT_WAIT_SECS = 30;
-
 
     /**
-     * Stop the server using the default wait time.
+     * Shut down the dss server
      */
     public static void shutdown() {
-        shutdown(1000);
-    }
-
-    /**
-     * Stop the Spark server and give it time to close.
-     *
-     * @param millisecs milliseconds to wait for Spark to close
-     */
-    public static void shutdown(int millisecs) {
         if (scheduler != null) {
-            JobScheduler.shutdownScheduler(scheduler, false);
+            try {
+                if (!scheduler.isShutdown()) {
+                    JobScheduler.shutdownScheduler(scheduler, false);
+                }
+            } catch (SchedulerException e) {
+                log.error("Error checking scheduler status", e);
+            }
         }
-
+        PubSubPublisherInitializer.shutdownPublishers();
         stop();
-        try {
-            log.info("Pausing for {}ms for server to stop", millisecs);
-            Thread.sleep(millisecs);
-        } catch (InterruptedException e) {
-            log.warn("Wait interrupted", e);
-        }
-
         log.info("ddp shutdown complete");
     }
 
     public static void main(String[] args) {
         try {
-            synchronized (isReady) {
-                start();
-                isReady.set(true);
-            }
+            start();
         } catch (Exception e) {
             log.error("Could not start ddp", e);
             shutdown();
         }
     }
 
-    private static void start() throws MalformedURLException {
+    /**
+     * Start the study server backend.
+     */
+    public static void start() throws MalformedURLException {
         LogbackConfigurationPrinter.printLoggingConfiguration();
+        LogUtil.addAppEngineEnvVarsToMDC();
         Config cfg = ConfigManager.getInstance().getConfig();
+        // respond GAE dispatcher endpoints as soon as possible
+        SparkBootUtil.startSparkServer(new SparkBootUtil.AppEngineShutdown() {
+            @Override
+            public void onAhStop() {
+                log.info("Shutting down DSS instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+
+            @Override
+            public void onTerminate() {
+                log.info("Terminating DSS instance {}", LogUtil.getAppEngineInstance());
+                shutdown();
+            }
+        }, cfg);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
-        int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
         String sendGridEventsVerificationKey = cfg.hasPath(EVENTS_VERIFICATION_KEY)
                 ? cfg.getString(EVENTS_VERIFICATION_KEY) : null;
         String auth0LogEventsToken = cfg.hasPath(AUTH0_LOG_EVENTS_TOKEN) ? cfg.getString(AUTH0_LOG_EVENTS_TOKEN) : null;
-
-        // app engine's port env var wins
-        int configFilePort = cfg.getInt(ConfigFile.PORT);
-
-        // GAE specifies port to use via environment variable
-        String appEnginePort = System.getenv(PORT);
-
-        String preferredSourceIPHeader = null;
-        if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
-            preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
-        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         TransactionWrapper.init(
@@ -305,20 +290,7 @@ public class DataDonationPlatform {
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
-
-        if (appEnginePort != null) {
-            port(Integer.parseInt(appEnginePort));
-        } else {
-            port(configFilePort);
-        }
-        threadPool(-1, -1, requestThreadTimeout);
-        JettyConfig.setupJetty(preferredSourceIPHeader);
-
-        // The first route mapping call will also initialize the Spark server. Make that first call
-        // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
-        // only once server has fully booted.
-        registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);;
 
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
@@ -605,7 +577,6 @@ public class DataDonationPlatform {
 
         awaitInitialization();
         startRedisPingThread();
-
         log.info("ddp startup complete");
     }
 
@@ -623,36 +594,6 @@ public class DataDonationPlatform {
         } catch (Exception e) {
             log.error("Redis connection validator thread has failed", e);
         }
-    }
-
-    private static void registerAppEngineCallbacks(long bootWaitSecs) {
-        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            log.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
-            long startedMillis = Instant.now().toEpochMilli();
-
-            var status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
-            var waitForBoot = new Thread(() -> {
-                synchronized (isReady) {
-                    if (isReady.get()) {
-                        status.set(HttpStatus.SC_OK);
-                    }
-                }
-            });
-            waitForBoot.start();
-            waitForBoot.join(bootWaitSecs * 1000);
-
-            long elapsed = Instant.now().toEpochMilli() - startedMillis;
-            log.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
-            response.status(status.get());
-            return "";
-        });
-
-        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            log.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
-
-            response.status(HttpStatus.SC_OK);
-            return "";
-        });
     }
 
     private static void setupApiActivityFilter() {
