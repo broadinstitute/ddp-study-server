@@ -76,6 +76,7 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
         assertNotNull(deleteResult);
         // verify that the soft delete happened by checking that there's a deletion time and a deleted by user id
         long secondsSinceDeletion = Duration.between(Instant.ofEpochSecond(deleteResult.getDeletedAt()), Instant.now()).getSeconds();
+        // verify that the delete happened recently
         Assert.assertTrue(secondsSinceDeletion < 30);
         Assert.assertEquals(testParticipant.getRequiredParticipantId(), deleteResult.getDeletedByUserId().intValue());
         TransactionWrapper.useTxn(handle -> {
