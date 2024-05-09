@@ -126,7 +126,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
             + "LEFT JOIN ddp_instance as ddp ON (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "WHERE p.ddp_participant_id = ? AND ddp.instance_name= ?)";
 
-    private static final String HARD_DELETE_SOMATIC_DOCUMENT = "delete from somatic_documents where id = ?";
+    private static final String SQL_HARD_DELETE_SOMATIC_DOCUMENT = "delete from somatic_documents where id = ?";
 
     public SomaticResultUpload() {}
 
@@ -325,7 +325,7 @@ public class SomaticResultUpload implements HasDdpInstanceId {
      */
     @VisibleForTesting
     public static void hardDeleteSomaticDocumentById(Handle handle, long id) {
-        try (PreparedStatement stmt = handle.getConnection().prepareStatement(HARD_DELETE_SOMATIC_DOCUMENT)) {
+        try (PreparedStatement stmt = handle.getConnection().prepareStatement(SQL_HARD_DELETE_SOMATIC_DOCUMENT)) {
             stmt.setLong(1, id);
             int rowsDeleted = stmt.executeUpdate();
             if (rowsDeleted != 1) {

@@ -25,6 +25,7 @@ import java.time.Instant;
 public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
 
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+    // the instance name must be included in the somatic.realmToBucketMappings section of the conf file
     private static final String instanceName = "somatic-upload-test";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
@@ -36,6 +37,8 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
         ddpInstanceDto = DdpInstanceGroupTestUtil.createTestDdpInstance(instanceName, esIndex, instanceName);
         Config loadedConfig = ConfigManager.getInstance().getConfig();
         somaticResultUploadSerivce = SomaticResultUploadService.fromConfig(loadedConfig);
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("somaticupload");
+        testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
     }
 
     @AfterClass
@@ -61,8 +64,6 @@ public class SomaticResultUploadServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testDelete() {
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("somaticupload");
-        testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         SomaticResultMetaData uploadData = new SomaticResultMetaData("testFile.pdf", "application/pdf", 1L);
         SomaticResultUploadService.AuthorizeResult uploadAuth = somaticResultUploadSerivce.authorizeUpload(
                 instanceName, Integer.toString(testParticipant.getRequiredParticipantId()),
