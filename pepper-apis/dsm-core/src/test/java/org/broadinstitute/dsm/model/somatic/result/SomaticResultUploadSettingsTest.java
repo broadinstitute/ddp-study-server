@@ -35,7 +35,7 @@ public class SomaticResultUploadSettingsTest {
     public void test_defaultLoadedSettingsObject() {
         validateSettings(loadedConfigSettings,
                 1000 * 1000 * 30L,
-                1,
+                2,
                 "application/pdf",
                 "pdf",
                 1
@@ -46,16 +46,16 @@ public class SomaticResultUploadSettingsTest {
     public void test_modifiedConfigSettingsObject() {
         ConfigManager loadedConfig = ConfigManager.getInstance();
         loadedConfig.overrideValue("somatic.maxFileSize", "60");
-        loadedConfig.overrideValue("somatic.mediaTypes", "application/foo,application/json");
-        loadedConfig.overrideValue("somatic.allowedFileExtensions", "foo,json");
+        loadedConfig.overrideValue("somatic.mediaTypes", "application/foo,application/json,application/pdf");
+        loadedConfig.overrideValue("somatic.allowedFileExtensions", "foo,json,pdf");
         Config modifiedConfig = loadedConfig.getConfig();
         SomaticResultUploadSettings uploadSettings = new SomaticResultUploadSettings(modifiedConfig);
         validateSettings(uploadSettings,
                 60L,
-                2,
+                3,
                 "application/foo",
                 "foo",
-                2
+                3
         );
     }
 
