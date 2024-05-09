@@ -35,7 +35,7 @@ public class SomaticResultUploadSettingsTest {
     public void test_defaultLoadedSettingsObject() {
         validateSettings(loadedConfigSettings,
                 1000 * 1000 * 30L,
-                2,
+                1,
                 "application/pdf",
                 "pdf",
                 1
