@@ -103,7 +103,7 @@ public class SomaticResultUploadService {
         if (!somaticUploadSettings.getMimeTypes().contains(somaticResultMetaData.getMimeType())) {
             log.info("File " + somaticResultMetaData.getFileName() + " has unsupported mime type "
                     + somaticResultMetaData.getMimeType() + ".  Supported mime types are "
-                    + StringUtils.join(somaticUploadSettings.getMaxFileSize(), ","));
+                    + StringUtils.join(somaticUploadSettings.getMimeTypes(), ","));
             return new AuthorizeResult(AuthorizeResultType.MIME_TYPE_NOT_ALLOWED, null, null, somaticUploadSettings);
         }
         if (!fileValidator.isValidFileName("Validating file name",
