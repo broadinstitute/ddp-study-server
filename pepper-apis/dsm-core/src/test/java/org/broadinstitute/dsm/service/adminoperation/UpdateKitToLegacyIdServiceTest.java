@@ -70,6 +70,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
         createdKits.forEach(dsmKitRequestId -> testKitUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
         testKitUtil.deleteGeneratedData();
+        ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.deleteIndex(esIndex);
     }
 
@@ -165,7 +166,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     public void testVerify_notVerifyDuplicateCollaboratorSampleID() {
         String collaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
         String dsmKitRequestId = testKitUtil.createKitRequestShipping(ddpParticipantId, collaboratorSampleId,
-                oldCollaboratorParticipantId, null,  "NEW_DDP_KIT", "SALIVA", ddpInstance, "100");
+                newCollaboratorParticipantId, null,  "NEW_DUP_DDP_KIT", "SALIVA", ddpInstance, "100");
         createdKits.add(dsmKitRequestId);
         LegacyKitResampleRequest duplicateSampleIdRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
                 collaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
@@ -203,10 +204,17 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
         Map<String, Object> participantDsm = ElasticSearchService.getDsmForSingleParticipant(ddpInstance.getName(),
                 ddpInstance.getParticipantIndexES(), legacyKitResampleRequest.getShortId());
         List<Map<String, Object>> kitRequests = (List<Map<String, Object>>) participantDsm.get("kitRequestShipping");
-        Assert.assertEquals(1, kitRequests.size());
-        Assert.assertEquals(newCollaboratorSampleId, kitRequests.get(0).get("bspCollaboratorSampleId"));
-        Assert.assertEquals(newCollaboratorParticipantId, kitRequests.get(0).get("bspCollaboratorParticipantId"));
-        Assert.assertEquals(legacyParticipantPair.getRight(), kitRequests.get(0).get("ddpParticipantId"));
+        kitRequests.stream().filter(kitRequest -> kitRequest.get("bspCollaboratorSampleId").equals(oldCollaboratorSampleId))
+                .findFirst().ifPresent(kitRequest -> Assert.fail("Old collaborator sample id should not be present"));
+        kitRequests.stream().filter(kitRequest -> kitRequest.get("bspCollaboratorParticipantId")
+                        .equals(oldCollaboratorParticipantId)).findAny()
+                .ifPresent(kitRequest -> Assert.fail("Old collaborator participant id should not be present"));
+        Assert.assertTrue(kitRequests.stream().anyMatch(kitRequest -> kitRequest.get("bspCollaboratorSampleId")
+                .equals(newCollaboratorSampleId)));
+        Assert.assertTrue(kitRequests.stream().anyMatch(kitRequest -> kitRequest.get("bspCollaboratorParticipantId")
+                .equals(newCollaboratorParticipantId)));
+        Assert.assertTrue(kitRequests.stream().anyMatch(kitRequest -> kitRequest.getOrDefault("ddpParticipantId", "")
+                .equals(legacyParticipantPair.getRight())));
     }
 
 }
