@@ -6,7 +6,6 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
@@ -23,7 +22,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  */
 public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService {
     private static DDPInstanceDto ddpInstanceDto;
-    private LegacyKitResampleList legacyKitResampleList;
+    private LegacyKitUpdateCollabIdList legacyKitUpdateCollabIdList;
     private static KitRequestDao kitRequestDao = new KitRequestDao();
     private DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static ElasticSearchService elasticSearchService = new ElasticSearchService();
@@ -47,9 +46,9 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         }
 
         // get and verify content of payload
-        legacyKitResampleList = LegacyKitResampleList.fromJson(payload);
-        legacyKitResampleList.getResampleRequestList().forEach(legacyKitResampleRequest -> legacyKitResampleRequest.verify(ddpInstanceDto,
-                kitRequestDao));
+        legacyKitUpdateCollabIdList = LegacyKitUpdateCollabIdList.fromJson(payload);
+        legacyKitUpdateCollabIdList.getUpdateCollabIdRequests().forEach(legacyKitUpdateCollabIdRequest ->
+                legacyKitUpdateCollabIdRequest.verify(ddpInstanceDto, kitRequestDao));
     }
 
     /**
@@ -61,8 +60,8 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
     public void run(int operationId) {
         List<UpdateLog> updateLog = new ArrayList<>();
 
-        legacyKitResampleList.getResampleRequestList().forEach(legacyKitResampleRequest ->
-                updateLog.add(changeKitIdsToLegacyIds(legacyKitResampleRequest)));
+        legacyKitUpdateCollabIdList.getUpdateCollabIdRequests().forEach(legacyKitUpdateCollabIdRequest ->
+                updateLog.add(changeKitIdsToLegacyIds(legacyKitUpdateCollabIdRequest)));
 
         // update job log record
         try {
@@ -73,21 +72,21 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         }
     }
 
-    protected static UpdateLog changeKitIdsToLegacyIds(LegacyKitResampleRequest legacyKitResampleRequest) {
+    protected static UpdateLog changeKitIdsToLegacyIds(LegacyKitUpdateCollabIdRequest legacyKitUpdateCollabIdRequest) {
         try {
             Map<String, Object> participantProfile = ElasticSearchService.getParticipantProfileByShortID(
-                    DDPInstance.from(ddpInstanceDto), legacyKitResampleRequest.getShortId());
+                    ddpInstanceDto.getInstanceName(), ddpInstanceDto.getEsParticipantIndex(), legacyKitUpdateCollabIdRequest.getShortId());
             String ddpParticipantId = participantProfile.get("guid").toString();
             String legacyParticipantId = participantProfile.get("legacyAltPid").toString();
-            kitRequestDao.updateKitToLegacyIds(legacyKitResampleRequest, legacyParticipantId);
-            changeDataInEs(legacyKitResampleRequest.getCurrentCollaboratorSampleId(), legacyKitResampleRequest.getNewCollaboratorSampleId(),
-                     ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+            kitRequestDao.updateKitToLegacyIds(legacyKitUpdateCollabIdRequest, legacyParticipantId);
+            changeDataInEs(legacyKitUpdateCollabIdRequest.getCurrentCollaboratorSampleId(),
+                    legacyKitUpdateCollabIdRequest.getNewCollaboratorSampleId(), ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
             return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
-                    "Kit collab id was changed from %s to %s".formatted(legacyKitResampleRequest.getCurrentCollaboratorSampleId(),
-                            legacyKitResampleRequest.getNewCollaboratorSampleId()));
+                    "Kit collab id was changed from %s to %s".formatted(legacyKitUpdateCollabIdRequest.getCurrentCollaboratorSampleId(),
+                            legacyKitUpdateCollabIdRequest.getNewCollaboratorSampleId()));
         } catch (Exception e) {
-            return new UpdateLog(legacyKitResampleRequest.getShortId(), UpdateLog.UpdateStatus.ERROR,
-                    "Error updating kit: " + legacyKitResampleRequest.currentCollaboratorSampleId + e.toString());
+            return new UpdateLog(legacyKitUpdateCollabIdRequest.getShortId(), UpdateLog.UpdateStatus.ERROR,
+                    "Error updating kit: " + legacyKitUpdateCollabIdRequest.currentCollaboratorSampleId + e.toString());
         }
     }
 

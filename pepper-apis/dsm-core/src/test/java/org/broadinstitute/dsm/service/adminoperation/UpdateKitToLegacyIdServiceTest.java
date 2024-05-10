@@ -25,7 +25,7 @@ import org.junit.Test;
 
 @Slf4j
 public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
-    private static final String instanceName = "kit_resample_service";
+    private static final String instanceName = "kit_update_collab_id";
     private static final String shortId = "PT_SHORT";
     private static final String legacyShortId = "LEGACY_SHORT";
     private static String esIndex;
@@ -40,27 +40,23 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
 
     private static final String oldCollaboratorSampleId = "OLD_SAMPLE_ID";
     private static final String oldCollaboratorParticipantId = "OLD_PARTICIPANT_ID";
-    private static final String ddpKitRequestId = "RESAMPLE_KIT_REQUEST_ID";
+    private static final String ddpKitRequestId = "Update_Collab_KIT_REQUEST_ID";
     private static List<ParticipantDto> participants = new ArrayList<>();
     private static List<String> createdKits = new ArrayList<>();
 
     private static UpdateKitToLegacyIdService updateKitToLegacyIdService = new UpdateKitToLegacyIdService();
-    private static DDPInstance ddpInstance;
 
     @BeforeClass
     public static void doFirst() {
-        testKitUtil = new TestKitUtil(instanceName, instanceName, "resample", instanceName, "SALIVA", null);
-        testKitUtil.setupInstanceAndSettings();
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
+        testKitUtil = new TestKitUtil(instanceName, instanceName, "UpdateCollab", instanceName, "SALIVA", null, esIndex);
+        testKitUtil.setupInstanceAndSettings();
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
-        ddpInstanceDto.setEsParticipantIndex(esIndex);
-        ddpInstanceDao.updateEsParticipantIndex(ddpInstanceDto.getDdpInstanceId(), esIndex);
         legacyParticipantPair = TestParticipantUtil.createLegacyParticipant(ddpParticipantId, participantCounter++, ddpInstanceDto,
                 shortId, legacyShortId);
         participants.add(legacyParticipantPair.getLeft());
-        ddpInstance = DDPInstance.from(ddpInstanceDto);
         String dsmKitRequestId = testKitUtil.createKitRequestShipping(ddpParticipantId, oldCollaboratorSampleId,
-                oldCollaboratorParticipantId, null,  ddpKitRequestId, "SALIVA", ddpInstance, "100");
+                oldCollaboratorParticipantId, null,  ddpKitRequestId, "SALIVA", DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
     }
 
@@ -76,10 +72,10 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testVerify_notVerifyMissingOldCollaboratorSampleId() {
-        LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(null,
+        LegacyKitUpdateCollabIdRequest wrongKitUpdateCollabRequest = new LegacyKitUpdateCollabIdRequest(null,
                 newCollaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
         try {
-            wrongKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            wrongKitUpdateCollabRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.assertEquals("Missing required field: currentCollaboratorSampleId", e.getMessage());
@@ -90,10 +86,10 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testVerify_notVerifyMissingNewCollaboratorSampleId() {
-        LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
+        LegacyKitUpdateCollabIdRequest wrongKitUpdateCollabRequest = new LegacyKitUpdateCollabIdRequest(oldCollaboratorSampleId,
                 null, newCollaboratorParticipantId, shortId, legacyShortId);
         try {
-            wrongKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            wrongKitUpdateCollabRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.assertEquals("Missing required field: newCollaboratorSampleId", e.getMessage());
@@ -104,10 +100,10 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testVerify_notVerifyMissingShortId() {
-        LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
+        LegacyKitUpdateCollabIdRequest wrongKitUpdateCollabRequest = new LegacyKitUpdateCollabIdRequest(oldCollaboratorSampleId,
                 newCollaboratorSampleId, newCollaboratorParticipantId, null, legacyShortId);
         try {
-            wrongKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            wrongKitUpdateCollabRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.assertEquals("Missing required field: shortId", e.getMessage());
@@ -118,10 +114,10 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testVerify_notVerifyMissingNewCollaboratorParticipantId() {
-        LegacyKitResampleRequest wrongKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
+        LegacyKitUpdateCollabIdRequest wrongKitUpdateCollabRequest = new LegacyKitUpdateCollabIdRequest(oldCollaboratorSampleId,
                 newCollaboratorSampleId, null, shortId, legacyShortId);
         try {
-            wrongKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            wrongKitUpdateCollabRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.assertEquals("Missing required field: newCollaboratorParticipantId", e.getMessage());
@@ -133,10 +129,10 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     @Test
     public void testVerify_notVerifyWrongShortId() {
         String wrongShortId = "WRONG_SHORT_ID";
-        LegacyKitResampleRequest wrongParticipantLegacyKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
-                newCollaboratorSampleId, newCollaboratorParticipantId, wrongShortId, legacyShortId);
+        LegacyKitUpdateCollabIdRequest wrongParticipantLegacyKitUpdateCollabIdRequest = new LegacyKitUpdateCollabIdRequest(
+                oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, wrongShortId, legacyShortId);
         try {
-            wrongParticipantLegacyKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            wrongParticipantLegacyKitUpdateCollabIdRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.assertEquals("Invalid participant short ID %s".formatted(wrongShortId), e.getMessage());
@@ -147,15 +143,15 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     @Test
     public void testVerify_notVerifyWrongLegacyShortId() {
         String wrongLegacyShortId = "WRONG_LEGACY_SHORT_ID";
-        LegacyKitResampleRequest wrongLegacyIdLegacyKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
-                newCollaboratorSampleId, newCollaboratorParticipantId, shortId, wrongLegacyShortId);
+        LegacyKitUpdateCollabIdRequest wrongLegacyIdLegacyKitUpdateCollabIdRequest = new LegacyKitUpdateCollabIdRequest(
+                oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, shortId, wrongLegacyShortId);
 
         try {
-            wrongLegacyIdLegacyKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            wrongLegacyIdLegacyKitUpdateCollabIdRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e2) {
             e2.printStackTrace();
             Assert.assertEquals(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
-                    + " will not resample kit %s")
+                    + " will not update kit %s")
                     .formatted(wrongLegacyShortId, legacyShortId, shortId, oldCollaboratorSampleId), e2.getMessage());
             return;
         }
@@ -166,9 +162,9 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     public void testVerify_notVerifyDuplicateCollaboratorSampleID() {
         String collaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
         String dsmKitRequestId = testKitUtil.createKitRequestShipping(ddpParticipantId, collaboratorSampleId,
-                newCollaboratorParticipantId, null,  "NEW_DUP_DDP_KIT", "SALIVA", ddpInstance, "100");
+                newCollaboratorParticipantId, null,  "NEW_DUP_DDP_KIT", "SALIVA", DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
-        LegacyKitResampleRequest duplicateSampleIdRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId,
+        LegacyKitUpdateCollabIdRequest duplicateSampleIdRequest = new LegacyKitUpdateCollabIdRequest(oldCollaboratorSampleId,
                 collaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
         try {
             duplicateSampleIdRequest.verify(ddpInstanceDto, new KitRequestDao());
@@ -182,27 +178,28 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testVerifyAndResample() {
-        LegacyKitResampleRequest legacyKitResampleRequest = new LegacyKitResampleRequest(oldCollaboratorSampleId, newCollaboratorSampleId,
+    public void testVerifyAndUpdateCollab() {
+        LegacyKitUpdateCollabIdRequest
+                legacyKitUpdateCollabIdRequest = new LegacyKitUpdateCollabIdRequest(oldCollaboratorSampleId, newCollaboratorSampleId,
                 newCollaboratorParticipantId, shortId, legacyShortId);
         try {
-            legacyKitResampleRequest.verify(ddpInstanceDto, new KitRequestDao());
+            legacyKitUpdateCollabIdRequest.verify(ddpInstanceDto, new KitRequestDao());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Should not have thrown exception");
         }
-        LegacyKitResampleList legacyKitResampleList = new LegacyKitResampleList(List.of(legacyKitResampleRequest));
-        String reqJson = new Gson().toJson(legacyKitResampleList);
+        LegacyKitUpdateCollabIdList legacyKitUpdateCollabIdList = new LegacyKitUpdateCollabIdList(List.of(legacyKitUpdateCollabIdRequest));
+        String reqJson = new Gson().toJson(legacyKitUpdateCollabIdList);
         updateKitToLegacyIdService.initialize("test_user", instanceName, null, reqJson);
-        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(legacyKitResampleRequest);
+        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(legacyKitUpdateCollabIdRequest);
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
 
         KitRequestShipping kitRequestShipping = KitRequestShipping.getKitRequest(Integer.parseInt(createdKits.get(0)));
         Assert.assertEquals(newCollaboratorSampleId, kitRequestShipping.getBspCollaboratorSampleId());
         Assert.assertEquals(newCollaboratorParticipantId, kitRequestShipping.getBspCollaboratorParticipantId());
         Assert.assertEquals(legacyParticipantPair.getRight(), kitRequestShipping.getDdpParticipantId());
-        Map<String, Object> participantDsm = ElasticSearchService.getDsmForSingleParticipant(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), legacyKitResampleRequest.getShortId());
+        Map<String, Object> participantDsm = ElasticSearchService.getDsmForSingleParticipant(instanceName,
+                esIndex, legacyKitUpdateCollabIdRequest.getShortId());
         List<Map<String, Object>> kitRequests = (List<Map<String, Object>>) participantDsm.get("kitRequestShipping");
         kitRequests.stream().filter(kitRequest -> kitRequest.get("bspCollaboratorSampleId").equals(oldCollaboratorSampleId))
                 .findFirst().ifPresent(kitRequest -> Assert.fail("Old collaborator sample id should not be present"));

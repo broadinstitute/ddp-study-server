@@ -408,13 +408,14 @@ public class ElasticSearchService {
     /**
      * Get the participant profile for a single participant from ES as a Map
      * or throw an exception if the participant or profile is not found
-     * @param ddpInstance the DDP instance
+     * @param instanceName the instance name
+     * @param participantEsIndex the the index of participant in ES
      * @param shortId the shortId of the participant
      * @return the participant profile as a Map&lt;String, Object&gt;
      */
-    public static Map<String, Object> getParticipantProfileByShortID(DDPInstance ddpInstance, String shortId) {
-        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), shortId);
+    public static Map<String, Object> getParticipantProfileByShortID(String instanceName, String participantEsIndex, String shortId) {
+        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(instanceName,
+                participantEsIndex, shortId);
         if (esParticipantData.size() != 1) {
             throw new DSMBadRequestException("Invalid participant short ID " + shortId);
         }

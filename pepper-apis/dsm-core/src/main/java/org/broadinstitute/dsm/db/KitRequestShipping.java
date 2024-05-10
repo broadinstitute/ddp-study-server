@@ -468,7 +468,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequestShipping;
     }
 
-    public static KitRequestShipping getKitRequestShippingForResample(@NonNull ResultSet rs) throws SQLException {
+    /**
+     * This method is used to get the KitRequestShipping from the result set, and only extracts values in the
+     * ddp_kit and ddp_kit_request tables.
+     * */
+    public static KitRequestShipping getKitRequestShippingFromResultSet(@NonNull ResultSet rs) throws SQLException {
         KitRequestShipping kitRequestShipping = KitRequestShipping.builder()
                 .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
                 .withBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))

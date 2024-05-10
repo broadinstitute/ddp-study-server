@@ -11,16 +11,16 @@ import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 /**
- * Request to resample a kit for a participant with a legacy short ID
+ * Request to resample or rename a kit for a participant with a legacy short ID
  * The request is for resampling a kit from Pepper Guid and Hruid to their old legacy ids
  */
-public class LegacyKitResampleRequest {
+public class LegacyKitUpdateCollabIdRequest {
     String currentCollaboratorSampleId;
     String newCollaboratorSampleId;
     String newCollaboratorParticipantId;
@@ -43,20 +43,13 @@ public class LegacyKitResampleRequest {
             throw new DsmInternalError("DDP instance not found");
         }
         checkNotEmptyRequestFields();
-        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstanceDto.getInstanceName(),
+        Map<String, Object> profile = ElasticSearchService.getParticipantProfileByShortID(ddpInstanceDto.getInstanceName(),
                 ddpInstanceDto.getEsParticipantIndex(), shortId);
-        if (esParticipantData.size() != 1) {
-            throw new DSMBadRequestException("Invalid participant short ID " + shortId);
-        }
-        Map<String, Object> ptp = esParticipantData.values().stream().findFirst().orElseThrow();
-        Map<String, Object> profile = (Map<String, Object>) ptp.get("profile");
-        if (profile == null) {
-            throw new DSMBadRequestException("No profile found for participant short ID " + shortId);
-        }
-        String legacyShortIdOnFile = profile.get("legacyShortId").toString();
+        // Check if the participant exists in ES and if it has a legacy short ID
+        String legacyShortIdOnFile = profile.getOrDefault("legacyShortId", "").toString();
         if (!legacyShortId.equals(legacyShortIdOnFile)) {
             throw new DSMBadRequestException(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
-                    + " will not resample kit %s").formatted(legacyShortId, legacyShortIdOnFile, shortId, currentCollaboratorSampleId));
+                    + " will not update kit %s").formatted(legacyShortId, legacyShortIdOnFile, shortId, currentCollaboratorSampleId));
         }
         if (!existsKitRequestWithCollaboratorSampleId(currentCollaboratorSampleId, (String) profile.get("guid"), kitRequestDao)) {
             throw new DSMBadRequestException("Kit request not found for collaborator sample ID %s".formatted(currentCollaboratorSampleId));

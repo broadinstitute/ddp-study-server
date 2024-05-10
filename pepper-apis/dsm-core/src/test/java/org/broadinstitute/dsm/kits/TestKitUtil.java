@@ -99,6 +99,7 @@ public class TestKitUtil {
     private String kitTypeName;
     private String studyGuid;
     private String collaboratorPrefix;
+    private String esIndex;
     private String userWithKitShippingAccess;
     @Getter
     @Mock
@@ -116,13 +117,14 @@ public class TestKitUtil {
     private KitDao kitDao = new KitDao();
 
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                                  String kitTypeName, String kitTypeDisplayName) {
+                                  String kitTypeName, String kitTypeDisplayName, String esIndex) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.collaboratorPrefix = collaboratorPrefix;
         this.groupName = groupName;
         this.kitTypeName = kitTypeName;
         this.kitTypeDisplayName = kitTypeDisplayName;
+        this.esIndex = esIndex;
     }
 
     public void deleteGeneratedData() {
@@ -231,7 +233,7 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, esIndex);
                 ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = adminUtil.getStudyGroupId();
                 instanceRoleId = getInstanceRole(conn);
