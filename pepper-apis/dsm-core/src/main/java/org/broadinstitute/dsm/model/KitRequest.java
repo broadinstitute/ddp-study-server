@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model;
 
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
@@ -14,6 +15,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
         alias = DBConstants.DDP_KIT_REQUEST_ALIAS,
         primaryKey = "",
         columnPrefix = "")
+@SuperBuilder(setterPrefix = "with", toBuilder = true)
 public class KitRequest {
 
     @ColumnName(DBConstants.DSM_KIT_REQUEST_ID)

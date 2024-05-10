@@ -34,8 +34,23 @@ public class TestParticipantUtil {
     /**
      * Create a participant with provided ES profile
      */
-    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
+    public static ParticipantDto createParticipantWithEsProfile(Profile profile,
                                                                 DDPInstanceDto ddpInstanceDto, String ddpParticipantId) {
+        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+
+        String esIndex = ddpInstanceDto.getEsParticipantIndex();
+        ElasticTestUtil.createParticipant(esIndex, participant);
+        profile.setGuid(ddpParticipantId);
+        ElasticTestUtil.addParticipantProfile(esIndex, profile);
+        return participant;
+    }
+
+    /**
+     * Create a participant with provided ES profile
+     */
+    public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
+                                                                DDPInstanceDto ddpInstanceDto) {
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
         ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
 
         String esIndex = ddpInstanceDto.getEsParticipantIndex();
@@ -88,19 +103,42 @@ public class TestParticipantUtil {
      * @return a pair of the participant DTO and the legacy PID
      */
     public static Pair<ParticipantDto, String> createLegacyParticipant(String baseName, int participantOrdinal,
-                                                                        DDPInstanceDto ddpInstanceDto, String shortId,
-                                                                       String participantBaseName, String legacyShortId) {
+                                                                        DDPInstanceDto ddpInstanceDto) {
         String ptpBase = String.format("%s_%d", baseName, participantOrdinal);
         Profile profile = TestParticipantUtil.createProfile("Joe", "Participant%d".formatted(participantOrdinal),
                 participantOrdinal);
         String legacyPid = "PID_%s_%d".formatted(baseName, participantOrdinal);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
+        profile.setLegacyAltPid(legacyPid);
+        ParticipantDto participant =
+                TestParticipantUtil.createParticipantWithEsProfile(ptpBase, profile, ddpInstanceDto);
+        return new ImmutablePair<>(participant, legacyPid);
+    }
+
+    /**
+     * Create a participant with a legacy PID profile in ES, and sets the shortId and legacyShortId to the provided values,
+     * Also the ddoParticipantId is set to a generated value based on the guidBaseName
+     *
+     * @param baseName base name for the legacy PID and DDP participant ID
+     *  @param participantOrdinal ordinal for the participant ID and legacy PID
+     * @param ddpInstanceDto DDP instance DTO
+     * @param shortId short ID for the participant
+     * @param legacyShortId legacy short ID for the participant
+     *
+     * @return a pair of the participant DTO and the legacy PID
+     */
+    public static Pair<ParticipantDto, String> createLegacyParticipant(String baseName, int participantOrdinal,
+                                                                       DDPInstanceDto ddpInstanceDto, String shortId,
+                                                                       String legacyShortId) {
+        Profile profile = TestParticipantUtil.createProfile("Joe", "Participant%d".formatted(participantOrdinal),
+                participantOrdinal);
+        String legacyPid = "PID_%s_%d".formatted(baseName, participantOrdinal);
+        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
         profile.setLegacyAltPid(legacyPid);
         profile.setHruid(shortId);
         profile.setGuid(ddpParticipantId);
         profile.setLegacyShortId(legacyShortId);
         ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(ptpBase, profile, ddpInstanceDto, ddpParticipantId);
+                TestParticipantUtil.createParticipantWithEsProfile(profile, ddpInstanceDto, ddpParticipantId);
         return new ImmutablePair<>(participant, legacyPid);
     }
 

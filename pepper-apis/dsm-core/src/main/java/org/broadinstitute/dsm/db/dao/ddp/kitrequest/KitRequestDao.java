@@ -110,8 +110,11 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_LABEL)) {
                 stmt.setLong(1, dsmKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
+                    if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.KIT_LABEL);
+                    } else {
+                        dbVals.resultValue = null;
+                        dbVals.resultException = new DsmInternalError("No kit found for dsm_kit_request_id " + dsmKitRequestId);
                     }
                 }
             } catch (SQLException ex) {
@@ -123,21 +126,21 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Couldn't get kit label for kit " + dsmKitRequestId, results.resultException);
         }
-        String kitLabel = String.valueOf(results.resultValue);
-        log.info("Got " + kitLabel + " sequencing kit label in DSM DB for " + dsmKitRequestId);
-        return kitLabel;
+        return (String) results.resultValue;
     }
 
     /**
-     * Resamples a kit for a participant with a legacy short ID. The request is for resampling a kit from Pepper Guid and Hruid to their
-     * older legacy ids.
-     * The method updates the DSM database with the new collaborator sample id, collaborator participant id and also changes
+     * This method works as "re-patient" or "re-sample" a kit as described by gp terms
+     * which is that for a participant that had kits with legacy ids, dsm changes their new kits with pepper ids to the legacy ids as well.
+     * By running this method DSM also changes the ddpParticipantId to the legacy participant id to match the older kits.
+     * </p><p>
+     * The method updates the DSM database with the legacy collaborator sample id, collaborator participant id and also changes
      * the ddp participant id to the legacy participant id. It does not  update the ES document at this point.
-     *
+     *</p>
      * @param legacyKitResampleRequest request to resample a kit for a participant with a legacy short ID
      * @param legacyParticipantId legacy participant ID
      * */
-    public void resampleKit(LegacyKitResampleRequest legacyKitResampleRequest, String legacyParticipantId) {
+    public void updateKitToLegacyIds(LegacyKitResampleRequest legacyKitResampleRequest, String legacyParticipantId) {
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_RESAMPLE_KIT)) {
@@ -147,9 +150,9 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                 stmt.setString(4, legacyKitResampleRequest.getCurrentCollaboratorSampleId());
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows != 1) {
-                    dbVals.resultException = new DSMBadRequestException("Error resampling kit for sample id %s, was updating %d rows"
-                            .formatted(legacyKitResampleRequest.getCurrentCollaboratorSampleId(), affectedRows));
-                    conn.rollback();
+                    throw new DSMBadRequestException(
+                            "Error updating kit to legacy ids for kit with sample id %s, was updating %d rows".formatted(
+                                    legacyKitResampleRequest.getCurrentCollaboratorSampleId(), affectedRows));
                 }
             } catch (SQLException e) {
                 dbVals.resultException = e;
@@ -161,54 +164,11 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             throw new DsmInternalError("Error resampling kit for sample id " + legacyKitResampleRequest.getCurrentCollaboratorSampleId(),
                     results.resultException);
         }
-        log.info("Resampled kit for sample id %s to %s ".formatted(legacyKitResampleRequest.getCurrentCollaboratorSampleId(),
+        log.info("Updated kit for sample id %s to %s ".formatted(legacyKitResampleRequest.getCurrentCollaboratorSampleId(),
                 legacyKitResampleRequest.getNewCollaboratorSampleId()));
     }
 
-    /**
-     * Collaborator sample id is unique in DSM, so we can use it to find a kit request, and to verify if we can use a
-     * collaborator sample id to resample a kit. This method checks if a kit request with the given collaborator sample id
-     * already exists in DSM, and if it belongs to the given participant.
-     *
-     * @param collaboratorSampleId collaborator sample id to check
-     * @param ddpParticipantId participant id to check
-     * @return true if a kit request with the given collaborator sample id exists in DSM and belongs to the given participant
-     * */
-    public boolean existsKitRequestWithCollaboratorSampleId(String collaboratorSampleId, String ddpParticipantId) {
-        SimpleResult results = TransactionWrapper.inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID)) {
-                stmt.setString(1, collaboratorSampleId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        if (ddpParticipantId.equals(rs.getString(DBConstants.DDP_PARTICIPANT_ID))) {
-                            log.info("Kit request exists for collaborator sample id %s with dsm_kit_request_id %s "
-                                    .formatted(collaboratorSampleId, rs.getString(DBConstants.DSM_KIT_REQUEST_ID)));
-                            dbVals.resultValue = true;
-                            return dbVals;
-                        } else {
-                            dbVals.resultException = new DSMBadRequestException("ddpParticipantId %s does not belong to sample with id %s"
-                                    .formatted(ddpParticipantId, collaboratorSampleId));
-                            return dbVals;
-                        }
-                    }
-                    dbVals.resultValue = false;
-                    return dbVals;
-                }
-            } catch (SQLException e) {
-                dbVals.resultException = e;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError("Error checking if kit request exists for collaborator sample id "
-                    + collaboratorSampleId, results.resultException);
-        }
-        return (boolean) results.resultValue;
-    }
-
-    public KitRequestShipping getKitRequestWithCollaboratorSampleId(String collaboratorSampleId) {
+    public KitRequestShipping getKitRequestForCollaboratorSampleId(String collaboratorSampleId) {
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID)) {

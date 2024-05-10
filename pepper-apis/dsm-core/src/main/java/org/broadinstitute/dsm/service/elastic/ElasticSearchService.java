@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Dsm;
@@ -371,5 +372,57 @@ public class ElasticSearchService {
             throw new DsmInternalError("Error deleting ES participant document %s for index %s"
                     .formatted(docId, index), e);
         }
+    }
+
+    /**
+     * Get the DSM object for a single participant from ES as a Map
+     * or throw an exception if the participant or DSM object is not found
+     * @param realm the realm
+     * @param participantIndex the participant index
+     * @param shortId the shortId of the participant
+     * @return the DSM participant object
+     */
+    public static Map<String, Object> getDsmForSingleParticipant(String realm, String participantIndex, String shortId) {
+        Map<String, Map<String, Object>> ptpData;
+        try {
+            ptpData = ElasticSearchUtil.getSingleParticipantFromES(realm, participantIndex, shortId);
+        } catch (Exception e) {
+            throw new DsmInternalError("ES threw exception for search of shortId: " + shortId, e);
+        }
+
+        if (ptpData.size() > 1) {
+            String msg = String.format("ES returned %d results for participant shortId %s", ptpData.size(), shortId);
+            throw new DsmInternalError(msg);
+        }
+        if (ptpData.size() == 0) {
+            throw new DSMBadRequestException("Invalid participant ID " + shortId);
+        }
+        Map<String, Object> ptp = ptpData.values().stream().findFirst().orElseThrow();
+        Map<String, Object> dsm = (Map<String, Object>) ptp.get("dsm");
+        if (dsm == null || dsm.isEmpty()) {
+            throw new DsmInternalError("ES returned empty dsm object for shortId " + shortId);
+        }
+        return dsm;
+    }
+
+    /**
+     * Get the participant profile for a single participant from ES as a Map
+     * or throw an exception if the participant or profile is not found
+     * @param ddpInstance the DDP instance
+     * @param shortId the shortId of the participant
+     * @return the participant profile as a Map&lt;String, Object&gt;
+     */
+    public static Map<String, Object> getParticipantProfileByShortID(DDPInstance ddpInstance, String shortId) {
+        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
+                ddpInstance.getParticipantIndexES(), shortId);
+        if (esParticipantData.size() != 1) {
+            throw new DSMBadRequestException("Invalid participant short ID " + shortId);
+        }
+        Map<String, Object> ptp = esParticipantData.values().stream().findFirst().orElseThrow();
+        Map<String, Object> profile = (Map<String, Object>) ptp.get("profile");
+        if (profile == null) {
+            throw new DSMBadRequestException("No profile found for participant short ID " + shortId);
+        }
+        return profile;
     }
 }

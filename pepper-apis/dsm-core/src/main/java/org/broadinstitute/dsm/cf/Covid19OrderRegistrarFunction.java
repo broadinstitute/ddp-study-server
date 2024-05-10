@@ -30,7 +30,6 @@ import org.broadinstitute.dsm.db.DdpKit;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.client.RestHighLevelClient;
 
 public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19OrderRegistrarFunction.OrderPayload> {
 
@@ -64,12 +63,6 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
                 return;
             }
         }
-
-        String esUrl = cfg.getString(ApplicationConfigConstants.ES_URL);
-        String esUsername = cfg.getString(ApplicationConfigConstants.ES_USERNAME);
-        String esPassword = cfg.getString(ApplicationConfigConstants.ES_PASSWORD);
-        String esProxy = cfg.getString(ApplicationConfigConstants.ES_PROXY);
-        RestHighLevelClient esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUsername, esPassword, esProxy);
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 

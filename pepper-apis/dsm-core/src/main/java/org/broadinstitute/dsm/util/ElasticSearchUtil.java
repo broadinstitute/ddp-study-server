@@ -32,7 +32,6 @@ import org.apache.lucene.search.TotalHits;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
@@ -1758,65 +1757,5 @@ public class ElasticSearchUtil {
             return getDDPParticipantsFromES(instance.getDisplayName(), instance.getParticipantIndexES());
         }
         return null;
-    }
-
-    /**
-     * Get the DSM participant object for a single participant from ES as a Map
-     * @param realm the realm
-     * @param participantIndex the participant index
-     * @param shortId the shortId of the participant
-     * @return the DSM participant object
-     */
-    public static Map<String, Object> getDsmParticipantForSingleParticipantFromES(String realm, String participantIndex, String shortId) {
-        Map<String, Object> dsm = getDsmForSingleParticipantFromES(realm, participantIndex, shortId);
-        Map<String, Object> dsmParticipant = (Map<String, Object>) dsm.get("participant");
-        if (dsmParticipant == null || dsmParticipant.isEmpty()) {
-            throw new DsmInternalError("ES returned empty dsm.participant object for shortId " + shortId);
-        }
-        return dsmParticipant;
-    }
-
-    /**
-     * Get the DSM object for a single participant from ES as a Map
-     * @param realm the realm
-     * @param participantIndex the participant index
-     * @param shortId the shortId of the participant
-     * @return the DSM participant object
-     */
-    public static Map<String, Object> getDsmForSingleParticipantFromES(String realm, String participantIndex, String shortId) {
-        Map<String, Map<String, Object>> ptpData;
-        try {
-            ptpData = ElasticSearchUtil.getSingleParticipantFromES(realm, participantIndex, shortId);
-        } catch (Exception e) {
-            throw new DsmInternalError("ES threw exception for search of shortId: " + shortId, e);
-        }
-
-        if (ptpData.size() > 1) {
-            String msg = String.format("ES returned %d results for participant shortId %s", ptpData.size(), shortId);
-            throw new DsmInternalError(msg);
-        }
-        if (ptpData.size() == 0) {
-            throw new DSMBadRequestException("Invalid participant ID " + shortId);
-        }
-        Map<String, Object> ptp = ptpData.values().stream().findFirst().orElseThrow();
-        Map<String, Object> dsm = (Map<String, Object>) ptp.get("dsm");
-        if (dsm == null || dsm.isEmpty()) {
-            throw new DsmInternalError("ES returned empty dsm object for shortId " + shortId);
-        }
-        return dsm;
-    }
-
-    public static Map<String, Object> getParticipantProfileByShortID(DDPInstance ddpInstance, String shortId) {
-        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), shortId);
-        if (esParticipantData.size() != 1) {
-            throw new DSMBadRequestException("Invalid participant short ID " + shortId);
-        }
-        Map<String, Object> ptp = esParticipantData.values().stream().findFirst().orElseThrow();
-        Map<String, Object> profile = (Map<String, Object>) ptp.get("profile");
-        if (profile == null) {
-            throw new DSMBadRequestException("No profile found for participant short ID " + shortId);
-        }
-        return profile;
     }
 }

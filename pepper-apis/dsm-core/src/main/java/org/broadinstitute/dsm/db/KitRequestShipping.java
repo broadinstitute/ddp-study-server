@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -83,6 +84,7 @@ import org.slf4j.LoggerFactory;
         primaryKey = DBConstants.DSM_KIT_REQUEST_ID, columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@SuperBuilder(setterPrefix = "with", toBuilder = true)
 public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_KIT_REQUEST =
@@ -467,29 +469,37 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public static KitRequestShipping getKitRequestShippingForResample(@NonNull ResultSet rs) throws SQLException {
-        KitRequestShipping kitRequestShipping =
-                new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
-                        null, null, rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
-                        rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),
-                        rs.getString(DBConstants.DSM_TRACKING_TO), null, rs.getString(DBConstants.DSM_TRACKING_URL_TO),
-                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
-                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
-                        (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
-                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
-                        rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
-                        rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
-                        (Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
-                        rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), false,
-                        rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
-                        rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
-                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
-                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
-                        rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION),
-                        rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES),
-                        null, null, null);
-        kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
-        kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
+        KitRequestShipping kitRequestShipping = KitRequestShipping.builder()
+                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
+                .withBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
+                .withBspCollaboratorSampleId(rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
+                .withDdpLabel(rs.getString(DBConstants.DSM_LABEL))
+                .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID))
+                .withDsmKitId(rs.getLong(DBConstants.DSM_KIT_ID))
+                .withLabelUrlTo(rs.getString(DBConstants.DSM_LABEL_TO))
+                .withLabelUrlReturn(rs.getString(DBConstants.DSM_LABEL_RETURN))
+                .withTrackingId(rs.getString(DBConstants.DSM_TRACKING_TO))
+                .withTrackingReturnId(rs.getString(DBConstants.DSM_TRACKING_RETURN))
+                .withEasypostTrackingToUrl(rs.getString(DBConstants.DSM_TRACKING_URL_TO))
+                .withEasypostTrackingReturnUrl(rs.getString(DBConstants.DSM_TRACKING_URL_RETURN))
+                .withScanDate((Long) rs.getObject(DBConstants.DSM_SCAN_DATE))
+                .withError(rs.getBoolean(DBConstants.ERROR))
+                .withMessage(rs.getString(DBConstants.MESSAGE))
+                .withReceiveDate((Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE))
+                .withEasypostAddressId(rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO))
+                .withDeactivatedDate((Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE))
+                .withDeactivationReason(rs.getString(DBConstants.DEACTIVATION_REASON))
+                .withKitLabel(rs.getString(DBConstants.KIT_LABEL))
+                .withExpress(rs.getBoolean(DBConstants.EXPRESS))
+                .withEasypostToId(rs.getString(DBConstants.EASYPOST_TO_ID))
+                .withLabelDate((Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE))
+                .withEasypostShipmentStatus(rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS))
+                .withExternalOrderNumber(rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER))
+                .withExternalOrderStatus(rs.getString(DBConstants.EXTERNAL_ORDER_STATUS))
+                .withCreatedBy(rs.getString(DBConstants.CREATED_BY))
+                .withReceivedBy(rs.getString(DBConstants.DSM_RECEIVE_BY))
+                .withSampleNotes(rs.getString(DBConstants.SAMPLE_NOTES))
+                .withDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID)).build();
         return kitRequestShipping;
     }
 

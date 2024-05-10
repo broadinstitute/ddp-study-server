@@ -11,9 +11,8 @@ import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.juniperkits.TestKitUtil;
+import org.broadinstitute.dsm.kits.TestKitUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
-
 import org.broadinstitute.dsm.util.MercuryOrderTestUtil;
 import org.broadinstitute.dsm.util.SampleIdTestUtil;
 import org.broadinstitute.dsm.util.TissueTestUtil;

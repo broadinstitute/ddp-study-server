@@ -3,33 +3,30 @@ package org.broadinstitute.dsm.service.adminoperation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.exception.ESMissingParticipantDataException;
 import org.broadinstitute.dsm.model.elastic.Dsm;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 @Slf4j
-@Data
 /**
- * Admin Operation to resample kits for participants to their legacy short IDs
+ * Admin Operation to change kits collaborator ids and ddpParticipantI to participant's legacy IDs
  */
-public class LegacyKitResampleService extends ParticipantAdminOperationService {
-    private DDPInstance ddpInstance;
+public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService {
+    private static DDPInstanceDto ddpInstanceDto;
     private LegacyKitResampleList legacyKitResampleList;
-    private KitRequestDao kitRequestDao = new KitRequestDao();
-    private ElasticSearchService elasticSearchService = new ElasticSearchService();
+    private static KitRequestDao kitRequestDao = new KitRequestDao();
+    private DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+    private static ElasticSearchService elasticSearchService = new ElasticSearchService();
 
     /**
      * Validate input and initialize operation, synchronously
@@ -42,7 +39,8 @@ public class LegacyKitResampleService extends ParticipantAdminOperationService {
      */
     @Override
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
-        ddpInstance = DDPInstance.getDDPInstance(realm);
+        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(realm)
+                .orElseThrow(() -> new DSMBadRequestException("Invalid realm: " + realm));
 
         if (StringUtils.isBlank(payload)) {
             throw new DSMBadRequestException("Missing required payload");
@@ -50,7 +48,7 @@ public class LegacyKitResampleService extends ParticipantAdminOperationService {
 
         // get and verify content of payload
         legacyKitResampleList = LegacyKitResampleList.fromJson(payload);
-        legacyKitResampleList.getResampleRequestList().forEach(legacyKitResampleRequest -> legacyKitResampleRequest.verify(ddpInstance,
+        legacyKitResampleList.getResampleRequestList().forEach(legacyKitResampleRequest -> legacyKitResampleRequest.verify(ddpInstanceDto,
                 kitRequestDao));
     }
 
@@ -64,7 +62,7 @@ public class LegacyKitResampleService extends ParticipantAdminOperationService {
         List<UpdateLog> updateLog = new ArrayList<>();
 
         legacyKitResampleList.getResampleRequestList().forEach(legacyKitResampleRequest ->
-                updateLog.add(resampleKit(legacyKitResampleRequest, ddpInstance)));
+                updateLog.add(changeKitIdsToLegacyIds(legacyKitResampleRequest)));
 
         // update job log record
         try {
@@ -75,35 +73,27 @@ public class LegacyKitResampleService extends ParticipantAdminOperationService {
         }
     }
 
-    private UpdateLog resampleKit(LegacyKitResampleRequest legacyKitResampleRequest, DDPInstance ddpInstance) {
-        Map<String, Object> participantProfile = ElasticSearchUtil.getParticipantProfileByShortID(ddpInstance,
-                legacyKitResampleRequest.getShortId());
-        String ddpParticipantId = participantProfile.get("guid").toString();
-        String legacyParticipantId = participantProfile.get("legacyAltPid").toString();
-        kitRequestDao.resampleKit(legacyKitResampleRequest, legacyParticipantId);
-        changeDataInEs(legacyKitResampleRequest.getCurrentCollaboratorSampleId(), legacyKitResampleRequest.getNewCollaboratorSampleId(),
-                 ddpParticipantId, ddpInstance.getParticipantIndexES());
-        return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
-                "Kit was resampled to " + legacyKitResampleRequest.getNewCollaboratorSampleId());
+    protected static UpdateLog changeKitIdsToLegacyIds(LegacyKitResampleRequest legacyKitResampleRequest) {
+        try {
+            Map<String, Object> participantProfile = ElasticSearchService.getParticipantProfileByShortID(
+                    DDPInstance.from(ddpInstanceDto), legacyKitResampleRequest.getShortId());
+            String ddpParticipantId = participantProfile.get("guid").toString();
+            String legacyParticipantId = participantProfile.get("legacyAltPid").toString();
+            kitRequestDao.updateKitToLegacyIds(legacyKitResampleRequest, legacyParticipantId);
+            changeDataInEs(legacyKitResampleRequest.getCurrentCollaboratorSampleId(), legacyKitResampleRequest.getNewCollaboratorSampleId(),
+                     ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+            return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
+                    "Kit collab id was changed from %s to %s".formatted(legacyKitResampleRequest.getCurrentCollaboratorSampleId(),
+                            legacyKitResampleRequest.getNewCollaboratorSampleId()));
+        } catch (Exception e) {
+            return new UpdateLog(legacyKitResampleRequest.getShortId(), UpdateLog.UpdateStatus.ERROR,
+                    "Error updating kit: " + legacyKitResampleRequest.currentCollaboratorSampleId + e.toString());
+        }
     }
 
-    private void changeDataInEs(String currentCollaboratorSampleId, String newCollaboratorSampleId,
+    private static void changeDataInEs(String currentCollaboratorSampleId, String newCollaboratorSampleId,
                                 String ddpParticipantId, String esIndex) {
-        Optional<ElasticSearchParticipantDto> maybeEsParticipant =
-                elasticSearchService.getParticipantDocument(ddpParticipantId, esIndex);
-        if (maybeEsParticipant.isEmpty()) {
-            throw new ESMissingParticipantDataException("Participant %s does not have an ES document"
-                    .formatted(ddpParticipantId));
-        }
-        ElasticSearchParticipantDto esParticipant = maybeEsParticipant.get();
-        Dsm dsm = new Dsm();
-        if (esParticipant.getDsm().isEmpty() || esParticipant.getActivities().isEmpty()) {
-            log.info(String.format("Participant %s does not yet have DSM data and "
-                    + "activities in ES", ddpParticipantId));
-
-        } else {
-            dsm = esParticipant.getDsm().get();
-        }
+        Dsm dsm = elasticSearchService.getRequiredDsmData(ddpParticipantId, esIndex);
         List<KitRequestShipping> kitRequestShippings = dsm.getKitRequestShipping();
         if (kitRequestShippings != null) {
             kitRequestShippings.removeIf(
@@ -116,11 +106,11 @@ public class LegacyKitResampleService extends ParticipantAdminOperationService {
         ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
     }
 
-    private List<KitRequestShipping> addNewKitRequestShippingToESKitsList(String newCollaboratorSampleId,
+    private static List<KitRequestShipping> addNewKitRequestShippingToESKitsList(String newCollaboratorSampleId,
                                                                           List<KitRequestShipping> oldKits) {
         List<KitRequestShipping> kitRequestShippings = new ArrayList<>();
         oldKits.forEach(kitRequestShipping -> kitRequestShippings.add(kitRequestShipping));
-        KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestWithCollaboratorSampleId(newCollaboratorSampleId);
+        KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
         kitRequestShippings.add(kitRequestShipping);
         return kitRequestShippings;
     }

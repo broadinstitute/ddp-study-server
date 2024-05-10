@@ -153,7 +153,7 @@ public class ParticipantInitServiceTest extends DbAndElasticBaseTest {
     @Test
     public void testInitParticipantWithLegacyPid() {
         Pair<ParticipantDto, String> ptpToLegacyId =
-                TestParticipantUtil.createLegacyParticipant(instanceName, participantCounter++, ddpInstanceDto, null, null, null);
+                TestParticipantUtil.createLegacyParticipant(instanceName, participantCounter++, ddpInstanceDto);
         participants.add(ptpToLegacyId.getLeft());
         String ddpParticipantId = ptpToLegacyId.getLeft().getRequiredDdpParticipantId();
         String legacyPid = ptpToLegacyId.getRight();

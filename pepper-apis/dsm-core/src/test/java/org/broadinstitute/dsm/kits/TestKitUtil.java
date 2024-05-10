@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.juniperkits;
+package org.broadinstitute.dsm.kits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
@@ -28,9 +28,9 @@ import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
@@ -113,6 +113,8 @@ public class TestKitUtil {
     @Mock
     Tracker mockShipmentTracker = mock(Tracker.class);
 
+    private KitDao kitDao = new KitDao();
+
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
                                   String kitTypeName, String kitTypeDisplayName) {
         this.instanceName = instanceName;
@@ -178,16 +180,16 @@ public class TestKitUtil {
         }
     }
 
-    public void deleteKit(String ddpKitRequestId) {
-        SimpleResult results = inTransaction((conn) -> {
-            List<Integer> dsmKitRequestId = new ArrayList<>();
+    public void deleteKitByDdpKitRequestId(String ddpKitRequestId) {
+        List<Integer> dsmKitRequestIds = new ArrayList<>();
+        inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
                 stmt.setString(1, ddpKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        dsmKitRequestId.add(rs.getInt("dsm_kit_request_id"));
+                        dsmKitRequestIds.add(rs.getInt("dsm_kit_request_id"));
                     }
-                    if (dsmKitRequestId.isEmpty()) {
+                    if (dsmKitRequestIds.isEmpty()) {
                         throw new DsmInternalError(
                                 String.format("Could not find kit %s to delete", ddpKitRequestId));
                     }
@@ -197,20 +199,15 @@ public class TestKitUtil {
             } catch (SQLException ex) {
                 throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
             }
-            try {
-                delete(conn, "ddp_kit", "dsm_kit_request_id", dsmKitRequestId);
-                delete(conn, "ddp_kit_request", "dsm_kit_request_id", dsmKitRequestId);
-            } catch (Exception ex) {
-                throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
-            }
             return null;
         });
+        dsmKitRequestIds.forEach(this::deleteKitRequestShipping);
     }
 
     public void deleteKitsArray() {
         for (String kitId : createdKitIds) {
             try {
-                deleteKit(kitId);
+                deleteKitByDdpKitRequestId(kitId);
             } catch (Exception e) {
                 throw new DsmInternalError("Could not delete kit " + kitId, e);
             }
@@ -492,10 +489,7 @@ public class TestKitUtil {
     }
 
     public void deleteKitRequestShipping(int dsmKitRequestId) {
-        TransactionWrapper.inTransaction(conn -> {
-            delete(conn, "ddp_kit", "dsm_kit_request_id", dsmKitRequestId);
-            delete(conn, "ddp_kit_request", "dsm_kit_request_id", dsmKitRequestId);
-            return null;
-        });
+        kitDao.deleteKit(dsmKitRequestId);
+        kitDao.deleteKitRequest(dsmKitRequestId);
     }
 }

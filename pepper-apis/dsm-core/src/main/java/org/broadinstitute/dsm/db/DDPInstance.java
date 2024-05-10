@@ -12,10 +12,12 @@ import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -25,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
+@Builder(toBuilder = true, setterPrefix = "with")
 public class DDPInstance {
 
     public static final String SQL_SELECT_ALL_ACTIVE_REALMS =
@@ -79,8 +82,8 @@ public class DDPInstance {
     private final String ddpInstanceId;
     private final String name;
     private final String baseUrl;
-    private final boolean hasRole;
     private final String collaboratorIdPrefix;
+    private final boolean hasRole;
     private final int daysMrAttentionNeeded;
     private final int daysTissueAttentionNeeded;
     private final boolean hasAuth0Token;
@@ -99,7 +102,8 @@ public class DDPInstance {
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
                        boolean migratedDDP, String billingReference, String participantIndexES, String activityDefinitionIndexES,
-                       String usersIndexES, String researchProject, String displayName, String mercuryOrderCreator) {
+                       String usersIndexES, String researchProject, String displayName, String mercuryOrderCreator,
+                       InstanceSettings instanceSettings) {
         this.ddpInstanceId = ddpInstanceId;
         this.name = name;
         this.baseUrl = baseUrl;
@@ -117,7 +121,9 @@ public class DDPInstance {
         this.researchProject = researchProject;
         this.mercuryOrderCreator = mercuryOrderCreator;
         this.displayName = displayName;
+        this.instanceSettings = instanceSettings;
     }
+
 
     @VisibleForTesting
     public DDPInstance(int ddpInstanceId, String name) {
@@ -456,7 +462,7 @@ public class DDPInstance {
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
                 rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
-                rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
+                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null);
     }
 
     private static DDPInstance getDDPInstanceFormResultSet(@NonNull ResultSet rs) throws SQLException {
@@ -473,7 +479,7 @@ public class DDPInstance {
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
                 rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
-                rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
+                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null);
     }
 
     //assumption: base url of pepper studies will always end like: dsm/studies/<STUDYNAME>
@@ -539,5 +545,25 @@ public class DDPInstance {
 
     public boolean isESUpdatePossible() {
         return StringUtils.isNotBlank(this.participantIndexES);
+    }
+
+    public static DDPInstance from(DDPInstanceDto ddpInstanceDto) {
+        return DDPInstance.builder()
+                .withDdpInstanceId(String.valueOf(ddpInstanceDto.getDdpInstanceId()))
+                .withName(ddpInstanceDto.getInstanceName())
+                .withBaseUrl(ddpInstanceDto.getBaseUrl())
+                .withCollaboratorIdPrefix(ddpInstanceDto.getCollaboratorIdPrefix())
+                .withDaysMrAttentionNeeded(ddpInstanceDto.getMrAttentionFlagD())
+                .withDaysTissueAttentionNeeded(ddpInstanceDto.getTissueAttentionFlagD())
+                .withHasAuth0Token(ddpInstanceDto.getAuth0Token() != null)
+                .withNotificationRecipient(ddpInstanceDto.getNotificationRecipients())
+                .withBillingReference(ddpInstanceDto.getBillingReference())
+                .withParticipantIndexES(ddpInstanceDto.getEsParticipantIndex())
+                .withActivityDefinitionIndexES(ddpInstanceDto.getEsActivityDefinitionIndex())
+                .withUsersIndexES(ddpInstanceDto.getEsUsersIndex())
+                .withResearchProject(ddpInstanceDto.getResearchProject().orElse(null))
+                .withMercuryOrderCreator(ddpInstanceDto.getMercuryOrderCreator().orElse(null))
+                .withDisplayName(ddpInstanceDto.getDisplayName())
+                .build();
     }
 }
