@@ -15,11 +15,11 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
  * List of requests to update ids in kits for participants with legacy short IDs
  */
 public class LegacyKitUpdateCollabIdList {
-    List<LegacyKitUpdateCollabIdRequest> updateCollabIdRequests;
+    List<UpdateKitToLegacyIdsRequest> updateCollabIdRequests;
 
     @JsonCreator
     public LegacyKitUpdateCollabIdList(@JsonProperty("updateCollabIdRequests")
-                                           List<LegacyKitUpdateCollabIdRequest> updateCollabIdRequests) {
+                                           List<UpdateKitToLegacyIdsRequest> updateCollabIdRequests) {
         this.updateCollabIdRequests = updateCollabIdRequests;
     }
 

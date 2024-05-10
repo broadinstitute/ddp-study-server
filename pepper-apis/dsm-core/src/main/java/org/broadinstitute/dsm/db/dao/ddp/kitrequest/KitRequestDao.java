@@ -17,7 +17,7 @@ import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.service.adminoperation.LegacyKitUpdateCollabIdRequest;
+import org.broadinstitute.dsm.service.adminoperation.UpdateKitToLegacyIdsRequest;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -52,8 +52,8 @@ public class KitRequestDao implements Dao<KitRequestDto> {
     public static final String SQL_UPDATE_COLLAB_ID_AND_DDP_PARTICIPANT_ID =
             " UPDATE ddp_kit_request SET bsp_collaborator_sample_id = ?, ddp_participant_id = ?, "
             + "bsp_collaborator_participant_id = ? WHERE dsm_kit_request_id in  "
-            + "(SELECT dsm_kit_request_id FROM (SELECT * FROM ddp_kit_request) as tbl WHERE bsp_collaborator_sample_id = ?) "
-            + "AND dsm_kit_request_id <> 0";
+            + "(SELECT dsm_kit_request_id FROM (SELECT dsm_kit_request_id FROM ddp_kit_request) as tbl "
+            + " WHERE bsp_collaborator_sample_id = ?) AND dsm_kit_request_id <> 0";
 
     public static final String BY_DDP_LABEL = " where ddp_label = ?";
 
@@ -138,22 +138,22 @@ public class KitRequestDao implements Dao<KitRequestDto> {
      * The method updates the DSM database with the legacy collaborator sample id, collaborator participant id and also changes
      * the ddp participant id to the legacy participant id. It does not  update the ES document at this point.
      *</p>
-     * @param legacyKitUpdateCollabIdRequest request to resample or re-patient a kit for a participant with a legacy short ID
+     * @param updateKitToLegacyIdsRequest request to resample or re-patient a kit for a participant with a legacy short ID
      * @param legacyParticipantId legacy participant ID
      * */
-    public void updateKitToLegacyIds(LegacyKitUpdateCollabIdRequest legacyKitUpdateCollabIdRequest, String legacyParticipantId) {
+    public void updateKitToLegacyIds(UpdateKitToLegacyIdsRequest updateKitToLegacyIdsRequest, String legacyParticipantId) {
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_COLLAB_ID_AND_DDP_PARTICIPANT_ID)) {
-                stmt.setString(1, legacyKitUpdateCollabIdRequest.getNewCollaboratorSampleId());
+                stmt.setString(1, updateKitToLegacyIdsRequest.getNewCollaboratorSampleId());
                 stmt.setString(2, legacyParticipantId);
-                stmt.setString(3, legacyKitUpdateCollabIdRequest.getNewCollaboratorParticipantId());
-                stmt.setString(4, legacyKitUpdateCollabIdRequest.getCurrentCollaboratorSampleId());
+                stmt.setString(3, updateKitToLegacyIdsRequest.getNewCollaboratorParticipantId());
+                stmt.setString(4, updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId());
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows != 1) {
                     throw new DSMBadRequestException(
                             "Error updating kit to legacy ids for kit with sample id %s, was updating %d rows".formatted(
-                                    legacyKitUpdateCollabIdRequest.getCurrentCollaboratorSampleId(), affectedRows));
+                                    updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(), affectedRows));
                 }
             } catch (SQLException e) {
                 dbVals.resultException = e;
@@ -163,10 +163,10 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
         if (results.resultException != null) {
             throw new DsmInternalError("Error resampling kit for sample id "
-                    + legacyKitUpdateCollabIdRequest.getCurrentCollaboratorSampleId(), results.resultException);
+                    + updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(), results.resultException);
         }
-        log.info("Updated kit for sample id %s to %s ".formatted(legacyKitUpdateCollabIdRequest.getCurrentCollaboratorSampleId(),
-                legacyKitUpdateCollabIdRequest.getNewCollaboratorSampleId()));
+        log.info("Updated kit for sample id %s to %s ".formatted(updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(),
+                updateKitToLegacyIdsRequest.getNewCollaboratorSampleId()));
     }
 
     public KitRequestShipping getKitRequestForCollaboratorSampleId(String collaboratorSampleId) {
