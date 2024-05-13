@@ -198,13 +198,15 @@ public class CreateClinicalDummyKitRoute implements Route {
             List<Tissue> tissueIds =
                     oncHistoryDetailDaoImpl.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
             Integer tissueId = null;
-            if (tissueIds != null && !tissueIds.isEmpty()) {
+            //if the random onc history detail has a tissue with a collaborator sample id, use that tissue
+            if (!tissueIds.isEmpty()) {
                 Optional<Tissue> tissue = tissueIds.stream().filter(tissue1 ->
                         tissue1 != null && StringUtils.isNotBlank(tissue1.getCollaboratorSampleId())
                 ).findAny();
                 tissueId = tissue.isPresent() ? tissue.get().getTissueId() : null;
             }
-            if (tissueId != null || tissueIds.isEmpty()) {
+            //if no tissue with collaborator sample id was found, create a new tissue
+            if (tissueId == null || tissueIds.isEmpty()) {
                 tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, ffpeUser);
                 String shortId = esParticipantDto.getProfile().map(Profile::getHruid).get();
                 addCollaboratorSampleId(tissueId, ddpInstance, ddpParticipantId, shortId);
