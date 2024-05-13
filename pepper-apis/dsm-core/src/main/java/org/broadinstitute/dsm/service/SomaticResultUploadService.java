@@ -132,7 +132,7 @@ public class SomaticResultUploadService {
         try {
             existingDocument = SomaticResultUpload.getSomaticFileUploadByIdAndRealm(documentId, realm);
         } catch (RuntimeException rte) {
-            throw new DSMBadRequestException("No document found for entry");
+            throw new DSMBadRequestException("No document found for document id " + documentId);
         }
 
         if (isDeletedSomaticResult(existingDocument)) {
@@ -146,16 +146,14 @@ public class SomaticResultUploadService {
             if (deleted) {
                 log.info("User {} deleted somatic document {}", userId, documentId);
             } else {
-                log.error("Somatic document failed to delete from GCS. Manual intervention required.  "
+                log.error("Somatic document failed to delete from GCS for {}. Manual intervention required.  "
                                 + "Last recorded bucket: {}, blobPath: {} ",
-                        deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
+                        documentId, deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
                 throw new DsmInternalError("Deletion failed, contact DSM developer.");
             }
         } else {
-            log.error("Somatic document blob not found in bucket when attempting to delete from GCS. Manual intervention required.  "
-                            + "Last recorded bucket: {}, blobPath: {} ",
-                    deletedSomaticResultUpload.getBucket(), deletedSomaticResultUpload.getBlobPath());
-            throw new DsmInternalError("Deletion failed, contact DSM developer.");
+            // sometimes storage blobs aren't written to during uploads, so there's no GCS data to delete
+            log.info("No somatic document blob found for {} so there's no file data to delete.", documentId);
         }
         return deletedSomaticResultUpload;
     }
