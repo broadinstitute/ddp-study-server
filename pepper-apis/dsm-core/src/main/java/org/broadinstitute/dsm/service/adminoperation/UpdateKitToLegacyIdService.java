@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -48,7 +49,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         // get and verify content of payload
         legacyKitUpdateCollabIdList = LegacyKitUpdateCollabIdList.fromJson(payload);
         legacyKitUpdateCollabIdList.getUpdateCollabIdRequests().forEach(updateKitToLegacyIdsRequest ->
-                updateKitToLegacyIdsRequest.verify(ddpInstanceDto, kitRequestDao));
+                updateKitToLegacyIdsRequest.verify(ddpInstanceDto));
     }
 
     /**
@@ -61,7 +62,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         List<UpdateLog> updateLog = new ArrayList<>();
 
         legacyKitUpdateCollabIdList.getUpdateCollabIdRequests().forEach(updateKitToLegacyIdsRequest ->
-                updateLog.add(changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest)));
+                updateLog.add(changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest, ddpInstanceDto)));
 
         // update job log record
         try {
@@ -72,12 +73,47 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         }
     }
 
-    protected static UpdateLog changeKitIdsToLegacyIds(UpdateKitToLegacyIdsRequest updateKitToLegacyIdsRequest) {
+    /**
+     * <p>
+     * First runs some validations on the request, checks that the participant exists in the ES with the given short ID, that the given
+     * legacy short ID matches the one on file, that the kit request exists for the given collaborator sample ID to be updated,
+     * and also that the new collaborator sample ID does not already exist.
+     * </p><p>
+     * If all validations pass, it updates the kit request in the database and the participant's kit requests in the ES.
+     * </p>
+     * */
+    protected static UpdateLog changeKitIdsToLegacyIds(UpdateKitToLegacyIdsRequest updateKitToLegacyIdsRequest,
+                                                       DDPInstanceDto ddpInstanceDto) {
+        String shortId = updateKitToLegacyIdsRequest.getShortId();
+        // Check if the participant exists in ES and if it has a legacy short ID
+        Profile profile;
         try {
-            Map<String, Object> participantProfile = ElasticSearchService.getParticipantProfileByShortID(
-                    ddpInstanceDto.getInstanceName(), ddpInstanceDto.getEsParticipantIndex(), updateKitToLegacyIdsRequest.getShortId());
-            String ddpParticipantId = participantProfile.get("guid").toString();
-            String legacyParticipantId = participantProfile.get("legacyAltPid").toString();
+            profile = ElasticSearchService.getParticipantProfileByShortID(ddpInstanceDto.getEsParticipantIndex(), shortId);
+        } catch (Exception e) {
+            return new UpdateLog(shortId, UpdateLog.UpdateStatus.ERROR, e.getMessage());
+        }
+        String legacyShortIdOnFile = profile.getLegacyShortId();
+        if (!updateKitToLegacyIdsRequest.getLegacyShortId().equals(legacyShortIdOnFile)) {
+            return new UpdateLog(updateKitToLegacyIdsRequest.getShortId(), UpdateLog.UpdateStatus.ERROR,
+                    ("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
+                    + " will not update kit %s").formatted(updateKitToLegacyIdsRequest.getLegacyShortId(), legacyShortIdOnFile, shortId,
+                    updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId()));
+        }
+        if (!existsKitRequestWithCollaboratorSampleId(updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(),
+                profile.getGuid(), kitRequestDao)) {
+            return new UpdateLog(updateKitToLegacyIdsRequest.getShortId(), UpdateLog.UpdateStatus.ERROR,
+                    ("Kit request not found for collaborator sample ID %s".formatted(
+                            updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId())));
+        }
+        if (existsKitRequestWithCollaboratorSampleId(updateKitToLegacyIdsRequest.getNewCollaboratorSampleId(), profile.getGuid(),
+                kitRequestDao)) {
+            return new UpdateLog(updateKitToLegacyIdsRequest.getShortId(), UpdateLog.UpdateStatus.ERROR,
+                    "Kit request with the new collaboratorSampleId %s already exists!"
+                            .formatted(updateKitToLegacyIdsRequest.getNewCollaboratorSampleId()));
+        }
+        try {
+            String ddpParticipantId = profile.getGuid();
+            String legacyParticipantId = profile.getLegacyAltPid();
             kitRequestDao.updateKitToLegacyIds(updateKitToLegacyIdsRequest, legacyParticipantId);
             changeDataInEs(updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(),
                     updateKitToLegacyIdsRequest.getNewCollaboratorSampleId(), ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
@@ -112,5 +148,25 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
         kitRequestShippings.add(kitRequestShipping);
         return kitRequestShippings;
+    }
+
+
+
+    /**
+     * Collaborator sample id is unique in DSM, so we can use it to find a kit request, and to verify if we can use a
+     * collaborator sample id to resample a kit. This method checks if a kit request with the given collaborator sample id
+     * already exists in DSM, and if it belongs to the given participant.
+     *
+     * @param collaboratorSampleId collaborator sample id to check
+     * @param ddpParticipantId participant id to check
+     * @return true if a kit request with the given collaborator sample id exists in DSM and belongs to the given participant
+     * */
+    private static boolean existsKitRequestWithCollaboratorSampleId(String collaboratorSampleId, String ddpParticipantId,
+                                                            KitRequestDao kitRequestDao) {
+        KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestForCollaboratorSampleId(collaboratorSampleId);
+        if (kitRequestShipping == null) {
+            return false;
+        }
+        return StringUtils.isNotBlank(ddpParticipantId) ? ddpParticipantId.equals(kitRequestShipping.getDdpParticipantId()) : true;
     }
 }

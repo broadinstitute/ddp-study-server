@@ -10,7 +10,6 @@ import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.kits.TestKitUtil;
@@ -79,91 +78,28 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testVerify_notVerifyMissingOldCollaboratorSampleId() {
-        try {
-            UpdateKitToLegacyIdsRequest missingOldSampleId = new UpdateKitToLegacyIdsRequest(null,
-                    newCollaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
-            missingOldSampleId.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.assertEquals("Missing required field: currentCollaboratorSampleId", e.getMessage());
-            return;
-        }
-        Assert.fail("Should have thrown exception");
-    }
-
-    @Test
-    public void testVerify_notVerifyMissingNewCollaboratorSampleId() {
-        try {
-            UpdateKitToLegacyIdsRequest missingNewSampleIdReq = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId,
-                    null, newCollaboratorParticipantId, shortId, legacyShortId);
-            missingNewSampleIdReq.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.assertEquals("Missing required field: newCollaboratorSampleId", e.getMessage());
-            return;
-        }
-        Assert.fail("Should have thrown exception");
-    }
-
-    @Test
-    public void testVerify_notVerifyMissingShortId() {
-        try {
-            UpdateKitToLegacyIdsRequest missingShortIdReq = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId,
-                    newCollaboratorSampleId, newCollaboratorParticipantId, null, legacyShortId);
-            missingShortIdReq.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.assertEquals("Missing required field: shortId", e.getMessage());
-            return;
-        }
-        Assert.fail("Should have thrown exception");
-    }
-
-    @Test
-    public void testVerify_notVerifyMissingNewCollaboratorParticipantId() {
-        try {
-            UpdateKitToLegacyIdsRequest missingNewParticipantIdReq = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId,
-                    newCollaboratorSampleId, null, shortId, legacyShortId);
-            missingNewParticipantIdReq.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.assertEquals("Missing required field: newCollaboratorParticipantId", e.getMessage());
-            return;
-        }
-        Assert.fail("Should have thrown exception");
-    }
-
-    @Test
-    public void testVerify_notVerifyWrongShortId() {
+    public void testUpdate_notUpdateWrongShortId() {
         String wrongShortId = "WRONG_SHORT_ID";
         UpdateKitToLegacyIdsRequest wrongShortIdReq = new UpdateKitToLegacyIdsRequest(
                 oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, wrongShortId, legacyShortId);
-        try {
-            wrongShortIdReq.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.assertEquals("Invalid participant short ID %s".formatted(wrongShortId), e.getMessage());
-            return;
-        }
+        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(wrongShortIdReq, ddpInstanceDto);
+
+        log.info(updateLog.getMessage());
+        Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
+        Assert.assertEquals("Invalid short ID WRONG_SHORT_ID", updateLog.getMessage());
     }
 
     @Test
-    public void testVerify_notVerifyWrongLegacyShortId() {
+    public void testUpdate_notVerifyWrongLegacyShortId() {
         String wrongLegacyShortId = "WRONG_LEGACY_SHORT_ID";
         UpdateKitToLegacyIdsRequest wrongLegacyIdReq = new UpdateKitToLegacyIdsRequest(
                 oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, shortId, wrongLegacyShortId);
-
-        try {
-            wrongLegacyIdReq.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e2) {
-            e2.printStackTrace();
-            Assert.assertEquals(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
-                    + " will not update kit %s")
-                    .formatted(wrongLegacyShortId, legacyShortId, shortId, oldCollaboratorSampleId), e2.getMessage());
-            return;
-        }
-        Assert.fail("Should have thrown exception");
+        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(wrongLegacyIdReq, ddpInstanceDto);
+        log.info(updateLog.getMessage());
+        Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
+        Assert.assertEquals(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
+                        + " will not update kit %s")
+                .formatted(wrongLegacyShortId, legacyShortId, shortId, oldCollaboratorSampleId), updateLog.getMessage());
     }
 
     @Test
@@ -181,15 +117,13 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
         createdKits.add(dsmKitRequestId);
         UpdateKitToLegacyIdsRequest duplicateSampleIdRequest = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId,
                 collaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
-        try {
-            duplicateSampleIdRequest.verify(ddpInstanceDto, new KitRequestDao());
-        } catch (Exception e2) {
-            e2.printStackTrace();
-            Assert.assertEquals(("Kit request with the new collaboratorSampleId %s already exists!").formatted(collaboratorSampleId),
-                    e2.getMessage());
-            return;
-        }
-        Assert.fail("Should have thrown exception");
+
+        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(duplicateSampleIdRequest, ddpInstanceDto);
+        log.info(updateLog.getMessage());
+        Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
+        Assert.assertEquals("Kit request with the new collaboratorSampleId DUP_COLLABORATOR_SAMPLE_ID already exists!",
+                updateLog.getMessage());
+
     }
 
     @Test
@@ -198,15 +132,14 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 updateKitToLegacyIdsRequest = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId, newCollaboratorSampleId,
                 newCollaboratorParticipantId, shortId, legacyShortId);
         try {
-            updateKitToLegacyIdsRequest.verify(ddpInstanceDto, new KitRequestDao());
+            updateKitToLegacyIdsRequest.verify(ddpInstanceDto);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Should not have thrown exception");
         }
         LegacyKitUpdateCollabIdList legacyKitUpdateCollabIdList = new LegacyKitUpdateCollabIdList(List.of(updateKitToLegacyIdsRequest));
         String reqJson = new Gson().toJson(legacyKitUpdateCollabIdList);
-        updateKitToLegacyIdService.initialize("test_user", instanceName, null, reqJson);
-        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest);
+        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest, ddpInstanceDto);
         log.info(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
 

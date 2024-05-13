@@ -401,22 +401,24 @@ public class ElasticSearchService {
     /**
      * Get the participant profile for a single participant from ES as a Map
      * or throw an exception if the participant or profile is not found
-     * @param instanceName the instance name
      * @param participantEsIndex the the index of participant in ES
      * @param shortId the shortId of the participant
-     * @return the participant profile as a Map&lt;String, Object&gt;
+     * @return the participant profile
      */
-    public static Map<String, Object> getParticipantProfileByShortID(String instanceName, String participantEsIndex, String shortId) {
-        Map<String, Map<String, Object>> esParticipantData = ElasticSearchUtil.getSingleParticipantFromES(instanceName,
-                participantEsIndex, shortId);
-        if (esParticipantData.size() != 1) {
-            throw new DSMBadRequestException("Invalid participant short ID " + shortId);
+    public static Profile getParticipantProfileByShortID(String participantEsIndex, String shortId) {
+        Optional<ElasticSearchParticipantDto> ptpData;
+        try {
+            ptpData = new ElasticSearch().getParticipantByShortId(participantEsIndex, shortId);
+        } catch (Exception e) {
+            throw new DsmInternalError("ES threw exception for search of shortId: " + shortId, e);
         }
-        Map<String, Object> ptp = esParticipantData.values().stream().findFirst().orElseThrow();
-        Map<String, Object> profile = (Map<String, Object>) ptp.get("profile");
-        if (profile == null) {
-            throw new DSMBadRequestException("No profile found for participant short ID " + shortId);
+        if (ptpData.isEmpty()) {
+            throw new DSMBadRequestException("Invalid short ID " + shortId);
         }
-        return profile;
+        Optional<Profile> profile = ptpData.get().getProfile();
+        if (profile.isEmpty()) {
+            throw new DSMBadRequestException("ES returned empty profile object for shortId " + shortId);
+        }
+        return profile.get();
     }
 }

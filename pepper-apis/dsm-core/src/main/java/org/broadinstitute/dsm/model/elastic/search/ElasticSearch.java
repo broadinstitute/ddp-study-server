@@ -210,6 +210,11 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
+        if (esParticipants == null || esParticipants.isEmpty()) {
+            logger.info("No participant found for  shortId {} in ES index {}"
+                    .formatted(shortId, esParticipantsIndex));
+            return Optional.empty();
+        }
         if (esParticipants.size() > 1) {
             throw new DsmInternalError("More than one participant found for shortId {} in ES index {}"
                     .formatted(shortId, esParticipantsIndex));
