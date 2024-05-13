@@ -17,6 +17,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
 import org.broadinstitute.dsm.db.structure.DBElement;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -208,6 +209,9 @@ public class CreateClinicalDummyKitRoute implements Route {
             //if no tissue with collaborator sample id was found, create a new tissue
             if (tissueId == null || tissueIds.isEmpty()) {
                 tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, ffpeUser);
+                if (tissueId == null) {
+                    throw new DsmInternalError("Couldn't create a new tissue for the participant" + ddpParticipantId);
+                }
                 String shortId = esParticipantDto.getProfile().map(Profile::getHruid).get();
                 addCollaboratorSampleId(tissueId, ddpInstance, ddpParticipantId, shortId);
             }
