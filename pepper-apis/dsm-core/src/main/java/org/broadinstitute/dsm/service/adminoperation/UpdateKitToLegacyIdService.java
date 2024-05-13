@@ -134,23 +134,14 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
             kitRequestShippings.removeIf(
                     kitRequestShipping -> currentCollaboratorSampleId.equals(kitRequestShipping.getBspCollaboratorSampleId()));
         } else {
+            log.info("No kit requests found for participant %s".formatted(ddpParticipantId));
             kitRequestShippings = new ArrayList<>();
         }
-        kitRequestShippings = addNewKitRequestShippingToESKitsList(newCollaboratorSampleId, kitRequestShippings);
+        KitRequestShipping newlyUpdatedKit = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
+        kitRequestShippings.add(newlyUpdatedKit);
         dsm.setKitRequestShipping(kitRequestShippings);
         ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
     }
-
-    private static List<KitRequestShipping> addNewKitRequestShippingToESKitsList(String newCollaboratorSampleId,
-                                                                          List<KitRequestShipping> oldKits) {
-        List<KitRequestShipping> kitRequestShippings = new ArrayList<>();
-        oldKits.forEach(kitRequestShipping -> kitRequestShippings.add(kitRequestShipping));
-        KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
-        kitRequestShippings.add(kitRequestShipping);
-        return kitRequestShippings;
-    }
-
-
 
     /**
      * Collaborator sample id is unique in DSM, so we can use it to find a kit request, and to verify if we can use a
