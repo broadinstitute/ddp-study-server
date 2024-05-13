@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.service.adminoperation;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
@@ -137,8 +136,6 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
             e.printStackTrace();
             Assert.fail("Should not have thrown exception");
         }
-        LegacyKitUpdateCollabIdList legacyKitUpdateCollabIdList = new LegacyKitUpdateCollabIdList(List.of(updateKitToLegacyIdsRequest));
-        String reqJson = new Gson().toJson(legacyKitUpdateCollabIdList);
         UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest, ddpInstanceDto);
         log.info(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
