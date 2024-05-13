@@ -254,7 +254,11 @@ public class DDPInstance {
         if (results.resultException != null) {
             throw new DsmInternalError("Couldn't get study %s with role %s".formatted(realm, role), results.resultException);
         }
-        return (DDPInstance) results.resultValue;
+        DDPInstance ddpInstance = (DDPInstance) results.resultValue;
+        if (ddpInstance == null) {
+            throw new DsmInternalError("Couldn't find study %s with role %s".formatted(realm, role));
+        }
+        return ddpInstance;
     }
 
     // This method is used to get DDPInstance with role in a transaction, only called by getDDPInstanceWithRole in this class
