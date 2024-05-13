@@ -41,9 +41,7 @@ public class KitShippingTestUtil {
     public void tearDown() {
         participantToKitRequest.values().forEach(ids -> ids.forEach(kitRequestId -> {
             log.debug("Deleting kit request with id {}", kitRequestId);
-            KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
-            kitDao.deleteKit(kitRequestShipping.getDsmKitId().intValue());
-            int deleteCount = kitDao.deleteKitRequest(kitRequestId);
+            int deleteCount = kitDao.deleteKitRequestShipping(kitRequestId);
             if (deleteCount != 1) {
                 throw new DsmInternalError("Failed to delete kit request with id " + kitRequestId);
             }

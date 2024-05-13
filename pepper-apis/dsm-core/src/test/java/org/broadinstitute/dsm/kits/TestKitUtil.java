@@ -474,24 +474,16 @@ public class TestKitUtil {
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }
 
-    public String createKitRequestShipping(String ddpParticipantId, String collaboratorSampleId, String collaboratorParticipantId,
-                                        String ddpLabel, String ddpKitRequestId, String kitType, DDPInstance ddpInstance, String userId) {
-        KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setDdpParticipantId(ddpParticipantId);
-        kitRequestShipping.setBspCollaboratorSampleId(collaboratorSampleId);
-        kitRequestShipping.setBspCollaboratorParticipantId(collaboratorParticipantId);
-        kitRequestShipping.setDdpLabel(ddpLabel);
-        kitRequestShipping.setDdpKitRequestId(ddpKitRequestId);
-        kitRequestShipping.setKitTypeName(kitType);
-        kitRequestShipping.setKitTypeId(String.valueOf(kitTypeId));
+    public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
+                                           String userId) {
 
-        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), ddpKitRequestId, kitTypeId, ddpParticipantId,
-                collaboratorParticipantId, collaboratorSampleId, userId, null, null, null, false, null,
+        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(), kitTypeId,
+                kitRequestShipping.getDdpParticipantId(), kitRequestShipping.getBspCollaboratorParticipantId(),
+                kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false, null,
                 ddpInstance, kitTypeName, null);
     }
 
     public void deleteKitRequestShipping(int dsmKitRequestId) {
-        kitDao.deleteKit(dsmKitRequestId);
-        kitDao.deleteKitRequest(dsmKitRequestId);
+        kitDao.deleteKitRequestShipping(dsmKitRequestId);
     }
 }

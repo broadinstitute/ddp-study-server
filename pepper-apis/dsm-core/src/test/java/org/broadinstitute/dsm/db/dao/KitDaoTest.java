@@ -100,15 +100,13 @@ public class KitDaoTest extends DbTxnBaseTest {
 
     @AfterClass
     public static void deleteTestKit() {
+
         if (participantId != null) {
             participantDao.delete(participantId);
         }
         kitDao.deleteKitTrackingByKitLabel(KIT_NAME);
         if (kitId != null) {
-            kitDao.deleteKit(kitId);
-        }
-        if (kitRequestId != null) {
-            kitDao.deleteKitRequest(kitRequestId);
+            kitDao.deleteKitRequestShipping(kitId);
         }
         if (kitTypeId != null) {
             kitTypeDao.delete(kitTypeId);

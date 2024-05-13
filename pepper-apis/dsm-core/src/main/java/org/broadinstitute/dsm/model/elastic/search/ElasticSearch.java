@@ -113,7 +113,7 @@ public class ElasticSearch implements ElasticSearchable {
      * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
      * @param sourceMap the source map
      * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the queriedParticipantId
-     * @return
+     * @return a new {@link ElasticSearchParticipantDto} from the source map
      */
     public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
         if (sourceMap != null) {
@@ -183,6 +183,40 @@ public class ElasticSearch implements ElasticSearchable {
         logger.info("Got {} participants from ES for instance {} (getParticipantsWithinRange)",
                 esParticipants.size(), esParticipantsIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
+    }
+
+    /**
+     * Searches for a participant by shortId in the given ES index.
+     *
+     * @param esParticipantsIndex the ES index to search
+     * @param shortId the shortId to search for
+     * @return an optional containing in form if {@link ElasticSearchParticipantDto} the participant if found, or empty if not found.
+     *     throws a DsmInternalError if more than one participant is found.
+     */
+    public Optional<ElasticSearchParticipantDto> getParticipantByShortId(String esParticipantsIndex, String shortId) {
+        if (StringUtils.isBlank(esParticipantsIndex)) {
+            throw new IllegalArgumentException("ES participants index cannot be empty");
+        }
+        SearchResponse response;
+        try {
+            int scrollSize = 1000;
+            SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(QueryBuilders.matchQuery("profile.hruid", shortId));
+            searchSourceBuilder.size(scrollSize);
+            searchRequest.source(searchSourceBuilder);
+            response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
+        }
+        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
+        if (esParticipants.size() > 1) {
+            throw new DsmInternalError("More than one participant found for shortId {} in ES index {}"
+                    .formatted(shortId, esParticipantsIndex));
+        }
+        logger.info("Got {} participants from ES for instance {} with shortId {} ",
+                esParticipants.size(), esParticipantsIndex, shortId);
+        return Optional.ofNullable(esParticipants.get(0));
     }
 
     @Override
