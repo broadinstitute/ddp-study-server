@@ -438,16 +438,14 @@ public class KitDao {
         return Optional.ofNullable((KitRequestShipping) results.resultValue);
     }
 
-    private SimpleResult deleteKitRequest(Connection conn, int kitRequestId) {
-        SimpleResult execResult = new SimpleResult();
+    private void deleteKitRequest(Connection conn, int kitRequestId) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_REQUEST)) {
             stmt.setInt(1, kitRequestId);
-            execResult.resultValue = stmt.executeUpdate();
-        } catch (SQLException sqle) {
-            execResult.resultException = sqle;
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                logger.error("No kit request found with id: %d".formatted(kitRequestId));
+            }
         }
-        return execResult;
-
     }
 
     public Integer deleteKitTrackingByKitLabel(String kitLabel) {
@@ -468,16 +466,14 @@ public class KitDao {
         return (int) simpleResult.resultValue;
     }
 
-    private SimpleResult deleteKit(Connection conn, int kitId) {
-        SimpleResult execResult = new SimpleResult();
+    private void deleteKit(Connection conn, int kitId) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
             stmt.setInt(1, kitId);
-            execResult.resultValue = stmt.executeUpdate();
-        } catch (SQLException sqle) {
-            execResult.resultException = sqle;
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                logger.error("No kit found with id: %d".formatted(kitId));
+            }
         }
-        return execResult;
-
     }
 
     public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel) {
@@ -807,24 +803,20 @@ public class KitDao {
 
     /**
      * Deletes from both ddp_kit and ddp_kit_request tables in one single transaction
+     * @param dsmKitRequestId the id of the kit request to delete
      * @return the number of affected rows in ddp_kit_request
      * */
     public int deleteKitRequestShipping(int dsmKitRequestId) {
-        return (int) inTransaction(conn -> {
-            SimpleResult kitDeleteResult = deleteKit(conn, dsmKitRequestId);
-            if (kitDeleteResult.resultException != null) {
-                throw new DsmInternalError(String.format("Error deleting kit with id: %d ", dsmKitRequestId),
-                        kitDeleteResult.resultException);
-            }
-            SimpleResult kitReqDeleteResult = deleteKitRequest(conn, dsmKitRequestId);
-            if (kitReqDeleteResult.resultException != null) {
-                throw new DsmInternalError(String.format("Error deleting kit with id: %d ", dsmKitRequestId),
-                        kitReqDeleteResult.resultException);
-            }
-            return kitReqDeleteResult;
-        }).resultValue;
+        return inTransaction(conn -> {
+            try {
+                deleteKit(conn, dsmKitRequestId);
+                deleteKitRequest(conn, dsmKitRequestId);
+                return dsmKitRequestId;
 
-
+            } catch (SQLException e) {
+                throw new DsmInternalError(String.format("Error deleting kit request shipping with id: %d", dsmKitRequestId), e);
+            }
+        });
     }
 
 }

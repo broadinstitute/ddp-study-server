@@ -43,7 +43,6 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     private static List<ParticipantDto> participants = new ArrayList<>();
     private static List<String> createdKits = new ArrayList<>();
     private ElasticSearchService elasticSearchService = new ElasticSearchService();
-    private static UpdateKitToLegacyIdService updateKitToLegacyIdService = new UpdateKitToLegacyIdService();
 
     @BeforeClass
     public static void doFirst() {
@@ -77,24 +76,24 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testUpdate_notUpdateWrongShortId() {
+    public void test_notUpdateWhenWrongShortId() {
         String wrongShortId = "WRONG_SHORT_ID";
         UpdateKitToLegacyIdsRequest wrongShortIdReq = new UpdateKitToLegacyIdsRequest(
                 oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, wrongShortId, legacyShortId);
-        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(wrongShortIdReq, ddpInstanceDto);
+        UpdateLog updateLog = UpdateKitToLegacyIdService.changeKitIdsToLegacyIds(wrongShortIdReq, ddpInstanceDto);
 
-        log.info(updateLog.getMessage());
+        log.debug(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
         Assert.assertEquals("Invalid short ID WRONG_SHORT_ID", updateLog.getMessage());
     }
 
     @Test
-    public void testUpdate_notVerifyWrongLegacyShortId() {
+    public void test_notUpdateWhenWrongLegacyShortId() {
         String wrongLegacyShortId = "WRONG_LEGACY_SHORT_ID";
         UpdateKitToLegacyIdsRequest wrongLegacyIdReq = new UpdateKitToLegacyIdsRequest(
                 oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, shortId, wrongLegacyShortId);
-        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(wrongLegacyIdReq, ddpInstanceDto);
-        log.info(updateLog.getMessage());
+        UpdateLog updateLog = UpdateKitToLegacyIdService.changeKitIdsToLegacyIds(wrongLegacyIdReq, ddpInstanceDto);
+        log.debug(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
         Assert.assertEquals(("Legacy short ID %s does not match legacy short ID on file %s for participant short ID %s, "
                         + " will not update kit %s")
@@ -102,27 +101,36 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testVerify_notVerifyDuplicateCollaboratorSampleID() {
-        String collaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
+    public void test_notUpdateWhenDuplicateCollaboratorSampleID() {
+        String collaboratorSampleId = "NEW_COLLABORATOR_SAMPLE_ID";
         String collaboratorParticipantId = "SOME_COLLAB_PARTICIPANT_ID";
         KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
                 .withDdpParticipantId(ddpParticipantId)
                 .withBspCollaboratorSampleId(collaboratorSampleId)
                 .withBspCollaboratorParticipantId(collaboratorParticipantId)
-                .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT")
+                .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT1")
                 .withKitTypeName("SALIVA")
                 .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
         String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
-        UpdateKitToLegacyIdsRequest duplicateSampleIdRequest = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId,
-                collaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
+        String dupCollaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
+        KitRequestShipping kitRequestShipping2 =  KitRequestShipping.builder()
+                .withDdpParticipantId(ddpParticipantId)
+                .withBspCollaboratorSampleId(dupCollaboratorSampleId)
+                .withBspCollaboratorParticipantId(collaboratorParticipantId)
+                .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT2")
+                .withKitTypeName("SALIVA")
+                .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+        String dsmKitRequestId2 = testKitUtil.createKitRequestShipping(kitRequestShipping2, DDPInstance.from(ddpInstanceDto), "100");
+        createdKits.add(dsmKitRequestId2);
 
-        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(duplicateSampleIdRequest, ddpInstanceDto);
-        log.info(updateLog.getMessage());
+        UpdateKitToLegacyIdsRequest duplicateSampleIdRequest = new UpdateKitToLegacyIdsRequest(collaboratorSampleId,
+                dupCollaboratorSampleId, collaboratorParticipantId, shortId, legacyShortId);
+        UpdateLog updateLog = UpdateKitToLegacyIdService.changeKitIdsToLegacyIds(duplicateSampleIdRequest, ddpInstanceDto);
+        log.debug(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
         Assert.assertEquals("Kit request with the new collaboratorSampleId DUP_COLLABORATOR_SAMPLE_ID already exists!",
                 updateLog.getMessage());
-
     }
 
     @Test
@@ -130,14 +138,9 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
         UpdateKitToLegacyIdsRequest
                 updateKitToLegacyIdsRequest = new UpdateKitToLegacyIdsRequest(oldCollaboratorSampleId, newCollaboratorSampleId,
                 newCollaboratorParticipantId, shortId, legacyShortId);
-        try {
-            updateKitToLegacyIdsRequest.verify(ddpInstanceDto);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Should not have thrown exception");
-        }
-        UpdateLog updateLog = updateKitToLegacyIdService.changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest, ddpInstanceDto);
-        log.info(updateLog.getMessage());
+
+        UpdateLog updateLog = UpdateKitToLegacyIdService.changeKitIdsToLegacyIds(updateKitToLegacyIdsRequest, ddpInstanceDto);
+        log.debug(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ES_UPDATED, updateLog.getStatus());
 
         KitRequestShipping kitRequestShipping = KitRequestShipping.getKitRequest(Integer.parseInt(createdKits.get(0)));

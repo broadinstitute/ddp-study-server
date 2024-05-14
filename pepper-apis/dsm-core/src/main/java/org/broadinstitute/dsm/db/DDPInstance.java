@@ -247,38 +247,30 @@ public class DDPInstance {
     }
 
     public static DDPInstance getDDPInstanceWithRole(@NonNull String realm, @NonNull String role) {
-        SimpleResult results = inTransaction((conn) -> {
-            return getDDPInstanceWithRole(realm, role, conn);
-        });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError("Couldn't get study %s with role %s".formatted(realm, role), results.resultException);
+        try {
+            return inTransaction((conn) -> getDDPInstanceWithRole(realm, role, conn));
+        } catch (Exception e) {
+            throw new DsmInternalError("Couldn't get study %s with role %s".formatted(realm, role), e);
         }
-        DDPInstance ddpInstance = (DDPInstance) results.resultValue;
-        if (ddpInstance == null) {
-            throw new DsmInternalError("Couldn't find study %s with role %s".formatted(realm, role));
-        }
-        return ddpInstance;
     }
 
     // This method is used to get DDPInstance with role in a transaction, only called by getDDPInstanceWithRole in this class
     // and by Covid19OrderRegistrar
-    public static SimpleResult getDDPInstanceWithRole(@NonNull String realm, @NonNull String role, Connection conn) {
+    public static DDPInstance getDDPInstanceWithRole(@NonNull String realm, @NonNull String role, Connection conn) {
         SimpleResult dbVals = new SimpleResult();
         try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_INSTANCE_WITH_ROLE + QueryExtension.BY_INSTANCE_NAME)) {
             stmt.setString(1, role);
             stmt.setString(2, realm);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    dbVals.resultValue = getDDPInstanceWithRoleFormResultSet(rs);
+                    return getDDPInstanceWithRoleFormResultSet(rs);
+                } else {
+                    throw new DsmInternalError("Couldn't get study %s with role %s".formatted(realm, role));
                 }
-            } catch (SQLException e) {
-                dbVals.resultException = new DsmInternalError("Error getting study %s with role %s ".formatted(realm, role), e);
             }
-        } catch (SQLException ex) {
-            dbVals.resultException = new DsmInternalError("Couldn't get study %s with role %s".formatted(realm, role), ex);
+        } catch (SQLException e) {
+            throw new DsmInternalError("Error getting study %s with role %s".formatted(realm, role), e);
         }
-        return dbVals;
     }
 
     public static DDPInstance getDDPInstanceWithRoleByStudyGuid(@NonNull String studyGuid, @NonNull String role) {

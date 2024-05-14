@@ -26,10 +26,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.CareEvolveException;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,11 +251,7 @@ public class Covid19OrderRegistrar {
             throw new CareEvolveException("Cannot place order for " + kitLabel + " without a pickup time");
         }
 
-        SimpleResult results = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
-        if (results.resultException != null) {
-            throw new DsmInternalError("Could not get DDP instance with role has_kit_request_endpoints", results.resultException);
-        }
-        DDPInstance ddpInstance = (DDPInstance) results.resultValue;
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
         Map<String, Map<String, Object>> esData =
                 ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), participantHruid);
 

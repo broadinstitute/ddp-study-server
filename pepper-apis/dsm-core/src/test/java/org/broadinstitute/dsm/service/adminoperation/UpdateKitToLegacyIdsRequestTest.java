@@ -47,7 +47,6 @@ public class UpdateKitToLegacyIdsRequestTest {
         try {
             UpdateKitToLegacyIdsRequest request = new UpdateKitToLegacyIdsRequest(
                     oldCollaboratorSampleId, newCollaboratorSampleId, newCollaboratorParticipantId, shortId, legacyShortId);
-            request.verify(ddpInstanceDto);  // Assuming ddpInstanceDto is available in your test context
             Assert.fail("Expected an exception to be thrown");
         } catch (Exception e) {
             e.printStackTrace();

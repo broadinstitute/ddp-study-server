@@ -3,9 +3,7 @@ package org.broadinstitute.dsm.service.adminoperation;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 
 @Getter
 @NoArgsConstructor
@@ -47,17 +45,5 @@ public class UpdateKitToLegacyIdsRequest {
             throw new DSMBadRequestException("Missing required field: legacyShortId");
         }
         this.legacyShortId = legacyShortId;
-    }
-
-    /**
-     * Verify that the request is valid by checking if the DDP instance is found
-     *
-     * @param ddpInstanceDto instance from the request
-     */
-    public void verify(DDPInstanceDto ddpInstanceDto) {
-        if (ddpInstanceDto == null) {
-            throw new DsmInternalError("DDP instance not found");
-        }
-
     }
 }

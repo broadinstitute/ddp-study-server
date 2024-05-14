@@ -34,20 +34,6 @@ public class TestParticipantUtil {
     /**
      * Create a participant with provided ES profile
      */
-    public static ParticipantDto createParticipantWithEsProfile(Profile profile,
-                                                                DDPInstanceDto ddpInstanceDto, String ddpParticipantId) {
-        ParticipantDto participant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
-
-        String esIndex = ddpInstanceDto.getEsParticipantIndex();
-        ElasticTestUtil.createParticipant(esIndex, participant);
-        profile.setGuid(ddpParticipantId);
-        ElasticTestUtil.addParticipantProfile(esIndex, profile);
-        return participant;
-    }
-
-    /**
-     * Create a participant with provided ES profile
-     */
     public static ParticipantDto createParticipantWithEsProfile(String participantBaseName, Profile profile,
                                                                 DDPInstanceDto ddpInstanceDto) {
         String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(participantBaseName);
@@ -132,13 +118,11 @@ public class TestParticipantUtil {
         Profile profile = TestParticipantUtil.createProfile("Joe", "Participant%d".formatted(participantOrdinal),
                 participantOrdinal);
         String legacyPid = "PID_%s_%d".formatted(baseName, participantOrdinal);
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId(baseName);
         profile.setLegacyAltPid(legacyPid);
         profile.setHruid(shortId);
-        profile.setGuid(ddpParticipantId);
         profile.setLegacyShortId(legacyShortId);
         ParticipantDto participant =
-                TestParticipantUtil.createParticipantWithEsProfile(profile, ddpInstanceDto, ddpParticipantId);
+                TestParticipantUtil.createParticipantWithEsProfile(baseName, profile, ddpInstanceDto);
         return new ImmutablePair<>(participant, legacyPid);
     }
 
