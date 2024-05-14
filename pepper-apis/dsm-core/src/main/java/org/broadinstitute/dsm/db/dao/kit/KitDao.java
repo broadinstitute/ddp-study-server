@@ -438,13 +438,14 @@ public class KitDao {
         return Optional.ofNullable((KitRequestShipping) results.resultValue);
     }
 
-    private void deleteKitRequest(Connection conn, int kitRequestId) throws SQLException {
+    private int deleteKitRequest(Connection conn, int kitRequestId) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_REQUEST)) {
             stmt.setInt(1, kitRequestId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
                 logger.error("No kit request found with id: %d".formatted(kitRequestId));
             }
+            return rowsAffected;
         }
     }
 
@@ -466,13 +467,14 @@ public class KitDao {
         return (int) simpleResult.resultValue;
     }
 
-    private void deleteKit(Connection conn, int kitId) throws SQLException {
+    private int deleteKit(Connection conn, int kitId) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
             stmt.setInt(1, kitId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
                 logger.error("No kit found with id: %d".formatted(kitId));
             }
+            return rowsAffected;
         }
     }
 
@@ -809,9 +811,11 @@ public class KitDao {
     public int deleteKitRequestShipping(int dsmKitRequestId) {
         return inTransaction(conn -> {
             try {
-                deleteKit(conn, dsmKitRequestId);
+                int rowsAffected = deleteKit(conn, dsmKitRequestId);
                 deleteKitRequest(conn, dsmKitRequestId);
-                return dsmKitRequestId;
+                //deletes in the ddp_kit can affect more rows than in ddp_kit_request, because kit reactivation creates more records
+                //of the same kit in the ddp_kit table
+                return rowsAffected;
 
             } catch (SQLException e) {
                 throw new DsmInternalError(String.format("Error deleting kit request shipping with id: %d", dsmKitRequestId), e);
