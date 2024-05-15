@@ -84,7 +84,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
 
         log.debug(updateLog.getMessage());
         Assert.assertEquals(UpdateLog.UpdateStatus.ERROR, updateLog.getStatus());
-        Assert.assertEquals("Invalid short ID WRONG_SHORT_ID", updateLog.getMessage());
+        Assert.assertEquals("Participant not found for short id WRONG_SHORT_ID", updateLog.getMessage());
     }
 
     @Test

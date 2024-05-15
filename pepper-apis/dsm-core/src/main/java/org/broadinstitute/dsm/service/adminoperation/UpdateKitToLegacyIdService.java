@@ -11,7 +11,6 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
@@ -42,9 +41,6 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
     public void initialize(String userId, String realm, Map<String, String> attributes, String payload) {
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(realm)
                 .orElseThrow(() -> new DSMBadRequestException("Invalid realm: " + realm));
-        if (ddpInstanceDto == null) {
-            throw new DsmInternalError("DDP instance not found");
-        }
 
         if (StringUtils.isBlank(payload)) {
             throw new DSMBadRequestException("Missing required payload");
@@ -93,7 +89,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         // Check if the participant exists in ES and if it has a legacy short ID
         Profile profile;
         try {
-            profile = ElasticSearchService.getParticipantProfileByShortID(ddpInstanceDto.getEsParticipantIndex(), shortId);
+            profile = elasticSearchService.getParticipantProfileByShortID(shortId, ddpInstanceDto.getEsParticipantIndex());
         } catch (Exception e) {
             return new UpdateLog(shortId, UpdateLog.UpdateStatus.ERROR, e.getMessage());
         }

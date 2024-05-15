@@ -97,6 +97,11 @@ public class ElasticSearchService {
         return getSingleParticipantDocument(ddpParticipantId, matchField, index);
     }
 
+    public Optional<ElasticSearchParticipantDto> getParticipantDocumentByShortId(String shortId, String index) {
+        return getSingleParticipantDocument(shortId, "profile.hruid", index);
+    }
+
+
     public boolean participantDocumentExists(String ddpParticipantId, String index) {
         GetRequest getRequest = new GetRequest(index, ddpParticipantId);
         getRequest.fetchSourceContext(new FetchSourceContext(false));
@@ -377,23 +382,18 @@ public class ElasticSearchService {
     /**
      * Get the DSM object for a single participant from ES as a Map
      * or throw an exception if the participant or DSM object is not found
-     * @param participantIndex the participant index
      * @param shortId the shortId of the participant
+     * @param index the index of participant in ES
      * @return the DSM participant object
      */
-    public static Dsm getParticipantDsmByShortId(String participantIndex, String shortId) {
-        Optional<ElasticSearchParticipantDto> ptpData;
-        try {
-            ptpData = new ElasticSearch().getParticipantByShortId(participantIndex, shortId);
-        } catch (Exception e) {
-            throw new DsmInternalError("ES threw exception for search of shortId: " + shortId, e);
-        }
+    public Dsm getParticipantDsmByShortId(String shortId, String index) {
+        Optional<ElasticSearchParticipantDto> ptpData = getParticipantDocumentByShortId(shortId, index);
         if (ptpData.isEmpty()) {
             throw new DSMBadRequestException("Invalid short ID " + shortId);
         }
         Optional<Dsm> dsm = ptpData.get().getDsm();
         if (dsm.isEmpty()) {
-            throw new DsmInternalError("ES returned empty dsm object for shortId " + shortId);
+            throw new DsmInternalError("Dsm object is empty for shortId " + shortId);
         }
         return dsm.get();
     }
@@ -401,23 +401,18 @@ public class ElasticSearchService {
     /**
      * Get the participant profile for a single participant from ES as a Map
      * or throw an exception if the participant or profile is not found
-     * @param participantEsIndex the the index of participant in ES
      * @param shortId the shortId of the participant
+     * @param index the index of participant in ES
      * @return the participant profile
      */
-    public static Profile getParticipantProfileByShortID(String participantEsIndex, String shortId) {
-        Optional<ElasticSearchParticipantDto> ptpData;
-        try {
-            ptpData = new ElasticSearch().getParticipantByShortId(participantEsIndex, shortId);
-        } catch (Exception e) {
-            throw new DsmInternalError("ES threw exception for search of shortId: " + shortId, e);
-        }
+    public Profile getParticipantProfileByShortID(String shortId, String index) {
+        Optional<ElasticSearchParticipantDto> ptpData = getParticipantDocumentByShortId(shortId, index);
         if (ptpData.isEmpty()) {
-            throw new DSMBadRequestException("Invalid short ID " + shortId);
+            throw new DSMBadRequestException("Participant not found for short id " + shortId);
         }
         Optional<Profile> profile = ptpData.get().getProfile();
         if (profile.isEmpty()) {
-            throw new DSMBadRequestException("ES returned empty profile object for shortId " + shortId);
+            throw new DSMBadRequestException("Profile object empty for shortId " + shortId);
         }
         return profile.get();
     }
