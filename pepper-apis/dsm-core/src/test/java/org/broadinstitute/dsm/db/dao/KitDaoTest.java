@@ -106,7 +106,7 @@ public class KitDaoTest extends DbTxnBaseTest {
         }
         kitDao.deleteKitTrackingByKitLabel(KIT_NAME);
         if (kitId != null) {
-            kitDao.deleteKitRequestShipping(kitId);
+            kitDao.deleteKitRequestShipping(kitRequestId);
         }
         if (kitTypeId != null) {
             kitTypeDao.delete(kitTypeId);

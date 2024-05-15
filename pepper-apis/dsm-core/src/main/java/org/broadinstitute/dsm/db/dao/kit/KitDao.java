@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.eval.NotImplementedException;
@@ -443,7 +444,7 @@ public class KitDao {
             stmt.setInt(1, kitRequestId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
-                logger.error("No kit request found with id: %d".formatted(kitRequestId));
+                throw new DsmInternalError("No kit request found with id: %d".formatted(kitRequestId));
             }
             return rowsAffected;
         }
@@ -472,7 +473,7 @@ public class KitDao {
             stmt.setInt(1, kitId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
-                logger.error("No kit found with id: %d".formatted(kitId));
+                throw new DsmInternalError("No kit found with id: %d".formatted(kitId));
             }
             return rowsAffected;
         }
@@ -808,6 +809,7 @@ public class KitDao {
      * @param dsmKitRequestId the id of the kit request to delete
      * @return the number of affected rows in ddp_kit_request
      * */
+    @VisibleForTesting
     public int deleteKitRequestShipping(int dsmKitRequestId) {
         return inTransaction(conn -> {
             try {
