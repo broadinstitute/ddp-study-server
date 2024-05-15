@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.juniperkits;
+package org.broadinstitute.dsm.kits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
@@ -42,16 +43,17 @@ import org.junit.Assert;
 import org.mockito.Mock;
 
 /**
+ * <p>
  * This class has methods to set up a study that uses kits in DSM database.
  * It creates the instance, group, instance_role, kit_type, carrier,
  * kit_dimensions, kit_return and ddp_kit_request_settings for the
  * newly created study.
  * It also contains methods to delete what was set up after tests are complete
- * <p>
+ * </p><p>
  * The usage is by first creating an instance of this class by declaring the desired instance name and study guid,
  * display name and collaborator prefix.
  * Then call setupStudyWithKitsInstanceAndSettings() for initiating all the config in database.
- * <p>
+ * </p>
  * When done, call deleteJuniperInstanceAndSettings() to delete everything
  */
 
@@ -78,7 +80,8 @@ public class TestKitUtil {
     private static final String INSERT_SUB_KITS_SETTINGS =
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
                     + " VALUES (?, ?, 1, ?, '') ;";
-    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request where ddp_kit_request_id like ? ";
+    private static final String SELECT_DSM_KIT_REQUEST_ID = "SELECT dsm_kit_request_id from ddp_kit_request "
+            + " where ddp_kit_request_id like ? ";
     public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     private String kitTypeDisplayName;
     public Integer ddpGroupId;
@@ -96,6 +99,7 @@ public class TestKitUtil {
     private String kitTypeName;
     private String studyGuid;
     private String collaboratorPrefix;
+    private String esIndex;
     private String userWithKitShippingAccess;
     @Getter
     @Mock
@@ -110,14 +114,17 @@ public class TestKitUtil {
     @Mock
     Tracker mockShipmentTracker = mock(Tracker.class);
 
+    private KitDao kitDao = new KitDao();
+
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                                  String kitTypeName, String kitTypeDisplayName) {
+                                  String kitTypeName, String kitTypeDisplayName, String esIndex) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.collaboratorPrefix = collaboratorPrefix;
         this.groupName = groupName;
         this.kitTypeName = kitTypeName;
         this.kitTypeDisplayName = kitTypeDisplayName;
+        this.esIndex = esIndex;
     }
 
     public void deleteGeneratedData() {
@@ -175,16 +182,16 @@ public class TestKitUtil {
         }
     }
 
-    public void deleteKit(String ddpKitRequestId) {
-        SimpleResult results = inTransaction((conn) -> {
-            List<Integer> dsmKitRequestId = new ArrayList<>();
+    public void deleteKitByDdpKitRequestId(String ddpKitRequestId) {
+        List<Integer> dsmKitRequestIds = new ArrayList<>();
+        inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
                 stmt.setString(1, ddpKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        dsmKitRequestId.add(rs.getInt("dsm_kit_request_id"));
+                        dsmKitRequestIds.add(rs.getInt("dsm_kit_request_id"));
                     }
-                    if (dsmKitRequestId.isEmpty()) {
+                    if (dsmKitRequestIds.isEmpty()) {
                         throw new DsmInternalError(
                                 String.format("Could not find kit %s to delete", ddpKitRequestId));
                     }
@@ -194,20 +201,15 @@ public class TestKitUtil {
             } catch (SQLException ex) {
                 throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
             }
-            try {
-                delete(conn, "ddp_kit", "dsm_kit_request_id", dsmKitRequestId);
-                delete(conn, "ddp_kit_request", "dsm_kit_request_id", dsmKitRequestId);
-            } catch (Exception ex) {
-                throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
-            }
             return null;
         });
+        dsmKitRequestIds.forEach(this::deleteKitRequestShipping);
     }
 
     public void deleteKitsArray() {
         for (String kitId : createdKitIds) {
             try {
-                deleteKit(kitId);
+                deleteKitByDdpKitRequestId(kitId);
             } catch (Exception e) {
                 throw new DsmInternalError("Could not delete kit " + kitId, e);
             }
@@ -231,7 +233,7 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, esIndex);
                 ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = adminUtil.getStudyGroupId();
                 instanceRoleId = getInstanceRole(conn);
@@ -408,7 +410,7 @@ public class TestKitUtil {
      * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
      *
      * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
-     ***/
+     **/
 
     public void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
                                        DDPInstance ddpInstance) {
@@ -472,4 +474,16 @@ public class TestKitUtil {
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }
 
+    public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
+                                           String userId) {
+
+        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(), kitTypeId,
+                kitRequestShipping.getDdpParticipantId(), kitRequestShipping.getBspCollaboratorParticipantId(),
+                kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false, null,
+                ddpInstance, kitTypeName, null);
+    }
+
+    public void deleteKitRequestShipping(int dsmKitRequestId) {
+        kitDao.deleteKitRequestShipping(dsmKitRequestId);
+    }
 }

@@ -26,10 +26,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.CareEvolveException;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +50,6 @@ public class Covid19OrderRegistrar {
     private final Provider provider;
     private final int maxRetries;
     private final long retryWaitMillis;
-    private RestHighLevelClient esClient;
 
     /**
      * Create a new one that uses the given endpoint
@@ -253,14 +250,10 @@ public class Covid19OrderRegistrar {
         if (kitPickupTime == null) {
             throw new CareEvolveException("Cannot place order for " + kitLabel + " without a pickup time");
         }
-        esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(cfg.getString(ApplicationConfigConstants.ES_URL),
-                cfg.getString(ApplicationConfigConstants.ES_USERNAME), cfg.getString(ApplicationConfigConstants.ES_PASSWORD),
-                cfg.getString(ApplicationConfigConstants.ES_PROXY));
 
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
         Map<String, Map<String, Object>> esData =
-                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
-                        participantHruid);
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), participantHruid);
 
         if (esData.size() == 1) {
             JsonObject data = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();

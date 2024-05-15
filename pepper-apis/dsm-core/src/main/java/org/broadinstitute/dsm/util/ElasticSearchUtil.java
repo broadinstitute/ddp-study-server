@@ -250,7 +250,7 @@ public class ElasticSearchUtil {
     }
 
     public static Map<String, Map<String, Object>> getSingleParticipantFromES(@NonNull String realm, @NonNull String index,
-                                                                              RestHighLevelClient client, String participantHruid) {
+                                                                              String participantHruid) {
         initialize();
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {

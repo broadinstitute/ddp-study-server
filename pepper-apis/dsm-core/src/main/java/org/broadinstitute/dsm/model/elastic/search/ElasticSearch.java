@@ -113,7 +113,7 @@ public class ElasticSearch implements ElasticSearchable {
      * Parses the result map to create a new {@link ElasticSearchParticipantDto}.
      * @param sourceMap the source map
      * @param queriedParticipantId optional, used for troubleshooting.  If given, this becomes the queriedParticipantId
-     * @return
+     * @return a new {@link ElasticSearchParticipantDto} from the source map
      */
     public ElasticSearchParticipantDto parseSourceMap(Map<String, Object> sourceMap, String queriedParticipantId) {
         if (sourceMap != null) {

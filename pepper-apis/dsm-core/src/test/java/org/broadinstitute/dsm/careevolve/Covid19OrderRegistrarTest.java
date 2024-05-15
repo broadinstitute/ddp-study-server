@@ -19,7 +19,6 @@ import org.broadinstitute.dsm.db.DdpKit;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -73,15 +72,11 @@ public class Covid19OrderRegistrarTest {
         String kitLabel = "";
         String externalOrderNumber = "";
         String collectionTime = "";
-        String esUrl = cfg.getString(ApplicationConfigConstants.ES_URL);
-        String esUsername = cfg.getString(ApplicationConfigConstants.ES_USERNAME);
-        String esPassword = cfg.getString(ApplicationConfigConstants.ES_PASSWORD);
-        RestHighLevelClient esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUsername, esPassword);
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
         Map<String, Map<String, Object>> esData =
-                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(),
                         participantHruid);
 
         if (esData.size() == 1) {

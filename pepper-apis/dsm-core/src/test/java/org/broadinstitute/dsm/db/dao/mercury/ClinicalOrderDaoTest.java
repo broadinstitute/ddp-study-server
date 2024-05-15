@@ -1,5 +1,16 @@
 package org.broadinstitute.dsm.db.dao.mercury;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
+import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -11,9 +22,8 @@ import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.juniperkits.TestKitUtil;
+import org.broadinstitute.dsm.kits.TestKitUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
-
 import org.broadinstitute.dsm.util.MercuryOrderTestUtil;
 import org.broadinstitute.dsm.util.SampleIdTestUtil;
 import org.broadinstitute.dsm.util.TissueTestUtil;
@@ -22,17 +32,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
-import static org.broadinstitute.dsm.statics.DBConstants.PT_LIST_VIEW;
 
 @Slf4j
 public class ClinicalOrderDaoTest extends DbTxnBaseTest {
@@ -83,7 +82,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String studyGroup = "ClinOrdTest" + nameAppend;
 
         testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup,
-                "SALIVA", null);
+                "SALIVA", null, null);
         testKitUtil.setupInstanceAndSettings();
         userId = testKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
