@@ -127,6 +127,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
                         .formatted(kitsWithNewSampleId.size(), newCollaboratorSampleId, (kitsWithNewSampleId.stream().map(
                                 kit -> kit.getDdpKitRequestId()).collect(Collectors.joining(", ")))));
             }
+            //use the dsmKitRequestId of that kit to get all the kit data for this kit and update the ES
             KitRequestShipping newKitRequestShipping = KitRequestShipping.getKitRequest(kitsWithNewSampleId.get(0).getDsmKitRequestId());
             changeDataInEs(currentCollaboratorSampleId, newKitRequestShipping, ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
             return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
