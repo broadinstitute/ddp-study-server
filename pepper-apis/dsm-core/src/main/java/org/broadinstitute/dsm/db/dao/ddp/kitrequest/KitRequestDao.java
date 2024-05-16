@@ -177,7 +177,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                 stmt.setString(1, collaboratorSampleId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        kitRequestShippingList.add(KitRequestShipping.getKitRequestShippingFromResultSet(rs));
+                        kitRequestShippingList.add(KitRequestShipping.getKitRequestFromResultSet(rs));
                     }
                     return dbVals;
                 } catch (SQLException e) {
