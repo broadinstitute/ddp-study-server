@@ -119,17 +119,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
             String ddpParticipantId = profile.getGuid();
             kitRequestDao.updateKitToLegacyIds(updateKitToLegacyIdsRequest, legacyParticipantId);
             //find the recently updated kit request, so we can update the ES
-            List<KitRequestShipping> kitsWithNewSampleId = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
-            if (kitsWithNewSampleId.size() != 1) {
-                //this should not happen, we have checked that the new collaborator sample id does not exist and that the update only
-                // updated one row, so we should only have one kit request with the new collaborator sample id
-                throw new DsmInternalError("Unexpected number of kit requests, got %d kits with collaborator sample ID %s, kit ids:%s"
-                        .formatted(kitsWithNewSampleId.size(), newCollaboratorSampleId, (kitsWithNewSampleId.stream().map(
-                                kit -> kit.getDdpKitRequestId()).collect(Collectors.joining(", ")))));
-            }
-            //use the dsmKitRequestId of this kit to get all the kit data for this kit and update the ES
-            KitRequestShipping newKitRequestShipping = KitRequestShipping.getKitRequest(kitsWithNewSampleId.get(0).getDsmKitRequestId());
-            changeDataInEs(currentCollaboratorSampleId, newKitRequestShipping, ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+            changeDataInEs(currentCollaboratorSampleId, newCollaboratorSampleId, ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
             return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
                     "Kit collab id was changed from %s to %s".formatted(currentCollaboratorSampleId, newCollaboratorSampleId));
         } catch (Exception e) {
@@ -138,7 +128,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         }
     }
 
-    private static void changeDataInEs(String currentCollaboratorSampleId, KitRequestShipping newKitRequestShipping,
+    private static void changeDataInEs(String currentCollaboratorSampleId, String newCollaboratorSampleId,
                                        String ddpParticipantId, String esIndex) {
         Dsm dsm = elasticSearchService.getRequiredDsmData(ddpParticipantId, esIndex);
         List<KitRequestShipping> kitRequestShippings = dsm.getKitRequestShipping();
@@ -146,11 +136,21 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
             kitRequestShippings.removeIf(
                     kitRequestShipping -> currentCollaboratorSampleId.equals(kitRequestShipping.getBspCollaboratorSampleId()));
         } else {
-            // This should not happen, there is a known bug in KitUpload that causes this but this should be fixed
+            // This technically should not happen, but there is a known bug in KitUpload that causes this and should be fixed
             // but if it does, log it and create an empty list
             log.info("No kit requests found for participant %s".formatted(ddpParticipantId));
             kitRequestShippings = new ArrayList<>();
         }
+        List<KitRequestShipping> kitsWithNewSampleId = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
+        if (kitsWithNewSampleId.size() != 1) {
+            //this should not happen, we have checked that the new collaborator sample id does not exist and that the update only
+            // updated one row, so we should only have one kit request with the new collaborator sample id
+            throw new DsmInternalError("Unexpected number of kit requests, got %d kits with collaborator sample ID %s, kit ids:%s"
+                    .formatted(kitsWithNewSampleId.size(), newCollaboratorSampleId, (kitsWithNewSampleId.stream().map(
+                            kit -> kit.getDdpKitRequestId()).collect(Collectors.joining(", ")))));
+        }
+        //use the dsmKitRequestId of this kit to get all the kit data for this kit and update the ES
+        KitRequestShipping newKitRequestShipping = KitRequestShipping.getKitRequest(kitsWithNewSampleId.get(0).getDsmKitRequestId());
         kitRequestShippings.add(newKitRequestShipping);
         dsm.setKitRequestShipping(kitRequestShippings);
         ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
