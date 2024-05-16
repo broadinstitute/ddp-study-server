@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.service.adminoperation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,7 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.service.admin.AdminOperationRecord;
@@ -105,18 +107,28 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
                     + " will not update kit %s").formatted(updateKitToLegacyIdsRequest.getLegacyShortId(), legacyShortIdOnFile, shortId,
                     currentCollaboratorSampleId));
         }
-        if (!existsKitRequestWithCollaboratorSampleId(currentCollaboratorSampleId, profile.getGuid(), kitRequestDao)) {
+        if (!existsKitRequestWithCollaboratorSampleId(currentCollaboratorSampleId, kitRequestDao)) {
             return new UpdateLog(shortId, UpdateLog.UpdateStatus.ERROR,
                     ("Kit request not found for collaborator sample ID %s".formatted(currentCollaboratorSampleId)));
         }
-        if (existsKitRequestWithCollaboratorSampleId(newCollaboratorSampleId, profile.getGuid(), kitRequestDao)) {
+        if (existsKitRequestWithCollaboratorSampleId(newCollaboratorSampleId, kitRequestDao)) {
             return new UpdateLog(shortId, UpdateLog.UpdateStatus.ERROR,
                     "Kit request with the new collaboratorSampleId %s already exists!".formatted(newCollaboratorSampleId));
         }
         try {
             String ddpParticipantId = profile.getGuid();
             kitRequestDao.updateKitToLegacyIds(updateKitToLegacyIdsRequest, legacyParticipantId);
-            changeDataInEs(currentCollaboratorSampleId, newCollaboratorSampleId, ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+            //find the recently updated kit request, so we can update the ES
+            List<KitRequestShipping> kitsWithNewSampleId = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
+            if (kitsWithNewSampleId.size() != 1) {
+                //this should not happen, we have checked that the new collaborator sample id does not exist and that the update only
+                // updated one row, so we should only have one kit request with the new collaborator sample id
+                throw new DsmInternalError("Unexpected number of kit requests, got %d kits with collaborator sample ID %s, kit ids:%s"
+                        .formatted(kitsWithNewSampleId.size(), newCollaboratorSampleId, (kitsWithNewSampleId.stream().map(
+                                kit -> kit.getDdpKitRequestId()).collect(Collectors.joining(", ")))));
+            }
+            KitRequestShipping newKitRequestShipping = KitRequestShipping.getKitRequest(kitsWithNewSampleId.get(0).getDsmKitRequestId());
+            changeDataInEs(currentCollaboratorSampleId, newKitRequestShipping, ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
             return new UpdateLog(ddpParticipantId, UpdateLog.UpdateStatus.ES_UPDATED,
                     "Kit collab id was changed from %s to %s".formatted(currentCollaboratorSampleId, newCollaboratorSampleId));
         } catch (Exception e) {
@@ -125,8 +137,8 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
         }
     }
 
-    private static void changeDataInEs(String currentCollaboratorSampleId, String newCollaboratorSampleId, String ddpParticipantId,
-                                       String esIndex) {
+    private static void changeDataInEs(String currentCollaboratorSampleId, KitRequestShipping newKitRequestShipping,
+                                       String ddpParticipantId, String esIndex) {
         Dsm dsm = elasticSearchService.getRequiredDsmData(ddpParticipantId, esIndex);
         List<KitRequestShipping> kitRequestShippings = dsm.getKitRequestShipping();
         if (kitRequestShippings != null) {
@@ -138,12 +150,7 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
             log.info("No kit requests found for participant %s".formatted(ddpParticipantId));
             kitRequestShippings = new ArrayList<>();
         }
-        List<KitRequestShipping> kitsWithNewSampleId = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
-        if (kitsWithNewSampleId == null || kitsWithNewSampleId.isEmpty() ||  kitsWithNewSampleId.size() > 1) {
-            throw new DSMBadRequestException("Unexpected number of kit requests with collaborator sample ID %s"
-                    .formatted(newCollaboratorSampleId));
-        }
-        kitRequestShippings.add(kitsWithNewSampleId.get(0));
+        kitRequestShippings.add(newKitRequestShipping);
         dsm.setKitRequestShipping(kitRequestShippings);
         ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
     }
@@ -154,13 +161,11 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
      * already exists in DSM, and if it belongs to the given participant.
      *
      * @param collaboratorSampleId collaborator sample id to check
-     * @param ddpParticipantId participant id to check
      * @return true if a kit request with the given collaborator sample id exists in DSM and belongs to the given participant
      * */
-    private static boolean existsKitRequestWithCollaboratorSampleId(String collaboratorSampleId, String ddpParticipantId,
-                                                            KitRequestDao kitRequestDao) {
+    private static boolean existsKitRequestWithCollaboratorSampleId(String collaboratorSampleId, KitRequestDao kitRequestDao) {
         List<KitRequestShipping> kitRequestShippingList = kitRequestDao.getKitRequestForCollaboratorSampleId(collaboratorSampleId);
-        if (kitRequestShippingList == null || kitRequestShippingList.isEmpty()) {
+        if (kitRequestShippingList.isEmpty()) {
             return false;
         }
         if (kitRequestShippingList.size() > 1) {

@@ -478,6 +478,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 .withBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
                 .withBspCollaboratorSampleId(rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
                 .withDdpLabel(rs.getString(DBConstants.DSM_LABEL))
+                .withDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID))
                 .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID))
                 .withCreatedBy(rs.getString(DBConstants.CREATED_BY))
                 .withDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID)).build();

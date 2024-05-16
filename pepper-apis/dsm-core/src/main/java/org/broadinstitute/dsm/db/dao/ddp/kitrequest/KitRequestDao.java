@@ -151,6 +151,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                 stmt.setString(4, updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId());
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows != 1) {
+                    // checks that only one row was updated, which means only one row has this collaborator sample id
                     throw new DSMBadRequestException(
                             "Error updating kit to legacy ids for kit with sample id %s, was updating %d rows".formatted(
                                     updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(), affectedRows));
