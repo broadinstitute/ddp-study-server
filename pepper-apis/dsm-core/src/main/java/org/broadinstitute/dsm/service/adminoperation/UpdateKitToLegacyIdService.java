@@ -138,8 +138,12 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
             log.info("No kit requests found for participant %s".formatted(ddpParticipantId));
             kitRequestShippings = new ArrayList<>();
         }
-        KitRequestShipping newlyUpdatedKit = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
-        kitRequestShippings.add(newlyUpdatedKit);
+        List<KitRequestShipping> kitsWithNewSampleId = kitRequestDao.getKitRequestForCollaboratorSampleId(newCollaboratorSampleId);
+        if (kitsWithNewSampleId == null || kitsWithNewSampleId.isEmpty() ||  kitsWithNewSampleId.size() > 1) {
+            throw new DSMBadRequestException("Unexpected number of kit requests with collaborator sample ID %s"
+                    .formatted(newCollaboratorSampleId));
+        }
+        kitRequestShippings.add(kitsWithNewSampleId.get(0));
         dsm.setKitRequestShipping(kitRequestShippings);
         ElasticSearchService.updateDsm(ddpParticipantId, dsm, esIndex);
     }
@@ -155,10 +159,13 @@ public class UpdateKitToLegacyIdService extends ParticipantAdminOperationService
      * */
     private static boolean existsKitRequestWithCollaboratorSampleId(String collaboratorSampleId, String ddpParticipantId,
                                                             KitRequestDao kitRequestDao) {
-        KitRequestShipping kitRequestShipping = kitRequestDao.getKitRequestForCollaboratorSampleId(collaboratorSampleId);
-        if (kitRequestShipping == null) {
+        List<KitRequestShipping> kitRequestShippingList = kitRequestDao.getKitRequestForCollaboratorSampleId(collaboratorSampleId);
+        if (kitRequestShippingList == null || kitRequestShippingList.isEmpty()) {
             return false;
         }
-        return StringUtils.isNotBlank(ddpParticipantId) ? ddpParticipantId.equals(kitRequestShipping.getDdpParticipantId()) : true;
+        if (kitRequestShippingList.size() > 1) {
+            throw new DSMBadRequestException("Multiple kit requests found for collaborator sample ID %s".formatted(collaboratorSampleId));
+        }
+        return true;
     }
 }

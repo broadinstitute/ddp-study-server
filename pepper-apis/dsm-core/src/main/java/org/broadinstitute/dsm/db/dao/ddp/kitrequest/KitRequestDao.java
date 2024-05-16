@@ -47,8 +47,8 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                     + "req.external_order_date,  req.external_order_status,  req.external_response,  req.upload_reason, "
                     + "req.order_transmitted_at,  req.dsm_kit_request_id  FROM  ddp_kit_request req";
 
-    public static final String SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID = " SELECT * FROM  ddp_kit_request r LEFT JOIN ddp_kit k "
-            + " ON (r.dsm_kit_request_id = k.dsm_kit_request_id) WHERE bsp_collaborator_sample_id = ?";
+    public static final String SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID = " SELECT * FROM  ddp_kit_request r"
+            + " WHERE bsp_collaborator_sample_id = ?";
     public static final String SQL_UPDATE_COLLAB_ID_AND_DDP_PARTICIPANT_ID =
             " UPDATE ddp_kit_request SET bsp_collaborator_sample_id = ?, ddp_participant_id = ?, "
             + "bsp_collaborator_participant_id = ? WHERE dsm_kit_request_id in  "
@@ -169,14 +169,15 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                 updateKitToLegacyIdsRequest.getNewCollaboratorSampleId()));
     }
 
-    public KitRequestShipping getKitRequestForCollaboratorSampleId(String collaboratorSampleId) {
+    public List<KitRequestShipping> getKitRequestForCollaboratorSampleId(String collaboratorSampleId) {
+        List<KitRequestShipping> kitRequestShippingList = new ArrayList<>();
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID)) {
                 stmt.setString(1, collaboratorSampleId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = KitRequestShipping.getKitRequestShippingFromResultSet(rs);
+                    while (rs.next()) {
+                        kitRequestShippingList.add(KitRequestShipping.getKitRequestShippingFromResultSet(rs));
                     }
                     return dbVals;
                 } catch (SQLException e) {
@@ -192,6 +193,6 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             throw new DsmInternalError("Error getting KitRequestShipping by collaboratorSampleId "
                     + collaboratorSampleId, results.resultException);
         }
-        return (KitRequestShipping) results.resultValue;
+        return kitRequestShippingList;
     }
 }
