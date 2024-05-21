@@ -5,12 +5,13 @@ import java.util.Optional;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.kit.BSPKitDao;
+import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 public class BSPKit extends GPReceivedKit {
 
     private static Logger logger = LoggerFactory.getLogger(BSPKit.class);
+    EventService eventService = new EventService();
 
     public Optional<BSPKitStatus> getKitStatus(@NonNull BSPKitDto bspKitQueryResult, NotificationUtil notificationUtil) {
         if (StringUtils.isNotBlank(bspKitQueryResult.getParticipantExitId())) {
@@ -48,7 +50,7 @@ public class BSPKit extends GPReceivedKit {
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
                         kitLabel, 1);
                 if (kitDDPNotification != null) {
-                    EventUtil.sendKitNotification(kitDDPNotification);
+                    eventService.sendKitEventToDss(kitDDPNotification);
                 }
             }
         } catch (Exception e) {

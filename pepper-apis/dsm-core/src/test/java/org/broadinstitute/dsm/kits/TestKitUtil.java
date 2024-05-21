@@ -114,7 +114,6 @@ public class TestKitUtil {
     private String collaboratorPrefix;
     private String esIndex;
     private String userWithKitShippingAccess;
-    private String esIndex;
     @Getter
     @Mock
     EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
@@ -504,6 +503,7 @@ public class TestKitUtil {
     public void deleteKitRequestShipping(int dsmKitRequestId) {
         kitDao.deleteKitRequestShipping(dsmKitRequestId);
     }
+
     public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();

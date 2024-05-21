@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.stool.upload;
 
 import java.util.List;
 
+import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDto;
 import org.broadinstitute.dsm.files.parser.AbstractRecordsParser;
@@ -9,7 +10,7 @@ import org.broadinstitute.dsm.files.parser.stool.TSVStoolUploadRecordsParser;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,7 @@ public class StoolUploadService {
     private static final Logger logger = LoggerFactory.getLogger(StoolUploadService.class);
 
     private final StoolUploadDao stoolUploadDao = new StoolUploadDao();
+    EventService eventService = new EventService();
 
     public static StoolUploadService spawn() {
         return new StoolUploadService();
@@ -37,7 +39,7 @@ public class StoolUploadService {
                     stoolUploadDto.getMfBarcode(), 1);
             if (kitDDPNotification != null) {
                 logger.info("Triggering DDP to send emails");
-                EventUtil.sendKitNotification(kitDDPNotification);
+                eventService.sendKitEventToDss(kitDDPNotification);
             } else {
                 logger.warn(String.format("No notification was found for barcode %s", stoolUploadDto.getMfBarcode()));
             }

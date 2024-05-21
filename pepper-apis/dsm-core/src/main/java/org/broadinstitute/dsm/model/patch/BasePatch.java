@@ -30,7 +30,7 @@ import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +43,9 @@ public abstract class BasePatch {
     protected static final String STATUS = "status";
     protected static final Gson GSON = new GsonBuilder().serializeNulls().create();
     static final Logger logger = LoggerFactory.getLogger(BasePatch.class);
+
+    private EventDao eventDao = new EventDao();
+    private EventService eventService = new EventService();
     protected static Map<String, Object> NULL_KEY;
     protected Patch patch;
     protected Profile profile;
@@ -208,16 +211,15 @@ public abstract class BasePatch {
     }
 
     protected void triggerParticipantEvent(DDPInstance ddpInstance, Patch patch, Value action) {
-        final EventDao eventDao = new EventDao();
         final EventTypeDao eventTypeDao = new EventTypeDao();
         Optional<EventTypeDto> eventType =
                 eventTypeDao.getEventTypeByEventNameAndInstanceId(action.getName(), ddpInstance.getDdpInstanceId());
         eventType.ifPresent(eventTypeDto -> {
             boolean participantHasTriggeredEventByEventType =
-                    eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(action.getName(), patch.getParentId()).orElse(false);
+                    eventDao.isEventTriggeredForParticipant(action.getName(), patch.getParentId());
             if (!participantHasTriggeredEventByEventType) {
                 String type = eventTypeDto.getEventName();
-                EventUtil.triggerDDPForParticipantEvent(type, ddpInstance, patch.getParentId());
+                eventService.sendParticipantEventToDss(type, ddpInstance, patch.getParentId());
             } else {
                 logger.info("Participant " + patch.getParentId() + " was already triggered for event type " + action.getName());
             }

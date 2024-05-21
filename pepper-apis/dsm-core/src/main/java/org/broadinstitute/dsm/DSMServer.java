@@ -140,7 +140,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.JavaHeapDumper;
 import org.broadinstitute.dsm.util.JsonNullTransformer;
@@ -346,15 +346,17 @@ public class DSMServer {
     /**
      * Job to trigger ddp reminder emails and external shipper
      */
-    public static void createScheduleJob(@NonNull Scheduler scheduler, EventUtil eventUtil, NotificationUtil notificationUtil,
+    public static void createScheduleJob(@NonNull Scheduler scheduler, EventService eventService, NotificationUtil notificationUtil,
                                          @NonNull Class<? extends Job> jobClass, @NonNull String identity, @NonNull String cronExpression,
                                          @NonNull BasicTriggerListener basicTriggerListener) throws SchedulerException {
         //create job
         JobDetail job = JobBuilder.newJob(jobClass).withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
 
-        if (eventUtil != null) {
+        if (eventService != null) {
             //pass parameters to JobDataMap for JobDetail
-            job.getJobDataMap().put(EVENT_UTIL, eventUtil);
+            job.getJobDataMap().put(EVENT_UTIL, eventService);
+        } else {
+            logger.error("EventService is null, some jobs might not work properly");
         }
         if (notificationUtil != null) {
             //pass parameters to JobDataMap for JobDetail
@@ -684,8 +686,8 @@ public class DSMServer {
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
         patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new GsonResponseTransformer());
 
-        EventUtil eventUtil = new EventUtil();
-        scheduler = setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
+        EventService eventService = new EventService();
+        scheduler = setupJobs(cfg, kitUtil, notificationUtil, eventService);
 
         //TODO - redo with pubsub
         JavaHeapDumper heapDumper = new JavaHeapDumper();
@@ -974,7 +976,7 @@ public class DSMServer {
     }
 
     private Scheduler setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
-                                @NonNull EventUtil eventUtil) {
+                                @NonNull EventService eventService) {
         String schedulerName = null;
         Scheduler scheduler = null;
         if (cfg.getBoolean(ApplicationConfigConstants.QUARTZ_ENABLE_JOBS)) {
@@ -995,7 +997,7 @@ public class DSMServer {
                 createScheduleJob(scheduler, cfg, notificationUtil, kitUtil, GPNotificationJob.class, "GP_SCHEDULE_JOB",
                         cfg.getString(ApplicationConfigConstants.EMAIL_CRON_EXPRESSION_FOR_GP_NOTIFICATION));
 
-                createScheduleJob(scheduler, eventUtil, notificationUtil, DDPEventJob.class, "TRIGGER_DDP_EVENT",
+                createScheduleJob(scheduler, eventService, notificationUtil, DDPEventJob.class, "TRIGGER_DDP_EVENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_DDP_EVENT_TRIGGER),
                         new DDPEventTriggerListener());
 

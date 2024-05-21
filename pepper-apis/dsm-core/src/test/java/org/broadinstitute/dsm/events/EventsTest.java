@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.juniperkits.TestKitUtil;
+import org.broadinstitute.dsm.kits.TestKitUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.KitShippingTestUtil;
@@ -39,7 +39,7 @@ public class EventsTest extends DbAndElasticBaseTest {
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex("event_instance", "elastic/lmsMappings.json", null);
         testKitUtil = new TestKitUtil(instanceName, instanceGuid, instanceName, "event_test_prefix",
-                "event-group", null);
+                "event-group", null, esIndex);
         testKitUtil.setupInstanceAndSettings();
         testKitUtil.setEsIndex(esIndex);
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(testKitUtil.getDdpInstanceId()).orElseThrow();
@@ -72,7 +72,7 @@ public class EventsTest extends DbAndElasticBaseTest {
             String kitLabel = "EVENT_KIT_LABEL";
             testKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
 
-            Assert.assertTrue(new EventDao().hasTriggeredEventByEventTypeAndDsmKitId("SENT",
+            Assert.assertTrue(new EventDao().isEventTriggeredForKit("SENT",
                     kitRequestShipping.getDsmKitRequestId()).orElse(false));
         } catch (IOException e) {
             throw new RuntimeException(e);

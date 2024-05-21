@@ -4,18 +4,20 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
+import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(KitFinalSentBaseUseCase.class);
+    EventService eventService = new EventService();
 
     private static final String GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL =
             "select eve.event_name, eve.event_type, "
@@ -30,7 +32,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
 
 
 
-    public KitFinalSentBaseUseCase(KitPayload kitPayload, KitDao kitDao) {
+    protected KitFinalSentBaseUseCase(KitPayload kitPayload, KitDao kitDao) {
         super(kitPayload, kitDao);
     }
 
@@ -46,7 +48,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL,
                 ddpLabel, 1);
         if (kitDDPNotification != null) {
-            EventUtil.sendKitNotification(kitDDPNotification);
+            eventService.sendKitEventToDss(kitDDPNotification);
         }
         if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
             try {

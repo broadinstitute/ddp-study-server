@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.jobs;
 
 import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -18,8 +18,8 @@ public class DDPEventJob implements Job {
         try {
             JobDataMap dataMap = context.getJobDetail().getJobDataMap();
             //fetch parameters from JobDataMap
-            EventUtil eventUtil = (EventUtil) dataMap.get(DSMServer.EVENT_UTIL);
-            eventUtil.triggerReminder();
+            EventService eventService = (EventService) dataMap.get(DSMServer.EVENT_UTIL);
+            eventService.triggerReminder();
 
             NotificationUtil notificationUtil = (NotificationUtil) dataMap.get(DSMServer.NOTIFICATION_UTIL);
             notificationUtil.removeObsoleteReminders();

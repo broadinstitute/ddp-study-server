@@ -46,6 +46,7 @@ import org.apache.http.client.fluent.Executor;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.InstanceSettings;
+import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.exception.ExternalShipperException;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.KitRequest;
@@ -66,7 +67,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -113,6 +114,8 @@ public class GBFRequestUtil implements ExternalShipper {
     private static int additionalAttempts = 1;
     private static int sleepInMs = 500;
     private static Executor blindTrustEverythingExecutor;
+
+    EventService eventService = new EventService();
     // public final String CANCEL_ORDER_ENDPOINT = "cancelorder";
     //    private final String ORDERED = "ORDERED";
     private final String notFound = "NOT FOUND"; //INDICATES: we have no record of the order number
@@ -495,12 +498,12 @@ public class GBFRequestUtil implements ExternalShipper {
                                 if (kitDeliveredNotification != null) {
                                     logger.info("Triggering DDP for kit 'DELIVERED' with external order number: "
                                             + kit.getExternalOrderNumber());
-                                    EventUtil.sendKitNotification(kitDeliveredNotification);
+                                    eventService.sendKitEventToDss(kitDeliveredNotification);
                                 } else {
                                     logger.error("delivered kitDDPNotification was null for " + kit.getExternalOrderNumber());
                                 }
                             }
-                            EventUtil.sendKitNotification(kitDDPNotification);
+                            eventService.sendKitEventToDss(kitDDPNotification);
                         } else {
                             logger.error("kitDDPNotification was null for " + kit.getExternalOrderNumber());
                         }

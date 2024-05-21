@@ -17,14 +17,15 @@ import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
 public class ClinicalKitDao {
     public static final String PECGS = "PE-CGS";
     public static final String MERCURY = "MERCURY";
-    static final EventDao eventDao = new EventDao();
+    final EventDao eventDao = new EventDao();
+    EventService eventService = new EventService();
     final EventTypeDao eventTypeDao = new EventTypeDao();
     private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
             "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, date_px,  "
@@ -199,10 +200,10 @@ public class ClinicalKitDao {
                 eventTypeDao.getEventTypeByEventNameAndInstanceId(eventName, ddpInstance.getDdpInstanceId());
         eventType.ifPresent(eventTypeDto -> {
             boolean participantHasTriggeredEventByEventType =
-                    eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(eventName, ddpParticipantId).orElse(false);
+                    eventDao.isEventTriggeredForParticipant(eventName, ddpParticipantId);
             if (!participantHasTriggeredEventByEventType) {
                 String type = eventTypeDto.getEventName();
-                EventUtil.triggerDDPForParticipantEvent(type, ddpInstance, ddpParticipantId);
+                eventService.sendParticipantEventToDss(type, ddpInstance, ddpParticipantId);
             } else {
                 log.info("Participant " + ddpParticipantId + " was already triggered for event type " + eventName);
             }
