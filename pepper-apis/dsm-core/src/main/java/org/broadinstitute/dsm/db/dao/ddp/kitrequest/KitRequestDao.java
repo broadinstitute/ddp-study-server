@@ -10,9 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.service.adminoperation.UpdateKitToLegacyIdsRequest;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -35,16 +40,20 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String BY_INSTANCE_ID = " WHERE kr.ddp_instance_id = ?";
 
-    public static final String SQL_GET_KIT_REQUEST_ID = "SELECT  ddp_kit_request_id  FROM  ddp_kit_request";
-
-    public static final String BY_BSP_COLLABORATOR_SAMPLE_ID = " WHERE bsp_collaborator_sample_id = ?";
-
     public static final String SQL_GET_KIT_REQUEST =
             "SELECT  req.ddp_kit_request_id,   req.ddp_instance_id,  req.ddp_kit_request_id,  req.kit_type_id,"
                     + "req.bsp_collaborator_participant_id,  req.bsp_collaborator_sample_id,  req.ddp_participant_id, "
                     + "req.ddp_label,  req.created_by,  req.created_date,  req.external_order_number, "
                     + "req.external_order_date,  req.external_order_status,  req.external_response,  req.upload_reason, "
                     + "req.order_transmitted_at,  req.dsm_kit_request_id  FROM  ddp_kit_request req";
+
+    public static final String SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID = " SELECT * FROM  ddp_kit_request r"
+            + " WHERE bsp_collaborator_sample_id = ?";
+    public static final String SQL_UPDATE_COLLAB_ID_AND_DDP_PARTICIPANT_ID =
+            " UPDATE ddp_kit_request SET bsp_collaborator_sample_id = ?, ddp_participant_id = ?, "
+            + "bsp_collaborator_participant_id = ? WHERE dsm_kit_request_id in  "
+            + "(SELECT dsm_kit_request_id FROM (SELECT dsm_kit_request_id FROM ddp_kit_request) as tbl "
+            + " WHERE bsp_collaborator_sample_id = ?) AND dsm_kit_request_id <> 0";
 
     public static final String BY_DDP_LABEL = " where ddp_label = ?";
 
@@ -63,36 +72,6 @@ public class KitRequestDao implements Dao<KitRequestDto> {
     @Override
     public Optional<KitRequestDto> get(long id) {
         return Optional.empty();
-    }
-
-    public Optional<KitRequestDto> getKitRequestByLabel(String kitLabel) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST + BY_DDP_LABEL)) {
-                stmt.setString(1, kitLabel);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue =
-                            new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                    rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
-                                    rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                    rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
-                                    rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
-                                    rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
-                                    rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
-                                    rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),
-                                    rs.getString(DBConstants.UPLOAD_REASON), rs.getTimestamp(DBConstants.ORDER_TRANSMITTED_AT));
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            if (dbVals.resultException != null) {
-                throw new RuntimeException("Error getting kit request with label " + kitLabel, dbVals.resultException);
-            }
-            return dbVals;
-        });
-        return Optional.ofNullable((KitRequestDto) results.resultValue);
     }
 
     public List<ESSamplesDto> getESSamplesByInstanceId(int instanceId) {
@@ -126,38 +105,17 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return samplesDtosListES;
     }
 
-    public String getKitRequestIdByBSPSampleId(String bspSampleId) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST_ID + BY_BSP_COLLABORATOR_SAMPLE_ID)) {
-                stmt.setString(1, bspSampleId);
-                try (ResultSet idByBSPrs = stmt.executeQuery()) {
-                    if (idByBSPrs.next()) {
-                        dbVals.resultValue = idByBSPrs.getString(DBConstants.DDP_KIT_REQUEST_ID);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error getting information for " + bspSampleId, e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get kit request id for " + bspSampleId, results.resultException);
-        }
-        return (String) results.resultValue;
-    }
-
     public String getKitLabelFromDsmKitRequestId(long dsmKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_LABEL)) {
                 stmt.setLong(1, dsmKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
+                    if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.KIT_LABEL);
+                    } else {
+                        dbVals.resultValue = null;
+                        dbVals.resultException = new DsmInternalError("No kit found for dsm_kit_request_id " + dsmKitRequestId);
                     }
                 }
             } catch (SQLException ex) {
@@ -169,8 +127,73 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Couldn't get kit label for kit " + dsmKitRequestId, results.resultException);
         }
-        String kitLabel = String.valueOf(results.resultValue);
-        log.info("Got " + kitLabel + " sequencing kit label in DSM DB for " + dsmKitRequestId);
-        return kitLabel;
+        return (String) results.resultValue;
+    }
+
+    /**
+     * This method works as "re-patient" or "re-sample" a kit as described by gp terms
+     * which is that for a participant that had kits with legacy ids, dsm changes their new kits with pepper ids to the legacy ids as well.
+     * By running this method DSM also changes the ddpParticipantId to the legacy participant id to match the older kits.
+     * </p><p>
+     * The method updates the DSM database with the legacy collaborator sample id, collaborator participant id and also changes
+     * the ddp participant id to the legacy participant id. It does not  update the ES document at this point.
+     *</p>
+     * @param updateKitToLegacyIdsRequest request to resample or re-patient a kit for a participant with a legacy short ID
+     * @param legacyParticipantId legacy participant ID
+     * */
+    public void updateKitToLegacyIds(UpdateKitToLegacyIdsRequest updateKitToLegacyIdsRequest, String legacyParticipantId) {
+        SimpleResult results = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_COLLAB_ID_AND_DDP_PARTICIPANT_ID)) {
+                stmt.setString(1, updateKitToLegacyIdsRequest.getNewCollaboratorSampleId());
+                stmt.setString(2, legacyParticipantId);
+                stmt.setString(3, updateKitToLegacyIdsRequest.getNewCollaboratorParticipantId());
+                stmt.setString(4, updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId());
+                int affectedRows = stmt.executeUpdate();
+                if (affectedRows != 1) {
+                    // checks that only one row was updated, which means only one row has this collaborator sample id
+                    throw new DSMBadRequestException(
+                            "Error updating kit to legacy ids for kit with sample id %s, was updating %d rows".formatted(
+                                    updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(), affectedRows));
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error resampling kit for sample id "
+                    + updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(), results.resultException);
+        }
+        log.info("Updated kit for sample id %s to %s ".formatted(updateKitToLegacyIdsRequest.getCurrentCollaboratorSampleId(),
+                updateKitToLegacyIdsRequest.getNewCollaboratorSampleId()));
+    }
+
+    public List<KitRequestShipping> getKitRequestForCollaboratorSampleId(String collaboratorSampleId) {
+        List<KitRequestShipping> kitRequestShippingList = new ArrayList<>();
+        SimpleResult results = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID)) {
+                stmt.setString(1, collaboratorSampleId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        kitRequestShippingList.add(KitRequestShipping.getKitRequestFromResultSet(rs));
+                    }
+                    return dbVals;
+                } catch (SQLException e) {
+                    dbVals.resultException = e;
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error getting KitRequestShipping by collaboratorSampleId "
+                    + collaboratorSampleId, results.resultException);
+        }
+        return kitRequestShippingList;
     }
 }

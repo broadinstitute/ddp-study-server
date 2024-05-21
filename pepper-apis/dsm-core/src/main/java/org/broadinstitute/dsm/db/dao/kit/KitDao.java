@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.eval.NotImplementedException;
@@ -438,22 +439,15 @@ public class KitDao {
         return Optional.ofNullable((KitRequestShipping) results.resultValue);
     }
 
-    public int deleteKitRequest(int kitRequestId) {
-        SimpleResult simpleResult = inTransaction(conn -> {
-            SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_REQUEST)) {
-                stmt.setInt(1, kitRequestId);
-                execResult.resultValue = stmt.executeUpdate();
-            } catch (SQLException sqle) {
-                execResult.resultException = sqle;
+    private int deleteKitRequest(Connection conn, int kitRequestId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_REQUEST)) {
+            stmt.setInt(1, kitRequestId);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DsmInternalError("No kit request found with id: %d".formatted(kitRequestId));
             }
-            return execResult;
-        });
-
-        if (simpleResult.resultException != null) {
-            throw new DsmInternalError("Error deleting kit request with id: " + kitRequestId, simpleResult.resultException);
+            return rowsAffected;
         }
-        return (int) simpleResult.resultValue;
     }
 
     public Integer deleteKitTrackingByKitLabel(String kitLabel) {
@@ -474,22 +468,15 @@ public class KitDao {
         return (int) simpleResult.resultValue;
     }
 
-    public int deleteKit(int kitId) {
-        SimpleResult simpleResult = inTransaction(conn -> {
-            SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
-                stmt.setInt(1, kitId);
-                execResult.resultValue = stmt.executeUpdate();
-            } catch (SQLException sqle) {
-                execResult.resultException = sqle;
+    private int deleteKit(Connection conn, int kitId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
+            stmt.setInt(1, kitId);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DsmInternalError("No kit found with id: %d".formatted(kitId));
             }
-            return execResult;
-        });
-
-        if (simpleResult.resultException != null) {
-            throw new DsmInternalError(String.format("Error deleting kit with id: %d ", kitId), simpleResult.resultException);
+            return rowsAffected;
         }
-        return (int) simpleResult.resultValue;
     }
 
     public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel) {
@@ -815,6 +802,27 @@ public class KitDao {
             throw new DsmInternalError(String.format("Error getting kits for %s", ddpParticipantId));
         }
         return false;
+    }
+
+    /**
+     * Deletes from both ddp_kit and ddp_kit_request tables in one single transaction
+     * @param dsmKitRequestId the id of the kit request to delete
+     * @return the number of affected rows in ddp_kit_request
+     * */
+    @VisibleForTesting
+    public int deleteKitRequestShipping(int dsmKitRequestId) {
+        return inTransaction(conn -> {
+            try {
+                int rowsAffected = deleteKit(conn, dsmKitRequestId);
+                deleteKitRequest(conn, dsmKitRequestId);
+                //deletes in the ddp_kit can affect more rows than in ddp_kit_request, because kit reactivation creates more records
+                //of the same kit in the ddp_kit table
+                return rowsAffected;
+
+            } catch (SQLException e) {
+                throw new DsmInternalError(String.format("Error deleting kit request shipping with id: %d", dsmKitRequestId), e);
+            }
+        });
     }
 
 }
