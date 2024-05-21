@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.juniperkits;
+package org.broadinstitute.dsm.kits;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
@@ -112,6 +112,7 @@ public class TestKitUtil {
     private String kitTypeName;
     private String studyGuid;
     private String collaboratorPrefix;
+    private String esIndex;
     private String userWithKitShippingAccess;
     private String esIndex;
     @Getter
@@ -127,14 +128,17 @@ public class TestKitUtil {
     @Mock
     Tracker mockShipmentTracker = mock(Tracker.class);
 
+    private KitDao kitDao = new KitDao();
+
     public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                                  String kitTypeName, String kitTypeDisplayName) {
+                                  String kitTypeName, String kitTypeDisplayName, String esIndex) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.collaboratorPrefix = collaboratorPrefix;
         this.groupName = groupName;
         this.kitTypeName = kitTypeName;
         this.kitTypeDisplayName = kitTypeDisplayName;
+        this.esIndex = esIndex;
     }
 
     public void deleteGeneratedData() {
@@ -194,16 +198,16 @@ public class TestKitUtil {
         }
     }
 
-    public void deleteKit(String ddpKitRequestId) {
-        SimpleResult results = inTransaction((conn) -> {
-            List<Integer> dsmKitRequestId = new ArrayList<>();
+    public void deleteKitByDdpKitRequestId(String ddpKitRequestId) {
+        List<Integer> dsmKitRequestIds = new ArrayList<>();
+        inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
                 stmt.setString(1, ddpKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        dsmKitRequestId.add(rs.getInt("dsm_kit_request_id"));
+                        dsmKitRequestIds.add(rs.getInt("dsm_kit_request_id"));
                     }
-                    if (dsmKitRequestId.isEmpty()) {
+                    if (dsmKitRequestIds.isEmpty()) {
                         throw new DsmInternalError(
                                 String.format("Could not find kit %s to delete", ddpKitRequestId));
                     }
@@ -213,20 +217,15 @@ public class TestKitUtil {
             } catch (SQLException ex) {
                 throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
             }
-            try {
-                delete(conn, "ddp_kit", "dsm_kit_request_id", dsmKitRequestId);
-                delete(conn, "ddp_kit_request", "dsm_kit_request_id", dsmKitRequestId);
-            } catch (Exception ex) {
-                throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
-            }
             return null;
         });
+        dsmKitRequestIds.forEach(this::deleteKitRequestShipping);
     }
 
     public void deleteKitsArray() {
         for (String kitId : createdKitIds) {
             try {
-                deleteKit(kitId);
+                deleteKitByDdpKitRequestId(kitId);
             } catch (Exception e) {
                 throw new DsmInternalError("Could not delete kit " + kitId, e);
             }
@@ -250,7 +249,7 @@ public class TestKitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
-                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, null);
+                adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, esIndex);
                 ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = adminUtil.getStudyGroupId();
                 instanceRoleId = getInstanceRole(conn);
@@ -493,6 +492,18 @@ public class TestKitUtil {
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }
 
+    public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
+                                           String userId) {
+
+        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(), kitTypeId,
+                kitRequestShipping.getDdpParticipantId(), kitRequestShipping.getBspCollaboratorParticipantId(),
+                kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false, null,
+                ddpInstance, kitTypeName, null);
+    }
+
+    public void deleteKitRequestShipping(int dsmKitRequestId) {
+        kitDao.deleteKitRequestShipping(dsmKitRequestId);
+    }
     public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();

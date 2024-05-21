@@ -5,7 +5,6 @@ import java.util.List;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.juniperkits.TestKitUtil;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -17,7 +16,7 @@ import org.junit.Test;
 public class KitDisplayNameTest extends DbTxnBaseTest {
     private static TestKitUtil testKitUtil = new TestKitUtil("kit_test_instance", "kit_test_instance_guid",
             "some_prefix", "kit_test_group", KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME,
-            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME);
+            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null);
 
     @BeforeClass
     public static void setupBefore() {

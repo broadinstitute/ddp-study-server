@@ -1,17 +1,20 @@
 package org.broadinstitute.dsm.service.onchistory;
 
-import java.util.Map;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 
 @Slf4j
 public class ESParticipantIdProvider implements ParticipantIdProvider {
 
     private final String realm;
     private final String participantIndex;
+    private final ElasticSearchService elasticSearchService = new ElasticSearchService();
 
     public ESParticipantIdProvider(String realm, String participantIndex) {
         this.realm = realm;
@@ -24,37 +27,17 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
      * @throws DSMBadRequestException when no participant ID is found for short ID
      */
     public int getParticipantIdForShortId(String shortId) {
-        Map<String, Map<String, Object>> ptpData;
-        try {
-            ptpData = ElasticSearchUtil.getSingleParticipantFromES(realm, participantIndex,
-                    ElasticSearchUtil.getClientInstance(), shortId);
-        } catch (Exception e) {
-            throw new DsmInternalError("ES threw exception for search of shortId: " + shortId, e);
-        }
-
-        if (ptpData.size() > 1) {
-            String msg = String.format("ES returned %d results for participant shortId %s", ptpData.size(), shortId);
-            throw new DsmInternalError(msg);
-        }
-        if (ptpData.size() == 0) {
-            throw new DSMBadRequestException("Invalid participant ID " + shortId);
-        }
-        Map<String, Object> ptp = ptpData.values().stream().findFirst().orElseThrow();
-        Map<String, Object> dsm = (Map<String, Object>) ptp.get("dsm");
-        if (dsm == null || dsm.isEmpty()) {
-            throw new DsmInternalError("ES returned empty dsm object for shortId " + shortId);
-        }
-        Map<String, Object> dsmParticipant = (Map<String, Object>) dsm.get("participant");
-        if (dsmParticipant == null || dsmParticipant.isEmpty()) {
+        Dsm dsm = elasticSearchService.getParticipantDsmByShortId(shortId, participantIndex);
+        Optional<Participant> dsmParticipant = dsm.getParticipant();
+        if (dsmParticipant.isEmpty()) {
             throw new DsmInternalError("ES returned empty dsm.participant object for shortId " + shortId);
         }
-        Object participantID = dsmParticipant.get("participantId");
+        Long participantID = dsmParticipant.get().getParticipantId();
         if (participantID == null) {
             throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);
         }
-
         try {
-            return Integer.parseInt(participantID.toString());
+            return participantID.intValue();
         } catch (Exception e) {
             throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
         }
