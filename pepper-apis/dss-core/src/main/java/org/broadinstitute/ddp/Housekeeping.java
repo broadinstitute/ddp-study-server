@@ -113,6 +113,7 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import spark.Spark;
 
 @Slf4j
@@ -468,7 +469,11 @@ public class Housekeeping {
                 }
 
             } catch (Exception e) {
-                logException(e);
+                if (!SparkBootUtil.isShuttingDown()) {
+                    logException(e);
+                } else {
+                    log.info("Exception during shutdown", e);
+                }
             }
             // send a ping to monitoring
             heartbeatMonitor.addPoint(1, Instant.now().toEpochMilli());
@@ -479,13 +484,17 @@ public class Housekeeping {
                 log.info("Housekeeping interrupted during sleep", e);
             }
         }
-        shutdownPubSub();
-        shutdownQuartz();
         log.info("Housekeeping is shutting down");
     }
 
     private static void shutdownQuartz() {
-        if (scheduler != null) {
+        boolean isShutdown = false;
+        try {
+            isShutdown = scheduler.isShutdown();
+        } catch (SchedulerException e) {
+            log.info("Could not determine whether schedule is shut down", e);
+        }
+        if (scheduler != null && !isShutdown) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
     }
@@ -502,7 +511,11 @@ public class Housekeeping {
             try {
                 pubSubTaskConnectionService.destroy();
             } catch (PubSubTaskException e) {
-                log.error("Failed to shutdown PubSubTask API", e);
+                if (!SparkBootUtil.isShuttingDown()) {
+                    log.error("Failed to shutdown PubSubTask API", e);
+                } else {
+                    log.info("Exception during shutdown", e);
+                }
             }
         }
     }
