@@ -11,8 +11,8 @@ public class Event {
     private long eventDate;
 
     /**
-     * Creates a new event to be inserted into the database.
-     * eventInfo could be ddpParticipantId for participant events, or kitRequestId for kit events.
+     * Creates a new event to be sent to DSS.
+     * eventInfo could be ddpParticipantId for participant events, or ddpKitRequestId for kit events.
      * **/
     public Event(String ddpParticipantId, String eventType, long eventDate, String kitReasonType, String eventInfo) {
         this.ddpParticipantId = ddpParticipantId;
