@@ -470,39 +470,17 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     /**
      * This method is used to get the KitRequestShipping from the result set, and only extracts values in the
-     * ddp_kit and ddp_kit_request tables.
+     * ddp_kit_request tables.
      * */
-    public static KitRequestShipping getKitRequestShippingFromResultSet(@NonNull ResultSet rs) throws SQLException {
+    public static KitRequestShipping getKitRequestFromResultSet(@NonNull ResultSet rs) throws SQLException {
         KitRequestShipping kitRequestShipping = KitRequestShipping.builder()
                 .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
                 .withBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
                 .withBspCollaboratorSampleId(rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
                 .withDdpLabel(rs.getString(DBConstants.DSM_LABEL))
+                .withDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID))
                 .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID))
-                .withDsmKitId(rs.getLong(DBConstants.DSM_KIT_ID))
-                .withLabelUrlTo(rs.getString(DBConstants.DSM_LABEL_TO))
-                .withLabelUrlReturn(rs.getString(DBConstants.DSM_LABEL_RETURN))
-                .withTrackingId(rs.getString(DBConstants.DSM_TRACKING_TO))
-                .withTrackingReturnId(rs.getString(DBConstants.DSM_TRACKING_RETURN))
-                .withEasypostTrackingToUrl(rs.getString(DBConstants.DSM_TRACKING_URL_TO))
-                .withEasypostTrackingReturnUrl(rs.getString(DBConstants.DSM_TRACKING_URL_RETURN))
-                .withScanDate((Long) rs.getObject(DBConstants.DSM_SCAN_DATE))
-                .withError(rs.getBoolean(DBConstants.ERROR))
-                .withMessage(rs.getString(DBConstants.MESSAGE))
-                .withReceiveDate((Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE))
-                .withEasypostAddressId(rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO))
-                .withDeactivatedDate((Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE))
-                .withDeactivationReason(rs.getString(DBConstants.DEACTIVATION_REASON))
-                .withKitLabel(rs.getString(DBConstants.KIT_LABEL))
-                .withExpress(rs.getBoolean(DBConstants.EXPRESS))
-                .withEasypostToId(rs.getString(DBConstants.EASYPOST_TO_ID))
-                .withLabelDate((Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE))
-                .withEasypostShipmentStatus(rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS))
-                .withExternalOrderNumber(rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER))
-                .withExternalOrderStatus(rs.getString(DBConstants.EXTERNAL_ORDER_STATUS))
                 .withCreatedBy(rs.getString(DBConstants.CREATED_BY))
-                .withReceivedBy(rs.getString(DBConstants.DSM_RECEIVE_BY))
-                .withSampleNotes(rs.getString(DBConstants.SAMPLE_NOTES))
                 .withDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID)).build();
         return kitRequestShipping;
     }
