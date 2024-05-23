@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 public class BSPKit extends GPReceivedKit {
 
     private static Logger logger = LoggerFactory.getLogger(BSPKit.class);
-    EventService eventService = new EventService();
-
     public static final String  SQL_SELECT_KIT_INFO_FOR_NOTIFICATION_EMAIL = "select eve.event_name,  eve.event_type,"
             + " request.ddp_participant_id, request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, "
             + " realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, "
@@ -54,7 +52,7 @@ public class BSPKit extends GPReceivedKit {
                 KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(SQL_SELECT_KIT_INFO_FOR_NOTIFICATION_EMAIL,
                         kitLabel, 1);
                 if (kitDDPNotification != null) {
-                    eventService.sendKitEventToDss(kitDDPNotification);
+                    EventService.sendKitEventToDss(kitDDPNotification);
                 }
             }
         } catch (Exception e) {

@@ -27,8 +27,8 @@ import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.service.EventService;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
@@ -45,7 +45,6 @@ public abstract class BasePatch {
     static final Logger logger = LoggerFactory.getLogger(BasePatch.class);
 
     private EventDao eventDao = new EventDao();
-    private EventService eventService = new EventService();
     protected static Map<String, Object> NULL_KEY;
     protected Patch patch;
     protected Profile profile;
@@ -219,7 +218,7 @@ public abstract class BasePatch {
                     eventDao.isEventTriggeredForParticipant(action.getName(), patch.getParentId());
             if (!participantHasTriggeredEventByEventType) {
                 String type = eventTypeDto.getEventName();
-                eventService.sendParticipantEventToDss(type, ddpInstance, patch.getParentId());
+                EventService.sendParticipantEventToDss(type, ddpInstance, patch.getParentId());
             } else {
                 logger.info("Participant " + patch.getParentId() + " was already triggered for event type " + action.getName());
             }

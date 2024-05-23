@@ -114,7 +114,6 @@ public class GBFRequestUtil implements ExternalShipper {
     private static int sleepInMs = 500;
     private static Executor blindTrustEverythingExecutor;
 
-    EventService eventService = new EventService();
     // public final String CANCEL_ORDER_ENDPOINT = "cancelorder";
     //    private final String ORDERED = "ORDERED";
     private final String notFound = "NOT FOUND"; //INDICATES: we have no record of the order number
@@ -497,12 +496,12 @@ public class GBFRequestUtil implements ExternalShipper {
                                 if (kitDeliveredNotification != null) {
                                     logger.info("Triggering DDP for kit 'DELIVERED' with external order number: "
                                             + kit.getExternalOrderNumber());
-                                    eventService.sendKitEventToDss(kitDeliveredNotification);
+                                    EventService.sendKitEventToDss(kitDeliveredNotification);
                                 } else {
                                     logger.error("delivered kitDDPNotification was null for " + kit.getExternalOrderNumber());
                                 }
                             }
-                            eventService.sendKitEventToDss(kitDDPNotification);
+                            EventService.sendKitEventToDss(kitDDPNotification);
                         } else {
                             logger.error("kitDDPNotification was null for " + kit.getExternalOrderNumber());
                         }

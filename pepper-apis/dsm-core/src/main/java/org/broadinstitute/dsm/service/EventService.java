@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.service;
 
 import java.util.Collection;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.sun.istack.NotNull;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory;
 public class EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
     protected static final int MAX_TRIES = 5;
-    private EventDao eventDao = new EventDao();
+    private static final EventDao eventDao = new EventDao();
 
 
     /**
@@ -30,7 +31,7 @@ public class EventService {
      * </p>
      * @param kitDDPNotification - the kit event to be triggered
      * */
-    public void sendKitEventToDss(@NonNull KitDDPNotification kitDDPNotification) {
+    public static void sendKitEventToDss(@NonNull KitDDPNotification kitDDPNotification) {
         boolean dssSuccessfullyTriggered = false;
         if (isParticipantEventSkipped(kitDDPNotification)) {
             logger.info("Participant event was skipped per data in participant_event table. DDP will not get triggered");
@@ -44,7 +45,7 @@ public class EventService {
     /**
      * Returns true if this event is skipped for this participant, false otherwise
      * */
-    private boolean isParticipantEventSkipped(KitDDPNotification kitDDPNotification) {
+    private static boolean isParticipantEventSkipped(KitDDPNotification kitDDPNotification) {
         return SkippedParticipantEvent.isParticipantEventSkipped(kitDDPNotification.getParticipantId(),
                 kitDDPNotification.getEventName(), kitDDPNotification.getDdpInstanceId());
     }
@@ -54,7 +55,7 @@ public class EventService {
      * and triggers the Dss for the event.
      * The Only participant_event currently in DSM is "REQUIRED_SAMPLES_RECEIVED" for PE-CGS studies
      * */
-    public void sendParticipantEventToDss(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
+    public static void sendParticipantEventToDss(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
         if (!SkippedParticipantEvent.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
             triggerDssWithEvent(eventName, ddpInstance, System.currentTimeMillis() / 1000, ddpParticipantId, ddpParticipantId, null);
@@ -70,6 +71,7 @@ public class EventService {
     /**
      * Sends a POST request to DSS to trigger the event for a kit, using the information in the KitDDPNotification object.
      * */
+    @VisibleForTesting
     protected static boolean triggerDssByKitEvent(KitDDPNotification kitDDPNotification) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(kitDDPNotification.getDdpInstanceId());
         return triggerDssWithEvent(kitDDPNotification.getEventName(), ddpInstance,
@@ -85,6 +87,7 @@ public class EventService {
      *      and for participant events it is the ddp_participant_id
      * @return true if the request was successful, false otherwise
      * */
+    @VisibleForTesting
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, String reason) {
         for (int tries = 0; tries < MAX_TRIES; tries++) {
@@ -103,6 +106,7 @@ public class EventService {
     /**
      * Sends the POST request to DSS to trigger the event for a kit or a participant.
      * */
+    @VisibleForTesting
     protected static boolean sendDDPEventRequest(String eventType, DDPInstance ddpInstance, long eventDate, String ddpParticipantId,
                                         String eventInfo, String reason) throws Exception {
         Event event = new Event(ddpParticipantId, eventType, eventDate, reason, eventInfo);
@@ -119,6 +123,7 @@ public class EventService {
     /**
      * logs the failure of the trigger event to DSS
      * */
+    @VisibleForTesting
     protected static void logTriggerFailure(DDPInstance ddpInstance, String eventType, String ddpParticipantId, String eventInfo, int tries,
                                    Exception e) {
         logger.warn("Failed to trigger {} to notify participant {} about {} for dsm_kit_request_id {} in try {}",
@@ -129,6 +134,7 @@ public class EventService {
     /**
      * logs the exhaustion of the tries to trigger the event to DSS
      * */
+    @VisibleForTesting
     protected static void logTriggerExhausted(DDPInstance ddpInstance, String eventType, String ddpParticipantId, String eventInfo) {
         logger.error("DSM was unable to send the trigger to DSS for study {}, participant {}, event type {} and event info {},"
                         + " exhausted all tries. Event will be added to the EVENT_QUEUE table with trigger false", ddpInstance.getName(),
@@ -138,7 +144,7 @@ public class EventService {
     /**
      * Adds a kit event to the EVENT_QUEUE table
      * */
-    public void addKitEvent(@NonNull String name, @NonNull int ddpInstanceID, @NonNull String requestId, boolean trigger) {
+    private static void addKitEvent(@NonNull String name, @NonNull int ddpInstanceID, @NonNull String requestId, boolean trigger) {
         eventDao.insertEvent(name, ddpInstanceID, null, requestId, trigger);
 
     }
@@ -146,14 +152,15 @@ public class EventService {
     /**
      * Adds a Participant event to the EVENT_QUEUE table
      * */
-    public void addParticipantEvent(@NonNull String name, @NonNull int instanceID, @NonNull String ddpParticipantId,
+    private static void addParticipantEvent(@NonNull String name, @NonNull int instanceID, @NonNull String ddpParticipantId,
                                            boolean trigger) {
         eventDao.insertEvent(name, instanceID, ddpParticipantId, null, trigger);
     }
 
     /**
      * Triggers the reminder emails for kits that were sent out but have not been received yet.
-     * The reminder emails not sent from DSM, they are sent from DSS.
+     * The events tell DSS the list of kits that need reminders, and then DSS will send the reminder emails.
+     * It's called from the DDPEventJob class
      * */
     public void triggerReminder() {
         logger.info("Triggering reminder emails now");

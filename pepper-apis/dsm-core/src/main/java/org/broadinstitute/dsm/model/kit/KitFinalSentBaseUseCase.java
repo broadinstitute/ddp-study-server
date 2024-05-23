@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(KitFinalSentBaseUseCase.class);
-    EventService eventService = new EventService();
-
     private static final String GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL =
             "select eve.event_name, eve.event_type, "
                     + "request.ddp_participant_id, request.dsm_kit_request_id, "
@@ -47,7 +45,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL,
                 ddpLabel, 1);
         if (kitDDPNotification != null) {
-            eventService.sendKitEventToDss(kitDDPNotification);
+            EventService.sendKitEventToDss(kitDDPNotification);
         }
         if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
             try {

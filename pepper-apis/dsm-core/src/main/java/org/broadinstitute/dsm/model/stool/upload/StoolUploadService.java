@@ -17,7 +17,6 @@ public class StoolUploadService {
     private static final Logger logger = LoggerFactory.getLogger(StoolUploadService.class);
 
     private final StoolUploadDao stoolUploadDao = new StoolUploadDao();
-    EventService eventService = new EventService();
 
     public static StoolUploadService spawn() {
         return new StoolUploadService();
@@ -36,7 +35,7 @@ public class StoolUploadService {
                     BSPKit.SQL_SELECT_KIT_INFO_FOR_NOTIFICATION_EMAIL, stoolUploadDto.getMfBarcode(), 1);
             if (kitDDPNotification != null) {
                 logger.info("Triggering DDP to send emails");
-                eventService.sendKitEventToDss(kitDDPNotification);
+                EventService.sendKitEventToDss(kitDDPNotification);
             } else {
                 logger.warn(String.format("No notification was found for barcode %s", stoolUploadDto.getMfBarcode()));
             }

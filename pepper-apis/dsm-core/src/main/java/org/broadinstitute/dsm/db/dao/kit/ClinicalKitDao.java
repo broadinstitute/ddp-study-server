@@ -26,7 +26,6 @@ public class ClinicalKitDao {
     public static final String PECGS = "PE-CGS";
     public static final String MERCURY = "MERCURY";
     final EventDao eventDao = new EventDao();
-    EventService eventService = new EventService();
     final EventTypeDao eventTypeDao = new EventTypeDao();
     private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
             "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, date_px,  "
@@ -205,7 +204,7 @@ public class ClinicalKitDao {
                     eventDao.isEventTriggeredForParticipant(eventName, ddpParticipantId);
             if (!participantHasTriggeredEventByEventType) {
                 String type = eventTypeDto.getEventName();
-                eventService.sendParticipantEventToDss(type, ddpInstance, ddpParticipantId);
+                EventService.sendParticipantEventToDss(type, ddpInstance, ddpParticipantId);
             } else {
                 log.info("Participant " + ddpParticipantId + " was already triggered for event type " + eventName);
             }
