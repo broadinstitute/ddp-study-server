@@ -25,18 +25,18 @@ import org.slf4j.LoggerFactory;
 public class EventDao implements Dao<EventDto> {
     private static final Logger logger = LoggerFactory.getLogger(EventDao.class);
     private static String GET_EVENT_QUEUE_BY_EVENT_TYPE_AND_DDP_PARTICIPANT_ID = "SELECT "
-            + "EVENT_ID, EVENT_DATE_CREATED, EVENT_TYPE, DDP_INSTANCE_ID, DSM_KIT_REQUEST_ID, DDP_PARTICIPANT_ID, EVENT_TRIGGERED "
-            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DDP_PARTICIPANT_ID = ? ";
+            + "event_id, event_date_created, event_type, ddp_instance_id, dsm_kit_request_id, ddp_participant_id, event_triggered "
+            + "FROM EVENT_QUEUE " + "WHERE event_type = ? and ddp_participant_id = ?  ";
 
-    private static String SQL_BY_TRIGGER_TRUE_CONDITION = "AND EVENT_TRIGGERED = 1";
+    private static String SQL_BY_TRIGGER_TRUE_CONDITION = "AND event_triggered = 1";
 
     private static String GET_EVENT_BY_EVENT_TYPE_AND_KIT_REQUEST_ID = "SELECT "
-            + "EVENT_ID, EVENT_DATE_CREATED, EVENT_TYPE, DDP_INSTANCE_ID, DSM_KIT_REQUEST_ID, DDP_PARTICIPANT_ID, EVENT_TRIGGERED "
-            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DSM_KIT_REQUEST_ID = ?";
+            + "event_id, event_date_created, event_type, ddp_instance_id, dsm_kit_request_id, ddp_participant_id, event_triggered "
+            + "FROM EVENT_QUEUE " + "WHERE event_type = ? AND dsm_kit_request_id = ?";
 
     private static final String SQL_INSERT_EVENT =
-            "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, "
-                    + "DDP_PARTICIPANT_ID = ?, DSM_KIT_REQUEST_ID = ?, EVENT_TRIGGERED = ?";
+            "INSERT INTO EVENT_QUEUE SET event_date_created = ?, event_type = ?, ddp_instance_id = ?, "
+                    + "ddp_participant_id = ?, dsm_kit_request_id = ?, event_triggered = ?";
 
     public static final String SQL_SELECT_KIT_FOR_REMINDER_EMAILS =
             "SELECT eve.event_name, eve.event_type, request.ddp_participant_id, request.dsm_kit_request_id, realm.instance_name, "
