@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.db;
+package org.broadinstitute.dsm.db.dao;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -9,6 +9,8 @@ import java.util.Collection;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.queue.SkippedParticipantEventDto;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -19,31 +21,20 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * When a participant no longer wants to get emails or reminders about their kits, they ask the study's CRC, and they enter
+ * the participant's ID and the event type into the DSM, which is stored in the ddp_participant_event table.
+ * */
 @Data
-public class SkippedParticipantEvent {
+public class SkippedParticipantEventDao {
 
-    private static final Logger logger = LoggerFactory.getLogger(SkippedParticipantEvent.class);
+    private static final Logger logger = LoggerFactory.getLogger(SkippedParticipantEventDao.class);
     private static String GET_PARTICIPANT_EVENT =
             "select event  from ddp_participant_event ev where ev.ddp_instance_id = ? "
                     + "and ev.ddp_participant_id = ?";
-    private final String participantId;
-    /**
-     * The event type in this table is actually the event_name from the event_type table
-     */
-    private final String eventType;
-    private final String user;
-    private final long date;
-    private String shortId;
 
-    public SkippedParticipantEvent(String participantId, String eventType, String user, long date) {
-        this.participantId = participantId;
-        this.eventType = eventType;
-        this.user = user;
-        this.date = date;
-    }
-
-    public static Collection<SkippedParticipantEvent> getSkippedParticipantEvents(@NonNull String realm) {
-        ArrayList<SkippedParticipantEvent> skippedParticipantEvents = new ArrayList();
+    public Collection<SkippedParticipantEventDto> getSkippedParticipantEvents(@NonNull String realm) {
+        ArrayList<SkippedParticipantEventDto> skippedParticipantEvents = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -52,8 +43,8 @@ public class SkippedParticipantEvent {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         skippedParticipantEvents.add(
-                                new SkippedParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
-                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
+                                new SkippedParticipantEventDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                        rs.getString(DBConstants.EVENT), rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
                     }
                 }
             } catch (Exception ex) {
@@ -66,7 +57,7 @@ public class SkippedParticipantEvent {
             logger.error("Couldn't get list of skipped participant events for " + realm, results.resultException);
         } else {
             DDPInstance instance = DDPInstance.getDDPInstance(realm);
-            for (SkippedParticipantEvent skippedParticipant : skippedParticipantEvents) {
+            for (SkippedParticipantEventDto skippedParticipant : skippedParticipantEvents) {
                 String sendRequest = instance.getBaseUrl() + RoutePath.DDP_PARTICIPANTS_PATH + "/" + skippedParticipant.getParticipantId();
                 try {
                     DDPParticipant ddpParticipant =
@@ -82,7 +73,7 @@ public class SkippedParticipantEvent {
         return skippedParticipantEvents;
     }
 
-    public static Collection<String> getSkippedParticipantEvents(@NonNull String ddpParticipantId, int instanceId) {
+    public Collection<String> getSkippedParticipantEvents(@NonNull String ddpParticipantId, int instanceId) {
         ArrayList<String> skippedEvents = new ArrayList();
         SimpleResult result = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -105,13 +96,13 @@ public class SkippedParticipantEvent {
         return skippedEvents;
     }
 
-    public static boolean isParticipantEventSkipped(@NonNull String ddpParticipantId, @NonNull String eventType,
+    public boolean isParticipantEventSkipped(@NonNull String ddpParticipantId, @NonNull String eventType,
                                                     int ddpInstanceId) {
         Collection<String> skippedParticipantEvents = getSkippedParticipantEvents(ddpParticipantId, ddpInstanceId);
         return skippedParticipantEvents.contains(eventType);
     }
 
-    public static void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,
+    public void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,
                                             @NonNull DDPInstance instance, @NonNull String eventType) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();

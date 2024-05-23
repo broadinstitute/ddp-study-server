@@ -126,14 +126,8 @@ public class EventServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testUnsuccessfulEvent_BadResponse() {
-        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class);
+        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS);
                 MockedStatic<DDPRequestUtil> utilities = Mockito.mockStatic(DDPRequestUtil.class)) {
-
-            eventServiceMockedStatic.when(() -> EventService.triggerDssByKitEvent(any())).thenCallRealMethod();
-            eventServiceMockedStatic.when(() -> EventService.triggerDssWithEvent(anyString(), any(), anyLong(), anyString(), anyString(),
-                    anyString())).thenCallRealMethod();
-            eventServiceMockedStatic.when(() -> EventService.sendDDPEventRequest(anyString(), any(), anyLong(), anyString(), anyString(),
-                    anyString())).thenCallRealMethod();
 
             utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean())).thenReturn(500);
 
@@ -164,10 +158,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     @Test
     public void testUnsuccessfulEvent_Exception() {
         IOException exception = new IOException("Test IOException");
-        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class)) {
-            eventServiceMockedStatic.when(() -> EventService.triggerDssByKitEvent(any())).thenCallRealMethod();
-            eventServiceMockedStatic.when(() -> EventService.triggerDssWithEvent(anyString(), any(), anyLong(), anyString(), anyString(),
-                    anyString())).thenCallRealMethod();
+        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS)) {
             eventServiceMockedStatic.when(() -> EventService.sendDDPEventRequest(anyString(), any(), anyLong(), anyString(), anyString(),
                     anyString())).thenThrow(exception);
 
@@ -194,10 +185,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testUnsuccessfulEvent_EventuallySuccessful() {
-        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class)) {
-            eventServiceMockedStatic.when(() -> EventService.triggerDssByKitEvent(any())).thenCallRealMethod();
-            eventServiceMockedStatic.when(() -> EventService.triggerDssWithEvent(anyString(), any(), Mockito.anyLong(), anyString(),
-                    anyString(), anyString())).thenCallRealMethod();
+        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS)) {
             eventServiceMockedStatic.when(() -> EventService.sendDDPEventRequest(anyString(), any(), Mockito.anyLong(), anyString(),
                     anyString(), anyString())).thenAnswer(new Answer<Boolean>() {
                         private int count = 0;
@@ -236,15 +224,9 @@ public class EventServiceTest extends DbAndElasticBaseTest {
 
     @Test
     public void testReceivedKitEvent() {
-        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class);
+        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS);
                 MockedStatic<DDPRequestUtil> utilities = Mockito.mockStatic(DDPRequestUtil.class)) {
-
             NotificationUtil mockedNotificationUtil = mock(NotificationUtil.class);
-            eventServiceMockedStatic.when(() -> EventService.triggerDssByKitEvent(any())).thenCallRealMethod();
-            eventServiceMockedStatic.when(() -> EventService.triggerDssWithEvent(anyString(), any(), anyLong(), anyString(), anyString(),
-                    anyString())).thenCallRealMethod();
-            eventServiceMockedStatic.when(() -> EventService.sendDDPEventRequest(anyString(), any(), anyLong(), anyString(), anyString(),
-                    anyString())).thenCallRealMethod();
 
             utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean())).thenReturn(200);
 

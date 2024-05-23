@@ -6,7 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.sun.istack.NotNull;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.SkippedParticipantEvent;
+import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -19,7 +19,7 @@ public class EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
     protected static final int MAX_TRIES = 5;
     private static final EventDao eventDao = new EventDao();
-
+    private static final SkippedParticipantEventDao skippedParticipantEventDao = new SkippedParticipantEventDao();
 
     /**
      * <p>
@@ -46,7 +46,7 @@ public class EventService {
      * Returns true if this event is skipped for this participant, false otherwise
      * */
     private static boolean isParticipantEventSkipped(KitDDPNotification kitDDPNotification) {
-        return SkippedParticipantEvent.isParticipantEventSkipped(kitDDPNotification.getParticipantId(),
+        return skippedParticipantEventDao.isParticipantEventSkipped(kitDDPNotification.getParticipantId(),
                 kitDDPNotification.getEventName(), kitDDPNotification.getDdpInstanceId());
     }
 
@@ -57,7 +57,7 @@ public class EventService {
      * */
     public static void sendParticipantEventToDss(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
-        if (!SkippedParticipantEvent.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
+        if (!skippedParticipantEventDao.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
             triggerDssWithEvent(eventName, ddpInstance, System.currentTimeMillis() / 1000, ddpParticipantId, ddpParticipantId, null);
             addParticipantEvent(eventName, ddpInstanceId, ddpParticipantId, true);
         } else {
@@ -162,7 +162,7 @@ public class EventService {
      * The events tell DSS the list of kits that need reminders, and then DSS will send the reminder emails.
      * It's called from the DDPEventJob class
      * */
-    public void triggerReminder() {
+    public static void triggerReminder() {
         logger.info("Triggering reminder emails now");
         Collection<KitDDPNotification> kitDDPNotifications = eventDao.getKitsNotReceived();
         for (KitDDPNotification kitInfo : kitDDPNotifications) {
