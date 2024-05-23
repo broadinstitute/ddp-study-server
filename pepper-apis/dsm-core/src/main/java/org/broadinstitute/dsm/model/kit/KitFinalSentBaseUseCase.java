@@ -4,13 +4,12 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
-import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,12 +1,15 @@
 package org.broadinstitute.dsm.db.dto.queue;
 
+import lombok.Getter;
+
+@Getter
 public class EventDto {
 
     private int eventId;
     private long eventDateCreated;
     private String eventType;
     private int ddpInstanceId;
-    private int dsmKitRequestId;
+    private Integer dsmKitRequestId;
     private String ddpParticipantId;
     private Boolean eventTriggered;
 

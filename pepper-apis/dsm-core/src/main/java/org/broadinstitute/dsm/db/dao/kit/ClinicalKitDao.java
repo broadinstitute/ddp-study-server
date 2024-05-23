@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -16,8 +17,8 @@ import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.EventService;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -195,7 +196,8 @@ public class ClinicalKitDao {
         return false;
     }
 
-    private void triggerParticipantEvent(DDPInstance ddpInstance, String ddpParticipantId, String eventName) {
+    @VisibleForTesting
+    public void triggerParticipantEvent(DDPInstance ddpInstance, String ddpParticipantId, String eventName) {
         Optional<EventTypeDto> eventType =
                 eventTypeDao.getEventTypeByEventNameAndInstanceId(eventName, ddpInstance.getDdpInstanceId());
         eventType.ifPresent(eventTypeDto -> {

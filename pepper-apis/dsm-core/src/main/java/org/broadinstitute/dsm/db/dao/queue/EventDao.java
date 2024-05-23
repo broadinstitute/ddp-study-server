@@ -24,13 +24,15 @@ import org.slf4j.LoggerFactory;
 
 public class EventDao implements Dao<EventDto> {
     private static final Logger logger = LoggerFactory.getLogger(EventDao.class);
-    private static String GET_TRIGGERED_EVENT_QUEUE_BY_EVENT_TYPE_AND_DDP_PARTICIPANT_ID = "SELECT "
+    private static String GET_EVENT_QUEUE_BY_EVENT_TYPE_AND_DDP_PARTICIPANT_ID = "SELECT "
             + "EVENT_ID, EVENT_DATE_CREATED, EVENT_TYPE, DDP_INSTANCE_ID, DSM_KIT_REQUEST_ID, DDP_PARTICIPANT_ID, EVENT_TRIGGERED "
-            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DDP_PARTICIPANT_ID = ? AND EVENT_TRIGGERED = 1";
+            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DDP_PARTICIPANT_ID = ? ";
 
-    private static String GET_TRIGGERED_EVENT_QUEUE_BY_EVENT_TYPE_AND_KIT_REQUEST_ID = "SELECT "
+    private static String SQL_BY_TRIGGER_TRUE_CONDITION = "AND EVENT_TRIGGERED = 1";
+
+    private static String GET_EVENT_BY_EVENT_TYPE_AND_KIT_REQUEST_ID = "SELECT "
             + "EVENT_ID, EVENT_DATE_CREATED, EVENT_TYPE, DDP_INSTANCE_ID, DSM_KIT_REQUEST_ID, DDP_PARTICIPANT_ID, EVENT_TRIGGERED "
-            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1";
+            + "FROM EVENT_QUEUE " + "WHERE EVENT_TYPE = ? AND DSM_KIT_REQUEST_ID = ?";
 
     private static final String SQL_INSERT_EVENT =
             "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, "
@@ -76,8 +78,8 @@ public class EventDao implements Dao<EventDto> {
     public boolean isEventTriggeredForParticipant(@NotNull String eventType, @NonNull String ddpParticipantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_TRIGGERED_EVENT_QUEUE_BY_EVENT_TYPE_AND_DDP_PARTICIPANT_ID,
-                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(GET_EVENT_QUEUE_BY_EVENT_TYPE_AND_DDP_PARTICIPANT_ID
+                            .concat(SQL_BY_TRIGGER_TRUE_CONDITION), ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, eventType);
                 stmt.setString(2, ddpParticipantId);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -101,18 +103,27 @@ public class EventDao implements Dao<EventDto> {
         return (boolean) results.resultValue;
     }
 
-    public Optional<Boolean> isEventTriggeredForKit(@NotNull String eventType, @NonNull int dsmKitRequestId) {
+    public Optional<EventDto> getEventForKit(@NotNull String eventType, @NonNull int dsmKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_TRIGGERED_EVENT_QUEUE_BY_EVENT_TYPE_AND_KIT_REQUEST_ID,
+            try (PreparedStatement stmt = conn.prepareStatement(GET_EVENT_BY_EVENT_TYPE_AND_KIT_REQUEST_ID,
                     ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, eventType);
                 stmt.setInt(2, dsmKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.last();
-                    int count = rs.getRow();
-                    if (count > 0) {
-                        dbVals.resultValue = true;
+                    if (rs.next()) {
+                        dbVals.resultValue = new EventDto.Builder(rs.getInt(DBConstants.DDP_INSTANCE_ID))
+                                .withEventId(rs.getInt(DBConstants.EVENT_ID))
+                                .withEventDateCreated(rs.getLong(DBConstants.EVENT_DATE_CREATED))
+                                .withEventType(rs.getString(DBConstants.EVENT_TYPE))
+                                .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID))
+                                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
+                                .withEventTriggered(rs.getBoolean(DBConstants.EVENT_TRIGGERED)).build();
+                    }
+                    if (rs.next()) {
+                        // multiple events found, this should not happen. Putting a log here to track this down
+                        logger.error("Multiple events found for kit with dsmKitRequestId %d and event type %s"
+                                .formatted(dsmKitRequestId, eventType));
                     }
                 }
             } catch (SQLException ex) {
@@ -122,9 +133,44 @@ public class EventDao implements Dao<EventDto> {
         });
 
         if (results.resultException != null) {
-            logger.error("Couldn't get triggered event for kit with dsmKitRequestId " + dsmKitRequestId, results.resultException);
+            logger.error("Couldn't get event for kit with dsmKitRequestId " + dsmKitRequestId, results.resultException);
         }
-        return Optional.ofNullable((Boolean) results.resultValue);
+        return Optional.ofNullable((EventDto) results.resultValue);
+    }
+
+    public Optional<EventDto> getEventForParticipant(@NotNull String eventType, @NonNull String ddpParticipantId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(GET_EVENT_QUEUE_BY_EVENT_TYPE_AND_DDP_PARTICIPANT_ID,
+                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+                stmt.setString(1, eventType);
+                stmt.setString(2, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = new EventDto.Builder(rs.getInt(DBConstants.DDP_INSTANCE_ID))
+                                .withEventId(rs.getInt(DBConstants.EVENT_ID))
+                                .withEventDateCreated(rs.getLong(DBConstants.EVENT_DATE_CREATED))
+                                .withEventType(rs.getString(DBConstants.EVENT_TYPE))
+                                .withDsmKitRequestId(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID))
+                                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
+                                .withEventTriggered(rs.getBoolean(DBConstants.EVENT_TRIGGERED)).build();
+                    }
+                    if (rs.next()) {
+                        // multiple events found, this should not happen. Putting a log here to track this down
+                        logger.error("Multiple events found for participant with ddpParticipantId %s and event type %s"
+                                .formatted(ddpParticipantId, eventType));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            logger.error("Couldn't get event for kit with ddpParticipantId " + ddpParticipantId, results.resultException);
+        }
+        return Optional.ofNullable((EventDto) results.resultValue);
     }
 
     /**

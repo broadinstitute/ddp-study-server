@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.jobs;
 
 import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.dsm.util.EventService;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.quartz.Job;
 import org.quartz.JobDataMap;

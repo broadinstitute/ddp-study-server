@@ -69,7 +69,9 @@ import org.mockito.Mock;
 @Data
 public class TestKitUtil {
 
-    private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = 'juniper_study';";
+    private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = ?;";
+    private static final String SELECT_PT_NOTIF_INSTANCE_ROLE =
+            "SELECT instance_role_id FROM instance_role WHERE name = 'kit_participant_notifications_activated';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
             + " VALUES (?, ?) ON DUPLICATE KEY UPDATE instance_role_id = ?;";
 
@@ -100,7 +102,7 @@ public class TestKitUtil {
     public Integer ddpGroupId;
     public Integer ddpInstanceId;
     public Integer instanceRoleId;
-    public Integer ddpInstanceRoleId;
+    public List<Integer> ddpInstanceRoleIdList = new ArrayList<>();
     List<String> createdKitIds = new ArrayList<>();
     public Integer kitTypeId;
     private Integer kitDimensionId;
@@ -150,7 +152,8 @@ public class TestKitUtil {
                 delete(conn, "ddp_kit_request_settings", "ddp_kit_request_settings_id", ddpKitRequestSettingsId);
                 delete(conn, "carrier_service", "carrier_service_id", carrierId);
                 delete(conn, "kit_dimension", "kit_dimension_id", kitDimensionId);
-                delete(conn, "ddp_instance_role", "ddp_instance_role_id", ddpInstanceRoleId);
+                ddpInstanceRoleIdList.forEach(ddpInstanceRoleId -> delete(conn, "ddp_instance_role",
+                        "ddp_instance_role_id", ddpInstanceRoleId));
                 adminUtil.deleteGeneratedData();
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -251,8 +254,10 @@ public class TestKitUtil {
                 adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, esIndex);
                 ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = adminUtil.getStudyGroupId();
-                instanceRoleId = getInstanceRole(conn);
-                ddpInstanceRoleId = createDdpInstanceRole(conn);
+                instanceRoleId = getJuniperStudyInstanceRole(conn);
+                ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, instanceRoleId));
+                int ptInstanceRoleId = getPtNotifInstanceRole(conn);
+                ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, ptInstanceRoleId));
                 kitTypeId = getKitTypeId(conn, kitTypeName, kitTypeDisplayName, true);
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
@@ -356,19 +361,23 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "kit_type");
     }
 
-    private Integer getInstanceRole(Connection conn) throws SQLException {
+    private Integer getJuniperStudyInstanceRole(Connection conn) throws SQLException {
         if (instanceRoleId != null) {
             return instanceRoleId;
         }
         PreparedStatement stmt = conn.prepareStatement(SELECT_INSTANCE_ROLE);
+        stmt.setString(1, "juniper_study");
         ResultSet rs = stmt.executeQuery();
         return getPrimaryKey(rs, "instance_role");
     }
 
-    private Integer createDdpInstanceRole(Connection conn) throws SQLException {
-        if (ddpInstanceRoleId != null) {
-            return ddpInstanceRoleId;
-        }
+    private Integer getPtNotifInstanceRole(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(SELECT_PT_NOTIF_INSTANCE_ROLE);
+        ResultSet rs = stmt.executeQuery();
+        return getPrimaryKey(rs, "instance_role");
+    }
+
+    private Integer createDdpInstanceRole(Connection conn, int instanceRoleId) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
         stmt.setInt(1, ddpInstanceId);
         stmt.setInt(2, instanceRoleId);
@@ -504,7 +513,7 @@ public class TestKitUtil {
         kitDao.deleteKitRequestShipping(dsmKitRequestId);
     }
 
-    public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription) {
+    public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription, boolean nullKitType) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult simpleResult = new SimpleResult();
             try {
@@ -512,7 +521,11 @@ public class TestKitUtil {
                 stmt.setInt(1, ddpInstanceId);
                 stmt.setString(2, eventName);
                 stmt.setString(3, eventDescription);
-                stmt.setInt(4, kitTypeId);
+                if (nullKitType) {
+                    stmt.setNull(4, Types.INTEGER);
+                } else {
+                    stmt.setInt(4, kitTypeId);
+                }
                 stmt.setString(5, eventType);
                 stmt.executeUpdate();
             } catch (SQLException e) {

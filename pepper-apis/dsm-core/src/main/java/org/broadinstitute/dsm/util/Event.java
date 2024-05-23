@@ -18,10 +18,10 @@ public class Event {
         this.ddpParticipantId = ddpParticipantId;
         this.eventType = eventType;
         this.eventDate = eventDate;
-        if (StringUtils.isBlank(kitReasonType)) {
-            kitReasonType = normal;
-        }
         this.kitReasonType = kitReasonType;
+        if (StringUtils.isBlank(kitReasonType)) {
+            this.kitReasonType = normal;
+        }
         this.eventInfo = eventInfo;
     }
 }

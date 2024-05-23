@@ -9,7 +9,6 @@ import java.util.Optional;
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.gp.BSPKit;
@@ -94,8 +93,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
         return Optional.ofNullable((BSPKitDto) results.resultValue);
     }
 
-    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver,
-                                            DDPInstanceDto ddpInstanceDto) {
+    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver) {
         boolean firstTimeReceived = TransactionWrapper.inTransaction(conn -> {
             boolean firstTime = false;
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateKitReceived)) {

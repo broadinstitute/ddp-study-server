@@ -59,24 +59,21 @@ public class KitShippingTestUtil {
     }
 
     public int createTestKitShipping(ParticipantDto participant, DDPInstanceDto instanceDto) {
-        participantCounter++;
-        String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
         KitTypeDto kitTypeDto = createKitType("SALIVA");
-        addKitType(ddpParticipantId, kitTypeDto.getKitTypeId());
-        int kitRequestId = createKitShipping(participant, instanceDto, kitTypeDto.getKitTypeName(), kitTypeDto.getKitTypeId());
-        addKitRequest(ddpParticipantId, kitRequestId);
-        log.info("Created kit request with id {} for ptp {}", kitRequestId, ddpParticipantId);
-        return kitRequestId;
+        return createTestKitShippingWithKitType(participant, instanceDto, kitTypeDto.getKitTypeName(), kitTypeDto.getKitTypeId(), true);
     }
 
-    public int createTestKitShipping(ParticipantDto participant, DDPInstanceDto instanceDto, String kitTypeName, int kitTypeId) {
+    public int createTestKitShippingWithKitType(ParticipantDto participant, DDPInstanceDto instanceDto, String kitTypeName, int kitTypeId,
+                                                boolean addKitType) {
         participantCounter++;
         String ddpParticipantId = participant.getDdpParticipantIdOrThrow();
-        addKitType(ddpParticipantId, kitTypeId);
-        int kitRequestId = createKitShipping(participant, instanceDto, kitTypeName, kitTypeId);
-        addKitRequest(ddpParticipantId, kitRequestId);
-        log.info("Created kit request with id {} for ptp {}", kitRequestId, ddpParticipantId);
-        return kitRequestId;
+        if (addKitType) {
+            addKitType(ddpParticipantId, kitTypeId);
+        }
+        int dsmKitRequestId = createKitShipping(participant, instanceDto, kitTypeName, kitTypeId);
+        addKitRequest(ddpParticipantId, dsmKitRequestId);
+        log.info("Created kit request with id {} for ptp {}", dsmKitRequestId, ddpParticipantId);
+        return dsmKitRequestId;
     }
 
     public List<Integer> getParticipantKitRequestIds(String ddpParticipantId) {
@@ -87,7 +84,11 @@ public class KitShippingTestUtil {
         return ids;
     }
 
-    public int createKitShipping(ParticipantDto participant, DDPInstanceDto instanceDto, String kitTypeName, int kitTypeId ) {
+    /**
+     * Creates a kit shipping request for a participant.
+     * @return dsmKitRequestId
+     */
+    public int createKitShipping(ParticipantDto participant, DDPInstanceDto instanceDto, String kitTypeName, int kitTypeId) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceDto.getInstanceName());
         String dsmKitRequestId = genDsmKitRequestId();
         String kitReqestIdStr = KitRequestShipping.writeRequest(instanceDto.getDdpInstanceId().toString(),
