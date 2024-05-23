@@ -57,6 +57,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     private static DDPInstanceDto ddpInstanceDto;
     private static TestKitUtil testKitUtil;
     private static ParticipantDto participantDto;
+    private static ParticipantDto unsuccessfulEventPtDto;
     private static String ddpParticipantId;
     private static final ParticipantDao participantDao = new ParticipantDao();
     private final EventDao eventDao = new EventDao();
@@ -81,6 +82,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     public static void tearDown() {
         kitShippingTestUtil.tearDown();
         participantDao.delete(participantDto.getParticipantId().get());
+        participantDao.delete(unsuccessfulEventPtDto.getParticipantId().get());
         testKitUtil.deleteGeneratedData();
         ElasticTestUtil.deleteIndex(esIndex);
     }
@@ -117,6 +119,32 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     eventDao.getEventForParticipant(DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, ddpParticipantId).orElseThrow();
             assertEvent(eventDto, true, 0, ddpParticipantId, ddpInstanceDto.getDdpInstanceId(),
                     DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception");
+        }
+
+    }
+
+    @Test
+    public void testParticipantEvent_unsuccessful() {
+        try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS);
+                MockedStatic<DDPRequestUtil> utilities = Mockito.mockStatic(DDPRequestUtil.class)) {
+            //we can't use the same participant as before, because the event is already triggered and so dsm won't trigger it again
+            String unsuccessfulEventPt = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT_2");
+            unsuccessfulEventPtDto = TestParticipantUtil.createParticipant(unsuccessfulEventPt,
+                    ddpInstanceDto.getDdpInstanceId());
+            utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean())).thenReturn(500);
+            clinicalKitDao.triggerParticipantEvent(DDPInstance.from(ddpInstanceDto), unsuccessfulEventPt,
+                    DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
+            EventDto eventDto =
+                    eventDao.getEventForParticipant(DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, unsuccessfulEventPt).orElseThrow();
+            assertEvent(eventDto, false, 0, unsuccessfulEventPt, ddpInstanceDto.getDdpInstanceId(),
+                    DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), anyInt(),
+                    any()), never());
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(DDPInstance.from(ddpInstanceDto),
+                    DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, unsuccessfulEventPt, unsuccessfulEventPt), times(1));
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception");

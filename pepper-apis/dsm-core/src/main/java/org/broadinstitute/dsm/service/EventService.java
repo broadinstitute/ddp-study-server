@@ -58,8 +58,9 @@ public class EventService {
     public static void sendParticipantEventToDss(String eventName, DDPInstance ddpInstance, @NotNull String ddpParticipantId) {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
         if (!skippedParticipantEventDao.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
-            triggerDssWithEvent(eventName, ddpInstance, System.currentTimeMillis() / 1000, ddpParticipantId, ddpParticipantId, null);
-            addParticipantEvent(eventName, ddpInstanceId, ddpParticipantId, true);
+            boolean dssSuccessfullyTriggered = triggerDssWithEvent(eventName, ddpInstance, System.currentTimeMillis() / 1000,
+                    ddpParticipantId, ddpParticipantId, null);
+            addParticipantEvent(eventName, ddpInstanceId, ddpParticipantId, dssSuccessfullyTriggered);
         } else {
             logger.info("Participant event was skipped for event %s for participant %s ".formatted(eventName, ddpParticipantId)
                             .concat("based on participant_event table. Dss will not get triggered"));
