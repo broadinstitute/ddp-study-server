@@ -11,6 +11,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
@@ -58,7 +59,11 @@ public class PubSubPublisherInitializer {
             try {
                 publisher.getValue().shutdown();
             } catch (Exception e) {
-                log.error("Error shutting down publisher {}", publisher.getKey(), e);
+                if (!SparkBootUtil.isShuttingDown()) {
+                    log.error("Error shutting down publisher {}", publisher.getKey(), e);
+                } else {
+                    log.info("Exception during shutdown", e);
+                }
             }
         }
     }
