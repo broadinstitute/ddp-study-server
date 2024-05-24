@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="PEPPER-1426_scad_ddp_instance" author="pegah">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="scad"></column>
+            <column name="study_guid" value="scad"></column>
+            <column name="display_name" value="SCAD"></column>
+            <column name="is_active" value="0"></column>
+            <column name="bsp_group" value="Endocrine / MPG"></column>
+            <column name="bsp_collection" value=""></column>
+            <column name="bsp_organism" value="1"></column>
+            <column name="collaborator_id_prefix" value="CS"></column>
+            <column name="billing_Reference" value="8201079"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_ddp_group" author="pegah">
+        <insert tableName="ddp_group">
+            <column name="name" value="juniper-scad"></column>
+            <column name="description" value="Juniper SCAD study"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_ddp_instance_group" author="pegah">
+        <insert tableName="ddp_instance_group">
+            <column name="ddp_instance_id" valueComputed="Select ddp_instance_id from ddp_instance where instance_name = 'scad'"></column>
+            <column name="ddp_group_id" valueComputed="Select ddp_group_id from ddp_group where name = 'juniper-scad'"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_kit_return_information" author="pegah">
+        <insert tableName="kit_return_information">
+            <column name="return_address_name" value="Broad Institute"></column>
+            <column name="return_address_street1" value="Attn. Broad Genomics"></column>
+            <column name="return_address_street2" value="320 Charles St. - Lab 132"></column>
+            <column name="return_address_city" value="Cambridge"></column>
+            <column name="return_address_state" value="MA"></column>
+            <column name="return_address_zip" value="02141"></column>
+            <column name="return_address_country" value="US"></column>
+            <column name="return_address_phone" value="617 724 2725"></column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
