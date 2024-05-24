@@ -1,9 +1,13 @@
 package org.broadinstitute.dsm.service;
 
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.sun.istack.NotNull;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
@@ -91,17 +95,36 @@ public class EventService {
     @VisibleForTesting
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, String reason) {
-        for (int tries = 0; tries < MAX_TRIES; tries++) {
+        final long initialInterval = 100; // base delay in milliseconds
+        final double multiplier = 2.0; // exponential backoff multiplier
+
+        IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(initialInterval, multiplier);
+        RetryConfig retryConfig = RetryConfig.custom()
+                .maxAttempts(MAX_TRIES)
+                .intervalFunction(intervalFn)
+                .build();
+        Retry retry = Retry.of("triggerDssWithEvent", retryConfig);
+
+        Callable<Boolean> triggerDssWithEventCallable = Retry.decorateCallable(retry, () -> {
+            boolean success = false;
             try {
-                if (sendDDPEventRequest(eventType, ddpInstance, eventDate, ddpParticipantId, eventInfo, reason)) {
-                    return true;
-                }
+                success = sendDDPEventRequest(eventType, ddpInstance, eventDate, ddpParticipantId, eventInfo, reason);
             } catch (Exception e) {
-                logTriggerFailure(ddpInstance, eventType, ddpParticipantId, eventInfo, tries, e);
+                logTriggerFailure(ddpInstance, eventType, ddpParticipantId, eventInfo, e);
             }
+            if (success) {
+                return true;
+            } else {
+                throw new Exception("Failed to trigger event");
+            }
+        });
+
+        try {
+            return triggerDssWithEventCallable.call();
+        } catch (Exception e) {
+            logTriggerExhausted(ddpInstance, eventType, ddpParticipantId, eventInfo);
+            return false;
         }
-        logTriggerExhausted(ddpInstance, eventType, ddpParticipantId, eventInfo);
-        return false;
     }
 
     /**
@@ -125,10 +148,10 @@ public class EventService {
      * logs the failure of the trigger event to DSS
      * */
     @VisibleForTesting
-    protected static void logTriggerFailure(DDPInstance ddpInstance, String eventType, String ddpParticipantId, String eventInfo, int tries,
+    protected static void logTriggerFailure(DDPInstance ddpInstance, String eventType, String ddpParticipantId, String eventInfo,
                                    Exception e) {
-        logger.warn("Failed to trigger {} to notify participant {} about {} for dsm_kit_request_id {} in try {}",
-                ddpInstance.getName(), ddpParticipantId, eventType, eventInfo, tries);
+        logger.warn("Failed to trigger {} to notify participant {} about {} for dsm_kit_request_id {}",
+                ddpInstance.getName(), ddpParticipantId, eventType, eventInfo);
         logger.error("Error: ", e);
     }
 

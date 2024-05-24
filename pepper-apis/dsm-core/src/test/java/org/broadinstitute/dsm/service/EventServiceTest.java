@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.service;
 
+import static org.broadinstitute.dsm.service.EventService.MAX_TRIES;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
@@ -55,10 +55,12 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     private static String esIndex;
     private static KitShippingTestUtil kitShippingTestUtil;
     private static DDPInstanceDto ddpInstanceDto;
+    private static DDPInstance ddpInstance;
     private static TestKitUtil testKitUtil;
     private static ParticipantDto participantDto;
     private static ParticipantDto unsuccessfulEventPtDto;
     private static String ddpParticipantId;
+    private static String unsuccessfulEventPt;
     private static final ParticipantDao participantDao = new ParticipantDao();
     private final EventDao eventDao = new EventDao();
     private final ClinicalKitDao clinicalKitDao = new ClinicalKitDao();
@@ -70,8 +72,12 @@ public class EventServiceTest extends DbAndElasticBaseTest {
         testKitUtil = new TestKitUtil(INSTANCE_NAME, INSTANCE_GUID, INSTANCE_NAME, "event_test_prefix", "event-group", null, esIndex);
         testKitUtil.setupInstanceAndSettings();
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(testKitUtil.getDdpInstanceId()).orElseThrow();
+        ddpInstance = DDPInstance.from(ddpInstanceDto);
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT");
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
+        unsuccessfulEventPt = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT_2");
+        unsuccessfulEventPtDto = TestParticipantUtil.createParticipant(unsuccessfulEventPt,
+                ddpInstanceDto.getDdpInstanceId());
         testKitUtil.createEventsForDDPInstance(EVENT_TYPE_SENT, "SENT", "test purpose: event for sent kit", false);
         testKitUtil.createEventsForDDPInstance(EVENT_TYPE_RECEIVED, "RECEIVED", "test purpose: event for received kit", false);
         testKitUtil.createEventsForDDPInstance(DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, "RECEIVED",
@@ -131,19 +137,16 @@ public class EventServiceTest extends DbAndElasticBaseTest {
         try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS);
                 MockedStatic<DDPRequestUtil> utilities = Mockito.mockStatic(DDPRequestUtil.class)) {
             //we can't use the same participant as before, because the event is already triggered and so dsm won't trigger it again
-            String unsuccessfulEventPt = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT_2");
-            unsuccessfulEventPtDto = TestParticipantUtil.createParticipant(unsuccessfulEventPt,
-                    ddpInstanceDto.getDdpInstanceId());
             utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean())).thenReturn(500);
-            clinicalKitDao.triggerParticipantEvent(DDPInstance.from(ddpInstanceDto), unsuccessfulEventPt,
+            clinicalKitDao.triggerParticipantEvent(ddpInstance, unsuccessfulEventPt,
                     DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
             EventDto eventDto =
                     eventDao.getEventForParticipant(DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, unsuccessfulEventPt).orElseThrow();
             assertEvent(eventDto, false, 0, unsuccessfulEventPt, ddpInstanceDto.getDdpInstanceId(),
                     DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), anyInt(),
-                    any()), never());
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(DDPInstance.from(ddpInstanceDto),
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), any()),
+                    never());
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance,
                     DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, unsuccessfulEventPt, unsuccessfulEventPt), times(1));
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,11 +174,11 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             assertEvent(eventDto, false, kitRequestShipping.getDsmKitRequestId(), null, ddpInstanceDto.getDdpInstanceId(),
                     EVENT_TYPE_SENT);
 
-            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, DDPInstance.from(ddpInstanceDto), 0L,
-                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(EventService.MAX_TRIES));
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), anyInt(),
+            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
+                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(MAX_TRIES));
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(),
                     any()), never());
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(DDPInstance.from(ddpInstanceDto), EVENT_TYPE_SENT,
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId()), times(1));
         } catch (IOException e) {
             e.printStackTrace();
@@ -199,11 +202,11 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             assertEvent(eventDto, false, kitRequestShipping.getDsmKitRequestId(), null,
                     ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
 
-            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, DDPInstance.from(ddpInstanceDto), 0L,
-                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(EventService.MAX_TRIES));
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), anyInt(),
-                    any()), times(EventService.MAX_TRIES));
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(DDPInstance.from(ddpInstanceDto), EVENT_TYPE_SENT,
+            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
+                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(MAX_TRIES));
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(),
+                    any()), times(MAX_TRIES));
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId()), times(1));
         } catch (Exception e) {
             e.printStackTrace();
@@ -238,11 +241,11 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             assertEvent(eventDto, true, kitRequestShipping.getDsmKitRequestId(), null,
                     ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
 
-            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, DDPInstance.from(ddpInstanceDto), 0L,
+            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(3));
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), anyInt(),
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(),
                     any()), never());
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(DDPInstance.from(ddpInstanceDto), EVENT_TYPE_SENT,
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId()), never());
         } catch (Exception e) {
             e.printStackTrace();
@@ -279,11 +282,11 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             assertEvent(eventDto, true, kitRequestShipping.getDsmKitRequestId(), null, ddpInstanceDto.getDdpInstanceId(),
                     EVENT_TYPE_RECEIVED);
 
-            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, DDPInstance.from(ddpInstanceDto), 0L,
+            eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(1));
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), anyInt(),
-                    any()), never());
-            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(DDPInstance.from(ddpInstanceDto), EVENT_TYPE_SENT,
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), any()),
+                    never());
+            eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId()), never());
         } catch (Exception e) {
             e.printStackTrace();
