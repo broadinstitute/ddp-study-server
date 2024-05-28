@@ -78,6 +78,7 @@ public class SparkBootUtil {
                 // as a failure
                 if (numShutdownAttempts == 0) {
                     final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+                    // temporary experiment to see if 5s gives the database enough time to free connections
                     executor.schedule(() -> stopRouteCallback.onAhStop(), 5, TimeUnit.SECONDS);
                 } else {
                     log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
