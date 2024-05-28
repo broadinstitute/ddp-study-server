@@ -104,7 +104,8 @@ public class EventService {
                 .intervalFunction(intervalFn)
                 .build();
         Retry retry = Retry.of("triggerDssWithEvent", retryConfig);
-
+        retry.getEventPublisher()
+                .onRetry(event -> logger.warn("{}", event));
         Callable<Boolean> triggerDssWithEventCallable = Retry.decorateCallable(retry, () -> {
             boolean success = false;
             try {
