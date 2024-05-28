@@ -21,7 +21,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.notficationevent.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
 import org.broadinstitute.ddp.model.event.EventConfiguration;

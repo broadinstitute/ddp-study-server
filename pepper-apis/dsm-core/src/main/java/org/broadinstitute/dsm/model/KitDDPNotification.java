@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.notficationevent.KitReasonType;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -29,7 +31,7 @@ public class KitDDPNotification {
     private final String eventType;
     private final long date;
     private final boolean hasAuth0Token;
-    private final String uploadReason;
+    private final KitReasonType uploadReason;
     private final String ddpKitRequestId;
 
     public KitDDPNotification(String participantId, String dsmKitRequestId, int ddpInstanceId, String instanceName, String baseUrl,
@@ -44,7 +46,11 @@ public class KitDDPNotification {
         this.eventType = eventType;
         this.date = date;
         this.hasAuth0Token = hasAuth0Token;
-        this.uploadReason = uploadReason;
+        if (StringUtils.isBlank(uploadReason)) {
+            this.uploadReason = KitReasonType.NORMAL;
+        } else {
+            this.uploadReason = KitReasonType.valueOf(uploadReason);
+        }
         this.ddpKitRequestId = ddpKitRequestId;
     }
 

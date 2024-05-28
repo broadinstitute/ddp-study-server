@@ -1,12 +1,10 @@
-package org.broadinstitute.ddp.json.dsm;
+package org.broadinstitute.ddp.notficationevent;
 
 import java.util.Optional;
 import javax.validation.constraints.NotBlank;
 
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
-import org.broadinstitute.ddp.model.dsm.KitReasonType;
 
 public class DsmNotificationPayload {
 
@@ -36,6 +34,17 @@ public class DsmNotificationPayload {
     public DsmNotificationPayload(String eventType, String kitRequestId, KitReasonType kitReasonType) {
         this.eventType = eventType;
         this.kitRequestId = kitRequestId;
+        this.kitReasonType = kitReasonType;
+    }
+
+    /**
+     * Creates a new event to be sent to DSS.
+     * eventInfo could be ddpParticipantId for participant events, or ddpKitRequestId for kit events.
+     * **/
+    public DsmNotificationPayload(String eventType, long eventDate, KitReasonType kitReasonType, String eventInfo) {
+        this.eventType = eventType;
+        this.eventDate = eventDate;
+        this.eventInfo = eventInfo;
         this.kitReasonType = kitReasonType;
     }
 

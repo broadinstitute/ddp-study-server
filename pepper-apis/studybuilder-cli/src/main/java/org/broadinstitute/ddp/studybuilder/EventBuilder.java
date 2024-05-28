@@ -42,7 +42,7 @@ import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
 import org.broadinstitute.ddp.model.copy.CopyPreviousInstanceFilter;
 import org.broadinstitute.ddp.model.copy.UserType;
-import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.notficationevent.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
 import org.broadinstitute.ddp.model.event.EventTrigger;

@@ -9,13 +9,14 @@ import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.NonNull;
+import org.broadinstitute.ddp.notficationevent.DsmNotificationPayload;
+import org.broadinstitute.ddp.notficationevent.KitReasonType;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,7 @@ public class EventService {
         int ddpInstanceId = ddpInstance.getDdpInstanceIdAsInt();
         if (!skippedParticipantEventDao.isParticipantEventSkipped(ddpParticipantId, eventName, ddpInstanceId)) {
             boolean dssSuccessfullyTriggered = triggerDssWithEvent(eventName, ddpInstance, System.currentTimeMillis() / 1000,
-                    ddpParticipantId, ddpParticipantId, null);
+                    ddpParticipantId, ddpParticipantId, KitReasonType.NORMAL);
             addParticipantEvent(eventName, ddpInstanceId, ddpParticipantId, dssSuccessfullyTriggered);
         } else {
             logger.info("Participant event was skipped for event %s for participant %s ".formatted(eventName, ddpParticipantId)
@@ -94,7 +95,7 @@ public class EventService {
      * */
     @VisibleForTesting
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
-                                        @NotNull String ddpParticipantId, @NotNull String eventInfo, String reason) {
+                                        @NotNull String ddpParticipantId, @NotNull String eventInfo, KitReasonType reason) {
         final long initialInterval = 100; // base delay in milliseconds
         final double multiplier = 2.0; // exponential backoff multiplier
 
@@ -130,11 +131,12 @@ public class EventService {
 
     /**
      * Sends the POST request to DSS to trigger the event for a kit or a participant.
+     * @return true if the request was successful, false otherwise
      * */
     @VisibleForTesting
     protected static boolean sendDDPEventRequest(String eventType, DDPInstance ddpInstance, long eventDate, String ddpParticipantId,
-                                        String eventInfo, String reason) throws Exception {
-        Event event = new Event(ddpParticipantId, eventType, eventDate, reason, eventInfo);
+                                        String eventInfo, KitReasonType reason) throws Exception {
+        DsmNotificationPayload event = new DsmNotificationPayload(eventType, eventDate, reason, eventInfo);
         String sendRequest = ddpInstance.getBaseUrl() + RoutePath.DDP_PARTICIPANT_EVENT_PATH + "/" + ddpParticipantId;
         int responseCode = DDPRequestUtil.postRequest(sendRequest, event, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
         if (responseCode == 200) {

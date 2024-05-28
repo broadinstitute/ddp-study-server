@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model.dsm;
+package org.broadinstitute.ddp.notficationevent;
 
 public enum DsmNotificationEventType {
     /**

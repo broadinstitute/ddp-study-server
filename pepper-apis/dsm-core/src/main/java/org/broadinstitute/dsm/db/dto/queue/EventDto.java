@@ -9,6 +9,8 @@ public class EventDto {
     private long eventDateCreated;
     private String eventType;
     private int ddpInstanceId;
+
+    //the dsmKitRequestId will be null for participant events
     private Integer dsmKitRequestId;
     private String ddpParticipantId;
     private Boolean eventTriggered;

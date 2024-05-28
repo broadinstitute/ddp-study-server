@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.notficationevent.KitReasonType;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -50,8 +51,6 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     private static final String SALIVA = "SALIVA";
     private static final String EVENT_TYPE_SENT = "SALIVA_SENT";
     private static final String EVENT_TYPE_RECEIVED = "SALIVA_RECEIVED";
-    private static final String TEST_REASON = "test";
-
     private static String esIndex;
     private static KitShippingTestUtil kitShippingTestUtil;
     private static DDPInstanceDto ddpInstanceDto;
@@ -175,7 +174,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     EVENT_TYPE_SENT);
 
             eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
-                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(MAX_TRIES));
+                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), KitReasonType.NORMAL), times(MAX_TRIES));
             eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(),
                     any()), never());
             eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
@@ -191,7 +190,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
         IOException exception = new IOException("Test IOException");
         try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS)) {
             eventServiceMockedStatic.when(() -> EventService.sendDDPEventRequest(anyString(), any(), anyLong(), anyString(), anyString(),
-                    anyString())).thenThrow(exception);
+                    any())).thenThrow(exception);
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
                     testKitUtil.getKitTypeId(), false);
@@ -203,7 +202,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
 
             eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
-                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(MAX_TRIES));
+                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), KitReasonType.NORMAL), times(MAX_TRIES));
             eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(),
                     any()), times(MAX_TRIES));
             eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
@@ -218,7 +217,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     public void testUnsuccessfulEvent_EventuallySuccessful() {
         try (MockedStatic<EventService> eventServiceMockedStatic = Mockito.mockStatic(EventService.class, Mockito.CALLS_REAL_METHODS)) {
             eventServiceMockedStatic.when(() -> EventService.sendDDPEventRequest(anyString(), any(), Mockito.anyLong(), anyString(),
-                    anyString(), anyString())).thenAnswer(new Answer<Boolean>() {
+                    anyString(), any())).thenAnswer(new Answer<Boolean>() {
                         private int count = 0;
 
                         @Override
@@ -242,7 +241,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
 
             eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
-                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(3));
+                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), KitReasonType.NORMAL), times(3));
             eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(),
                     any()), never());
             eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,
@@ -283,7 +282,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     EVENT_TYPE_RECEIVED);
 
             eventServiceMockedStatic.verify(() -> EventService.sendDDPEventRequest(EVENT_TYPE_SENT, ddpInstance, 0L,
-                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), TEST_REASON), times(1));
+                    ddpParticipantId, kitRequestShipping.getDdpKitRequestId(), KitReasonType.NORMAL), times(1));
             eventServiceMockedStatic.verify(() -> EventService.logTriggerFailure(any(), anyString(), anyString(), anyString(), any()),
                     never());
             eventServiceMockedStatic.verify(() -> EventService.logTriggerExhausted(ddpInstance, EVENT_TYPE_SENT,

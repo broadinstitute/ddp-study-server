@@ -94,7 +94,7 @@ public class KitShippingTestUtil {
         String kitReqestIdStr = KitRequestShipping.writeRequest(instanceDto.getDdpInstanceId().toString(),
                 dsmKitRequestId, kitTypeId, participant.getDdpParticipantIdOrThrow(),
                 "test", "test", testUser, "test", "", "test",
-                false, "test", ddpInstance, kitTypeName, dsmKitRequestId);
+                false, null, ddpInstance, kitTypeName, dsmKitRequestId);
         return Integer.parseInt(kitReqestIdStr);
     }
 
