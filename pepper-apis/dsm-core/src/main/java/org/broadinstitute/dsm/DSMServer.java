@@ -13,6 +13,7 @@ import static spark.Spark.post;
 import static spark.Spark.put;
 
 import java.io.File;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
@@ -493,6 +496,38 @@ public class DSMServer {
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
     }
 
+    /**
+     * Try numTries times to get a database connection, sleeping
+     * for sleepSeconds in between.  If unsuccessful, throws
+     * an exception.  We do this here in case db server-side connection
+     * limits have been exceeded during the GAE startup/shutdown cycle.
+     */
+    private void checkForDatabaseConnectivity(String dbUrl, int sleepSeconds, int numTries) {
+        boolean gotConnection = false;
+        for (int i = 0; i < numTries; i++) {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(dbUrl);
+            config.setMaximumPoolSize(2);
+            HikariDataSource dataSource = new HikariDataSource(config);
+            try (Connection conn = dataSource.getConnection()) {
+                logger.info("Got database connection after try {}", i);
+                gotConnection = true;
+            } catch (SQLException e) {
+                logger.info("Could not get a database connection from the pool, try {} of {}", i, numTries, e);
+                try {
+                    Thread.sleep(sleepSeconds * 1000);
+                } catch (InterruptedException interrupted) {
+                    logger.info("Interrupted while sleeping between connection attempt", e);
+                }
+            } finally {
+                dataSource.close();
+            }
+        }
+        if (!gotConnection) {
+            throw new DsmInternalError("Failed to get database connection after " + numTries);
+        }
+    }
+
     protected void setupDB(@NonNull Config config) {
         logger.info("Setup the DB...");
 
@@ -507,6 +542,8 @@ public class DSMServer {
         } catch (SQLException e) {
             throw new DsmInternalError("Could not query liquibase locks", e);
         }
+
+        checkForDatabaseConnectivity(dbUrl, 1, 60);
 
         logger.info("Running DB update...");
 
