@@ -86,6 +86,8 @@ public class SparkBootUtil {
             } catch (Exception e) {
                 log.info("Error during shutdown", e);
             }
+            log.info("Returning from GAE stop request [{}] for instance {} deployment {}", request.url(),
+                    System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             response.status(HttpStatus.SC_OK);
             return "";
         });

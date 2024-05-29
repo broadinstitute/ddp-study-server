@@ -498,43 +498,6 @@ public class DSMServer {
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
     }
 
-    // todo arz move to util class, use in all startups
-
-    /**
-     * Try numTries times to get a database connection, sleeping
-     * for sleepSeconds in between.  If unsuccessful, throws
-     * an exception.  We do this here in case db server-side connection
-     * limits have been exceeded during the GAE startup/shutdown cycle.
-     */
-    private void checkForDatabaseConnectivity(String dbUrl, int sleepSeconds, int numTries) {
-        boolean gotConnection = false;
-        for (int i = 0; i < numTries; i++) {
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(dbUrl);
-            config.setMaximumPoolSize(1);
-            HikariDataSource dataSource = new HikariDataSource(config);
-            try (Connection conn = dataSource.getConnection()) {
-                logger.info("Got database connection after try {}", i);
-                gotConnection = true;
-            } catch (SQLException e) {
-                logger.info("Could not get a database connection from the pool, try {} of {}", i, numTries, e);
-                try {
-                    Thread.sleep(Duration.of(sleepSeconds, ChronoUnit.SECONDS).toMillis());
-                } catch (InterruptedException interrupted) {
-                    logger.info("Interrupted while sleeping between connection attempt", e);
-                }
-            } finally {
-                dataSource.close();
-            }
-            if (gotConnection) {
-                break;
-            }
-        }
-        if (!gotConnection) {
-            throw new DsmInternalError("Failed to get database connection after " + numTries);
-        }
-    }
-
     protected void setupDB(@NonNull Config config) {
         logger.info("Setup the DB...");
 
@@ -549,8 +512,6 @@ public class DSMServer {
         } catch (SQLException e) {
             throw new DsmInternalError("Could not query liquibase locks", e);
         }
-
-        checkForDatabaseConnectivity(dbUrl, 1, 60);
 
         logger.info("Running DB update...");
 
@@ -598,10 +559,7 @@ public class DSMServer {
         before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
-        afterAfter((req, res) -> {
-            logger.info("afterAfter " + req.url() + " status " + res.status());
-            MDC.clear();
-        });
+        afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
@@ -1118,7 +1076,6 @@ public class DSMServer {
     }
 
     public static void shutdown() {
-        logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
         // shutdown jobs
         if (scheduler != null) {
             logger.info("Shutting down quartz.");
