@@ -254,7 +254,7 @@ public class DSMServer {
             }
 
             public void onTerminate() {
-                logger.info("Terminating DSM instance", LogUtil.getAppEngineInstance());
+                logger.info("Terminating DSM instance {}", LogUtil.getAppEngineInstance());
                 shutdown();
             }
         },
@@ -1071,7 +1071,6 @@ public class DSMServer {
     }
 
     public static void shutdown() {
-        logger.info("Shutting down DSM instance {}", LogUtil.getAppEngineInstance());
         // shutdown jobs
         if (scheduler != null) {
             logger.info("Shutting down quartz.");
@@ -1110,8 +1109,5 @@ public class DSMServer {
         // shutdown db pool
         logger.info("Shutting down db pool");
         TransactionWrapper.reset();
-
-        // shutdown spark
-        Spark.stop();
     }
 }

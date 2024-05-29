@@ -236,7 +236,6 @@ public class DataDonationPlatform {
             }
         }
         PubSubPublisherInitializer.shutdownPublishers();
-        stop();
         log.info("ddp shutdown complete");
     }
 
