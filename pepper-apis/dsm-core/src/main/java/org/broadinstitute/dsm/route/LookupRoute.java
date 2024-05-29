@@ -72,9 +72,9 @@ public class LookupRoute extends RequestHandler {
         if (queryParams.value(RequestParameter.LOOKUP_FIELD) != null) {
             field = queryParams.get(RequestParameter.LOOKUP_FIELD).value();
         }
-        String value = null;
+        String lookUpValue = null;
         if (queryParams.value(RequestParameter.LOOKUP_VALUE) != null) {
-            value = queryParams.get(RequestParameter.LOOKUP_VALUE).value();
+            lookUpValue = queryParams.get(RequestParameter.LOOKUP_VALUE).value();
         }
         String realm = null;
         String group = null;
@@ -109,10 +109,9 @@ public class LookupRoute extends RequestHandler {
                         throw new RuntimeException("Error getting collaboratorId, realm is missing ");
                     }
                     DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+                    //4 is length of CMI id prefix in gen2
                     String collaboratorParticipantId =
-                            KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                    ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), value, shortId, "4"); //4 was length of CMI in Gen2
+                            KitRequestShipping.getCollaboratorParticipantId(ddpInstance, lookUpValue, shortId, "4");
                     if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                         //if participant has already a sample collaborator participant id, return just the participant id
                         List<LookupResponse> responseList = new ArrayList<>();
@@ -120,7 +119,7 @@ public class LookupRoute extends RequestHandler {
                         return responseList;
                     }
                 }
-                return getLookupValue(field, query, value, realm, group);
+                return getLookupValue(field, query, lookUpValue, realm, group);
             } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);

@@ -108,9 +108,7 @@ public class ClinicalKitDto {
             this.setGender(esParticipantDto.getParticipantGender(ddpInstance.getName(), ddpParticipantId));
             String shortId = esParticipantDto.getProfile().map(Profile::getHruid).orElse("");
             String collaboratorId =
-                    KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                            ddpInstance.isMigratedDDP(),
-                            ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
+                    KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorId);
         } catch (Exception e) {
             throw new DsmInternalError(String.format("Error getting participant data for %s", ddpParticipantId), e);

@@ -49,6 +49,10 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_SAMPLE_ID = " SELECT * FROM  ddp_kit_request r"
             + " WHERE bsp_collaborator_sample_id = ?";
+
+    public static final String SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_PARTICIPANT_ID = " SELECT * FROM  ddp_kit_request r"
+            + " WHERE bsp_collaborator_participant_id = ?";
+
     public static final String SQL_UPDATE_COLLAB_ID_AND_DDP_PARTICIPANT_ID =
             " UPDATE ddp_kit_request SET bsp_collaborator_sample_id = ?, ddp_participant_id = ?, "
             + "bsp_collaborator_participant_id = ? WHERE dsm_kit_request_id in  "
@@ -193,6 +197,33 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         if (results.resultException != null) {
             throw new DsmInternalError("Error getting KitRequestShipping by collaboratorSampleId "
                     + collaboratorSampleId, results.resultException);
+        }
+        return kitRequestShippingList;
+    }
+
+    public List<KitRequestShipping> getKitRequestsForCollaboratorParticipantId(String collaboratorParticipantId) {
+        List<KitRequestShipping> kitRequestShippingList = new ArrayList<>();
+        SimpleResult results = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SAMPLE_BY_BSP_COLLABORATOR_PARTICIPANT_ID)) {
+                stmt.setString(1, collaboratorParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        kitRequestShippingList.add(KitRequestShipping.getKitRequestFromResultSet(rs));
+                    }
+                    return dbVals;
+                } catch (SQLException e) {
+                    dbVals.resultException = e;
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new DsmInternalError("Error getting KitRequestShipping by collaboratorParticipantId "
+                    + collaboratorParticipantId, results.resultException);
         }
         return kitRequestShippingList;
     }

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import javax.servlet.http.HttpServletRequest;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.servlet.http.HttpServletRequest;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
+
 
 public class KitUploadRoute extends RequestHandler {
 
@@ -241,17 +243,14 @@ public class KitUploadRoute extends RequestHandler {
                     participantLegacyAltPid = participantByShortId.getProfile().map(Profile::getLegacyAltPid).orElse("");
                     kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
                     collaboratorParticipantId = KitRequestShipping
-                            .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                    ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                            .getCollaboratorParticipantId(ddpInstance, kit.getParticipantId(), kit.getShortId(),
                                     kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 } else {
                     //kit with legacy id in RGP will go here
                     participantGuid = kit.getParticipantId();
                     //this needs to be here with base URL being null for RGP kits
                     collaboratorParticipantId = KitRequestShipping
-                            .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                            .getCollaboratorParticipantId(ddpInstance, kit.getParticipantId(), kit.getShortId(),
                                     kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 }
                 //subkits is currently only used by test boston and RGP
@@ -576,7 +575,8 @@ public class KitUploadRoute extends RequestHandler {
 
                 if (skipAddressValidation) {
                     try {
-                        Address address = easyPostUtil.createAddressWithoutValidation(name, object.getStreet1(), object.getStreet2(), object.getCity(),
+                        Address address = easyPostUtil.createAddressWithoutValidation(name, object.getStreet1(), object.getStreet2(),
+                                object.getCity(),
                                 object.getPostalCode(), object.getState(), object.getCountry(), phone);
                         object.setEasyPostAddressId(address.getId());
                     } catch (EasyPostException e) {

@@ -81,9 +81,7 @@ public class DDPKitRequest {
                                                                 (Map<String, Object>) participantESData.get("profile");
                                                         if (profile != null && !profile.isEmpty()) {
                                                             String collaboratorParticipantId =
-                                                                    KitRequestShipping.getCollaboratorParticipantId(latestKit.getBaseURL(),
-                                                                            latestKit.getInstanceID(), latestKit.isMigrated(),
-                                                                            latestKit.getCollaboratorIdPrefix(),
+                                                                    KitRequestShipping.getCollaboratorParticipantId(latestKit,
                                                                             (String) profile.get("guid"), (String) profile.get("hruid"),
                                                                             kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
@@ -150,7 +148,8 @@ public class DDPKitRequest {
                 KitRequestShipping.addKitRequests(instanceId, subKit.getKitName(), kitDetail.getParticipantId(),
                         subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter,
                         subKit.getKitTypeId(), kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(),
-                        externalOrderNumber, uploadReason, ddpInstance, subCounter == 0 ? subKitsDdpLabel : subKitsDdpLabel + "_" + subCounter);
+                        externalOrderNumber, uploadReason, ddpInstance, subCounter == 0 ? subKitsDdpLabel : subKitsDdpLabel + "_"
+                                + subCounter);
                 subCounter = subCounter + 1;
             }
         }

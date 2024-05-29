@@ -1,13 +1,77 @@
 package org.broadinstitute.dsm.kits;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.dsm.DbAndElasticBaseTest;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.util.ElasticTestUtil;
+import org.broadinstitute.dsm.util.TestParticipantUtil;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class KitRequestShippingTest {
+public class KitRequestShippingTest extends DbAndElasticBaseTest {
     public static String BLOOD_RNA_KIT_TYPE_NAME = "BLOOD";
     public static String BLOOD_RNA_KIT_TYPE_DISPLAY_NAME = "BLOOD and RNA";
     private static String guid = "TEST_GUID";
+
+    private static final String instanceName = "test_kit_request_shipping";
+    private static final String shortId = "KRSTS1";
+    private static final String notLegacyParticipantShortId = "KRSTS2";
+    private static final String legacyShortId = "0001";
+    private static final String collaboratorIdPrefix = "PROJ";
+    private static String esIndex;
+    private static DDPInstanceDto ddpInstanceDto;
+    private static DDPInstance ddpInstance;
+    private static DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+    private static String legacyParticipantGuid = "DDP_PT_ID_1";
+    private static ParticipantDto legacyParticipant;
+    private static String notLegacyParticipantGuid = "DDP_PT_ID_2";
+    private static ParticipantDto notLegacyParticipant;
+    private static int participantCounter = 0;
+    private static Pair<ParticipantDto, String> legacyParticipantPair;
+    private static TestKitUtil testKitUtil;
+    private static List<ParticipantDto> participants = new ArrayList<>();
+    private static List<String> createdKits = new ArrayList<>();
+
+    @BeforeClass
+    public static void doFirst() {
+        esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
+        testKitUtil = new TestKitUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, "SALIVA", null, esIndex);
+        testKitUtil.setupInstanceAndSettings();
+        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
+        ddpInstance = DDPInstance.from(ddpInstanceDto);
+        legacyParticipantPair = TestParticipantUtil.createLegacyParticipant(legacyParticipantGuid, participantCounter++, ddpInstanceDto,
+                shortId, legacyShortId);
+
+        legacyParticipant = legacyParticipantPair.getLeft();
+        participants.add(legacyParticipant);
+        legacyParticipantGuid = legacyParticipant.getRequiredDdpParticipantId();
+
+        Profile profile = new Profile();
+        profile.setHruid(notLegacyParticipantShortId);
+        notLegacyParticipant = TestParticipantUtil.createParticipantWithEsProfile(notLegacyParticipantGuid, profile, ddpInstanceDto);
+        notLegacyParticipantGuid = notLegacyParticipant.getRequiredDdpParticipantId();
+        participants.add(notLegacyParticipant);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        participants.forEach(participantDto ->
+                TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
+        createdKits.forEach(dsmKitRequestId -> testKitUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
+        testKitUtil.deleteGeneratedData();
+        ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
+        ElasticTestUtil.deleteIndex(esIndex);
+    }
 
     @Test
     public void testEmptyDisplayName() {
@@ -52,5 +116,54 @@ public class KitRequestShippingTest {
         Assert.assertFalse(shipping.hasBSPCollaboratorParticipantId());
     }
 
+    @Test
+    public void testLegacyKitUpload() {
+        //check when legacy participant doesn't have a prior legacy kit
+        String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
+        Assert.assertEquals("PROJ_" + shortId, nextCollaboratorParticipantId);
+
+        //now check when legacy participant has a kit with legacy id
+        String legacyCollaboratorParticipantId = "PROJ_0001";
+        KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
+                .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
+                .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
+                .withBspCollaboratorSampleId("PROJ_0001_SALIVA_1")
+                .withKitTypeName("SALIVA")
+                .withDdpKitRequestId("0001_Kit")
+                .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+
+        String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+        createdKits.add(dsmKitRequestId);
+
+        nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
+        Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
+    }
+
+    @Test
+    public void testPepperParticipantKitUpload() {
+        String collaboratorParticipantId = "PROJ_" + notLegacyParticipantShortId;
+        //check when legacy participant doesn't have a prior legacy kit
+        String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
+        Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+
+        //now check when legacy participant has a kit with legacy id
+        KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
+                .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
+                .withBspCollaboratorParticipantId(collaboratorParticipantId)
+                .withBspCollaboratorSampleId(collaboratorParticipantId + "_SALIVA_1")
+                .withKitTypeName("SALIVA")
+                .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit")
+                .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+
+        String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+        createdKits.add(dsmKitRequestId);
+
+        nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
+        Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+    }
 
 }

@@ -52,8 +52,7 @@ public class CreateClinicalDummyKitRoute implements Route {
 
     public static void addCollaboratorSampleId(int tissueId, DDPInstance ddpInstance, String ddpParticipantId, String shortId) {
         String collaboratorParticipantId = KitRequestShipping
-                .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                        ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, "4");
+                .getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, "4");
         int randomINT = new Random().nextInt(100000);
         updateTissue(tissueId, collaboratorParticipantId + "_T" + randomINT);
 
@@ -127,9 +126,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             String participantCollaboratorId;
             if (!fixedParticipantId) {
                 participantCollaboratorId = KitRequestShipping
-                        .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                ddpInstance.isMigratedDDP(),
-                                ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId,
+                        .getCollaboratorParticipantId(ddpInstance, ddpParticipantId,
                                 esParticipantDto.getProfile().map(Profile::getHruid).orElseThrow(), null);
             } else {
                 participantCollaboratorId = participantId;

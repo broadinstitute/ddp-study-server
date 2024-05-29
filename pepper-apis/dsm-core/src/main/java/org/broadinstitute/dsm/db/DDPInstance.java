@@ -524,7 +524,7 @@ public class DDPInstance {
         return Integer.parseInt(ddpInstanceId);
     }
 
-    public boolean isESUpdatePossible() {
+    public boolean hasEsIndex() {
         return StringUtils.isNotBlank(this.participantIndexES);
     }
 

@@ -149,8 +149,7 @@ public class NonPepperKitCreationService {
         String errorMessage = "";
         // collaboratorParticipantId is the id of the participant in GP's view
         String collaboratorParticipantId = KitRequestShipping
-                .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                        ddpInstance.getCollaboratorIdPrefix(), kit.getJuniperParticipantID(), kit.getJuniperParticipantID(),
+                .getCollaboratorParticipantId(ddpInstance, kit.getJuniperParticipantID(), kit.getJuniperParticipantID(),
                         kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
         //In case it's needed, subkits handling should be added here
