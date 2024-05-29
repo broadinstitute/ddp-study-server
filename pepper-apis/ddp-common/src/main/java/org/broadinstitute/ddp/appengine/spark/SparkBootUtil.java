@@ -78,10 +78,10 @@ public class SparkBootUtil {
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             try {
                 if (stopRouteCallback != null) {
-                    // run shutdown in a separate thread, putting a limit on how long to wait
                     synchronized (SparkBootUtil.class) {
                         numShutdownAttempts++;
                         if (numShutdownAttempts == 1) {
+                            // run shutdown in a separate thread, only once, putting a limit on how long to wait
                             ExecutorService executorService = Executors.newSingleThreadExecutor();
                             executorService.submit(() -> stopRouteCallback.onAhStop()).get(10, TimeUnit.SECONDS);
                         } else {
