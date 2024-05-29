@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static spark.Spark.halt;
 import static spark.Spark.threadPool;
 
 /**
@@ -76,8 +77,8 @@ public class SparkBootUtil {
                 if (stopRouteCallback != null) {
                     // run shutdown in a separate thread, putting a limit on how long to wait
                     synchronized (SparkBootUtil.class) {
-                        if (numShutdownAttempts == 0) {
-                            numShutdownAttempts++;
+                        numShutdownAttempts++;
+                        if (numShutdownAttempts == 1) {
                             ExecutorService executorService = Executors.newSingleThreadExecutor();
                             executorService.submit(() -> stopRouteCallback.onAhStop()).get(10, TimeUnit.SECONDS);
                         } else {
@@ -88,8 +89,6 @@ public class SparkBootUtil {
             } catch (Exception e) {
                 log.info("Error during shutdown", e);
             }
-            log.info("Returning from GAE stop request [{}] for instance {} deployment {}", request.url(),
-                    System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             response.status(HttpStatus.SC_OK);
             return "";
         });
