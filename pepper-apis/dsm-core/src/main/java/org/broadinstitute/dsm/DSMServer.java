@@ -522,6 +522,9 @@ public class DSMServer {
             } finally {
                 dataSource.close();
             }
+            if (gotConnection) {
+                break;
+            }
         }
         if (!gotConnection) {
             throw new DsmInternalError("Failed to get database connection after " + numTries);
