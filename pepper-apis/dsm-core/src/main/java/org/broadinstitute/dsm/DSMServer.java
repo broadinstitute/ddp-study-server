@@ -259,7 +259,7 @@ public class DSMServer {
             }
 
             public void onTerminate() {
-                logger.info("Terminating DSM instance", LogUtil.getAppEngineInstance());
+                logger.info("Terminating DSM instance {}", LogUtil.getAppEngineInstance());
                 shutdown();
             }
         },

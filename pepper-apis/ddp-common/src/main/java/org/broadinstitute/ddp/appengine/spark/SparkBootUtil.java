@@ -76,12 +76,12 @@ public class SparkBootUtil {
                 if (stopRouteCallback != null) {
                     // run shutdown in a separate thread, putting a limit on how long to wait
                     if (numShutdownAttempts == 0) {
+                        numShutdownAttempts++;
                         ExecutorService executorService = Executors.newSingleThreadExecutor();
                         executorService.submit(() -> stopRouteCallback.onAhStop()).get(10, TimeUnit.SECONDS);
                     } else {
                         log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
                     }
-                    numShutdownAttempts++;
                 }
             } catch (Exception e) {
                 log.info("Error during shutdown", e);
