@@ -598,7 +598,10 @@ public class DSMServer {
         before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
-        // afterAfter((req, res) -> MDC.clear());
+        afterAfter((req, res) -> {
+            logger.info("afterAfter " + req.url() + " status " + res.status());
+            MDC.clear();
+        });
 
         before(API_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
