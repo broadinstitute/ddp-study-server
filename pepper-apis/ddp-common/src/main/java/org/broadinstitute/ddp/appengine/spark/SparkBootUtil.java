@@ -10,7 +10,10 @@ import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.logging.LogUtil;
 import spark.Spark;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static spark.Spark.threadPool;
@@ -73,13 +76,10 @@ public class SparkBootUtil {
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             try {
                 if (stopRouteCallback != null) {
-                    // Handling the shutdown command will likely shut down spark
-                    // itself, so give spark a moment to respond to the current request
-                    // before turning it off.  Otherwise, appengine may see the shutdown command
-                    // as a failure
+                    // run shutdown in a separate thread, putting a limit on how long to wait
                     if (numShutdownAttempts == 0) {
-                        final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-                        executor.schedule(() -> stopRouteCallback.onAhStop(), 5, TimeUnit.SECONDS);
+                        ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        executorService.submit(() -> stopRouteCallback.onAhStop()).get(10, TimeUnit.SECONDS);
                     } else {
                         log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
                     }
@@ -87,10 +87,9 @@ public class SparkBootUtil {
                 }
             } catch (Exception e) {
                 log.info("Error during shutdown", e);
-            } finally {
-                response.status(HttpStatus.SC_OK);
-                return "";
             }
+            response.status(HttpStatus.SC_OK);
+            return "";
         });
 
         if (stopRouteCallback != null) {

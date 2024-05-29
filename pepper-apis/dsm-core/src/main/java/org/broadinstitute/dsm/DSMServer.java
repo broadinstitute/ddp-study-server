@@ -1158,7 +1158,5 @@ public class DSMServer {
         logger.info("Shutting down db pool");
         TransactionWrapper.reset();
 
-        // shutdown spark
-        Spark.stop();
     }
 }

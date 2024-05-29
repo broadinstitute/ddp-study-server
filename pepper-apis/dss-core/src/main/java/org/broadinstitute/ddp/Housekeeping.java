@@ -662,9 +662,6 @@ public class Housekeeping {
 
         // shut down db pool
         TransactionWrapper.reset();
-
-        // stop spark
-        Spark.stop();
     }
 
     public static void stop() {
