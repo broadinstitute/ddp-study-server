@@ -1688,7 +1688,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 ddpInstance, collaboratorParticipantLengthOverwrite);
     }
 
-    public static String getCollaboratorParticipantId(int instanceId, String baseUrl, String collaboratorIdPrefix, boolean hasEsIndex,
+    private static String getCollaboratorParticipantId(int instanceId, String baseUrl, String collaboratorIdPrefix, boolean hasEsIndex,
                                                       String ddpParticipantId, String shortId, DDPInstance ddpInstance,
                                                       String collaboratorParticipantLengthOverwrite) {
         if (hasEsIndex) {
@@ -1702,7 +1702,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
         if (isGen2MigratedKit(ddpInstance, ddpParticipantId, baseUrl)) {
             // if kit uploaded with a gen2 legacy id, then use that id to generate the collaborator id
-            return handleGen2MigratedKit(instanceId, ddpParticipantId, shortId);
+            return handleGen2MigratedKit(instanceId, ddpParticipantId, shortId, collaboratorIdPrefix,
+                    collaboratorParticipantLengthOverwrite);
         }
         return generateCollaboratorParticipantId(shortId, ddpParticipantId, collaboratorIdPrefix, collaboratorParticipantLengthOverwrite);
     }
@@ -1734,7 +1735,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return StringUtils.isNotBlank(legacyCollaboratorParticipantId);
     }
 
-    private static String handleGen2MigratedKit(int instanceId, String ddpParticipantId, String shortId) {
+    private static String handleGen2MigratedKit(int instanceId, String ddpParticipantId, String shortId, String collaboratorIdPrefix,
+                                                String overwrite) {
         String collaboratorId = KitUtil.getKitCollaboratorId(ddpParticipantId, instanceId);
         if (StringUtils.isNotBlank(collaboratorId)) {
             return collaboratorId;
@@ -1742,17 +1744,17 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         // if a gen2 migrated kit without previous collab id, then use the sample id to extract the participant id
         String sampleId = KitUtil.getTissueCollaboratorId(ddpParticipantId, instanceId);
         if (StringUtils.isBlank(sampleId)) {
-            return handleBlankSampleId(shortId);
+            return handleBlankSampleId(shortId, collaboratorIdPrefix, overwrite);
         }
 
         return extractParticipantIdFromSampleId(sampleId);
     }
 
-    private static String handleBlankSampleId(String shortId) {
+    private static String handleBlankSampleId(String shortId, String collaboratorIdPrefix, String overwrite) {
         //legacy short id is  4 characters long and Pepper's HURID is 6 characters long, so here we check if the short id is 6 characters
         //long and if so, we use it as the participant id
         if (StringUtils.isNotBlank(shortId) && shortId.length() == 6) {
-            return shortId.trim();
+            return KitRequestShipping.generateBspParticipantID(collaboratorIdPrefix, overwrite, shortId.trim());
         }
         //For this case, in time of buying a shipping label, KitUtil.createCollaboratorParticipantId() will generate a new collaborator id
         return null;
