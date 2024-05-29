@@ -15,6 +15,8 @@ import static spark.Spark.put;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -496,6 +498,8 @@ public class DSMServer {
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
     }
 
+    // todo arz move to util class, use in all startups
+
     /**
      * Try numTries times to get a database connection, sleeping
      * for sleepSeconds in between.  If unsuccessful, throws
@@ -507,7 +511,7 @@ public class DSMServer {
         for (int i = 0; i < numTries; i++) {
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl(dbUrl);
-            config.setMaximumPoolSize(2);
+            config.setMaximumPoolSize(1);
             HikariDataSource dataSource = new HikariDataSource(config);
             try (Connection conn = dataSource.getConnection()) {
                 logger.info("Got database connection after try {}", i);
@@ -515,7 +519,7 @@ public class DSMServer {
             } catch (SQLException e) {
                 logger.info("Could not get a database connection from the pool, try {} of {}", i, numTries, e);
                 try {
-                    Thread.sleep(sleepSeconds * 1000);
+                    Thread.sleep(Duration.of(sleepSeconds, ChronoUnit.SECONDS).toMillis());
                 } catch (InterruptedException interrupted) {
                     logger.info("Interrupted while sleeping between connection attempt", e);
                 }
@@ -594,7 +598,7 @@ public class DSMServer {
         before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, KDUX_SIGNER, ddpSecretEncoded));
-        afterAfter((req, res) -> MDC.clear());
+        // afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
