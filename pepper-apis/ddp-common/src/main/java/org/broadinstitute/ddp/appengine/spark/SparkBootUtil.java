@@ -71,22 +71,27 @@ public class SparkBootUtil {
         Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
-            if (stopRouteCallback != null) {
-                // Handling the shutdown command will likely shut down spark
-                // itself, so give spark a moment to respond to the current request
-                // before turning it off.  Otherwise, appengine may see the shutdown command
-                // as a failure
-                if (numShutdownAttempts == 0) {
-                    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-                    // temporary experiment to see if this gives the database enough time to free connections
-                    executor.schedule(() -> stopRouteCallback.onAhStop(), 500, TimeUnit.MILLISECONDS).get();
-                } else {
-                    log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
+            try {
+                if (stopRouteCallback != null) {
+                    // Handling the shutdown command will likely shut down spark
+                    // itself, so give spark a moment to respond to the current request
+                    // before turning it off.  Otherwise, appengine may see the shutdown command
+                    // as a failure
+                    if (numShutdownAttempts == 0) {
+                        final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+                        // temporary experiment to see if this gives the database enough time to free connections
+                        executor.schedule(() -> stopRouteCallback.onAhStop(), 500, TimeUnit.MILLISECONDS).get();
+                    } else {
+                        log.info("Ignoring shutdown attempt {}", numShutdownAttempts);
+                    }
+                    numShutdownAttempts++;
                 }
-                numShutdownAttempts++;
+            } catch (Exception e) {
+                log.info("Error during shutdown", e);
+            } finally {
+                response.status(HttpStatus.SC_OK);
+                return "";
             }
-            response.status(HttpStatus.SC_OK);
-            return "";
         });
 
         if (stopRouteCallback != null) {
