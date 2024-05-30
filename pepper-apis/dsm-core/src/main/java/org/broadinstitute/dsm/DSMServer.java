@@ -1072,7 +1072,7 @@ public class DSMServer {
         exception(DuplicateEntityException.class, (e, request, response) -> {
             // Tell the user to retry with a different name.  Not logged as an error,
             // since this can happen during normal operations.
-            response.status(400);
+            response.status(422);
             response.body(String.format("%s %s is already taken.  Please retry with a different value.",
                     e.getEntityName(), e.getEntityValue()));
         });
