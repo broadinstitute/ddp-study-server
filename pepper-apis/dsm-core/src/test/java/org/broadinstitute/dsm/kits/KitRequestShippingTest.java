@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -118,52 +119,77 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
     @Test
     public void testLegacyKitUpload() {
-        //check when legacy participant doesn't have a prior legacy kit
-        String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
-                legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
-        Assert.assertEquals("PROJ_" + shortId, nextCollaboratorParticipantId);
+        TransactionWrapper.inTransaction(conn -> {
+            String collaboratorParticipantId = "PROJ_" + shortId;
+            String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
+            String legacyCollaboratorParticipantId = "PROJ_0001";
+            String legacyCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA";
+            String expectedNextCollaboratorSampleId = legacyCollaboratorSampleId + "_2";
 
-        //now check when legacy participant has a kit with legacy id
-        String legacyCollaboratorParticipantId = "PROJ_0001";
-        KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
-                .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
-                .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
-                .withBspCollaboratorSampleId("PROJ_0001_SALIVA_1")
-                .withKitTypeName("SALIVA")
-                .withDdpKitRequestId("0001_Kit")
-                .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+            //check when legacy participant doesn't have a prior legacy kit
+            String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                    legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
+            String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    testKitUtil.kitTypeId);
+            Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+            Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
-        String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
-        createdKits.add(dsmKitRequestId);
+            //now check when legacy participant has a kit with legacy id
+            KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
+                    .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
+                    .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
+                    .withBspCollaboratorSampleId(legacyCollaboratorSampleId)
+                    .withKitTypeName("SALIVA")
+                    .withDdpKitRequestId("0001_Kit")
+                    .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
 
-        nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
-                legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
-        Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
+            String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+            createdKits.add(dsmKitRequestId);
+
+            nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                    legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
+            nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    testKitUtil.kitTypeId);
+
+            Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
+            Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
+            return null;
+        });
     }
 
     @Test
     public void testPepperParticipantKitUpload() {
-        String collaboratorParticipantId = "PROJ_" + notLegacyParticipantShortId;
-        //check when legacy participant doesn't have a prior legacy kit
-        String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
-                notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
-        Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+        TransactionWrapper.inTransaction(conn -> {
+            String collaboratorParticipantId = "PROJ_" + notLegacyParticipantShortId;
+            String collaboratorSampleId = "PROJ_" + notLegacyParticipantShortId + "_SALIVA";
+            //check when legacy participant doesn't have a prior legacy kit
+            String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                    notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
+            String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    testKitUtil.kitTypeId);
+            Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+            Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
-        //now check when legacy participant has a kit with legacy id
-        KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
-                .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
-                .withBspCollaboratorParticipantId(collaboratorParticipantId)
-                .withBspCollaboratorSampleId(collaboratorParticipantId + "_SALIVA_1")
-                .withKitTypeName("SALIVA")
-                .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit")
-                .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+            //now check when pepper participant has a kit without legacy id
+            KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
+                    .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
+                    .withBspCollaboratorParticipantId(collaboratorParticipantId)
+                    .withBspCollaboratorSampleId(collaboratorSampleId)
+                    .withKitTypeName("SALIVA")
+                    .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit")
+                    .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
 
-        String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
-        createdKits.add(dsmKitRequestId);
-
-        nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
-                notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
-        Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+            String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+            createdKits.add(dsmKitRequestId);
+            nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                    notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
+            nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    testKitUtil.kitTypeId);
+            String expectedNextCollaboratorSampleId = "PROJ_" + notLegacyParticipantShortId + "_SALIVA_2";
+            Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+            Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
+            return null;
+        });
     }
 
 }
