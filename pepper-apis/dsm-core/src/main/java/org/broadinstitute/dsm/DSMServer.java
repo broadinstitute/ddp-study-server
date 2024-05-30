@@ -44,6 +44,7 @@ import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.DuplicateEntityException;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -1067,6 +1068,13 @@ public class DSMServer {
             logger.warn("Authentication error while processing request: {}: {}", request.url(), exception.toString());
             response.status(401);
             response.body(exception.getMessage());
+        });
+        exception(DuplicateEntityException.class, (e, request, response) -> {
+            // Tell the user to retry with a different name.  Not logged as an error,
+            // since this can happen during normal operations.
+            response.status(400);
+            response.body(String.format("%s %s is already taken.  Please retry with a different value.",
+                    e.getEntityName(), e.getEntityValue()));
         });
     }
 
