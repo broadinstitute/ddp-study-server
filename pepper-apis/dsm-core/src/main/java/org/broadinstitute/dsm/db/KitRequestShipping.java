@@ -1669,29 +1669,37 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kits;
     }
 
+    /**
+     * Generates the CollaboratorParticipantId for a kit request, called from the hourly kit creation job
+     * */
     public static String getCollaboratorParticipantId(LatestKitRequest latestKitRequest, String ddpParticipantId, String shortId,
                                                       String collaboratorParticipantLengthOverwrite) {
         int instanceId = Integer.parseInt(latestKitRequest.getInstanceID());
-        String baseUrl = latestKitRequest.getBaseURL();
-        String collaboratorIdPrefix = latestKitRequest.getCollaboratorIdPrefix();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(instanceId);
-        return getCollaboratorParticipantId(instanceId, baseUrl, collaboratorIdPrefix, ddpInstance.hasEsIndex(), ddpParticipantId, shortId,
-                ddpInstance, collaboratorParticipantLengthOverwrite);
+        return getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, collaboratorParticipantLengthOverwrite);
     }
+
+    /**
+     * <p>
+     * Retrieves the collaborator participant ID for a given participant. The method first checks if the participant has kit with
+     * a legacy collaborator participant ID . If so that ID is returned. If the kit is a Gen2 migrated kit, a collaborator
+     * participant ID is generated based on previous Gen2 samples.
+     * Otherwise, a new collaborator participant ID is generated from Pepper short id.
+     *</p>
+     * <p>
+     * Called  during  kit creation through KitUpload, BSPDummyRoutes, KitLookUp
+     * and NonPepperKitCreationService
+     *      </p>
+     * @return the collaborator participant ID
+     */
 
     public static String getCollaboratorParticipantId(DDPInstance ddpInstance, String ddpParticipantId, String shortId,
                                                       String collaboratorParticipantLengthOverwrite) {
         int instanceId = ddpInstance.getDdpInstanceIdAsInt();
         String baseUrl = ddpInstance.getBaseUrl();
         String collaboratorIdPrefix = ddpInstance.getCollaboratorIdPrefix();
-        return getCollaboratorParticipantId(instanceId, baseUrl, collaboratorIdPrefix, ddpInstance.hasEsIndex(), ddpParticipantId, shortId,
-                ddpInstance, collaboratorParticipantLengthOverwrite);
-    }
-
-    private static String getCollaboratorParticipantId(int instanceId, String baseUrl, String collaboratorIdPrefix, boolean hasEsIndex,
-                                                      String ddpParticipantId, String shortId, DDPInstance ddpInstance,
-                                                      String collaboratorParticipantLengthOverwrite) {
-        if (hasEsIndex) {
+        //TODO PT collaboratorParticipantLengthOverwrite should be an int
+        if (ddpInstance.hasEsIndex()) {
             // This should only be checked for studies that have an ES index, like cmi and rgp, and not for studies like darwin
             String legacyId = getLegacyCollaboratorParticipantId(ddpInstance, shortId, collaboratorParticipantLengthOverwrite);
             if (legacyParticipantIdExists(legacyId)) {
@@ -1709,17 +1717,18 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     /**
-     * Checks if the participant has a legacy shorty id and if so, creates a collaborator participant id based on that.
-     * If the participant has previous kits using that id, then returns that id. If the participant is not a legacy participant
-     * or does not have kits with legacy id, then returns null.
+     * Generates a legacy collaborator participant ID if the participant has a legacy short ID
+     * and has previously used that ID for kits. Returns the ID if it exists; otherwise, returns null.
      *
      * @param ddpInstance the DDPInstance of the participant
-     * @param shortId the Pepper shortId
-     * @param collaboratorParticipantLengthOverwrite the length of the collaborator participant id
-     * */
+     * @param shortId the Pepper short ID
+     * @param collaboratorParticipantLengthOverwrite the length of the collaborator participant ID
+     * @return the legacy collaborator participant ID if it exists, otherwise null
+     */
+
     private static String getLegacyCollaboratorParticipantId(DDPInstance ddpInstance, String shortId,
                                                              String collaboratorParticipantLengthOverwrite) {
-        String legacyCollaboratorPtId = findLegacyCollaboratorParticipantId(ddpInstance, shortId,
+        String legacyCollaboratorPtId = generateLegacyCollaboratorParticipantId(ddpInstance, shortId,
                 collaboratorParticipantLengthOverwrite);
         if (StringUtils.isNotBlank(legacyCollaboratorPtId)
                 && !kitRequestDao.getKitRequestsForCollaboratorParticipantId(legacyCollaboratorPtId).isEmpty()) {
@@ -1783,7 +1792,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return ddpInstance.isMigratedDDP() && ddpParticipantId.contains(".") && baseUrl != null;
     }
 
-    private static String findLegacyCollaboratorParticipantId(DDPInstance ddpInstance, String shortId,
+    /**
+     * If participant has a legacy short id, then it generates a collaborator participant id based on that.
+     * If participant is not a legacy participant then returns null.
+     * */
+    private static String generateLegacyCollaboratorParticipantId(DDPInstance ddpInstance, String shortId,
                                                               String collaboratorParticipantLengthOverwrite) {
         Profile profile = new ElasticSearchService().getParticipantProfileByShortID(shortId, ddpInstance.getParticipantIndexES());
         if (profile == null) {
