@@ -75,7 +75,7 @@ public class ViewFilterRoute extends RequestHandler {
                 String filterName = viewFilter.getFilterName();
                 if (ViewFilter.doesFilterExist(filterName)) {
                     // tell the user to retry with a different name for the filter if the name is already taken
-                    throw new DuplicateEntityException("filter", filterName);
+                    throw new DuplicateEntityException("filter name", filterName);
                 }
                 return ViewFilter.saveFilter(viewFilter, userIdRequest, patchUtil.getColumnNameMap(), ddpGroupId);
             } else if (request.url().contains(RoutePath.FILTER_DEFAULT)) {

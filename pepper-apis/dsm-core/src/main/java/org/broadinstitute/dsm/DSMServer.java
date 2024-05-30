@@ -1073,8 +1073,8 @@ public class DSMServer {
             // Tell the user to retry with a different name.  Not logged as an error,
             // since this can happen during normal operations.
             response.status(422);
-            response.body(String.format("%s %s is already taken.  Please retry with a different value.",
-                    e.getEntityName(), e.getEntityValue()));
+            response.body(String.format("%s %s is already taken.  Please retry with a different %s.",
+                    e.getEntityName(), e.getEntityValue(), e.getEntityName()));
         });
     }
 
