@@ -2,10 +2,13 @@ package org.broadinstitute.dsm.route;
 
 import java.util.Collection;
 
+import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
+import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.DuplicateEntityException;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -67,7 +70,14 @@ public class ViewFilterRoute extends RequestHandler {
                 }
             } else if (request.url().contains(RoutePath.SAVE_FILTER)) {
                 String ddpGroupId = DDPInstance.getDDPGroupId(realm);
-                return ViewFilter.saveFilter(json, userIdRequest, patchUtil.getColumnNameMap(), ddpGroupId);
+                ViewFilter viewFilter = new Gson().fromJson(json, ViewFilter.class);
+
+                String filterName = viewFilter.getFilterName();
+                if (ViewFilter.doesFilterExist(filterName)) {
+                    // tell the user to retry with a different name for the filter if the name is already taken
+                    throw new DuplicateEntityException("filter name", filterName);
+                }
+                return ViewFilter.saveFilter(viewFilter, userIdRequest, patchUtil.getColumnNameMap(), ddpGroupId);
             } else if (request.url().contains(RoutePath.FILTER_DEFAULT)) {
                 if (StringUtils.isBlank(parent)) {
                     throw new RuntimeException("No parent was sent in the request.");
