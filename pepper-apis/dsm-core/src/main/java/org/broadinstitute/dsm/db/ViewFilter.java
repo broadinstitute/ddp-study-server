@@ -108,7 +108,7 @@ public class ViewFilter {
                       Integer[] realmId) {
         this.userId = userId;
         this.fDeleted = fDeleted;
-        this.filterName = filterName;
+        setFilterName(filterName);
         this.columns = columns;
         this.shared = shared;
         this.id = id;
@@ -119,6 +119,13 @@ public class ViewFilter {
         this.queryItems = queryItems;
         this.filterQuery = filterQuery;
         this.realmId = realmId;
+    }
+
+    public void setFilterName(String filterName) {
+        this.filterName = filterName;
+        if (StringUtils.isNotBlank(this.filterName)) {
+            this.filterName = this.filterName.trim();
+        }
     }
 
     /**
