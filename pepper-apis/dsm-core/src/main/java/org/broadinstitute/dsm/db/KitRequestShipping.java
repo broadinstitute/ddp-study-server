@@ -1858,6 +1858,27 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
     }
 
+    public static String getParticipantIdFromLegacyKit(DDPInstance ddpInstance, String shortId, String collaboratorParticipantId) {
+        Profile profile = new ElasticSearchService().getParticipantProfileByShortID(shortId, ddpInstance.getParticipantIndexES());
+        if (profile == null) {
+            throw new DsmInternalError("Could not find profile for shortId " + shortId);
+        }
+        if (StringUtils.isBlank(profile.getLegacyAltPid())) {
+            return null;
+        }
+        if (isLegacyCollaboratorParticipantId(collaboratorParticipantId, profile.getLegacyShortId())) {
+            List<KitRequestShipping> legacyKits = kitRequestDao.getKitRequestsForCollaboratorParticipantId(collaboratorParticipantId);
+            if (!legacyKits.isEmpty()) {
+                return legacyKits.get(0).getDdpParticipantId();
+            }
+        }
+        return null;
+    }
+
+    private static boolean isLegacyCollaboratorParticipantId(String collaboratorParticipantId, String legacyShortId) {
+        return StringUtils.isNotBlank(collaboratorParticipantId) && collaboratorParticipantId.contains("_" + legacyShortId);
+    }
+
     public Boolean getError() {
         if (Objects.isNull(error)) {
             return false;

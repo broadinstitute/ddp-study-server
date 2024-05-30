@@ -34,6 +34,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static DDPInstance ddpInstance;
     private static DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static String legacyParticipantGuid = "DDP_PT_ID_1";
+    private static String legacyAltpid;
     private static ParticipantDto legacyParticipant;
     private static String notLegacyParticipantGuid = "DDP_PT_ID_2";
     private static ParticipantDto notLegacyParticipant;
@@ -56,6 +57,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         legacyParticipant = legacyParticipantPair.getLeft();
         participants.add(legacyParticipant);
         legacyParticipantGuid = legacyParticipant.getRequiredDdpParticipantId();
+        legacyAltpid = legacyParticipantPair.getRight();
 
         Profile profile = new Profile();
         profile.setHruid(notLegacyParticipantShortId);
@@ -134,9 +136,9 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
-            //now check when legacy participant has a kit with legacy id
+            //now check when legacy participant has a kit with legacy id and legacy altpid
             KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
-                    .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
+                    .withDdpParticipantId(legacyAltpid)
                     .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
                     .withBspCollaboratorSampleId(legacyCollaboratorSampleId)
                     .withKitTypeName("SALIVA")
@@ -153,6 +155,10 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
             Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
+
+            //test what the participant id will be for this
+            String kitParticipantId = KitRequestShipping.getParticipantIdFromLegacyKit(ddpInstance, shortId, nextCollaboratorParticipantId);
+            Assert.assertEquals(legacyAltpid, kitParticipantId);
             return null;
         });
     }

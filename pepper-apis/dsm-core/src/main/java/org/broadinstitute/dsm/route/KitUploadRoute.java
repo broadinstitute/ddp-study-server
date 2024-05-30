@@ -234,9 +234,9 @@ public class KitUploadRoute extends RequestHandler {
                 String participantLegacyAltPid = "";
                 String collaboratorParticipantId = "";
                 //if kit has ddpParticipantId use that (RGP!) and
-                //For any studies that do not have participants the search will fail and error so
+                //For any studies that do not have participants the search will fail and error, so
                 //we check if ddpInstance.getParticipantIndexES() != null
-                if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES())) && StringUtils.isBlank(kit.getParticipantId())) {
+                if (ddpInstance.hasEsIndex() && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
                     participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
@@ -292,7 +292,7 @@ public class KitUploadRoute extends RequestHandler {
                         orderKits.add(kit);
                     }
                 } else {
-                    //all cmi ddps are currently using this!
+                    //all cmi studies are currently using this!
                     handleNormalKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
                             collaboratorParticipantId, errorMessage, uploadAnyway, duplicateKitList, orderKits, specialKitList, behavior,
                             externalOrderNumber, uploadReason, carrier);
@@ -403,8 +403,15 @@ public class KitUploadRoute extends RequestHandler {
 
             //If there is a participant change the participantID to the ID of the existing
             //participant
-            if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
-                participantID = kit.getParticipantId().trim();
+            if (ddpInstance.hasEsIndex()) {
+                //check if there are previous kits with the legacy participant id
+                String participantIdOfLegacyKit = KitRequestShipping.getParticipantIdFromLegacyKit(ddpInstance, participantID,
+                        collaboratorParticipantId);
+                if (participantIdOfLegacyKit != null) {
+                    participantID = participantIdOfLegacyKit;
+                } else {
+                    participantID = kit.getParticipantId().trim();
+                }
             }
 
             KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, participantID,
