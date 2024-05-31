@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.gson.Gson;
 import lombok.Data;
@@ -107,7 +108,7 @@ public class ViewFilter {
                       Integer[] realmId) {
         this.userId = userId;
         this.fDeleted = fDeleted;
-        this.filterName = filterName;
+        setFilterName(filterName);
         this.columns = columns;
         this.shared = shared;
         this.id = id;
@@ -120,42 +121,37 @@ public class ViewFilter {
         this.realmId = realmId;
     }
 
-    private static SimpleResult checkUniqueFilterName(String suggestedName) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_CHECK_VIEW_NAME)) {
-                stmt.setString(1, suggestedName);
-                try {
-                    ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        dbVals.resultValue = "Duplicate Name";
-                    }
-                } catch (Exception e) {
-                    dbVals.resultException = e;
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-        return results;
+    public void setFilterName(String filterName) {
+        this.filterName = filterName;
+        if (StringUtils.isNotBlank(this.filterName)) {
+            this.filterName = this.filterName.trim();
+        }
     }
 
-    public static Object saveFilter(@NonNull String filterViewToSave, String userId, @NonNull Map<String, DBElement> columnNameMap,
+    /**
+     * Returns true if a filter with the given name exists in the database,
+     * false if it does not exist.
+     */
+    public static boolean doesFilterExist(String filterName) {
+        final AtomicBoolean filterExists = new AtomicBoolean(false);
+        inTransaction((conn) -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_CHECK_VIEW_NAME)) {
+                stmt.setString(1, filterName);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    filterExists.set(true);
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error checking uniqueness of filter " + filterName, e);
+            }
+            return null;
+        });
+        return filterExists.get();
+    }
+
+    public static Object saveFilter(@NonNull ViewFilter viewFilter, String userId, @NonNull Map<String, DBElement> columnNameMap,
                                     @NonNull String ddpGroupId) {
-        ViewFilter viewFilter = new Gson().fromJson(filterViewToSave, ViewFilter.class);
-        if (viewFilter == null) {
-            throw new RuntimeException("The request for saving filter doesn't have a ViewFilter");
-        }
         String query;
-        String suggestedName = viewFilter.getFilterName();
-        SimpleResult results = checkUniqueFilterName(suggestedName);
-        if (results.resultValue != null && results.resultValue instanceof String) {
-            return new Result(500, (String) results.resultValue);
-        }
-        if (results.resultException != null) {
-            throw new RuntimeException(results.resultException);
-        }
         if (StringUtils.isBlank(viewFilter.getQueryItems())) {
             Filter[] filters = viewFilter.getFilters();
             Map<String, String> queryConditions = new HashMap<>();
