@@ -98,6 +98,14 @@ public class SparkBootUtil {
                 stopRouteCallback.onTerminate();
             }));
         }
+
+        Spark.afterAfter((req, res) -> {
+            // enable hsts
+            res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+            // assume everything is sensitive and don't allow browser caching
+            res.header("Cache-control", "no-store");
+            res.header("Pragma", "no-cache");
+        });
     }
 
     public static boolean isShuttingDown() {
