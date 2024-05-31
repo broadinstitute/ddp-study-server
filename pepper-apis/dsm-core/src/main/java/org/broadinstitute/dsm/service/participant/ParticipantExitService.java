@@ -25,10 +25,19 @@ import org.broadinstitute.dsm.util.DDPRequestUtil;
 @Slf4j
 public class ParticipantExitService {
 
+    /**
+     * Return a map of DDP participant ID to ParticipantExit object for all exited participants in the given realm
+     */
     public Map<String, ParticipantExit> getExitedParticipants(String realm) {
         return ParticipantExit.getExitedParticipants(realm, true);
     }
 
+    /**
+     * Exit a participant from DSM and DSS
+     * @param inDDP true if the participant is in DSS. (See note in _participantExit Java doc.)
+     * @return a list of KitDiscard for the participant, which allows the user to select what should be done with dangling kits
+     *      if they are returned for GP processing
+     */
     public List<KitDiscard> exitParticipant(String realm, String ddpParticipantId, String userId, boolean inDDP) {
         _exitParticipant(realm, ddpParticipantId, userId, inDDP);
 
@@ -55,8 +64,8 @@ public class ParticipantExitService {
     /**
      * Exit a participant from DSM and DSS
      * @param inDDP true if the participant is in DSS. Note: The role of this parameter is unclear. It is passed from
-     *             the front end and the pre-existing code recorded it in the DB, but used
-     *             different criteria to determine if the participant is in DSS. -DC
+     *             the front end (and is always true) The pre-existing code (modified here) recorded it in the DB, but used
+     *             different criteria to determine if the participant is in DSS, so we kept that intact. -DC
      */
     protected void _exitParticipant(String realm, String ddpParticipantId, String userId, boolean inDDP) {
         // assert input
