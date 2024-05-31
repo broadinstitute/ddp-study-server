@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
-
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
@@ -45,6 +44,7 @@ import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.exception.DuplicateEntityException;
+import org.broadinstitute.dsm.exception.EntityNotFound;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -255,7 +255,7 @@ public class DSMServer {
             }
 
             public void onTerminate() {
-                logger.info("Terminating DSM instance", LogUtil.getAppEngineInstance());
+                logger.info("Terminating DSM instance {}", LogUtil.getAppEngineInstance());
                 shutdown();
             }
         },
@@ -1067,6 +1067,11 @@ public class DSMServer {
             // this is a fallback exception, log it warn level to see why it is happening
             logger.warn("Authentication error while processing request: {}: {}", request.url(), exception.toString());
             response.status(401);
+            response.body(exception.getMessage());
+        });
+        exception(EntityNotFound.class, (exception, request, response) -> {
+            logger.info("Entity not found while processing request: {}: {}", request.url(), exception.toString());
+            response.status(404);
             response.body(exception.getMessage());
         });
         exception(DuplicateEntityException.class, (e, request, response) -> {
