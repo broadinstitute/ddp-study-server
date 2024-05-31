@@ -44,6 +44,7 @@ import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.EntityNotFound;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -1066,6 +1067,11 @@ public class DSMServer {
             // this is a fallback exception, log it warn level to see why it is happening
             logger.warn("Authentication error while processing request: {}: {}", request.url(), exception.toString());
             response.status(401);
+            response.body(exception.getMessage());
+        });
+        exception(EntityNotFound.class, (exception, request, response) -> {
+            logger.info("Entity not found while processing request: {}: {}", request.url(), exception.toString());
+            response.status(404);
             response.body(exception.getMessage());
         });
     }
