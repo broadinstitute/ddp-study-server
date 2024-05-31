@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPInternalError;
 import org.broadinstitute.ddp.logging.LogUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
-
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
@@ -44,6 +43,7 @@ import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.exception.AuthorizationException;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.exception.DuplicateEntityException;
 import org.broadinstitute.dsm.exception.EntityNotFound;
 import org.broadinstitute.dsm.exception.UnsafeDeleteError;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
@@ -255,7 +255,7 @@ public class DSMServer {
             }
 
             public void onTerminate() {
-                logger.info("Terminating DSM instance", LogUtil.getAppEngineInstance());
+                logger.info("Terminating DSM instance {}", LogUtil.getAppEngineInstance());
                 shutdown();
             }
         },
@@ -1073,6 +1073,13 @@ public class DSMServer {
             logger.info("Entity not found while processing request: {}: {}", request.url(), exception.toString());
             response.status(404);
             response.body(exception.getMessage());
+        });
+        exception(DuplicateEntityException.class, (e, request, response) -> {
+            // Tell the user to retry with a different name.  Not logged as an error,
+            // since this can happen during normal operations.
+            response.status(422);
+            response.body(String.format("%s %s is already taken.  Please retry with a different %s.",
+                    e.getEntityName(), e.getEntityValue(), e.getEntityName()));
         });
     }
 
