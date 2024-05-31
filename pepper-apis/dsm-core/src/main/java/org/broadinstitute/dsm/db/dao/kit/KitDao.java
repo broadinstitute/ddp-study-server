@@ -450,7 +450,6 @@ public class KitDao {
         }
     }
 
-    @VisibleForTesting
     public Integer deleteKitTrackingByKitLabel(String kitLabel) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult execResult = new SimpleResult();
