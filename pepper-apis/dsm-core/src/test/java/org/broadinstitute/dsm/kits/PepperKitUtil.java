@@ -184,7 +184,7 @@ public class PepperKitUtil extends BaseKitTestUtil {
         }
     }
 
-    public Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
+    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
             throws SQLException {
         if (kitTypeId != null && isExistingKit) {
             return kitTypeId;
