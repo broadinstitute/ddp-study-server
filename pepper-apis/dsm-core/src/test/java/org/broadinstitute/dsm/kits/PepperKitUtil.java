@@ -68,15 +68,7 @@ public class PepperKitUtil extends BaseKitTestUtil {
     private static final String INSERT_KIT_TYPE_ID = "INSERT into kit_type (kit_type_name , display_name) VALUES (?, ?)";
     private static final String SELECT_KIT_TYPE_ID = "SELECT kit_type_id FROM kit_type WHERE kit_type_name = ? ";
     private static final String SELECT_BY_DISPLAY_NAME = " and display_name = ? ";
-    private static final String INSERT_KIT_DIMENSION = "INSERT INTO kit_dimension (kit_width, kit_height, kit_length, kit_weight) "
-            + " VALUES ('6.9', '1.3', '5.2', '3.2') ON DUPLICATE KEY UPDATE kit_width = '6.9';";
-    private static final String INSERT_KIT_RETURN = "INSERT INTO kit_return_information (return_address_name, return_address_phone) "
-            + " VALUES ('Broad Institute', '1111112222') ON DUPLICATE KEY UPDATE return_address_name = 'Broad Institute';";
-    private static final String INSERT_CARRIER = "INSERT INTO carrier_service (carrier, service) "
-            + " VALUES ('FedEx', 'FEDEX_2_DAY') ON DUPLICATE KEY UPDATE carrier = 'FedEx';";
-    private static final String INSERT_DDP_KIT_REQUEST_SETTINGS =
-            "INSERT INTO ddp_kit_request_settings (ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id) "
-                    + " VALUES (?, ?, ?, ?, ?) ;";
+
 
     private static final String INSERT_SUB_KITS_SETTINGS =
             "INSERT INTO  sub_kits_settings (ddp_kit_request_settings_id, kit_type_id, kit_count, hide_on_sample_pages, external_name) "
