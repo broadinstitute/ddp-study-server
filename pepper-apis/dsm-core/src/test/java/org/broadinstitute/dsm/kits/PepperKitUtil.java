@@ -45,13 +45,11 @@ import org.mockito.Mock;
  * It creates the instance, group, instance_role, kit_type, carrier,
  * kit_dimensions, kit_return and ddp_kit_request_settings for the
  * newly created study.
- * It also contains methods to delete what was set up after tests are complete
+ * The usage is by first creating an instance of this class by passing the instanceName and studyGuid,
+ * kitTypeName, kitTypeDisplayName, esIndex, and userName.
+ * Then call setupInstanceAndSettings() for initiating all the config in database.
  * </p><p>
- * The usage is by first creating an instance of this class by declaring the desired instance name and study guid,
- * display name and collaborator prefix.
- * Then call setupStudyWithKitsInstanceAndSettings() for initiating all the config in database.
- * </p><p>
- * When done, call deleteJuniperInstanceAndSettings() to delete everything
+ * When done, call deleteGeneratedData() to delete everything
  * </p>
  */
 

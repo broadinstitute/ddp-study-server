@@ -17,17 +17,9 @@ import org.broadinstitute.dsm.kits.BaseKitTestUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 /**
- * This class has methods to set up a study in DSM database that has the needed configuration to send out kits
- * It creates the instance, group, instance_role, kit_type, carrier,
- * kit_dimensions, kit_return and ddp_kit_request_settings for the
- * newly created study.
- * It also contains methods to delete what was set up after tests are complete
- * </p>
- * <p>
- * The usage is by first creating an instance of this class by declaring the desired instance name and study guid,
- * display name and collaborator prefix.
- * Then call setupJuniperInstanceAndSettings() for initiating all the config in database.
- *When done, call deleteJuniperInstanceAndSettings() to delete everything
+ * This class creates Juniper instance and settings for testing kits. It is used to create all the necessary data for testing kits.
+ * First initialize the class and then call setupJuniperInstanceAndSettings() for initiating all the config in database.
+ * When done, call deleteInstanceAndSettings() to delete everything
  * </p>
  */
 @Slf4j
