@@ -205,7 +205,7 @@ public class LiquibaseUtil implements AutoCloseable {
                 liquibase.update(new Contexts(context));
             } catch (LiquibaseException originalError) {
                 log.error("LiquibaseException: {}", originalError.getMessage());
-                if (tag != null) {
+                if (tag != null && originalError.getCause() != null) {
                     if (originalError.getCause().getClass() == MigrationFailedException.class
                             || originalError.getCause().getMessage().contains("Migration failed for change set " + changelogFile)) {
                         try {

@@ -26,6 +26,7 @@ import com.google.pubsub.v1.Topic;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.appengine.spark.SparkBootUtil;
 import org.broadinstitute.ddp.util.PubSubEmulator;
 
 /**
@@ -50,7 +51,12 @@ public class PubSubConnectionManager {
                 try {
                     publisher.shutdown();
                 } catch (Exception e) {
-                    log.error("Could not shutdown publisher for topic {}", publisher.getTopicName(), e);
+                    if (!SparkBootUtil.isShuttingDown()) {
+                        log.error("Could not shutdown publisher for topic {}", publisher.getTopicName(), e);
+                    } else {
+                        log.info("Error shutting down publisher for topic {} during shutdown",
+                                publisher.getTopicName(), e);
+                    }
                 }
             }
         }));
