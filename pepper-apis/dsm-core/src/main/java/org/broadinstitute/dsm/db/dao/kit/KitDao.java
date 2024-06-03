@@ -633,11 +633,13 @@ public class KitDao {
         Optional<ScanResult> result = Optional.empty();
         String errorMessage = String.format("Unable to insert tracking %s for %s.", kitRequestShipping.getTrackingId(),
                 kitRequestShipping.getKitLabel());
-        SimpleResult results = inTransaction(conn -> {
+        SimpleResult results = inTransaction((conn) -> {
+            // Preferred approach is to check for existing values up front instead of relying on SQLException handling.
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID)) {
                 // If a kit exists with the given kit label or tracking id, the unique key will be violated
-                // on insert.  Return an error to the user with some information about the existing row.
+                // on insert. First check here for previous existence and return an error to the user with
+                // some information about the existing values.
                 stmt.setString(1, kitRequestShipping.getKitLabel());
                 stmt.setString(2, kitRequestShipping.getTrackingId());
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -657,7 +659,10 @@ public class KitDao {
                 logger.error(errorMessage, ex);
                 return dbVals;
             }
-
+            if (dbVals.resultValue != null) {
+                // an existing value was found, return it and not try to insert
+                return dbVals;
+            }
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TRACKING)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setInt(2, userId);
