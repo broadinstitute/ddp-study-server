@@ -34,7 +34,7 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 
 @Slf4j
 @Getter
-public class BaseKitTestUtil {
+public abstract class BaseKitTestUtil {
 
     protected static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = ?;";
     protected static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
