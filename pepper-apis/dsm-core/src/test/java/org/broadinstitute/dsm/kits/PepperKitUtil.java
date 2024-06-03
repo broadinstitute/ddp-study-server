@@ -3,9 +3,7 @@ package org.broadinstitute.dsm.kits;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.dsm.service.admin.UserAdminService.USER_ADMIN_ROLE;
 import static org.broadinstitute.dsm.statics.DBConstants.KIT_SHIPPING;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,15 +16,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Parcel;
 import com.easypost.model.PostageLabel;
 import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
-import com.google.gson.Gson;
-import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -34,19 +30,13 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
 import org.broadinstitute.dsm.model.kit.ScanResult;
-import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
-import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
-import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.junit.Assert;
 import org.mockito.Mock;
 
 /**
@@ -66,10 +56,10 @@ import org.mockito.Mock;
  */
 
 @Slf4j
-@Data
-public class TestKitUtil {
+@Getter
+@Setter
+public class PepperKitUtil extends BaseKitTestUtil {
 
-    private static final String SELECT_INSTANCE_ROLE = "SELECT instance_role_id FROM instance_role WHERE name = ?;";
     private static final String SELECT_PT_NOTIF_INSTANCE_ROLE =
             "SELECT instance_role_id FROM instance_role WHERE name = 'kit_participant_notifications_activated';";
     private static final String INSERT_DDP_INSTANCE_ROLE = "INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id) "
@@ -97,25 +87,13 @@ public class TestKitUtil {
     private static final String INSERT_EVENT_TYPE =
             "INSERT INTO event_type (ddp_instance_id, event_name, event_description, kit_type_id, event_type) "
                     + " VALUES (?, ?, ?, ?, ?) ;";
-    public final UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     private String kitTypeDisplayName;
-    public Integer ddpGroupId;
-    public Integer ddpInstanceId;
     public Integer instanceRoleId;
     public List<Integer> ddpInstanceRoleIdList = new ArrayList<>();
     List<String> createdKitIds = new ArrayList<>();
-    public Integer kitTypeId;
-    private Integer kitDimensionId;
-    private Integer kitReturnId;
-    private Integer carrierId;
-    private Integer ddpKitRequestSettingsId;
-    private String instanceName;
-    private String groupName;
     private String kitTypeName;
-    private String studyGuid;
     private String collaboratorPrefix;
     private String esIndex;
-    private String userWithKitShippingAccess;
     @Getter
     @Mock
     EasyPostUtil mockEasyPostUtil = mock(EasyPostUtil.class);
@@ -129,14 +107,10 @@ public class TestKitUtil {
     @Mock
     Tracker mockShipmentTracker = mock(Tracker.class);
 
-    private KitDao kitDao = new KitDao();
-
-    public TestKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                                  String kitTypeName, String kitTypeDisplayName, String esIndex) {
-        this.instanceName = instanceName;
-        this.studyGuid = studyGuid;
+    public PepperKitUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
+                         String kitTypeName, String kitTypeDisplayName, String esIndex, String userName) {
+        super(instanceName, studyGuid, groupName);
         this.collaboratorPrefix = collaboratorPrefix;
-        this.groupName = groupName;
         this.kitTypeName = kitTypeName;
         this.kitTypeDisplayName = kitTypeDisplayName;
         this.esIndex = esIndex;
@@ -181,67 +155,6 @@ public class TestKitUtil {
         });
     }
 
-    private void delete(Connection conn, String tableName, String primaryColumn, int id) {
-        try (PreparedStatement stmt = conn.prepareStatement("DELETE from " + tableName + " WHERE " + primaryColumn + " = ? ;")) {
-            stmt.setInt(1, id);
-            try {
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                throw new RuntimeException("Error deleting from " + tableName, e);
-            }
-        } catch (SQLException ex) {
-            throw new RuntimeException("Error deleting ", ex);
-        }
-    }
-
-    private void delete(Connection conn, String tableName, String primaryColumn, List<Integer> ids) {
-        for (int id: ids) {
-            delete(conn, tableName, primaryColumn, id);
-        }
-    }
-
-    public void deleteKitByDdpKitRequestId(String ddpKitRequestId) {
-        List<Integer> dsmKitRequestIds = new ArrayList<>();
-        inTransaction((conn) -> {
-            try (PreparedStatement stmt = conn.prepareStatement(SELECT_DSM_KIT_REQUEST_ID)) {
-                stmt.setString(1, ddpKitRequestId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        dsmKitRequestIds.add(rs.getInt("dsm_kit_request_id"));
-                    }
-                    if (dsmKitRequestIds.isEmpty()) {
-                        throw new DsmInternalError(
-                                String.format("Could not find kit %s to delete", ddpKitRequestId));
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error selecting dsm_kit_request_id", e);
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException("Error deleting kit request " + ddpKitRequestId, ex);
-            }
-            return null;
-        });
-        dsmKitRequestIds.forEach(this::deleteKitRequestShipping);
-    }
-
-    public void deleteKitsArray() {
-        for (String kitId : createdKitIds) {
-            try {
-                deleteKitByDdpKitRequestId(kitId);
-            } catch (Exception e) {
-                throw new DsmInternalError("Could not delete kit " + kitId, e);
-            }
-        }
-    }
-
-    private Integer getPrimaryKey(ResultSet rs, String table) throws SQLException {
-        if (rs.next()) {
-            return rs.getInt(1);
-        } else {
-            throw new DsmInternalError(String.format("Unable to get primary key for %s", table));
-        }
-    }
-
     private String generateUserEmail() {
         return "Test-" + System.currentTimeMillis() + "@broad.dev";
     }
@@ -254,7 +167,7 @@ public class TestKitUtil {
                 adminUtil.createRealmAndStudyGroup(instanceName, studyGuid, collaboratorPrefix, groupName, esIndex);
                 ddpInstanceId = adminUtil.getDdpInstanceId();
                 ddpGroupId = adminUtil.getStudyGroupId();
-                instanceRoleId = getJuniperStudyInstanceRole(conn);
+                instanceRoleId = getKitRequestInstanceRole(conn);
                 ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, instanceRoleId));
                 int ptInstanceRoleId = getPtNotifInstanceRole(conn);
                 ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, ptInstanceRoleId));
@@ -277,51 +190,6 @@ public class TestKitUtil {
             log.error("Error creating  data ", results.resultException);
             deleteGeneratedData();
         }
-    }
-
-    private Integer createKitRequestSettingsInformation(Connection conn) throws SQLException {
-        if (ddpKitRequestSettingsId != null) {
-            return ddpKitRequestSettingsId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
-        stmt.setInt(1, ddpInstanceId);
-        stmt.setInt(2, kitTypeId);
-        stmt.setInt(3, kitReturnId);
-        stmt.setInt(4, carrierId);
-        stmt.setInt(5, kitDimensionId);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "ddp_kit_request_settings");
-    }
-
-    private Integer createCarrierInformation(Connection conn) throws SQLException {
-        if (carrierId != null) {
-            return carrierId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_CARRIER, Statement.RETURN_GENERATED_KEYS);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "carrier_service");
-    }
-
-    private Integer createKitReturnInformation(Connection conn) throws SQLException {
-        if (kitReturnId != null) {
-            return kitReturnId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_RETURN, Statement.RETURN_GENERATED_KEYS);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "kit_return_information");
-    }
-
-    private Integer createKitDimension(Connection conn) throws SQLException {
-        if (kitDimensionId != null) {
-            return kitDimensionId;
-        }
-        PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_DIMENSION, Statement.RETURN_GENERATED_KEYS);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "kit_dimension");
     }
 
     public Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
@@ -361,12 +229,12 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "kit_type");
     }
 
-    private Integer getJuniperStudyInstanceRole(Connection conn) throws SQLException {
+    private Integer getKitRequestInstanceRole(Connection conn) throws SQLException {
         if (instanceRoleId != null) {
             return instanceRoleId;
         }
         PreparedStatement stmt = conn.prepareStatement(SELECT_INSTANCE_ROLE);
-        stmt.setString(1, "juniper_study");
+        stmt.setString(1, "kit_request_activated");
         ResultSet rs = stmt.executeQuery();
         return getPrimaryKey(rs, "instance_role");
     }
@@ -375,16 +243,6 @@ public class TestKitUtil {
         PreparedStatement stmt = conn.prepareStatement(SELECT_PT_NOTIF_INSTANCE_ROLE);
         ResultSet rs = stmt.executeQuery();
         return getPrimaryKey(rs, "instance_role");
-    }
-
-    private Integer createDdpInstanceRole(Connection conn, int instanceRoleId) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_INSTANCE_ROLE, Statement.RETURN_GENERATED_KEYS);
-        stmt.setInt(1, ddpInstanceId);
-        stmt.setInt(2, instanceRoleId);
-        stmt.setInt(3, instanceRoleId);
-        stmt.executeUpdate();
-        ResultSet rs = stmt.getGeneratedKeys();
-        return getPrimaryKey(rs, "ddp_instance_role");
     }
 
     public Integer[] createSubKitsForTheStudy(String subkitName1, String subkitDisplayName1, int hideSample1, String subkitName2,
@@ -431,75 +289,6 @@ public class TestKitUtil {
         return getPrimaryKey(rs, "sub_kits_settings");
     }
 
-    /**
-     * this method creates the test KitRequest in the database  by calling
-     * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
-     *
-     * @param juniperTestKitRequest a JuniperKitRequest that can be passed to the kti creation service
-     **/
-
-    public void createNonPepperTestKit(JuniperKitRequest juniperTestKitRequest, NonPepperKitCreationService nonPepperKitCreationService,
-                                       DDPInstance ddpInstance) {
-        createdKitIds.add(juniperTestKitRequest.getJuniperKitId());
-        when(mockEasyPostShipment.getPostageLabel()).thenReturn(mockParticipantLabel);
-        when(mockEasyPostShipment.getTracker()).thenReturn(mockShipmentTracker);
-        when(mockShipmentTracker.getPublicUrl()).thenReturn("PUBLIC_URL");
-        when(mockParticipantLabel.getLabelUrl()).thenReturn("MOCK_LABEL_URL");
-        when(mockEasyPostAddress.getId()).thenReturn("SOME_STRING");
-        when(mockEasyPostUtil.getEasyPostAddressId(any(), any(), any())).thenReturn("SOME_STRING");
-        try {
-            when(mockEasyPostUtil.createParcel(any(), any(), any(), any())).thenReturn(mockEasyPostParcel);
-            when(mockEasyPostUtil.getAddress(any())).thenReturn(mockEasyPostAddress);
-            when(mockEasyPostUtil.createAddressWithoutValidation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
-                    mockEasyPostAddress);
-            when(mockEasyPostUtil.buyShipment(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mockEasyPostShipment);
-        } catch (EasyPostException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
-        List<KitRequestShipping> oldKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitTypeName);
-        KitResponse kitResponse =
-                nonPepperKitCreationService.createNonPepperKit(juniperTestKitRequest, kitTypeName, mockEasyPostUtil, ddpInstance);
-        Assert.assertFalse(kitResponse.isError());
-        Assert.assertNotNull(kitResponse.getKits());
-        Assert.assertEquals(1, kitResponse.getKits().size());
-        NonPepperKitStatusDto kitStatus = kitResponse.getKits().get(0);
-        Assert.assertEquals(juniperTestKitRequest.getJuniperKitId(), kitStatus.getJuniperKitId());
-        Assert.assertNotNull(kitStatus.getDsmShippingLabel());
-        Assert.assertNotNull(kitStatus.getCollaboratorSampleId());
-        Assert.assertNotNull(kitStatus.getCollaboratorParticipantId());
-        List<KitRequestShipping> newKits = KitRequestShipping.getKitRequestsByRealm(instanceName, "overview", kitTypeName);
-        Assert.assertEquals(oldKits.size() + 1, newKits.size());
-        KitRequestShipping newKit =
-                newKits.stream().filter(kitRequestShipping -> kitRequestShipping.getDdpParticipantId()
-                                .equals(juniperTestKitRequest.getJuniperParticipantID()))
-                        .findAny().get();
-        Assert.assertEquals(newKit.getBspCollaboratorParticipantId(),
-                collaboratorPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID());
-        Assert.assertEquals(newKit.getBspCollaboratorSampleId(),
-                collaboratorPrefix + "_" + juniperTestKitRequest.getJuniperParticipantID() + "_" + kitTypeName);
-    }
-
-    public JuniperKitRequest generateKitRequestJson() {
-        String participantId = "TEST_PARTICIPANT";
-
-        String json = "{ \"firstName\":\"P\","
-                + "\"lastName\":\"T\","
-                + "\"street1\":\"415 Main st\","
-                + "\"street2\":null,"
-                + "\"city\":\"Cambridge\","
-                + "\"state\":\"MA\","
-                + "\"postalCode\":\"02142\","
-                + "\"country\":\"USA\","
-                + "\"phoneNumber\":\" 111 - 222 - 3344\","
-                + "\"juniperKitId\":\"kitId_\","
-                + "\"juniperParticipantID\":\"" + participantId  + "\","
-                + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
-
-        return new Gson().fromJson(json, JuniperKitRequest.class);
-    }
-
     public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
                                            String userId) {
 
@@ -507,10 +296,6 @@ public class TestKitUtil {
                 kitRequestShipping.getDdpParticipantId(), kitRequestShipping.getBspCollaboratorParticipantId(),
                 kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false, null,
                 ddpInstance, kitTypeName, null);
-    }
-
-    public void deleteKitRequestShipping(int dsmKitRequestId) {
-        kitDao.deleteKitRequestShipping(dsmKitRequestId);
     }
 
     public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription, boolean nullKitType) {
@@ -529,13 +314,10 @@ public class TestKitUtil {
                 stmt.setString(5, eventType);
                 stmt.executeUpdate();
             } catch (SQLException e) {
-                simpleResult.resultException = e;
+                throw new DsmInternalError("Error creating event ", e);
             }
             return simpleResult;
         });
-        if (results.resultException != null) {
-            throw new DsmInternalError("Error creating event ", results.resultException);
-        }
     }
 
     public List<ScanResult> changeKitRequestShippingToSent(KitRequestShipping kitRequestShipping, String kitLabel) {

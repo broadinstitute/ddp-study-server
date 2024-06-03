@@ -107,7 +107,7 @@ public class UserAdminTestUtil {
      * Setup study admin and study roles
      *
      * @param adminEmail    for new admin user account
-     * @param adminRole     PEPPER_ADMIN or STUDY_USER_ADMIN
+     * @param adminRole     PEPPER_ADMIN_ROLE or STUDY_USER_ADMIN
      * @param rolesToManage actual DSM roles
      * @return study admin user ID
      */

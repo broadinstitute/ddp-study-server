@@ -25,7 +25,7 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.db.dto.queue.EventDto;
-import org.broadinstitute.dsm.kits.TestKitUtil;
+import org.broadinstitute.dsm.kits.PepperKitUtil;
 import org.broadinstitute.dsm.model.gp.BSPKit;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -55,7 +55,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     private static KitShippingTestUtil kitShippingTestUtil;
     private static DDPInstanceDto ddpInstanceDto;
     private static DDPInstance ddpInstance;
-    private static TestKitUtil testKitUtil;
+    private static PepperKitUtil pepperKitUtil;
     private static ParticipantDto participantDto;
     private static ParticipantDto unsuccessfulEventPtDto;
     private static String ddpParticipantId;
@@ -68,18 +68,19 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     public static void setUp() {
         esIndex = ElasticTestUtil.createIndex(INSTANCE_NAME, "elastic/lmsMappings.json", null);
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, "EVENT");
-        testKitUtil = new TestKitUtil(INSTANCE_NAME, INSTANCE_GUID, INSTANCE_NAME, "event_test_prefix", "event-group", null, esIndex);
-        testKitUtil.setupInstanceAndSettings();
-        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(testKitUtil.getDdpInstanceId()).orElseThrow();
+        pepperKitUtil = new PepperKitUtil(INSTANCE_NAME, INSTANCE_GUID, INSTANCE_NAME, "event_test_prefix", "event-group", null, esIndex,
+                "testUser123");
+        pepperKitUtil.setupInstanceAndSettings();
+        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(pepperKitUtil.getDdpInstanceId()).orElseThrow();
         ddpInstance = DDPInstance.from(ddpInstanceDto);
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT");
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         unsuccessfulEventPt = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT_2");
         unsuccessfulEventPtDto = TestParticipantUtil.createParticipant(unsuccessfulEventPt,
                 ddpInstanceDto.getDdpInstanceId());
-        testKitUtil.createEventsForDDPInstance(EVENT_TYPE_SENT, "SENT", "test purpose: event for sent kit", false);
-        testKitUtil.createEventsForDDPInstance(EVENT_TYPE_RECEIVED, "RECEIVED", "test purpose: event for received kit", false);
-        testKitUtil.createEventsForDDPInstance(DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, "RECEIVED",
+        pepperKitUtil.createEventsForDDPInstance(EVENT_TYPE_SENT, "SENT", "test purpose: event for sent kit", false);
+        pepperKitUtil.createEventsForDDPInstance(EVENT_TYPE_RECEIVED, "RECEIVED", "test purpose: event for received kit", false);
+        pepperKitUtil.createEventsForDDPInstance(DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT, "RECEIVED",
                 "test purpose: event for participant", true);
     }
 
@@ -88,7 +89,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
         kitShippingTestUtil.tearDown();
         participantDao.delete(participantDto.getParticipantId().get());
         participantDao.delete(unsuccessfulEventPtDto.getParticipantId().get());
-        testKitUtil.deleteGeneratedData();
+        pepperKitUtil.deleteGeneratedData();
         ElasticTestUtil.deleteIndex(esIndex);
     }
 
@@ -102,10 +103,10 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             Assert.assertEquals(200L, (long)DDPRequestUtil.postRequest("", "", "", true));
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    testKitUtil.getKitTypeId(), false);
+                    pepperKitUtil.getKitTypeId(), false);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL";
-            testKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
+            pepperKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
             EventDto eventDto = eventDao.getEventForKit(EVENT_TYPE_SENT, kitRequestShipping.getDsmKitRequestId()).orElseThrow();
             assertEvent(eventDto, true, kitRequestShipping.getDsmKitRequestId(), null, ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
         } catch (IOException e) {
@@ -165,10 +166,10 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             Assert.assertEquals(500L, (long)DDPRequestUtil.postRequest("", "", "", true));
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    testKitUtil.getKitTypeId(), false);
+                    pepperKitUtil.getKitTypeId(), false);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_2";
-            testKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
+            pepperKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
             EventDto eventDto = eventDao.getEventForKit(EVENT_TYPE_SENT, kitRequestShipping.getDsmKitRequestId()).orElseThrow();
             assertEvent(eventDto, false, kitRequestShipping.getDsmKitRequestId(), null, ddpInstanceDto.getDdpInstanceId(),
                     EVENT_TYPE_SENT);
@@ -193,10 +194,10 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     any())).thenThrow(exception);
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    testKitUtil.getKitTypeId(), false);
+                    pepperKitUtil.getKitTypeId(), false);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_3";
-            testKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
+            pepperKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
             EventDto eventDto = eventDao.getEventForKit(EVENT_TYPE_SENT, kitRequestShipping.getDsmKitRequestId()).orElseThrow();
             assertEvent(eventDto, false, kitRequestShipping.getDsmKitRequestId(), null,
                     ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
@@ -232,10 +233,10 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     });
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    testKitUtil.getKitTypeId(), false);
+                    pepperKitUtil.getKitTypeId(), false);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_4";
-            testKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
+            pepperKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
             EventDto eventDto = eventDao.getEventForKit(EVENT_TYPE_SENT, kitRequestShipping.getDsmKitRequestId()).orElseThrow();
             assertEvent(eventDto, true, kitRequestShipping.getDsmKitRequestId(), null,
                     ddpInstanceDto.getDdpInstanceId(), EVENT_TYPE_SENT);
@@ -261,10 +262,10 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean())).thenReturn(200);
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    testKitUtil.getKitTypeId(), false);
+                    pepperKitUtil.getKitTypeId(), false);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_5";
-            testKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
+            pepperKitUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
 
             BSPKit bspKit = new BSPKit();
             Optional<BSPKitDto> optionalBSPKitDto = bspKit.canReceiveKit(kitLabel);

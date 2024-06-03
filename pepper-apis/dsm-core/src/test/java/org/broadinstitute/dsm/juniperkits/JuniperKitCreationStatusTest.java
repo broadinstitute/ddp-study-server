@@ -30,6 +30,7 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,22 +71,22 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     Tracker mockShipmentTracker = mock(Tracker.class);
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
-    private static JuniperTestSetupUtil juniperTestSetupUtil;
+    private static JuniperKitUtil juniperKitUtil;
 
     @BeforeClass
     public static void setupJuniperBefore() {
 
-        juniperTestSetupUtil =
-                new JuniperTestSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group");
-        juniperTestSetupUtil.setupJuniperInstanceAndSettings();
+        juniperKitUtil =
+                new JuniperKitUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group");
+        juniperKitUtil.setupJuniperInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
 
     }
 
     @AfterClass
     public static void deleteJuniperInstance() {
-        juniperTestSetupUtil.deleteKitsArray(createdKitIds);
-        juniperTestSetupUtil.deleteInstanceAndSettings();
+        juniperKitUtil.deleteKitsArray(createdKitIds);
+        juniperKitUtil.deleteInstanceAndSettings();
     }
 
     @Before
@@ -101,16 +102,18 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
-        juniperTestSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
+        juniperKitUtil.changeKitToQueue(juniperTestKit.getJuniperParticipantID(), mockEasyPostUtil);
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
         juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
-        List<ScanResult> scanResultList = juniperTestSetupUtil.changeKitToSent(juniperTestKit);
+        List<ScanResult> scanResultList = juniperKitUtil.changeKitToSent(juniperTestKit.getDdpLabel(),
+                "SOME_RANDOM_KIT_LABEL");
         Assert.assertFalse(
                 scanResultList.stream().filter(scanError -> scanError.hasError()).findAny().isPresent());
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
-        JuniperTestSetupUtil.changeKitToReceived();
+        NotificationUtil notificationUtil = mock(NotificationUtil.class);
+        juniperKitUtil.changeKitToReceived(notificationUtil, "SOME_RANDOM_KIT_LABEL");
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.RECEIVED.getValue());
 

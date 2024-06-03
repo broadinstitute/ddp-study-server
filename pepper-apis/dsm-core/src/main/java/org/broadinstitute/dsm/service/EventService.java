@@ -96,7 +96,7 @@ public class EventService {
     @VisibleForTesting
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, KitReasonType reason) {
-        final long initialInterval = 100; // base delay in milliseconds
+        final long initialInterval = 500; // base delay in milliseconds
         final double multiplier = 2.0; // exponential backoff multiplier
 
         IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(initialInterval, multiplier);

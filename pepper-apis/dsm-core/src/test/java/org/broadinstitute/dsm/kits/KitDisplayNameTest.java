@@ -3,40 +3,55 @@ package org.broadinstitute.dsm.kits;
 import java.util.List;
 
 import org.broadinstitute.dsm.DbTxnBaseTest;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
-import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
-import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.util.KitShippingTestUtil;
+import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class KitDisplayNameTest extends DbTxnBaseTest {
-    private static TestKitUtil testKitUtil = new TestKitUtil("kit_test_instance", "kit_test_instance_guid",
+    private static final String instanceName = "kit_test_instance";
+    private static PepperKitUtil pepperKitUtil = new PepperKitUtil(instanceName, instanceName,
             "some_prefix", "kit_test_group", KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME,
-            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null);
+            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null, null);
+
+    private static KitShippingTestUtil kitShippingTestUtil;
+    private static DDPInstanceDto ddpInstanceDto;
+    private static DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+    private static String ddpParticipantId;
+    private static ParticipantDto participantDto;
+    private static ParticipantDao participantDao = new ParticipantDao();
+    private static final String TEST_USER = "kitDisplayNameTestUser";
 
     @BeforeClass
     public static void setupBefore() {
-        testKitUtil.setupInstanceAndSettings();
+        pepperKitUtil.setupInstanceAndSettings();
+        kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, "kitDisplayNameTest");
+        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(pepperKitUtil.getDdpInstanceId()).orElseThrow();
+        ddpParticipantId = TestParticipantUtil.genDDPParticipantId("kitDisplayNameTest");
+        participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
     }
 
     @AfterClass
     public static void cleanUpAfterClass() {
-        testKitUtil.deleteKitsArray();
-        testKitUtil.deleteGeneratedData();
+        kitShippingTestUtil.tearDown();
+        participantDao.delete(participantDto.getParticipantId().get());
+        pepperKitUtil.deleteGeneratedData();
     }
 
     @Test
     public void testKitWithDisplayName() {
-        NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("kit_test_instance",
-                DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
-        JuniperKitRequest juniperTestKit = testKitUtil.generateKitRequestJson();
-        testKitUtil.createNonPepperTestKit(juniperTestKit, nonPepperKitCreationService, ddpInstance);
-        List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm("kit_test_instance", "overview",
+        int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto,
+                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, pepperKitUtil.getKitTypeId(), false);
+        KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
+        List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm(instanceName, KitRequestShipping.OVERVIEW,
                 KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME);
         Assert.assertEquals(1, kits.size());
         Assert.assertEquals(KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kits.get(0).getKitTypeName());

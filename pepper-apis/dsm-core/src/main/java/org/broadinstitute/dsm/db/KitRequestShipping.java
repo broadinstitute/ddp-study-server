@@ -201,7 +201,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private static final String ERROR = "error";
     private static final String SENT = "sent";
     private static final String RECEIVED = "received";
-    private static final String OVERVIEW = "overview";
+    public static final String OVERVIEW = "overview";
     private static final String DEACTIVATED = "deactivated";
     private static final String TRIGGERED = "triggered";
     private static final String WAITING = "waiting";
