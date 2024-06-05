@@ -11,7 +11,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.kits.PepperKitUtil;
+import org.broadinstitute.dsm.kits.KitTestUtil;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
@@ -33,7 +33,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     private static String ddpParticipantId = "PT_SAMPLE_QUEUE_TEST";
     private static int participantCounter = 0;
     private static Pair<ParticipantDto, String> legacyParticipantPair;
-    private static PepperKitUtil pepperKitUtil;
+    private static KitTestUtil kitTestUtil;
     private static final String newCollaboratorSampleId = "NEW_SAMPLE_ID";
     private static final String newCollaboratorParticipantId = "NEW_PARTICIPANT_ID";
 
@@ -47,9 +47,9 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        pepperKitUtil = new PepperKitUtil(instanceName, instanceName, "UpdateCollab", instanceName, "SALIVA", null, esIndex,
-                null);
-        pepperKitUtil.setupInstanceAndSettings();
+        kitTestUtil = new KitTestUtil(instanceName, instanceName, "UpdateCollab", instanceName, "SALIVA", null, esIndex,
+                false);
+        kitTestUtil.setupInstanceAndSettings();
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
         legacyParticipantPair = TestParticipantUtil.createLegacyParticipant(ddpParticipantId, participantCounter++, ddpInstanceDto,
                 shortId, legacyShortId);
@@ -60,9 +60,9 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 .withBspCollaboratorParticipantId(oldCollaboratorParticipantId)
                 .withDdpKitRequestId(ddpKitRequestId)
                 .withKitTypeName("SALIVA")
-                .withKitTypeId(String.valueOf(pepperKitUtil.getKitTypeId())).build();
+                .withKitTypeId(String.valueOf(kitTestUtil.getKitTypeId())).build();
 
-        String dsmKitRequestId = pepperKitUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
+        String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
     }
 
@@ -70,8 +70,8 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     public static void tearDown() {
         participants.forEach(participantDto ->
                 TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
-        createdKits.forEach(dsmKitRequestId -> pepperKitUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
-        pepperKitUtil.deleteGeneratedData();
+        createdKits.forEach(dsmKitRequestId -> kitTestUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
+        kitTestUtil.deleteGeneratedData();
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.deleteIndex(esIndex);
     }
@@ -111,8 +111,8 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 .withBspCollaboratorParticipantId(collaboratorParticipantId)
                 .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT1")
                 .withKitTypeName("SALIVA")
-                .withKitTypeId(String.valueOf(pepperKitUtil.getKitTypeId())).build();
-        String dsmKitRequestId = pepperKitUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
+                .withKitTypeId(String.valueOf(kitTestUtil.getKitTypeId())).build();
+        String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
         String dupCollaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
         KitRequestShipping kitRequestShipping2 =  KitRequestShipping.builder()
@@ -121,8 +121,8 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 .withBspCollaboratorParticipantId(collaboratorParticipantId)
                 .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT2")
                 .withKitTypeName("SALIVA")
-                .withKitTypeId(String.valueOf(pepperKitUtil.getKitTypeId())).build();
-        String dsmKitRequestId2 = pepperKitUtil.createKitRequestShipping(kitRequestShipping2, DDPInstance.from(ddpInstanceDto), "100");
+                .withKitTypeId(String.valueOf(kitTestUtil.getKitTypeId())).build();
+        String dsmKitRequestId2 = kitTestUtil.createKitRequestShipping(kitRequestShipping2, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId2);
 
         UpdateKitToLegacyIdsRequest duplicateSampleIdRequest = new UpdateKitToLegacyIdsRequest(collaboratorSampleId,

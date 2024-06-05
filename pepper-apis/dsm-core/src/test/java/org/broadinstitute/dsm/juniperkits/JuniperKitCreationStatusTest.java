@@ -23,6 +23,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitCurrentStatus;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.kits.KitTestUtil;
 import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
@@ -71,14 +72,14 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     Tracker mockShipmentTracker = mock(Tracker.class);
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
-    private static JuniperKitUtil juniperKitUtil;
+    private static KitTestUtil juniperKitUtil;
 
     @BeforeClass
     public static void setupJuniperBefore() {
 
         juniperKitUtil =
-                new JuniperKitUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group");
-        juniperKitUtil.setupJuniperInstanceAndSettings();
+                new KitTestUtil(instanceName, instanceGuid, "JuniperTestProject",  "Juniper-Group", "SALIVA", "SALIVA", null, true);
+        juniperKitUtil.setupInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
 
     }
@@ -86,7 +87,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     @AfterClass
     public static void deleteJuniperInstance() {
         juniperKitUtil.deleteKitsArray(createdKitIds);
-        juniperKitUtil.deleteInstanceAndSettings();
+        juniperKitUtil.deleteGeneratedData();
     }
 
     @Before

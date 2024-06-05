@@ -18,9 +18,9 @@ import org.junit.Test;
 
 public class KitDisplayNameTest extends DbTxnBaseTest {
     private static final String instanceName = "kit_test_instance";
-    private static PepperKitUtil pepperKitUtil = new PepperKitUtil(instanceName, instanceName,
+    private static KitTestUtil kitTestUtil = new KitTestUtil(instanceName, instanceName,
             "some_prefix", "kit_test_group", KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME,
-            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null, null);
+            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null, false);
 
     private static KitShippingTestUtil kitShippingTestUtil;
     private static DDPInstanceDto ddpInstanceDto;
@@ -32,9 +32,9 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setupBefore() {
-        pepperKitUtil.setupInstanceAndSettings();
+        kitTestUtil.setupInstanceAndSettings();
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, "kitDisplayNameTest");
-        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(pepperKitUtil.getDdpInstanceId()).orElseThrow();
+        ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(kitTestUtil.getDdpInstanceId()).orElseThrow();
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId("kitDisplayNameTest");
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
     }
@@ -43,13 +43,13 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     public static void cleanUpAfterClass() {
         kitShippingTestUtil.tearDown();
         participantDao.delete(participantDto.getParticipantId().get());
-        pepperKitUtil.deleteGeneratedData();
+        kitTestUtil.deleteGeneratedData();
     }
 
     @Test
     public void testKitWithDisplayName() {
         int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto,
-                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, pepperKitUtil.getKitTypeId(), false);
+                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kitTestUtil.getKitTypeId(), false);
         KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
         List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm(instanceName, KitRequestShipping.OVERVIEW,
                 KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME);
