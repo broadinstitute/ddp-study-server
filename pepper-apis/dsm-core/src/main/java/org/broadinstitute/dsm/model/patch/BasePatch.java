@@ -239,29 +239,28 @@ public abstract class BasePatch {
             // if the date that was sent in is null, we don't want to set the workflow fields
             return nameValues;
         }
-        String patchValue = patch.getNameValue().getValue().toString();
         //mr request workflow
         if (patch.getNameValue().getName().equals("m.faxSent")) {
             nameValues.add(setAdditionalValue("m.faxSentBy", patch, patch.getUser()));
-            nameValues.add(setAdditionalValue("m.faxConfirmed", patch, patchValue));
+            nameValues.add(setAdditionalValue("m.faxConfirmed", patch, patch.getNameValue().getValue()));
         } else if (patch.getNameValue().getName().equals("m.faxSent2")) {
             nameValues.add(setAdditionalValue("m.faxSent2By", patch, patch.getUser()));
-            nameValues.add(setAdditionalValue("m.faxConfirmed2", patch, patchValue));
+            nameValues.add(setAdditionalValue("m.faxConfirmed2", patch, patch.getNameValue().getValue()));
         } else if (patch.getNameValue().getName().equals("m.faxSent3")) {
             nameValues.add(setAdditionalValue("m.faxSent3By", patch, patch.getUser()));
-            nameValues.add(setAdditionalValue("m.faxConfirmed3", patch, patchValue));
+            nameValues.add(setAdditionalValue("m.faxConfirmed3", patch, patch.getNameValue().getValue()));
         } else if (patch.getNameValue().getName().equals("oD.faxSent")) {
             //tissue request workflow
             nameValues.add(setAdditionalValue("oD.faxSentBy", patch, patch.getUser()));
-            nameValues.add(setAdditionalValue("oD.faxConfirmed", patch, patchValue));
+            nameValues.add(setAdditionalValue("oD.faxConfirmed", patch, patch.getNameValue().getValue()));
             nameValues.add(setAdditionalValue("oD.request", patch, "sent"));
         } else if (patch.getNameValue().getName().equals("oD.faxSent2")) {
             nameValues.add(setAdditionalValue("oD.faxSent2By", patch, patch.getUser()));
-            nameValues.add(setAdditionalValue("oD.faxConfirmed2", patch, patchValue));
+            nameValues.add(setAdditionalValue("oD.faxConfirmed2", patch, patch.getNameValue().getValue()));
             nameValues.add(setAdditionalValue("oD.request", patch, "sent"));
         } else if (patch.getNameValue().getName().equals("oD.faxSent3")) {
             nameValues.add(setAdditionalValue("oD.faxSent3By", patch, patch.getUser()));
-            nameValues.add(setAdditionalValue("oD.faxConfirmed3", patch, patchValue));
+            nameValues.add(setAdditionalValue("oD.faxConfirmed3", patch, patch.getNameValue().getValue()));
             nameValues.add(setAdditionalValue("oD.request", patch, "sent"));
         } else if (patch.getNameValue().getName().equals(DBConstants.OD_TISSUE_RECEIVED)) {
             nameValues.add(setAdditionalValue("oD.request", patch, "received"));
