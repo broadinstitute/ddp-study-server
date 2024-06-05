@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DsmNullDateException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
@@ -65,10 +66,13 @@ public abstract class MappingGenerator extends BaseGenerator {
     }
 
     @Override
-    protected Map<String, Object> parseJson() {
+    protected Map<String, Object> parseJson() throws DsmNullDateException {
         Map<String, Object> resultMap = new HashMap<>();
         Map<String, Object> fieldsByValues = parseJsonToMapFromValue();
-
+        if (fieldsByValues == null) {
+            //This happens when the value is null, and here dsm throws an exception so that the null value is processed as single values
+            throw new DsmNullDateException("fieldsByValues is null");
+        }
         Map<String, String> esMap = extractDynamicFieldsEsMap(fieldsByValues);
 
         for (Map.Entry<String, Object> entry : fieldsByValues.entrySet()) {

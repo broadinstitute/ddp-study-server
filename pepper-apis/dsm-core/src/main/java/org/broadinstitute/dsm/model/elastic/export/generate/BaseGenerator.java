@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import org.broadinstitute.dsm.db.structure.DBElement;
+import org.broadinstitute.dsm.exception.DsmNullDateException;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
@@ -76,13 +77,13 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
         Object sourceToUpsert;
         try {
             sourceToUpsert = parseJson();
-        } catch (JsonParseException jpe) {
+        } catch (JsonParseException | DsmNullDateException e) {
             sourceToUpsert = parseSingleElement();
         }
         return sourceToUpsert;
     }
 
-    protected abstract <T> T parseJson();
+    protected abstract <T> T parseJson() throws DsmNullDateException;
 
     protected Map<String, Object> parseJsonToMapFromValue() {
         try {

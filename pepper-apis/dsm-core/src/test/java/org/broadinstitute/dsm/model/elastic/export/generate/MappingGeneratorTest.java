@@ -95,26 +95,32 @@ public class MappingGeneratorTest {
 
     @Test
     public void parseJson() {
-        NameValue nameValue = new NameValue("m.additionalValuesJson", "{\"DDP_INSTANCE\": \"TEST\"}");
-        Patch patch = new Patch();
-        patch.setId("0");
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
-        DynamicFieldsParser parser = new DynamicFieldsParser();
-        parser.setDisplayType("TEXT");
-        parser.setHelperParser(new TypeParser());
-        parser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
-        BaseGenerator mappingGenerator = new CollectionMappingGenerator(parser, generatorPayload);
-        mappingGenerator.setFieldTypeExtractor(new FieldTypeExtractor() {
-            @Override
-            public Map<String, String> extract() {
-                return Map.of();
-            }
-        });
-        Map<String, Object> parseJson = mappingGenerator.parseJson();;
-        Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");
-        Assert.assertNotNull(additionalValuesJson);
-        Assert.assertEquals(TypeParser.TEXT_KEYWORD_MAPPING,
-                ((Map) additionalValuesJson.get(PROPERTIES)).get(CamelCaseConverter.of("DDP_INSTANCE").convert()));
+        try {
+            NameValue nameValue = new NameValue("m.additionalValuesJson", "{\"DDP_INSTANCE\": \"TEST\"}");
+            Patch patch = new Patch();
+            patch.setId("0");
+            GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
+            DynamicFieldsParser parser = new DynamicFieldsParser();
+            parser.setDisplayType("TEXT");
+            parser.setHelperParser(new TypeParser());
+            parser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
+            BaseGenerator mappingGenerator = new CollectionMappingGenerator(parser, generatorPayload);
+            mappingGenerator.setFieldTypeExtractor(new FieldTypeExtractor() {
+                @Override
+                public Map<String, String> extract() {
+                    return Map.of();
+                }
+            });
+            Map<String, Object> parseJson = mappingGenerator.parseJson();
+            ;
+            Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");
+            Assert.assertNotNull(additionalValuesJson);
+            Assert.assertEquals(TypeParser.TEXT_KEYWORD_MAPPING,
+                    ((Map) additionalValuesJson.get(PROPERTIES)).get(CamelCaseConverter.of("DDP_INSTANCE").convert()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Unexpected exception");
+        }
     }
 
 

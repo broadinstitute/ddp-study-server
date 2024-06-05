@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.patch;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.util.DdpInstanceGroupTestUtil;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordTestUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.After;
@@ -35,6 +38,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final String instanceName = "ohdetailpatch";
     private static String esIndex;
+    private static String ddpParticipantId;
     private static DDPInstanceDto ddpInstanceDto;
     private static ParticipantDto testParticipant = null;
     private static MedicalRecordTestUtil medicalRecordTestUtil;
@@ -71,7 +75,7 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
 
     @Test
     public void doPatchTest() {
-        String ddpParticipantId = TestParticipantUtil.genDDPParticipantId("onchistorypatch");
+        ddpParticipantId = TestParticipantUtil.genDDPParticipantId("onchistorypatch");
         try {
             testParticipant = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
             int participantId = testParticipant.getRequiredParticipantId();
@@ -131,11 +135,74 @@ public class OncHistoryDetailPatchTest extends DbAndElasticBaseTest {
             Map<String, String> patchMap = nameValuesToMap(patch.getNameValues());
             Assert.assertEquals(patchMap.get("oD.destructionPolicy"), oncHistoryDetail.getDestructionPolicy());
             Assert.assertEquals(patchMap.get("oD.facility"), oncHistoryDetail.getFacility());
+
+            changeFaxSent(oncHistoryDetail.getOncHistoryDetailId(), participantId);
+
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Unexpected exception: " + e);
         }
     }
+
+    public void changeFaxSent(int oncHistoryDetailId, int participantId) throws Exception {
+        String patchJson = TestUtil.readFile("onchistory/faxSentPatch.json");
+        Gson gson = new Gson();
+        Patch patch = gson.fromJson(patchJson, Patch.class);
+        patch.setDdpParticipantId(ddpParticipantId);
+        patch.setParentId(Integer.toString(participantId));
+        patch.setRealm(instanceName);
+        patch.setId(String.valueOf(oncHistoryDetailId));
+
+        NotificationUtil mockNotificationUtil = mock(NotificationUtil.class);
+        BasePatch existingOncHistoryDetailPatch = ExistingRecordPatchFactory.produce(patch, mockNotificationUtil);
+        existingOncHistoryDetailPatch.setElasticSearchExportable(true);
+        existingOncHistoryDetailPatch.doPatch();
+
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            Assert.fail("Interrupted while waiting for ES refresh");
+        }
+
+        ElasticSearchParticipantDto esParticipant =
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
+        // testing workflow fields were updated
+        Dsm dsm = esParticipant.getDsm().orElseThrow();
+
+        List<OncHistoryDetail> oncHistoryDetailList = dsm.getOncHistoryDetail();
+        Assert.assertEquals(1, oncHistoryDetailList.size());
+        OncHistoryDetail oncHistoryDetail = oncHistoryDetailList.get(0);
+
+        String faxSent = patch.getNameValue().getValue().toString();
+        Assert.assertEquals(faxSent, oncHistoryDetail.getFaxSent());
+        Assert.assertEquals(faxSent, oncHistoryDetail.getFaxConfirmed());
+        Assert.assertEquals("sent", oncHistoryDetail.getRequest());
+
+        patch = gson.fromJson(patchJson, Patch.class);
+        patch.setDdpParticipantId(ddpParticipantId);
+        patch.setParentId(Integer.toString(participantId));
+        patch.setRealm(instanceName);
+        patch.setId(String.valueOf(oncHistoryDetailId));
+        patch.setNameValue(new NameValue("oD.faxSent2", null));
+
+        existingOncHistoryDetailPatch = ExistingRecordPatchFactory.produce(patch, mockNotificationUtil);
+        existingOncHistoryDetailPatch.setElasticSearchExportable(true);
+        existingOncHistoryDetailPatch.doPatch();
+
+        esParticipant =
+                elasticSearchService.getRequiredParticipantDocument(ddpParticipantId, esIndex);
+        // testing workflow fields were updated
+        dsm = esParticipant.getDsm().orElseThrow();
+
+        oncHistoryDetailList = dsm.getOncHistoryDetail();
+        Assert.assertEquals(1, oncHistoryDetailList.size());
+        oncHistoryDetail = oncHistoryDetailList.get(0);
+
+        Assert.assertNull(oncHistoryDetail.getFaxSent2());
+        Assert.assertNull(oncHistoryDetail.getFaxConfirmed2());
+        Assert.assertEquals("sent", oncHistoryDetail.getRequest());
+    }
+
 
     private static Map<String, String> nameValuesToMap(List<NameValue> nameValues) {
         Map<String, String> nameToValue = new HashMap<>();
