@@ -49,7 +49,9 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
         testKitUtil = new TestKitUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, "SALIVA", null, esIndex);
         testKitUtil.setupInstanceAndSettings();
+        ddpInstanceDao.setMigratedDdp(testKitUtil.ddpInstanceId, true);
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
+        Assert.assertTrue(ddpInstanceDto.getMigratedDdp());
         ddpInstance = DDPInstance.from(ddpInstanceDto);
         legacyParticipantPair = TestParticipantUtil.createLegacyParticipant(legacyParticipantGuid, participantCounter++, ddpInstanceDto,
                 shortId, legacyShortId);
@@ -156,9 +158,6 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
 
-            //test what the participant id will be for this
-            String kitParticipantId = KitRequestShipping.getParticipantIdFromLegacyKit(ddpInstance, shortId, nextCollaboratorParticipantId);
-            Assert.assertEquals(legacyAltpid, kitParticipantId);
             return null;
         });
     }

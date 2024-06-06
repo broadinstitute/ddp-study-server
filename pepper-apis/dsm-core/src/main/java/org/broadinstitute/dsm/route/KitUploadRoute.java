@@ -400,18 +400,9 @@ public class KitUploadRoute extends RequestHandler {
             }
 
             String participantID = kit.getShortId();
-
-            //If there is a participant change the participantID to the ID of the existing
-            //participant
             if (ddpInstance.hasEsIndex()) {
-                //check if there are previous kits with the legacy participant id
-                String participantIdOfLegacyKit = KitRequestShipping.getParticipantIdFromLegacyKit(ddpInstance, participantID,
-                        collaboratorParticipantId);
-                if (participantIdOfLegacyKit != null) {
-                    participantID = participantIdOfLegacyKit;
-                } else {
-                    participantID = kit.getParticipantId().trim();
-                }
+                //we need ddpParticipantId for studies that are in ES to use it for upserting info in ES
+                participantID = kit.getParticipantId().trim();
             }
 
             KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, participantID,

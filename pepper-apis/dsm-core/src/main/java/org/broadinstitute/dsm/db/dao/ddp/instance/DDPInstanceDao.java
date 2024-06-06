@@ -89,10 +89,12 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "research_project, query_items, mercury_order_creator "
                     + "FROM ddp_instance realm LEFT JOIN view_filters filter ON (filter.filter_id = study_pre_filter) ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
-    private static final String SQL_SELECT_DDP_INSTANCE_BY_STUDY_GUID= SQL_BASE_SELECT + " WHERE study_guid = ?";
+    private static final String SQL_SELECT_DDP_INSTANCE_BY_STUDY_GUID = SQL_BASE_SELECT + " WHERE study_guid = ?";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
     private static final String SQL_UPDATE_PARTICIPANT_INDEX =
             "UPDATE ddp_instance SET es_participant_index = ? WHERE ddp_instance_id = ?";
+    private static final String SQL_UPDATE_MIGRATED_DDP =
+            "UPDATE ddp_instance SET migrated_ddp = ? WHERE ddp_instance_id = ?";
 
     public static DDPInstanceDao of() {
         return new DDPInstanceDao();
@@ -449,5 +451,22 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             throw new RuntimeException("Couldn't get realm information for " + instanceName, results.resultException);
         }
         return (int) results.resultValue;
+    }
+
+    @VisibleForTesting
+    public void setMigratedDdp(int instanceId, boolean migratedDdp) {
+        inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_MIGRATED_DDP)) {
+                stmt.setBoolean(1, migratedDdp);
+                stmt.setInt(2, instanceId);
+                int result = stmt.executeUpdate();
+                if (result != 1) {
+                    throw new DsmInternalError("Error updating migrated_ddp. Result count was " + result);
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error updating migrated_ddp", e);
+            }
+            return null;
+        });
     }
 }

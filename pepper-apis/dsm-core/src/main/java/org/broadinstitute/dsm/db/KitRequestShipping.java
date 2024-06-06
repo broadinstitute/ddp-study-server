@@ -1699,7 +1699,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         String baseUrl = ddpInstance.getBaseUrl();
         String collaboratorIdPrefix = ddpInstance.getCollaboratorIdPrefix();
         //TODO PT collaboratorParticipantLengthOverwrite should be an int
-        if (ddpInstance.hasEsIndex()) {
+        if (ddpInstance.isMigratedDDP()) {
             // This should only be checked for studies that have an ES index, like cmi and rgp, and not for studies like darwin
             String legacyId = getLegacyCollaboratorParticipantId(ddpInstance, shortId, collaboratorParticipantLengthOverwrite);
             if (legacyParticipantIdExists(legacyId)) {

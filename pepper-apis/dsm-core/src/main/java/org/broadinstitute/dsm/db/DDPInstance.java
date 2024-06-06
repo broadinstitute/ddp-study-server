@@ -545,6 +545,7 @@ public class DDPInstance {
                 .withResearchProject(ddpInstanceDto.getResearchProject().orElse(null))
                 .withMercuryOrderCreator(ddpInstanceDto.getMercuryOrderCreator().orElse(null))
                 .withDisplayName(ddpInstanceDto.getDisplayName())
+                .withMigratedDDP(ddpInstanceDto.getMigratedDdp())
                 .build();
     }
 }
