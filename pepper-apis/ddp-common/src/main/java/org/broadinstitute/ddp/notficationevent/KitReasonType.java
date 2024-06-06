@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model.dsm;
+package org.broadinstitute.ddp.notficationevent;
 
 /**
  * The reason of a kit. What each reason means and how it affects workflow will depend on the study's configuration.

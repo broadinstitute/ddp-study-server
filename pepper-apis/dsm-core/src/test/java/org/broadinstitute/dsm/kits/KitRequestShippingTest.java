@@ -40,16 +40,16 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static ParticipantDto notLegacyParticipant;
     private static int participantCounter = 0;
     private static Pair<ParticipantDto, String> legacyParticipantPair;
-    private static TestKitUtil testKitUtil;
+    private static KitTestUtil kitTestUtil;
     private static List<ParticipantDto> participants = new ArrayList<>();
     private static List<String> createdKits = new ArrayList<>();
 
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        testKitUtil = new TestKitUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, "SALIVA", null, esIndex);
-        testKitUtil.setupInstanceAndSettings();
-        ddpInstanceDao.setMigratedDdp(testKitUtil.ddpInstanceId, true);
+        kitTestUtil = new KitTestUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, "SALIVA", null, esIndex, false);
+        kitTestUtil.setupInstanceAndSettings();
+        ddpInstanceDao.setMigratedDdp(kitTestUtil.ddpInstanceId, true);
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
         Assert.assertTrue(ddpInstanceDto.getMigratedDdp());
         ddpInstance = DDPInstance.from(ddpInstanceDto);
@@ -72,8 +72,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     public static void tearDown() {
         participants.forEach(participantDto ->
                 TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
-        createdKits.forEach(dsmKitRequestId -> testKitUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
-        testKitUtil.deleteGeneratedData();
+        createdKits.forEach(dsmKitRequestId -> kitTestUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
+        kitTestUtil.deleteGeneratedData();
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.deleteIndex(esIndex);
     }
@@ -134,7 +134,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    testKitUtil.kitTypeId);
+                    kitTestUtil.kitTypeId);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
@@ -145,15 +145,15 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withBspCollaboratorSampleId(legacyCollaboratorSampleId)
                     .withKitTypeName("SALIVA")
                     .withDdpKitRequestId("0001_Kit")
-                    .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+                    .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
 
-            String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+            String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
             createdKits.add(dsmKitRequestId);
 
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    testKitUtil.kitTypeId);
+                    kitTestUtil.kitTypeId);
 
             Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
@@ -171,7 +171,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    testKitUtil.kitTypeId);
+                    kitTestUtil.kitTypeId);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
@@ -182,14 +182,14 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withBspCollaboratorSampleId(collaboratorSampleId)
                     .withKitTypeName("SALIVA")
                     .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit")
-                    .withKitTypeId(String.valueOf(testKitUtil.kitTypeId)).build();
+                    .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
 
-            String dsmKitRequestId = testKitUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+            String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
             createdKits.add(dsmKitRequestId);
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    testKitUtil.kitTypeId);
+                    kitTestUtil.kitTypeId);
             String expectedNextCollaboratorSampleId = "PROJ_" + notLegacyParticipantShortId + "_SALIVA_2";
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);

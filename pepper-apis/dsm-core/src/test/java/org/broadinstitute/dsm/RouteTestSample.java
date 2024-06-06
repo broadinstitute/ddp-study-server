@@ -415,8 +415,8 @@ public class RouteTestSample extends TestHelper {
         EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(instanceName);
         Address toAddress = easyPostUtil.createAddress(participant, "617-714-8952");
         Address returnAddress =
-                easyPostUtil.createAddressWithoutValidation("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics", "Cambridge", "02141",
-                        "MA", "US", "617-714-8952");
+                easyPostUtil.createAddressWithoutValidation("Broad Institute", "320 Charles St - Lab 181", "Attn. Broad Genomics",
+                        "Cambridge", "02141", "MA", "US", "617-714-8952");
         Parcel parcel = easyPostUtil.createParcel("3.2", "6.9", "1.3", "5.2");
         CustomsInfo customs = null;
         if (!"US".equals(participant.getCountry())) {
@@ -659,7 +659,7 @@ public class RouteTestSample extends TestHelper {
         DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST + "2", "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST + "2",
                 System.currentTimeMillis() - (17 * DBTestUtil.WEEK));
 
-        eventUtil.triggerReminder();
+        eventService.triggerReminder();
 
         //check kit which is just 2 weeks old is not in event table
         ArrayList<String> strings = new ArrayList<>();
@@ -680,7 +680,7 @@ public class RouteTestSample extends TestHelper {
         //check kit which is now 18 weeks old is in event table
         DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST + "2", "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST + "2",
                 System.currentTimeMillis() - (18 * DBTestUtil.WEEK));
-        eventUtil.triggerReminder();
+        eventService.triggerReminder();
         Assert.assertNotNull(
                 DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TYPE='BLOOD_SENT_4WK'", kitId,
                         "EVENT_ID"));
@@ -695,7 +695,7 @@ public class RouteTestSample extends TestHelper {
                 + "values (\'BLOOD_SENT_2WK\', \'" + FAKE_DDP_PARTICIPANT_ID + "_tt3" + "\', \'" + INSTANCE_ID + "\', \'"
                 + System.currentTimeMillis() + "\', \'1\')");
 
-        eventUtil.triggerReminder();
+        eventService.triggerReminder();
 
         //check if event_triggered = 1, which would mean it was sent
         Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request "
@@ -1566,7 +1566,7 @@ public class RouteTestSample extends TestHelper {
         String kitId = triggerBloodSentEmail(suffix);
         DBTestUtil.setKitToSent("FAKE_MF_" + kitId, FAKE_DSM_LABEL_UID + suffix, System.currentTimeMillis() - (3 * DBTestUtil.WEEK));
 
-        eventUtil.triggerReminder();
+        eventService.triggerReminder();
         //check kit which is just 3 weeks old is in event table
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + suffix);
@@ -1577,7 +1577,7 @@ public class RouteTestSample extends TestHelper {
                 "select count(dsm_kit_request_id) from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1", kitId,
                 "count(dsm_kit_request_id)"));
 
-        eventUtil.triggerReminder();
+        eventService.triggerReminder();
         //check kit which is just 3 weeks old is in event table
         strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + suffix);

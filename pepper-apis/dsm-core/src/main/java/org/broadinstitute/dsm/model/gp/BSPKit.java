@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.gp;
 
-import java.sql.Connection;
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -9,9 +8,7 @@ import org.broadinstitute.dsm.db.dao.kit.BSPKitDao;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +16,13 @@ import org.slf4j.LoggerFactory;
 public class BSPKit extends GPReceivedKit {
 
     private static Logger logger = LoggerFactory.getLogger(BSPKit.class);
+    public static final String  SQL_SELECT_KIT_INFO_FOR_NOTIFICATION_EMAIL = "select eve.event_name,  eve.event_type,"
+            + " request.ddp_participant_id, request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, "
+            + " realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, "
+            + " realm.migrated_ddp, kit.receive_date, kit.scan_date from ddp_kit_request request, ddp_kit kit, event_type eve, "
+            + " ddp_instance realm where request.dsm_kit_request_id = kit.dsm_kit_request_id and "
+            + " request.ddp_instance_id = realm.ddp_instance_id and (eve.ddp_instance_id = request.ddp_instance_id "
+            + " and eve.kit_type_id = request.kit_type_id) and eve.event_type = 'RECEIVED' and kit.kit_label = ?";
 
     public Optional<BSPKitStatus> getKitStatus(@NonNull BSPKitDto bspKitQueryResult, NotificationUtil notificationUtil) {
         if (StringUtils.isNotBlank(bspKitQueryResult.getParticipantExitId())) {
@@ -42,14 +46,13 @@ public class BSPKit extends GPReceivedKit {
         }
     }
 
-    public void triggerDDP(Connection conn, @NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
+    public void triggerDDP(@NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
         try {
             if (bspKitInfo.isHasParticipantNotifications() && firstTimeReceived) {
-                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
-                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
+                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(SQL_SELECT_KIT_INFO_FOR_NOTIFICATION_EMAIL,
                         kitLabel, 1);
                 if (kitDDPNotification != null) {
-                    EventUtil.triggerDDP(conn, kitDDPNotification);
+                    EventService.sendKitEventToDss(kitDDPNotification);
                 }
             }
         } catch (Exception e) {

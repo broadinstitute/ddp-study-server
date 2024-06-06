@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.ParticipantEvent;
+import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -15,9 +15,10 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-public class ParticipantEventRoute extends RequestHandler {
+public class SkippedParticipantEventRoute extends RequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantEventRoute.class);
+    private static final Logger logger = LoggerFactory.getLogger(SkippedParticipantEventRoute.class);
+    SkippedParticipantEventDao skippedParticipantEventDao = new SkippedParticipantEventDao();
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -25,7 +26,7 @@ public class ParticipantEventRoute extends RequestHandler {
         String realm = request.params(RequestParameter.REALM);
         if (StringUtils.isNotBlank(realm)) {
             if (UserUtil.checkUserAccess(realm, userId, "participant_event", null)) {
-                return ParticipantEvent.getSkippedParticipantEvents(realm);
+                return skippedParticipantEventDao.getSkippedParticipantEvents(realm);
             } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
@@ -43,7 +44,7 @@ public class ParticipantEventRoute extends RequestHandler {
                 String userIdRequest = jsonObject.getAsJsonObject().get("user").getAsString();
                 String eventType = jsonObject.getAsJsonObject().get("eventType").getAsString();
 
-                ParticipantEvent.skipParticipantEvent(ddpParticipantId, currentTime, userIdRequest, instance, eventType);
+                skippedParticipantEventDao.skipParticipantEvent(ddpParticipantId, currentTime, userIdRequest, instance, eventType);
                 return new Result(200);
             } else {
                 response.status(500);

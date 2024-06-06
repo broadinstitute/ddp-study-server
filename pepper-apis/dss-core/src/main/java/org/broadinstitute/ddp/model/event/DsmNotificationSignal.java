@@ -3,9 +3,9 @@ package org.broadinstitute.ddp.model.event;
 import javax.annotation.Nullable;
 
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
-import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
-import org.broadinstitute.ddp.model.dsm.KitReasonType;
+import org.broadinstitute.ddp.notficationevent.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
+import org.broadinstitute.ddp.notficationevent.KitReasonType;
 
 public class DsmNotificationSignal extends EventSignal {
 
