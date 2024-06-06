@@ -232,6 +232,10 @@ public abstract class BasePatch {
 
     protected List<NameValue> setWorkflowRelatedFields(@NonNull Patch patch) {
         List<NameValue> nameValues = new ArrayList<>();
+        if (patch.getNameValue().getValue() == null) {
+            // if the date that was sent in is null, we don't want to set the workflow fields
+            return nameValues;
+        }
         //mr request workflow
         if (patch.getNameValue().getName().equals("m.faxSent")) {
             nameValues.add(setAdditionalValue("m.faxSentBy", patch, patch.getUser()));
@@ -275,7 +279,6 @@ public abstract class BasePatch {
                                     patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
                 }
             }
-            // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
         } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue") && !(boolean) patch.getNameValue().getValue()) {
             boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
 

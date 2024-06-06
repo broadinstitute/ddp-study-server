@@ -50,6 +50,9 @@ public abstract class SourceGenerator extends BaseGenerator {
     protected Map<String, Object> parseJsonValuesToObject() {
         logger.info("Converting JSON values to Map");
         Map<String, Object> dynamicFieldValues = parseJsonToMapFromValue();
+        if (dynamicFieldValues == null) {
+            return new HashMap<>();
+        }
         Map<String, Object> transformedMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : dynamicFieldValues.entrySet()) {
             Object value = entry.getValue();

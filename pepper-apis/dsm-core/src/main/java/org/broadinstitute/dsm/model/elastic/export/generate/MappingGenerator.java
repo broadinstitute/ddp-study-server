@@ -68,7 +68,9 @@ public abstract class MappingGenerator extends BaseGenerator {
     protected Map<String, Object> parseJson() {
         Map<String, Object> resultMap = new HashMap<>();
         Map<String, Object> fieldsByValues = parseJsonToMapFromValue();
-
+        if (fieldsByValues == null) {
+            return null;
+        }
         Map<String, String> esMap = extractDynamicFieldsEsMap(fieldsByValues);
 
         for (Map.Entry<String, Object> entry : fieldsByValues.entrySet()) {
