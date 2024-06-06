@@ -39,6 +39,7 @@ import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.kit.KitTypeImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -64,6 +65,7 @@ import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -332,6 +334,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private Boolean requiresInsertInKitTracking;
     private String kitLabelPrefix;
     private Long kitLabelLength;
+
+    private static final KitRequestDao kitRequestDao = new KitRequestDao();
 
     public KitRequestShipping() {
     }
@@ -667,7 +671,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
                 DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.NEEDS_NAME_LABELS);
                 Map<String, Map<String, Object>> participantsESData = null;
-                if (ddpInstance.isESUpdatePossible()) {
+                if (ddpInstance.hasEsIndex()) {
                     participantsESData =
                             ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
                 }
@@ -1232,6 +1236,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
         if (collaboratorId.length() < COLLABORATOR_MAX_LENGTH) {
             return collaboratorId;
+        } else {
+            // this should not happen, let's put an error log here to see if this is happening and why
+            logger.error("Error generating collaboratorParticipantId for shortId %s (Got %d characters)".formatted(shortId,
+                    collaboratorId.length()));
         }
         return null;
     }
@@ -1661,54 +1669,144 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kits;
     }
 
-    //move that method to somewhere else...
-    public static String getCollaboratorParticipantId(String baseUrl, String instanceId, boolean isMigrated, String collaboratorPrefix,
-                                                      String ddpParticipantId, String shortId,
+    /**
+     * Generates the CollaboratorParticipantId for a kit request, called from the hourly kit creation job
+     * */
+    public static String getCollaboratorParticipantId(LatestKitRequest latestKitRequest, String ddpParticipantId, String shortId,
                                                       String collaboratorParticipantLengthOverwrite) {
-        String collaboratorParticipantId = null;
-        String id = null;
-        boolean noGeneratedID = false;
-        //assumption: Gen2 participantId contains "." & Pepper participantId contains NOT "."
-        if (isMigrated && ddpParticipantId.contains(".") && baseUrl != null) {
-            //gen2 migrated pt -> check if already has any samples
-            collaboratorParticipantId = KitUtil.getKitCollaboratorId(ddpParticipantId, instanceId);
-            if (StringUtils.isBlank(collaboratorParticipantId)) {
-                String collaboratorSampleId = KitUtil.getTissueCollaboratorId(ddpParticipantId, instanceId);
-                if (StringUtils.isBlank(collaboratorSampleId)) {
-                    //old pt but no samples in the system so call ddp to get shortID
-                    //assumption: Gen2 shortId is < 6 character & Pepper HURID = 6 character
-                    if (StringUtils.isNotBlank(shortId) && shortId.length() > 5) {
-                        //Pepper HURID was used for upload
-                        id = shortId.trim();
-                    } else {
-                        //user was uploading with legacy id instead of new Pepper HURID
-                        //label creation job will call DDP go get information to generate collaborator_ids
-                        noGeneratedID = true;
-                    }
-                } else {
-                    //extract participant information from tissue collaborator_sample_id
-                    //RGP collaborator_sample_ids can be ignored! not in DSM
-                    if (collaboratorSampleId.contains("_")) {
-                        //get participant part from sample by looking for second "_"
-                        //not last "_" because user could have done something like PART_0001_Tissue_4
-                        collaboratorParticipantId =
-                                collaboratorSampleId.substring(0, collaboratorSampleId.indexOf("_", collaboratorSampleId.indexOf("_") + 1));
-                    }
-                }
-            }
-        } else {
-            if (StringUtils.isNotBlank(shortId)) {
-                id = shortId.trim();
-            } else {
-                //TODO if gen2 with connection check for shortId
-                id = ddpParticipantId.trim();
+        int instanceId = Integer.parseInt(latestKitRequest.getInstanceID());
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(instanceId);
+        return getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, collaboratorParticipantLengthOverwrite);
+    }
+
+    /**
+     * <p>
+     * Retrieves the collaborator participant ID for a given participant. The method first checks if the participant has kit with
+     * a legacy collaborator participant ID . If so that ID is returned. If the kit is a Gen2 migrated kit, a collaborator
+     * participant ID is generated based on previous Gen2 samples.
+     * Otherwise, a new collaborator participant ID is generated from Pepper short id.
+     *</p>
+     * <p>
+     * Called  during  kit creation through KitUpload, BSPDummyRoutes, KitLookUp
+     * and NonPepperKitCreationService
+     *      </p>
+     * @return the collaborator participant ID
+     */
+
+    public static String getCollaboratorParticipantId(DDPInstance ddpInstance, String ddpParticipantId, String shortId,
+                                                      String collaboratorParticipantLengthOverwrite) {
+        int instanceId = ddpInstance.getDdpInstanceIdAsInt();
+        String baseUrl = ddpInstance.getBaseUrl();
+        String collaboratorIdPrefix = ddpInstance.getCollaboratorIdPrefix();
+        //TODO PT collaboratorParticipantLengthOverwrite should be an int
+        if (ddpInstance.isMigratedDDP()) {
+            // This should only be checked for studies that have an ES index, like cmi and rgp, and not for studies like darwin
+            String legacyId = getLegacyCollaboratorParticipantId(ddpInstance, shortId, collaboratorParticipantLengthOverwrite);
+            if (legacyParticipantIdExists(legacyId)) {
+                //this participant have kits with legacy participant id from before, use that id instead of generating new one to keep the
+                //GP data consistent
+                return legacyId;
             }
         }
-        if (StringUtils.isBlank(collaboratorParticipantId) && !noGeneratedID) {
-            collaboratorParticipantId =
-                    KitRequestShipping.generateBspParticipantID(collaboratorPrefix, collaboratorParticipantLengthOverwrite, id);
+        if (isGen2MigratedKit(ddpInstance, ddpParticipantId, baseUrl)) {
+            // if kit uploaded with a gen2 legacy id, then use that id to generate the collaborator id
+            return handleGen2MigratedKit(instanceId, ddpParticipantId, shortId, collaboratorIdPrefix,
+                    collaboratorParticipantLengthOverwrite);
         }
-        return collaboratorParticipantId;
+        return generateCollaboratorParticipantId(shortId, ddpParticipantId, collaboratorIdPrefix, collaboratorParticipantLengthOverwrite);
+    }
+
+    /**
+     * Generates a legacy collaborator participant ID if the participant has a legacy short ID
+     * and has previously used that ID for kits. Returns the ID if it exists; otherwise, returns null.
+     *
+     * @param ddpInstance the DDPInstance of the participant
+     * @param shortId the Pepper short ID
+     * @param collaboratorParticipantLengthOverwrite the length of the collaborator participant ID
+     * @return the legacy collaborator participant ID if it exists, otherwise null
+     */
+
+    private static String getLegacyCollaboratorParticipantId(DDPInstance ddpInstance, String shortId,
+                                                             String collaboratorParticipantLengthOverwrite) {
+        String legacyCollaboratorPtId = generateLegacyCollaboratorParticipantId(ddpInstance, shortId,
+                collaboratorParticipantLengthOverwrite);
+        if (StringUtils.isNotBlank(legacyCollaboratorPtId)
+                && !kitRequestDao.getKitRequestsForCollaboratorParticipantId(legacyCollaboratorPtId).isEmpty()) {
+            return legacyCollaboratorPtId;
+        }
+        return null;
+    }
+
+    /**
+     * Checks if the legacyCollaboratorParticipantId is not null or empty
+     * */
+    private static boolean legacyParticipantIdExists(String legacyCollaboratorParticipantId) {
+        return StringUtils.isNotBlank(legacyCollaboratorParticipantId);
+    }
+
+    private static String handleGen2MigratedKit(int instanceId, String ddpParticipantId, String shortId, String collaboratorIdPrefix,
+                                                String overwrite) {
+        String collaboratorId = KitUtil.getKitCollaboratorId(ddpParticipantId, instanceId);
+        if (StringUtils.isNotBlank(collaboratorId)) {
+            return collaboratorId;
+        }
+        // if a gen2 migrated kit without previous collab id, then use the sample id to extract the participant id
+        String sampleId = KitUtil.getTissueCollaboratorId(ddpParticipantId, instanceId);
+        if (StringUtils.isBlank(sampleId)) {
+            return handleBlankSampleId(shortId, collaboratorIdPrefix, overwrite);
+        }
+
+        return extractParticipantIdFromSampleId(sampleId);
+    }
+
+    private static String handleBlankSampleId(String shortId, String collaboratorIdPrefix, String overwrite) {
+        //legacy short id is  4 characters long and Pepper's HURID is 6 characters long, so here we check if the short id is 6 characters
+        //long and if so, we use it as the participant id
+        if (StringUtils.isNotBlank(shortId) && shortId.length() == 6) {
+            return KitRequestShipping.generateBspParticipantID(collaboratorIdPrefix, overwrite, shortId.trim());
+        }
+        //For this case, in time of buying a shipping label, KitUtil.createCollaboratorParticipantId() will generate a new collaborator id
+        return null;
+    }
+
+    private static String extractParticipantIdFromSampleId(String sampleId) {
+        if (sampleId.contains("_")) {
+            return sampleId.substring(0, sampleId.indexOf("_", sampleId.indexOf("_") + 1));
+        }
+        return null;
+    }
+
+    private static String generateCollaboratorParticipantId(String shortId, String ddpParticipantId, String collaboratorIdPrefix,
+                                                            String collaboratorParticipantLengthOverwrite) {
+        String id = StringUtils.isNotBlank(shortId) ? shortId.trim() : ddpParticipantId.trim();
+        return KitRequestShipping.generateBspParticipantID(collaboratorIdPrefix, collaboratorParticipantLengthOverwrite, id);
+    }
+
+
+    /**
+     * returns true if the kit with the given ddpParticipantId is a migrated Gen2 kit, only works when kit was uploaded/created
+     * using the legacy guid
+     * */
+    private static boolean isGen2MigratedKit(DDPInstance ddpInstance, String ddpParticipantId, String baseUrl) {
+        //assumes that Gen2 legacy participantId contains "." & Pepper participantId does NOT contain "."
+        return ddpInstance.isMigratedDDP() && ddpParticipantId.contains(".") && baseUrl != null;
+    }
+
+    /**
+     * If participant has a legacy short id, then it generates a collaborator participant id based on that.
+     * If participant is not a legacy participant then returns null.
+     * */
+    private static String generateLegacyCollaboratorParticipantId(DDPInstance ddpInstance, String shortId,
+                                                              String collaboratorParticipantLengthOverwrite) {
+        Profile profile = new ElasticSearchService().getParticipantProfileByShortID(shortId, ddpInstance.getParticipantIndexES());
+        if (profile == null) {
+            throw new DsmInternalError("Could not find profile for shortId " + shortId);
+        }
+        if (StringUtils.isBlank(profile.getLegacyShortId())) {
+            return null;
+        }
+        return KitRequestShipping.generateBspParticipantID(ddpInstance.getCollaboratorIdPrefix(), collaboratorParticipantLengthOverwrite,
+                profile.getLegacyShortId());
     }
 
     public static void changeAuthorizationStatus(Integer kitRequestId, String reason, @NonNull String userId,
@@ -1771,6 +1869,27 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         } else {
             return (String) results.resultValue;
         }
+    }
+
+    public static String getParticipantIdFromLegacyKit(DDPInstance ddpInstance, String shortId, String collaboratorParticipantId) {
+        Profile profile = new ElasticSearchService().getParticipantProfileByShortID(shortId, ddpInstance.getParticipantIndexES());
+        if (profile == null) {
+            throw new DsmInternalError("Could not find profile for shortId " + shortId);
+        }
+        if (StringUtils.isBlank(profile.getLegacyAltPid())) {
+            return null;
+        }
+        if (isLegacyCollaboratorParticipantId(collaboratorParticipantId, profile.getLegacyShortId())) {
+            List<KitRequestShipping> legacyKits = kitRequestDao.getKitRequestsForCollaboratorParticipantId(collaboratorParticipantId);
+            if (!legacyKits.isEmpty()) {
+                return legacyKits.get(0).getDdpParticipantId();
+            }
+        }
+        return null;
+    }
+
+    private static boolean isLegacyCollaboratorParticipantId(String collaboratorParticipantId, String legacyShortId) {
+        return StringUtils.isNotBlank(collaboratorParticipantId) && collaboratorParticipantId.contains("_" + legacyShortId);
     }
 
     public Boolean getError() {

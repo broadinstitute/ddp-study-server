@@ -499,7 +499,7 @@ public class DDPInstance {
         return Integer.parseInt(ddpInstanceId);
     }
 
-    public boolean isESUpdatePossible() {
+    public boolean hasEsIndex() {
         return StringUtils.isNotBlank(this.participantIndexES);
     }
 
@@ -521,6 +521,7 @@ public class DDPInstance {
                 .withResearchProject(ddpInstanceDto.getResearchProject().orElse(null))
                 .withMercuryOrderCreator(ddpInstanceDto.getMercuryOrderCreator().orElse(null))
                 .withDisplayName(ddpInstanceDto.getDisplayName())
+                .withMigratedDDP(ddpInstanceDto.getMigratedDdp())
                 .build();
     }
 }
