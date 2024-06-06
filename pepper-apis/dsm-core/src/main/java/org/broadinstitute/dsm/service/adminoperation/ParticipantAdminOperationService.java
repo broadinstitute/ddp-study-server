@@ -41,7 +41,7 @@ public abstract class ParticipantAdminOperationService implements AdminOperation
 
     protected DDPInstance getDDPInstance(String realm, List<String> validRealms) {
         if (!validRealms.contains(realm.toLowerCase())) {
-            throw new DsmInternalError("Invalid realm for : " + realm);
+            throw new DSMBadRequestException("Invalid realm for admin operation: " + realm);
         }
 
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
