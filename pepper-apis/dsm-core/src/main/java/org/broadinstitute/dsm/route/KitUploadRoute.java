@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import javax.servlet.http.HttpServletRequest;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.servlet.http.HttpServletRequest;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
+
 
 public class KitUploadRoute extends RequestHandler {
 
@@ -232,26 +234,23 @@ public class KitUploadRoute extends RequestHandler {
                 String participantLegacyAltPid = "";
                 String collaboratorParticipantId = "";
                 //if kit has ddpParticipantId use that (RGP!) and
-                //For any studies that do not have participants the search will fail and error so
+                //For any studies that do not have participants the search will fail and error, so
                 //we check if ddpInstance.getParticipantIndexES() != null
-                if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES())) && StringUtils.isBlank(kit.getParticipantId())) {
+                if (ddpInstance.hasEsIndex() && StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
                     participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
                     participantLegacyAltPid = participantByShortId.getProfile().map(Profile::getLegacyAltPid).orElse("");
                     kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
                     collaboratorParticipantId = KitRequestShipping
-                            .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                    ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                            .getCollaboratorParticipantId(ddpInstance, kit.getParticipantId(), kit.getShortId(),
                                     kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 } else {
                     //kit with legacy id in RGP will go here
                     participantGuid = kit.getParticipantId();
                     //this needs to be here with base URL being null for RGP kits
                     collaboratorParticipantId = KitRequestShipping
-                            .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                            .getCollaboratorParticipantId(ddpInstance, kit.getParticipantId(), kit.getShortId(),
                                     kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 }
                 //subkits is currently only used by test boston and RGP
@@ -293,7 +292,7 @@ public class KitUploadRoute extends RequestHandler {
                         orderKits.add(kit);
                     }
                 } else {
-                    //all cmi ddps are currently using this!
+                    //all cmi studies are currently using this!
                     handleNormalKit(conn, ddpInstance, kitType, kit, kitRequestSettings, easyPostUtil, userIdRequest, kitTypeName,
                             collaboratorParticipantId, errorMessage, uploadAnyway, duplicateKitList, orderKits, specialKitList, behavior,
                             externalOrderNumber, uploadReason, carrier);
@@ -401,10 +400,8 @@ public class KitUploadRoute extends RequestHandler {
             }
 
             String participantID = kit.getShortId();
-
-            //If there is a participant change the participantID to the ID of the existing
-            //participant
-            if (StringUtils.isNotBlank((ddpInstance.getParticipantIndexES()))) {
+            if (ddpInstance.hasEsIndex()) {
+                //we need ddpParticipantId for studies that are in ES to use it for upserting info in ES
                 participantID = kit.getParticipantId().trim();
             }
 
@@ -576,7 +573,8 @@ public class KitUploadRoute extends RequestHandler {
 
                 if (skipAddressValidation) {
                     try {
-                        Address address = easyPostUtil.createAddressWithoutValidation(name, object.getStreet1(), object.getStreet2(), object.getCity(),
+                        Address address = easyPostUtil.createAddressWithoutValidation(name, object.getStreet1(), object.getStreet2(),
+                                object.getCity(),
                                 object.getPostalCode(), object.getState(), object.getCountry(), phone);
                         object.setEasyPostAddressId(address.getId());
                     } catch (EasyPostException e) {
