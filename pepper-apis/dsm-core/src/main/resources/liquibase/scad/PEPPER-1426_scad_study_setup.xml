@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet id="PEPPER-1426_scad_ddp_instance" author="pegah">
+    <changeSet id="PEPPER-1426_scad_setup" author="pegah">
         <insert tableName="ddp_instance">
             <column name="instance_name" value="scad"></column>
             <column name="study_guid" value="scad"></column>
@@ -17,14 +17,10 @@
             <column name="collaborator_id_prefix" value="CS"></column>
             <column name="billing_Reference" value="8201079"></column>
         </insert>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_ddp_group" author="pegah">
         <insert tableName="ddp_group">
             <column name="name" value="juniper-scad"></column>
             <column name="description" value="Juniper SCAD study"></column>
         </insert>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_ddp_instance_group" author="pegah">
         <sql>
             INSERT INTO ddp_instance_group (ddp_instance_id, ddp_group_id)
             SELECT di.ddp_instance_id, dg.group_id
@@ -32,8 +28,7 @@
                      JOIN ddp_group dg ON dg.name = 'juniper-scad'
             WHERE di.instance_name = 'scad';
         </sql>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_kit_return_information" author="pegah">
+
         <insert tableName="kit_return_information">
             <column name="return_address_name" value="Broad Institute"></column>
             <column name="return_address_street1" value="Attn. Broad Genomics"></column>
@@ -44,8 +39,7 @@
             <column name="return_address_country" value="US"></column>
             <column name="return_address_phone" value="(617) 724-2725"></column>
         </insert>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_kit_dimension" author="pegah">
+
         <insert tableName="kit_dimension">
             <column name="kit_width" value="6.5"></column>
             <column name="kit_height" value="2.5"></column>
@@ -53,8 +47,7 @@
             <column name="kit_weight" value="4.8"></column>
             <column name="kit_description" value="scad saliva kit"></column>
         </insert>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_ddp_kit_request_settings" author="pegah">
+
         <sql>
             INSERT INTO ddp_kit_request_settings (
                 ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id, kit_label_length
@@ -71,9 +64,7 @@
                     (SELECT kit_dimension_id FROM kit_dimension WHERE kit_description = 'scad saliva kit'),
                     14
         </sql>
-    </changeSet>
 
-    <changeSet id="PEPPER-1426_scad_ddp_instance_role_juniper_study" author="pegah">
         <sql>
             INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id)
             SELECT di.ddp_instance_id, ir.instance_role_id
@@ -81,8 +72,7 @@
             JOIN instance_role ir ON ir.name = 'juniper_study'
             WHERE di.instance_name = 'scad';
         </sql>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_ddp_instance_role_kit_request_activated" author="pegah">
+
         <sql>
             INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id)
             SELECT di.ddp_instance_id, ir.instance_role_id
@@ -90,8 +80,6 @@
                      JOIN instance_role ir ON ir.name = 'kit_request_activated'
             WHERE di.instance_name = 'scad';
         </sql>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_ddp_group_role" author="pegah">
         <sql>
             INSERT INTO ddp_group_role (group_id, role_id, admin_role_id)
             SELECT
@@ -116,8 +104,6 @@
                     (SELECT group_id FROM ddp_group WHERE name = 'juniper-scad'),
                     (SELECT role_id FROM access_role WHERE name = 'study_user_admin');
         </sql>
-    </changeSet>
-    <changeSet id="PEPPER-1426_scad_set_active" author="pegah">
         <update tableName="ddp_instance">
             <column name="is_active" value="1"/>
             <where>instance_name = 'scad'</where>
