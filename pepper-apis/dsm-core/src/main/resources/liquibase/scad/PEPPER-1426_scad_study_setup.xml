@@ -12,7 +12,7 @@
             <column name="display_name" value="SCAD"></column>
             <column name="is_active" value="0"></column>
             <column name="bsp_group" value="Endocrine / MPG"></column>
-            <column name="bsp_collection" value=""></column>
+            <column name="bsp_collection" value="SC-59133"></column>
             <column name="bsp_organism" value="1"></column>
             <column name="collaborator_id_prefix" value="CS"></column>
             <column name="billing_Reference" value="8201079"></column>
@@ -25,10 +25,13 @@
         </insert>
     </changeSet>
     <changeSet id="PEPPER-1426_scad_ddp_instance_group" author="pegah">
-        <insert tableName="ddp_instance_group">
-            <column name="ddp_instance_id" valueComputed="Select ddp_instance_id from ddp_instance where instance_name = 'scad'"></column>
-            <column name="ddp_group_id" valueComputed="Select ddp_group_id from ddp_group where name = 'juniper-scad'"></column>
-        </insert>
+        <sql>
+            INSERT INTO ddp_instance_group (ddp_instance_id, ddp_group_id)
+            SELECT di.ddp_instance_id, dg.group_id
+            FROM ddp_instance di
+                     JOIN ddp_group dg ON dg.name = 'juniper-scad'
+            WHERE di.instance_name = 'scad';
+        </sql>
     </changeSet>
     <changeSet id="PEPPER-1426_scad_kit_return_information" author="pegah">
         <insert tableName="kit_return_information">
@@ -39,7 +42,85 @@
             <column name="return_address_state" value="MA"></column>
             <column name="return_address_zip" value="02141"></column>
             <column name="return_address_country" value="US"></column>
-            <column name="return_address_phone" value="617 724 2725"></column>
+            <column name="return_address_phone" value="(617) 724-2725"></column>
         </insert>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_kit_dimension" author="pegah">
+        <insert tableName="kit_dimension">
+            <column name="kit_width" value="6.5"></column>
+            <column name="kit_height" value="2.5"></column>
+            <column name="kit_length" value="4.5"></column>
+            <column name="kit_weight" value="4.8"></column>
+            <column name="kit_description" value="scad saliva kit"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_ddp_kit_request_settings" author="pegah">
+        <sql>
+            INSERT INTO ddp_kit_request_settings (
+                ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id, kit_label_length
+            )
+            SELECT
+                    (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = 'scad'),
+                    (SELECT kit_type_id FROM kit_type WHERE bsp_material_type = 'saliva' AND bsp_receptacle_type = 'Oragene kit'),
+                    (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(617) 724-2725'),
+                    (SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service = 'FEDEX_2_DAY' AND carrier_service_id NOT IN (
+                        SELECT carrier_service_to_id FROM ddp_kit_request_settings settings
+                                                              LEFT JOIN ddp_instance realm ON realm.ddp_instance_id = settings.ddp_instance_id
+                        WHERE realm.instance_name = 'mmrf'
+                    )),
+                    (SELECT kit_dimension_id FROM kit_dimension WHERE kit_description = 'scad saliva kit'),
+                    14
+        </sql>
+    </changeSet>
+
+    <changeSet id="PEPPER-1426_scad_ddp_instance_role_juniper_study" author="pegah">
+        <sql>
+            INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id)
+            SELECT di.ddp_instance_id, ir.instance_role_id
+            FROM ddp_instance di
+            JOIN instance_role ir ON ir.name = 'juniper_study'
+            WHERE di.instance_name = 'scad';
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_ddp_instance_role_kit_request_activated" author="pegah">
+        <sql>
+            INSERT INTO ddp_instance_role (ddp_instance_id, instance_role_id)
+            SELECT di.ddp_instance_id, ir.instance_role_id
+            FROM ddp_instance di
+                     JOIN instance_role ir ON ir.name = 'kit_request_activated'
+            WHERE di.instance_name = 'scad';
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_ddp_group_role" author="pegah">
+        <sql>
+            INSERT INTO ddp_group_role (group_id, role_id, admin_role_id)
+            SELECT
+                    (SELECT group_id FROM ddp_group WHERE name = 'juniper-scad'),
+                    (SELECT role_id FROM access_role WHERE name = 'kit_shipping'),
+                    (SELECT role_id FROM access_role WHERE name = 'study_user_admin');
+
+            INSERT INTO ddp_group_role (group_id, role_id, admin_role_id)
+            SELECT
+                    (SELECT group_id FROM ddp_group WHERE name = 'juniper-scad'),
+                    (SELECT role_id FROM access_role WHERE name = 'kit_deactivation'),
+                    (SELECT role_id FROM access_role WHERE name = 'study_user_admin');
+
+            INSERT INTO ddp_group_role (group_id, role_id, admin_role_id)
+            SELECT
+                    (SELECT group_id FROM ddp_group WHERE name = 'juniper-scad'),
+                    (SELECT role_id FROM access_role WHERE name = 'kit_shipping_view'),
+                    (SELECT role_id FROM access_role WHERE name = 'study_user_admin');
+
+            INSERT INTO ddp_group_role (group_id, role_id)
+            SELECT
+                    (SELECT group_id FROM ddp_group WHERE name = 'juniper-scad'),
+                    (SELECT role_id FROM access_role WHERE name = 'study_user_admin');
+        </sql>
+    </changeSet>
+    <changeSet id="PEPPER-1426_scad_set_active" author="pegah">
+        <update tableName="ddp_instance">
+            <column name="is_active" value="1"/>
+            <where>instance_name = 'scad'</where>
+        </update>
     </changeSet>
 </databaseChangeLog>
