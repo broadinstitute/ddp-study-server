@@ -72,13 +72,6 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         notLegacyParticipant = TestParticipantUtil.createParticipantWithEsProfile(notLegacyParticipantGuid, profile, ddpInstanceDto);
         notLegacyParticipantGuid = notLegacyParticipant.getRequiredDdpParticipantId();
         participants.add(notLegacyParticipant);
-
-        Profile mimicNotHuridParticipant = new Profile();
-        mimicNotHuridParticipant.setHruid(notHruidParticipantShortID);
-        notHruidParticipant = TestParticipantUtil.createParticipantWithEsProfile(notHruidParticipantGuid, mimicNotHuridParticipant,
-                ddpInstanceDto);
-        notHruidParticipantGuid = notHruidParticipant.getRequiredDdpParticipantId();
-        participants.add(notHruidParticipant);
     }
 
     @AfterClass
@@ -212,12 +205,20 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
     @Test
     public void testNotHruidParticipantKitUpload() {
+        Profile mimicNotHruidParticipant = new Profile();
+        mimicNotHruidParticipant.setHruid(notHruidParticipantShortID);
+        notHruidParticipant = TestParticipantUtil.createParticipantWithEsProfile(notHruidParticipantGuid, mimicNotHruidParticipant,
+                ddpInstanceDto);
+        notHruidParticipantGuid = notHruidParticipant.getRequiredDdpParticipantId();
+        participants.add(notHruidParticipant);
+
+        String collaboratorParticipantId = "PROJ_" + notHruidId;
+        String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
+        // Checking the generated collaborator participant ID and sample ID for the case where the ID passed as short ID is not an HRUID
+        String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                notHruidParticipantGuid, notHruidId, "0");
+
         TransactionWrapper.inTransaction(conn -> {
-            String collaboratorParticipantId = "PROJ_" + notHruidId;
-            String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
-            //check when upload is made without hruid
-            String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
-                    notHruidParticipantGuid, notHruidId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
                     kitTestUtil.kitTypeId);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
