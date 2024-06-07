@@ -16,11 +16,11 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.notficationevent.DsmNotificationEventType;
 import org.jdbi.v3.core.Handle;
 
 /**

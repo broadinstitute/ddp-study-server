@@ -22,7 +22,7 @@ import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.kits.TestKitUtil;
+import org.broadinstitute.dsm.kits.KitTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.broadinstitute.dsm.util.MercuryOrderTestUtil;
 import org.broadinstitute.dsm.util.SampleIdTestUtil;
@@ -64,7 +64,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
     private static int oncHistoryDetailId = -1;
 
-    public static TestKitUtil testKitUtil;
+    public static KitTestUtil kitTestUtil;
 
     private static int ddpInstanceId = -1;
 
@@ -81,13 +81,13 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         studyInstanceName = "ClinOrdTest" + nameAppend;
         String studyGroup = "ClinOrdTest" + nameAppend;
 
-        testKitUtil = new TestKitUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup,
-                "SALIVA", null, null);
-        testKitUtil.setupInstanceAndSettings();
-        userId = testKitUtil.adminUtil.createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
+        kitTestUtil = new KitTestUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup,
+                "SALIVA", "SALIVA", null, false);
+        kitTestUtil.setupInstanceAndSettings();
+        userId = kitTestUtil.getAdminUtil().createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
         ParticipantDto participantDto =
-                new ParticipantDto.Builder(testKitUtil.ddpInstanceId, System.currentTimeMillis())
+                new ParticipantDto.Builder(kitTestUtil.getDdpInstanceId(), System.currentTimeMillis())
                         .withDdpParticipantId(ddpParticipantId)
                         .withLastVersion(0L)
                         .withLastVersionDate("")
@@ -118,7 +118,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         });
         oncHistoryDetailId = OncHistoryDetail.createOncHistoryDetail(medicalRecordId, "tester");
         log.info("Created onc history detail {}", oncHistoryDetailId);
-        ddpInstanceId = testKitUtil.adminUtil.getDdpInstanceId();
+        ddpInstanceId = kitTestUtil.getDdpInstanceId();
     }
 
     @Test
@@ -153,7 +153,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String order1Barcode = "testtestBarcode";
 
         MercuryOrderDto orderDto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order1Barcode,
-                testKitUtil.kitTypeId, ddpInstanceId, tissueId);
+                kitTestUtil.getKitTypeId(), ddpInstanceId, tissueId);
 
         Map<Integer, Collection<ClinicalOrderDto>> ordersByTissue =
                 clinicalOrderDao.getClinicalOrdersForTissueIds(tissueIds);
@@ -176,16 +176,16 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
         String order1Barcode = "TestBarcode1";
 
-        ddpInstanceId = testKitUtil.adminUtil.getDdpInstanceId();
+        ddpInstanceId = kitTestUtil.getAdminUtil().getDdpInstanceId();
         MercuryOrderDto orderDto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order1Barcode,
-                testKitUtil.kitTypeId, ddpInstanceId, tissueWithOrder);
+                kitTestUtil.getKitTypeId(), ddpInstanceId, tissueWithOrder);
 
         log.info("Created order {} for tissue {} and sample {}", orderDto.getMercurySequencingId(), tissueWithOrder,
                 sampleWithOrder);
 
         String order2Barcode = "TestBarcode2";
         MercuryOrderDto order2Dto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order2Barcode,
-                testKitUtil.kitTypeId, ddpInstanceId, tissueWithOrder);
+                kitTestUtil.getKitTypeId(), ddpInstanceId, tissueWithOrder);
         log.info("Created order {} for tissue {} and sample {}", order2Dto.getMercurySequencingId(), tissueWithOrder,
                 sampleWithOrder);
 
@@ -233,6 +233,6 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         log.info("Deleted institution {}", institutionDto.getInstitutionId());
         participantDao.delete(participantId);
         log.info("Deleted participant {}", participantId);
-        testKitUtil.deleteGeneratedData();
+        kitTestUtil.deleteGeneratedData();
     }
 }

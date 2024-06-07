@@ -23,6 +23,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitCurrentStatus;
 import org.broadinstitute.dsm.db.dto.kit.nonPepperKit.NonPepperKitStatusDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.kits.KitTestUtil;
 import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
@@ -30,6 +31,7 @@ import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperStatusKitService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,21 +72,22 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     Tracker mockShipmentTracker = mock(Tracker.class);
     NonPepperKitCreationService nonPepperKitCreationService = new NonPepperKitCreationService();
     NonPepperStatusKitService nonPepperStatusKitService = new NonPepperStatusKitService();
+    private static KitTestUtil juniperKitUtil;
 
     @BeforeClass
     public static void setupJuniperBefore() {
 
-        JuniperTestSetupUtil juniperTestSetupUtil =
-                new JuniperTestSetupUtil(instanceName, instanceGuid, "Juniper-Test", "JuniperTestProject", "Juniper-Group");
-        juniperTestSetupUtil.setupJuniperInstanceAndSettings();
+        juniperKitUtil =
+                new KitTestUtil(instanceName, instanceGuid, "JuniperTestProject",  "Juniper-Group", "SALIVA", "SALIVA", null, true);
+        juniperKitUtil.setupInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
 
     }
 
     @AfterClass
     public static void deleteJuniperInstance() {
-        JuniperTestSetupUtil.deleteKitsArray(createdKitIds);
-        JuniperTestSetupUtil.deleteJuniperInstanceAndSettings();
+        juniperKitUtil.deleteKitsArray(createdKitIds);
+        juniperKitUtil.deleteGeneratedData();
     }
 
     @Before
@@ -100,16 +103,18 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
-        JuniperTestSetupUtil.changeKitToQueue(juniperTestKit, mockEasyPostUtil);
+        juniperKitUtil.changeKitToQueue(juniperTestKit.getJuniperParticipantID(), mockEasyPostUtil);
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.QUEUE.getValue());
         juniperTestKit.setDdpLabel(kitResponse.getKits().get(0).getDsmShippingLabel());
-        List<ScanResult> scanResultList = JuniperTestSetupUtil.changeKitToSent(juniperTestKit);
+        List<ScanResult> scanResultList = juniperKitUtil.changeKitToSent(juniperTestKit.getDdpLabel(),
+                "SOME_RANDOM_KIT_LABEL");
         Assert.assertFalse(
                 scanResultList.stream().filter(scanError -> scanError.hasError()).findAny().isPresent());
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
-        JuniperTestSetupUtil.changeKitToReceived();
+        NotificationUtil notificationUtil = mock(NotificationUtil.class);
+        juniperKitUtil.changeKitToReceived(notificationUtil, "SOME_RANDOM_KIT_LABEL");
         kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.RECEIVED.getValue());
 

@@ -35,7 +35,7 @@ public class KitDao {
                     + " ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
                     + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, "
-                    + "req.dsm_kit_request_id, "
+                    + "req.dsm_kit_request_id, req.ddp_kit_request_id,"
                     + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
                     + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
                     + "WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request "
@@ -194,7 +194,7 @@ public class KitDao {
      */
     public Optional<ScanResult> updateKitScanInfo(KitRequestShipping kitRequestShipping, String userId) {
         Optional<ScanResult> result = Optional.empty();
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
 
             // check to make sure the kit request for the label exists
@@ -290,7 +290,7 @@ public class KitDao {
     public Optional<ScanResult> updateKitReceived(KitRequestShipping kitRequestShipping,
                                                  String userId) {
         Optional<ScanResult> result = Optional.empty();
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_RECEIVED)) {
                 stmt.setLong(1, System.currentTimeMillis());
@@ -316,7 +316,7 @@ public class KitDao {
     }
 
     public Integer insertKit(KitRequestShipping kitRequestShipping) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setLong(1, kitRequestShipping.getDsmKitRequestId());
@@ -351,7 +351,7 @@ public class KitDao {
     }
 
     public Integer insertKitRequest(KitRequestShipping kitRequestShipping) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_REQUEST, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setLong(1, kitRequestShipping.getDdpInstanceId());
@@ -384,7 +384,7 @@ public class KitDao {
     }
 
     public static Optional<KitRequestShipping> getKitRequest(int kitRequestId) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setInt(1, kitRequestId);
@@ -412,7 +412,7 @@ public class KitDao {
     }
 
     public Optional<KitRequestShipping> getKit(Long kitId) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_KIT_ID)) {
                 stmt.setLong(1, kitId);
@@ -480,7 +480,7 @@ public class KitDao {
     }
 
     public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_BY_DDP_LABEL)) {
                 stmt.setString(1, kitLabel);
@@ -525,7 +525,7 @@ public class KitDao {
 
     public Optional<List<KitRequestShipping>> getSubkitsByDdpLabel(String ddpLabel, String kitLabel) {
         List<KitRequestShipping> subkits = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             String subKitDDpLabel = ddpLabel.concat("\\_%");
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_SUB_KIT_BY_DDP_LABEL)) {
@@ -610,6 +610,9 @@ public class KitDao {
             }
 
         }
+        if (DBUtil.columnExists(rs, DBConstants.DDP_KIT_REQUEST_ID)) {
+            kitRequestShipping.setDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
+        }
         return kitRequestShipping;
     }
 
@@ -631,10 +634,12 @@ public class KitDao {
         String errorMessage = String.format("Unable to insert tracking %s for %s.", kitRequestShipping.getTrackingId(),
                 kitRequestShipping.getKitLabel());
         SimpleResult results = inTransaction((conn) -> {
+            // Preferred approach is to check for existing values up front instead of relying on SQLException handling.
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID)) {
                 // If a kit exists with the given kit label or tracking id, the unique key will be violated
-                // on insert.  Return an error to the user with some information about the existing row.
+                // on insert. First check here for previous existence and return an error to the user with
+                // some information about the existing values.
                 stmt.setString(1, kitRequestShipping.getKitLabel());
                 stmt.setString(2, kitRequestShipping.getTrackingId());
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -654,7 +659,10 @@ public class KitDao {
                 logger.error(errorMessage, ex);
                 return dbVals;
             }
-
+            if (dbVals.resultValue != null) {
+                // an existing value was found, return it and not try to insert
+                return dbVals;
+            }
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TRACKING)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setInt(2, userId);
@@ -683,7 +691,7 @@ public class KitDao {
     }
 
     private boolean booleanCheckFoundAsName(String kitLabel, String query) {
-        SimpleResult results = inTransaction((conn) -> {
+        SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, kitLabel);
@@ -711,7 +719,7 @@ public class KitDao {
 
     public List<KitRequestShipping> getKitsByHruid(String hruid) {
         List<KitRequestShipping> kitRequestList = new ArrayList<>();
-        inTransaction((conn) -> {
+        inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_HRUID)) {
                 stmt.setString(1, "%" + hruid + "%");

@@ -17,16 +17,16 @@ public class RouteUtil {
     public static String requireParam(Request request, String param) {
         QueryParamsMap queryParams = request.queryMap();
         if (!queryParams.hasKey(param)) {
-            throw new DSMBadRequestException("Request must include realm parameter");
+            throw new DSMBadRequestException("Request must include %s parameter".formatted(param));
         }
         return requireParam(param, queryParams.value(param));
     }
 
     public static String requireParam(String paramName, String paramValue) {
-        if (StringUtils.isEmpty(paramValue)) {
+        if (StringUtils.isBlank(paramValue)) {
             throw new DSMBadRequestException("Missing request parameter: " + paramName);
         }
-        return paramValue;
+        return paramValue.trim();
     }
 
     public static String requireRequestBody(Request request) {
@@ -38,7 +38,7 @@ public class RouteUtil {
     }
 
     public static String requireStringFromJsonObject(JsonObject jsonObject, String field) {
-        String val = jsonObject.get(field).getAsString();
+        String val = jsonObject.get(field).getAsString().trim();
         if (StringUtils.isBlank(val)) {
             throw new DSMBadRequestException(String.format("Request body must include %s field", field));
         }

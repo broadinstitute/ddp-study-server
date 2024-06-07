@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="pegah" id="PEPPER-1397_kit_participant_notifications_activated_instance_role_insert">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM instance_role WHERE name='kit_participant_notifications_activated';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="instance_role">
+            <column name="name" value="kit_participant_notifications_activated"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

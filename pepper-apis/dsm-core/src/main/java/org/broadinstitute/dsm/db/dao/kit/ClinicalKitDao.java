@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -16,14 +17,16 @@ import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
 public class ClinicalKitDao {
     public static final String PECGS = "PE-CGS";
     public static final String MERCURY = "MERCURY";
+    final EventDao eventDao = new EventDao();
+    final EventTypeDao eventTypeDao = new EventTypeDao();
     private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
             "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, date_px,  "
                     + "kit_type_name, bsp_material_type, bsp_receptacle_type, ddp.ddp_instance_id FROM sm_id sm "
@@ -135,7 +138,7 @@ public class ClinicalKitDao {
         }
     }
 
-    public static void ifTissueAccessionedTriggerDDP(String ddpParticipantId, DDPInstance ddpInstance) {
+    public void triggerRequiredSamplesReceivedEvent(String ddpParticipantId, DDPInstance ddpInstance) {
         if (hasTissueAccessioned(ddpParticipantId, ddpInstance)) {
             triggerParticipantEvent(ddpInstance, ddpParticipantId, DBConstants.REQUIRED_SAMPLES_RECEIVED_EVENT);
         }
@@ -192,19 +195,16 @@ public class ClinicalKitDao {
         return false;
     }
 
-    private static void triggerParticipantEvent(DDPInstance ddpInstance, String ddpParticipantId, String eventName) {
-        final EventDao eventDao = new EventDao();
-        final EventTypeDao eventTypeDao = new EventTypeDao();
+    @VisibleForTesting
+    public void triggerParticipantEvent(DDPInstance ddpInstance, String ddpParticipantId, String eventName) {
         Optional<EventTypeDto> eventType =
                 eventTypeDao.getEventTypeByEventNameAndInstanceId(eventName, ddpInstance.getDdpInstanceId());
         eventType.ifPresent(eventTypeDto -> {
             boolean participantHasTriggeredEventByEventType =
-                    eventDao.hasTriggeredEventByEventTypeAndDdpParticipantId(eventName, ddpParticipantId).orElse(false);
+                    eventDao.isEventTriggeredForParticipant(eventName, ddpParticipantId);
             if (!participantHasTriggeredEventByEventType) {
-                inTransaction((conn) -> {
-                    EventUtil.triggerDDP(conn, eventType, ddpParticipantId);
-                    return null;
-                });
+                String type = eventTypeDto.getEventName();
+                EventService.sendParticipantEventToDss(type, ddpInstance, ddpParticipantId);
             } else {
                 log.info("Participant " + ddpParticipantId + " was already triggered for event type " + eventName);
             }

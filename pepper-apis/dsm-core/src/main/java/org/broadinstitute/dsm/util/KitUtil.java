@@ -400,12 +400,12 @@ public class KitUtil {
         KitRequestShipping.updateKit(dsmKitId, participantShipment, returnShipment, errorMessage, toAddress, false, ddpInstanceDto);
     }
 
-    public static String getKitCollaboratorId(@NonNull String ddpParticipantId, @NonNull String realmId) {
+    public static String getKitCollaboratorId(@NonNull String ddpParticipantId, int realmId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_COLLABORATOR_ID_KIT)) {
                 stmt.setString(1, ddpParticipantId);
-                stmt.setString(2, realmId);
+                stmt.setInt(2, realmId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
@@ -425,12 +425,12 @@ public class KitUtil {
         return (String) results.resultValue;
     }
 
-    public static String getTissueCollaboratorId(@NonNull String ddpParticipantId, @NonNull String realmId) {
+    public static String getTissueCollaboratorId(@NonNull String ddpParticipantId, int realmId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_COLLABORATOR_ID_TISSUE)) {
                 stmt.setString(1, ddpParticipantId);
-                stmt.setString(2, realmId);
+                stmt.setInt(2, realmId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID);

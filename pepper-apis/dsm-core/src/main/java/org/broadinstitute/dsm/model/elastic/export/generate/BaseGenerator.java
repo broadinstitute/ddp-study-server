@@ -76,7 +76,10 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
         Object sourceToUpsert;
         try {
             sourceToUpsert = parseJson();
-        } catch (JsonParseException jpe) {
+            if (sourceToUpsert == null) {
+                sourceToUpsert = parseSingleElement();
+            }
+        } catch (JsonParseException e) {
             sourceToUpsert = parseSingleElement();
         }
         return sourceToUpsert;

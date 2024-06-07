@@ -58,7 +58,7 @@ public class EventTypeDao implements Dao<EventTypeDto> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         eventTypeList.add(
-                                new EventTypeDto.Builder(rs.getString(DBConstants.DDP_INSTANCE_ID)).withEventName(rs.getString(EVENT_NAME))
+                                new EventTypeDto.Builder(rs.getInt(DBConstants.DDP_INSTANCE_ID)).withEventName(rs.getString(EVENT_NAME))
                                         .withEventType(rs.getString(EVENT_TYPE)).withInstanceName(rs.getString(DBConstants.INSTANCE_NAME))
                                         .withBaseUrl(rs.getString(DBConstants.BASE_URL))
                                         .withAuth0Token(rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN)).build());
@@ -88,7 +88,7 @@ public class EventTypeDao implements Dao<EventTypeDto> {
                     rs.beforeFirst();
                     if (count == 1) {
                         if (rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
-                            dbVals.resultValue = new EventTypeDto.Builder(rs.getString(DBConstants.DDP_INSTANCE_ID)).withEventName(
+                            dbVals.resultValue = new EventTypeDto.Builder(rs.getInt(DBConstants.DDP_INSTANCE_ID)).withEventName(
                                             rs.getString(EVENT_NAME)).withEventType(rs.getString(EVENT_TYPE))
                                     .withInstanceName(rs.getString(DBConstants.INSTANCE_NAME))
                                     .withBaseUrl(rs.getString(DBConstants.BASE_URL))

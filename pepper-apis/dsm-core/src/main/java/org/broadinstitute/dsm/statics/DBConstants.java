@@ -374,6 +374,9 @@ public class DBConstants {
     //eventType
     public static final String EVENT_NAME = "event_name";
     public static final String EVENT_TYPE = "event_type";
+    public static final String EVENT_DATE_CREATED = "EVENT_DATE_CREATED";
+    public static final String EVENT_TRIGGERED = "EVENT_TRIGGERED";
+    public static final String EVENT_ID = "EVENT_ID";
     public static final String EVENT_DESCRIPTION = "event_description";
     public static final String EVENT = "event";
 

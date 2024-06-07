@@ -1,8 +1,7 @@
-package org.broadinstitute.dsm.db;
+package org.broadinstitute.dsm.db.dao;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -10,6 +9,8 @@ import java.util.Collection;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.queue.SkippedParticipantEventDto;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -20,28 +21,20 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * When a participant no longer wants to get emails or reminders about their kits, they ask the study's CRC, and they enter
+ * the participant's ID and the event type into the DSM, which is stored in the ddp_participant_event table.
+ * */
 @Data
-public class ParticipantEvent {
+public class SkippedParticipantEventDao {
 
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantEvent.class);
+    private static final Logger logger = LoggerFactory.getLogger(SkippedParticipantEventDao.class);
     private static String GET_PARTICIPANT_EVENT =
             "select event  from ddp_participant_event ev where ev.ddp_instance_id = ? "
                     + "and ev.ddp_participant_id = ?";
-    private final String participantId;
-    private final String eventType;
-    private final String user;
-    private final long date;
-    private String shortId;
 
-    public ParticipantEvent(String participantId, String eventType, String user, long date) {
-        this.participantId = participantId;
-        this.eventType = eventType;
-        this.user = user;
-        this.date = date;
-    }
-
-    public static Collection<ParticipantEvent> getSkippedParticipantEvents(@NonNull String realm) {
-        ArrayList<ParticipantEvent> skippedParticipantEvents = new ArrayList();
+    public Collection<SkippedParticipantEventDto> getSkippedParticipantEvents(@NonNull String realm) {
+        ArrayList<SkippedParticipantEventDto> skippedParticipantEvents = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -50,8 +43,8 @@ public class ParticipantEvent {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         skippedParticipantEvents.add(
-                                new ParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
-                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
+                                new SkippedParticipantEventDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                        rs.getString(DBConstants.EVENT), rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
                     }
                 }
             } catch (Exception ex) {
@@ -64,7 +57,7 @@ public class ParticipantEvent {
             logger.error("Couldn't get list of skipped participant events for " + realm, results.resultException);
         } else {
             DDPInstance instance = DDPInstance.getDDPInstance(realm);
-            for (ParticipantEvent skippedParticipant : skippedParticipantEvents) {
+            for (SkippedParticipantEventDto skippedParticipant : skippedParticipantEvents) {
                 String sendRequest = instance.getBaseUrl() + RoutePath.DDP_PARTICIPANTS_PATH + "/" + skippedParticipant.getParticipantId();
                 try {
                     DDPParticipant ddpParticipant =
@@ -80,7 +73,36 @@ public class ParticipantEvent {
         return skippedParticipantEvents;
     }
 
-    public static void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,
+    public Collection<String> getSkippedParticipantEvents(@NonNull String ddpParticipantId, int instanceId) {
+        ArrayList<String> skippedEvents = new ArrayList();
+        SimpleResult result = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
+                stmt.setInt(1, instanceId);
+                stmt.setString(2, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        skippedEvents.add(rs.getString(DBConstants.EVENT));
+                    }
+                }
+            } catch (Exception ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        if (result.resultException != null) {
+            logger.error("Couldn't get skipped participant events for " + instanceId, result.resultException);
+        }
+        return skippedEvents;
+    }
+
+    public boolean isParticipantEventSkipped(@NonNull String ddpParticipantId, @NonNull String eventType,
+                                                    int ddpInstanceId) {
+        Collection<String> skippedParticipantEvents = getSkippedParticipantEvents(ddpParticipantId, ddpInstanceId);
+        return skippedParticipantEvents.contains(eventType);
+    }
+
+    public void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,
                                             @NonNull DDPInstance instance, @NonNull String eventType) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -107,46 +129,5 @@ public class ParticipantEvent {
         if (results.resultException != null) {
             logger.error("Couldn't skip event for participant w/ ddpParticipantId " + ddpParticipantId, results.resultException);
         }
-    }
-
-    public static Collection<String> getParticipantEvent(@NonNull String ddpParticipantId, @NonNull String instanceId) {
-        ArrayList<String> skippedEvents = new ArrayList();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
-                stmt.setString(1, instanceId);
-                stmt.setString(2, ddpParticipantId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        skippedEvents.add(rs.getString(DBConstants.EVENT));
-                    }
-                }
-            } catch (Exception ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            logger.error("Couldn't exited participants for " + instanceId, results.resultException);
-        }
-        return skippedEvents;
-    }
-
-    public static Collection<String> getParticipantEvent(Connection conn, @NonNull String ddpParticipantId, @NonNull String instanceId) {
-        ArrayList<String> skippedEvents = new ArrayList();
-        try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
-            stmt.setString(1, instanceId);
-            stmt.setString(2, ddpParticipantId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    skippedEvents.add(rs.getString(DBConstants.EVENT));
-                }
-            }
-        } catch (Exception ex) {
-            logger.error("Couldn't get exited participants for " + instanceId, ex);
-        }
-
-        return skippedEvents;
     }
 }

@@ -2,22 +2,6 @@ package org.broadinstitute.dsm.util.externalshipper;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -34,6 +18,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -62,11 +62,11 @@ import org.broadinstitute.dsm.model.gbf.ShippingConfirmation;
 import org.broadinstitute.dsm.model.gbf.ShippingConfirmations;
 import org.broadinstitute.dsm.model.gbf.ShippingInfo;
 import org.broadinstitute.dsm.model.gbf.Status;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -113,6 +113,7 @@ public class GBFRequestUtil implements ExternalShipper {
     private static int additionalAttempts = 1;
     private static int sleepInMs = 500;
     private static Executor blindTrustEverythingExecutor;
+
     // public final String CANCEL_ORDER_ENDPOINT = "cancelorder";
     //    private final String ORDERED = "ORDERED";
     private final String notFound = "NOT FOUND"; //INDICATES: we have no record of the order number
@@ -495,12 +496,12 @@ public class GBFRequestUtil implements ExternalShipper {
                                 if (kitDeliveredNotification != null) {
                                     logger.info("Triggering DDP for kit 'DELIVERED' with external order number: "
                                             + kit.getExternalOrderNumber());
-                                    EventUtil.triggerDDP(conn, kitDeliveredNotification);
+                                    EventService.sendKitEventToDss(kitDeliveredNotification);
                                 } else {
                                     logger.error("delivered kitDDPNotification was null for " + kit.getExternalOrderNumber());
                                 }
                             }
-                            EventUtil.triggerDDP(conn, kitDDPNotification);
+                            EventService.sendKitEventToDss(kitDDPNotification);
                         } else {
                             logger.error("kitDDPNotification was null for " + kit.getExternalOrderNumber());
                         }

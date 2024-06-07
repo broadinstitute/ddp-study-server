@@ -14,13 +14,12 @@ import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 
 @Slf4j
 public class MercuryOrderStatusListener {
 
-    private MercuryOrderStatusListener(){
+    private MercuryOrderStatusListener() {
         throw new IllegalStateException("Utility class");
     }
 

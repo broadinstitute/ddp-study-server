@@ -112,6 +112,7 @@ public class NonPepperKitStatusDto {
             this.labelByEmail = labelByEmail;
             return this;
         }
+
         public Builder withMfBarcode(String mfBarcode) {
             this.mfBarcode = mfBarcode;
             return this;

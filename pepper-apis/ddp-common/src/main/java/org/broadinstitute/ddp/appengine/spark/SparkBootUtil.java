@@ -26,6 +26,9 @@ public class SparkBootUtil {
 
     private static int numShutdownAttempts = 0;
 
+    // set when the shutdown process begins
+    private static boolean isShuttingDown;
+
     /**
      * Reads configuration and environment settings common to
      * DSM, DSS, and Housekeeping and starts a spark server on the appropriate port.
@@ -69,6 +72,7 @@ public class SparkBootUtil {
         });
 
         Spark.get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            isShuttingDown = true;
             log.info("Received GAE stop request [{}] for instance {} deployment {}", request.url(),
                     System.getenv(LogUtil.GAE_INSTANCE), System.getenv(LogUtil.GAE_DEPLOYMENT_ID));
             if (stopRouteCallback != null) {
@@ -89,8 +93,23 @@ public class SparkBootUtil {
         });
 
         if (stopRouteCallback != null) {
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopRouteCallback.onTerminate()));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                isShuttingDown = true;
+                stopRouteCallback.onTerminate();
+            }));
         }
+
+        Spark.afterAfter((req, res) -> {
+            // enable hsts
+            res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+            // assume everything is sensitive and don't allow browser caching
+            res.header("Cache-control", "no-store");
+            res.header("Pragma", "no-cache");
+        });
+    }
+
+    public static boolean isShuttingDown() {
+        return isShuttingDown;
     }
 
     /**

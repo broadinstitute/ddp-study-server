@@ -22,7 +22,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.model.dsm.KitReasonType;
+import org.broadinstitute.ddp.notficationevent.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 
 /**
@@ -130,10 +130,10 @@ public class RenderValueProvider implements Cloneable {
 
     /**
      * If the current activity has been previously completed, returns the date of completion.
-     * 
+     *
      * <p>See {@link java.time.format.DateTimeFormatter#ofPattern(String)} for more information
      * about supported format strings.
-     * @param format The date format string to use. 
+     * @param format The date format string to use.
      * @param defaultValue The string to return if there is no valid date
      * @return the formatted date of first completion, or `defaultValue` if one does not exist
      */
@@ -271,10 +271,10 @@ public class RenderValueProvider implements Cloneable {
     /**
      * Returns a string value depending on whether a specified PICKLIST question's option
      * is selected or not.
-     * 
-     * <p>If {@link useDefaultsForDdpMethods} is true, this method will always return
+     *
+     * <p>If {@link #useDefaultsForDdpMethods} is true, this method will always return
      * a value of the form "stringIfMatches/stringOtherwise".
-     * 
+     *
      * <p>If an activity does not have a response,
      * or the question does not have an associated answer, a match will be assumed,
      * and the `stringIfMatches` value will be returned.

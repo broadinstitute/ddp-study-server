@@ -15,13 +15,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -94,8 +94,8 @@ public class TestHelper {
     public static DDPRequestUtil ddpRequestUtil;
     public static NotificationUtil notificationUtil;
     public static UserUtil userUtil;
-    public static EventUtil eventUtil;
     protected static String DDP_BASE_URL;
+    public static EventService eventService;
     protected static String DSM_BASE_URL;
     protected static RestHighLevelClient esClient;
 
@@ -321,7 +321,7 @@ public class TestHelper {
         notificationUtil = new NotificationUtil(cfg);
 
         userUtil = new UserUtil();
-        eventUtil = new EventUtil();
+        eventService = new EventService();
     }
 
     public static void setupEsClient() {
