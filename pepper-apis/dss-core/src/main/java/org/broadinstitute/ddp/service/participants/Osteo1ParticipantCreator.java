@@ -236,7 +236,7 @@ public class Osteo1ParticipantCreator {
         dataExportDao.queueDataSync(newUser.getId());
         if (governedUser != null) {
             dataExportDao.queueDataSync(govUserGuid);
-            publishRegisteredPubSubMessage(studyGuid, userGuid);
+            publishRegisteredPubSubMessage(studyGuid, govUserGuid);
         } else {
             publishRegisteredPubSubMessage(studyGuid, userGuid);
         }
