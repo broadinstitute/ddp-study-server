@@ -41,7 +41,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
     //mimics when a participant is having kit creation by using legacy id or RGP subject id
     private static ParticipantDto notHruidParticipant;
-    private static String notHruidParticipantGuid = "DDP_PT_ID_2";
+    private static String notHruidParticipantGuid = "DDP_PT_ID_3";
     private static final String notHruidId = "RGP_5883_3";
     private static final String notHruidParticipantShortID = "PABRGP";
     private static int participantCounter = 0;
@@ -75,7 +75,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
         Profile mimicNotHuridParticipant = new Profile();
         mimicNotHuridParticipant.setHruid(notHruidParticipantShortID);
-        notHruidParticipant = TestParticipantUtil.createParticipantWithEsProfile(notHruidParticipantGuid, profile, ddpInstanceDto);
+        notHruidParticipant = TestParticipantUtil.createParticipantWithEsProfile(notHruidParticipantGuid, mimicNotHuridParticipant,
+                ddpInstanceDto);
         notHruidParticipantGuid = notHruidParticipant.getRequiredDdpParticipantId();
         participants.add(notHruidParticipant);
     }
@@ -214,7 +215,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         TransactionWrapper.inTransaction(conn -> {
             String collaboratorParticipantId = "PROJ_" + notHruidId;
             String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
-            //check when legacy participant doesn't have a prior legacy kit
+            //check when upload is made without hruid
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notHruidParticipantGuid, notHruidId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
