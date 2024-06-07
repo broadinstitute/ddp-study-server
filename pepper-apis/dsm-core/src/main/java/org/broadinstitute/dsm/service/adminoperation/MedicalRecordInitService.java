@@ -19,7 +19,8 @@ import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 public class MedicalRecordInitService extends ParticipantAdminOperationService {
     protected List<String> validRealms =
             List.of(OsteoParticipantService.OSTEO1_INSTANCE_NAME.toLowerCase(),
-                    OsteoParticipantService.OSTEO2_INSTANCE_NAME.toLowerCase());
+                    OsteoParticipantService.OSTEO2_INSTANCE_NAME.toLowerCase(),
+                    "cmi-lms");
     private DDPInstance ddpInstance;
     private InstitutionListRequest institutionListRequest;
 
