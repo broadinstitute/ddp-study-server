@@ -25,8 +25,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static String guid = "TEST_GUID";
 
     private static final String instanceName = "test_kit_request_shipping";
-    private static final String shortId = "KRSTS1";
-    private static final String notLegacyParticipantShortId = "KRSTS2";
+    private static final String shortId = "PRSTS1";
+    private static final String notLegacyParticipantShortId = "PRSTS2";
     private static final String legacyShortId = "0001";
     private static final String collaboratorIdPrefix = "PROJ";
     private static String esIndex;
@@ -38,6 +38,12 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static ParticipantDto legacyParticipant;
     private static String notLegacyParticipantGuid = "DDP_PT_ID_2";
     private static ParticipantDto notLegacyParticipant;
+
+    //mimics when a participant is having kit creation by using legacy id or RGP subject id
+    private static ParticipantDto notHruidParticipant;
+    private static String notHruidParticipantGuid = "DDP_PT_ID_2";
+    private static final String notHruidId = "RGP_5883_3";
+    private static final String notHruidParticipantShortID = "PABRGP";
     private static int participantCounter = 0;
     private static Pair<ParticipantDto, String> legacyParticipantPair;
     private static KitTestUtil kitTestUtil;
@@ -66,6 +72,12 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         notLegacyParticipant = TestParticipantUtil.createParticipantWithEsProfile(notLegacyParticipantGuid, profile, ddpInstanceDto);
         notLegacyParticipantGuid = notLegacyParticipant.getRequiredDdpParticipantId();
         participants.add(notLegacyParticipant);
+
+        Profile mimicNotHuridParticipant = new Profile();
+        mimicNotHuridParticipant.setHruid(notHruidParticipantShortID);
+        notHruidParticipant = TestParticipantUtil.createParticipantWithEsProfile(notHruidParticipantGuid, profile, ddpInstanceDto);
+        notHruidParticipantGuid = notHruidParticipant.getRequiredDdpParticipantId();
+        participants.add(notHruidParticipant);
     }
 
     @AfterClass
@@ -193,6 +205,23 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             String expectedNextCollaboratorSampleId = "PROJ_" + notLegacyParticipantShortId + "_SALIVA_2";
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
+            return null;
+        });
+    }
+
+    @Test
+    public void testNotHruidParticipantKitUpload() {
+        TransactionWrapper.inTransaction(conn -> {
+            String collaboratorParticipantId = "PROJ_" + notHruidId;
+            String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
+            //check when legacy participant doesn't have a prior legacy kit
+            String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                    notHruidParticipantGuid, notHruidId, "0");
+            String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    kitTestUtil.kitTypeId);
+            Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+            Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
+
             return null;
         });
     }
