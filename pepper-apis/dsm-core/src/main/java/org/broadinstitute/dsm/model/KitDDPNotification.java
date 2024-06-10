@@ -46,7 +46,8 @@ public class KitDDPNotification {
         this.eventType = eventType;
         this.date = date;
         this.hasAuth0Token = hasAuth0Token;
-        if (StringUtils.isBlank(uploadReason)) {
+        // some kits have the string "null" instead of a null value for their upload reason
+        if (StringUtils.isBlank(uploadReason) || "null".equalsIgnoreCase(uploadReason)) {
             this.uploadReason = KitReasonType.NORMAL;
         } else {
             this.uploadReason = KitReasonType.valueOf(uploadReason);
