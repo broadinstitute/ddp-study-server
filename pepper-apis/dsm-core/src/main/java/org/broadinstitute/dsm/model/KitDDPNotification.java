@@ -47,6 +47,7 @@ public class KitDDPNotification {
         this.date = date;
         this.hasAuth0Token = hasAuth0Token;
         // some kits have the string "null" instead of a null value for their upload reason
+        //TODO frontend should get fixed to not send "null" as a string
         if (StringUtils.isBlank(uploadReason) || "null".equalsIgnoreCase(uploadReason)) {
             this.uploadReason = KitReasonType.NORMAL;
         } else {
