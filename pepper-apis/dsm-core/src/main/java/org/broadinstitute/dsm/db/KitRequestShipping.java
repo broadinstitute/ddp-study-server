@@ -75,6 +75,7 @@ import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.eclipse.jetty.util.StringUtil;
@@ -1699,8 +1700,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         String baseUrl = ddpInstance.getBaseUrl();
         String collaboratorIdPrefix = ddpInstance.getCollaboratorIdPrefix();
         //TODO PT collaboratorParticipantLengthOverwrite should be an int
-        if (ddpInstance.isMigratedDDP()) {
-            // This should only be checked for studies that have an ES index, like cmi and rgp, and not for studies like darwin
+        //
+        if (ddpInstance.isMigratedDDP() && ParticipantUtil.isHruid(shortId)) {
+            // This check should be performed only for studies that have an ES index and are migrated studies, like CMI,
+            // and not for studies like Darwin. It should only be applied if the shortId used to create the kit is a Pepper HRUID
+            // rather than a legacy shortId or RGP's family/subject ID.
             String legacyId = getLegacyCollaboratorParticipantId(ddpInstance, shortId, collaboratorParticipantLengthOverwrite);
             if (legacyParticipantIdExists(legacyId)) {
                 //this participant have kits with legacy participant id from before, use that id instead of generating new one to keep the

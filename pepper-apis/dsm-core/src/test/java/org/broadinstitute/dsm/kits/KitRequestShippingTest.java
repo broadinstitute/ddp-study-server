@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -25,8 +26,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static String guid = "TEST_GUID";
 
     private static final String instanceName = "test_kit_request_shipping";
-    private static final String shortId = "KRSTS1";
-    private static final String notLegacyParticipantShortId = "KRSTS2";
+    private static final String shortId = "PRSTS1";
+    private static final String notLegacyParticipantShortId = "PRSTS2";
     private static final String legacyShortId = "0001";
     private static final String collaboratorIdPrefix = "PROJ";
     private static String esIndex;
@@ -195,6 +196,35 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
             return null;
         });
+    }
+
+    @Test
+    public void testNotHruidParticipantKitUpload() {
+        //mimics when a participant is having kit creation by using legacy id or RGP subject id
+        ParticipantDto notHruidParticipant;
+        String notHruidParticipantGuid = "DDP_PT_ID_3";
+        String notHruidId = "RGP_5883_3";
+        String notHruidParticipantShortID = "PABRGP";
+        Profile mimicNotHruidParticipant = new Profile();
+        mimicNotHruidParticipant.setHruid(notHruidParticipantShortID);
+        notHruidParticipant = TestParticipantUtil.createParticipantWithEsProfile(notHruidParticipantGuid, mimicNotHruidParticipant,
+                ddpInstanceDto);
+        notHruidParticipantGuid = notHruidParticipant.getRequiredDdpParticipantId();
+        participants.add(notHruidParticipant);
+
+        String collaboratorParticipantId = "PROJ_" + notHruidId;
+        String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
+        // We are verifying that even if a participant has an HRUID, if the RGP subject ID (notHruidId) is passed as the short ID to
+        // this method,the returned collaborator participant ID and sample ID should use the subject ID (notHruidId) and not the HRUID.
+        String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                notHruidParticipantGuid, notHruidId, "0");
+        String nextCollaboratorSampleId = (String) TransactionWrapper.inTransaction(conn -> {
+            String sampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    kitTestUtil.kitTypeId);
+            return new SimpleResult(sampleId);
+        }).resultValue;
+        Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
+        Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
     }
 
 }
