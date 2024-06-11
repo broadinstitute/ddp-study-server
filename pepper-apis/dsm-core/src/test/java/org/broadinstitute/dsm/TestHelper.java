@@ -26,7 +26,6 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.mockserver.integration.ClientAndServer;
@@ -315,7 +314,6 @@ public class TestHelper {
 
         testUtil = TestUtil.newInstance(cfg);
         ddpRequestUtil = new DDPRequestUtil();
-        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
         kitUtil = new KitUtil();
         ddpKitRequest = new DDPKitRequest();
         notificationUtil = new NotificationUtil(cfg);
