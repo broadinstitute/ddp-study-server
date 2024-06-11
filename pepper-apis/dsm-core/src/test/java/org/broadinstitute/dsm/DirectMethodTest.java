@@ -34,15 +34,10 @@ import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.gbf.LineItem;
-import org.broadinstitute.dsm.model.gbf.Orders;
-import org.broadinstitute.dsm.model.gbf.ShippingConfirmations;
-import org.broadinstitute.dsm.model.gbf.ShippingInfo;
 import org.broadinstitute.dsm.route.NDIRoute;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.TestUtil;
-import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.junit.AfterClass;
@@ -707,44 +702,6 @@ public class DirectMethodTest extends TestHelper {
                 GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
                         cfg.getString("portal.discardSampleBucket"), nameInBucket);
         Assert.assertTrue(fileDeleted);
-    }
-
-    @Test
-    public void gbfOrder() throws Exception {
-        org.broadinstitute.dsm.model.gbf.Address address =
-                new org.broadinstitute.dsm.model.gbf.Address("Zulma Medical", "19272 Stone Oak Parkway", null, "San Antonio", "TX", "78258",
-                        "United States", "(210) 265-8851");
-        ShippingInfo shippingInfo = new ShippingInfo(null, "Ground, FedEx", address);
-        List<LineItem> lineItems = new ArrayList<>();
-        lineItems.add(new LineItem("378186", "1"));
-        lineItems.add(new LineItem("378188", "2"));
-        org.broadinstitute.dsm.model.gbf.Order order =
-                new org.broadinstitute.dsm.model.gbf.Order("ID-000814", "C7037154", "A10000018", shippingInfo, lineItems);
-        Orders orders = new Orders();
-        orders.setOrders(new ArrayList<>());
-        orders.getOrders().add(order);
-        String xmlString = GBFRequestUtil.orderXmlToString(Orders.class, orders);
-        Assert.assertNotNull(xmlString);
-    }
-
-    @Test
-    public void gbfConfirmation() throws Exception {
-        String shippingConfirmationResponse = TestUtil.readFile("gbf/ShippingConfirmation.xml");
-        ShippingConfirmations shippingConfirmations =
-                GBFRequestUtil.objectFromXMLString(ShippingConfirmations.class, shippingConfirmationResponse);
-        Assert.assertNotNull(shippingConfirmations);
-        Assert.assertTrue(!shippingConfirmations.getShippingConfirmations().isEmpty());
-        Assert.assertTrue(shippingConfirmations.getShippingConfirmations().size() == 1);
-    }
-
-    @Test
-    public void findOrderInShippingConfirmation() throws Exception {
-        String shippingConfirmationResponse = TestUtil.readFile("gbf/ShippingConfirmation.xml");
-        Node node = GBFRequestUtil.getXMLNode(shippingConfirmationResponse,
-                "/ShippingConfirmations/ShippingConfirmation[@OrderNumber=\'" + "PROM-000824" + "\']");
-        Assert.assertNotNull(node);
-        String nodeAsString = GBFRequestUtil.getStringFromNode(node);
-        Assert.assertTrue(StringUtils.isNotBlank(nodeAsString));
     }
 
     @Ignore("This test is broken. Looks like it depends on data that should be in database always/before test suite executes?. "

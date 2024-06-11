@@ -52,7 +52,6 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalshipper.ExternalShipper;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.lddp.util.DeliveryAddress;
@@ -183,24 +182,6 @@ public class KitUploadRoute extends RequestHandler {
                             kitTypeName, uploadAnyway.get(), invalidAddressList, duplicateKitList, orderKits, specialKitList, upload,
                             kitUploadReason.get(), shippingCarrier.get(), conn);
 
-                    //only order if external shipper name is set for that kit request
-                    if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-                        try {
-                            logger.info("placing order with external shipper");
-                            ExternalShipper shipper =
-                                    (ExternalShipper) Class.forName(DSMServer.getClassName(kitRequestSettings.getExternalShipper()))
-                                            .newInstance();
-                            shipper.orderKitRequests(orderKits, easyPostUtil, kitRequestSettings, shippingCarrier.get());
-                            // mark kits as transmitted so that background jobs don't try to double order it
-                            for (KitRequest orderKit : orderKits) {
-                                KitRequestShipping.markOrderTransmittedAt(conn, orderKit.getExternalOrderNumber(), Instant.now());
-                            }
-                        } catch (Exception e) {
-                            logger.error("Failed to sent kit request order to " + kitRequestSettings.getExternalShipper(), e);
-                            response.status(500);
-                            return new Result(500, "Failed to sent kit request order to " + kitRequestSettings.getExternalShipper());
-                        }
-                    }
                     return null;
                 });
 

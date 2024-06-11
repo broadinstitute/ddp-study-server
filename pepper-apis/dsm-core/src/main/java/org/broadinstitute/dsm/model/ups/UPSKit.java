@@ -56,23 +56,4 @@ public class UPSKit {
         }
         return kitLabel;
     }
-
-    public void changeCEOrdered(Connection conn, boolean orderStatus) {
-        String query = "UPDATE ddp_kit SET CE_order = ? where dsm_kit_request_id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setBoolean(1, orderStatus);
-            stmt.setString(2, this.getDsmKitRequestId());
-            int r = stmt.executeUpdate();
-            if (r != 1) { // number of subkits
-                throw new RuntimeException(
-                        "Update query for CE order flag updated " + r + " rows! with dsm kit request id: " + this.getDsmKitRequestId());
-            }
-            logger.info("Updated CE_Order value for kit with dsm kit request id " + this.getDsmKitRequestId()
-                    + " to " + orderStatus);
-            conn.commit();
-        } catch (Exception e) {
-            throw new RuntimeException("Could not update ce_ordered status for " + this.getDsmKitRequestId(), e);
-        }
-    }
-
 }

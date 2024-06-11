@@ -280,8 +280,6 @@
             org.broadinstitute.dsm.DDPRequestUtilTest,
             org.broadinstitute.dsm.DirectMethodTest,
             org.broadinstitute.dsm.ElasticSearchTest,
-            org.broadinstitute.dsm.GBFOrderFinderTest,
-            org.broadinstitute.dsm.GBFTest,
             org.broadinstitute.dsm.JWTRouteFilterTest,
             org.broadinstitute.dsm.KitStatusChangeRouteTest,
             org.broadinstitute.dsm.NotificationJobTest,

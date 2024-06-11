@@ -409,52 +409,6 @@ public class ElasticSearchUtil {
         return null;
     }
 
-    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client,
-                                                                                                String indexName,
-                                                                                                Set<String> participantGuids) {
-        initialize();
-        Gson gson = new Gson();
-        Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
-        int scrollSize = 100;
-        SearchRequest searchRequest = new SearchRequest(indexName);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        SearchResponse response = null;
-        int hitNumber = 0;
-        int pageNumber = 0;
-        long totalHits = 0;
-
-
-        BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        qb.must(QueryBuilders.termsQuery(PROFILE_GUID, participantGuids));
-
-        searchSourceBuilder.fetchSource(new String[] {PROFILE, ADDRESS}, null);
-        searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.DESC).docValueField(ADDRESS).docValueField(PROFILE);
-        while (pageNumber == 0 || hitNumber < totalHits) {
-            searchSourceBuilder.size(scrollSize);
-            searchSourceBuilder.from(pageNumber * scrollSize);
-            searchRequest.source(searchSourceBuilder);
-
-            response = search(searchRequest);
-            totalHits = response.getHits().getTotalHits().value;
-            pageNumber++;
-            for (SearchHit hit : response.getHits()) {
-                Map<String, Object> participantRecord = hit.getSourceAsMap();
-                JsonObject participantJson = new JsonParser().parse(new Gson().toJson(participantRecord)).getAsJsonObject();
-                if (participantJson.has(ADDRESS) && participantJson.has(PROFILE)) {
-                    Address address = gson.fromJson(participantJson.get(ADDRESS), Address.class);
-                    Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
-                    org.broadinstitute.dsm.model.gbf.Address gbfAddress =
-                            new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
-                                    address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
-                    addressByParticipant.put(profile.getGuid(), gbfAddress);
-                }
-                hitNumber++;
-            }
-
-        }
-        return addressByParticipant;
-    }
-
     // TODO Remove this method -DC
     public static void removeWorkflowIfNoDataOrWrongSubject(RestHighLevelClient client, String ddpParticipantId, DDPInstance ddpInstance,
                                                             String collaboratorParticipantId) {

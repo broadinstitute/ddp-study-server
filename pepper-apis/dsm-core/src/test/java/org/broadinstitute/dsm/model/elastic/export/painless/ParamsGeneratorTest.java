@@ -9,10 +9,8 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
-import org.broadinstitute.dsm.model.birch.DSMTestResult;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,30 +28,6 @@ public class ParamsGeneratorTest {
         Assert.assertEquals("easyPostIdValue", kitRequestShippingObj.get("easypostToId"));
         Assert.assertEquals(true, kitRequestShippingObj.get("error"));
         Assert.assertEquals("msg", kitRequestShippingObj.get("message"));
-    }
-
-    @Test
-    public void generateKitRequest() {
-
-        DSMTestResult[] array = new DSMTestResult[] {new DSMTestResult("Negative", "2012-05-02", true)};
-        String finalArray = ObjectMapperSingleton.writeValueAsString(array);
-
-        KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setTestResult(finalArray);
-
-        ParamsGenerator paramsGenerator = new ParamsGenerator(kitRequestShipping, null);
-        Map<String, Object> actual = paramsGenerator.generate();
-
-        Map<String, Object> innerMap =
-                new LinkedHashMap<>(Map.of("timeCompleted", "2012-05-02", "result", "Negative", "isCorrected", true));
-        List<Map<String, Object>> innerMapInList = new ArrayList<>(List.of(innerMap));
-        Map<String, Object> fullInnerMap = new HashMap<>(Map.of(ESObjectConstants.KIT_TEST_RESULT, innerMapInList));
-        Map<String, Map<String, Object>> kitRequestShippingMap =
-                new HashMap<>(Map.of(ESObjectConstants.KIT_REQUEST_SHIPPING, fullInnerMap));
-        Map<String, Object> expected = new HashMap<>(Map.of(ESObjectConstants.DSM, kitRequestShippingMap));
-
-        Assert.assertEquals(expected, actual);
-
     }
 
     @Test
