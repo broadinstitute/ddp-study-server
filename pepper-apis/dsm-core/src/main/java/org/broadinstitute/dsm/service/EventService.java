@@ -11,7 +11,6 @@ import io.github.resilience4j.retry.RetryConfig;
 import lombok.NonNull;
 import org.broadinstitute.ddp.notficationevent.DsmNotificationPayload;
 import org.broadinstitute.ddp.notficationevent.KitReasonType;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
@@ -19,6 +18,7 @@ import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +27,11 @@ public class EventService {
     protected static final int MAX_TRIES = 5;
     private static final EventDao eventDao = new EventDao();
     private static final SkippedParticipantEventDao skippedParticipantEventDao = new SkippedParticipantEventDao();
-    private static final int INITIAL_RETRY_INTERVAL = ConfigManager.getInstance().getConfig()
-            .getInt(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS); //base delay in milliseconds
+    private static final int INITIAL_RETRY_INTERVAL =  DSMConfig.getIntFromConfig(
+            ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS); //base delay in milliseconds
 
-    private static final double RETRY_MULTIPLIER = ConfigManager.getInstance().getConfig()
-            .getDouble(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER); // exponential backoff multiplier
+    private static final double RETRY_MULTIPLIER = DSMConfig.getDoubleFromConfig(
+            ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER); // exponential backoff multiplier
 
     /**
      * <p>
