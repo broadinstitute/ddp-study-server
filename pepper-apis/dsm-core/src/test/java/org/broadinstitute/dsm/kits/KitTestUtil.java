@@ -22,9 +22,11 @@ import com.easypost.model.Parcel;
 import com.easypost.model.PostageLabel;
 import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
+import com.typesafe.config.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -40,6 +42,7 @@ import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -511,6 +514,17 @@ public class KitTestUtil {
     public void setEsIndex(String esIndex) {
         this.esIndex = esIndex;
         new DDPInstanceDao().updateEsParticipantIndex(ddpInstanceId, esIndex);
+    }
+
+
+    /**
+     * reads the test config and sets it as what dsm uses as config.
+     * This is needed for the tests that use values from config/secret to run
+     * */
+    public static void setDsmConfig() {
+        ConfigManager configManager = ConfigManager.getInstance();
+        Config cfg = configManager.getConfig();
+        new DSMConfig(cfg);
     }
 
 }

@@ -15,8 +15,10 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,8 +98,11 @@ public class EventService {
     @VisibleForTesting
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, KitReasonType reason) {
-        final long initialInterval = 500; // base delay in milliseconds
-        final double multiplier = 2.0; // exponential backoff multiplier
+
+        final long initialInterval = DSMConfig.getIntFromConfig(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS); // base delay in
+        // milliseconds
+        final double multiplier = DSMConfig.getDoubleFromConfig(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER); // exponential backoff
+        // multiplier (1.5, 2, etc.)
 
         IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(initialInterval, multiplier);
         RetryConfig retryConfig = RetryConfig.custom()
