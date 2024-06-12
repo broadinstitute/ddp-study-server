@@ -513,6 +513,5 @@ public class KitTestUtil {
         new DDPInstanceDao().updateEsParticipantIndex(ddpInstanceId, esIndex);
     }
 
-
 }
 
