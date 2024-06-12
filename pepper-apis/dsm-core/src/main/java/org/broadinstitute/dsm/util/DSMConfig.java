@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.util;
 
 import com.typesafe.config.Config;
 import lombok.NonNull;
-import org.broadinstitute.dsm.exception.DsmInternalError;
 
 public class DSMConfig {
 
@@ -22,28 +21,6 @@ public class DSMConfig {
         }
 
         return config.getString(queryName);
-    }
-
-    public static Integer getIntFromConfig(@NonNull String name) {
-        try {
-            if (hasConfigPath(name)) {
-                return config.getInt(name);
-            }
-            return null;
-        } catch (Exception e) {
-            throw new DsmInternalError("Error getting int from config for " + name, e);
-        }
-    }
-
-    public static Double getDoubleFromConfig(@NonNull String name) {
-        try {
-            if (hasConfigPath(name)) {
-                return config.getDouble(name);
-            }
-            return null;
-        } catch (Exception e) {
-            throw new DsmInternalError("Error getting double from config for " + name, e);
-        }
     }
 
     public static boolean hasConfigPath(@NonNull String configPath) {

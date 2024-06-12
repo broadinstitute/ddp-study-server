@@ -12,6 +12,7 @@ import io.github.resilience4j.retry.RetryConfig;
 import lombok.NonNull;
 import org.broadinstitute.ddp.notficationevent.DsmNotificationPayload;
 import org.broadinstitute.ddp.notficationevent.KitReasonType;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
@@ -19,7 +20,6 @@ import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.DSMConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,11 +100,11 @@ public class EventService {
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, KitReasonType reason) {
 
-        final int initialInterval = Optional.ofNullable(DSMConfig.getIntFromConfig(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS))
-                .orElse(500); // Default to 500 if
+        final int initialInterval = Optional.ofNullable(ConfigManager.getInstance().getConfig()
+                        .getInt(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS)).orElse(500); // Default to 500 if
 
-        final double multiplier = Optional.ofNullable(DSMConfig.getDoubleFromConfig(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER))
-                .orElse(2.0); // Default to 2.0 if null
+        final double multiplier = Optional.ofNullable(ConfigManager.getInstance().getConfig()
+                .getDouble(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER)).orElse(2.0); // Default to 2.0 if null
 
 
         IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(initialInterval, multiplier);

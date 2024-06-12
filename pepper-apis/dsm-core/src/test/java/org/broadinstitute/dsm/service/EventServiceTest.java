@@ -73,7 +73,6 @@ public class EventServiceTest extends DbAndElasticBaseTest {
         kitTestUtil = new KitTestUtil(INSTANCE_NAME, INSTANCE_GUID, "event_test_prefix", "event-group", "SALIVA", "SALIVA", esIndex,
                  false);
         kitTestUtil.setupInstanceAndSettings();
-        kitTestUtil.setDsmConfig();
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(kitTestUtil.getDdpInstanceId()).orElseThrow();
         ddpInstance = DDPInstance.from(ddpInstanceDto);
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT");
