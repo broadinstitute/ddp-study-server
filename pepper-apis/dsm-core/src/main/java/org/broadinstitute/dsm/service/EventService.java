@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.service;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -28,6 +27,11 @@ public class EventService {
     protected static final int MAX_TRIES = 5;
     private static final EventDao eventDao = new EventDao();
     private static final SkippedParticipantEventDao skippedParticipantEventDao = new SkippedParticipantEventDao();
+    private static final int INITIAL_RETRY_INTERVAL = ConfigManager.getInstance().getConfig()
+            .getInt(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS); //base delay in milliseconds
+
+    private static final double RETRY_MULTIPLIER = ConfigManager.getInstance().getConfig()
+            .getDouble(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER); // exponential backoff multiplier
 
     /**
      * <p>
@@ -100,14 +104,7 @@ public class EventService {
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, KitReasonType reason) {
 
-        final int initialInterval = Optional.ofNullable(ConfigManager.getInstance().getConfig()
-                        .getInt(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS)).orElse(500); // Default to 500 if
-
-        final double multiplier = Optional.ofNullable(ConfigManager.getInstance().getConfig()
-                .getDouble(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER)).orElse(2.0); // Default to 2.0 if null
-
-
-        IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(initialInterval, multiplier);
+        IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(INITIAL_RETRY_INTERVAL, RETRY_MULTIPLIER);
         RetryConfig retryConfig = RetryConfig.custom()
                 .maxAttempts(MAX_TRIES)
                 .intervalFunction(intervalFn)
