@@ -138,4 +138,8 @@ public class ApplicationConfigConstants {
     public static final String FILE_DOWNLOAD_CREDENTIALS = "fileDownload.credentials";
     public static final String FILE_DOWNLOAD_PROJECT_ID = "fileDownload.credentials.project_id";
     public static final String MAX_SIGN_URL_MIN = "fileDownload.maxSignedUrlMins";
+
+    //EventService variables for retrying
+    public static final String EVENT_RETRY_INTERVAL_MS = "eventRetryIntervalMs";
+    public static final String EVENT_RETRY_MULTIPLIER = "eventRetryMultiplier";
 }
