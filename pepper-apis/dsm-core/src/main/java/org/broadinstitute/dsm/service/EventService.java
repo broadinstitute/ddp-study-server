@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.service;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -99,10 +100,12 @@ public class EventService {
     protected static boolean triggerDssWithEvent(@NonNull String eventType, DDPInstance ddpInstance, long eventDate,
                                         @NotNull String ddpParticipantId, @NotNull String eventInfo, KitReasonType reason) {
 
-        final long initialInterval = DSMConfig.getIntFromConfig(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS); // base delay in
-        // milliseconds
-        final double multiplier = DSMConfig.getDoubleFromConfig(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER); // exponential backoff
-        // multiplier (1.5, 2, etc.)
+        final int initialInterval = Optional.ofNullable(DSMConfig.getIntFromConfig(ApplicationConfigConstants.EVENT_RETRY_INTERVAL_MS))
+                .orElse(500); // Default to 500 if
+
+        final double multiplier = Optional.ofNullable(DSMConfig.getDoubleFromConfig(ApplicationConfigConstants.EVENT_RETRY_MULTIPLIER))
+                .orElse(2.0); // Default to 2.0 if null
+
 
         IntervalFunction intervalFn = IntervalFunction.ofExponentialBackoff(initialInterval, multiplier);
         RetryConfig retryConfig = RetryConfig.custom()
