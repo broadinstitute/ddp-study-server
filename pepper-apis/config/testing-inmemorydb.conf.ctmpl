@@ -220,8 +220,8 @@
             {"realm": "somatic-upload-test", "uploadBucket":"cmi-lms-uploaded-files"}
         ]
     },
-    "eventRetryIntervalMs": 1000,
-    "eventRetryMultiplier": 2.0
+    "eventRetryIntervalMs": {{$testingConf.Data.eventRetryIntervalMs}},
+    "eventRetryMultiplier": {{$testingConf.Data.eventRetryMultiplier}}
 }
 
 {{end}}
