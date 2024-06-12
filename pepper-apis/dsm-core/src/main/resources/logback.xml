@@ -16,8 +16,8 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %X{LogBreadCrumb} %X{X-Forwarded-For} C:%X{ClientId} S:%X{UserId} [%thread] %-5level %logger{36} %msg%n</pattern>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeCallerData>true</includeCallerData>
         </encoder>
     </appender>
 
