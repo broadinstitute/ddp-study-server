@@ -57,6 +57,7 @@ import org.broadinstitute.ddp.route.UserRegistrationRoute;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.DateTimeUtils;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.QuestionAnswersUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -69,12 +70,15 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
 public class Osteo1ParticipantCreator {
 
     private final TaskPublisher taskPublisher;
+    private final Map<String, String> payloadMap = Map.of("studyVersion", "Osteo1");
+    private final String eventPayload = GsonUtil.standardGson().toJson(payloadMap);
     private long ddpCreatedAt = Instant.parse("2022-07-09T15:35:00Z").toEpochMilli(); //default v1 activity created date
     private String auth0ClientId = null;
     private String auth0Domain = null;
@@ -258,10 +262,9 @@ public class Osteo1ParticipantCreator {
     }
 
     private void publishRegisteredPubSubMessage(String studyGuid, String participantGuid) {
-        String payload = "";
         taskPublisher.publishTask(
                 TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
-                payload, studyGuid, participantGuid);
+                eventPayload, studyGuid, participantGuid);
     }
 
     private ActivityInstanceDto createActivityInstance(Handle handle, String activityCode, String studyGuid,
