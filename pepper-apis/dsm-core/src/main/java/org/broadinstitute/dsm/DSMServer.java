@@ -263,7 +263,7 @@ public class DSMServer {
         synchronized (isReady) {
             try {
                 logger.info("Starting up DSM");
-                new DSMConfig(cfg);
+                DSMConfig.setConfig(cfg);
                 DSMServer server = new DSMServer();
                 server.configureServer(cfg);
                 isReady.set(true);
