@@ -104,6 +104,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-logging-logback</artifactId>
+            <version>0.131.8-alpha</version>
+        </dependency>
+
+        <dependency>
             <!-- configuration -->
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>

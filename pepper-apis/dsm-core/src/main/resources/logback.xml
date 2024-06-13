@@ -5,10 +5,6 @@
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %X{LogBreadCrumb} %X{X-Forwarded-For} C:%X{ClientId} S:%X{UserId} [%thread] %-5level %logger{36} %msg%n</pattern>
         </encoder>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>DENY</onMatch>
-        </filter>
     </appender>
 
     <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
@@ -21,8 +17,14 @@
         </encoder>
     </appender>
 
+    <appender name="CLOUD" class="com.google.cloud.logging.logback.LoggingAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="STDERR" />
+        <appender-ref ref="CLOUD" />
     </root>
 </configuration>
