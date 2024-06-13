@@ -515,17 +515,5 @@ public class KitTestUtil {
         this.esIndex = esIndex;
         new DDPInstanceDao().updateEsParticipantIndex(ddpInstanceId, esIndex);
     }
-
-
-    /**
-     * reads the test config and sets it as what dsm uses as config.
-     * This is needed for the tests that use values from config/secret to run
-     * */
-    public static void setDsmConfig() {
-        ConfigManager configManager = ConfigManager.getInstance();
-        Config cfg = configManager.getConfig();
-        new DSMConfig(cfg);
-    }
-
 }
 

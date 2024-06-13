@@ -79,9 +79,7 @@ public class ElasticExporter {
                     System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
                 }
             }
-
-            new DSMConfig(cfg);
-
+            DSMConfig.setConfig(cfg);
             dsmBackend = new ElasticExporter();
             dsmBackend.configureServer(cfg);
             isReady.set(true);

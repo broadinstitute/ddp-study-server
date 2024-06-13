@@ -122,7 +122,7 @@ public class TestHelper {
         if (cfg == null) {
             throw new NullPointerException("config");
         } else {
-            new DSMConfig(cfg);
+            DSMConfig.setConfig(cfg);
             logger.info("Setup the DB...");
             boolean skipSsl = false;
             if (cfg.hasPath("portal.dbSkipSsl") && cfg.getBoolean("portal.dbSkipSsl")) {
