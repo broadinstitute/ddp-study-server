@@ -98,6 +98,12 @@
         </dependency>
 
         <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+
+        <dependency>
             <!-- configuration -->
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>

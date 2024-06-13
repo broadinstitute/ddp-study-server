@@ -15,7 +15,6 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.SkippedParticipantEventDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.model.KitDDPNotification;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.DSMConfig;
