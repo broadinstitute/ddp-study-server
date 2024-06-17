@@ -162,8 +162,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             Assert.assertEquals(expectedCollaboratorSampleId, nextCollaboratorSampleId);
 
             //test when Participant has both Legacy And Pepper Kit
-            //this situation should not happen, but we are testing it to make sure the code handles it correctly because there might be dirty
-            // data in the database
+            //this situation should not happen, but we are testing it to make sure the code handles it correctly because there might be
+            // dirty data in the database
 
             KitRequestShipping pepperKitRequestShipping =  KitRequestShipping.builder()
                     .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
