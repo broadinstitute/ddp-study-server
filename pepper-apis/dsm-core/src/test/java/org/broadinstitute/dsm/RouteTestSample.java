@@ -356,7 +356,8 @@ public class RouteTestSample extends TestHelper {
     public void generateBspSampleID() {
         inTransaction((conn) -> {
             try {
-                String id = KitRequestShipping.generateBspSampleID(conn, "TestProject_0023", "SALIVA", 1);
+                String id = KitRequestShipping.generateBspSampleID(conn, "TestProject_0023", "SALIVA", 1,
+                        new DDPInstance(1, "Test"));
                 Assert.assertNotNull(id);
                 Assert.assertEquals("TestProject_0023_SALIVA", id);
             } catch (Exception e) {
@@ -524,7 +525,8 @@ public class RouteTestSample extends TestHelper {
                     bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
                 }
                 String collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, "TestProject_1_3", bspCollaboratorSampleType, kitType.getKitTypeId());
+                        KitRequestShipping.generateBspSampleID(conn, "TestProject_1_3", bspCollaboratorSampleType,
+                                kitType.getKitTypeId(), ddpInstance);
                 Assert.assertNotNull(collaboratorSampleId);
                 Assert.assertEquals("TestProject_1_3", collaboratorSampleId);
             } catch (Exception e) {

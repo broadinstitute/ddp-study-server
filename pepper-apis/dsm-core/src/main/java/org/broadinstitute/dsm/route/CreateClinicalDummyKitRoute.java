@@ -132,7 +132,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                 participantCollaboratorId = participantId;
             }
             String collaboratorSampleId = KitRequestShipping
-                    .getCollaboratorSampleId(desiredKitType.getKitId(), participantCollaboratorId, desiredKitType.getName());
+                    .getCollaboratorSampleId(desiredKitType.getKitId(), participantCollaboratorId, desiredKitType.getName(), ddpInstance);
             logger.info("Found collaboratorSampleId  " + collaboratorSampleId);
             //if instance not null
             String dsmKitRequestId = KitRequestShipping

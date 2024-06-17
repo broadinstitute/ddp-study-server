@@ -377,7 +377,8 @@ public class KitUploadRoute extends RequestHandler {
 
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             collaboratorSampleId =
-                    KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                    KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                            ddpInstance);
             KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
                     collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
                     uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel);
@@ -390,7 +391,8 @@ public class KitUploadRoute extends RequestHandler {
             }
             if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                 collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                                ddpInstance);
                 if (collaboratorParticipantId == null) {
                     errorMessage += "collaboratorParticipantId was too long ";
                 }
