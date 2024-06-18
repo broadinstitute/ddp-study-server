@@ -219,7 +219,9 @@
             {"realm": "cmi-lms", "uploadBucket":"cmi-lms-uploaded-files"},
             {"realm": "somatic-upload-test", "uploadBucket":"cmi-lms-uploaded-files"}
         ]
-    }
+    },
+    "eventRetryIntervalMs": {{$testingConf.Data.eventRetryIntervalMs}},
+    "eventRetryMultiplier": {{$testingConf.Data.eventRetryMultiplier}}
 }
 
 {{end}}
