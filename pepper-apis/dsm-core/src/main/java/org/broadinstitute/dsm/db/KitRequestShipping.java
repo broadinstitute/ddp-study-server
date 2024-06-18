@@ -883,7 +883,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
             if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                 collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                                ddpInstance);
                 if (collaboratorParticipantId == null) {
                     errorMessage += "collaboratorParticipantId was too long ";
                 }
@@ -1194,8 +1195,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 if (kitRequestSettings.getCollaboratorSampleTypeOverwrite() != null) {
                     bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
                 }
+                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kit.getInstanceName());
                 String collaboratorSampleId =
-                        generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitType.getKitTypeId());
+                        generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitType.getKitTypeId(),
+                                ddpInstance);
 
                 updateStmt.setString(1, collaboratorParticipantId);
                 updateStmt.setString(2, collaboratorSampleId);
@@ -1245,13 +1248,32 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return null;
     }
 
-    public static String generateBspSampleID(@NonNull Connection conn, String collaboratorParticipantId, String type, int kitTypeId) {
+    public static String generateBspSampleID(@NonNull Connection conn, String collaboratorParticipantId, String type, int kitTypeId,
+                                             DDPInstance ddpInstance) {
         if (collaboratorParticipantId != null && collaboratorParticipantId.length() < COLLABORATOR_MAX_LENGTH) {
             String collaboratorSampleId = collaboratorParticipantId;
             if (StringUtils.isNotBlank(type)) {
                 collaboratorSampleId += "_" + type;
             }
+            String participantId = collaboratorParticipantId.split("_")[1];
             int counter = getKitCounter(conn, collaboratorSampleId, kitTypeId);
+
+            if  (ddpInstance.isMigratedDDP()) {
+                //For Migrated studies, if either of the legacy id or pepper short id is given, DSM needs count the number of kits that
+                // were created for this participant with both of these ids and consider that total number when creating the
+                // collaborator sample id for this new kit. For example, if participant PABCDE has legacy short id 1, and has saliva
+                // kits `0001_SALIVA_1` and `PABCDE_SALIVA_2`, the next kit should be 0001_SALIVA_3, and not 0001_SALIVA_2.
+                //Ideally the kits should all have one type of id but because of a bug in the kit creation process, some kits might have
+                //been created with the wrong id
+                if (!ParticipantUtil.isHruid(participantId)) {
+                    //We can assume the participantId is a legacy short id here
+                    counter += getPepperKitCounter(conn, collaboratorSampleId, participantId, kitTypeId,
+                            ddpInstance.getParticipantIndexES());
+                } else {
+                    counter += getLegacyKitCounter(conn, collaboratorSampleId, participantId, kitTypeId,
+                            ddpInstance.getParticipantIndexES());
+                }
+            }
             if (counter == 0) {
                 if (collaboratorSampleId.length() < COLLABORATOR_MAX_LENGTH) {
                     return collaboratorSampleId;
@@ -1263,6 +1285,43 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
         }
         return null;
+    }
+
+    /**
+     * Given a participant's legacy short id, counts the number of participant's kits that have the collaborator sample id with the Pepper
+     * short id and with this kit type id
+     * */
+    private static int getPepperKitCounter(Connection conn, String bspCollaboratorSampleId, String legacyShortId, int kitTypeId,
+                                           String index) {
+        Optional<ElasticSearchParticipantDto> maybeParticipantDto = new ElasticSearchService()
+                .getSingleParticipantDocument(legacyShortId, "profile.legacyShortId", index);
+        if (maybeParticipantDto.isEmpty()) {
+            return 0;
+        }
+        ElasticSearchParticipantDto participantDto = maybeParticipantDto.get();
+        String pepperCollaboratorSampleId = bspCollaboratorSampleId.replace(legacyShortId,
+                participantDto.getProfile().get().getHruid());
+        return getKitCounter(conn, pepperCollaboratorSampleId, kitTypeId);
+    }
+
+    /**
+     * Given a participant's Pepper short id, counts the number of participant's kits that have the collaborator sample id with the Legacy
+     * short id and with this kit type id
+     * */
+    private static int getLegacyKitCounter(Connection conn, String bspCollaboratorSampleId, String shortId, int kitTypeId,
+                                           String index) {
+        Optional<ElasticSearchParticipantDto> maybeParticipantDto = new ElasticSearchService()
+                .getSingleParticipantDocument(shortId, "profile.hruid", index);
+        if (maybeParticipantDto.isEmpty()) {
+            return 0;
+        }
+        ElasticSearchParticipantDto participantDto = maybeParticipantDto.get();
+        if (participantDto.getProfile().isEmpty() || participantDto.getProfile().get().getLegacyShortId() == null) {
+            return 0;
+        }
+        String pepperCollaboratorSampleId = bspCollaboratorSampleId.replace(shortId,
+                participantDto.getProfile().get().getLegacyShortId());
+        return getKitCounter(conn, pepperCollaboratorSampleId, kitTypeId);
     }
 
     public static int getKitCounter(@NonNull Connection conn, String collaboratorSampleId, int kitTypeId) {
@@ -1861,10 +1920,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         }
     }
 
-    public static String getCollaboratorSampleId(int kitTypeId, String participantCollaboratorId, String kitType) {
+    public static String getCollaboratorSampleId(int kitTypeId, String participantCollaboratorId, String kitType, DDPInstance ddpInstance) {
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            String collaboratorSampleId = generateBspSampleID(conn, participantCollaboratorId, kitType, kitTypeId);
+            String collaboratorSampleId = generateBspSampleID(conn, participantCollaboratorId, kitType, kitTypeId, ddpInstance);
             dbVals.resultValue = collaboratorSampleId;
             return dbVals;
         });
@@ -1873,23 +1932,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         } else {
             return (String) results.resultValue;
         }
-    }
-
-    public static String getParticipantIdFromLegacyKit(DDPInstance ddpInstance, String shortId, String collaboratorParticipantId) {
-        Profile profile = new ElasticSearchService().getParticipantProfileByShortID(shortId, ddpInstance.getParticipantIndexES());
-        if (profile == null) {
-            throw new DsmInternalError("Could not find profile for shortId " + shortId);
-        }
-        if (StringUtils.isBlank(profile.getLegacyAltPid())) {
-            return null;
-        }
-        if (isLegacyCollaboratorParticipantId(collaboratorParticipantId, profile.getLegacyShortId())) {
-            List<KitRequestShipping> legacyKits = kitRequestDao.getKitRequestsForCollaboratorParticipantId(collaboratorParticipantId);
-            if (!legacyKits.isEmpty()) {
-                return legacyKits.get(0).getDdpParticipantId();
-            }
-        }
-        return null;
     }
 
     private static boolean isLegacyCollaboratorParticipantId(String collaboratorParticipantId, String legacyShortId) {
