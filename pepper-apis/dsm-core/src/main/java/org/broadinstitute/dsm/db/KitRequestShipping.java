@@ -1281,6 +1281,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return null;
     }
 
+    /**
+     * Given a participant's legacy short id, counts the number of participant's kits that have the collaborator sample id with the Pepper
+     * short id and with this kit type id
+     * */
     private static int getPepperKitCounter(Connection conn, String bspCollaboratorSampleId, String legacyShortId, int kitTypeId,
                                            String index) {
         Optional<ElasticSearchParticipantDto> maybeParticipantDto = new ElasticSearchService()
@@ -1294,6 +1298,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return getKitCounter(conn, pepperCollaboratorSampleId, kitTypeId);
     }
 
+    /**
+     * Given a participant's Pepper short id, counts the number of participant's kits that have the collaborator sample id with the Legacy
+     * short id and with this kit type id
+     * */
     private static int getLegacyKitCounter(Connection conn, String bspCollaboratorSampleId, String shortId, int kitTypeId,
                                            String index) {
         Optional<ElasticSearchParticipantDto> maybeParticipantDto = new ElasticSearchService()
