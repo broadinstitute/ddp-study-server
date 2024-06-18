@@ -127,19 +127,19 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         TransactionWrapper.inTransaction(conn -> {
             String collaboratorParticipantId = "PROJ_" + shortId;
             String collaboratorSampleId = collaboratorParticipantId + "_SALIVA";
-            String legacyCollaboratorParticipantId = "PROJ_0001";
-            String legacyCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA";
-            String expectedNextCollaboratorSampleId = legacyCollaboratorSampleId + "_2";
 
             //check when legacy participant doesn't have a prior legacy kit
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId);
+                    kitTestUtil.kitTypeId, ddpInstance);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
-            //now check when legacy participant has a kit with legacy id and legacy altpid
+            //now check when legacy participant has a kit with legacy id
+            String legacyCollaboratorParticipantId = "PROJ_0001";
+            String legacyCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA";
+
             KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
                     .withDdpParticipantId(legacyAltpid)
                     .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
@@ -154,10 +154,37 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId);
+                    kitTestUtil.kitTypeId, ddpInstance);
+
+            String expectedCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA_2";
 
             Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
-            Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
+            Assert.assertEquals(expectedCollaboratorSampleId, nextCollaboratorSampleId);
+
+            //test when Participant has both Legacy And Pepper Kit
+            //this situation should not happen, but we are testing it to make sure the code handles it correctly because there might be
+            // dirty data in the database
+
+            KitRequestShipping pepperKitRequestShipping =  KitRequestShipping.builder()
+                    .withDdpParticipantId(legacyParticipant.getRequiredDdpParticipantId())
+                    .withBspCollaboratorParticipantId(collaboratorParticipantId)
+                    .withBspCollaboratorSampleId(collaboratorSampleId + "_2")
+                    .withKitTypeName("SALIVA")
+                    .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit2")
+                    .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
+
+            createdKits.add(kitTestUtil.createKitRequestShipping(pepperKitRequestShipping, ddpInstance, "100"));
+
+            nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
+                    legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
+            nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
+                    kitTestUtil.kitTypeId, ddpInstance);
+
+            expectedCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA_3";
+
+            Assert.assertEquals(legacyCollaboratorParticipantId, nextCollaboratorParticipantId);
+            Assert.assertEquals(expectedCollaboratorSampleId, nextCollaboratorSampleId);
+
 
             return null;
         });
@@ -172,7 +199,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId);
+                    kitTestUtil.kitTypeId, ddpInstance);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
@@ -190,7 +217,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId);
+                    kitTestUtil.kitTypeId, ddpInstance);
             String expectedNextCollaboratorSampleId = "PROJ_" + notLegacyParticipantShortId + "_SALIVA_2";
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
@@ -220,7 +247,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 notHruidParticipantGuid, notHruidId, "0");
         String nextCollaboratorSampleId = (String) TransactionWrapper.inTransaction(conn -> {
             String sampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId);
+                    kitTestUtil.kitTypeId, ddpInstance);
             return new SimpleResult(sampleId);
         }).resultValue;
         Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);

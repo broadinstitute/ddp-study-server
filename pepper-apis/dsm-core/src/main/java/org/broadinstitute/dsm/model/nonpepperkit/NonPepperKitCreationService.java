@@ -184,7 +184,8 @@ public class NonPepperKitCreationService {
             try {
                 // collaborator sample id is the id of the physical sample that GP will work with.
                 collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                                ddpInstance);
                 KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
                         kit.getParticipantId().trim(),
                         collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
@@ -201,7 +202,8 @@ public class NonPepperKitCreationService {
             }
             if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                 collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                                ddpInstance);
                 if (collaboratorSampleId == null) {
                     errorMessage += "collaboratorSampleId was too long ";
                 }

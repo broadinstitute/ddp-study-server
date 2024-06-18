@@ -50,6 +50,7 @@ import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.externalshipper.ExternalShipper;
@@ -377,7 +378,8 @@ public class KitUploadRoute extends RequestHandler {
 
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             collaboratorSampleId =
-                    KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                    KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                            ddpInstance);
             KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
                     collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
                     uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel);
@@ -390,7 +392,8 @@ public class KitUploadRoute extends RequestHandler {
             }
             if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                 collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                                ddpInstance);
                 if (collaboratorParticipantId == null) {
                     errorMessage += "collaboratorParticipantId was too long ";
                 }
@@ -520,6 +523,14 @@ public class KitUploadRoute extends RequestHandler {
         String participantLastNameFromDoc = participantDataByFieldName.get(LAST_NAME).trim().toLowerCase();
 
         ElasticSearchParticipantDto participantByShortId;
+        //only check this for studies that have a DSS instance and not RGP
+        if (ddpInstanceByRealm.hasEsIndex()) {
+            if (!ddpInstanceByRealm.isRgp() && !ParticipantUtil.isHruid(participantIdFromDoc)) {
+                // for Pepper studies we need to check if the upload was done with the HRUID.
+                // Not applicable for RGP and studies like Darwin's Ark
+                return "Short Id %s is not a valid shortId".formatted(participantIdFromDoc);
+            }
+        }
         try {
             participantByShortId = elasticSearch.getParticipantById(ddpInstanceByRealm.getParticipantIndexES(), participantIdFromDoc);
         } catch (Exception e) {
