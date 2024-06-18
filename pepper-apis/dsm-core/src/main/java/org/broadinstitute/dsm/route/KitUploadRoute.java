@@ -525,7 +525,9 @@ public class KitUploadRoute extends RequestHandler {
         ElasticSearchParticipantDto participantByShortId;
         //only check this for studies that have a DSS instance and not RGP
         if (ddpInstanceByRealm.hasEsIndex()) {
-            if (!isRgpUpload(ddpInstanceByRealm) && ddpInstanceByRealm.hasEsIndex() && !ParticipantUtil.isHruid(participantIdFromDoc)) {
+            if (!ddpInstanceByRealm.isRgp() && !ParticipantUtil.isHruid(participantIdFromDoc)) {
+                // for Pepper studies we need to check if the upload was done with the HRUID.
+                // Not applicable for RGP and studies like Darwin's Ark
                 return "Short Id %s is not a valid shortId".formatted(participantIdFromDoc);
             }
         }
@@ -535,10 +537,6 @@ public class KitUploadRoute extends RequestHandler {
             throw new RuntimeException("Participant " + participantIdFromDoc + " does not belong to this study", e);
         }
         return checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc, participantByShortId);
-    }
-
-    private boolean isRgpUpload(DDPInstance ddpInstanceByRealm) {
-        return DBConstants.RGP.equalsIgnoreCase(ddpInstanceByRealm.getStudyGuid());
     }
 
     String checkKitUploadNameMatchesToEsName(String participantFirstNameFromDoc, String participantLastNameFromDoc,

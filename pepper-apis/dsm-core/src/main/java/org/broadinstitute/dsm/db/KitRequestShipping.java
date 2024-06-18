@@ -1259,8 +1259,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             int counter = getKitCounter(conn, collaboratorSampleId, kitTypeId);
 
             if  (ddpInstance.isMigratedDDP()) {
+                //For Migrated studies, if either of the legacy id or pepper short id is given, DSM needs count the number of kits that
+                // were created for this participant with both of these ids and consider that total number when creating the
+                // collaborator sample id for this new kit. For example, if participant PABCDE has legacy short id 1, and has saliva
+                // kits `0001_SALIVA_1` and `PABCDE_SALIVA_2`, the next kit should be 0001_SALIVA_3, and not 0001_SALIVA_2.
+                //Ideally the kits should all have one type of id but because of a bug in the kit creation process, some kits might have
+                //been created with the wrong id
                 if (!ParticipantUtil.isHruid(participantId)) {
-                    //assuming participantId is a legacy short id
+                    //We can assume the participantId is a legacy short id here
                     counter += getPepperKitCounter(conn, collaboratorSampleId, participantId, kitTypeId,
                             ddpInstance.getParticipantIndexES());
                 } else {

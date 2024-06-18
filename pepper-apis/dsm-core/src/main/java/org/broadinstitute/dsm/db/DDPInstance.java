@@ -527,4 +527,8 @@ public class DDPInstance {
                 .withMigratedDDP(ddpInstanceDto.getMigratedDdp())
                 .build();
     }
+
+    public boolean isRgp() {
+        return DBConstants.RGP.equalsIgnoreCase(this.getStudyGuid());
+    }
 }
