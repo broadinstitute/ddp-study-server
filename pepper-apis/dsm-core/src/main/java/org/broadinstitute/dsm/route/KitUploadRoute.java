@@ -538,7 +538,7 @@ public class KitUploadRoute extends RequestHandler {
     }
 
     private boolean isRgpUpload(DDPInstance ddpInstanceByRealm) {
-        return "rgo".equalsIgnoreCase(ddpInstanceByRealm.getStudyGuid());
+        return DBConstants.RGP.equalsIgnoreCase(ddpInstanceByRealm.getStudyGuid());
     }
 
     String checkKitUploadNameMatchesToEsName(String participantFirstNameFromDoc, String participantLastNameFromDoc,
