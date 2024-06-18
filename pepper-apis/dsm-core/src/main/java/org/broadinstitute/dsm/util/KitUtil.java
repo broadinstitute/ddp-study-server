@@ -454,7 +454,7 @@ public class KitUtil {
                                              @NonNull String bspCollaboratorSampleType) {
         SimpleResult results = inTransaction((conn) -> {
             String collaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType,
-                    kitLabelTriggered.getKitTyp().getKitTypeId());
+                    kitLabelTriggered.getKitTyp().getKitTypeId(), DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName()));
 
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_COLLABORATOR_IDS)) {

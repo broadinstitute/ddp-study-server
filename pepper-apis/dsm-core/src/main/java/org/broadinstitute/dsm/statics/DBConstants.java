@@ -6,6 +6,7 @@ public class DBConstants {
         throw new IllegalStateException("Utility class");
     }
 
+    public static final String RGP = "RGP";
     public static final String LMS_STUDY_GUID = "cmi-lms";
     public static final String OSTEO_STUDY_GUID = "cmi-osteo";
     //table names
