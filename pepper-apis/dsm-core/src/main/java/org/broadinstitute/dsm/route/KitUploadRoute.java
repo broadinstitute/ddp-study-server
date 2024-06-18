@@ -50,6 +50,7 @@ import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.externalshipper.ExternalShipper;
@@ -522,12 +523,22 @@ public class KitUploadRoute extends RequestHandler {
         String participantLastNameFromDoc = participantDataByFieldName.get(LAST_NAME).trim().toLowerCase();
 
         ElasticSearchParticipantDto participantByShortId;
+        //only check this for studies that have a DSS instance and not RGP
+        if (ddpInstanceByRealm.hasEsIndex()) {
+            if (!isRgpUpload(ddpInstanceByRealm) && ddpInstanceByRealm.hasEsIndex() && !ParticipantUtil.isHruid(participantIdFromDoc)) {
+                return "Short Id %s is not a valid shortId".formatted(participantIdFromDoc);
+            }
+        }
         try {
             participantByShortId = elasticSearch.getParticipantById(ddpInstanceByRealm.getParticipantIndexES(), participantIdFromDoc);
         } catch (Exception e) {
             throw new RuntimeException("Participant " + participantIdFromDoc + " does not belong to this study", e);
         }
         return checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc, participantByShortId);
+    }
+
+    private boolean isRgpUpload(DDPInstance ddpInstanceByRealm) {
+        return "rgo".equalsIgnoreCase(ddpInstanceByRealm.getStudyGuid());
     }
 
     String checkKitUploadNameMatchesToEsName(String participantFirstNameFromDoc, String participantLastNameFromDoc,
