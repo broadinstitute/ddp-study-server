@@ -165,14 +165,17 @@ public class LmsProxyFixes implements CustomTask {
         List<SqlHelper.ProxyActivityActivityInfo> prequals = sqlHelper.getPrequalProxyActivities("cmi-lms");
         log.info("existing prequals to update: {}", prequals.size());
         prequals.forEach(prequalActivity -> {
-            DBUtils.checkUpdate(1, sqlHelper.updateProxyInstance(prequalActivity.activityInstanceId, prequalActivity.governedUserId, prequalActivity.operatorId));
-            log.info("remapped activity instance : {} of operator: {} with gov user : {} ", prequalActivity.activityInstanceId, prequalActivity.operatorGuid, prequalActivity.governedUserId);
-
-            //delete proxy enrollment
+            //update only if proxy has NO self enrollment.. check for consent existence
             if (jdbiActivityInstance.findAllByUserGuidAndActivityCode(prequalActivity.operatorGuid, "CONSENT", studyId).isEmpty()) {
+                DBUtils.checkUpdate(1, sqlHelper.updateProxyInstance(prequalActivity.activityInstanceId, prequalActivity.governedUserId, prequalActivity.operatorId));
+                log.info("remapped activity instance : {} of operator: {} with gov user : {} ", prequalActivity.activityInstanceId, prequalActivity.operatorGuid, prequalActivity.governedUserId);
+
+                //delete proxy enrollment
                 sqlHelper.deleteProxyEnrollmentStatusById(prequalActivity.operatorId);
                 log.info("deleted proxy study enrollment for proxy: {}", prequalActivity.operatorGuid);
 
+                //do elastic datasync
+                dataExportDao.queueDataSync(prequalActivity.operatorId, studyId);
                 //delete proxy from elastic
                 try {
                     deleteElasticSearchData(handle, prequalActivity.operatorGuid, "cmi-lms");
@@ -182,7 +185,6 @@ public class LmsProxyFixes implements CustomTask {
             } else {
                 log.info("operator: {} seem to have self consent, not deleting enrollment status ", prequalActivity.operatorGuid);
             }
-            dataExportDao.queueDataSync(prequalActivity.operatorId, studyId);
         });
     }
 
