@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -142,7 +143,7 @@ public class LmsProxyFixes implements CustomTask {
             String currentExpr = sqlHelper.getValidationPexById(activityValidationId);
             String updatedExpr = currentExpr.replace(currentTxt, newTxt);
             sqlHelper.updateStudyValidationExpr(activityValidationId, updatedExpr);
-            log.info("Updated validation ID:  {} with expr text {}. \nOld expr: {} ", activityValidationId, currentExpr, updatedExpr);
+            log.info("Updated validation ID:  {} with expr text {}. \nOld validation expr: {} ", activityValidationId, currentExpr, updatedExpr);
         }
     }
 
@@ -165,18 +166,18 @@ public class LmsProxyFixes implements CustomTask {
         log.info("existing prequals to update: {}", prequals.size());
         prequals.forEach(prequalActivity -> {
             DBUtils.checkUpdate(1, sqlHelper.updateProxyInstance(prequalActivity.activityInstanceId, prequalActivity.governedUserId, prequalActivity.operatorId));
-            log.info("remapped activity instance : {} of operator: {} with gov user : {} ", prequalActivity.activityInstanceId, prequalActivity.governedUserId, prequalActivity.operatorId);
+            log.info("remapped activity instance : {} of operator: {} with gov user : {} ", prequalActivity.activityInstanceId, prequalActivity.operatorGuid, prequalActivity.governedUserId);
 
             //delete proxy enrollment
-            if (!jdbiActivityInstance.findAllByUserGuidAndActivityCode(prequalActivity.operatorGuid, "CONSENT", studyId).isEmpty()) {
-                DBUtils.checkUpdate(1, sqlHelper.deleteProxyEnrollmentStatusById(prequalActivity.operatorId));
-                log.info("deleted proxy study enrollment for proxy: {}", prequalActivity.operatorId);
+            if (jdbiActivityInstance.findAllByUserGuidAndActivityCode(prequalActivity.operatorGuid, "CONSENT", studyId).isEmpty()) {
+                sqlHelper.deleteProxyEnrollmentStatusById(prequalActivity.operatorId);
+                log.info("deleted proxy study enrollment for proxy: {}", prequalActivity.operatorGuid);
 
                 //delete proxy from elastic
                 try {
                     deleteElasticSearchData(handle, prequalActivity.operatorGuid, "cmi-lms");
                 } catch (IOException e) {
-                    log.warn("Failed to delted proxy : {} from ES . ignoring...", prequalActivity.operatorGuid);
+                    log.warn("Failed to delete proxy : {} from ES . ignoring...", prequalActivity.operatorGuid);
                 }
             } else {
                 log.info("operator: {} seem to have self consent, not deleting enrollment status ", prequalActivity.operatorGuid);
@@ -263,7 +264,7 @@ public class LmsProxyFixes implements CustomTask {
                 .type(REQUEST_TYPE)
                 .id(userGuid));
 
-        BulkResponse bulkResponse = null; //esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
         if (bulkResponse != null && bulkResponse.hasFailures()) {
             log.warn(bulkResponse.buildFailureMessage());
@@ -312,7 +313,7 @@ public class LmsProxyFixes implements CustomTask {
         @RegisterConstructorMapper(ProxyActivityActivityInfo.class)
         List<ProxyActivityActivityInfo> getPrequalProxyActivities(@Bind("studyGuid") String studyGuid);
 
-        @SqlUpdate("delete from user_study_enrollment where user_id :proxyId")
+        @SqlUpdate("delete from user_study_enrollment where user_id = :proxyId")
         int deleteProxyEnrollmentStatusById(@Bind("proxyId") Long proxyId);
 
         @SqlUpdate("update activity_instance ai" +
