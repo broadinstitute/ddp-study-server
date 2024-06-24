@@ -6,12 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -23,6 +26,11 @@ import org.broadinstitute.ddp.model.event.CopyAnswerEventAction;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -32,6 +40,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -42,10 +52,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class LmsProxyFixes implements CustomTask {
 
+    private static final String REQUEST_TYPE = "_doc";
     private static final String STUDY = "cmi-lms";
-    //todo add agedup check pex to study_governance_pex like in pancan ?
-    private static final String STUDY_GOV_PEX = "(!user.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"WHO_ENROLLING\"].answers.hasOption(\"DIAGNOSED\")\n" +
-            "      && user.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"WHO_ENROLLING\"].answers.hasOption(\"CHILD_DIAGNOSED\"))";
+    private static final String STUDY_GOV_PEX = "(!user.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"WHO_ENROLLING\"].answers.hasOption(\"DIAGNOSED\") " +
+            " && user.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"WHO_ENROLLING\"].answers.hasOption(\"CHILD_DIAGNOSED\")" +
+            " && (user.studies[\"cmi-lms\"].forms[\"PARENTAL_CONSENT\"].hasInstance() || user.studies[\"cmi-lms\"].forms[\"CONSENT_ASSENT\"].hasInstance()))";
 
     private static String PREQUAL_OPERATOR_COUNTRY_PEX_TXT = "operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"]";
     private static String PREQUAL_USER_COUNTRY_PEX_TXT = "user.studies[\"cmi-lms\"].forms[\"PREQUAL\"].questions[\"CHILD_COUNTRY\"]";
@@ -54,6 +65,7 @@ public class LmsProxyFixes implements CustomTask {
     private static String PREQUAL_OPERATOR_PEX_TXT = "operator.studies[\"cmi-lms\"].forms[\"PREQUAL\"]";
     private static String PREQUAL_USER_PEX_TXT = "user.studies[\"cmi-lms\"].forms[\"PREQUAL\"]";
     private static final String ACTIVITY_DATA_FILE = "patches/lms-copy-events-upd.conf";
+    private RestHighLevelClient esClient = null;
 
     private Config dataCfg;
     private Config varsCfg;
@@ -77,7 +89,12 @@ public class LmsProxyFixes implements CustomTask {
             throw new DDPException("This task is only for the " + STUDY + " study!");
         }
         this.activityDataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
-        cfg = studyCfg;
+        this.cfg = studyCfg;
+        try {
+            esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -138,12 +155,33 @@ public class LmsProxyFixes implements CustomTask {
     }
 
     private void updateExistingPrequals(Handle handle) {
+        DataExportDao dataExportDao = handle.attach(DataExportDao.class);
+        JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+        JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
+        Long studyId = jdbiUmbrellaStudy.findByStudyGuid("cmi-lms").getId();
+
         //get existing prequal instances that need to be updated
         List<SqlHelper.ProxyActivityActivityInfo> prequals = sqlHelper.getPrequalProxyActivities("cmi-lms");
         log.info("existing prequals to update: {}", prequals.size());
         prequals.forEach(prequalActivity -> {
             DBUtils.checkUpdate(1, sqlHelper.updateProxyInstance(prequalActivity.activityInstanceId, prequalActivity.governedUserId, prequalActivity.operatorId));
             log.info("remapped activity instance : {} of operator: {} with gov user : {} ", prequalActivity.activityInstanceId, prequalActivity.governedUserId, prequalActivity.operatorId);
+
+            //delete proxy enrollment
+            if (!jdbiActivityInstance.findAllByUserGuidAndActivityCode(prequalActivity.operatorGuid, "CONSENT", studyId).isEmpty()) {
+                DBUtils.checkUpdate(1, sqlHelper.deleteProxyEnrollmentStatusById(prequalActivity.operatorId));
+                log.info("deleted proxy study enrollment for proxy: {}", prequalActivity.operatorId);
+
+                //delete proxy from elastic
+                try {
+                    deleteElasticSearchData(handle, prequalActivity.operatorGuid, "cmi-lms");
+                } catch (IOException e) {
+                    log.warn("Failed to delted proxy : {} from ES . ignoring...", prequalActivity.operatorGuid);
+                }
+            } else {
+                log.info("operator: {} seem to have self consent, not deleting enrollment status ", prequalActivity.operatorGuid);
+            }
+            dataExportDao.queueDataSync(prequalActivity.operatorId, studyId);
         });
     }
 
@@ -196,6 +234,43 @@ public class LmsProxyFixes implements CustomTask {
         });
     }
 
+
+    private void deleteElasticSearchData(Handle handle, String userGuid, String studyGuid)
+            throws IOException {
+        log.info("deleting proxy from ES " + "participants, participants_structured, users", userGuid);
+        BulkRequest bulkRequest = new BulkRequest().timeout("2m");
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+
+        String indexParticipant = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                ElasticSearchIndexType.PARTICIPANTS);
+        String indexParticipantStructured = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+        String indexUsers = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                ElasticSearchIndexType.USERS);
+
+        bulkRequest.add(new DeleteRequest()
+                .index(indexParticipant)
+                .type(REQUEST_TYPE)
+                .id(userGuid));
+
+        bulkRequest.add(new DeleteRequest()
+                .index(indexParticipantStructured)
+                .type(REQUEST_TYPE)
+                .id(userGuid));
+
+        bulkRequest.add(new DeleteRequest()
+                .index(indexUsers)
+                .type(REQUEST_TYPE)
+                .id(userGuid));
+
+        BulkResponse bulkResponse = null; //esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+
+        if (bulkResponse != null && bulkResponse.hasFailures()) {
+            log.warn(bulkResponse.buildFailureMessage());
+        }
+    }
+
+
     private interface SqlHelper extends SqlObject {
 
         @SqlQuery("select expression_id from expression where expression_text like :searchTxt")
@@ -224,7 +299,8 @@ public class LmsProxyFixes implements CustomTask {
                 + " where av.activity_validation_id = :activityValidationId")
         int updateStudyValidationExpr(@Bind("activityValidationId") Long activityValidationId, @Bind("exprTxt") String exprTxt);
 
-        @SqlQuery("select u.user_id as operatorId, gu.user_id as governedUserId, ai.activity_instance_id as activityInstanceId\n" +
+        @SqlQuery("select u.user_id as operatorId, u.guid as operatorGuid, " +
+                "gu.user_id as governedUserId, ai.activity_instance_id as activityInstanceId\n" +
                 "from user u, umbrella_study s, study_activity sa, activity_instance ai , user_governance ug, user gu\n" +
                 "where sa.study_id = s.umbrella_study_id\n" +
                 "and ai.study_activity_id = sa.study_activity_id\n" +
@@ -236,6 +312,9 @@ public class LmsProxyFixes implements CustomTask {
         @RegisterConstructorMapper(ProxyActivityActivityInfo.class)
         List<ProxyActivityActivityInfo> getPrequalProxyActivities(@Bind("studyGuid") String studyGuid);
 
+        @SqlUpdate("delete from user_study_enrollment where user_id :proxyId")
+        int deleteProxyEnrollmentStatusById(@Bind("proxyId") Long proxyId);
+
         @SqlUpdate("update activity_instance ai" +
                 " set ai.participant_id = :govUserId" +
                 " where ai.activity_instance_id = :activityValidationId " +
@@ -245,6 +324,7 @@ public class LmsProxyFixes implements CustomTask {
         @AllArgsConstructor
         class ProxyActivityActivityInfo {
             Long operatorId;
+            String operatorGuid;
             Long governedUserId;
             Long activityInstanceId;
         }
