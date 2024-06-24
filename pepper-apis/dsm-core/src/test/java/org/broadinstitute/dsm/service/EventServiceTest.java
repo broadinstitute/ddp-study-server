@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.notficationevent.KitReasonType;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -32,6 +33,7 @@ import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.KitShippingTestUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -73,6 +75,8 @@ public class EventServiceTest extends DbAndElasticBaseTest {
         kitTestUtil = new KitTestUtil(INSTANCE_NAME, INSTANCE_GUID, "event_test_prefix", "event-group", "SALIVA", "SALIVA", esIndex,
                  false);
         kitTestUtil.setupInstanceAndSettings();
+        // set DSM's config to the test setup's config
+        DSMConfig.setConfig(ConfigManager.getInstance().getConfig());
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceId(kitTestUtil.getDdpInstanceId()).orElseThrow();
         ddpInstance = DDPInstance.from(ddpInstanceDto);
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId("EVENT_PARTICIPANT");

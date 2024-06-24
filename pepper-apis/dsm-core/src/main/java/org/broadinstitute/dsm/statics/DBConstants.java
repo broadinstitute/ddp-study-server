@@ -2,6 +2,8 @@ package org.broadinstitute.dsm.statics;
 
 public class DBConstants {
 
+    public static final String RGP = "RGP";
+
     private DBConstants() {
         throw new IllegalStateException("Utility class");
     }
