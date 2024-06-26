@@ -106,6 +106,9 @@ public class LmsProxyFixes implements CustomTask {
         updateProxyEvents(handle);
         updateValidationPrequalPex(handle, PREQUAL_OPERATOR_PEX_TXT, PREQUAL_USER_PEX_TXT);
         updateExistingPrequals(handle);
+
+        //todo .. handle self+child selection in PREQUAL.. In this case prequal is assigned to proxy/self and complicates pex reference
+        //need to identify some pex expressions which need to handle proxy:prequal and update them
     }
 
     private void updatePrequalProxyPex(Handle handle) {
