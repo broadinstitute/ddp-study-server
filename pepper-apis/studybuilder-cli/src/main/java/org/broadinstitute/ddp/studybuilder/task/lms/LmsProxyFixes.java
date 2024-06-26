@@ -113,8 +113,8 @@ public class LmsProxyFixes implements CustomTask {
 
     private void updatePrequalProxyPex(Handle handle) {
         Map<String, String> pexMap = new HashMap<>();
-        pexMap.put(PREQUAL_OPERATOR_COUNTRY_PEX_TXT, PREQUAL_USER_COUNTRY_PEX_TXT);
-        pexMap.put(PREQUAL_OPERATOR_STATE_PEX_TXT, PREQUAL_USER_STATE_PEX_TXT);
+        //pexMap.put(PREQUAL_OPERATOR_COUNTRY_PEX_TXT, PREQUAL_USER_COUNTRY_PEX_TXT); //todo.. need to handle self+child scenarios
+        //pexMap.put(PREQUAL_OPERATOR_STATE_PEX_TXT, PREQUAL_USER_STATE_PEX_TXT);
         pexMap.put(PREQUAL_OPERATOR_PEX_TXT, PREQUAL_USER_PEX_TXT);
         pexMap.entrySet().forEach(entry -> updatePrequalProxyPex(handle, entry.getKey(), entry.getValue()));
     }
