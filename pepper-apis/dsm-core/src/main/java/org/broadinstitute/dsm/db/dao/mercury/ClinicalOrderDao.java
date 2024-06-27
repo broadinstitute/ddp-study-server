@@ -30,6 +30,7 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
 
     public static final String GET_ORDERS_BY_TISSUE_IDS =
             "SELECT t.collaborator_sample_id, m.order_id, m.order_status, m.order_date, m.status_date, m.status_detail,"
+                    + "m.order_message, m.status_message, "
             + "st.sm_id_type, t.tissue_id, st.sm_id_type as sample_type, m.mercury_sequencing_id "
             + "FROM ddp_mercury_sequencing m, ddp_tissue t , sm_id s, sm_id_type st "
             + "where t.tissue_id = m.tissue_id "
@@ -39,7 +40,7 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
 
     public static String SQL_GET_ALL_ORDERS_FOR_CLINICAL_KIT_PAGE = "select ms.mercury_sequencing_id, ms.order_id, ms.ddp_participant_id, "
             + "IFNULL(t.collaborator_sample_id, kit.bsp_collaborator_sample_id) as collaborator_sample_id, order_date, order_status, "
-            + "status_date, status_detail,  IF(ms.tissue_id is null, \"Normal\", \"Tumor\") as sample_type "
+            + "status_date, status_detail, order_message, status_message, IF(ms.tissue_id is null, \"Normal\", \"Tumor\") as sample_type "
             + "FROM ddp_mercury_sequencing ms "
             + "LEFT join ddp_tissue t on (ms.tissue_id = t.tissue_id  and ms.tissue_id ) "
             + "LEFT join ddp_kit_request kit on (ms.dsm_kit_request_id = kit.dsm_kit_request_id)"
@@ -88,7 +89,9 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                                     rs.getString(DBConstants.MERCURY_ORDER_STATUS), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
                                     rs.getLong(DBConstants.MERCURY_STATUS_DATE), rs.getString(DBConstants.MERCURY_STATUS_DETAIL),
                                     rs.getString(DBConstants.MERCURY_SAMPLE_TYPE),
-                                    rs.getInt(DBConstants.MERCURY_SEQUENCING_ID)
+                                    rs.getInt(DBConstants.MERCURY_SEQUENCING_ID),
+                                    rs.getString(DBConstants.MERCURY_ORDER_MESSAGE),
+                                    rs.getString(DBConstants.MERCURY_STATUS_MESSAGE)
                             );
                             map.put(key, clinicalOrderDto);
                             if (!COMPLETED_ORDER_STATUS.equals(clinicalOrderDto.getStatusDetail())) {
