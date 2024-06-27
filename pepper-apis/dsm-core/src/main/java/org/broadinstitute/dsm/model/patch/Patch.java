@@ -238,7 +238,13 @@ public class Patch {
     public int getParentIdAsInt() {
         return Integer.parseInt(parentId);
     }
+
     public int getIdAsInt() {
+        if (id == null) {
+            throw new DsmInternalError("No id for this patch:" + this);
+        }
         return Integer.parseInt(this.id);
     }
+
+
 }
