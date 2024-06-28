@@ -9,8 +9,8 @@
         <update tableName="kit_return_information">
             <column name="return_address_phone" value="651-602-2045"/>
             <where>kit_return_id IN (
-                SELECT distinct s.kit_return_id FROM dev_dsm_db.ddp_instance di
-                join dev_dsm_db.ddp_kit_request_settings s on s.ddp_instance_id = di.ddp_instance_id
+                SELECT distinct s.kit_return_id FROM ddp_instance di
+                join ddp_kit_request_settings s on s.ddp_instance_id = di.ddp_instance_id
                 WHERE di.is_active = 1
                 and di.instance_name in ('Angio','Osteo', 'Osteo2', 'Pepper-MBC', 'Prostate', 'Brain', 'GEC', 'PanCan', 'cmi-lms')
                 )
@@ -19,8 +19,8 @@
         <update tableName="kit_return_information">
             <column name="return_address_phone" value="617-724-1240"/>
             <where>kit_return_id IN (
-                SELECT distinct s.kit_return_id FROM dev_dsm_db.ddp_instance di
-                join dev_dsm_db.ddp_kit_request_settings s on s.ddp_instance_id = di.ddp_instance_id
+                SELECT distinct s.kit_return_id FROM ddp_instance di
+                join ddp_kit_request_settings s on s.ddp_instance_id = di.ddp_instance_id
                 WHERE di.is_active = 1
                 and di.instance_name in ('juniper-ourheart')
                 )
