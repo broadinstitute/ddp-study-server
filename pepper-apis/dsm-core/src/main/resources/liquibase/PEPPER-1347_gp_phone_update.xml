@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="PEPPER-1347_gp_phone_update">
+        <update tableName="kit_return_information">
+            <column name="return_address_phone" value="651-602-2045"/>
+            <where>kit_return_id IN (
+                SELECT distinct s.kit_return_id FROM dev_dsm_db.ddp_instance di
+                join dev_dsm_db.ddp_kit_request_settings s on s.ddp_instance_id = di.ddp_instance_id
+                WHERE di.is_active = 1
+                and di.instance_name in ('Angio','Osteo', 'Osteo2', 'Pepper-MBC', 'Prostate', 'Brain', 'GEC', 'PanCan', 'cmi-lms')
+                )
+            </where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
