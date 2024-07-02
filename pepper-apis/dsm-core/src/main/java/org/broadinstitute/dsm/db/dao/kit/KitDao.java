@@ -493,7 +493,6 @@ public class KitDao {
                         kitRequestShipping.setDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
                         kitRequestShipping.setKitTypeId(String.valueOf(rs.getInt(DBConstants.KIT_TYPE_ID)));
                         kitRequestShipping.setKitTypeName(rs.getString(DBConstants.KIT_TYPE_NAME));
-                        logger.info("---Set Kit Type Name in Final Scan: {}", kitRequestShipping.getKitTypeName());
                         kitRequestShipping.setBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID));
                         kitRequestShipping.setBspCollaboratorSampleId(rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID));
                         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
