@@ -1069,7 +1069,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             KitRequestShipping kitRequestShipping = new KitRequestShipping(null, dsmKitId, null, null, null, null);
             kitRequestShipping.setLabelDate(labelDate);
-            logger.info("--updating ES: {} .. kit type: {}", kitRequestShipping, kitRequestShipping.kitTypeName);
             upsertUpdatedKitInfoIntoES(ddpInstanceDto, kitRequestShipping, dsmKitId);
         }
     }
