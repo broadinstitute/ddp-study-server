@@ -90,7 +90,8 @@ import org.slf4j.LoggerFactory;
 @SuperBuilder(setterPrefix = "with", toBuilder = true)
 public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
-    public static final String SQL_SELECT_KIT_REQUEST = "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, \n" +
+    public static final String SQL_SELECT_KIT_REQUEST =
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, \n" +
             "        ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference,\n" +
             "        ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index,\n" +
             "        req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id,\n" +
