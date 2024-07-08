@@ -1,5 +1,18 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -14,19 +27,6 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
 
 public class KitDao {
 
@@ -167,8 +167,8 @@ public class KitDao {
      */
     private static final String SELECT_KIT_TRACKING_BY_KIT_LABEL_OR_TRACKING_ID =
             "select t.kit_label, t.tracking_id, (select email from access_user where user_id = t.scan_by) as scan_by, case "
-                    + " when t.scan_date is not null then from_unixtime(t.scan_date/1000) else null end as scan_date from ddp_kit_tracking "
-                    + " t where t.kit_label = ? or t.tracking_id = ? limit 1";
+            + " when t.scan_date is not null then from_unixtime(t.scan_date/1000) else null end as scan_date from ddp_kit_tracking "
+            + " t where t.kit_label = ? or t.tracking_id = ? limit 1";
 
     public int create(KitRequestShipping kitRequestDto) {
         throw new NotImplementedException("This method is not implemented ");
@@ -315,7 +315,7 @@ public class KitDao {
     }
 
     public Optional<ScanResult> updateKitReceived(KitRequestShipping kitRequestShipping,
-                                                  String userId) {
+                                                 String userId) {
         Optional<ScanResult> result = Optional.empty();
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();

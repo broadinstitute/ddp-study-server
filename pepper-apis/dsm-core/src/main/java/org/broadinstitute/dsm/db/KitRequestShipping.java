@@ -95,7 +95,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
                     + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
-                    + "if (LOCATE('_',req.ddp_label)>0, LEFT(req.ddp_label,LOCATE('_',req.ddp_label) - 1), req.ddp_label) as ddp_label, "
+                    + " if (LOCATE('_',req.ddp_label)>0, LEFT(req.ddp_label,LOCATE('_',req.ddp_label) - 1), req.ddp_label) as ddp_label, "
                     + "req.dsm_kit_request_id, "
                     + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
                     + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site  "
@@ -823,7 +823,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             } catch (Exception e) {
                 logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
                         + "ElasticSearch", dsmKitRequestId));
-                e.printStackTrace();
             }
 
         } else {
