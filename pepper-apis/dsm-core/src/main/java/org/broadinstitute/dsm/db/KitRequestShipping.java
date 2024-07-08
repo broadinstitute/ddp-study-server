@@ -502,7 +502,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     }
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -823,6 +822,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             } catch (Exception e) {
                 logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
                         + "ElasticSearch", dsmKitRequestId));
+                e.printStackTrace();
             }
 
         } else {
