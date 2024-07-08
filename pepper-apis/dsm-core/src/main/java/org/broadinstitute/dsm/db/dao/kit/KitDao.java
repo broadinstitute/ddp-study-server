@@ -101,7 +101,7 @@ public class KitDao {
             + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
             + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
             + "req.order_transmitted_at, req.dsm_kit_request_id, kit.kit_label, kit.dsm_kit_id, kit.message, "
-            + "kt.requires_insert_in_kit_tracking, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
+            + "kt.requires_insert_in_kit_tracking, kt.kit_type_name, track.tracking_id, ks.kit_label_prefix, ks.kit_label_length "
             + "FROM ddp_kit as kit "
             + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
             + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
@@ -155,6 +155,9 @@ public class KitDao {
     private static final String SQL_NUM_KITS_BY_LABEL = "select count(1) from ddp_kit WHERE dsm_kit_request_id = "
             + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) and deactivated_date is null";
 
+    private static final String SQL_NUM_DEACTIVATED_KITS_BY_LABEL = "select count(1) from ddp_kit WHERE dsm_kit_request_id = "
+            + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) and deactivated_date is NOT null";
+
     private static final String SQL_DELETE_KIT_TRACKING = "DELETE FROM ddp_kit_tracking WHERE kit_label = ?";
 
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
@@ -185,6 +188,30 @@ public class KitDao {
 
     public Boolean hasTrackingScan(String kitLabel) {
         return booleanCheckFoundAsName(kitLabel, SQL_HAS_KIT_TRACKING);
+    }
+
+    public int getDeactivatedKitCountByLabel(KitRequestShipping kitRequestShipping) throws Exception {
+        SimpleResult results = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_NUM_DEACTIVATED_KITS_BY_LABEL)) {
+                stmt.setString(1, kitRequestShipping.getDdpLabel());
+                ResultSet rs = stmt.executeQuery();
+                if (!rs.next()) {
+                    dbVals.resultValue = 0;
+                } else {
+                    dbVals.resultValue = rs.getInt(1);
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = new DsmInternalError("Error checking for de-activated kits with label: " + kitRequestShipping.getDdpLabel(), dbVals.resultException);
+            }
+            return dbVals;
+        });
+
+        if (results.resultException == null) {
+            return (Integer) results.resultValue;
+        } else {
+            throw results.resultException;
+        }
     }
 
     /**
@@ -492,6 +519,7 @@ public class KitDao {
                         kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
                         kitRequestShipping.setDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
                         kitRequestShipping.setKitTypeId(String.valueOf(rs.getInt(DBConstants.KIT_TYPE_ID)));
+                        kitRequestShipping.setKitTypeName(rs.getString(DBConstants.KIT_TYPE_NAME));
                         kitRequestShipping.setBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID));
                         kitRequestShipping.setBspCollaboratorSampleId(rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID));
                         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
@@ -701,12 +729,12 @@ public class KitDao {
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultException =  new DsmInternalError("Error checking if kit exists in tracking table ", dbVals.resultException);
+                dbVals.resultException = new DsmInternalError("Error checking if kit exists in tracking table ", dbVals.resultException);
             }
             if (dbVals.resultValue == null) {
                 throw new DsmInternalError("Error checking if kit exists in tracking table ");
             }
-            logger.info("Found {} kit in tracking table w/ kit_label {} ", dbVals.resultValue,  kitLabel);
+            logger.info("Found {} kit in tracking table w/ kit_label {} ", dbVals.resultValue, kitLabel);
             return dbVals;
         });
 
@@ -814,9 +842,10 @@ public class KitDao {
 
     /**
      * Deletes from both ddp_kit and ddp_kit_request tables in one single transaction
+     *
      * @param dsmKitRequestId the id of the kit request to delete
      * @return the number of affected rows in ddp_kit_request
-     * */
+     */
     @VisibleForTesting
     public int deleteKitRequestShipping(int dsmKitRequestId) {
         return inTransaction(conn -> {

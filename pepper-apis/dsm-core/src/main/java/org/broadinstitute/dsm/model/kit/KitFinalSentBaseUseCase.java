@@ -49,9 +49,13 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         }
         if (kitPayload.getDdpInstanceDto().isESUpdatePossible()) {
             try {
-                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping,
-                        kitPayload.getDdpInstanceDto(), "ddpLabel", "ddpLabel",
-                        ddpLabel, new PutToNestedScriptBuilder()).export();
+                //to avoid updating old deactivated record in ES because of search by label .. update only if NO de-activated record exists with same label
+                //check if de-activated kit request exists for same kit-request-id and skip ES update
+                if (kitDao.getDeactivatedKitCountByLabel(kitRequestShipping) == 0) {
+                    UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping,
+                            kitPayload.getDdpInstanceDto(), "ddpLabel", "ddpLabel",
+                            ddpLabel, new PutToNestedScriptBuilder()).export();
+                }
             } catch (Exception e) {
                 logger.error(String.format("Error updating ddp label for kit with ddpLabel: %s", ddpLabel));
                 e.printStackTrace();
@@ -59,3 +63,4 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         }
     }
 }
+
