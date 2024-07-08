@@ -202,7 +202,7 @@ public class KitDao {
                     dbVals.resultValue = rs.getInt(1);
                 }
             } catch (SQLException e) {
-                dbVals.resultValue = new ScanResult(kitRequestShipping.getDdpLabel(), e.getMessage());
+                dbVals.resultException = new DsmInternalError("Error checking for de-activated kits with label: " + kitRequestShipping.getDdpLabel(), dbVals.resultException);
             }
             return dbVals;
         });
