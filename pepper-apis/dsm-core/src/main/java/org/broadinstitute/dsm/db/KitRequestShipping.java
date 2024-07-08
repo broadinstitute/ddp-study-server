@@ -91,33 +91,33 @@ import org.slf4j.LoggerFactory;
 public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_KIT_REQUEST =
-            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, \n" +
-            "        ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference,\n" +
-            "        ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index,\n" +
-            "        req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id,\n" +
-            "        if (LOCATE('_',req.ddp_label)>0, LEFT(req.ddp_label,LOCATE('_',req.ddp_label) - 1), req.ddp_label) as ddp_label,\n" +
-            "        req.dsm_kit_request_id,\n" +
-            "        req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date,\n" +
-            "        req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site \n" +
-            "        WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request \n" +
-            "        LEFT JOIN \n" +
-            "        (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to,\n" +
-            "        kit.label_url_return, kit.tracking_to_id,\n" +
-            "        kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id,\n" +
-            "        kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message,\n" +
-            "        kit.receive_date, kit.receive_by, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason,\n" +
-            "        tracking.tracking_id, \n" +
-            "        kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason,\n" +
-            "        kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date,\n" +
-            "        kit.sequencing_restriction, kit.sample_notes FROM ddp_kit kit \n" +
-            "        LEFT JOIN ddp_kit_tracking tracking \n" +
-            "        ON (kit.kit_label = tracking.kit_label) )as wtf) AS kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id \n" +
-            "        LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id \n" +
-            "        AND ex.ddp_participant_id = request.ddp_participant_id) \n" +
-            "        LEFT JOIN ddp_kit_request_settings dkc ON (request.ddp_instance_id = dkc.ddp_instance_id \n" +
-            "        AND request.kit_type_id = dkc.kit_type_id) \n" +
-            "        LEFT JOIN kit_type ktype ON (request.kit_type_id = ktype.kit_type_id) \n" +
-            "        WHERE ex.ddp_participant_exit_id is null ";
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
+                    + "        ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
+                    + "        ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
+                    + "        req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
+                    + "        if (LOCATE('_',req.ddp_label)>0, LEFT(req.ddp_label,LOCATE('_',req.ddp_label) - 1), req.ddp_label) as ddp_label, "
+                    + "        req.dsm_kit_request_id, "
+                    + "        req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
+                    + "        req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site  "
+                    + "        WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request  "
+                    + "        LEFT JOIN  "
+                    + "        (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, "
+                    + "        kit.label_url_return, kit.tracking_to_id, "
+                    + "        kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id, "
+                    + "        kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
+                    + "        kit.receive_date, kit.receive_by, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
+                    + "        tracking.tracking_id,  "
+                    + "        kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
+                    + "        kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "        kit.sequencing_restriction, kit.sample_notes FROM ddp_kit kit  "
+                    + "        LEFT JOIN ddp_kit_tracking tracking  "
+                    + "        ON (kit.kit_label = tracking.kit_label) )as wtf) AS kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id  "
+                    + "        LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id  "
+                    + "        AND ex.ddp_participant_id = request.ddp_participant_id)  "
+                    + "        LEFT JOIN ddp_kit_request_settings dkc ON (request.ddp_instance_id = dkc.ddp_instance_id  "
+                    + "        AND request.kit_type_id = dkc.kit_type_id)  "
+                    + "        LEFT JOIN kit_type ktype ON (request.kit_type_id = ktype.kit_type_id)  "
+                    + "        WHERE ex.ddp_participant_exit_id is null ";
 
     public static final String SQL_SELECT_KIT_WITH_QUERY_EXTENSION_FOR_UPS_TABLE =
             "SELECT kt.kit_type_name, realm.instance_name, request.bsp_collaborator_participant_id, request.bsp_collaborator_sample_id, "
