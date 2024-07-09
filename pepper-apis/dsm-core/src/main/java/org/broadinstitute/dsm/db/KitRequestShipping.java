@@ -752,7 +752,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequests;
     }
 
-    public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealmforES(@NonNull String realm, boolean getAll) {
+    public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealmForES(@NonNull String realm, boolean getAll) {
         logger.info("Collecting kit information for ES export");
         //this method will include deactivated kits as well even if it is reactivated so that elastic has the deactivated record
         Map<String, List<KitRequestShipping>> kitRequests = getKitRequestsByKitTypeId(realm, null, null, getAll, SQL_SELECT_KIT_REQUEST_FOR_ES);
