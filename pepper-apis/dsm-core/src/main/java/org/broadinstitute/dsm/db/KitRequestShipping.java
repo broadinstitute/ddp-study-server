@@ -182,8 +182,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "LEFT JOIN kit_type ty ON (req.kit_type_id = ty.kit_type_id) WHERE req.ddp_participant_id = ? "
                     + "AND realm.instance_name = ?";
     public static final String SQL_SELECT_KIT =
-            "SELECT * FROM (SELECT realm.instance_name, re.dsm_kit_request_id FROM ddp_kit_request re, ddp_instance realm "
-                    + "WHERE realm.ddp_instance_id = re.ddp_instance_id) AS request "
+            "SELECT * FROM (SELECT realm.instance_name, re.dsm_kit_request_id, kt.kit_type_name FROM ddp_kit_request re, ddp_instance realm, kit_type kt "
+                    + "WHERE realm.ddp_instance_id = re.ddp_instance_id and kt.kit_type_id = re.kit_type_id) AS request "
                     + "LEFT JOIN (SELECT * FROM (SELECT k.easypost_to_id, k.easypost_return_id, "
                     + "k.deactivated_date, k.deactivation_reason, k.dsm_kit_request_id, k.easypost_address_id_to, k.dsm_kit_id "
                     + "FROM ddp_kit k INNER JOIN( "
@@ -396,6 +396,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public KitRequestShipping(Integer dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
                               String message) {
         this(null, null, null, null, null, null, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
+                easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null);
+    }
+
+    public KitRequestShipping(Integer dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
+                              String message, String kitTypeName) {
+        this(null, null, null, null, null, kitTypeName, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
                 easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null);
     }
@@ -1676,7 +1683,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         dbVals.resultValue =
                                 new KitRequestShipping(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
                                         rs.getString(DBConstants.EASYPOST_TO_ID), rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), false,
-                                        null);
+                                        null, rs.getString(DBConstants.KIT_TYPE_NAME));
                     }
                 }
             } catch (Exception ex) {
@@ -1693,7 +1700,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             long dsmKitId = KitRequestShipping.writeNewKit(dsmKitRequestId, kitRequestShipping.getEasypostAddressId(), message, false);
             kitRequestShipping.setDsmKitId(dsmKitId);
-            kitRequestShipping.setKitTypeName(kitRequestDao.getKitTypeByKitRequestId(dsmKitRequestId));
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,

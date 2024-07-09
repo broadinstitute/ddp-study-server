@@ -140,28 +140,20 @@ public class KitRequestDao implements Dao<KitRequestDto> {
     }
 
     public String getKitTypeByKitRequestId(long kitRequestId) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
+        return inTransaction(conn -> {
+            String result = null;
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_TYPE_BY_KIT_REQUEST_ID)) {
                 stmt.setLong(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getString(DBConstants.KIT_TYPE_NAME);
-                    } else {
-                        dbVals.resultValue = null;
-                        dbVals.resultException = new DsmInternalError("No kit request found for kit_request_id " + kitRequestId);
+                        result = rs.getString(DBConstants.KIT_TYPE_NAME);
                     }
                 }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
+            } catch (SQLException e) {
+                throw new DsmInternalError("No kit request found for kit_request_id " + kitRequestId, e);
             }
-            return dbVals;
+            return result;
         });
-
-        if (results.resultException != null) {
-            throw new DsmInternalError("Couldn't get kit type for kit request: " + kitRequestId, results.resultException);
-        }
-        return (String) results.resultValue;
     }
 
     /**
