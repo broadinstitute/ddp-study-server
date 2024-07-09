@@ -20,7 +20,7 @@ public class KitRequestShippingMigrator extends BaseCollectionMigrator {
     @Override
     protected Map<String, Object> getDataByRealm() {
         Map<String, List<KitRequestShipping>> kitRequests =
-                KitRequestShipping.getAllKitRequestsByRealm(realm, null, null, true);
+                KitRequestShipping.getAllKitRequestsByRealmforES(realm, true);
         int recordsFromRealm = kitRequests.size();
         AdditionalKitShippingRetriever.fromRealm(realm)
                 .ifPresent(retriever -> retriever.mergeRecords(kitRequests));
