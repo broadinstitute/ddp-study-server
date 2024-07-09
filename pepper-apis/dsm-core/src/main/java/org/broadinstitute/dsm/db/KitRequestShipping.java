@@ -854,8 +854,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             kitRequestShipping.setDsmKitRequestId(dsmKitRequestId);
             kitRequestShipping.setDeactivationReason(deactivationReason);
             kitRequestShipping.setDeactivatedDate(deactivatedDate);
-
+            kitRequestShipping.setKitTypeName(kitRequestDao.getKitTypeByKitRequestId(dsmKitRequestId));
             try {
+                //todo: if multiple kits exist for same kit-request(dsmKitRequestId), we are updating all elements? edge case though
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                         new PutToNestedScriptBuilder()).export();
@@ -1692,7 +1693,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             long dsmKitId = KitRequestShipping.writeNewKit(dsmKitRequestId, kitRequestShipping.getEasypostAddressId(), message, false);
             kitRequestShipping.setDsmKitId(dsmKitId);
-
+            kitRequestShipping.setKitTypeName(kitRequestDao.getKitTypeByKitRequestId(dsmKitRequestId));
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,

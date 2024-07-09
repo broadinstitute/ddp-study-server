@@ -63,6 +63,11 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String BY_KIT_LABEL = " left join ddp_kit k on req.dsm_kit_request_id = k.dsm_kit_request_id where kit_label = ?";
 
+    public static final String SQL_GET_KIT_TYPE_BY_KIT_REQUEST_ID =
+            "select kt.kit_type_name FROM ddp_kit_request kr "
+                    + "join kit_type kt on kt.kit_type_id = kr.kit_type_id "
+                    + "where kr.dsm_kit_request_id = ? ";
+
     @Override
     public int create(KitRequestDto kitRequestDto) {
         return 0;
@@ -130,6 +135,31 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
         if (results.resultException != null) {
             throw new RuntimeException("Couldn't get kit label for kit " + dsmKitRequestId, results.resultException);
+        }
+        return (String) results.resultValue;
+    }
+
+    public String getKitTypeByKitRequestId(long kitRequestId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_TYPE_BY_KIT_REQUEST_ID)) {
+                stmt.setLong(1, kitRequestId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getString(DBConstants.KIT_TYPE_NAME);
+                    } else {
+                        dbVals.resultValue = null;
+                        dbVals.resultException = new DsmInternalError("No kit request found for kit_request_id " + kitRequestId);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get kit type for kit request: " + kitRequestId, results.resultException);
         }
         return (String) results.resultValue;
     }
