@@ -159,7 +159,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get kit type for kit request: " + kitRequestId, results.resultException);
+            throw new DsmInternalError("Couldn't get kit type for kit request: " + kitRequestId, results.resultException);
         }
         return (String) results.resultValue;
     }
