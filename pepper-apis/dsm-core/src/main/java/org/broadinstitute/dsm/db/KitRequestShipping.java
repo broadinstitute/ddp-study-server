@@ -90,7 +90,7 @@ import org.slf4j.LoggerFactory;
 @SuperBuilder(setterPrefix = "with", toBuilder = true)
 public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
-    public static final String SQL_SELECT_KIT_REQUEST =
+    public static final String SQL_SELECT_KIT_REQUEST_FOR_ES =
             "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
                     + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
                     + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
@@ -117,6 +117,36 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "LEFT JOIN ddp_kit_request_settings dkc ON (request.ddp_instance_id = dkc.ddp_instance_id  "
                     + "AND request.kit_type_id = dkc.kit_type_id)  "
                     + "LEFT JOIN kit_type ktype ON (request.kit_type_id = ktype.kit_type_id)  "
+                    + "WHERE ex.ddp_participant_exit_id is null ";
+
+    public static final String SQL_SELECT_KIT_REQUEST =
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, kt.display_name, ddp_site.instance_name, ddp_site.ddp_instance_id,"
+                    + " ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
+                    + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
+                    + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
+                    + " if (LOCATE('_',req.ddp_label)>0, LEFT(req.ddp_label,LOCATE('_',req.ddp_label) - 1), req.ddp_label) as ddp_label, "
+                    + "req.dsm_kit_request_id, "
+                    + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
+                    + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
+                    + "WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request "
+                    + "LEFT JOIN (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, "
+                    + "kit.label_url_return, kit.tracking_to_id, "
+                    + "kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id, "
+                    + "kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
+                    + "kit.receive_date, kit.receive_by, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
+                    + "tracking.tracking_id,"
+                    + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
+                    + " kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "  kit.sequencing_restriction, kit.sample_notes FROM ddp_kit kit "
+                    + "INNER JOIN (SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit "
+                    + "GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
+                    + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
+                    + "ON (kit.kit_label = tracking.kit_label))as wtf) AS kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id "
+                    + "LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id "
+                    + "AND ex.ddp_participant_id = request.ddp_participant_id) "
+                    + "LEFT JOIN ddp_kit_request_settings dkc ON (request.ddp_instance_id = dkc.ddp_instance_id "
+                    + "AND request.kit_type_id = dkc.kit_type_id) "
+                    + "LEFT JOIN kit_type ktype ON (request.kit_type_id = ktype.kit_type_id) "
                     + "WHERE ex.ddp_participant_exit_id is null ";
 
     public static final String SQL_SELECT_KIT_WITH_QUERY_EXTENSION_FOR_UPS_TABLE =
@@ -490,12 +520,12 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequestShipping;
     }
 
-    private static Map<String, List<KitRequestShipping>> getKitRequestsByKitId(@NonNull String realm, String target, Integer kitTypeId,
-                                                                               boolean getAll) {
+    private static Map<String, List<KitRequestShipping>> getKitRequestsByKitTypeId(@NonNull String realm, String target, Integer kitTypeId,
+                                                                                   boolean getAll, String selectSQL) {
         Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = getSelectKitReqPreparedStatement(conn, target, realm, kitTypeId, getAll)) {
+            try (PreparedStatement stmt = getSelectKitReqPreparedStatement(conn, target, realm, kitTypeId, getAll, selectSQL)) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         addKitRequest(rs, kitRequests);
@@ -658,7 +688,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target,
                                                                                  Integer kitTypeId, boolean getAll) {
         logger.info("Collecting kit information");
-        Map<String, List<KitRequestShipping>> kitRequests = getKitRequestsByKitId(realm, target, kitTypeId, getAll);
+        Map<String, List<KitRequestShipping>> kitRequests = getKitRequestsByKitTypeId(realm, target, kitTypeId, getAll, null);
         if (!kitRequests.isEmpty() && !getAll) {
             if (StringUtils.isBlank(realm)) {
                 logger.info("Found " + kitRequests.size() + " " + target + " KitRequests across all realms ");
@@ -722,15 +752,25 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         return kitRequests;
     }
 
+    public static Map<String, List<KitRequestShipping>> getKitRequestsForExport(@NonNull String realm, boolean getAll) {
+        logger.info("Collecting kit information for ES export");
+        //this method will include deactivated kits as well even if it is reactivated so that elastic has the deactivated record
+        Map<String, List<KitRequestShipping>> kitRequests = getKitRequestsByKitTypeId(realm, null, null, getAll, SQL_SELECT_KIT_REQUEST_FOR_ES);
+        return kitRequests;
+    }
+
     private static PreparedStatement getSelectKitReqPreparedStatement(@NonNull Connection conn, String target, @NonNull String realm,
-                                                                      Integer kitTypeId, boolean getAll) throws SQLException {
+                                                                      Integer kitTypeId, boolean getAll, String selectQuery) throws SQLException {
         PreparedStatement stmt = null;
+        if (selectQuery == null) {
+            selectQuery = SQL_SELECT_KIT_REQUEST;
+        }
         if (getAll) {
-            String query = SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM);
+            String query = selectQuery.concat(QueryExtension.BY_REALM);
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
         } else {
-            String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE_ID));
+            String query = addQueryExtension(target, selectQuery.concat(QueryExtension.BY_REALM_AND_TYPE_ID));
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
             stmt.setInt(2, kitTypeId);
