@@ -857,22 +857,24 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     results.resultException);
         }
         if (Objects.nonNull(ddpInstanceDto)) {
-            KitRequestShipping kitRequestShipping = new KitRequestShipping();
-            kitRequestShipping.setDsmKitRequestId(dsmKitRequestId);
-            kitRequestShipping.setDeactivationReason(deactivationReason);
-            kitRequestShipping.setDeactivatedDate(deactivatedDate);
-            kitRequestShipping.setKitTypeName(kitRequestDao.getKitTypeByKitRequestId(dsmKitRequestId));
-            try {
-                //todo: if multiple kits exist for same kit-request(dsmKitRequestId), we are updating all elements? edge case though
-                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                        ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
-                        new PutToNestedScriptBuilder()).export();
-            } catch (Exception e) {
-                logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
-                        + "ElasticSearch", dsmKitRequestId));
-                e.printStackTrace();
+            if (ddpInstanceDto.isESUpdatePossible()) {
+                //skip if no elastic index. ex: juniper studies/eating-disorder
+                KitRequestShipping kitRequestShipping = new KitRequestShipping();
+                kitRequestShipping.setDsmKitRequestId(dsmKitRequestId);
+                kitRequestShipping.setDeactivationReason(deactivationReason);
+                kitRequestShipping.setDeactivatedDate(deactivatedDate);
+                kitRequestShipping.setKitTypeName(kitRequestDao.getKitTypeByKitRequestId(dsmKitRequestId));
+                try {
+                    //todo: if multiple kits exist for same kit-request(dsmKitRequestId), we are updating all elements? edge case though
+                    UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+                            ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
+                            new PutToNestedScriptBuilder()).export();
+                } catch (Exception e) {
+                    logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
+                            + "ElasticSearch", dsmKitRequestId));
+                    e.printStackTrace();
+                }
             }
-
         } else {
             if (easypostApiKey != null) {
                 KitRequestShipping.refundKit(dsmKitRequestId, easypostApiKey, ddpInstanceDto);
@@ -1700,14 +1702,17 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             long dsmKitId = KitRequestShipping.writeNewKit(dsmKitRequestId, kitRequestShipping.getEasypostAddressId(), message, false);
             kitRequestShipping.setDsmKitId(dsmKitId);
-            try {
-                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                        ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
-                        new PutToNestedScriptBuilder()).export();
-            } catch (Exception e) {
-                logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch",
-                        dsmKitRequestId));
-                e.printStackTrace();
+            if (ddpInstanceDto.isESUpdatePossible()) {
+                //skip if no elastic index. ex: juniper studies/eating-disorder
+                try {
+                    UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                            ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
+                            new PutToNestedScriptBuilder()).export();
+                } catch (Exception e) {
+                    logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch",
+                            dsmKitRequestId));
+                    e.printStackTrace();
+                }
             }
         }
     }
