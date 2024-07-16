@@ -877,11 +877,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
         } else {
             //todo check out when we need to request refund and probably remove else once we confirm its never invoked.
-            if (easypostApiKey != null) {
-                KitRequestShipping.refundKit(dsmKitRequestId, easypostApiKey, ddpInstanceDto);
-                logger.info("Requested refund for kitRequest: {} ", dsmKitRequestId);
-            }
             logger.error("DDPInstanceDto null for deactivation of kitRequest: {}", dsmKitRequestId);
+            if (easypostApiKey != null) {
+                logger.info("Requesting refund for kitRequest: {} ", dsmKitRequestId);
+                KitRequestShipping.refundKit(dsmKitRequestId, easypostApiKey, ddpInstanceDto);
+            }
         }
     }
 
