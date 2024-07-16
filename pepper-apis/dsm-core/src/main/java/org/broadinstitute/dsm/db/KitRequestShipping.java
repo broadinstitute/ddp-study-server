@@ -870,8 +870,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
-                    logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
-                            + "ElasticSearch. Exception: %s", dsmKitRequestId, e.getMessage()));
+                    logger.error("Error updating kit request shipping deactivate reason with dsm kit request id: {} "
+                            + " in ElasticSearch. Exception: {}", dsmKitRequestId, e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1712,8 +1712,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
-                    logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch. Exception: %s ",
-                            dsmKitRequestId, e.getMessage()));
+                    logger.error("Error inserting reactivated kit request shipping with id: {} in ElasticSearch. Exception: {} ", dsmKitRequestId, e.getMessage());
                     e.printStackTrace();
                 }
             }
