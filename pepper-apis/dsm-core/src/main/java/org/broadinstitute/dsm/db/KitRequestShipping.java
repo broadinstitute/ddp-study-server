@@ -871,14 +871,17 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
                     logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
-                            + "ElasticSearch", dsmKitRequestId));
+                            + "ElasticSearch. Exception: %s", dsmKitRequestId, e.getMessage()));
                     e.printStackTrace();
                 }
             }
         } else {
+            //todo check out when we need to request refund and probably remove else once we confirm its never invoked.
             if (easypostApiKey != null) {
                 KitRequestShipping.refundKit(dsmKitRequestId, easypostApiKey, ddpInstanceDto);
+                logger.info("Requested refund for kitRequest: {} ", dsmKitRequestId);
             }
+            logger.error("DDPInstanceDto null for deactivation of kitRequest: {}", dsmKitRequestId);
         }
     }
 
@@ -1709,8 +1712,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId,
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
-                    logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch",
-                            dsmKitRequestId));
+                    logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch. Exception: %s ",
+                            dsmKitRequestId), e.getMessage());
                     e.printStackTrace();
                 }
             }
