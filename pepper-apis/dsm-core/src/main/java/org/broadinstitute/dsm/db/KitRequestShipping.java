@@ -1713,7 +1713,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                             new PutToNestedScriptBuilder()).export();
                 } catch (Exception e) {
                     logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch. Exception: %s ",
-                            dsmKitRequestId), e.getMessage());
+                            dsmKitRequestId, e.getMessage()));
                     e.printStackTrace();
                 }
             }
