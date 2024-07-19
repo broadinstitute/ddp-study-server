@@ -319,20 +319,7 @@ public class PdfGenerationService {
             }
 
             //special case for pancan release v2 completed user who consented v1, add consent-v1 for consent signature substitution
-            if (config.getStudyGuid().equalsIgnoreCase("cmi-pancan")) {
-                if (config.getConfigName().equalsIgnoreCase("countmein-release")
-                        && acceptedActivityVersions.get("RELEASE").contains("v2")) {
-                    acceptedActivityVersions.get("CONSENT").add("v1");
-                } else if (config.getConfigName().equalsIgnoreCase("countmein-release-parental")
-                        && acceptedActivityVersions.get("RELEASE_MINOR").contains("v2")
-                        && acceptedActivityVersions.containsKey("CONSENT_PARENTAL")) {
-                    acceptedActivityVersions.get("CONSENT_PARENTAL").add("v1");
-                } else if (config.getConfigName().equalsIgnoreCase("countmein-release-assent")
-                        && acceptedActivityVersions.get("RELEASE_MINOR").contains("v2")
-                        && acceptedActivityVersions.containsKey("CONSENT_ASSENT")) {
-                    acceptedActivityVersions.get("CONSENT_ASSENT").add("v1");
-                }
-            }
+            handlePancanReleaseV2(config, acceptedActivityVersions);
 
             for (Map.Entry<String, Set<String>> entry : acceptedActivityVersions.entrySet()) {
                 String activityCode = entry.getKey();
@@ -349,6 +336,23 @@ public class PdfGenerationService {
         }
 
         return assignments;
+    }
+
+    private void handlePancanReleaseV2(PdfConfiguration config, Map<String, Set<String>> acceptedActivityVersions) {
+        if (config.getStudyGuid().equalsIgnoreCase("cmi-pancan")) {
+            if (config.getConfigName().equalsIgnoreCase("countmein-release")
+                    && acceptedActivityVersions.get("RELEASE").contains("v2")) {
+                acceptedActivityVersions.get("CONSENT").add("v1");
+            } else if (config.getConfigName().equalsIgnoreCase("countmein-release-parental")
+                    && acceptedActivityVersions.get("RELEASE_MINOR").contains("v2")
+                    && acceptedActivityVersions.containsKey("CONSENT_PARENTAL")) {
+                acceptedActivityVersions.get("CONSENT_PARENTAL").add("v1");
+            } else if (config.getConfigName().equalsIgnoreCase("countmein-release-assent")
+                    && acceptedActivityVersions.get("RELEASE_MINOR").contains("v2")
+                    && acceptedActivityVersions.containsKey("CONSENT_ASSENT")) {
+                acceptedActivityVersions.get("CONSENT_ASSENT").add("v1");
+            }
+        }
     }
 
     private void checkForErrors(List<String> errors, String userGuid) {
