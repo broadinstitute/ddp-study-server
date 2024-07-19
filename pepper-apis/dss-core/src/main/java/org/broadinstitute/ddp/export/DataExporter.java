@@ -952,7 +952,31 @@ public class DataExporter {
                 userPdfConfigs.add(pdfConfigInfo);
             }
         }
+        //pancan special case to handle scenarios where pancan user consented-v1 but had release-v2
+        if (!studyConfigs.isEmpty() && studyConfigs.get(0).getStudyGuid().equals("cmi-pancan")) {
+            PdfConfigInfo pancanReleasePdfConfigV2 = getPancanReleaseV2PdfConfigIfNeeded(studyConfigs, userActivityVersions);
+            if (pancanReleasePdfConfigV2 != null && !userPdfConfigs.contains(pancanReleasePdfConfigV2)) {
+                userPdfConfigs.add(pancanReleasePdfConfigV2);
+            }
+        }
+
         return userPdfConfigs;
+    }
+
+    private PdfConfigInfo getPancanReleaseV2PdfConfigIfNeeded(List<PdfConfigInfo> studyConfigs, Map<String, Set<String>> userActivityVersions) {
+        PdfConfigInfo releasePdfConfig = null;
+        if (userActivityVersions.containsKey("RELEASE") && userActivityVersions.get("RELEASE").contains("v2")
+                && userActivityVersions.get("CONSENT").contains("v1")) {
+            return studyConfigs.stream().filter(pdfConfigInfo -> pdfConfigInfo.getConfigName().equals("countmein-release")).findFirst().orElse(null);
+        }
+        if (userActivityVersions.containsKey("RELEASE_MINOR") && userActivityVersions.get("RELEASE_MINOR").contains("v2")) {
+            if (userActivityVersions.get("CONSENT_PARENTAL").contains("v1")) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo -> pdfConfigInfo.getConfigName().equals("countmein-release-parental")).findFirst().orElse(null);
+            } else if (userActivityVersions.get("CONSENT_ASSENT").contains("v1")) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo -> pdfConfigInfo.getConfigName().equals("countmein-release-assent")).findFirst().orElse(null);
+            }
+        }
+        return releasePdfConfig;
     }
 
     /**
