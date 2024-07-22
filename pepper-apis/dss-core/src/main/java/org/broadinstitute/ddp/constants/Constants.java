@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.constants;
 
-public class PdfConstants {
+public class Constants {
     public static final String PANCAN_GUID = "cmi-pancan";
     public static final String COUNTMEIN_RELEASE = "countmein-release";
     public static final String RELEASE = "RELEASE";

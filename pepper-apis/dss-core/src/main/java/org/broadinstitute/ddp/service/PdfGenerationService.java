@@ -84,17 +84,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.broadinstitute.ddp.constants.PdfConstants.CONSENT;
-import static org.broadinstitute.ddp.constants.PdfConstants.CONSENT_ASSENT;
-import static org.broadinstitute.ddp.constants.PdfConstants.CONSENT_PARENTAL;
-import static org.broadinstitute.ddp.constants.PdfConstants.COUNTMEIN_RELEASE;
-import static org.broadinstitute.ddp.constants.PdfConstants.COUNTMEIN_RELEASE_ASSENT;
-import static org.broadinstitute.ddp.constants.PdfConstants.COUNTMEIN_RELEASE_PARENTAL;
-import static org.broadinstitute.ddp.constants.PdfConstants.PANCAN_GUID;
-import static org.broadinstitute.ddp.constants.PdfConstants.RELEASE;
-import static org.broadinstitute.ddp.constants.PdfConstants.RELEASE_MINOR;
-import static org.broadinstitute.ddp.constants.PdfConstants.VERSION_1;
-import static org.broadinstitute.ddp.constants.PdfConstants.VERSION_2;
+import static org.broadinstitute.ddp.constants.Constants.CONSENT;
+import static org.broadinstitute.ddp.constants.Constants.CONSENT_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.CONSENT_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
+import static org.broadinstitute.ddp.constants.Constants.RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.RELEASE_MINOR;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_1;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_2;
 
 @Slf4j
 public class PdfGenerationService {
