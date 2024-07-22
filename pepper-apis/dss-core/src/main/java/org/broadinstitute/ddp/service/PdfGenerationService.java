@@ -1,22 +1,5 @@
 package org.broadinstitute.ddp.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import com.google.common.collect.Sets;
 import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.PdfPageFormCopier;
@@ -83,6 +66,35 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.broadinstitute.ddp.constants.PdfConstants.CONSENT;
+import static org.broadinstitute.ddp.constants.PdfConstants.CONSENT_ASSENT;
+import static org.broadinstitute.ddp.constants.PdfConstants.CONSENT_PARENTAL;
+import static org.broadinstitute.ddp.constants.PdfConstants.COUNTMEIN_RELEASE;
+import static org.broadinstitute.ddp.constants.PdfConstants.COUNTMEIN_RELEASE_ASSENT;
+import static org.broadinstitute.ddp.constants.PdfConstants.COUNTMEIN_RELEASE_PARENTAL;
+import static org.broadinstitute.ddp.constants.PdfConstants.PANCAN_GUID;
+import static org.broadinstitute.ddp.constants.PdfConstants.RELEASE;
+import static org.broadinstitute.ddp.constants.PdfConstants.RELEASE_MINOR;
+import static org.broadinstitute.ddp.constants.PdfConstants.VERSION_1;
+import static org.broadinstitute.ddp.constants.PdfConstants.VERSION_2;
 
 @Slf4j
 public class PdfGenerationService {
@@ -339,18 +351,18 @@ public class PdfGenerationService {
     }
 
     private void handlePancanReleaseV2(PdfConfiguration config, Map<String, Set<String>> acceptedActivityVersions) {
-        if (config.getStudyGuid().equalsIgnoreCase("cmi-pancan")) {
-            if (config.getConfigName().equalsIgnoreCase("countmein-release")
-                    && acceptedActivityVersions.get("RELEASE").contains("v2")) {
-                acceptedActivityVersions.get("CONSENT").add("v1");
-            } else if (config.getConfigName().equalsIgnoreCase("countmein-release-parental")
-                    && acceptedActivityVersions.get("RELEASE_MINOR").contains("v2")
-                    && acceptedActivityVersions.containsKey("CONSENT_PARENTAL")) {
-                acceptedActivityVersions.get("CONSENT_PARENTAL").add("v1");
-            } else if (config.getConfigName().equalsIgnoreCase("countmein-release-assent")
-                    && acceptedActivityVersions.get("RELEASE_MINOR").contains("v2")
-                    && acceptedActivityVersions.containsKey("CONSENT_ASSENT")) {
-                acceptedActivityVersions.get("CONSENT_ASSENT").add("v1");
+        if (config.getStudyGuid().equalsIgnoreCase(PANCAN_GUID)) {
+            if (config.getConfigName().equalsIgnoreCase(COUNTMEIN_RELEASE)
+                    && acceptedActivityVersions.get(RELEASE).contains(VERSION_2)) {
+                acceptedActivityVersions.get(CONSENT).add(VERSION_1);
+            } else if (config.getConfigName().equalsIgnoreCase(COUNTMEIN_RELEASE_PARENTAL)
+                    && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)
+                    && acceptedActivityVersions.containsKey(CONSENT_PARENTAL)) {
+                acceptedActivityVersions.get(CONSENT_PARENTAL).add(VERSION_1);
+            } else if (config.getConfigName().equalsIgnoreCase(COUNTMEIN_RELEASE_ASSENT)
+                    && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)
+                    && acceptedActivityVersions.containsKey(CONSENT_ASSENT)) {
+                acceptedActivityVersions.get(CONSENT_ASSENT).add(VERSION_1);
             }
         }
     }
