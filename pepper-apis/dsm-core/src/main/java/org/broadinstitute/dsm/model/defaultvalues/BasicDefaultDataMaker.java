@@ -16,10 +16,11 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
     protected static final ElasticSearchService elasticSearchService = new ElasticSearchService();
     protected DDPInstance instance;
 
-    protected abstract boolean setDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant);
+    protected abstract boolean setDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant,
+                                              String payload);
 
     @Override
-    public boolean generateDefaults(String studyGuid, String participantId) {
+    public boolean generateDefaults(String studyGuid, String participantId, String payload) {
         instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
         if (instance == null) {
             throw new DSMBadRequestException("Invalid study GUID: " + studyGuid);
@@ -36,6 +37,6 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
                     .formatted(participantId));
         }
         log.info("Calling setDefaultData for ES index {} and participant ID {}", esIndex, participantId);
-        return setDefaultData(participantId, esParticipant.get());
+        return setDefaultData(participantId, esParticipant.get(), payload);
     }
 }

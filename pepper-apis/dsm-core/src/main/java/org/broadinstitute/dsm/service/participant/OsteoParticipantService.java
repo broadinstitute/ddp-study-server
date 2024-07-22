@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -20,6 +23,7 @@ import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
@@ -28,6 +32,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.dsm.service.onchistory.OncHistoryService;
 import org.broadinstitute.dsm.util.SystemUtil;
+import spark.utils.StringUtils;
 
 
 @Slf4j
@@ -67,8 +72,24 @@ public class OsteoParticipantService {
      *  OS1 registrations in prod
      * @param participantDto participant ElasticSearch data, including DSM entity
      */
-    public void setOsteoDefaultData(String ddpParticipantId, ElasticSearchParticipantDto participantDto) {
-        if (isOsteo1Participant(participantDto)) {
+    public void setOsteoDefaultData(String ddpParticipantId, ElasticSearchParticipantDto participantDto,
+                                    String payload) {
+        // see if study name provided
+        String studyName = null;
+        if (!StringUtils.isEmpty(payload)) {
+            try {
+                JsonObject jsonObject = JsonParser.parseString(payload).getAsJsonObject();
+                JsonElement nameObj = jsonObject.get("studyName");
+                if (nameObj != null) {
+                    studyName = nameObj.getAsString().trim();
+                }
+            } catch (Exception e) {
+                throw new DSMBadRequestException(
+                        "Error parsing payload for participant %s: %s".formatted(ddpParticipantId, payload), e);
+            }
+        }
+
+        if (!StringUtils.isEmpty(studyName) && OSTEO1_INSTANCE_NAME.equalsIgnoreCase(studyName)) {
             createOsteoTag(participantDto, ddpParticipantId, osteo1Instance, OSTEO1_COHORT_TAG_NAME);
         } else {
             createOsteoTag(participantDto, ddpParticipantId, osteo2Instance, OSTEO2_COHORT_TAG_NAME);

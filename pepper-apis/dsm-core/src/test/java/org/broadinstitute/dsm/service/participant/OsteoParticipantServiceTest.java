@@ -98,7 +98,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
-        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto, null);
         verifyCohortTags(ddpParticipantId, osteo2InstanceDto, List.of(OSTEO2_COHORT_TAG_NAME));
     }
 
@@ -114,7 +114,15 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
-        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
+        try {
+            osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto, "zoinks");
+            Assert.fail("Expecting DsmBadRequestException for bad payload");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Error parsing payload"));
+        }
+
+        String payload = "{\"studyName\":\"Osteo\"}";
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto, payload);
         verifyCohortTags(ddpParticipantId, osteo1InstanceDto, List.of(OSTEO1_COHORT_TAG_NAME));
     }
 
@@ -134,7 +142,7 @@ public class OsteoParticipantServiceTest extends DbAndElasticBaseTest {
 
         OsteoParticipantService osteoParticipantService =
                 new OsteoParticipantService(osteo1InstanceName, osteo2InstanceName);
-        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto);
+        osteoParticipantService.setOsteoDefaultData(ddpParticipantId, esParticipantDto, null);
 
         // when no consent, an osteo2 cohort tag should be created
         verifyCohortTags(ddpParticipantId, osteo2InstanceDto, List.of(OSTEO2_COHORT_TAG_NAME));

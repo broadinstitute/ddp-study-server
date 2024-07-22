@@ -2,8 +2,5 @@ package org.broadinstitute.dsm.model.defaultvalues;
 
 public interface Defaultable {
 
-
-    boolean generateDefaults(String studyGuid, String participantId);
-
-
+    boolean generateDefaults(String studyGuid, String participantId, String payload);
 }
