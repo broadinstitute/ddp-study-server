@@ -1,5 +1,16 @@
 package org.broadinstitute.ddp.export;
 
+import static org.broadinstitute.ddp.constants.Constants.CONSENT;
+import static org.broadinstitute.ddp.constants.Constants.CONSENT_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.CONSENT_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
+import static org.broadinstitute.ddp.constants.Constants.RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.RELEASE_MINOR;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_1;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_2;
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.export.ExportUtil.hideProtectedValue;
@@ -952,7 +963,35 @@ public class DataExporter {
                 userPdfConfigs.add(pdfConfigInfo);
             }
         }
+        //pancan special case to handle scenarios where pancan user consented-v1 but had release-v2
+        if (!studyConfigs.isEmpty() && studyConfigs.get(0).getStudyGuid().equals(PANCAN_GUID)) {
+            PdfConfigInfo pancanReleasePdfConfigV2 = getPancanReleaseV2PdfConfigIfNeeded(studyConfigs, userActivityVersions);
+            if (pancanReleasePdfConfigV2 != null && !userPdfConfigs.contains(pancanReleasePdfConfigV2)) {
+                userPdfConfigs.add(pancanReleasePdfConfigV2);
+            }
+        }
+
         return userPdfConfigs;
+    }
+
+    private PdfConfigInfo getPancanReleaseV2PdfConfigIfNeeded(
+            List<PdfConfigInfo> studyConfigs, Map<String, Set<String>> userActivityVersions) {
+        PdfConfigInfo releasePdfConfig = null;
+        if (userActivityVersions.containsKey(RELEASE) && userActivityVersions.get(RELEASE).contains(VERSION_2)
+                && userActivityVersions.get(CONSENT).contains(VERSION_1)) {
+            return studyConfigs.stream().filter(pdfConfigInfo ->
+                            pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE)).findFirst().orElse(null);
+        }
+        if (userActivityVersions.containsKey(RELEASE_MINOR) && userActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)) {
+            if (userActivityVersions.get(CONSENT_PARENTAL).contains(VERSION_1)) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
+                        pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE_PARENTAL)).findFirst().orElse(null);
+            } else if (userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_1)) {
+                releasePdfConfig = studyConfigs.stream().filter(
+                        pdfConfigInfo -> pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE_ASSENT)).findFirst().orElse(null);
+            }
+        }
+        return releasePdfConfig;
     }
 
     /**
