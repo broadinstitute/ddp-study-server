@@ -77,7 +77,7 @@ import java.util.Set;
 public class Osteo1ParticipantCreator {
 
     private final TaskPublisher taskPublisher;
-    private final Map<String, String> payloadMap = Map.of("studyVersion", "Osteo1");
+    private final Map<String, String> payloadMap = Map.of("studyName", "Osteo");
     private final String eventPayload = GsonUtil.standardGson().toJson(payloadMap);
     private long ddpCreatedAt = Instant.parse("2022-07-09T15:35:00Z").toEpochMilli(); //default v1 activity created date
     private String auth0ClientId = null;
