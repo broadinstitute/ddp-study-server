@@ -66,11 +66,14 @@ public class PancanTherapyQuestion implements CustomTask {
 
         log.info("updating current treatment question...");
         String currCompositeQuestionStableId = dataCfg.getString("currCompositeQuestionStableId");
-        //String newQuestionStableId = dataCfg.getString("newQuestionStableId");
+        String newCompositeStableId = dataCfg.getString("newQuestionStableId");
 
         QuestionDto currCompositeQuestionDto = jdbiQuestion
                 .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), currCompositeQuestionStableId)
                 .orElseThrow(() -> new DDPException("Could not find question " + currCompositeQuestionStableId));
+        QuestionDto currPLQuestionDto = jdbiQuestion
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), "THERAPY_NAME_CHOOSE")
+                .orElseThrow(() -> new DDPException("Could not find question " + "THERAPY_NAME_CHOOSE"));
 
         long currCompositeBlockId = helper.findQuestionBlockId(currCompositeQuestionDto.getId());
         SectionBlockMembershipDto currSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(currCompositeBlockId).get();
@@ -91,6 +94,10 @@ public class PancanTherapyQuestion implements CustomTask {
                 65, questionBlockDef, currCompositeQuestionDto.getRevisionId());
         log.info("inserted new composite question for past treatments : {} ", questionBlockDef.getQuestion().getQuestionId());
 
+        //update stableIds
+        helper.updateCompositeQuestionStableId(currCompositeQuestionDto.getId(), newCompositeStableId);
+        helper.updateCompositeQuestionStableId(currPLQuestionDto.getId(), "CURRENT_MED_CLINICAL_TRIAL");
+
     }
 
     private interface SqlHelper extends SqlObject {
@@ -99,6 +106,11 @@ public class PancanTherapyQuestion implements CustomTask {
                 + "set display_order = display_order + 1 "
                 + "where cqq.parent_question_id = :parentQuestionId")
         int incrementCompositeChildrenDisplayOrder(@Bind("parentQuestionId") long parentQuestionId);
+
+        @SqlUpdate("update question_stable_code qsc "
+                + "set qsc.stable_id = : "
+                + "where qsc.question_id = :questionId")
+        int updateCompositeQuestionStableId(@Bind("questionId") long questionId, @Bind("stableId") String stableId);
 
         @SqlQuery("select block_id from block__question where question_id = :questionId")
         int findQuestionBlockId(@Bind("questionId") long questionId);
