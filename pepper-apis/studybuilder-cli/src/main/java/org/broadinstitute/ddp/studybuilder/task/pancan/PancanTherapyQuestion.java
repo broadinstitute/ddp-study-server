@@ -108,8 +108,8 @@ public class PancanTherapyQuestion implements CustomTask {
         int incrementCompositeChildrenDisplayOrder(@Bind("parentQuestionId") long parentQuestionId);
 
         @SqlUpdate("update question_stable_code qsc "
-                + "set qsc.stable_id = : "
-                + "where qsc.question_id = :questionId")
+                + "set qsc.stable_id = :stableId "
+                + "where qsc.question_stable_code_id = (select question_stable_code_id from question where question_id = :questionId)")
         int updateCompositeQuestionStableId(@Bind("questionId") long questionId, @Bind("stableId") String stableId);
 
         @SqlQuery("select block_id from block__question where question_id = :questionId")
