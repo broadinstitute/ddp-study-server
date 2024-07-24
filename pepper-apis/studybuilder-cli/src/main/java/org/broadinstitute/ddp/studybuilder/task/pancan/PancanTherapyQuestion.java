@@ -33,6 +33,10 @@ import java.util.Arrays;
 @Slf4j
 public class PancanTherapyQuestion implements CustomTask {
     private static final String DATA_FILE = "patches/composite-therapy-question.conf";
+    private static final String TREATMENT_START = "TREATMENT_START";
+    private static final String THERAPY_NAME_CHOOSE = "THERAPY_NAME_CHOOSE";
+    private static final String CURRENT_MED_CLINICAL_TRIAL = "CURRENT_MED_CLINICAL_TRIAL";
+    private static final String CURRENT_MED_START = "CURRENT_MED_START";
 
     private Config dataCfg;
     private String studyGuid;
@@ -71,8 +75,11 @@ public class PancanTherapyQuestion implements CustomTask {
                 .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), currCompositeQuestionStableId)
                 .orElseThrow(() -> new DDPException("Could not find question " + currCompositeQuestionStableId));
         QuestionDto currPLQuestionDto = jdbiQuestion
-                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), "THERAPY_NAME_CHOOSE")
-                .orElseThrow(() -> new DDPException("Could not find question " + "THERAPY_NAME_CHOOSE"));
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), THERAPY_NAME_CHOOSE)
+                .orElseThrow(() -> new DDPException("Could not find question " + THERAPY_NAME_CHOOSE));
+        QuestionDto currDateQuestionDto = jdbiQuestion
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), TREATMENT_START)
+                .orElseThrow(() -> new DDPException("Could not find question " + TREATMENT_START));
 
         long currCompositeBlockId = helper.findQuestionBlockId(currCompositeQuestionDto.getId());
         SectionBlockMembershipDto currSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(currCompositeBlockId).get();
@@ -96,10 +103,13 @@ public class PancanTherapyQuestion implements CustomTask {
         log.info("inserted new composite question for past treatments : {} ", questionBlockDef.getQuestion().getQuestionId());
 
         //update stableIds
-        rowCount = helper.updateCompositeQuestionStableId(currCompositeQuestionDto.getId(), newCompositeStableId);
+        rowCount = helper.updateQuestionStableId(currCompositeQuestionDto.getId(), newCompositeStableId);
         DBUtils.checkUpdate(1, rowCount);
-        rowCount = helper.updateCompositeQuestionStableId(currPLQuestionDto.getId(), "CURRENT_MED_CLINICAL_TRIAL");
+        rowCount = helper.updateQuestionStableId(currPLQuestionDto.getId(), CURRENT_MED_CLINICAL_TRIAL);
         DBUtils.checkUpdate(1, rowCount);
+        rowCount = helper.updateQuestionStableId(currDateQuestionDto.getId(), CURRENT_MED_START);
+        DBUtils.checkUpdate(1, rowCount);
+        log.info("updated question stableIds");
 
     }
 
@@ -113,7 +123,7 @@ public class PancanTherapyQuestion implements CustomTask {
         @SqlUpdate("update question_stable_code qsc "
                 + "set qsc.stable_id = :stableId "
                 + "where qsc.question_stable_code_id = (select question_stable_code_id from question where question_id = :questionId)")
-        int updateCompositeQuestionStableId(@Bind("questionId") long questionId, @Bind("stableId") String stableId);
+        int updateQuestionStableId(@Bind("questionId") long questionId, @Bind("stableId") String stableId);
 
         @SqlQuery("select block_id from block__question where question_id = :questionId")
         int findQuestionBlockId(@Bind("questionId") long questionId);
