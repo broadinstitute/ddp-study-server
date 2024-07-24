@@ -62,7 +62,7 @@ public class DSMtasksSubscription {
                             doESExport(attributesMap, data);
                             break;
                         case PARTICIPANT_REGISTERED:
-                            generateStudyDefaultValues(consumer, attributesMap);
+                            generateStudyDefaultValues(consumer, attributesMap, data);
                             break;
                         default:
                             logger.error("Invalid task type DSMtasksSubscription PubsubMessage: {}", taskType);
@@ -105,7 +105,8 @@ public class DSMtasksSubscription {
         StudyMigrator.migrate(exportPayload.getStudy(), null);
     }
 
-    private static void generateStudyDefaultValues(AckReplyConsumer consumer, Map<String, String> attributesMap) {
+    private static void generateStudyDefaultValues(AckReplyConsumer consumer, Map<String, String> attributesMap,
+                                                   String payload) {
         String studyGuid = attributesMap.get("studyGuid");
         if (StringUtils.isEmpty(studyGuid)) {
             throw new DSMBadRequestException("No studyGuid provided");
@@ -123,7 +124,7 @@ public class DSMtasksSubscription {
         }
 
         try {
-            defaultable.generateDefaults(studyGuid, participantGuid);
+            defaultable.generateDefaults(studyGuid, participantGuid, payload);
             retryPerParticipant.remove(participantGuid);
             consumer.ack();
         } catch (ESMissingParticipantDataException e) {

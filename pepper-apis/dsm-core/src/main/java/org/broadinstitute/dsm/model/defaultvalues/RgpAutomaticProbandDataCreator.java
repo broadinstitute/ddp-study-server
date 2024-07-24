@@ -14,7 +14,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
      *                                         callers to retry after waiting for the ES profile to be created.
      */
     @Override
-    protected boolean setDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant) {
+    protected boolean setDefaultData(String ddpParticipantId, ElasticSearchParticipantDto esParticipant, String payload) {
         RgpParticipantDataService.createDefaultData(ddpParticipantId, esParticipant, instance,
                 new RgpFamilyIdProvider());
         return true;
