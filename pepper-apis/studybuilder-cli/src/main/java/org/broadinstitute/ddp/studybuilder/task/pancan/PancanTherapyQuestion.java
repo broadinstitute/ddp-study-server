@@ -46,12 +46,10 @@ public class PancanTherapyQuestion implements CustomTask {
             throw new DDPException("Data file is missing: " + file);
         }
         dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
-
         studyGuid = dataCfg.getString("studyGuid");
         if (!studyCfg.getString("study.guid").equals(studyGuid)) {
             throw new DDPException("This task is only for the " + studyGuid + " study!");
         }
-
         gson = GsonUtil.standardGson();
     }
 
@@ -76,7 +74,7 @@ public class PancanTherapyQuestion implements CustomTask {
 
         long currCompositeBlockId = helper.findQuestionBlockId(currCompositeQuestionDto.getId());
         SectionBlockMembershipDto currSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(currCompositeBlockId).get();
-        //update existing child questions display order to accomodate new txt question
+        //update existing child questions display order to accommodate new txt question
         int rowCount = helper.incrementCompositeChildrenDisplayOrder(currCompositeQuestionDto.getId());
         DBUtils.checkUpdate(2, rowCount);
         //insert new txt question for current medication/therapies
@@ -86,13 +84,11 @@ public class PancanTherapyQuestion implements CustomTask {
         jdbiCompositeQuestion.insertChildren(currCompositeQuestionDto.getId(), Arrays.asList(textQuestionDef.getQuestionId()), Arrays.asList(0));
         log.info("added new txt treatment question : {} as child to composite question...", textQuestionDef.getQuestionId());
 
-
         //populate new composite for past medications/therapies
-        //todo identify display order of this new question
         log.info("creating new composite question...");
         QuestionBlockDef questionBlockDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("current-therapy-composite")), QuestionBlockDef.class);
         sectionBlockDao.insertBlockForSection(currCompositeQuestionDto.getActivityId(), currSectionDto.getSectionId(),
-                6, (FormBlockDef) questionBlockDef, currCompositeQuestionDto.getRevisionId());
+                65, questionBlockDef, currCompositeQuestionDto.getRevisionId());
         log.info("inserted new composite question for past treatments : {} ", questionBlockDef.getQuestion().getQuestionId());
 
     }
