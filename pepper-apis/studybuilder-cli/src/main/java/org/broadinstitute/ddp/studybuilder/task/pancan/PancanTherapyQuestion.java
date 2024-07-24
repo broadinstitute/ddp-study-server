@@ -15,7 +15,6 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
@@ -84,19 +83,23 @@ public class PancanTherapyQuestion implements CustomTask {
         TextQuestionDef textQuestionDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("textQuestion")), TextQuestionDef.class);
         questionDao.insertQuestion(currCompositeQuestionDto.getActivityId(), textQuestionDef, currCompositeQuestionDto.getRevisionId());
         //add as child
-        jdbiCompositeQuestion.insertChildren(currCompositeQuestionDto.getId(), Arrays.asList(textQuestionDef.getQuestionId()), Arrays.asList(0));
+        jdbiCompositeQuestion.insertChildren(currCompositeQuestionDto.getId(),
+                Arrays.asList(textQuestionDef.getQuestionId()), Arrays.asList(0));
         log.info("added new txt treatment question : {} as child to composite question...", textQuestionDef.getQuestionId());
 
         //populate new composite for past medications/therapies
         log.info("creating new composite question...");
-        QuestionBlockDef questionBlockDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("current-therapy-composite")), QuestionBlockDef.class);
+        QuestionBlockDef questionBlockDef = gson.fromJson(ConfigUtil.toJson(
+                dataCfg.getConfig("current-therapy-composite")), QuestionBlockDef.class);
         sectionBlockDao.insertBlockForSection(currCompositeQuestionDto.getActivityId(), currSectionDto.getSectionId(),
                 65, questionBlockDef, currCompositeQuestionDto.getRevisionId());
         log.info("inserted new composite question for past treatments : {} ", questionBlockDef.getQuestion().getQuestionId());
 
         //update stableIds
-        helper.updateCompositeQuestionStableId(currCompositeQuestionDto.getId(), newCompositeStableId);
-        helper.updateCompositeQuestionStableId(currPLQuestionDto.getId(), "CURRENT_MED_CLINICAL_TRIAL");
+        rowCount = helper.updateCompositeQuestionStableId(currCompositeQuestionDto.getId(), newCompositeStableId);
+        DBUtils.checkUpdate(1, rowCount);
+        rowCount = helper.updateCompositeQuestionStableId(currPLQuestionDto.getId(), "CURRENT_MED_CLINICAL_TRIAL");
+        DBUtils.checkUpdate(1, rowCount);
 
     }
 
