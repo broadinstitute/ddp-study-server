@@ -983,10 +983,10 @@ public class DataExporter {
                             pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE)).findFirst().orElse(null);
         }
         if (userActivityVersions.containsKey(RELEASE_MINOR) && userActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)) {
-            if (userActivityVersions.get(CONSENT_PARENTAL).contains(VERSION_1)) {
+            if (userActivityVersions.containsKey(CONSENT_PARENTAL) && userActivityVersions.get(CONSENT_PARENTAL).contains(VERSION_1)) {
                 releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
                         pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE_PARENTAL)).findFirst().orElse(null);
-            } else if (userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_1)) {
+            } else if (userActivityVersions.containsKey(CONSENT_ASSENT) && userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_1)) {
                 releasePdfConfig = studyConfigs.stream().filter(
                         pdfConfigInfo -> pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE_ASSENT)).findFirst().orElse(null);
             }
