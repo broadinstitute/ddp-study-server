@@ -44,7 +44,7 @@ public class PancanPrequalV2 implements CustomTask {
 
     private void revisionPrequal(Handle handle, StudyDto studyDto, UserDto adminUser) {
         String activityCode = "PREQUAL";
-        String versionTag = "V2";
+        String versionTag = "v2";
         log.info("Versioning activity: {}", activityCode);
 
         ActivityDao activityDao = handle.attach(ActivityDao.class);
