@@ -27,6 +27,10 @@ public interface JdbiCompositeQuestion extends SqlObject {
         insertChild(compositeQuestionId, childQuestionIds, IntStream.rangeClosed(0, childQuestionIds.size() - 1).boxed().collect(toList()));
     }
 
+    default void insertChildren(long compositeQuestionId, List<Long> childQuestionIds, List<Integer> orderIdxs) {
+        insertChild(compositeQuestionId, childQuestionIds, orderIdxs);
+    }
+
     @SqlBatch("INSERT INTO composite_question__question (parent_question_id, child_question_id, display_order)"
             + " VALUES(:parentQuestionId, :childQuestionId, :orderIndex)")
     void insertChild(@Bind("parentQuestionId") long parentQuestionId, @Bind("childQuestionId") List<Long> childQuestionIds,
