@@ -19,9 +19,11 @@ import org.jdbi.v3.core.Handle;
 
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
-public class PancanPrequalV2 implements CustomTask {
+public class PancanPrequalAddChildV2 implements CustomTask {
 
     private static final String OTHER_CANCER = "OTHER_CANCER";
     private Path cfgPath;
@@ -39,13 +41,13 @@ public class PancanPrequalV2 implements CustomTask {
     public void run(Handle handle) {
         var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
         var adminUser = handle.attach(JdbiUser.class).findByUserGuid(studyCfg.getString("adminUser.guid"));
-        revisionPrequal(handle, studyDto, adminUser);
+        revisionActivity(handle, studyDto, adminUser, "PREQUAL", "v2", Arrays.asList("PRIMARY_CANCER_SELF", "PRIMARY_CANCER_CHILD"));
+        revisionActivity(handle, studyDto, adminUser, "ADD_CHILD", "v2", Arrays.asList("PRIMARY_CANCER_ADD_CHILD"));
     }
 
-    private void revisionPrequal(Handle handle, StudyDto studyDto, UserDto adminUser) {
-        String activityCode = "PREQUAL";
-        String versionTag = "v2";
-        log.info("Versioning activity: {}", activityCode);
+    private void revisionActivity(Handle handle, StudyDto studyDto, UserDto adminUser, String activityCode,
+                                  String versionTag, List<String> questionStableIds) {
+        log.info("Versioning activity: {} to {}", activityCode, versionTag);
 
         ActivityDao activityDao = handle.attach(ActivityDao.class);
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
@@ -55,8 +57,9 @@ public class PancanPrequalV2 implements CustomTask {
         log.info("Created new revision {} of activity {} with revId: {}", v2Dto.getVersionTag(), activityCode, v2Dto.getRevId());
 
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
-        disablePicklistOption("PRIMARY_CANCER_SELF", OTHER_CANCER, studyDto.getId(), meta, jdbiQuestion, plQuestionDao);
-        disablePicklistOption("PRIMARY_CANCER_CHILD", OTHER_CANCER, studyDto.getId(), meta, jdbiQuestion, plQuestionDao);
+        for (String questionStableId : questionStableIds) {
+            disablePicklistOption(questionStableId, OTHER_CANCER, studyDto.getId(), meta, jdbiQuestion, plQuestionDao);
+        }
     }
 
     private void disablePicklistOption(String plQuestionStableId, String optionStableId, long studyId, RevisionMetadata meta,
