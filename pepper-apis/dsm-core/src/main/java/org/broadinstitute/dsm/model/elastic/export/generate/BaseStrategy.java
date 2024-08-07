@@ -11,6 +11,9 @@ public class BaseStrategy implements Generator {
     public BaseStrategy(String fieldName, Object value) {
         this.fieldName = fieldName;
         this.value = value;
+        if (value instanceof String && ((String) value).isEmpty()) {
+            this.value = null;
+        }
     }
 
     @Override
