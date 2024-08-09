@@ -981,7 +981,6 @@ public class DataExporter {
         if (!studyConfigs.isEmpty() && studyConfigs.get(0).getStudyGuid().equals(LMS_GUID)) {
             PdfConfigInfo lmsReleasePdfConfigV2 = getLmsReleaseV2PdfConfigIfNeeded(studyConfigs, userActivityVersions);
             if (lmsReleasePdfConfigV2 != null && !userPdfConfigs.contains(lmsReleasePdfConfigV2)) {
-                log.info("-----------------------------------> Adding LMS Release V2 PDF Config");
                 userPdfConfigs.add(lmsReleasePdfConfigV2);
             }
         }
