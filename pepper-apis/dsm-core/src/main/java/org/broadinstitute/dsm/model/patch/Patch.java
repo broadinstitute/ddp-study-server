@@ -161,7 +161,8 @@ public class Patch {
                     logger.info("Updated {} value in table {}, record ID={}", nameValue.getName(), dbElement.getTableName(), id);
                 } else {
                     //logging as warn in case we want to investigate or track the scenarios where we updated more than one row.
-                    logger.warn("Updated more than one {} values in table {}, record ID={} , rows updated: {}", nameValue.getName(), dbElement.getTableName(), id, result);
+                    logger.warn("Updated more than one {} values in table {}, record ID={} , rows updated: {}",
+                            nameValue.getName(), dbElement.getTableName(), id, result);
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
                 throw new DsmInternalError(toErrorMessage(dbElement.getTableName(), dbElement.getColumnName(),
