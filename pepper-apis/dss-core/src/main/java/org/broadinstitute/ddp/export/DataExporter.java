@@ -6,7 +6,13 @@ import static org.broadinstitute.ddp.constants.Constants.CONSENT_PARENTAL;
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_ASSENT;
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.LMS_GUID;
+import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE_PEDIATRIC;
+import static org.broadinstitute.ddp.constants.Constants.MEDICAL_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
+import static org.broadinstitute.ddp.constants.Constants.PARENTAL_CONSENT;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE_MINOR;
 import static org.broadinstitute.ddp.constants.Constants.VERSION_1;
@@ -971,6 +977,14 @@ public class DataExporter {
             }
         }
 
+        //lms special case to handle scenarios where lms user consented-v1 but had release-v2
+        if (!studyConfigs.isEmpty() && studyConfigs.get(0).getStudyGuid().equals(LMS_GUID)) {
+            PdfConfigInfo lmsReleasePdfConfigV2 = getLmsReleaseV2PdfConfigIfNeeded(studyConfigs, userActivityVersions);
+            if (lmsReleasePdfConfigV2 != null && !userPdfConfigs.contains(lmsReleasePdfConfigV2)) {
+                log.info("-----------------------------------> Adding LMS Release V2 PDF Config");
+                userPdfConfigs.add(lmsReleasePdfConfigV2);
+            }
+        }
         return userPdfConfigs;
     }
 
@@ -989,6 +1003,25 @@ public class DataExporter {
             } else if (userActivityVersions.containsKey(CONSENT_ASSENT) && userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_1)) {
                 releasePdfConfig = studyConfigs.stream().filter(
                         pdfConfigInfo -> pdfConfigInfo.getConfigName().equals(COUNTMEIN_RELEASE_ASSENT)).findFirst().orElse(null);
+            }
+        }
+        return releasePdfConfig;
+    }
+
+    private PdfConfigInfo getLmsReleaseV2PdfConfigIfNeeded(
+            List<PdfConfigInfo> studyConfigs, Map<String, Set<String>> userActivityVersions) {
+        PdfConfigInfo releasePdfConfig = null;
+        if (userActivityVersions.containsKey(MEDICAL_RELEASE) && userActivityVersions.get(MEDICAL_RELEASE).contains(VERSION_2)) {
+            if (userActivityVersions.containsKey(CONSENT) && userActivityVersions.get(CONSENT).contains(VERSION_1)) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
+                        pdfConfigInfo.getConfigName().equals(LMS_RELEASE)).findFirst().orElse(null);
+            } else if (userActivityVersions.containsKey(PARENTAL_CONSENT)
+                    && userActivityVersions.get(PARENTAL_CONSENT).contains(VERSION_1)) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
+                        pdfConfigInfo.getConfigName().equals(LMS_RELEASE_PEDIATRIC)).findFirst().orElse(null);
+            } else if (userActivityVersions.containsKey(CONSENT_ASSENT) && userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_1)) {
+                releasePdfConfig = studyConfigs.stream().filter(
+                        pdfConfigInfo -> pdfConfigInfo.getConfigName().equals(LMS_RELEASE_ASSENT)).findFirst().orElse(null);
             }
         }
         return releasePdfConfig;
