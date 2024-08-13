@@ -490,7 +490,9 @@ public class Housekeeping {
     private static void shutdownQuartz() {
         boolean isShutdown = false;
         try {
-            isShutdown = scheduler.isShutdown();
+            if (scheduler != null) {
+                isShutdown = scheduler.isShutdown();
+            }
         } catch (SchedulerException e) {
             log.info("Could not determine whether schedule is shut down", e);
         }
@@ -500,7 +502,9 @@ public class Housekeeping {
     }
 
     private static void shutdownPubSub() {
-        pubsubConnectionManager.close();
+        if (pubsubConnectionManager != null) {
+            pubsubConnectionManager.close();
+        }
         if (fileScanResultSubscriber != null && fileScanResultSubscriber.isRunning()) {
             fileScanResultSubscriber.stopAsync();
         }

@@ -271,6 +271,7 @@ public class DSMServer {
             } catch (Exception e) {
                 logger.error("Error starting DSM server {}", e.toString());
                 e.printStackTrace();
+                System.exit(-1);
             }
         }
     }
