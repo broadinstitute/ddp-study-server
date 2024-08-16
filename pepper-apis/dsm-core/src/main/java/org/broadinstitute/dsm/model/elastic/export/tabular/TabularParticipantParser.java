@@ -276,7 +276,7 @@ public class TabularParticipantParser {
                     parentConfig);
             String exportValue = StringUtils.EMPTY;
             String optionStableId = null;
-            if (option != null) { //todo SS since we're returning Map.. not matching exact stableIDs ????? .. alter response values ?
+            if (option != null) {
                 optionStableId = (String) option.get(ESObjectConstants.OPTION_STABLE_ID);
                 exportValue = responseValues.contains(optionStableId) ? COLUMN_SELECTED : COLUMN_UNSELECTED;
             } else {

@@ -44,7 +44,7 @@ public class PickListValueProvider extends TextValueProvider {
 
         Object nestedOptions = targetAnswer.get(ESObjectConstants.NESTED_OPTIONS);
         // nestedOptions is a map of parent option -> array of nested option choices
-        if (nestedOptions instanceof Map && ((Map) nestedOptions).size() > 0) {
+        if (nestedOptions instanceof Map && (!((Map) nestedOptions).isEmpty())) {
             Map<String, List> nestedOptionsMap = (Map<String, List>) nestedOptions;
             //get main options selected
             List<String> allValues = (List<String>) super.extractValuesFromAnswer(targetAnswer, filterConfig);
