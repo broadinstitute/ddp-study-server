@@ -227,7 +227,7 @@ public class TabularParticipantParser {
             List<Map<String, Object>> nestedOptions = new ArrayList<>();
             if (filterConfig.getOptions() != null && filterConfig.isSplitOptionsIntoColumns()) {
                 options = filterConfig.getOptions();
-                //check for nestedOptions and add as options
+                //add nestedOptions as options
                 options.stream().filter(option -> option.get(ESObjectConstants.NESTED_OPTIONS) != null).forEach(option -> {
                     nestedOptions.addAll((List<Map<String, Object>>) option.get(ESObjectConstants.NESTED_OPTIONS));
                 });
