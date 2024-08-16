@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class PickListValueProvider extends TextValueProvider {
         }).collect(Collectors.toList());
     }
 
-    // adds extra logic to handle grouped options
+    // adds extra logic to handle grouped options & nested options
     protected Object extractValuesFromAnswer(Map<String, Object> targetAnswer, FilterExportConfig filterConfig) {
         if (targetAnswer == null) {
             return null;
@@ -38,6 +39,18 @@ public class PickListValueProvider extends TextValueProvider {
             // groupedOptions is a map of groupName -> array of option choices
             Map<String, List> optGroups = (Map<String, List>) groupedOptions;
             List<?> allValues = (List<String>) optGroups.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+            return allValues;
+        }
+
+        Object nestedOptions = targetAnswer.get(ESObjectConstants.NESTED_OPTIONS);
+        // nestedOptions is a map of parent option -> array of nested option choices
+        if (nestedOptions instanceof Map && ((Map) nestedOptions).size() > 0) {
+            Map<String, List> nestedOptionsMap = (Map<String, List>) nestedOptions;
+            //get main options selected
+            List<String> allValues = (List<String>) super.extractValuesFromAnswer(targetAnswer, filterConfig);
+            //get nested options selected for the main options
+            List<String> allNestedValues = (List<String>) nestedOptionsMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+            allValues.addAll(allNestedValues);
             return allValues;
         }
         return super.extractValuesFromAnswer(targetAnswer, filterConfig);

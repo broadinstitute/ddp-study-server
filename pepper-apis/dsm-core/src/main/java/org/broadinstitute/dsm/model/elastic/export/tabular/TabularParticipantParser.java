@@ -224,8 +224,16 @@ public class TabularParticipantParser {
                                                Map<String, Object> esModuleMap, int moduleRepeatNum) {
         for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
             List<Map<String, Object>> options = Collections.singletonList(null);
+            List<Map<String, Object>> nestedOptions = new ArrayList<>();
             if (filterConfig.getOptions() != null && filterConfig.isSplitOptionsIntoColumns()) {
                 options = filterConfig.getOptions();
+                //check for nestedOptions and add as options
+                options.stream().filter(option -> option.get(ESObjectConstants.NESTED_OPTIONS) != null).forEach(option -> {
+                    nestedOptions.addAll((List<Map<String, Object>>) option.get(ESObjectConstants.NESTED_OPTIONS));
+                });
+                if (!nestedOptions.isEmpty()) {
+                    options.addAll(nestedOptions);
+                }
             }
             TextValueProvider valueProvider =
                     ValueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getType());
@@ -268,7 +276,7 @@ public class TabularParticipantParser {
                     parentConfig);
             String exportValue = StringUtils.EMPTY;
             String optionStableId = null;
-            if (option != null) {
+            if (option != null) { //todo SS since we're returning Map.. not matching exact stableIDs ????? .. alter response values ?
                 optionStableId = (String) option.get(ESObjectConstants.OPTION_STABLE_ID);
                 exportValue = responseValues.contains(optionStableId) ? COLUMN_SELECTED : COLUMN_UNSELECTED;
             } else {
