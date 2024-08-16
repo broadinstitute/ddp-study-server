@@ -48,7 +48,7 @@ public class PickListValueProvider extends TextValueProvider {
             Map<String, List> nestedOptionsMap = (Map<String, List>) nestedOptions;
             //get main options selected
             List<String> allValues = (List<String>) super.extractValuesFromAnswer(targetAnswer, filterConfig);
-            //get selected nested options for the main options
+            //get nested options selected for the main options
             List<String> allNestedValues = (List<String>) nestedOptionsMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
             allValues.addAll(allNestedValues);
             return allValues;
