@@ -234,7 +234,7 @@ public abstract class BasePatch {
     protected List<NameValue> setWorkflowRelatedFields(@NonNull Patch patch) {
         List<NameValue> nameValues = new ArrayList<>();
         if (patch.getNameValue().getValue() == null) {
-            // if the date that was sent in is null, we don't want to set the workflow fields
+            // if the value that was sent in is null, we don't want to set the workflow fields
             return nameValues;
         }
         //mr request workflow
