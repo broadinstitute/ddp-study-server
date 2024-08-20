@@ -13,6 +13,7 @@ import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
@@ -297,9 +298,10 @@ public abstract class BasePatch {
                 //"unable to obtain tissue" : checked/true .. update request status
                 nameValues.add(setAdditionalValue("oD.request",
                         new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
-                                patch.getNameValues(), patch.getDdpParticipantId()), OncHistoryDetailSourceGenerator.UNABLE_OBTAIN_TISSUE));
+                                patch.getNameValues(), patch.getDdpParticipantId()), OncHistoryDetail.UNABLE_OBTAIN_TISSUE));
             }
         }
+        logger.info("----namevalues: " + nameValues);
         return nameValues;
     }
 
