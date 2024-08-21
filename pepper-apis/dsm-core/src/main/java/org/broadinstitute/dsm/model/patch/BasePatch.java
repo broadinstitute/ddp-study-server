@@ -301,7 +301,6 @@ public abstract class BasePatch {
                                 patch.getNameValues(), patch.getDdpParticipantId()), OncHistoryDetail.UNABLE_OBTAIN_TISSUE));
             }
         }
-        logger.info("----namevalues: " + nameValues);
         return nameValues;
     }
 
