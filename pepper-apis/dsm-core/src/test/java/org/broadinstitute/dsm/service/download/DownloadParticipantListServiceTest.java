@@ -162,12 +162,12 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participantEsDataMaps);
         TabularParticipantExporter participantExporter =
                 TabularParticipantExporter.getExporter(exportConfigs, participantValueMaps, downloadParticipantListParams.getFileFormat());
-        assertNotNull(participantExporter);
-        assertNotNull(participantExporter.getExportFilename());
         assertParticipantRaceExporterMap(participantExporter);
     }
 
     private void assertParticipantRaceExporterMap(TabularParticipantExporter participantExporter) {
+        assertNotNull(participantExporter);
+        assertNotNull(participantExporter.getExportFilename());
         assertEquals(1, participantExporter.participantValueMaps.size());
         Map<String, String> participantValues = participantExporter.participantValueMaps.get(0);
         assertNotNull(participantValues);
