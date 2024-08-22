@@ -91,6 +91,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     public static final String STATUS_RETURNED = "returned";
     public static final String STATUS_REQUEST = "request";
     public static final String STATUS_UNABLE_TO_OBTAIN = "unableToObtain";
+    public static final String UNABLE_OBTAIN_TISSUE = "unableObtainTissue";
     public static final String PROBLEM_INSUFFICIENT_PATH = "insufficientPath";
     public static final String PROBLEM_INSUFFICIENT_SHL = "insufficientSHL";
     public static final String PROBLEM_NO_E_SIGN = "noESign";

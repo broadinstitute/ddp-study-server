@@ -13,6 +13,7 @@ import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
@@ -233,7 +234,7 @@ public abstract class BasePatch {
     protected List<NameValue> setWorkflowRelatedFields(@NonNull Patch patch) {
         List<NameValue> nameValues = new ArrayList<>();
         if (patch.getNameValue().getValue() == null) {
-            // if the date that was sent in is null, we don't want to set the workflow fields
+            // if the value that was sent in is null, we don't want to set the workflow fields
             return nameValues;
         }
         //mr request workflow
@@ -279,18 +280,17 @@ public abstract class BasePatch {
                                     patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
                 }
             }
-        } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue") && !(boolean) patch.getNameValue().getValue()) {
-            boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
-
-            if (hasReceivedDate) {
-                nameValues.add(setAdditionalValue("oD.request",
-                        new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
-                                patch.getNameValues(), patch.getDdpParticipantId()), "received"));
-            } else {
-                nameValues.add(setAdditionalValue("oD.request",
-                        new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
-                                patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
-            }
+        } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue")) {
+            // if unable to obtain tissue, set request to "unable to obtain"
+            // if not unable to obtain, check if received date exists, if so set request to "received", otherwise set to "sent"
+            String status = (boolean) patch.getNameValue().getValue()
+                    ? OncHistoryDetail.UNABLE_OBTAIN_TISSUE
+                    : new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch))
+                    ? "received"
+                    : "sent";
+            nameValues.add(setAdditionalValue("oD.request",
+                    new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
+                            patch.getNameValues(), patch.getDdpParticipantId()), status));
         }
         return nameValues;
     }
