@@ -27,7 +27,6 @@ import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
-import org.broadinstitute.dsm.model.elastic.export.generate.OncHistoryDetailSourceGenerator;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.service.EventService;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -282,24 +281,14 @@ public abstract class BasePatch {
                 }
             }
         } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue")) {
-            if (!(boolean) patch.getNameValue().getValue()) {
-                boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
-
-                if (hasReceivedDate) {
-                    nameValues.add(setAdditionalValue("oD.request",
-                            new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
-                                    patch.getNameValues(), patch.getDdpParticipantId()), "received"));
-                } else {
-                    nameValues.add(setAdditionalValue("oD.request",
-                            new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
-                                    patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
-                }
-            } else {
-                //"unable to obtain tissue" : checked/true .. update request status
-                nameValues.add(setAdditionalValue("oD.request",
-                        new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
-                                patch.getNameValues(), patch.getDdpParticipantId()), OncHistoryDetail.UNABLE_OBTAIN_TISSUE));
-            }
+            String status = (boolean) patch.getNameValue().getValue()
+                    ? OncHistoryDetail.UNABLE_OBTAIN_TISSUE
+                    : new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch))
+                    ? "received"
+                    : "sent";
+            nameValues.add(setAdditionalValue("oD.request",
+                    new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
+                            patch.getNameValues(), patch.getDdpParticipantId()), status));
         }
         return nameValues;
     }
