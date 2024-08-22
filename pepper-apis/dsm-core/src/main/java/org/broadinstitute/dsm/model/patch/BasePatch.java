@@ -281,6 +281,8 @@ public abstract class BasePatch {
                 }
             }
         } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue")) {
+            // if unable to obtain tissue, set request to "unable to obtain"
+            // if not unable to obtain, check if received date exists, if so set request to "received", otherwise set to "sent"
             String status = (boolean) patch.getNameValue().getValue()
                     ? OncHistoryDetail.UNABLE_OBTAIN_TISSUE
                     : new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch))
