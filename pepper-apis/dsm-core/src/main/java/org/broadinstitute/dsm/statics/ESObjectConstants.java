@@ -115,6 +115,7 @@ public class ESObjectConstants {
     public static final String ALLOW_MULTIPLE = "allowMultiple";
     public static final String OPTION_GROUPS = "groups";
     public static final String GROUPED_OPTIONS = "groupedOptions";
+    public static final String NESTED_OPTIONS = "nestedOptions";
     public static final String CHILD_QUESTIONS = "childQuestions";
     public static final String DETAIL = "detail";
     public static final String DETAILS = "details";

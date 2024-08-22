@@ -39,9 +39,12 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
 
     private static final String instanceName = "download_test_instance";
     private static final String shortId = "PT_SHORT";
+    private static final String FIRST_NAME = "testDataDownloadFromElastic";
+    private static final String LAST_NAME = "lastName";
+    private static final String AY_RACE_DOWNLOAD_FILE = "elastic/participantListAboutYouRaceDownload.json";
     private static String esIndex;
     private static DDPInstanceDto ddpInstanceDto;
-    private static String ddpParticipantId = "PT_SAMPLE_QUEUE_TEST";
+    private static String ddpParticipantId = "PT_DOWNLOAD_TEST";
     private static ParticipantDto participantDto = null;
 
     @BeforeClass
@@ -51,10 +54,11 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         ddpParticipantId = TestParticipantUtil.genDDPParticipantId(ddpParticipantId);
         participantDto = TestParticipantUtil.createParticipant(ddpParticipantId, ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.createParticipant(esIndex, participantDto);
-        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex, ddpParticipantId, shortId, "testDataDownloadFromElastic",
-                "lastName", "email");
+        ElasticTestUtil.addParticipantProfileFromTemplate(esIndex, ddpParticipantId, shortId, FIRST_NAME,
+                LAST_NAME, "email");
         ElasticTestUtil.addDsmEntityFromFile(esIndex, "elastic/dsmKitRequestShippingClinicalOrders.json", ddpParticipantId, "1990-10-10",
                 null);
+        ElasticTestUtil.addActivitiesFromFile(esIndex, "elastic/lmsAboutYouActivity.json", ddpParticipantId);
         log.debug("ES participant record with DSM for {}: {}", ddpParticipantId,
                 ElasticTestUtil.getParticipantDocumentAsString(esIndex, ddpParticipantId));
     }
@@ -126,6 +130,52 @@ public class DownloadParticipantListServiceTest extends DbAndElasticBaseTest {
         assertNotNull(participantExporter.getExportFilename());
         assertParticipantExporterMap(participantExporter);
 
+    }
+
+    @Test
+    public void testParticipantRaceDownloadFromElastic() {
+        ManualFilterParticipantList filterable = getFilterFromFile(AY_RACE_DOWNLOAD_FILE);
+        List<Filter> columnNames = getColumnNames(AY_RACE_DOWNLOAD_FILE);
+        Assert.assertNotNull(filterable);
+        Assert.assertNotNull(columnNames);
+        Assert.assertNotEquals(0, columnNames.size());
+
+        QueryParamsMap queryParamsMap = buildMockQueryParams(false, true, "tsv");
+        List<ParticipantWrapperDto> downloadList = DownloadParticipantListService.fetchParticipantEsData(filterable, queryParamsMap);
+        DownloadParticipantListParams downloadParticipantListParams = new DownloadParticipantListParams(queryParamsMap);
+
+        //load activity definition
+        String activityDefJson = null;
+        try {
+            activityDefJson = TestUtil.readFile("elastic/lmsAboutYouActivityDef.json");
+        } catch (Exception e) {
+            Assert.fail("Failed to read activity definition file " + e.getMessage());
+        }
+        Map<String, Object> activityDef = new Gson().fromJson(activityDefJson, Map.class);
+        Map<String, Map<String, Object>> lmsActivityDefs = Map.of("LMS_ACTIVITY_DEFS", activityDef);
+
+        TabularParticipantParser parser = new TabularParticipantParser(columnNames, ddpInstanceDto,
+                downloadParticipantListParams.isHumanReadable(), downloadParticipantListParams.isOnlyMostRecent(), lmsActivityDefs);
+        List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
+        List<Map<String, Object>> participantEsDataMaps = downloadList.stream().map(dto ->
+                ((UnparsedESParticipantDto) dto.getEsData()).getDataAsMap()).toList();
+        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participantEsDataMaps);
+        TabularParticipantExporter participantExporter =
+                TabularParticipantExporter.getExporter(exportConfigs, participantValueMaps, downloadParticipantListParams.getFileFormat());
+        assertParticipantRaceExporterMap(participantExporter);
+    }
+
+    private void assertParticipantRaceExporterMap(TabularParticipantExporter participantExporter) {
+        assertNotNull(participantExporter);
+        assertNotNull(participantExporter.getExportFilename());
+        assertEquals(1, participantExporter.participantValueMaps.size());
+        Map<String, String> participantValues = participantExporter.participantValueMaps.get(0);
+        assertNotNull(participantValues);
+        assertEquals(shortId, participantValues.get("PROFILE.HRUID"));
+        assertEquals(FIRST_NAME, participantValues.get("PROFILE.FIRSTNAME"));
+        assertEquals(LAST_NAME, participantValues.get("PROFILE.LASTNAME"));
+        assertEquals("Hispanic, Latino, or Spanish (For example: Colombian, Cuban, Dominican, Mexican or Mexican American, Puerto Rican, Salvadoran, etc.), None of these fully describe my child/me, HISPANIC_SPANISH", participantValues.get("ABOUT_YOU.RACE"));
+        assertEquals("Other Ethnicity", participantValues.get("ABOUT_YOU.RACE_DETAIL"));
     }
 
     private void assertParticipantExporterMap(TabularParticipantExporter participantExporter) {
