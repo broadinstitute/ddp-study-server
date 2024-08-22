@@ -1,0 +1,515 @@
+{
+  "columnNames": [
+    {
+      "participantColumn": {
+        "display": "DDP",
+        "name": "ddp",
+        "tableAlias": "data"
+      },
+      "type": "TEXT",
+      "filter2": {
+        "name": null,
+        "value": null
+      },
+      "range": false,
+      "exactMatch": true,
+      "filter1": {
+        "name": null,
+        "value": null
+      },
+      "selectedOptions": [],
+      "value1": null,
+      "value2": null,
+      "sortAsc": true,
+      "empty": false,
+      "notEmpty": false,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Short ID",
+        "name": "hruid",
+        "tableAlias": "data",
+        "object": "profile"
+      },
+      "type": "TEXT",
+      "filter2": {
+        "name": null,
+        "value": null
+      },
+      "range": false,
+      "exactMatch": true,
+      "filter1": {
+        "name": null,
+        "value": null
+      },
+      "selectedOptions": [],
+      "value1": "PT_SHORT",
+      "value2": null,
+      "sortAsc": true,
+      "empty": false,
+      "notEmpty": false,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "First Name",
+        "name": "firstName",
+        "tableAlias": "data",
+        "object": "profile"
+      },
+      "type": "TEXT",
+      "filter2": {
+        "name": null,
+        "value": null
+      },
+      "range": false,
+      "exactMatch": true,
+      "filter1": {
+        "name": null,
+        "value": null
+      },
+      "selectedOptions": [],
+      "value1": null,
+      "value2": null,
+      "sortAsc": true,
+      "empty": false,
+      "notEmpty": false,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Last Name",
+        "name": "lastName",
+        "tableAlias": "data",
+        "object": "profile"
+      },
+      "type": "TEXT",
+      "filter2": {
+        "name": null,
+        "value": null
+      },
+      "range": false,
+      "exactMatch": true,
+      "filter1": {
+        "name": null,
+        "value": null
+      },
+      "selectedOptions": [],
+      "value1": null,
+      "value2": null,
+      "sortAsc": true,
+      "empty": false,
+      "notEmpty": false,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "Status",
+        "name": "status",
+        "tableAlias": "data"
+      },
+      "type": "OPTIONS",
+      "options": [
+        {
+          "name": "REGISTERED",
+          "value": "Registered"
+        },
+        {
+          "name": "EXITED_BEFORE_ENROLLMENT",
+          "value": "Exited before Enrollment"
+        },
+        {
+          "name": "EXITED_AFTER_ENROLLMENT",
+          "value": "Exited after Enrollment"
+        },
+        {
+          "name": "ENROLLED",
+          "value": "Enrolled"
+        },
+        {
+          "name": "CONSENT_SUSPENDED",
+          "value": "Lost to Followup"
+        }
+      ],
+      "filter2": {
+        "name": null,
+        "value": null
+      },
+      "range": false,
+      "exactMatch": true,
+      "filter1": {
+        "name": null,
+        "value": null
+      },
+      "selectedOptions": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "value1": null,
+      "value2": null,
+      "sortAsc": true,
+      "empty": false,
+      "notEmpty": false,
+      "searchable": true
+    },
+    {
+      "participantColumn": {
+        "display": "RACE",
+        "name": "RACE",
+        "tableAlias": "ABOUT_YOU",
+        "object": "questionsAnswers",
+        "esData": true
+      },
+      "type": "OPTIONS",
+      "options": [
+        {
+          "name": "AMERICANINDIAN_OR_ALASKAN",
+          "value": "American Indian or Alaska Native (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+        },
+        {
+          "name": "AMERICANINDIAN_OR_ALASKAN.AMERICAN_INDIAN",
+          "value": "American Indian Provide the name of the tribe in which your child is/you are enrolled or affiliated or your child's/your tribal descent. (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+        },
+        {
+          "name": "AMERICANINDIAN_OR_ALASKAN.ALASKA_NATIVE",
+          "value": "Alaska Native Provide the name of the tribe in which your child is/you are enrolled or affiliated or your child's/your tribal descent. (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+        },
+        {
+          "name": "AMERICANINDIAN_OR_ALASKAN.CENTRAL_OR_SOUTH_AMERICAN",
+          "value": "Central or South American Indian Provide the name of the tribe in which your child is/you are enrolled or affiliated or your child's/your tribal descent. (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+        },
+        {
+          "name": "AMERICANINDIAN_OR_ALASKAN.AMERICANINDIAN_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "ASIAN",
+          "value": "Asian (For example: Asian Indian, Chinese, Filipino, Japanese, Korean, Vietnamese, etc.)"
+        },
+        {
+          "name": "ASIAN.ASIAN_INDIAN",
+          "value": "Asian Indian"
+        },
+        {
+          "name": "ASIAN.CAMBODIAN",
+          "value": "Cambodian"
+        },
+        {
+          "name": "ASIAN.CHINESE",
+          "value": "Chinese"
+        },
+        {
+          "name": "ASIAN.FILIPINO",
+          "value": "Filipino"
+        },
+        {
+          "name": "ASIAN.HMONG",
+          "value": "Hmong"
+        },
+        {
+          "name": "ASIAN.JAPANESE",
+          "value": "Japanese"
+        },
+        {
+          "name": "ASIAN.KOREAN",
+          "value": "Korean"
+        },
+        {
+          "name": "ASIAN.PAKISTANI",
+          "value": "Pakistani"
+        },
+        {
+          "name": "ASIAN.VIETNAMESE",
+          "value": "Vietnamese"
+        },
+        {
+          "name": "ASIAN.ASIAN_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN",
+          "value": "Black, African American, or African (For example: African American, Ethiopian, Haitian, Jamaican, Nigerian, Somali, etc.)"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.AFRICAN_AMERICAN",
+          "value": "African American"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.BARBADIAN",
+          "value": "Barbadian"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.CARIBBEAN",
+          "value": "Caribbean"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.ETHIOPIAN",
+          "value": "Ethiopian"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.GHANAIAN",
+          "value": "Ghanaian"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.HAITIAN",
+          "value": "Haitian"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.JAMAICAN",
+          "value": "Jamaican"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.LIBERIAN",
+          "value": "Liberian"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.NIGERIAN",
+          "value": "Nigerian"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.SOMALI",
+          "value": "Somali"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.SOUTH_AFRICAN",
+          "value": "South African"
+        },
+        {
+          "name": "BLACK_OR_AFRICAN.AFRICAN_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH",
+          "value": "Hispanic, Latino, or Spanish (For example: Colombian, Cuban, Dominican, Mexican or Mexican American, Puerto Rican, Salvadoran, etc.)"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.COLOMBIAN",
+          "value": "Colombian"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.CUBAN",
+          "value": "Cuban"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.DOMINICAN",
+          "value": "Dominican"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.ECUADORIAN",
+          "value": "Ecuadorian"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.HONDURAN",
+          "value": "Honduran"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.MEXICAN",
+          "value": "Mexican or Mexican American"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.PUERTO_RICAN",
+          "value": "Puerto Rican"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.SALVADORAN",
+          "value": "Salvadoran"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.HISPANIC_SPANISH",
+          "value": "Spanish"
+        },
+        {
+          "name": "HISPANIC_OR_SPANISH.HISPANIC_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN",
+          "value": "Middle Eastern or North African (For example: Algerian, Egyptian, Iranian, Lebanese, Moroccan, Syrian, etc.)"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.AFGHAN",
+          "value": "Afghan"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.ALGERIAN",
+          "value": "Algerian"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.EGYPTIAN",
+          "value": "Egyptian"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.IRANIAN",
+          "value": "Iranian"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.IRAQI",
+          "value": "Iraqi"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.ISRAELI",
+          "value": "Israeli"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.LEBANESE",
+          "value": "Lebanese"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.MOROCCAN",
+          "value": "Moroccan"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.SYRIAN",
+          "value": "Syrian"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.TUNISIAN",
+          "value": "Tunisian"
+        },
+        {
+          "name": "MIDDLEEASTERN_OR_AFRICAN.MIDDLEEASTERN_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER",
+          "value": "Native Hawaiian or other Pacific Islander (For example: Chamorro, Fijian, Marshallese, Native Hawaiian, Tongan, etc.)"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.CHAMORRO",
+          "value": "Chamorro"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.CHUUKESE",
+          "value": "Chuukese"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.FIJIAN",
+          "value": "Fijian"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.MARSHALLESE",
+          "value": "Marshallese"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.NATIVE_HAWAIIAN",
+          "value": "Native Hawaiian"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.PALAUAN",
+          "value": "Palauan"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.SAMOAN",
+          "value": "Samoan"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.TAHITIAN",
+          "value": "Tahitian"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.TONGAN",
+          "value": "Tongan"
+        },
+        {
+          "name": "HAWAIIAN_OR_ISLANDER.ISLANDER_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "WHITE",
+          "value": "White (For example: English, European, French, German, Irish, Italian, Polish, etc.)"
+        },
+        {
+          "name": "WHITE.DUTCH",
+          "value": "Dutch"
+        },
+        {
+          "name": "WHITE.ENGLISH",
+          "value": "English"
+        },
+        {
+          "name": "WHITE.FRENCH",
+          "value": "French"
+        },
+        {
+          "name": "WHITE.GERMAN",
+          "value": "German"
+        },
+        {
+          "name": "WHITE.IRISH",
+          "value": "Irish"
+        },
+        {
+          "name": "WHITE.ITALIAN",
+          "value": "Italian"
+        },
+        {
+          "name": "WHITE.NORWEGIAN",
+          "value": "Norwegian"
+        },
+        {
+          "name": "WHITE.POLISH",
+          "value": "Polish"
+        },
+        {
+          "name": "WHITE.SPANISH",
+          "value": "Spanish"
+        },
+        {
+          "name": "WHITE.EUROPEAN",
+          "value": "European"
+        },
+        {
+          "name": "WHITE.SCOTTISH",
+          "value": "Scottish"
+        },
+        {
+          "name": "WHITE.WHITE_NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "NONE",
+          "value": "None of these fully describe my child/me"
+        },
+        {
+          "name": "PREFER_NOT_ANSWER",
+          "value": "Prefer not to answer"
+        }
+      ],
+      "exactMatch": true,
+      "filter1": null,
+      "value1": null,
+      "value2": null,
+      "searchable": true
+    }
+  ],
+  "filters": [
+    {
+      "parentName": "profile",
+      "filter1": {
+        "name": "hruid",
+        "value": "PT_SHORT"
+      },
+      "filter2": {
+        "name": null,
+        "value": null
+      },
+      "exactMatch": true,
+      "selectedOptions": null,
+      "type": "TEXT",
+      "range": false,
+      "empty": false,
+      "notEmpty": false,
+      "participantColumn": {
+        "display": "Short ID",
+        "name": "hruid",
+        "tableAlias": "data",
+        "object": "profile"
+      }
+    }
+  ],
+  "parent": "participantList"
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "activityCode": "ABOUT_YOU",
+    "createdAt": "2024-07-30",
+    "completedAt": null,
+    "activityVersion": "v1",
+    "lastUpdatedAt": "2024-07-30",
+    "parentInstanceGuid": null,
+    "questionsAnswers": [
+      {
+        "stableId": "RACE",
+        "answer": [
+          "HISPANIC_OR_SPANISH",
+          "NONE"
+        ],
+        "groupedOptions": {},
+        "RACE": [
+          "HISPANIC_OR_SPANISH",
+          "NONE"
+        ],
+        "optionDetails": [
+          {
+            "details": "Other Ethnicity",
+            "option": "NONE"
+          }
+        ],
+        "nestedOptions": {
+          "HISPANIC_OR_SPANISH": [
+            "HISPANIC_SPANISH"
+          ]
+        },
+        "questionType": "PICKLIST"
+      }
+    ],
+    "guid": "49QOWOYBKB",
+    "attributes": {},
+    "status": "IN_PROGRESS"
+  }
+]

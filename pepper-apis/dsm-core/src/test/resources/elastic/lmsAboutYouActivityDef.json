@@ -1,0 +1,460 @@
+{
+  "activityCode": "ABOUT_YOU",
+  "activityVersion": "v1",
+  "showActivityStatus": false,
+  "activityName": "Survey: About Your Child/You",
+  "displayOrder": 6,
+  "questions": [
+    {
+      "stableId": "BIRTH_SEX_ASSIGN",
+      "selectMode": "SINGLE",
+      "options": [
+        {
+          "optionStableId": "MALE",
+          "optionText": "Male"
+        },
+        {
+          "optionStableId": "FEMALE",
+          "optionText": "Female"
+        },
+        {
+          "optionStableId": "INTERSEX",
+          "optionText": "Intersex"
+        },
+        {
+          "optionStableId": "PREFER_NOT_ANSWER",
+          "optionText": "Prefer not to answer"
+        }
+      ],
+      "groups": [],
+      "questionType": "PICKLIST",
+      "questionText": "What sex was your child/were you assigned at birth? Sex assigned at birth is the assignment and classification of people as male, female, or intersex based on a combination of external anatomy, internal anatomy, hormones, and chromosomes."
+    },
+    {
+      "stableId": "GENDER_IDENTITY",
+      "selectMode": "MULTIPLE",
+      "options": [
+        {
+          "optionStableId": "MAN",
+          "optionText": "Boy/Man"
+        },
+        {
+          "optionStableId": "WOMAN",
+          "optionText": "Girl/Woman"
+        },
+        {
+          "optionStableId": "TRANSGENDER",
+          "optionText": "Transgender",
+          "nestedOptions": [
+            {
+              "optionStableId": "TRANSGENDER_MAN",
+              "optionText": "Transgender Boy/Transgender Man"
+            },
+            {
+              "optionStableId": "TRANSGENDER_WOMAN",
+              "optionText": "Transgender Girl/Transgender Woman"
+            },
+            {
+              "optionStableId": "TRANSGENDER_NONE",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "NONBINARY",
+          "optionText": "Nonbinary"
+        },
+        {
+          "optionStableId": "GENDERQUEER",
+          "optionText": "Genderqueer"
+        },
+        {
+          "optionStableId": "GENDERFLUID",
+          "optionText": "Genderfluid"
+        },
+        {
+          "optionStableId": "AGENDER",
+          "optionText": "Agender"
+        },
+        {
+          "optionStableId": "TWOSPIRIT",
+          "optionText": "Two-spirit"
+        },
+        {
+          "optionStableId": "QUESTIONING",
+          "optionText": "Questioning or unsure of gender identity"
+        },
+        {
+          "optionStableId": "NONE",
+          "isDetailsAllowed": true,
+          "detailsText": "Please specify",
+          "optionText": "None of these fully describe my child/me"
+        },
+        {
+          "optionStableId": "PREFER_NOT_ANSWER",
+          "optionText": "Prefer not to answer"
+        }
+      ],
+      "groups": [],
+      "questionType": "PICKLIST",
+      "questionText": "What is your child's/your gender identity? Select all that apply Gender identity is a term to describe a person's inner sense of being male, female, both, neither, or some other gender. It can correspond to or differ from a person's sex assigned at birth."
+    },
+    {
+      "stableId": "RACE",
+      "selectMode": "MULTIPLE",
+      "options": [
+        {
+          "optionStableId": "AMERICANINDIAN_OR_ALASKAN",
+          "optionText": "American Indian or Alaska Native (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "AMERICAN_INDIAN",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "American Indian Provide the name of the tribe in which your child is/you are enrolled or affiliated or your child's/your tribal descent. (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+            },
+            {
+              "optionStableId": "ALASKA_NATIVE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "Alaska Native Provide the name of the tribe in which your child is/you are enrolled or affiliated or your child's/your tribal descent. (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+            },
+            {
+              "optionStableId": "CENTRAL_OR_SOUTH_AMERICAN",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "Central or South American Indian Provide the name of the tribe in which your child is/you are enrolled or affiliated or your child's/your tribal descent. (For example: Aztec, Blackfeet Tribe, Mayan, Navajo Nation, Native Village of Barrow (Utqiagvik) Inupiat Traditional Government, Nome Eskimo Community, etc.)"
+            },
+            {
+              "optionStableId": "AMERICANINDIAN_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "ASIAN",
+          "optionText": "Asian (For example: Asian Indian, Chinese, Filipino, Japanese, Korean, Vietnamese, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "ASIAN_INDIAN",
+              "optionText": "Asian Indian"
+            },
+            {
+              "optionStableId": "CAMBODIAN",
+              "optionText": "Cambodian"
+            },
+            {
+              "optionStableId": "CHINESE",
+              "optionText": "Chinese"
+            },
+            {
+              "optionStableId": "FILIPINO",
+              "optionText": "Filipino"
+            },
+            {
+              "optionStableId": "HMONG",
+              "optionText": "Hmong"
+            },
+            {
+              "optionStableId": "JAPANESE",
+              "optionText": "Japanese"
+            },
+            {
+              "optionStableId": "KOREAN",
+              "optionText": "Korean"
+            },
+            {
+              "optionStableId": "PAKISTANI",
+              "optionText": "Pakistani"
+            },
+            {
+              "optionStableId": "VIETNAMESE",
+              "optionText": "Vietnamese"
+            },
+            {
+              "optionStableId": "ASIAN_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "BLACK_OR_AFRICAN",
+          "optionText": "Black, African American, or African (For example: African American, Ethiopian, Haitian, Jamaican, Nigerian, Somali, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "AFRICAN_AMERICAN",
+              "optionText": "African American"
+            },
+            {
+              "optionStableId": "BARBADIAN",
+              "optionText": "Barbadian"
+            },
+            {
+              "optionStableId": "CARIBBEAN",
+              "optionText": "Caribbean"
+            },
+            {
+              "optionStableId": "ETHIOPIAN",
+              "optionText": "Ethiopian"
+            },
+            {
+              "optionStableId": "GHANAIAN",
+              "optionText": "Ghanaian"
+            },
+            {
+              "optionStableId": "HAITIAN",
+              "optionText": "Haitian"
+            },
+            {
+              "optionStableId": "JAMAICAN",
+              "optionText": "Jamaican"
+            },
+            {
+              "optionStableId": "LIBERIAN",
+              "optionText": "Liberian"
+            },
+            {
+              "optionStableId": "NIGERIAN",
+              "optionText": "Nigerian"
+            },
+            {
+              "optionStableId": "SOMALI",
+              "optionText": "Somali"
+            },
+            {
+              "optionStableId": "SOUTH_AFRICAN",
+              "optionText": "South African"
+            },
+            {
+              "optionStableId": "AFRICAN_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "HISPANIC_OR_SPANISH",
+          "optionText": "Hispanic, Latino, or Spanish (For example: Colombian, Cuban, Dominican, Mexican or Mexican American, Puerto Rican, Salvadoran, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "COLOMBIAN",
+              "optionText": "Colombian"
+            },
+            {
+              "optionStableId": "CUBAN",
+              "optionText": "Cuban"
+            },
+            {
+              "optionStableId": "DOMINICAN",
+              "optionText": "Dominican"
+            },
+            {
+              "optionStableId": "ECUADORIAN",
+              "optionText": "Ecuadorian"
+            },
+            {
+              "optionStableId": "HONDURAN",
+              "optionText": "Honduran"
+            },
+            {
+              "optionStableId": "MEXICAN",
+              "optionText": "Mexican or Mexican American"
+            },
+            {
+              "optionStableId": "PUERTO_RICAN",
+              "optionText": "Puerto Rican"
+            },
+            {
+              "optionStableId": "SALVADORAN",
+              "optionText": "Salvadoran"
+            },
+            {
+              "optionStableId": "HISPANIC_SPANISH",
+              "optionText": "Spanish"
+            },
+            {
+              "optionStableId": "HISPANIC_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "MIDDLEEASTERN_OR_AFRICAN",
+          "optionText": "Middle Eastern or North African (For example: Algerian, Egyptian, Iranian, Lebanese, Moroccan, Syrian, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "AFGHAN",
+              "optionText": "Afghan"
+            },
+            {
+              "optionStableId": "ALGERIAN",
+              "optionText": "Algerian"
+            },
+            {
+              "optionStableId": "EGYPTIAN",
+              "optionText": "Egyptian"
+            },
+            {
+              "optionStableId": "IRANIAN",
+              "optionText": "Iranian"
+            },
+            {
+              "optionStableId": "IRAQI",
+              "optionText": "Iraqi"
+            },
+            {
+              "optionStableId": "ISRAELI",
+              "optionText": "Israeli"
+            },
+            {
+              "optionStableId": "LEBANESE",
+              "optionText": "Lebanese"
+            },
+            {
+              "optionStableId": "MOROCCAN",
+              "optionText": "Moroccan"
+            },
+            {
+              "optionStableId": "SYRIAN",
+              "optionText": "Syrian"
+            },
+            {
+              "optionStableId": "TUNISIAN",
+              "optionText": "Tunisian"
+            },
+            {
+              "optionStableId": "MIDDLEEASTERN_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "HAWAIIAN_OR_ISLANDER",
+          "optionText": "Native Hawaiian or other Pacific Islander (For example: Chamorro, Fijian, Marshallese, Native Hawaiian, Tongan, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "CHAMORRO",
+              "optionText": "Chamorro"
+            },
+            {
+              "optionStableId": "CHUUKESE",
+              "optionText": "Chuukese"
+            },
+            {
+              "optionStableId": "FIJIAN",
+              "optionText": "Fijian"
+            },
+            {
+              "optionStableId": "MARSHALLESE",
+              "optionText": "Marshallese"
+            },
+            {
+              "optionStableId": "NATIVE_HAWAIIAN",
+              "optionText": "Native Hawaiian"
+            },
+            {
+              "optionStableId": "PALAUAN",
+              "optionText": "Palauan"
+            },
+            {
+              "optionStableId": "SAMOAN",
+              "optionText": "Samoan"
+            },
+            {
+              "optionStableId": "TAHITIAN",
+              "optionText": "Tahitian"
+            },
+            {
+              "optionStableId": "TONGAN",
+              "optionText": "Tongan"
+            },
+            {
+              "optionStableId": "ISLANDER_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "WHITE",
+          "optionText": "White (For example: English, European, French, German, Irish, Italian, Polish, etc.)",
+          "nestedOptions": [
+            {
+              "optionStableId": "DUTCH",
+              "optionText": "Dutch"
+            },
+            {
+              "optionStableId": "ENGLISH",
+              "optionText": "English"
+            },
+            {
+              "optionStableId": "FRENCH",
+              "optionText": "French"
+            },
+            {
+              "optionStableId": "GERMAN",
+              "optionText": "German"
+            },
+            {
+              "optionStableId": "IRISH",
+              "optionText": "Irish"
+            },
+            {
+              "optionStableId": "ITALIAN",
+              "optionText": "Italian"
+            },
+            {
+              "optionStableId": "NORWEGIAN",
+              "optionText": "Norwegian"
+            },
+            {
+              "optionStableId": "POLISH",
+              "optionText": "Polish"
+            },
+            {
+              "optionStableId": "SPANISH",
+              "optionText": "Spanish"
+            },
+            {
+              "optionStableId": "EUROPEAN",
+              "optionText": "European"
+            },
+            {
+              "optionStableId": "SCOTTISH",
+              "optionText": "Scottish"
+            },
+            {
+              "optionStableId": "WHITE_NONE",
+              "isDetailsAllowed": true,
+              "detailsText": "Please specify",
+              "optionText": "None of these fully describe my child/me"
+            }
+          ]
+        },
+        {
+          "optionStableId": "NONE",
+          "isDetailsAllowed": true,
+          "detailsText": "Please specify",
+          "optionText": "None of these fully describe my child/me"
+        },
+        {
+          "optionStableId": "PREFER_NOT_ANSWER",
+          "optionText": "Prefer not to answer"
+        }
+      ],
+      "groups": [],
+      "questionType": "PICKLIST",
+      "questionText": "Which of the following categories best describes your child/you? Select all that apply. Note, you may select more than one group."
+    }
+  ]
+}

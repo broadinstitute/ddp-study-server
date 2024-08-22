@@ -224,8 +224,16 @@ public class TabularParticipantParser {
                                                Map<String, Object> esModuleMap, int moduleRepeatNum) {
         for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
             List<Map<String, Object>> options = Collections.singletonList(null);
+            List<Map<String, Object>> nestedOptions = new ArrayList<>();
             if (filterConfig.getOptions() != null && filterConfig.isSplitOptionsIntoColumns()) {
                 options = filterConfig.getOptions();
+                //add nestedOptions as options
+                options.stream().filter(option -> option.get(ESObjectConstants.NESTED_OPTIONS) != null).forEach(option -> {
+                    nestedOptions.addAll((List<Map<String, Object>>) option.get(ESObjectConstants.NESTED_OPTIONS));
+                });
+                if (!nestedOptions.isEmpty()) {
+                    options.addAll(nestedOptions);
+                }
             }
             TextValueProvider valueProvider =
                     ValueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getType());
