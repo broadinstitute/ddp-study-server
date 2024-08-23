@@ -6,12 +6,12 @@ import org.broadinstitute.dsm.route.phimanifest.PhiManifestReportRoute;
 @Data
 public class PhiManifest {
     private final String[] headers =
-            new String[] {"realm", "Participant ID", "Short Id", "First Name", "Last Name", "Date of Birth", "Proxy First Name",
+            new String[] {"realm", "Participant ID", "Short Id", "Collaborator Participant ID", "First Name", "Last Name", "Date of Birth", "Proxy First Name",
                     "Proxy Last Name", "Gender", "Somatic Assent Addendum Response", "Somatic Consent Tumor Pediatric Response",
-                    "somatic Consent Tumor Response", "Date of PX", "Facility Name", "Sample Type", "Accession Number", "Histology",
-                    "Block Id", "Tumor Collaborator Sample Id", "First SM ID", "Tissue Site", "Sequencing Results",
-                    "Normal Manufacturer Barcode", "Normal Collaborator Sample Id", "Clinical Order Date", "Clinical Order Id",
-                    "Clinical PDO Number", "Order Status", "Order Status Date"};
+                    "somatic Consent Tumor Response", "Date of PX", "Facility Name", "TissueType", "Accession Number", "Histology",
+                    "Block Id", "Tumor Collaborator Sample Id", "First SM ID", "Tissue Site", "Normal Manufacturer Barcode",
+                    "Collection Date", "Normal Collaborator Sample Id", "Clinical Order Date", "Clinical Order Id",
+                    "Clinical PDO Number", "Order Status", "Order Status Date", "Sequencing Results"};
     //profile
     String realm;
     String participantId;
@@ -26,7 +26,6 @@ public class PhiManifest {
     //oncHistory and tissue
     String dateOfPx;
     String facility;
-    String sampleType;
     String accessionNumber;
     String histology;
     //normal
@@ -37,6 +36,7 @@ public class PhiManifest {
     String tumorCollaboratorSampleId;
     String firstSmId;
     String tissueSite;
+    String tissueType;
     String sequencingResults;
     //consent
     String somaticAssentAddendumResponse;
@@ -48,6 +48,8 @@ public class PhiManifest {
     String clinicalPdoNumber;
     String orderStatus;
     String orderStatusDate;
+    String collectionDate;
+    String collaboratorParticipantId;
 
     public PhiManifestReportRoute.PhiManifestResponse toResponseArray(String ddpParticipantId, String sequencingOrderId) {
         String[][] report = new String[2][headers.length];
@@ -56,33 +58,34 @@ public class PhiManifest {
         data[0] = this.getRealm();
         data[1] = this.getParticipantId();
         data[2] = this.getShortId();
-        data[3] = this.getFirstName();
-        data[4] = this.getLastName();
-        data[5] = this.getDateOfBirth();
-        data[6] = this.getProxyFirstName();
-        data[7] = this.getProxyLastName();
-        data[8] = this.getGender();
-        data[9] = this.getSomaticAssentAddendumResponse();
-        data[10] = this.getSomaticConsentTumorPediatricResponse();
-        data[11] = this.getSomaticConsentTumorResponse();
-        data[12] = this.getDateOfPx();
-        data[13] = this.getFacility();
-        data[14] = this.getSampleType();
-        data[15] = this.getAccessionNumber();
-        data[16] = this.getHistology();
-        data[17] = this.getBlockId();
-        data[18] = this.getTumorCollaboratorSampleId();
-        data[19] = this.getFirstSmId();
-        data[20] = this.getTissueSite();
-        data[21] = this.getSequencingResults();
+        data[3] = this.getCollaboratorParticipantId();
+        data[4] = this.getFirstName();
+        data[5] = this.getLastName();
+        data[6] = this.getDateOfBirth();
+        data[7] = this.getProxyFirstName();
+        data[8] = this.getProxyLastName();
+        data[9] = this.getGender();
+        data[10] = this.getSomaticAssentAddendumResponse();
+        data[11] = this.getSomaticConsentTumorPediatricResponse();
+        data[12] = this.getSomaticConsentTumorResponse();
+        data[13] = this.getDateOfPx();
+        data[14] = this.getFacility();
+        data[15] = this.getTissueType();
+        data[16] = this.getAccessionNumber();
+        data[17] = this.getHistology();
+        data[18] = this.getBlockId();
+        data[19] = this.getTumorCollaboratorSampleId();
+        data[20] = this.getFirstSmId();
+        data[21] = this.getTissueSite();
         data[22] = this.getMfBarcode();
-        data[23] = this.getNormalCollaboratorSampleId();
-        data[24] = this.getClinicalOrderDate();
-        data[25] = this.getClinicalOrderId();
-        data[26] = this.getClinicalPdoNumber();
-        data[27] = this.getOrderStatus();
-        data[28] = this.getOrderStatusDate();
-
+        data[23] = this.getCollectionDate();
+        data[24] = this.getNormalCollaboratorSampleId();
+        data[25] = this.getClinicalOrderDate();
+        data[26] = this.getClinicalOrderId();
+        data[27] = this.getClinicalPdoNumber();
+        data[28] = this.getOrderStatus();
+        data[29] = this.getOrderStatusDate();
+        data[30] = this.getSequencingResults();
 
         report[0] = headers;
         report[1] = data;
