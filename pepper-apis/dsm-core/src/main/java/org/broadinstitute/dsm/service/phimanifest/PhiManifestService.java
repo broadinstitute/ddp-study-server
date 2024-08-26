@@ -1,12 +1,8 @@
 package org.broadinstitute.dsm.service.phimanifest;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -118,21 +114,11 @@ public class PhiManifestService {
             phiManifest.setFacility(oncHistoryDetail.getFacility());
             phiManifest.setAccessionNumber(oncHistoryDetail.getAccessionNumber());
             phiManifest.setHistology(oncHistoryDetail.getHistology());
-            if (StringUtils.isNotBlank(oncHistoryDetail.getAdditionalValuesJson())) {
-                try {
-                    Map<String, String> oncHistoryAdditionalValues =
-                            new ObjectMapper().readValue(oncHistoryDetail.getAdditionalValuesJson(), HashMap.class);
-                    phiManifest.setSampleType(oncHistoryAdditionalValues.getOrDefault("FFPE", null));
-                } catch (JsonProcessingException e) {
-                    throw new DsmInternalError(
-                            String.format("Unable to read additional values from oncHistory with id %d for participant %s",
-                                    oncHistoryDetail.getOncHistoryDetailId(), participantProfile.getGuid()), e);
-                }
-            }
             phiManifest.setBlockId(tissue.getBlockIdShl());
             phiManifest.setTumorCollaboratorSampleId(tissue.getCollaboratorSampleId());
             phiManifest.setFirstSmId(tissue.getFirstSmId());
             phiManifest.setTissueSite(tissue.getTissueSite());
+            phiManifest.setTissueType(tissue.getTissueType());
             phiManifest.setSequencingResults(tissue.getTissueSequence());
         }
         Optional<MercuryOrderDto> maybeNormalDataInOrder = orders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getDsmKitRequestId()
@@ -143,6 +129,8 @@ public class PhiManifestService {
                     clinicalOrderWithNormalData.getDsmKitRequestId());
             phiManifest.setMfBarcode(kitRequestShipping.getKitLabel());
             phiManifest.setNormalCollaboratorSampleId(kitRequestShipping.getBspCollaboratorSampleId());
+            phiManifest.setCollaboratorParticipantId(kitRequestShipping.getBspCollaboratorParticipantId());
+            phiManifest.setCollectionDate(kitRequestShipping.getCollectionDate());
         }
         MercuryOrderDto mercuryOrderDto = orders.get(0);
         phiManifest.setClinicalOrderDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getOrderDate()));
