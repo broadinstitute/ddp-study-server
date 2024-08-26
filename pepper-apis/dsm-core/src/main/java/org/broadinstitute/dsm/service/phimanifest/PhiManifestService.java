@@ -87,7 +87,7 @@ public class PhiManifestService {
         if (proxies != null && !proxies.isEmpty()) {
             String proxyParticipantId = proxies.get(0);
             ElasticSearchParticipantDto proxyParticipant = ElasticSearchUtil.getParticipantESDataByParticipantId(
-                    ddpInstanceDto.getEsParticipantIndex(), proxyParticipantId);
+                    ddpInstanceDto.getEsUsersIndex(), proxyParticipantId);
             if (proxyParticipant.getProfile().isPresent()) {
                 Profile proxyParticipantProfile = proxyParticipant.getProfile().get();
                 phiManifest.setProxyFirstName(proxyParticipantProfile.getFirstName());
