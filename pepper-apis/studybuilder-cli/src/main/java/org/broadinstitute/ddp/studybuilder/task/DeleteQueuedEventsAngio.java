@@ -49,14 +49,15 @@ public class DeleteQueuedEventsAngio implements CustomTask {
                 .findIdByStudyIdAndCode(studyDto.getId(), FOLLOWUP_ACTIVITY_CODE)
                 .orElseThrow(() -> new DDPException("Could not find activity id for " + FOLLOWUP_ACTIVITY_CODE));
 
-        DBUtils.checkUpdate(1,handle.attach(DeleteQueuedEventsAngio.SqlHelper.class).updateAngioStudyActivity(activityId));
+        DBUtils.checkUpdate(1, handle.attach(DeleteQueuedEventsAngio.SqlHelper.class).updateAngioStudyActivity(activityId));
         log.info("updated : {} ", FOLLOWUP_ACTIVITY_CODE);
 
     }
 
     interface SqlHelper extends SqlObject {
 
-        @SqlUpdate("update study_activity set allow_ondemand_trigger = false, is_followup = false where study_activity_id = :studyActivityId")
+        @SqlUpdate("update study_activity set allow_ondemand_trigger = false, is_followup = false "
+                + " where study_activity_id = :studyActivityId")
         int updateAngioStudyActivity(@Bind("studyActivityId") long studyActivityId);
     }
 
