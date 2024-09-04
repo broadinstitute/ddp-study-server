@@ -34,7 +34,7 @@ public class DeleteQueuedEventsAngio implements CustomTask {
         int rowCount = queuedEventDao.deleteQueuedEventsByStudyId(studyDto.getId());
         log.info("Deleted: {} queued events for study ", rowCount, ANGIO_STUDY);
 
-        //disable ALL active event config
+        //disable ALL active event configurations
         int numUpdated = handle.attach(EventDao.class).enableAllStudyEvents(studyDto.getId(), false);
         log.info("Disabled {} event configurations for study {}", numUpdated, ANGIO_STUDY);
     }
