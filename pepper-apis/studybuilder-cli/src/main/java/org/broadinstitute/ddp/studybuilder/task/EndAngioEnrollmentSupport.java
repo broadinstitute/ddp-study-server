@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -24,12 +25,16 @@ public class EndAngioEnrollmentSupport implements CustomTask {
 
     private static final String ANGIO_STUDY = "ANGIO";
     public static final String FOLLOWUP_ACTIVITY_CODE = "followupconsent";
+    protected Config cfg;
+    protected Config varsCfg;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         if (!studyCfg.getString("study.guid").equals(ANGIO_STUDY)) {
             throw new DDPException("This task is only for the " + ANGIO_STUDY + " study!");
         }
+        this.cfg = studyCfg;
+        this.varsCfg = varsCfg;
     }
 
     @Override
@@ -51,6 +56,13 @@ public class EndAngioEnrollmentSupport implements CustomTask {
 
         DBUtils.checkUpdate(1, handle.attach(EndAngioEnrollmentSupport.SqlHelper.class).updateAngioStudyActivity(activityId));
         log.info("updated : {} ", FOLLOWUP_ACTIVITY_CODE);
+
+        //revoke angio angular client
+        String auth0ClientId = varsCfg.getString("auth0.clientId");
+        String auth0Domain = varsCfg.getString("auth0.domain");
+        DBUtils.checkUpdate(1, handle.attach(JdbiClient.class).
+                updateIsRevokedByAuth0ClientIdAndAuth0Domain(true, auth0ClientId, auth0Domain));
+        log.info("Revoked Angular client for {} ", ANGIO_STUDY);
 
         //disable elastic export
         DBUtils.checkUpdate(1, handle.attach(EndAngioEnrollmentSupport.SqlHelper.class).disableAngioStudyElasticExport(studyDto.getId()));
