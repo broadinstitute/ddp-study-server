@@ -60,8 +60,8 @@ public class EndAngioEnrollmentSupport implements CustomTask {
         //revoke angio angular client
         String auth0ClientId = varsCfg.getString("auth0.clientId");
         String auth0Domain = varsCfg.getString("auth0.domain");
-        DBUtils.checkUpdate(1, handle.attach(JdbiClient.class).
-                updateIsRevokedByAuth0ClientIdAndAuth0Domain(true, auth0ClientId, auth0Domain));
+        DBUtils.checkUpdate(1, handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientIdAndAuth0Domain(
+                true, auth0ClientId, auth0Domain));
         log.info("Revoked Angular client for {} ", ANGIO_STUDY);
 
         //disable elastic export
