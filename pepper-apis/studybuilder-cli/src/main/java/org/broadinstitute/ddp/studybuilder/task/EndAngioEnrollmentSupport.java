@@ -20,7 +20,7 @@ import java.nio.file.Path;
  * Task to delete All pending participant queued events & disable ALL events for the Angio study.
  */
 @Slf4j
-public class DeleteQueuedEventsAngio implements CustomTask {
+public class EndAngioEnrollmentSupport implements CustomTask {
 
     private static final String ANGIO_STUDY = "ANGIO";
     public static final String FOLLOWUP_ACTIVITY_CODE = "followupconsent";
@@ -49,9 +49,12 @@ public class DeleteQueuedEventsAngio implements CustomTask {
                 .findIdByStudyIdAndCode(studyDto.getId(), FOLLOWUP_ACTIVITY_CODE)
                 .orElseThrow(() -> new DDPException("Could not find activity id for " + FOLLOWUP_ACTIVITY_CODE));
 
-        DBUtils.checkUpdate(1, handle.attach(DeleteQueuedEventsAngio.SqlHelper.class).updateAngioStudyActivity(activityId));
+        DBUtils.checkUpdate(1, handle.attach(EndAngioEnrollmentSupport.SqlHelper.class).updateAngioStudyActivity(activityId));
         log.info("updated : {} ", FOLLOWUP_ACTIVITY_CODE);
 
+        //disable elastic export
+        DBUtils.checkUpdate(1, handle.attach(EndAngioEnrollmentSupport.SqlHelper.class).disableAngioStudyElasticExport(studyDto.getId()));
+        log.info("Disabled Elastic Export for {} ", ANGIO_STUDY);
     }
 
     interface SqlHelper extends SqlObject {
@@ -59,6 +62,11 @@ public class DeleteQueuedEventsAngio implements CustomTask {
         @SqlUpdate("update study_activity set allow_ondemand_trigger = false, is_followup = false "
                 + " where study_activity_id = :studyActivityId")
         int updateAngioStudyActivity(@Bind("studyActivityId") long studyActivityId);
+
+        @SqlUpdate("update umbrella_study set enable_data_export = false "
+                + " where umbrella_study_id = :studyId")
+        int disableAngioStudyElasticExport(@Bind("studyId") long studyId);
+
     }
 
 }
