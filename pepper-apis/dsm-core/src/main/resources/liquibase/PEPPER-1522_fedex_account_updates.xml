@@ -8,8 +8,8 @@
     <changeSet author="sampath" id="PEPPER-1522_fedex_account_updates">
         <update tableName="kit_return_information">
             <column name="return_address_name" value="Broad Clinical Labs"/>
-            <column name="return_address_street1" value="27 Blue Sky Drive"/>
-            <column name="return_address_street2" value="Receiving Lab 132"/>
+            <column name="return_address_street1" value="Receiving Lab 132"/>
+            <column name="return_address_street2" value="27 Blue Sky Drive"/>
             <column name="return_address_city" value="Burlington"/>
             <column name="return_address_zip" value="01803"/>
             <where>kit_return_id IN (
