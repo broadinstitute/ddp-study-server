@@ -1,12 +1,8 @@
 package org.broadinstitute.dsm.service.phimanifest;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +36,8 @@ public class PhiManifestService {
     public static final String SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID = "SOMATIC_CONSENT_TUMOR_PEDIATRIC";
     public static final String SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID = "SOMATIC_ASSENT_ADDENDUM";
 
+    public static final String CONSENT_SUSPENDED = "CONSENT_SUSPENDED";
+    public static final String CONSENT_ACTIVITY_CODE = "CONSENT";
     public static final String CONSENT_ADDENDUM_ACTIVITY_ACTIVITY_CODE = "CONSENT_ADDENDUM";
     public static final String LMS_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID = "SOMATIC_CONSENT_ADDENDUM_TUMOR";
     public static final String OS2_QUESTION_SOMATIC_CONSENT_ADDENDUM_TUMOR_STABLE_ID = "SOMATIC_CONSENT_TUMOR";
@@ -77,7 +75,7 @@ public class PhiManifestService {
      * Creates a PhiManifest from the information in participant and in a clinical order
      */
     public static PhiManifest generateDataForReport(@NonNull ElasticSearchParticipantDto participant, @NonNull List<MercuryOrderDto> orders,
-                                             @NonNull DDPInstanceDto ddpInstanceDto) {
+                                                    @NonNull DDPInstanceDto ddpInstanceDto) {
         //This method assumes that each order has at most 1 Tumor and at most 1 Normal sample, which is a correct assumption based on
         // clinical ordering criteria currently in place
         PhiManifest phiManifest = new PhiManifest();
@@ -91,7 +89,7 @@ public class PhiManifestService {
         if (proxies != null && !proxies.isEmpty()) {
             String proxyParticipantId = proxies.get(0);
             ElasticSearchParticipantDto proxyParticipant = ElasticSearchUtil.getParticipantESDataByParticipantId(
-                    ddpInstanceDto.getEsParticipantIndex(), proxyParticipantId);
+                    ddpInstanceDto.getEsUsersIndex(), proxyParticipantId);
             if (proxyParticipant.getProfile().isPresent()) {
                 Profile proxyParticipantProfile = proxyParticipant.getProfile().get();
                 phiManifest.setProxyFirstName(proxyParticipantProfile.getFirstName());
@@ -118,21 +116,11 @@ public class PhiManifestService {
             phiManifest.setFacility(oncHistoryDetail.getFacility());
             phiManifest.setAccessionNumber(oncHistoryDetail.getAccessionNumber());
             phiManifest.setHistology(oncHistoryDetail.getHistology());
-            if (StringUtils.isNotBlank(oncHistoryDetail.getAdditionalValuesJson())) {
-                try {
-                    Map<String, String> oncHistoryAdditionalValues =
-                            new ObjectMapper().readValue(oncHistoryDetail.getAdditionalValuesJson(), HashMap.class);
-                    phiManifest.setSampleType(oncHistoryAdditionalValues.getOrDefault("FFPE", null));
-                } catch (JsonProcessingException e) {
-                    throw new DsmInternalError(
-                            String.format("Unable to read additional values from oncHistory with id %d for participant %s",
-                                    oncHistoryDetail.getOncHistoryDetailId(), participantProfile.getGuid()), e);
-                }
-            }
             phiManifest.setBlockId(tissue.getBlockIdShl());
             phiManifest.setTumorCollaboratorSampleId(tissue.getCollaboratorSampleId());
             phiManifest.setFirstSmId(tissue.getFirstSmId());
             phiManifest.setTissueSite(tissue.getTissueSite());
+            phiManifest.setTissueType(tissue.getTissueType());
             phiManifest.setSequencingResults(tissue.getTissueSequence());
         }
         Optional<MercuryOrderDto> maybeNormalDataInOrder = orders.stream().filter(mercuryOrderDto -> mercuryOrderDto.getDsmKitRequestId()
@@ -143,6 +131,8 @@ public class PhiManifestService {
                     clinicalOrderWithNormalData.getDsmKitRequestId());
             phiManifest.setMfBarcode(kitRequestShipping.getKitLabel());
             phiManifest.setNormalCollaboratorSampleId(kitRequestShipping.getBspCollaboratorSampleId());
+            phiManifest.setCollaboratorParticipantId(kitRequestShipping.getBspCollaboratorParticipantId());
+            phiManifest.setCollectionDate(kitRequestShipping.getCollectionDate());
         }
         MercuryOrderDto mercuryOrderDto = orders.get(0);
         phiManifest.setClinicalOrderDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getOrderDate()));
@@ -178,7 +168,7 @@ public class PhiManifestService {
      */
     public static String convertBooleanActivityAnswerToString(Optional<Object> answer) {
         if (answer.isPresent() && answer.get() instanceof Boolean) {
-            return convertBooleanToYesNo((Boolean)answer.get());
+            return convertBooleanToYesNo((Boolean) answer.get());
         } else {
             if (answer.isPresent()) {
                 return answer.get().toString();
@@ -221,15 +211,23 @@ public class PhiManifestService {
         }
         String dateOfBirth = participant.getDsm().get().getDateOfBirth();
         String dateOfMajority = (String) participant.getDsm().get().getDateOfMajority();
-        if (StringUtils.isBlank(dateOfMajority) || DateTimeUtil.isAdult(dateOfMajority)) {
-            return (Boolean)getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid())
+        String participantStatus = participant.getStatus().orElse("");
+        if (StringUtils.isBlank(dateOfMajority) || participant.hasCompletedActivity(CONSENT_ACTIVITY_CODE)) {
+            //self adult enrollment
+            return (Boolean) getAdultParticipantConsentedToTumorAnswer(participant, ddpInstanceDto.getStudyGuid())
                     .orElse(false);
+        } else {
+            //pediatric or aged-up in lost to followup
+            return isPediatricValidForPHI(participant, dateOfBirth, participantStatus);
         }
+    }
+
+    private static boolean isPediatricValidForPHI(ElasticSearchParticipantDto participant, String dateOfBirth, String participantStatus) {
         int age = DateTimeUtil.calculateAgeInYears(dateOfBirth);
         boolean hasCompletedPediatricConsentAddendum = participant.hasCompletedActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE);
 
         if (hasCompletedPediatricConsentAddendum) {
-            if (age >= 7) {
+            if (age >= 7 || participantStatus.equalsIgnoreCase(CONSENT_SUSPENDED)) {
                 return participant.checkAnswerToActivity(CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE,
                         SOMATIC_CONSENT_TUMOR_PEDIATRIC_QUESTION_STABLE_ID, true) && participant.checkAnswerToActivity(
                         CONSENT_ADDENDUM_PEDIATRICS_ACTIVITY_CODE, SOMATIC_ASSENT_ADDENDUM_QUESTION_STABLE_ID, true);
