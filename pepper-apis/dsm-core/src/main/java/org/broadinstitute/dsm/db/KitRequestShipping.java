@@ -1071,7 +1071,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             } else {
                 insertKit.setNull(9, Types.INTEGER);
             }
-            // todo arz must set scan date
             insertKit.executeUpdate();
             try (ResultSet rs = insertKit.getGeneratedKeys()) {
                 if (rs.next()) {
