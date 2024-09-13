@@ -95,7 +95,7 @@ public class KitShippingTestUtil {
         String kitReqestIdStr = TransactionWrapper.inTransaction(conn ->
                 KitRequestShipping.writeRequest(conn, instanceDto.getDdpInstanceId().toString(), dsmKitRequestId,
                         kitTypeId, participant.getDdpParticipantIdOrThrow(), "test", "test", testUser, "test", "",
-                        "test", false, null, ddpInstance, kitTypeName, dsmKitRequestId, false, null));
+                        "test", false, null, ddpInstance, kitTypeName, dsmKitRequestId, false, null, null, null));
         return Integer.parseInt(kitReqestIdStr);
     }
 

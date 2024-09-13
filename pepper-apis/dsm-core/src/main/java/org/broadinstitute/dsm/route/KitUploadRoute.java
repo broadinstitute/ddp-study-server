@@ -382,7 +382,7 @@ public class KitUploadRoute extends RequestHandler {
                             ddpInstance);
             KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), shippingId, kitTypeId,
                     kit.getParticipantId().trim(), collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber,
-                    false, uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel, false, null);
+                    false, uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel, false, null, null, null);
             kit.setDdpLabel(shippingId);
             kit.setExternalOrderNumber(externalOrderNumber);
         } else {
@@ -410,7 +410,7 @@ public class KitUploadRoute extends RequestHandler {
 
             KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), shippingId, kitTypeId,
                     participantID, collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(),
-                    false, uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel, false, null,);
+                    false, uploadReason, ddpInstance, bspCollaboratorSampleType, ddpLabel, false, null, null, null);
             kit.setDdpLabel(shippingId);
         }
     }

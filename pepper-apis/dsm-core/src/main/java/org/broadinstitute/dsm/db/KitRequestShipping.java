@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -209,7 +210,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id "
                     + "SET deactivated_date = ?,deactivation_reason = ?, deactivated_by = ? WHERE kit.dsm_kit_request_id = ?";
     private static final String INSERT_KIT =
-            "INSERT INTO ddp_kit (dsm_kit_request_id, easypost_address_id_to,  error, message, needs_approval, kit_complete, tracking_return_id, kit_label) VALUES (?,?,?,?,?,?,?,?)";
+            "INSERT INTO ddp_kit (dsm_kit_request_id, easypost_address_id_to,  error, message, needs_approval, kit_complete, tracking_return_id, kit_label, scan_date) VALUES (?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_KIT =
             "UPDATE ddp_kit SET label_url_to = ?, label_url_return = ?, easypost_to_id = ?, easypost_return_id = ?, tracking_to_id = ?, "
                     + "tracking_return_id = ?, easypost_tracking_to_url = ?, easypost_tracking_return_url = ?, error = ?, message = ?, "
@@ -947,7 +948,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
             writeRequest(conn, instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId,
                     "SYSTEM", null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance,
-                    bspCollaboratorSampleType, subkitsDdpLabel, false, null, null);
+                    bspCollaboratorSampleType, subkitsDdpLabel, false, null, null, null);
             return null;
         });
     }
@@ -966,7 +967,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                       @NonNull String ddpParticipantId, String bspCollaboratorParticipantId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName,
-                                      String subKitddpLabel, boolean isReturnOnly, String returnTrackingId, String kitLabel) {
+                                      String subKitddpLabel, boolean isReturnOnly, String returnTrackingId,
+                                      String kitLabel, Long scanDate) {
         String ddpLabel = StringUtils.isBlank(subKitddpLabel)
                 ? (StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()) : subKitddpLabel;
 
@@ -1000,7 +1002,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         if (dbVals.resultException == null && dbVals.resultValue != null) {
             KitRequestShipping kitRequestShipping = (KitRequestShipping) dbVals.resultValue;
             SimpleResult simpleResultKitWriting = writeNewKit(conn, kitRequestShipping.getDsmKitRequestId(),
-                    addressIdTo, errorMessage, needsApproval, isReturnOnly, returnTrackingId, kitLabel);
+                    addressIdTo, errorMessage, needsApproval, isReturnOnly, returnTrackingId, kitLabel, scanDate);
             kitRequestShipping.setDsmKitId((Long) simpleResultKitWriting.resultValue);
             dbVals.resultValue = kitRequestShipping;
         }
@@ -1044,7 +1046,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     private static SimpleResult writeNewKit(Connection conn, int kitRequestId, String addressIdTo, String errorMessage,
-                                            boolean needsApproval, boolean isComplete, String returnTrackingId, String kitLabel) {
+                                            boolean needsApproval, boolean isComplete, String returnTrackingId,
+                                            String kitLabel, Long scanDate) {
         SimpleResult dbVals = new SimpleResult(0);
         try (PreparedStatement insertKit = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
             insertKit.setInt(1, kitRequestId);
@@ -1063,6 +1066,12 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             insertKit.setBoolean(6, isComplete);
             insertKit.setString(7, returnTrackingId);
             insertKit.setString(8, kitLabel);
+            if (scanDate != null) {
+                insertKit.setLong(9, scanDate);
+            } else {
+                insertKit.setNull(9, Types.INTEGER);
+            }
+            // todo arz must set scan date
             insertKit.executeUpdate();
             try (ResultSet rs = insertKit.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -1080,7 +1089,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     // called by reactivation of a deactivated kit
     public static long writeNewKit(Integer kitRequestId, String addressIdTo, String errorMessage, boolean needsApproval) {
         SimpleResult results = inTransaction(conn -> writeNewKit(conn, kitRequestId, addressIdTo, errorMessage, needsApproval,
-                false, null, null));
+                false, null, null, null));
 
         if (results.resultException != null) {
             logger.error("Error writing new kit w/ dsm_kit_id " + kitRequestId, results.resultException);

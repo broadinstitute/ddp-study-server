@@ -473,7 +473,7 @@ public class KitTestUtil {
                 KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(),
                         kitTypeId, kitRequestShipping.getDdpParticipantId(),
                         kitRequestShipping.getBspCollaboratorParticipantId(), kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false,
-                        null, ddpInstance, kitTypeName, null, false, kitRequestShipping.getTrackingReturnId(), kitRequestShipping.getKitLabel()));
+                        null, ddpInstance, kitTypeName, null, false, kitRequestShipping.getTrackingReturnId(), kitRequestShipping.getKitLabel(), null));
     }
 
     public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription, boolean nullKitType) {

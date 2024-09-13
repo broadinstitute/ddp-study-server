@@ -184,7 +184,6 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
         }
 
         private static boolean isSentKit(ResultSet foundKitResults) throws SQLException {
-//        and kit.kit_complete = 1 and kit.deactivated_date is null
             return ("1".equals(foundKitResults.getString(DBConstants.KIT_COMPLETE)))
                     && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_DEACTIVATED_DATE))
                     && StringUtils.isBlank(foundKitResults.getString(DBConstants.DSM_RECEIVE_DATE))

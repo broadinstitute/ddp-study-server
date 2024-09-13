@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.nonpepperkit;
 
 import java.sql.Connection;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,7 +95,7 @@ public class NonPepperKitCreationService {
         }
         try {
             // only track shipping address if we're actually shipping the kit vs. collecting it onsite
-            if (juniperKitRequest.isReturnOnly()) {
+            if (!juniperKitRequest.isReturnOnly()) {
                 String easypostAddressId = easyPostUtil.getEasyPostAddressId(juniperKitRequest, phone, deliveryAddress);
                 if (StringUtils.isBlank(easypostAddressId)) {
                     throw new DsmInternalError("EasyPost address id should not be null for kit" + juniperKitRequest.getJuniperKitId());
@@ -179,17 +180,27 @@ public class NonPepperKitCreationService {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
+        Long scanDate = null;
+
+        // if this is a kit that we aren't shipping out, we'll
+        // consider now to be the scan date
+        if (kit.isReturnOnly()) {
+            scanDate = Instant.now().toEpochMilli();
+        }
         try {
-            Address address = easyPostUtil.getAddress(kit.getEasypostAddressId());
-            if (address != null) {
-                addressId = address.getId();
+            // only check addresses for kits that are being shipped out
+            if (!kit.isReturnOnly()) {
+                Address address = easyPostUtil.getAddress(kit.getEasypostAddressId());
+                if (address != null) {
+                    addressId = address.getId();
+                }
             }
         } catch (EasyPostException e) {
             throw new DsmInternalError("EasyPost addressId could not be received for " + kit.getJuniperKitId(), e);
         }
 
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-            //             Not needed now but in general, we don't check for overwrite length for an external shipper
+            // Not needed now but in general, we don't check for overwrite length for an external shipper
             try {
                 // collaborator sample id is the id of the physical sample that GP will work with.
                 collaboratorSampleId =
@@ -198,7 +209,7 @@ public class NonPepperKitCreationService {
                 KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), juniperKitRequestId,
                         kitTypeId,
                         kit.getParticipantId().trim(), collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber,
-                        false, null, ddpInstance, bspCollaboratorSampleType, null, returnOnly, returnShipmentTrackingLabel, kitLabel);
+                        false, null, ddpInstance, bspCollaboratorSampleType, null, returnOnly, returnShipmentTrackingLabel, kitLabel, scanDate);
                 kit.setExternalOrderNumber(externalOrderNumber);
             } catch (Exception e) {
                 transactionResults.resultException = e;
@@ -224,7 +235,7 @@ public class NonPepperKitCreationService {
                         KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
                                 participantID, collaboratorParticipantId, collaboratorSampleId, userId, addressId,
                                 errorMessage, kit.getExternalOrderNumber(), false, null, ddpInstance, bspCollaboratorSampleType,
-                                null, kit.isReturnOnly(), kit.getReturnTrackingId(), kit.getKitLabel());
+                                null, kit.isReturnOnly(), kit.getReturnTrackingId(), kit.getKitLabel(), scanDate);
                 log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
             } catch (Exception e) {
                 transactionResults.resultException = e;
