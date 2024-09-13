@@ -140,7 +140,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             String dsmKitRequestId  = TransactionWrapper.inTransaction(conn -> {
                 return KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), kitRequestId, desiredKitType.getKitId(),
                                 ddpParticipantId.get(), participantCollaboratorId, collaboratorSampleId, USER_ID, "", "",
-                                "", false, "", ddpInstance, desiredKitType.getName(), null, false, null);
+                                "", false, "", ddpInstance, desiredKitType.getName(), null, false, null, null);
             });
             bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
             bspDummyKitDao.updateCollectionDate(dsmKitRequestId);

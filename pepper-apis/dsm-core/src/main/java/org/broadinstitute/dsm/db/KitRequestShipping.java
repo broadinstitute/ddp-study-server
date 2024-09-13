@@ -947,7 +947,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
             writeRequest(conn, instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId,
                     "SYSTEM", null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance,
-                    bspCollaboratorSampleType, subkitsDdpLabel, false, null);
+                    bspCollaboratorSampleType, subkitsDdpLabel, false, null, null);
             return null;
         });
     }
@@ -1045,7 +1045,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     private static SimpleResult writeNewKit(Connection conn, int kitRequestId, String addressIdTo, String errorMessage,
                                             boolean needsApproval, boolean isComplete, String returnTrackingId, String kitLabel) {
-        // todo arz pass through complete and return tracking
         SimpleResult dbVals = new SimpleResult(0);
         try (PreparedStatement insertKit = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
             insertKit.setInt(1, kitRequestId);
