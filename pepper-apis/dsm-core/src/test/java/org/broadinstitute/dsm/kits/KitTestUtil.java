@@ -22,11 +22,10 @@ import com.easypost.model.Parcel;
 import com.easypost.model.PostageLabel;
 import com.easypost.model.Shipment;
 import com.easypost.model.Tracker;
-import com.typesafe.config.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -42,7 +41,6 @@ import org.broadinstitute.dsm.model.kit.ScanResult;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.broadinstitute.dsm.service.admin.UserAdminTestUtil;
-import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -471,10 +469,11 @@ public class KitTestUtil {
     public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
                                            String userId) {
 
-        return KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(), kitTypeId,
-                kitRequestShipping.getDdpParticipantId(), kitRequestShipping.getBspCollaboratorParticipantId(),
-                kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false, null,
-                ddpInstance, kitTypeName, null);
+        return TransactionWrapper.inTransaction(conn ->
+                KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(),
+                        kitTypeId, kitRequestShipping.getDdpParticipantId(),
+                        kitRequestShipping.getBspCollaboratorParticipantId(), kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false,
+                        null, ddpInstance, kitTypeName, null, false, kitRequestShipping.getTrackingReturnId(), kitRequestShipping.getKitLabel()));
     }
 
     public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription, boolean nullKitType) {
