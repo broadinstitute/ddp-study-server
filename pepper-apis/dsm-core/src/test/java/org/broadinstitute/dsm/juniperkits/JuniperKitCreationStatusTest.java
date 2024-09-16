@@ -139,6 +139,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
 
+        // kit requests that are marked as return only should come back as "SENT" as soon as they are created
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
     }
 
