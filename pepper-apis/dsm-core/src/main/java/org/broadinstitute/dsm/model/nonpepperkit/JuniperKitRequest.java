@@ -21,4 +21,25 @@ public class JuniperKitRequest extends KitRequest {
     private String juniperParticipantID;
     private String juniperStudyID;
     private String easypostAddressId;
+
+    /**
+     * Carrier's return tracking id, set when the participant
+     * is preparing an in-person kit in the presence
+     * of study staff.
+     */
+    private String returnTrackingId;
+
+    /**
+     * Set to true when the kit should not be sent by mail
+     * to the participant.  Set to true when preparing in-person
+     * kits.
+     */
+    private boolean returnOnly;
+
+    /**
+     * The label on the physical kit, also known as
+     * kit barcode.  Set in conjunction with {@link #returnOnly}
+     * and {@link #returnTrackingId}
+     */
+    private String kitLabel;
 }

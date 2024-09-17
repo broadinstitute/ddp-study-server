@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
@@ -91,10 +92,10 @@ public class KitShippingTestUtil {
     public int createKitShipping(ParticipantDto participant, DDPInstanceDto instanceDto, String kitTypeName, int kitTypeId) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(instanceDto.getInstanceName());
         String dsmKitRequestId = genDsmKitRequestId();
-        String kitReqestIdStr = KitRequestShipping.writeRequest(instanceDto.getDdpInstanceId().toString(),
-                dsmKitRequestId, kitTypeId, participant.getDdpParticipantIdOrThrow(),
-                "test", "test", testUser, "test", "", "test",
-                false, null, ddpInstance, kitTypeName, dsmKitRequestId);
+        String kitReqestIdStr = TransactionWrapper.inTransaction(conn ->
+                KitRequestShipping.writeRequest(conn, instanceDto.getDdpInstanceId().toString(), dsmKitRequestId,
+                        kitTypeId, participant.getDdpParticipantIdOrThrow(), "test", "test", testUser, "test", "",
+                        "test", false, null, ddpInstance, kitTypeName, dsmKitRequestId, false, null, null, null));
         return Integer.parseInt(kitReqestIdStr);
     }
 
