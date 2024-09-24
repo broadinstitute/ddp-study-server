@@ -7,6 +7,8 @@
   "AUTH0_DOMAIN": "{{$conf.auth0.domain}}",
   "AUTH0_CLIENT_ID": "{{$conf.auth0.clientId}}",
   "AUTH0_CLIENT_SECRET": "{{$conf.auth0.clientSecret}}",
+  "AUTH0_MGMT_CLIENT_ID": "{{$conf.auth0.mgmtClientId}}",
+  "AUTH0_MGMT_CLIENT_SECRET": "{{$conf.auth0.mgmtSecret}}",
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
     {{/* These end up in a yaml inlined list, so the comma in front is needed. */}}
