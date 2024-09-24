@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="PEPPER-1522_fedex_account_updates">
+        <update tableName="kit_return_information">
+            <column name="return_address_name" value="Broad Clinical Labs - Receiving Lab 132"/>
+            <column name="return_address_street1" value="27 Blue Sky Drive"/>
+            <column name="return_address_street2" value=""/>
+            <column name="return_address_city" value="Burlington"/>
+            <column name="return_address_zip" value="01803"/>
+            <where>kit_return_id IN (
+                SELECT distinct s.kit_return_id FROM ddp_instance di
+                join ddp_kit_request_settings s on s.ddp_instance_id = di.ddp_instance_id
+                WHERE di.is_active = 1
+                and di.study_guid IN ('ANGIO', 'cmi-osteo', 'cmi-brain', 'cmi-mbc', 'cmi-mpc', 'cmi-esc', 'cmi-pancan', 'cmi-lms', 'colorectal', 'RGP', 'juniper-ourheart', 'scad', 'eating-disorders', 'dark')
+                )
+            </where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
