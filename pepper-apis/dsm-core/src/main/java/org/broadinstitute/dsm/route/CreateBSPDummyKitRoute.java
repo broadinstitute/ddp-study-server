@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.route;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
@@ -44,11 +45,15 @@ public class CreateBSPDummyKitRoute implements Route {
                     KitRequestShipping.getCollaboratorSampleId(kitTypeId, participantCollaboratorId, DUMMY_KIT_TYPE_NAME, mockDdpInstance);
             if (ddpParticipantId != null) {
                 //if instance not null
-                String dsmKitRequestId = KitRequestShipping.writeRequest(mockDdpInstance.getDdpInstanceId(), mercuryKitRequestId, kitTypeId,
-                        ddpParticipantId, participantCollaboratorId, collaboratorSampleId,
-                        USER_ID, "", "", "", false, "", null,
-                        DUMMY_KIT_TYPE_NAME, null);
-                new BSPDummyKitDao().updateKitLabel(kitLabel, dsmKitRequestId);
+                TransactionWrapper.inTransaction(conn -> {
+                    String dsmKitRequestId = KitRequestShipping.writeRequest(conn, mockDdpInstance.getDdpInstanceId(), mercuryKitRequestId,
+                            kitTypeId, ddpParticipantId, participantCollaboratorId,
+                            collaboratorSampleId, USER_ID, "", "", "", false, "",
+                            null, DUMMY_KIT_TYPE_NAME, null, false, null, null, null);
+                    new BSPDummyKitDao().updateKitLabel(kitLabel, dsmKitRequestId);
+                    return null;
+                });
+
             }
             logger.info("Returning 200 to Mercury");
             response.status(200);

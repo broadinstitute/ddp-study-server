@@ -76,7 +76,6 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
 
     @BeforeClass
     public static void setupJuniperBefore() {
-
         juniperKitUtil =
                 new KitTestUtil(instanceName, instanceGuid, "JuniperTestProject",  "Juniper-Group", "SALIVA", "SALIVA", null, true);
         juniperKitUtil.setupInstanceAndSettings();
@@ -128,6 +127,20 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
 
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
+    }
+
+    @Test
+    public void testReturnOnlyKit() {
+        int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
+        juniperTestKit.setReturnOnly(true);
+        juniperTestKit.setKitLabel(juniperTestKit.getParticipantId() + ".kit");
+        juniperTestKit.setReturnTrackingId(juniperTestKit.getJuniperParticipantID() + ".tracking");
+        createNonPepperTestKit(juniperTestKit);
+        KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnJuniperKitId(juniperTestKit.getJuniperKitId());
+
+        // kit requests that are marked as return only should come back as "SENT" as soon as they are created
+        verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.SENT.getValue());
     }
 
     @Test
