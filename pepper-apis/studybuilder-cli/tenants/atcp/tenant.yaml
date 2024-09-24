@@ -5,7 +5,7 @@ rules:
   - name: Google Sign In Restriction
     script: ./rules/google-signin-restriction.js
     stage: login_success
-    enabled: true
+    enabled: false
     order: 1
   - name: Force email verification
     script: ./rules/force-email-verification.js
@@ -19,8 +19,59 @@ rules:
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
-    enabled: true
+    enabled: false
     order: 4
+
+actions:
+  - name: Force email verification
+    code: ../actions/force-email-verification.js
+    dependencies:
+      - name: auth0
+        version: 4.10.0
+    deployed: false
+    secrets:
+      - name: M2M_DOMAIN
+        value: '##AUTH0_DOMAIN##'
+      - name: M2M_CLIENT_ID
+        value: '##AUTH0_MGMT_CLIENT_ID##'
+      - name: M2M_CLIENT_SECRET
+        value: '##AUTH0_MGMT_CLIENT_SECRET##'
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v1
+
+  - name: Google Sign In Restriction
+    code: ../actions/google-signin-restriction.js
+    deployed: false
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v1
+
+  - name: Register User in Pepper
+    code: ../register-user-in-pepper-action.js
+    dependencies:
+      - name: request
+        version: 2.88.2
+      - name: google-cloud/logging
+        version: 11.2.0
+      - name: auth0
+        version: 4.10.0
+    deployed: false
+    secrets:
+      - name: pepperBaseUrl
+        value: '##SERVER_BASE_URL##'
+      - name: domain
+        value: '##AUTH0_DOMAIN##'
+      - name: M2M_CLIENT_ID
+        value: '##AUTH0_MGMT_CLIENT_ID##'
+      - name: M2M_CLIENT_SECRET
+        value: '##AUTH0_MGMT_CLIENT_SECRET##'
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v1
 
 pages:
   - name: guardian_multifactor
