@@ -169,7 +169,6 @@ exports.onExecutePostLogin = async (event, api) => {
         message: 'User need to register first in order to login',
         statusCode: 403,
       };
-      //const loginErr = new Error(JSON.stringify(loginErrPayload));
       return api.access.deny(loginErrPayload.message);
     }
 
@@ -213,10 +212,8 @@ exports.onExecutePostLogin = async (event, api) => {
     //  for one study initially, then attempt to renew it when accessing another. For the moment,
     //  assume that, if a study guid is included with the call, the client wants us to call the
     //  registration endpoint.
-    //var isRefreshTokenExchange = ""; //todo .. revisit and fix (context.protocol === "oauth2-refresh-token");
     //var isRefreshTokenExchange = event.transaction.protocol  === "oauth2-refresh-token"; //todo
     var isRefreshTokenExchange = false;
-    //false; //event.request.body.get("grant_type") == "refresh_token";
     console.log('Action Event isRefreshTokenExchange::' + isRefreshTokenExchange);
     var needsStudyRegistration = !!(pepper_params.studyGuid);
     var hasCachedUserGuid = !!(event.user.app_metadata.user_guid);
@@ -257,13 +254,11 @@ exports.onExecutePostLogin = async (event, api) => {
 
       }
 
-      //added below in action.. todo revisit and fix
+      //added below in action as workaround for not able to update userGUID in user AppMetadata post registration
+      // todo revisit and fix
       console.log('pepper params: ' + JSON.stringify(pepper_params));
-      console.log('EVENT: ' + JSON.stringify(event));
-      console.log('API::: ' + JSON.stringify(api));
-      //console.log('Redirect URI::: ' + event.transaction.redirect_uri);
-
-
+      console.debug('EVENT: ' + JSON.stringify(event));
+      console.debug('API::: ' + JSON.stringify(api));
       if (event.user.app_metadata.user_guid) {
         console.log('setting userGUID claim from user.app_metadata');
         api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
@@ -271,19 +266,7 @@ exports.onExecutePostLogin = async (event, api) => {
         console.log('setting userGUID claim from temp user');
         api.idToken.setCustomClaim(pepperUserGuidClaim, pepper_params.tempUserGuid);
         api.user.setAppMetadata("user_guid", pepper_params.tempUserGuid);
-        //console.log('::: UserGUID claim NOT set.. setting auth0 userID');
-        //api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.user_id);
       }
-      api.user.setAppMetadata("user_guid_test_1", "test GUID-1");
-
-      /**
-       if (pepper_params.tempUserGuid) {
-       console.log('setting userGUID claim from temp user');
-       api.idToken.setCustomClaim(pepperUserGuidClaim, pepper_params.tempUserGuid);
-       api.user.setAppMetadata("user_guid", pepper_params.tempUserGuid);
-       } else if (event.user.app_metadata.user_guid) {
-       api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
-       } */
 
       var pepperUrl = event.secrets.pepperBaseUrl;
       if (event.client.metadata.backendUrl) {
@@ -320,27 +303,22 @@ exports.onExecutePostLogin = async (event, api) => {
 
           console.log('Access denied...' + body.message);
           return api.access.deny(body.message);
-          //todo .. doesnt seem to block UI invoking next steps ?
-          //try redirect ?
+          //todo .. doesnt seem to block UI invoking next steps?
         } else {
           console.log(' register response: ' + JSON.stringify(response));
           console.log(' register body: ' + JSON.stringify(body));
 
           // all is well
-          //todo.. below doesnt seem to work.. looks AppMetadata update is likely delayed
-          // added before register call for now
+          //todo.. below doesnt seem to work..added before register call for now
           //maybe try API call?
           var ddpUserGuid = body.ddpUserGuid;
           api.idToken.setCustomClaim(pepperUserGuidClaim, ddpUserGuid);
           api.user.setAppMetadata("user_guid", ddpUserGuid);
           api.user.setUserMetadata("user_guid", ddpUserGuid);
           console.log('updated user metaData with user GUID ? ');
-          api.user.setAppMetadata("user_guid_test_2", "test GUID-2");
-          api.user.setUserMetadata("user_guid_test_3", "test GUID-3");
 
           // Update user AppMetadata with user_guid using Auth0 Management API
           const auth0Sdk = require("auth0");
-          //const ManagementClient = require('auth0@2.9.1').ManagementClient
           const ManagementClient = auth0Sdk.ManagementClient;
           // This will make an Authentication API call
           const managementClientInstance = new ManagementClient({
@@ -385,5 +363,4 @@ exports.onExecutePostLogin = async (event, api) => {
  */
 exports.onContinuePostLogin = async (event, api) => {
   console.log('In action register pepper user onContinuePostLogin..');
-
 };
