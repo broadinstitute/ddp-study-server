@@ -317,6 +317,7 @@ exports.onExecutePostLogin = async (event, api) => {
           api.user.setUserMetadata("user_guid", ddpUserGuid);
           console.log('updated user metaData with user GUID ? ');
 
+          /**
           // Update user AppMetadata with user_guid using Auth0 Management API
           const auth0Sdk = require("auth0");
           const ManagementClient = auth0Sdk.ManagementClient;
@@ -346,8 +347,9 @@ exports.onExecutePostLogin = async (event, api) => {
               console.log('Successfully completed Post registration user AppMetadata update');
             }
           });
-        }
+           */
 
+        }
       });
     }
   }
