@@ -47,6 +47,7 @@ exports.onExecutePostLogin = async (event, api) => {
     console.log('cloudLogging Disabled');
   }
 
+
   // Use of the m2mClients list below should be considered legacy behavior, and
   // may be removed at any time. Any new clients should set the key 'skipPepperRegistration'
   // to the value of 'true' in their client metadata if the Pepper registration process
@@ -169,8 +170,22 @@ exports.onExecutePostLogin = async (event, api) => {
         message: 'User need to register first in order to login',
         statusCode: 403,
       };
-      return api.access.deny(loginErrPayload.message);
+      return api.access.deny(JSON.stringify(loginErrPayload));
     }
+
+    //added below in action to restrict access to other cmi studies in same tenant
+    if (pepper_params.mode && pepper_params.mode === "login" && event.user.app_metadata.user_guid
+      && event.user.app_metadata.study_guid && pepper_params.studyGuid &&
+      event.user.app_metadata.study_guid != pepper_params.studyGuid) {
+      console.log('Access denied. User not registered to this study: ' + pepper_params.studyGuid);
+      const loginErrPayload = {
+        code: 'user_not_registered',
+        message: 'User need to register to study: ' + pepper_params.studyGuid + '  to login',
+        statusCode: 403,
+      };
+      return api.access.deny(JSON.stringify(loginErrPayload));
+    }
+
 
     if (event.request.query.invitation_id) {
       pepper_params.invitationId = event.request.query.invitation_id;
@@ -212,8 +227,7 @@ exports.onExecutePostLogin = async (event, api) => {
     //  for one study initially, then attempt to renew it when accessing another. For the moment,
     //  assume that, if a study guid is included with the call, the client wants us to call the
     //  registration endpoint.
-    //var isRefreshTokenExchange = event.transaction.protocol  === "oauth2-refresh-token"; //todo
-    var isRefreshTokenExchange = false;
+    var isRefreshTokenExchange = event.transaction && event.transaction.protocol  === "oauth2-refresh-token";
     console.log('Action Event isRefreshTokenExchange::' + isRefreshTokenExchange);
     var needsStudyRegistration = !!(pepper_params.studyGuid);
     var hasCachedUserGuid = !!(event.user.app_metadata.user_guid);
@@ -259,13 +273,17 @@ exports.onExecutePostLogin = async (event, api) => {
       console.log('pepper params: ' + JSON.stringify(pepper_params));
       console.debug('EVENT: ' + JSON.stringify(event));
       console.debug('API::: ' + JSON.stringify(api));
-      if (event.user.app_metadata.user_guid) {
-        console.log('setting userGUID claim from user.app_metadata');
-        api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
-      } else if (pepper_params.tempUserGuid) {
+
+      if (pepper_params.mode && pepper_params.mode === 'signup' && pepper_params.tempUserGuid) {
         console.log('setting userGUID claim from temp user');
         api.idToken.setCustomClaim(pepperUserGuidClaim, pepper_params.tempUserGuid);
         api.user.setAppMetadata("user_guid", pepper_params.tempUserGuid);
+        api.user.setAppMetadata("study_guid", pepper_params.studyGuid);
+        console.log('setting userGUID and studyGUID into AppMetadata');
+      }
+      if (pepper_params.mode && pepper_params.mode === 'login' && event.user.app_metadata.user_guid) {
+        console.log('setting userGUID claim from user.app_metadata');
+        api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
       }
 
       var pepperUrl = event.secrets.pepperBaseUrl;
@@ -289,7 +307,7 @@ exports.onExecutePostLogin = async (event, api) => {
             statusCode: 500
           }));
           console.log('Error during registration: ' + err.message);
-          return api.access.deny(err.message);
+          return api.access.deny(JSON.stringify(error));
         } else if (response && response.statusCode !== 200) {
           console.log('Response: ' + JSON.stringify(response));
           console.log('Failed to register auth0 user ' + event.user.user_id + ':' + response.statusCode + ' at ' + pepperUrl);
@@ -301,9 +319,10 @@ exports.onExecutePostLogin = async (event, api) => {
             statusCode: response.statusCode
           }));
 
-          console.log('Access denied...' + body.message);
-          return api.access.deny(body.message);
-          //todo .. doesnt seem to block UI invoking next steps?
+          console.log('Access denied...' + JSON.stringify(error));
+          api.idToken.setCustomClaim(pepperUserGuidClaim, null);
+          return api.access.deny(JSON.stringify(error));
+          //todo .. doesnt seem to block UI invoking next steps ?
         } else {
           console.log(' register response: ' + JSON.stringify(response));
           console.log(' register body: ' + JSON.stringify(body));
@@ -337,19 +356,21 @@ exports.onExecutePostLogin = async (event, api) => {
           };
 
           console.log('managementClientInstance userID: ' + JSON.stringify(event.user.user_id));
-          managementClientInstance.users.updateAppMetadata(params, metadata, function (err, user) {
-            if (err) {
-              console.log(
-                'Post registration user AppMetadata update failed:' + err.getMessage());
-              return api.access.deny(err.message);
+           managementClientInstance.users.updateAppMetadata(params, metadata, function (err, user) {
+           if (err) {
+           console.log(
+           'Post registration user AppMetadata update failed:' + err.getMessage());
+           return api.access.deny(err.message);
 
-            } else {
-              console.log('Successfully completed Post registration user AppMetadata update');
-            }
-          });
-           */
+           } else {
+           console.log('Successfully completed Post registration user AppMetadata update');
+           }
+
+           }); */
+
 
         }
+
       });
     }
   }
@@ -365,4 +386,5 @@ exports.onExecutePostLogin = async (event, api) => {
  */
 exports.onContinuePostLogin = async (event, api) => {
   console.log('In action register pepper user onContinuePostLogin..');
+
 };
