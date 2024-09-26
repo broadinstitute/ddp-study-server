@@ -1,0 +1,11 @@
+tenant:
+  default_directory: ##DB_NAME##
+
+actions:
+  - name: Add Claims
+    code: ../action/add-claims.js
+    deployed: false
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v1
