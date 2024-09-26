@@ -24,30 +24,6 @@ exports.onExecutePostLogin = async (event, api) => {
     return;
   }
 
-  const {Logging} = require('@google-cloud/logging');
-  const cloudLoggingEnabled = false; //!!event.secrets.googleApplicationCredentials;
-  var cloudLog = null;
-
-  if (cloudLoggingEnabled) {
-    console.log('cloudLogging Enabled');
-
-    const cloudLogName = "_Default";
-    var applicationCredentials = JSON.parse(event.secrets.googleApplicationCredentials);
-
-    console.log("Successfully loaded googleApplicationCredentials. Google Cloud Logging to project " + applicationCredentials.project_id + " is enabled");
-
-    var cloudLoggingConfig = {
-      projectId: applicationCredentials.project_id,
-      credentials: applicationCredentials
-    };
-
-    var cloudLogging = new Logging(cloudLoggingConfig);
-    cloudLog = cloudLogging.log(cloudLogName);
-  } else {
-    console.log('cloudLogging Disabled');
-  }
-
-
   // Use of the m2mClients list below should be considered legacy behavior, and
   // may be removed at any time. Any new clients should set the key 'skipPepperRegistration'
   // to the value of 'true' in their client metadata if the Pepper registration process
@@ -243,28 +219,6 @@ exports.onExecutePostLogin = async (event, api) => {
       if (event.user.user_metadata.last_name) {
         pepper_params.lastName = event.user.user_metadata.last_name;
         console.log('User metadata has last name = ' + pepper_params.lastName);
-      }
-
-      if (cloudLoggingEnabled) {
-        console.log('trying to log to cloud');
-        var severity = "INFO";
-
-        if (pepper_params.mode) {
-          if ((pepper_params.mode === 'signup') && (!pepper_params.tempUserGuid)) {
-            severity = "ERROR";
-          }
-        }
-
-        var entry = cloudLog.entry({
-          severity: severity,
-          labels: {
-            source: "auth0",
-            mode: pepper_params.mode || "default"
-          }
-        }, event);
-
-        cloudLog.write(entry);
-
       }
 
       //added below in action as workaround for not able to update userGUID in user AppMetadata post registration
