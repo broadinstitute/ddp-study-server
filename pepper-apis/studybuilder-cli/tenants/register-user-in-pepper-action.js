@@ -231,8 +231,7 @@ exports.onExecutePostLogin = async (event, api) => {
     console.log('Action Event isRefreshTokenExchange::' + isRefreshTokenExchange);
     var needsStudyRegistration = !!(pepper_params.studyGuid);
     var hasCachedUserGuid = !!(event.user.app_metadata.user_guid);
-    //if (isRefreshTokenExchange && hasCachedUserGuid && !needsStudyRegistration) { //todo
-    if (hasCachedUserGuid && !needsStudyRegistration) {
+    if (isRefreshTokenExchange && hasCachedUserGuid && !needsStudyRegistration) {
       console.log('using app_metadata cached user GUID: ' + JSON.stringify(event.user.app_metadata));
       api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
       return;
