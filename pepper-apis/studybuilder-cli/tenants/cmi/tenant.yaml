@@ -28,7 +28,7 @@ actions:
         version: v1
 
   - name: Register User in Pepper
-    code: ../register-user-in-pepper-action.js
+    code: ../register-cmi-user-in-pepper-action.js
     dependencies:
       - name: request
         version: 2.88.2

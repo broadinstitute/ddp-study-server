@@ -12,6 +12,8 @@
  * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
  */
 exports.onExecutePostLogin = async (event, api) => {
+  console.log('In action register pepper user');
+
   /**
    * The following code block will skip this Action if Rule "Register User in Pepper"
    * was previously executed in the transaction in order to avoid duplication
@@ -22,21 +24,20 @@ exports.onExecutePostLogin = async (event, api) => {
     return;
   }
 
-
-// Use of the m2mClients list below should be considered legacy behavior, and
-// may be removed at any time. Any new clients should set the key 'skipPepperRegistration'
-// to the value of 'true' in their client metadata if the Pepper registration process
-// is not required.
+  // Use of the m2mClients list below should be considered legacy behavior, and
+  // may be removed at any time. Any new clients should set the key 'skipPepperRegistration'
+  // to the value of 'true' in their client metadata if the Pepper registration process
+  // is not required.
   var m2mClients = ['dsm', 'Count Me In (Salt CMS)'];
 
-// The new flag is opt-in. If no value is defined, the legacy behavior will be used.
-// If the value is non-null, then assume the client has opted in.
+  // The new flag is opt-in. If no value is defined, the legacy behavior will be used.
+  // If the value is non-null, then assume the client has opted in.
   var skipPepperRegistration = event.client.metadata.skipPepperRegistration || null;
   if ((skipPepperRegistration === null) && (m2mClients.includes(event.client.name))) {
     console.log('skipping Pepper registration for legacy client \'' + event.client.name + '\'');
     return;
   } else if (skipPepperRegistration === 'true') {
-    console.log('skipping Pepper registration for \'' + event.client.name  + '\'');
+    console.log('skipping Pepper registration for \'' + event.client.name + '\'');
     return;
   }
 
@@ -121,7 +122,7 @@ exports.onExecutePostLogin = async (event, api) => {
       !event.user.app_metadata.user_guid &&
       event.user.user_metadata && !!event.user.user_metadata.temp_user_guid
     ) {
-      console.log('looking for temp_user_guid in user_metadata.temp_user_guid: '+ event.user.user_metadata.temp_user_guid);
+      console.log('looking for temp_user_guid in user_metadata.temp_user_guid: ' + event.user.user_metadata.temp_user_guid);
       pepper_params.tempUserGuid = event.user.user_metadata.temp_user_guid;
     }
 
@@ -145,8 +146,22 @@ exports.onExecutePostLogin = async (event, api) => {
         message: 'User need to register first in order to login',
         statusCode: 403,
       };
-      return  api.access.deny(JSON.stringify(loginErrPayload));
+      return api.access.deny(JSON.stringify(loginErrPayload));
     }
+
+    //added below in action to restrict access to other cmi studies in same tenant
+    if (pepper_params.mode && pepper_params.mode === "login" && event.user.app_metadata.user_guid
+      && event.user.app_metadata.study_guid && pepper_params.studyGuid &&
+      event.user.app_metadata.study_guid != pepper_params.studyGuid) {
+      console.log('Access denied. User not registered to this study: ' + pepper_params.studyGuid);
+      const loginErrPayload = {
+        code: 'user_not_registered',
+        message: 'User need to register to study: ' + pepper_params.studyGuid + '  to login',
+        statusCode: 403,
+      };
+      return api.access.deny(JSON.stringify(loginErrPayload));
+    }
+
 
     if (event.request.query.invitation_id) {
       pepper_params.invitationId = event.request.query.invitation_id;
@@ -174,7 +189,7 @@ exports.onExecutePostLogin = async (event, api) => {
 
     // This is the token renewal case. Let's avoid going through pepper registration
     if (event.request.query.renew_token_only) {
-      console.log('Action request.query.renew_token_only: ' );
+      console.log('Action request.query.renew_token_only: ');
       api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
       return;
     }
@@ -207,7 +222,11 @@ exports.onExecutePostLogin = async (event, api) => {
       }
 
       //added below in action as workaround for not able to update userGUID in user AppMetadata post registration
+      // todo revisit and fix
       console.log('pepper params: ' + JSON.stringify(pepper_params));
+      console.debug('EVENT: ' + JSON.stringify(event));
+      console.debug('API::: ' + JSON.stringify(api));
+
       if (pepper_params.mode && pepper_params.mode === 'signup' && pepper_params.tempUserGuid) {
         console.log('setting userGUID claim from temp user');
         api.idToken.setCustomClaim(pepperUserGuidClaim, pepper_params.tempUserGuid);
@@ -231,7 +250,7 @@ exports.onExecutePostLogin = async (event, api) => {
         url: pepperUrl + '/pepper/v1/register',
         json: pepper_params,
         timeout: 15000
-      }, function(err, response, body) {
+      }, function (err, response, body) {
         if (err) {
           console.log('Error while registering auth0 user ' + event.user.user_id);
           console.log(err);
@@ -245,29 +264,71 @@ exports.onExecutePostLogin = async (event, api) => {
         } else if (response && response.statusCode !== 200) {
           console.log('Response: ' + JSON.stringify(response));
           console.log('Failed to register auth0 user ' + event.user.user_id + ':' + response.statusCode + ' at ' + pepperUrl);
+          console.log('BODY: ' + JSON.stringify(body));
           body = body || {};
           let error = new Error(JSON.stringify({
             code: body.code,
             message: body.message,
             statusCode: response.statusCode
           }));
-          //todo remove pepperUserGuidClaim ?
-          //api.idToken.setCustomClaim(pepperUserGuidClaim, null);
+
+          console.log('Access denied...' + JSON.stringify(error));
+          api.idToken.setCustomClaim(pepperUserGuidClaim, null);
           return api.access.deny(JSON.stringify(error));
+          //todo .. doesnt seem to block UI invoking next steps ?
         } else {
-          console.debug(' register response: ' + JSON.stringify(response));
+          console.log(' register response: ' + JSON.stringify(response));
+          console.log(' register body: ' + JSON.stringify(body));
+
           // all is well
-          //todo.. below doesnt seem to work.. added before register call for now
+          //todo.. below doesnt seem to work..added before register call for now
+          //maybe try API call?
           var ddpUserGuid = body.ddpUserGuid;
           api.idToken.setCustomClaim(pepperUserGuidClaim, ddpUserGuid);
           api.user.setAppMetadata("user_guid", ddpUserGuid);
           api.user.setUserMetadata("user_guid", ddpUserGuid);
-          console.log('updated user metaData with user GUID ');
+          console.log('updated user metaData with user GUID ? ');
+
+          /**
+          // Update user AppMetadata with user_guid using Auth0 Management API
+          const auth0Sdk = require("auth0");
+          const ManagementClient = auth0Sdk.ManagementClient;
+          // This will make an Authentication API call
+          const managementClientInstance = new ManagementClient({
+            // These come from a machine-to-machine application
+            domain: event.secrets.domain,
+            token: api.accessToken,
+            //clientId: event.secrets.M2M_CLIENT_ID,
+            //clientSecret: event.secrets.M2M_CLIENT_SECRET,
+            scope: "update:users"
+          });
+
+          var params = {id: event.user.user_id};
+          var metadata = {
+            user_guid: ddpUserGuid
+          };
+
+          console.log('managementClientInstance userID: ' + JSON.stringify(event.user.user_id));
+           managementClientInstance.users.updateAppMetadata(params, metadata, function (err, user) {
+           if (err) {
+           console.log(
+           'Post registration user AppMetadata update failed:' + err.getMessage());
+           return api.access.deny(err.message);
+
+           } else {
+           console.log('Successfully completed Post registration user AppMetadata update');
+           }
+
+           }); */
+
+
         }
 
       });
     }
-  }};
+  }
+};
+
 
 /**
  * Handler that will be invoked when this action is resuming after an external redirect. If your
@@ -276,5 +337,7 @@ exports.onExecutePostLogin = async (event, api) => {
  * @param {Event} event - Details about the user and the context in which they are logging in.
  * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
  */
-// exports.onContinuePostLogin = async (event, api) => {
-// };
+exports.onContinuePostLogin = async (event, api) => {
+  console.log('In action register pepper user onContinuePostLogin..');
+
+};
