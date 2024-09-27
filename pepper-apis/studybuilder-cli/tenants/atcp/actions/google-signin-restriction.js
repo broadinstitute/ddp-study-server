@@ -54,7 +54,7 @@ exports.onExecutePostLogin = async (event, api) => {
           message: 'You have to complete prequal first in order to proceed',
           statusCode: 422,
         };
-        return api.access.deny(loginErrPayload.message);
+        return api.access.deny(JSON.stringify(loginErrPayload));
       } else {
         console.log('Temp user guid is set to: ' + tempUserGuid);
         return;
