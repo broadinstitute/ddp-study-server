@@ -45,6 +45,12 @@ actions:
       - id: post-login
         version: v3
 
+triggers:
+  post-login:
+    - action_name: Register User in Pepper
+      display_name: Register User in Pepper
+      order: 1
+
 emailProvider:
   name: "sendgrid"
   enabled: true

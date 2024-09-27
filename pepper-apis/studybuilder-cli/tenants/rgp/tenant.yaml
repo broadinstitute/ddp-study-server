@@ -57,6 +57,15 @@ actions:
       - id: post-login
         version: v3
 
+triggers:
+  post-login:
+    - action_name: Force email verification
+      display_name: Force email verification
+      order: 1
+    - action_name: Register User in Pepper
+      display_name: Register User in Pepper
+      order: 2
+
 pages:
   - name: login
     html: ./pages/login.html

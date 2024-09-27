@@ -10,3 +10,9 @@ actions:
     supported_triggers:
       - id: post-login
         version: v3
+
+triggers:
+  post-login:
+    - action_name: Add Claims
+      display_name: Add Claims
+      order: 1

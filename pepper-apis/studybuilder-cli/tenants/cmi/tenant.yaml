@@ -53,6 +53,15 @@ actions:
       - id: post-login
         version: v3
 
+triggers:
+  post-login:
+    - action_name: Check Admin Role
+      display_name: Check Admin Role
+      order: 1
+    - action_name: Register User in Pepper
+      display_name: Register User in Pepper
+      order: 2
+
 pages:
   - name: login
     html: ./pages/login.html

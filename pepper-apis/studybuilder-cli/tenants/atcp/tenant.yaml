@@ -74,6 +74,18 @@ actions:
       - id: post-login
         version: v1
 
+triggers:
+  post-login:
+    - action_name: Force email verification
+      display_name: Force email verification
+      order: 1
+    - action_name: Google Sign In Restriction
+      display_name: Google Sign In Restriction
+      order: 2
+    - action_name: Register User in Pepper
+      display_name: Register User in Pepper
+      order: 3
+
 pages:
   - name: guardian_multifactor
     enabled: false
