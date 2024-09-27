@@ -1,7 +1,7 @@
 /**
  * This Action was migrated from Rule.
  * Rule name: Register User in Pepper
- * Rule ID: rul_
+ * Rule ID: rul_prion
  * Created on 9/24/2024
  */
 

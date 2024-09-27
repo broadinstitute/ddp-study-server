@@ -7,8 +7,6 @@
   "AUTH0_DOMAIN": "{{$conf.auth0.deployDomain}}",
   "AUTH0_CLIENT_ID": "{{$conf.auth0.deployClientId}}",
   "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
-  "AUTH0_MGMT_CLIENT_ID": "{{$conf.auth0.mgmtClientId}}",
-  "AUTH0_MGMT_CLIENT_SECRET": "{{$conf.auth0.mgmtSecret}}",
 
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
@@ -27,6 +25,9 @@
     "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
     "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}",
     "DB_NAME": "{{$conf.auth0.dbName}}"
+    "AUTH0_DOMAIN": "{{$conf.auth0.deployDomain}}",
+    "AUTH0_MGMT_CLIENT_ID": "p1ySwZVs9BG5DY8mXeAvFUd3O1jqSfIx",
+    "AUTH0_MGMT_CLIENT_SECRET": "_7IkqACQ8N4FsVTGkuNOyt8SnikZqFmMmZcMsYEfwdMWbUfOMQsrvHvv0Q6ecB5T"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {

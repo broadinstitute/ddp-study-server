@@ -21,14 +21,16 @@ rules:
 actions:
   - name: Check Admin Role
     code: ../actions/check-admin-role.js
-    deployed: false
+    runtime: node18
+    deployed: true
     status: built
     supported_triggers:
       - id: post-login
-        version: v1
+        version: v3
 
   - name: Register User in Pepper
     code: ../register-cmi-user-in-pepper-action.js
+    runtime: node18
     dependencies:
       - name: request
         version: 2.88.2
@@ -36,7 +38,7 @@ actions:
         version: 11.2.0
       - name: auth0
         version: 4.10.0
-    deployed: false
+    deployed: true
     secrets:
       - name: pepperBaseUrl
         value: '##SERVER_BASE_URL##'
@@ -49,7 +51,7 @@ actions:
     status: built
     supported_triggers:
       - id: post-login
-        version: v1
+        version: v3
 
 pages:
   - name: login

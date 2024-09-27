@@ -15,10 +15,11 @@ rules:
 actions:
   - name: Force email verification
     code: ../actions/force-email-verification.js
+    runtime: node18
     dependencies:
       - name: auth0
         version: 4.10.0
-    deployed: false
+    deployed: true
     secrets:
       - name: M2M_DOMAIN
         value: '##AUTH0_DOMAIN##'
@@ -29,10 +30,11 @@ actions:
     status: built
     supported_triggers:
       - id: post-login
-        version: v1
+        version: v3
 
   - name: Register User in Pepper
     code: ../register-user-in-pepper-action.js
+    runtime: node18
     dependencies:
       - name: request
         version: 2.88.2
@@ -40,7 +42,7 @@ actions:
         version: 11.2.0
       - name: auth0
         version: 4.10.0
-    deployed: false
+    deployed: true
     secrets:
       - name: pepperBaseUrl
         value: '##SERVER_BASE_URL##'
@@ -53,7 +55,7 @@ actions:
     status: built
     supported_triggers:
       - id: post-login
-        version: v1
+        version: v3
 
 pages:
   - name: login
