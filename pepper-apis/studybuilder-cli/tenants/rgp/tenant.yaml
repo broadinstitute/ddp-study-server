@@ -1,5 +1,5 @@
 tenant:
-  default_directory: ##DB_NAME##
+  "DB_NAME": "Username-Password-Authentication",
 
 rules:
   - name: Force email verification
@@ -14,7 +14,7 @@ rules:
 
 actions:
   - name: Force email verification
-    code: ../actions/force-email-verification.js
+    code: ./actions/force-email-verification.js
     runtime: node18
     dependencies:
       - name: auth0

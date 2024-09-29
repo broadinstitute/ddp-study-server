@@ -19,7 +19,7 @@ exports.onExecutePostLogin = async (event, api) => {
    * was previously executed in the transaction in order to avoid duplication
    * of logic.
    */
-  if (api.rules.wasExecuted("rul_*")) {
+  if (api.rules.wasExecuted("rul_pfKZwBRYcntnVEtS")) {
     console.log('In action register pepper user rule executed');
     return;
   }
@@ -288,39 +288,6 @@ exports.onExecutePostLogin = async (event, api) => {
           api.user.setAppMetadata("user_guid", ddpUserGuid);
           api.user.setUserMetadata("user_guid", ddpUserGuid);
           console.log('updated user metaData with user GUID ? ');
-
-          /**
-          // Update user AppMetadata with user_guid using Auth0 Management API
-          const auth0Sdk = require("auth0");
-          const ManagementClient = auth0Sdk.ManagementClient;
-          // This will make an Authentication API call
-          const managementClientInstance = new ManagementClient({
-            // These come from a machine-to-machine application
-            domain: event.secrets.domain,
-            token: api.accessToken,
-            //clientId: event.secrets.M2M_CLIENT_ID,
-            //clientSecret: event.secrets.M2M_CLIENT_SECRET,
-            scope: "update:users"
-          });
-
-          var params = {id: event.user.user_id};
-          var metadata = {
-            user_guid: ddpUserGuid
-          };
-
-          console.log('managementClientInstance userID: ' + JSON.stringify(event.user.user_id));
-           managementClientInstance.users.updateAppMetadata(params, metadata, function (err, user) {
-           if (err) {
-           console.log(
-           'Post registration user AppMetadata update failed:' + err.getMessage());
-           return api.access.deny(err.message);
-
-           } else {
-           console.log('Successfully completed Post registration user AppMetadata update');
-           }
-
-           }); */
-
 
         }
 

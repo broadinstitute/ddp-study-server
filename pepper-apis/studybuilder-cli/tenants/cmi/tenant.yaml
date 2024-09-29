@@ -34,10 +34,6 @@ actions:
     dependencies:
       - name: request
         version: 2.88.2
-      - name: google-cloud/logging
-        version: 11.2.0
-      - name: auth0
-        version: 4.10.0
     deployed: true
     secrets:
       - name: pepperBaseUrl
