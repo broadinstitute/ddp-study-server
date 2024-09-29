@@ -1,30 +1,9 @@
 tenant:
   default_directory: Username-Password-Authentication
 
-rules:
-  - name: Google Sign In Restriction
-    script: ./rules/google-signin-restriction.js
-    stage: login_success
-    enabled: false
-    order: 1
-  - name: Force email verification
-    script: ./rules/force-email-verification.js
-    enabled: true
-    order: 2
-  - name: Check user is signed up
-    script: ./rules/check-user-is-signedup.js
-    stage: login_success
-    enabled: false
-    order: 3
-  - name: Register User in Pepper
-    script: ../register-user-in-pepper.js
-    stage: login_success
-    enabled: false
-    order: 4
-
 actions:
   - name: Force email verification
-    code: ../actions/force-email-verification.js
+    code: ./actions/force-email-verification.js
     runtime: node18
     dependencies:
       - name: auth0
@@ -43,22 +22,18 @@ actions:
         version: v3
 
   - name: Google Sign In Restriction
-    code: ../actions/google-signin-restriction.js
+    code: ./actions/google-signin-restriction.js
     deployed: false
     status: built
     supported_triggers:
       - id: post-login
-        version: v1
+        version: v3
 
   - name: Register User in Pepper
-    code: ../register-user-in-pepper-action.js
+    code: ./actions/register-user-in-pepper-action.js
     dependencies:
       - name: request
         version: 2.88.2
-      - name: google-cloud/logging
-        version: 11.2.0
-      - name: auth0
-        version: 4.10.0
     deployed: false
     secrets:
       - name: pepperBaseUrl
@@ -72,7 +47,7 @@ actions:
     status: built
     supported_triggers:
       - id: post-login
-        version: v1
+        version: v3
 
 triggers:
   post-login:
@@ -86,67 +61,3 @@ triggers:
       display_name: Register User in Pepper
       order: 3
 
-pages:
-  - name: guardian_multifactor
-    enabled: false
-    html: ./pages/guardian_multifactor.html
-  - name: login
-    enabled: true
-    html: ./pages/login.html
-  - name: password_reset
-    enabled: true
-    html: ./pages/password_reset.html
-
-emailProvider:
-  name: "sendgrid"
-  enabled: true
-  default_from_address: ##SENDGRID_EMAIL##
-  credentials:
-    api_key: ##SENDGRID_TOKEN##
-
-emailTemplates:
-  - template: reset_email
-    body: ./emailTemplates/reset_email.html
-    from: A-T Project <##STUDY_EMAIL##>
-    resultUrl: '{{ application.callback_domain }}/dashboard'
-    subject: Global A-T Family Data Platform | Reset Password Instructions
-    urlLifetimeInSeconds: 432000
-    syntax: liquid
-    enabled: true
-  - template: verify_email
-    body: ./emailTemplates/verify_email.html
-    from: A-T Project <##STUDY_EMAIL##>
-    resultUrl: '{{ application.callback_domain }}/account-activated'
-    subject: Global AT-Family Data Platform | Activate Account Notification
-    urlLifetimeInSeconds: 432000
-    syntax: liquid
-    enabled: true
-
-# NOTE: client names must match what's in Auth0's dashboard, otherwise deploy
-# will create new clients. Everytime deploy happens, client configurations here
-# will overwrite what's in Auth0. If there are additional urls not in here then
-# those need to be added back manually. Other settings not configured here will
-# also need to be configured manually.
-clients:
-  - name: atcp-angular-client
-    app_type: spa
-    callbacks: [
-      '##BASE_URL##/login-landing'
-      ##LOCALHOST_CALLBACKS##
-    ]
-    allowed_logout_urls: [
-      '##BASE_URL##',
-      '##BASE_URL##/error',
-      '##BASE_URL##/session-expired'
-      ##LOCALHOST_LOGOUTS##
-    ]
-    web_origins: [
-      '##BASE_URL##'
-      ##LOCALHOST_ORIGINS##
-    ]
-    client_metadata:
-      study: ATCP
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-    oidc_conformant: true

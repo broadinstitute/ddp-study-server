@@ -1,7 +1,7 @@
 /**
  * This Action was migrated from Rule.
  * Rule name: Google Sign In Restriction
- * Rule ID: rul_
+ * Rule ID: rul_nSlTGpLpwQlfA278
  * Created on 9/24/2024
  */
 
@@ -17,7 +17,7 @@ exports.onExecutePostLogin = async (event, api) => {
    * was previously executed in the transaction in order to avoid duplication
    * of logic.
    */
-  if (api.rules.wasExecuted("change_me")) {
+  if (api.rules.wasExecuted("rul_nSlTGpLpwQlfA278")) {
     return;
   }
 

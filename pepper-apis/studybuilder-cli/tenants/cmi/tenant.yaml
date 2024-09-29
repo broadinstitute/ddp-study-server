@@ -20,7 +20,7 @@ rules:
 
 actions:
   - name: Check Admin Role
-    code: ../actions/check-admin-role.js
+    code: ./actions/check-admin-role.js
     runtime: node18
     deployed: true
     status: built

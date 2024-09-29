@@ -16,7 +16,7 @@ exports.onExecutePostLogin = async (event, api) => {
    * was previously executed in the transaction in order to avoid duplication
    * of logic.
    */
-  if (api.rules.wasExecuted("change_me")) {
+  if (api.rules.wasExecuted("rul_bL3jV04z2KADpdx9")) {
     return;
   }
 
