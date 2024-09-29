@@ -208,15 +208,10 @@ exports.onExecutePostLogin = async (event, api) => {
 
       //added below in action as workaround for not able to update userGUID in user AppMetadata post registration
       console.log('pepper params: ' + JSON.stringify(pepper_params));
-      if (pepper_params.mode && pepper_params.mode === 'signup' && pepper_params.tempUserGuid) {
-        console.log('setting userGUID claim from temp user');
+      if (pepper_params.tempUserGuid) {
         api.idToken.setCustomClaim(pepperUserGuidClaim, pepper_params.tempUserGuid);
         api.user.setAppMetadata("user_guid", pepper_params.tempUserGuid);
-        api.user.setAppMetadata("study_guid", pepper_params.studyGuid);
-        console.log('setting userGUID and studyGUID into AppMetadata');
-      }
-      if (pepper_params.mode && pepper_params.mode === 'login' && event.user.app_metadata.user_guid) {
-        console.log('setting userGUID claim from user.app_metadata');
+      } else if (event.user.app_metadata.user_guid) {
         api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
       }
 
