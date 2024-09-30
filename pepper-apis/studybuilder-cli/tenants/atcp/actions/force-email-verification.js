@@ -64,7 +64,7 @@ exports.onExecutePostLogin = async (event, api) => {
         })
       );
 
-      return api.access.deny(JSON.stringify(error));
+      return api.access.deny(error.message);
     });
   } else {
     return;
