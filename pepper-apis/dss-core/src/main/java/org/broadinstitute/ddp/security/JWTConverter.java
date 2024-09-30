@@ -28,7 +28,6 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
-import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPTokenException;
@@ -183,15 +182,6 @@ public class JWTConverter {
                     try {
                         DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
                         String ddpUserGuid = validToken.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
-                        //handle if auth0 user_id was set rather than user guid
-                        if (ddpUserGuid != null && ddpUserGuid.startsWith("auth0")) {
-                            long tenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
-                            User user = handle.attach(UserDao.class).findUserByAuth0UserId(ddpUserGuid, tenantId).orElse(null);
-                            if (user != null) {
-                                ddpUserGuid = user.getGuid();
-                            }
-                        }
-
                         UserPermissions userPermissions = handle.attach(AuthDao.class)
                                 .findUserPermissions(ddpUserGuid, auth0ClientId, auth0Domain);
                         userProfile = findUserProfile(handle, ddpUserGuid);

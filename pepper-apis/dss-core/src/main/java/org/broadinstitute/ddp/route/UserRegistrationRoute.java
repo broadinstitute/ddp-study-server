@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -179,7 +180,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 operatorUser = pair.getOperatorUser();
                 if (!payload.skipTriggerEvents()) {
                     triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
-                    publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
+                    //publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
                 } else {
                     log.warn("Skipped triggering events & publishing participant-registered event for {}", operatorUser.getGuid());
                 }
@@ -259,7 +260,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             log.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
                     invitation.getInvitationType(), pair.getParticipantUser().getGuid());
             triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
-            publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
+            //publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
             return pair.getOperatorUser();
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
@@ -591,13 +592,30 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             log.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
             Map<String, Object> metadata = new HashMap<>();
             metadata.put(User.METADATA_LANGUAGE, languageDto.getIsoCode());
-            var result = Auth0ManagementClient.forUser(handle, user.getGuid()).updateUserMetadata(auth0UserId, metadata);
-            if (result.hasThrown() || result.hasError()) {
-                var e = result.hasThrown() ? result.getThrown() : result.getError();
-                log.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", user.getGuid(), e);
-            } else {
-                log.info("Updated user_metadata for user {}", user.getGuid());
-            }
+            metadata.put("user_guid", user.getGuid());
+            syncAuth0Metadata(handle, user, auth0UserId, metadata, false);
+
+            //sync user AppMetaData
+            log.info("User {} : proceeding to sync app_metadata", user.getGuid());
+            Map<String, Object> appMetadata = new HashMap<>();
+            metadata.put("study_guid", payload.getStudyGuid());
+            appMetadata.put("user_guid", user.getGuid());
+            syncAuth0Metadata(handle, user, auth0UserId, appMetadata, true);
+        }
+    }
+
+    private static void syncAuth0Metadata(Handle handle, User user, String auth0UserId, Map<String, Object> metadata, boolean appMetadata) {
+        ApiResult result;
+        if (appMetadata) {
+            result = Auth0ManagementClient.forUser(handle, user.getGuid()).updateUserAppMetadata(auth0UserId, metadata);
+        } else {
+            result = Auth0ManagementClient.forUser(handle, user.getGuid()).updateUserAppMetadata(auth0UserId, metadata);
+        }
+        if (result.hasThrown() || result.hasError()) {
+            var e = result.hasThrown() ? result.getThrown() : result.getError();
+            log.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", user.getGuid(), e);
+        } else {
+            log.info("Updated user_metadata for user {}", user.getGuid());
         }
     }
 
