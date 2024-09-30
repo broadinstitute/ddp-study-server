@@ -180,7 +180,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 operatorUser = pair.getOperatorUser();
                 if (!payload.skipTriggerEvents()) {
                     triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
-                    //publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
+                    publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
                 } else {
                     log.warn("Skipped triggering events & publishing participant-registered event for {}", operatorUser.getGuid());
                 }
@@ -260,7 +260,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             log.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
                     invitation.getInvitationType(), pair.getParticipantUser().getGuid());
             triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
-            //publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
+            publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
             return pair.getOperatorUser();
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
