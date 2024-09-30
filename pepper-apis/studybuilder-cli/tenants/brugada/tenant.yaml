@@ -1,5 +1,5 @@
 tenant:
-  default_directory: ##DB_NAME##
+  default_directory:  Username-Password-Authentication
 
 rules:
   - name: Register User in Pepper
@@ -18,6 +18,38 @@ pages:
   - name: password_reset
     enabled: true
     html: ./pages/password_reset.html
+
+actions:
+  - name: Register User in Pepper
+    code: ../register-user-in-pepper-action.js
+    runtime: node18
+    dependencies:
+      - name: request
+        version: 2.88.2
+      - name: google-cloud/logging
+        version: 11.2.0
+      - name: auth0
+        version: 4.10.0
+    deployed: true
+    secrets:
+      - name: pepperBaseUrl
+        value: '##SERVER_BASE_URL##'
+      - name: domain
+        value: '##AUTH0_DOMAIN##'
+      - name: M2M_CLIENT_ID
+        value: '##AUTH0_MGMT_CLIENT_ID##'
+      - name: M2M_CLIENT_SECRET
+        value: '##AUTH0_MGMT_CLIENT_SECRET##'
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+
+triggers:
+  post-login:
+    - action_name: Register User in Pepper
+      display_name: Register User in Pepper
+      order: 1
 
 emailProvider:
   name: "sendgrid"

@@ -1,0 +1,18 @@
+tenant:
+  default_directory: Username-Password-Authentication
+
+actions:
+  - name: Add Claims
+    code: ../action/add-claims.js
+    runtime: node18
+    deployed: false
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+
+triggers:
+  post-login:
+    - action_name: Add Claims
+      display_name: Add Claims
+      order: 1

@@ -18,6 +18,46 @@ rules:
     enabled: true
     order: 2
 
+actions:
+  - name: Check Admin Role
+    code: ./actions/check-admin-role.js
+    runtime: node18
+    deployed: true
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+
+  - name: Register User in Pepper
+    code: ../register-cmi-user-in-pepper-action.js
+    runtime: node18
+    dependencies:
+      - name: request
+        version: 2.88.2
+    deployed: true
+    secrets:
+      - name: pepperBaseUrl
+        value: '##SERVER_BASE_URL##'
+      - name: domain
+        value: '##AUTH0_DOMAIN##'
+      - name: M2M_CLIENT_ID
+        value: '##AUTH0_MGMT_CLIENT_ID##'
+      - name: M2M_CLIENT_SECRET
+        value: '##AUTH0_MGMT_CLIENT_SECRET##'
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+
+triggers:
+  post-login:
+    - action_name: Check Admin Role
+      display_name: Check Admin Role
+      order: 1
+    - action_name: Register User in Pepper
+      display_name: Register User in Pepper
+      order: 2
+
 pages:
   - name: login
     html: ./pages/login.html
