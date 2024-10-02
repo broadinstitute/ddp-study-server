@@ -98,6 +98,7 @@ exports.onExecutePostLogin = async (event, api) => {
       console.log('StudyGuid (defaulting to clientMetadata.study) = ' + pepper_params.studyGuid);
     } else {
       console.log('No studyGuid passed in request');
+      return api.access.deny("No studyGuid passed or found. Request denied.");
     }
 
     console.log('looking for temp_user_guid');
