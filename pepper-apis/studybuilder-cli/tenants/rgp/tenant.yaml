@@ -9,7 +9,7 @@ rules:
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
-    enabled: true
+    enabled: false
     order: 2
 
 actions:
@@ -36,22 +36,14 @@ actions:
     code: ../register-user-in-pepper-action.js
     runtime: node18
     dependencies:
-      - name: request
-        version: 2.88.2
-      - name: google-cloud/logging
-        version: 11.2.0
-      - name: auth0
-        version: 4.10.0
+      - name: axios
+        version: 1.7.7
     deployed: true
     secrets:
       - name: pepperBaseUrl
         value: '##SERVER_BASE_URL##'
       - name: domain
         value: '##AUTH0_DOMAIN##'
-      - name: M2M_CLIENT_ID
-        value: '##AUTH0_MGMT_CLIENT_ID##'
-      - name: M2M_CLIENT_SECRET
-        value: '##AUTH0_MGMT_CLIENT_SECRET##'
     status: built
     supported_triggers:
       - id: post-login

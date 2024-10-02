@@ -36,7 +36,7 @@ exports.onExecutePostLogin = async (event, api) => {
     console.log('skipping Pepper registration for legacy client \'' + event.client.name + '\'');
     return;
   } else if (skipPepperRegistration === 'true') {
-    console.log('skipping Pepper registration for \'' + event.client.name  + '\'');
+    console.log('skipping Pepper registration for \'' + event.client.name + '\'');
     return;
   }
 
@@ -121,7 +121,7 @@ exports.onExecutePostLogin = async (event, api) => {
       !event.user.app_metadata.user_guid &&
       event.user.user_metadata && !!event.user.user_metadata.temp_user_guid
     ) {
-      console.log('looking for temp_user_guid in user_metadata.temp_user_guid: '+ event.user.user_metadata.temp_user_guid);
+      console.log('looking for temp_user_guid in user_metadata.temp_user_guid: ' + event.user.user_metadata.temp_user_guid);
       pepper_params.tempUserGuid = event.user.user_metadata.temp_user_guid;
     }
 
@@ -145,7 +145,7 @@ exports.onExecutePostLogin = async (event, api) => {
         message: 'User need to register first in order to login',
         statusCode: 403,
       };
-      return  api.access.deny(JSON.stringify(loginErrPayload));
+      return api.access.deny(JSON.stringify(loginErrPayload));
     }
 
     if (event.request.query.invitation_id) {
@@ -174,7 +174,7 @@ exports.onExecutePostLogin = async (event, api) => {
 
     // This is the token renewal case. Let's avoid going through pepper registration
     if (event.request.query.renew_token_only) {
-      console.log('Action request.query.renew_token_only: ' );
+      console.log('Action request.query.renew_token_only: ');
       api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
       return;
     }
@@ -188,7 +188,7 @@ exports.onExecutePostLogin = async (event, api) => {
     //  for one study initially, then attempt to renew it when accessing another. For the moment,
     //  assume that, if a study guid is included with the call, the client wants us to call the
     //  registration endpoint.
-    var isRefreshTokenExchange = event.transaction && event.transaction.protocol  === "oauth2-refresh-token";
+    var isRefreshTokenExchange = event.transaction && event.transaction.protocol === "oauth2-refresh-token";
     console.log('Action Event isRefreshTokenExchange::' + isRefreshTokenExchange);
     var needsStudyRegistration = !!(pepper_params.studyGuid);
     var hasCachedUserGuid = !!(event.user.app_metadata.user_guid);
@@ -206,63 +206,56 @@ exports.onExecutePostLogin = async (event, api) => {
         console.log('User metadata has last name = ' + pepper_params.lastName);
       }
 
-      //added below in action as workaround for not able to update userGUID in user AppMetadata post registration
-      console.log('pepper params: ' + JSON.stringify(pepper_params));
-      if (pepper_params.tempUserGuid) {
-        api.idToken.setCustomClaim(pepperUserGuidClaim, pepper_params.tempUserGuid);
-        api.user.setAppMetadata("user_guid", pepper_params.tempUserGuid);
-      } else if (event.user.app_metadata.user_guid) {
-        api.idToken.setCustomClaim(pepperUserGuidClaim, event.user.app_metadata.user_guid);
-      }
-
       var pepperUrl = event.secrets.pepperBaseUrl;
       if (event.client.metadata.backendUrl) {
         pepperUrl = event.client.metadata.backendUrl;
       }
-      var request = require('request');
+
       console.log('Invoking DDP registration : ' + pepperUrl + ' ... params: ' + JSON.stringify(pepper_params));
-      console.log('ID Token:' + JSON.stringify(api.idToken));
-      request.post({
-        url: pepperUrl + '/pepper/v1/register',
-        json: pepper_params,
-        timeout: 15000
-      }, function(err, response, body) {
-        if (err) {
-          console.log('Error while registering auth0 user ' + event.user.user_id);
-          console.log(err);
-          let error = new Error(JSON.stringify({
-            code: err.code,
-            message: err.message,
-            statusCode: 500
-          }));
-          console.log('Error during registration: ' + err.message);
-          return api.access.deny(JSON.stringify(error));
-        } else if (response && response.statusCode !== 200) {
-          console.log('Response: ' + JSON.stringify(response));
-          console.log('Failed to register auth0 user ' + event.user.user_id + ':' + response.statusCode + ' at ' + pepperUrl);
-          body = body || {};
-          let error = new Error(JSON.stringify({
-            code: body.code,
-            message: body.message,
-            statusCode: response.statusCode
-          }));
-          //todo remove pepperUserGuidClaim ?
-          //api.idToken.setCustomClaim(pepperUserGuidClaim, null);
-          return api.access.deny(JSON.stringify(error));
-        } else {
-          console.debug(' register response: ' + JSON.stringify(response));
-          // all is well
-          //todo.. below doesnt seem to work.. added before register call for now
-          var ddpUserGuid = body.ddpUserGuid;
-          api.idToken.setCustomClaim(pepperUserGuidClaim, ddpUserGuid);
-          api.user.setAppMetadata("user_guid", ddpUserGuid);
-          api.user.setUserMetadata("user_guid", ddpUserGuid);
-          console.log('updated user metaData with user GUID ');
+
+      var axios = require('axios');
+      console.log('Invoking DDP registration : ' + pepperUrl);
+
+      try {
+        const response = await axios.post(`${pepperUrl}/pepper/v1/register`, pepper_params, {timeout: 15000});
+        if (response) {
+          console.info(' register response data: ' + JSON.stringify(response.data));
         }
 
-      });
+        if (response && response.status !== 200) {
+          console.log('Response not 200:: ' + JSON.stringify(response.data) + ' status code: ' + response.status);
+          console.log('Failed to register auth0 user ' + event.user.user_id + ':' + response.statusCode + ' at ' + pepperUrl);
+          let error = new Error(JSON.stringify({
+            code: response.data.code,
+            message: response.data.message,
+            statusCode: response.statusCode
+          }));
+          return api.access.deny(JSON.stringify(error));
+        }
+
+        //all good
+        var ddpUserGuid = response.data.ddpUserGuid;
+        api.user.setAppMetadata("user_guid", ddpUserGuid);
+        api.user.setAppMetadata("study_guid", pepper_params.studyGuid);
+        api.user.setUserMetadata("user_guid", ddpUserGuid);
+        api.idToken.setCustomClaim(pepperUserGuidClaim, ddpUserGuid);
+        console.log('updated user metaData with user GUID ');
+
+      } catch (err) {
+        console.log('Error while registering auth0 user ' + event.user.user_id, err);
+        console.log(err);
+        let error = new Error(JSON.stringify({
+          code: err.code,
+          message: err.message,
+          statusCode: 500
+        }));
+        console.log('Error during registration: ' + err.message);
+        return api.access.deny(JSON.stringify(error));
+      }
+
     }
-  }};
+  }
+};
 
 /**
  * Handler that will be invoked when this action is resuming after an external redirect. If your
