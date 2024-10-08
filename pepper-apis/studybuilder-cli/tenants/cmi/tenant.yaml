@@ -10,12 +10,12 @@ rules:
   - name: Check Admin Role
     script: ./rules/check-admin-role.js
     stage: login_success
-    enabled: true
+    enabled: false
     order: 1
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
-    enabled: true
+    enabled: false
     order: 2
 
 actions:

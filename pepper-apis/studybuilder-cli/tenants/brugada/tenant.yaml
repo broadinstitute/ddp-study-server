@@ -5,7 +5,7 @@ rules:
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
-    enabled: true
+    enabled: false
     order: 1
 rulesConfigs:
   # Key/Value pairs for Rule configuration settings

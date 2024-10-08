@@ -12,16 +12,6 @@
  * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
  */
 exports.onExecutePostLogin = async (event, api) => {
-  /**
-   * The following code block will skip this Action if Rule "Register User in Pepper"
-   * was previously executed in the transaction in order to avoid duplication
-   * of logic.
-   */
-  if (api.rules.wasExecuted("rul_pfKZwBRYcntnVEtS")) {
-    console.log('In action register pepper user rule executed');
-    return;
-  }
-
 
 // Use of the m2mClients list below should be considered legacy behavior, and
 // may be removed at any time. Any new clients should set the key 'skipPepperRegistration'

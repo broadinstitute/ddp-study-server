@@ -12,17 +12,6 @@
  * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
  */
 exports.onExecutePostLogin = async (event, api) => {
-  /**
-   * The following code block will skip this Action if Rule "Check Admin Role"
-   * was previously executed in the transaction in order to avoid duplication
-   * of logic.
-   */
-  if (api.rules.wasExecuted("rul_")) {
-    console.log('check-admin-role rule was executed, skipping check-admin-role action');
-    return;
-  }
-
-  // YOUR_CODE_HERE
   const adminRole = 'CMI Prism Admin';
   console.log('Executing check-admin-role action');
 
