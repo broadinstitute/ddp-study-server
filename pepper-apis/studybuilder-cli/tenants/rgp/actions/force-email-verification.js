@@ -12,14 +12,6 @@
  * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
  */
 exports.onExecutePostLogin = async (event, api) => {
-  /**
-   * The following code block will skip this Action if Rule "Force email verification"
-   * was previously executed in the transaction in order to avoid duplication
-   * of logic.
-   */
-  if (api.rules.wasExecuted("rul_")) {
-    return;
-  }
 
   console.log('Received user', event.user);
   console.debug('Received context', event);

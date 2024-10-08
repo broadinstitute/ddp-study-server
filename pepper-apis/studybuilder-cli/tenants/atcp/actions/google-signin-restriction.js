@@ -17,11 +17,6 @@ exports.onExecutePostLogin = async (event, api) => {
    * was previously executed in the transaction in order to avoid duplication
    * of logic.
    */
-  if (api.rules.wasExecuted("rul_nSlTGpLpwQlfA278")) {
-    return;
-  }
-
-  // YOUR_CODE_HERE
   const GOOGLE_CONNECTION_IDENTIFIER = 'google-oauth2';
 
   const app_metadata = event.user.app_metadata || {};

@@ -12,16 +12,6 @@
  * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
  */
 exports.onExecutePostLogin = async (event, api) => {
-  /**
-   * The following code block will skip this Action if Rule "Add claims"
-   * was previously executed in the transaction in order to avoid duplication
-   * of logic.
-   */
-  if (api.rules.wasExecuted("rul_qE6QN5GnYTDhtbmg")) {
-    return;
-  }
-
-  // YOUR_CODE_HERE
   console.log('Executing DSM Add Claims action');
   var pepperClientClaim = 'https://datadonationplatform.org/cid';
   var pepperTenantClaim = 'https://datadonationplatform.org/t';
