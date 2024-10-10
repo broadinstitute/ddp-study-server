@@ -76,6 +76,70 @@ public class PdfBuilder {
         }
     }
 
+    /**
+     * Update existing pdf templates (pdf bytes only) in the pdf config.
+     * Does not update the pdf config like sources/substitutions or new insertions
+     */
+    public void updatePdfTemplates(Handle handle, long studyId, Config pdfCfg, String pdfFilePath) {
+
+        //update All pdf templates in this pdf config unless pdfFilePath is provided
+
+        PdfDao pdfDao = handle.attach(PdfDao.class);
+        File pdfFile = pdfFilePath != null ? dirPath.resolve(pdfFilePath).toFile() : null;
+        if (pdfFilePath != null && !pdfFile.exists()) {
+            throw new DDPException("Pdf file is missing: " + pdfFile);
+        }
+
+        //update only 1 version of pdf templates per execution for now
+        if (pdfCfg.getConfigList("versions").size() > 1) {
+            throw new RuntimeException("Only 1 version of pdf templates can be updated in 1 run");
+        }
+
+        String pdfConfigName = pdfCfg.getString("name");
+        String versionTag = pdfCfg.getConfigList("versions").get(0).getString("tag");
+        PdfConfigInfo pdfConf = pdfDao.findConfigInfoByStudyIdAndName(studyId, pdfConfigName).get();
+        PdfVersion pdfVersion = pdfDao.findConfigVersionByConfigIdAndVersionTag(pdfConf.getId(), versionTag).get();
+        List<Long> pdfTemplateIds = pdfDao.findTemplateIdsByVersionId(pdfVersion.getId());
+
+        List<? extends Config> pdfFiles = pdfCfg.getConfigList("versions").get(0).getConfigList("files");
+        //Each pdf file is one pdf template
+        //number of pdf files(pages) should match the template count in DB
+        if (pdfTemplateIds.size() != pdfFiles.size()) {
+            throw new RuntimeException("Number of pdf files/pages does not match the number of pdf templates in DB");
+        }
+
+        for (int pageItr = 0; pageItr < pdfFiles.size(); pageItr++) {
+            Config pageCfg = pdfFiles.get(pageItr);
+            File file = dirPath.resolve(pageCfg.getString("filepath")).toFile();
+            if (!file.exists()) {
+                throw new DDPException("Pdf page file is missing: " + file);
+            }
+            if (pdfFile != null && !pdfFile.equals(file)) {
+                log.info("skipping updating pdf template file: {} ", file.getAbsolutePath());
+                continue;
+            }
+
+            byte[] pdfBytes;
+            try (FileInputStream input = new FileInputStream(file)) {
+                pdfBytes = IOUtils.toByteArray(input);
+            } catch (IOException e) {
+                throw new DDPException(e);
+            }
+
+            long baseTemplateid = pdfTemplateIds.get(pageItr);
+            String pageType = pageCfg.getString("type");
+            //update bytes
+            //watch out, not doing any validations like template matches the pageType etc..
+            updatePdfPage(handle, baseTemplateid, pdfBytes, pageType);
+        }
+
+        if (pdfFile != null) {
+            log.info("Updated pdf bytes for pdf file: {} ", pdfFile.getAbsolutePath());
+        } else {
+            log.info("Updated pdf bytes for ALL templates in pdf Config: {} ", pdfConfigName);
+        }
+    }
+
     private void updatePdfPages(Handle handle, Config pdfCfg, PdfMappingType mappingType) {
         JdbiPdfTemplates jdbiPdfTemplates = handle.attach(JdbiPdfTemplates.class);
         List<? extends Config> pages = pdfCfg.getConfigList("pages");
