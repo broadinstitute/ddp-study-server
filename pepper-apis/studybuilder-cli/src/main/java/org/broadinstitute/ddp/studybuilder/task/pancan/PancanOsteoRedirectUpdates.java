@@ -53,7 +53,6 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
 
         //find and delete existing OSTEO study redirect workflow transition
         List<Long> workflowTransitionIds = sqlHelper.getPancanOsteoStudyRedirectWorkflowIds();
-        //DBUtils.checkDelete(workflowTransitionIds.size(), sqlHelper.deleteOsteoRedirectWorkflowTransitions(workflowTransitionIds));
         DBUtils.checkDelete(2, sqlHelper.deleteOsteoRedirectWorkflowTransitions(workflowTransitionIds));
         log.info("Deleted workflow transition with IDs: {}", workflowTransitionIds);
 
@@ -68,7 +67,7 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
         WorkflowBuilder workflowBuilder = new WorkflowBuilder(studyCfg, studyDto);
         for (Config workflowCfg : workflows) {
             workflowBuilder.insertTransitionSet(handle, workflowCfg);
-            log.info("Insert wf: {}", workflowCfg);
+            log.info("Inserted workflow transition: {}", workflowCfg);
         }
     }
 
