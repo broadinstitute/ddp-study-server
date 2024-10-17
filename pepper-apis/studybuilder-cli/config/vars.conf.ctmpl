@@ -33,6 +33,7 @@
     "angioRedirectUrl": "{{$conf.angioRedirectUrl}}",
     "brainRedirectUrl": "{{$conf.brainRedirectUrl}}",
     "osteoRedirectUrl": "{{$conf.osteoRedirectUrl}}",
+    "osteoRedirectUrlES": "{{$conf.osteoRedirectUrlES}}",
     "mbcRedirectUrl": "{{$conf.mbcRedirectUrl}}",
     "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
     "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
