@@ -53,11 +53,21 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
 
         //find and delete existing OSTEO study redirect workflow transition
         List<Long> workflowTransitionIds = sqlHelper.getPancanOsteoStudyRedirectWorkflowIds();
-        DBUtils.checkDelete(2, sqlHelper.deleteOsteoRedirectWorkflowTransitions(workflowTransitionIds));
+        DBUtils.checkDelete(workflowTransitionIds.size(), sqlHelper.deleteOsteoRedirectWorkflowTransitions(workflowTransitionIds));
         log.info("Deleted workflow transition with IDs: {}", workflowTransitionIds);
 
         //insert updated osteo study redirect workflow transitions
         addWorkflows(handle, studyDto);
+
+        //update block visibility pex expressions to handle OSTEO (C_SARCOMAS_OSTEOSARCOMA) from non english REDIRECT pex
+        int rowCount = sqlHelper.updatePancanOsteoBlockPex1();
+        log.info("Updated {} rows in expression table for Expr1", rowCount);
+
+        rowCount = sqlHelper.updatePancanOsteoBlockPex2();
+        log.info("Updated {} rows in expression table for Expr2", rowCount);
+
+        rowCount = sqlHelper.updatePancanOsteoBlockPex3();
+        log.info("Updated {} rows in expression table for Expr3", rowCount);
 
     }
 
@@ -95,7 +105,186 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
                 + "where workflow_transition_id in (<workflowTransitionIds>)")
         int deleteOsteoRedirectWorkflowTransitions(@BindList("workflowTransitionIds") List<Long> workflowTransitionIds);
 
-    }
 
+        @SqlUpdate("update expression\n" +
+                "set expression_text = '  !( (user.profile.language() == \"en\" &&\n" +
+                "                    (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_BRAIN_\")\n" +
+                "                      || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith(\"C_BRAIN_\")\n" +
+                "                      || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "                      || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "                    ) &&\n" +
+                "                    !(\n" +
+                "                      (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") > 1\n" +
+                "                        && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "                      )\n" +
+                "                      ||\n" +
+                "                      (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].numChildAnswers(\"PRIMARY_CANCER_CHILD\") > 1\n" +
+                "                        && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "                      )\n" +
+                "                    )\n" +
+                "                  )\n" +
+                "               || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "                      && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"]\n" +
+                "                      .answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\")\n" +
+                "                      && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "                      && user.profile.language() == \"en\"\n" +
+                "                   )\n" +
+                "               || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "                      && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_BREAST_\")\n" +
+                "                      && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "                      && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_BREAST\"].answers.hasOption(\"YES\")\n" +
+                "                  )\n" +
+                "               || (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\")\n" +
+                "                      || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\")\n" +
+                "                  )\n" +
+                "               || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "                      && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_GENITOURINARY_PROSTATE\")\n" +
+                "                      && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "                      && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_PROSTATE\"].answers.hasOption(\"YES\")\n" +
+                "                      && user.profile.language() == \"en\"\n" +
+                "                  )\n" +
+                "                )\n" +
+                "'\n" +
+                "  where expression_text like '%!( (user.profile.language() == \"en\" &&\n" +
+                "          (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\", \"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\", \"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "          ) &&\n" +
+                "          !(\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "            ||\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].numChildAnswers(\"PRIMARY_CANCER_CHILD\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "          )\n" +
+                "        )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"]\n" +
+                "            .answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.profile.language() == \"en\"\n" +
+                "         )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_BREAST_\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_BREAST\"].answers.hasOption(\"YES\")\n" +
+                "        )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_GENITOURINARY_PROSTATE\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_PROSTATE\"].answers.hasOption(\"YES\")\n" +
+                "            && user.profile.language() == \"en\"\n" +
+                "        )\n" +
+                "      )%'")
+        int updatePancanOsteoBlockPex2();
+
+
+        @SqlUpdate("      update expression\n" +
+                "      set expression_text = '(user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"DIAGNOSED\"))\n" +
+                "    &&\n" +
+                "     !( (user.profile.language() == \"en\" &&\n" +
+                "                    (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_BRAIN_\")\n" +
+                "                      || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith(\"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "          ) &&\n" +
+                "          !(\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "            ||\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].numChildAnswers(\"PRIMARY_CANCER_CHILD\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "          )\n" +
+                "        )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"]\n" +
+                "            .answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.profile.language() == \"en\"\n" +
+                "         )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_BREAST_\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_BREAST\"].answers.hasOption(\"YES\")\n" +
+                "        )\n" +
+                "               || (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\")\n" +
+                "                                     || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\")\n" +
+                "                  )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_GENITOURINARY_PROSTATE\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_PROSTATE\"].answers.hasOption(\"YES\")\n" +
+                "            && user.profile.language() == \"en\"\n" +
+                "        )\n" +
+                "      )'\n" +
+                "      where expression_text like '%(user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"DIAGNOSED\"))\n" +
+                "    &&\n" +
+                "     !( (user.profile.language() == \"en\" &&\n" +
+                "          (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\", \"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\", \"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "          ) &&\n" +
+                "          !(\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "            ||\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].numChildAnswers(\"PRIMARY_CANCER_CHILD\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_CHILD\"].children[\"PRIMARY_CANCER_CHILD\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "          )\n" +
+                "        )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"]\n" +
+                "            .answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.profile.language() == \"en\"\n" +
+                "         )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_BREAST_\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_BREAST\"].answers.hasOption(\"YES\")\n" +
+                "        )\n" +
+                "     || ( user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].numChildAnswers(\"PRIMARY_CANCER_SELF\") == 1\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"PRIMARY_CANCER_LIST_SELF\"].children[\"PRIMARY_CANCER_SELF\"].answers.hasOptionStartsWith(\"C_GENITOURINARY_PROSTATE\")\n" +
+                "            && !user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"DESCRIBE\"].answers.hasOption(\"CHILD_DIAGNOSED\")\n" +
+                "            && user.studies[\"cmi-pancan\"].forms[\"PREQUAL\"].questions[\"ADVANCED_PROSTATE\"].answers.hasOption(\"YES\")\n" +
+                "            && user.profile.language() == \"en\"\n" +
+                "        )\n" +
+                "      )%'")
+        int updatePancanOsteoBlockPex1();
+
+        @SqlUpdate("update expression\n" +
+                "      set expression_text = '!(user.profile.language() == \"en\" &&\n" +
+                "          ((user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith(\"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "          ) &&\n" +
+                "          !(\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].numChildAnswers(\"PRIMARY_CANCER_ADD_CHILD\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "          ))\n" +
+                "          || (user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\"))\n" +
+                "        )\n" +
+                "'\n" +
+                "      where expression_text like '%!(user.profile.language() == \"en\" &&\n" +
+                "          (user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_OSTEOSARCOMA\", \"C_BRAIN_\")\n" +
+                "            || user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")\n" +
+                "          ) &&\n" +
+                "          !(\n" +
+                "            (user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].numChildAnswers(\"PRIMARY_CANCER_ADD_CHILD\") > 1\n" +
+                "              && user.studies[\"cmi-pancan\"].forms[\"ADD_CHILD\"].questions[\"PRIMARY_CANCER_LIST_ADD_CHILD\"].children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith( \"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\", \"C_GENITOURINARY_PROSTATE\", \"C_BREAST_\")\n" +
+                "            )\n" +
+                "          )\n" +
+                "        )%'")
+        int updatePancanOsteoBlockPex3();
+
+    }
 
 }
