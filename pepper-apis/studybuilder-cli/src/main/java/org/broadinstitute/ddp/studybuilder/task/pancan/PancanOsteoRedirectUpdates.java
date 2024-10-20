@@ -61,7 +61,7 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
 
         //find and delete existing OSTEO study redirect workflow transition
         List<Long> workflowTransitionIds = sqlHelper.getPancanOsteoStudyRedirectWorkflowIds();
-        DBUtils.checkDelete(workflowTransitionIds.size(), sqlHelper.deleteOsteoRedirectWorkflowTransitions(workflowTransitionIds));
+        DBUtils.checkDelete(2, sqlHelper.deleteOsteoRedirectWorkflowTransitions(workflowTransitionIds));
         log.info("Deleted workflow transition with IDs: {}", workflowTransitionIds);
 
         //insert updated osteo study redirect workflow transitions
@@ -72,12 +72,14 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
         String newExpr = pexCfg.getString("is_not_redirect_new").trim();
         String searchExpr = String.format("%s%s%s", "%", currentExpr, "%").trim();
         int rowCount = sqlHelper.updatePancanOsteoBlockPex(searchExpr, currentExpr, newExpr);
+        DBUtils.checkUpdate(8, rowCount);
         log.info("Updated {} rows in expression table for Expr is_not_redirect_current", rowCount);
 
         currentExpr = pexCfg.getString("addchild_is_not_redirect_current").trim();
         newExpr = pexCfg.getString("addchild_is_not_redirect_new").trim();
         searchExpr = String.format("%s%s%s", "%", currentExpr, "%").trim();
         rowCount = sqlHelper.updatePancanOsteoBlockPex(searchExpr, currentExpr, newExpr);
+        DBUtils.checkUpdate(4, rowCount);
         log.info("Updated {} rows in expression table for Expr addchild_is_not_redirect_current", rowCount);
 
     }
