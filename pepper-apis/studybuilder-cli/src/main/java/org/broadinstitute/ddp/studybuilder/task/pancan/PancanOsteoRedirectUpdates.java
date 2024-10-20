@@ -118,10 +118,11 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
                 + "where workflow_transition_id in (<workflowTransitionIds>)")
         int deleteOsteoRedirectWorkflowTransitions(@BindList("workflowTransitionIds") List<Long> workflowTransitionIds);
 
-        @SqlUpdate("update expression\n" +
-                "set expression_text = REPLACE(expression_text, :currentExpr, :newExpr) "
+        @SqlUpdate("update expression\n"
+                + "set expression_text = REPLACE(expression_text, :currentExpr, :newExpr) "
                 + "where expression_text like :searchExpr")
-        int updatePancanOsteoBlockPex(@Bind("searchExpr") String searchExpr, @Bind("currentExpr") String currentExpr, @Bind("newExpr") String newExpr);
+        int updatePancanOsteoBlockPex(@Bind("searchExpr") String searchExpr, @Bind("currentExpr") String currentExpr,
+                                      @Bind("newExpr") String newExpr);
 
     }
 
