@@ -23,14 +23,13 @@ import java.util.List;
 @Slf4j
 public class PancanOsteoRedirectUpdates implements CustomTask {
 
+    private static final String DATA_FILE = "patches/osteo-redirect-workflows.conf";
+    private static final String DATA_FILE_2 = "patches/osteo-redirect-block-pex.conf";
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
     private Config dataCfg;
-
     private SqlHelper sqlHelper;
-    private static final String DATA_FILE = "patches/osteo-redirect-workflows.conf";
-    private static final String DATA_FILE_2 = "patches/osteo-redirect-block-pex.conf";
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -69,20 +68,17 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
         addWorkflows(handle, studyDto);
 
         //update block visibility pex expressions to handle OSTEO (C_SARCOMAS_OSTEOSARCOMA) from non english REDIRECT pex
-        String currentExpr = pexCfg.getString("pex_1_current");
-        String newExpr = pexCfg.getString("pex_1_new");
-        int rowCount = sqlHelper.updatePancanOsteoBlockPex(String.format("%s%s%s", "%", currentExpr, "%"), newExpr);
-        log.info("Updated {} rows in expression table for Expr1", rowCount);
+        String currentExpr = pexCfg.getString("is_not_redirect_current").trim();
+        String newExpr = pexCfg.getString("is_not_redirect_new").trim();
+        String searchExpr = String.format("%s%s%s", "%", currentExpr, "%").trim();
+        int rowCount = sqlHelper.updatePancanOsteoBlockPex(searchExpr, currentExpr, newExpr);
+        log.info("Updated {} rows in expression table for Expr is_not_redirect_current", rowCount);
 
-        currentExpr = pexCfg.getString("is_not_redirect_current");
-        newExpr = pexCfg.getString("is_not_redirect_new");
-        rowCount = sqlHelper.updatePancanOsteoBlockPex(String.format("%s%s%s", "%", currentExpr, "%"), newExpr);
-        log.info("Updated {} rows in expression table for Expr2", rowCount);
-
-        currentExpr = pexCfg.getString("addchild_is_not_redirect_current");
-        newExpr = pexCfg.getString("addchild_is_not_redirect_new");
-        rowCount = sqlHelper.updatePancanOsteoBlockPex(String.format("%s%s%s", "%", currentExpr, "%"), newExpr);
-        log.info("Updated {} rows in expression table for Expr3", rowCount);
+        currentExpr = pexCfg.getString("addchild_is_not_redirect_current").trim();
+        newExpr = pexCfg.getString("addchild_is_not_redirect_new").trim();
+        searchExpr = String.format("%s%s%s", "%", currentExpr, "%").trim();
+        rowCount = sqlHelper.updatePancanOsteoBlockPex(searchExpr, currentExpr, newExpr);
+        log.info("Updated {} rows in expression table for Expr addchild_is_not_redirect_current", rowCount);
 
     }
 
@@ -120,11 +116,10 @@ public class PancanOsteoRedirectUpdates implements CustomTask {
                 + "where workflow_transition_id in (<workflowTransitionIds>)")
         int deleteOsteoRedirectWorkflowTransitions(@BindList("workflowTransitionIds") List<Long> workflowTransitionIds);
 
-
         @SqlUpdate("update expression\n" +
-                "set expression_text = :newExpr "
-                + "where expression_text like :currentExpr")
-        int updatePancanOsteoBlockPex(@Bind("currentExpr") String currentExpr, @Bind("newExpr") String newExpr);
+                "set expression_text = REPLACE(expression_text, :currentExpr, :newExpr) "
+                + "where expression_text like :searchExpr")
+        int updatePancanOsteoBlockPex(@Bind("searchExpr") String searchExpr, @Bind("currentExpr") String currentExpr, @Bind("newExpr") String newExpr);
 
     }
 
