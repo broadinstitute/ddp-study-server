@@ -17,7 +17,7 @@
         <sonar.projectKey>broadinstitute_ddp-study-server</sonar.projectKey>
         <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
         <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
-        <sonar.includedModules>dpp-common,dsm-core,dss-core</sonar.includedModules>
+        <sonar.includedModules>ddp-common,dsm-core,dss-core</sonar.includedModules>
         <jdbi.version>3.39.1</jdbi.version>
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
@@ -809,7 +809,7 @@
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.9.1.2184</version>
+                <version>3.10.0.2594</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
