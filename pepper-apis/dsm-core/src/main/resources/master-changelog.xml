@@ -152,4 +152,5 @@
     <include file="liquibase/scad/PEPPER-1426_scad_study_setup.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1437_gp_phone_update.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1522_fedex_account_updates.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-1438_field_settings.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
