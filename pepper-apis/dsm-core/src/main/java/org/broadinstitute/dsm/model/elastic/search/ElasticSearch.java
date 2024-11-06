@@ -187,12 +187,22 @@ public class ElasticSearch implements ElasticSearchable {
 
     @Override
     public ElasticSearch getParticipantsByIds(String esIndex, List<String> participantIds) {
+        BoolQueryBuilder boolQuery = getBoolQueryOfParticipantsId(participantIds);
+        return getElasticSearchParticipants(esIndex, participantIds, boolQuery);
+    }
+
+    public ElasticSearch getParticipantsByShortIds(String esIndex, List<String> participantShortIds) {
+        BoolQueryBuilder boolQuery = getBoolQueryOfParticipantsShortId(participantShortIds);
+        return getElasticSearchParticipants(esIndex, participantShortIds, boolQuery);
+    }
+
+    private ElasticSearch getElasticSearchParticipants(String esIndex, List<String> participantIds, BoolQueryBuilder boolQuery) {
         if (Objects.isNull(esIndex)) {
             return new ElasticSearch();
         }
         SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esIndex));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(getBoolQueryOfParticipantsId(participantIds)).sort(sortBy);
+        searchSourceBuilder.query(boolQuery).sort(sortBy);
         searchSourceBuilder.size(participantIds.size());
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
@@ -205,29 +215,6 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
 
         logger.info("Got {} participants from ES for instance {} (getParticipantsByIds)",
-                esParticipants.size(), esIndex);
-        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
-    }
-
-    public ElasticSearch getParticipantsByShortIds(String esIndex, List<String> participantShortIds) {
-        if (Objects.isNull(esIndex)) {
-            return new ElasticSearch();
-        }
-        SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esIndex));
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(getBoolQueryOfParticipantsShortId(participantShortIds)).sort(sortBy);
-        searchSourceBuilder.size(participantShortIds.size());
-        searchSourceBuilder.from(0);
-        searchRequest.source(searchSourceBuilder);
-        SearchResponse response;
-        try {
-            response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't get participants from ES for instance " + esIndex, e);
-        }
-        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
-
-        logger.info("Got {} participants from ES for instance {} (getParticipantsByShortIds)",
                 esParticipants.size(), esIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }

@@ -108,7 +108,7 @@ public class OncHistoryUploadService {
         validateRows(rows);
         log.info("Validated {} rows for onc history upload", rows.size());
 
-        //look for any ptps exited and ignore them
+        //error out if any exited participants.
         ElasticSearch participantsByIds = new ElasticSearch()
                 .getParticipantsByShortIds(new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex(),
                         rows.stream().map(OncHistoryRecord::getParticipantTextId).collect(Collectors.toList()));
