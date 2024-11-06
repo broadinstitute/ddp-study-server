@@ -209,6 +209,29 @@ public class ElasticSearch implements ElasticSearchable {
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
     }
 
+    public ElasticSearch getParticipantsByShortIds(String esIndex, List<String> participantShortIds) {
+        if (Objects.isNull(esIndex)) {
+            return new ElasticSearch();
+        }
+        SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esIndex));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(getBoolQueryOfParticipantsShortId(participantShortIds)).sort(sortBy);
+        searchSourceBuilder.size(participantShortIds.size());
+        searchSourceBuilder.from(0);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse response;
+        try {
+            response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't get participants from ES for instance " + esIndex, e);
+        }
+        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
+
+        logger.info("Got {} participants from ES for instance {} (getParticipantsByShortIds)",
+                esParticipants.size(), esIndex);
+        return new ElasticSearch(esParticipants, response.getHits().getTotalHits().value);
+    }
+
     @Override
     public long getParticipantsSize(String esParticipantsIndex) {
         CountRequest countRequest = new CountRequest(Objects.requireNonNull(esParticipantsIndex));
@@ -350,6 +373,14 @@ public class ElasticSearch implements ElasticSearchable {
         BoolQueryBuilder boolQuery = new BoolQueryBuilder();
         isGuidMap.forEach((booleanId, idValues) -> boolQuery.should(
                 QueryBuilders.termsQuery(booleanId ? ElasticSearchUtil.PROFILE_GUID : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
+        return boolQuery;
+    }
+
+    private BoolQueryBuilder getBoolQueryOfParticipantsShortId(List<String> participantShortIds) {
+        Map<Boolean, List<String>> isHruidMap = participantShortIds.stream().collect(Collectors.partitioningBy(ParticipantUtil::isHruid));
+        BoolQueryBuilder boolQuery = new BoolQueryBuilder();
+        isHruidMap.forEach((booleanId, idValues) -> boolQuery.should(
+                QueryBuilders.termsQuery(ElasticSearchUtil.PROFILE_HRUID, idValues)));
         return boolQuery;
     }
 

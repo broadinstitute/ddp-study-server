@@ -106,6 +106,7 @@ public class ElasticSearchUtil {
     public static final String STATUS = "status";
     public static final String PROFILE_CREATED_AT = "profile." + CREATED_AT;
     public static final String PROFILE_GUID = "profile.guid";
+    public static final String PROFILE_HRUID = "profile.hruid";
     public static final String PROFILE_LEGACYALTPID = "profile.legacyAltPid";
     public static final String PARTICIPANTS_STRUCTURED_ANY = "participants_structured.*";
     public static final String TYPE = "type";

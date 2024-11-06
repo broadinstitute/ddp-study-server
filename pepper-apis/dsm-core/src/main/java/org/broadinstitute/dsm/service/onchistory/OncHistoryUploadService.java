@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.FieldSettings;
+import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
@@ -32,6 +33,8 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -105,9 +108,28 @@ public class OncHistoryUploadService {
         validateRows(rows);
         log.info("Validated {} rows for onc history upload", rows.size());
 
+        //look for any ptps exited and ignore them
+        ElasticSearch participantsByIds = new ElasticSearch()
+                .getParticipantsByShortIds(new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex(),
+                        rows.stream().map(OncHistoryRecord::getParticipantTextId).collect(Collectors.toList()));
+        List<ElasticSearchParticipantDto> esParticipants = participantsByIds.getEsParticipants();
+        List<String> exitedPtps = new ArrayList<>();
+        for (ElasticSearchParticipantDto esParticipant : esParticipants) {
+            if (esParticipant.getStatus().isPresent() && esParticipant.getStatus().get().startsWith("EXITED")) {
+                exitedPtps.add(esParticipant.getProfile().get().getHruid());
+            }
+        }
+        if (!exitedPtps.isEmpty()) {
+            log.error("Found {} exited participants: {} in Onc History Upload", exitedPtps.size(), exitedPtps);
+            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
+                    + " Please remove onc histories for these withdrawn participants " + exitedPtps
+                    + " from the file and upload it again.");
+        }
+
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows,
                 new ESParticipantIdProvider(realm, participantIndex), true);
+
         log.info("Processing {} participants for onc history upload", participantMedIds.size());
 
         // ensure oncHistory record for each participant
