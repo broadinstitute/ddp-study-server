@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
