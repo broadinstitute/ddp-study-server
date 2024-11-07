@@ -51,7 +51,7 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
         }
         Long participantID = dsmParticipant.get().getParticipantId();
         if (participantID == null) {
-            throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
+            throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);
         }
         return ptpData;
     }

@@ -130,8 +130,8 @@ public class OncHistoryUploadService {
      *
      * @throws OncHistoryValidationException for failed verifications
      */
-    protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords, ParticipantIdProvider participantIdProvider,
-                                                      boolean updateElastic) {
+    protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords,
+                                                      ParticipantIdProvider participantIdProvider, boolean updateElastic) {
         Map<Integer, Integer> medIds = new HashMap<>();
         List<String> exitedParticipants = new ArrayList<>();
 
