@@ -32,6 +32,7 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -125,23 +126,37 @@ public class OncHistoryUploadService {
     /**
      * Given participant short IDs in uploaded rows, verify the short ID, and get and record associated
      * participant IDs and medical record IDs
+     * verify if any exited participant(s) exists in passed onc history records.
      *
-     * @throws OncHistoryValidationException for failed verification
+     * @throws OncHistoryValidationException for failed verifications
      */
     protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords,
                                                       ParticipantIdProvider participantIdProvider, boolean updateElastic) {
         Map<Integer, Integer> medIds = new HashMap<>();
+        List<String> exitedParticipants = new ArrayList<>();
 
         ParticipantDao participantDao = ParticipantDao.of();
 
         for (OncHistoryRecord rec : oncHistoryRecords) {
-            int participantId = participantIdProvider.getParticipantIdForShortId(rec.getParticipantTextId());
+            ElasticSearchParticipantDto ptpData = participantIdProvider.getParticipantDataForShortId(rec.getParticipantTextId());
+            if (ptpData.getStatus().isPresent() && ptpData.getStatus().get().startsWith("EXITED")) {
+                exitedParticipants.add(rec.getParticipantTextId());
+            }
 
+            if (!exitedParticipants.isEmpty()) {
+                //skip MR verify/creation. continuing to collect any other exited participant hruids.
+                continue;
+            }
+
+            //since participantIdProvider.getParticipantDataForShortId already made sure participant ID exists.. its ok to get it directly
+            Long ptpId = ptpData.getDsm().get().getParticipant().get().getParticipantId();
+            int participantId;
             try {
+                participantId = ptpId.intValue();
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
                 rec.setDdpParticipantId(participant.getDdpParticipantId().orElseThrow());
             } catch (Exception e) {
-                throw new DsmInternalError("Participant not found for id " + participantId, e);
+                throw new DsmInternalError("Participant not found for id " + ptpId, e);
             }
 
             rec.setParticipantId(participantId);
@@ -152,6 +167,13 @@ public class OncHistoryUploadService {
                     this.realm, updateElastic);
             medIds.put(participantId, medId);
         }
+
+        if (!exitedParticipants.isEmpty()) {
+            log.error("Found {} exited participants: {} in Onc History Upload", exitedParticipants.size(), exitedParticipants);
+            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
+                    + "Please remove onc histories for these withdrawn participants from the file and upload it again: " + exitedParticipants);
+        }
+
         return medIds;
     }
 

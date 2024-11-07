@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
@@ -33,6 +34,8 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParserTest;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -99,6 +102,11 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     @Test
     public void testLmsWriteToDb() {
         writeToDb(LMS_REALM, "onchistory/lmsOncHistory.txt");
+    }
+
+    @Test
+    public void testLmsWriteToDbExit() {
+        writeToDb(LMS_REALM, "onchistory/lmsOncHistoryExited.txt");
     }
 
     @Test
@@ -176,6 +184,10 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows, shortIdToId, realm);
+        if (rows.get(0).getParticipantTextId().startsWith("xyz-exit")) {
+            // expecting an exit record and exception which was checked in getParticipantIds
+            return;
+        }
         Assert.assertEquals(2, participantMedIds.size());
 
         Map<String, OncHistoryUploadColumn> studyColumns = uploadService.getStudyColumns();
@@ -335,8 +347,14 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         try {
             return uploadService.getParticipantIds(records, participantIdProvider, false);
         } catch (Exception e) {
-            Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
-            return null;
+            if (records.get(0).getParticipantTextId().startsWith("xyz-exit")) {
+                // expecting an exit record and exception
+                Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a withdrawn participant"));
+                return null;
+            } else {
+                Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
+                return null;
+            }
         }
     }
 
@@ -411,6 +429,24 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         public int getParticipantIdForShortId(String shortId) {
             return shortIdToId.get(shortId);
         }
+
+        @Override
+        public ElasticSearchParticipantDto getParticipantDataForShortId(String shortId) {
+            Dsm dsm = new Dsm();
+            Participant participant = new Participant();
+            participant.setParticipantId(shortIdToId.get(shortId).longValue());
+            dsm.setParticipant(participant);
+
+            String participantStatus = "ENROLLED";
+            if (shortId.startsWith("xyz-exit")) {
+                participantStatus = "EXITED_AFTER_ENROLLMENT";
+            }
+            ElasticSearchParticipantDto dto = new ElasticSearchParticipantDto.Builder()
+                    .withDsm(dsm)
+                    .withStatus(participantStatus).build();
+            return dto;
+        }
+
     }
 
     private static class ParticipantInfo {
