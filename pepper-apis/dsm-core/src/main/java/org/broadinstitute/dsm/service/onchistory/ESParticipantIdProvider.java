@@ -29,7 +29,11 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
      */
     public int getParticipantIdForShortId(String shortId) {
         //getParticipantDataForShortId does all the validations to make sure participant ID exists
-        return getParticipantDataForShortId(shortId).getDsm().get().getParticipant().get().getParticipantId().intValue();
+        try {
+            return getParticipantDataForShortId(shortId).getDsm().get().getParticipant().get().getParticipantId().intValue();
+        } catch (Exception e) {
+            throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
+        }
     }
 
     /**

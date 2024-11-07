@@ -149,12 +149,14 @@ public class OncHistoryUploadService {
             }
 
             //since participantIdProvider.getParticipantDataForShortId already made sure participant ID exists.. its ok to get it directly
-            int participantId = ptpData.getDsm().get().getParticipant().get().getParticipantId().intValue();
+            Long ptpId = ptpData.getDsm().get().getParticipant().get().getParticipantId();
+            int participantId;
             try {
+                participantId = ptpId.intValue();
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
                 rec.setDdpParticipantId(participant.getDdpParticipantId().orElseThrow());
             } catch (Exception e) {
-                throw new DsmInternalError("Failed to get Participant/Participant Id for " + rec.getParticipantTextId(), e);
+                throw new DsmInternalError("Participant not found for id " + ptpId, e);
             }
 
             rec.setParticipantId(participantId);
