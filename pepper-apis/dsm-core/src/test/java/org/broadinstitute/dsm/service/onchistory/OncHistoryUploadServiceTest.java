@@ -71,7 +71,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         shortIdToId.put("ABC", participantId);
 
         List<OncHistoryRecord> records = createOncHistoryRecords(shortIdToId);
-        getParticipantIds(records, shortIdToId, DEFAULT_REALM);
+        getParticipantIds(records, DEFAULT_REALM);
     }
 
     //@Test
@@ -175,7 +175,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         }
 
         // verify each participant ID for the study and get an associated medical record ID
-        Map<Integer, Integer> participantMedIds = getParticipantIds(rows, shortIdToId, realm);
+        Map<Integer, Integer> participantMedIds = getParticipantIds(rows, realm);
         Assert.assertEquals(2, participantMedIds.size());
 
         Map<String, OncHistoryUploadColumn> studyColumns = uploadService.getStudyColumns();
@@ -322,18 +322,15 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
      * Verify the participant short ID, and get and record associated participant IDs and medical record IDs
      *
      * @param records list of records to update with participant IDs
-     * @param shortIdToId map of short ID to participant ID
      * @return map of participant ID to med record ID
      */
-    private static Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> records,
-                                                           Map<String, Integer> shortIdToId, String realm) {
-        TestParticipantIdProvider participantIdProvider = new TestParticipantIdProvider(shortIdToId);
+    private static Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> records, String realm) {
 
         OncHistoryUploadService uploadService =
                 new OncHistoryUploadService(realm, TEST_USER, new CodeStudyColumnsProvider());
 
         try {
-            return uploadService.getParticipantIds(records, participantIdProvider, false);
+            return uploadService.getParticipantIds(records, false);
         } catch (Exception e) {
             Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
             return null;

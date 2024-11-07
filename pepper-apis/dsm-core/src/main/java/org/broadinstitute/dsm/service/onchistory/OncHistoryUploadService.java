@@ -112,8 +112,7 @@ public class OncHistoryUploadService {
         log.info("Validated {} rows for onc history upload", rows.size());
 
         // verify each participant ID for the study and get an associated medical record ID
-        Map<Integer, Integer> participantMedIds = getParticipantIds(rows,
-                new ESParticipantIdProvider(realm, participantIndex), true);
+        Map<Integer, Integer> participantMedIds = getParticipantIds(rows, true);
 
         log.info("Processing {} participants for onc history upload", participantMedIds.size());
 
@@ -137,7 +136,7 @@ public class OncHistoryUploadService {
      * @throws OncHistoryValidationException for failed verifications
      */
     protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords,
-                                                      ParticipantIdProvider participantIdProvider, boolean updateElastic) {
+                                                      boolean updateElastic) {
         Map<Integer, Integer> medIds = new HashMap<>();
         List<String> exitedParticipants = new ArrayList<>();
 
