@@ -403,6 +403,4 @@ public class OncHistoryUploadService {
     protected Map<String, OncHistoryUploadColumn> getStudyColumns() {
         return studyColumns;
     }
-
-
 }
