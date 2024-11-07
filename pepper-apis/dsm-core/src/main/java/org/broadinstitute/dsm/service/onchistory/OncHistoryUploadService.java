@@ -130,9 +130,9 @@ public class OncHistoryUploadService {
     /**
      * Given participant short IDs in uploaded rows, verify the short ID, and get and record associated
      * participant IDs and medical record IDs
-     * verify if any exited participant(s) exists in the list.
+     * verify if any exited participant(s) exists in passed onc history records.
      *
-     * @throws OncHistoryValidationException for failed verification
+     * @throws OncHistoryValidationException for failed verifications
      */
     protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords,
                                                       ParticipantIdProvider participantIdProvider, boolean updateElastic) {
@@ -147,7 +147,7 @@ public class OncHistoryUploadService {
             Optional<ElasticSearchParticipantDto> ptpData = elasticSearchService.getParticipantDocumentByShortId(
                     rec.getParticipantTextId(), esIndex);
             if (ptpData.isEmpty()) {
-                throw new DSMBadRequestException("Invalid short ID " + rec.getParticipantTextId());
+                throw new OncHistoryValidationException("Invalid short ID " + rec.getParticipantTextId());
             }
             if (ptpData.get().getStatus().isPresent() && ptpData.get().getStatus().get().startsWith("EXITED")) {
                 exitedParticipants.add(rec.getParticipantTextId());
