@@ -7,6 +7,7 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 
 @Slf4j
@@ -42,4 +43,14 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
             throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
         }
     }
+
+    /**
+     * Given a participant short ID return a participant ID
+     * @throws DsmInternalError for bad ES behavior
+     * @throws DSMBadRequestException when no participant ID is found for short ID
+     */
+    public Optional<ElasticSearchParticipantDto> getParticipantDataForShortId(String shortId) {
+        return elasticSearchService.getParticipantDocumentByShortId(shortId, participantIndex);
+    }
+
 }

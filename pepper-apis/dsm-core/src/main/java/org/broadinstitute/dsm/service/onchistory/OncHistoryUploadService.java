@@ -36,7 +36,6 @@ import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -50,7 +49,6 @@ public class OncHistoryUploadService {
     private String participantIndex;
     private int ddpInstanceId;
     private OncHistoryElasticUpdater elasticUpdater;
-    private final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private boolean initialized;
     protected static final String ID_COLUMN = "RECORD_ID";
 
@@ -112,8 +110,8 @@ public class OncHistoryUploadService {
         log.info("Validated {} rows for onc history upload", rows.size());
 
         // verify each participant ID for the study and get an associated medical record ID
-        Map<Integer, Integer> participantMedIds = getParticipantIds(rows, true);
-
+        Map<Integer, Integer> participantMedIds = getParticipantIds(rows,
+                new ESParticipantIdProvider(realm, participantIndex), true);
         log.info("Processing {} participants for onc history upload", participantMedIds.size());
 
         // ensure oncHistory record for each participant
@@ -135,17 +133,17 @@ public class OncHistoryUploadService {
      *
      * @throws OncHistoryValidationException for failed verifications
      */
-    protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords,
+    protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords, ParticipantIdProvider participantIdProvider,
                                                       boolean updateElastic) {
         Map<Integer, Integer> medIds = new HashMap<>();
         List<String> exitedParticipants = new ArrayList<>();
 
         ParticipantDao participantDao = ParticipantDao.of();
 
-        String esIndex = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex();
+        //String esIndex = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex();
         for (OncHistoryRecord rec : oncHistoryRecords) {
-            ElasticSearchParticipantDto ptpData = elasticSearchService.getParticipantDocumentByShortId(
-                    rec.getParticipantTextId(), esIndex).orElseThrow(() -> new OncHistoryValidationException("Invalid short ID " + rec.getParticipantTextId()));
+            ElasticSearchParticipantDto ptpData = participantIdProvider.getParticipantDataForShortId(
+                    rec.getParticipantTextId()).orElseThrow(() -> new OncHistoryValidationException("Invalid short ID " + rec.getParticipantTextId()));
             if (ptpData.getStatus().isPresent() && ptpData.getStatus().get().startsWith("EXITED")) {
                 exitedParticipants.add(rec.getParticipantTextId());
             }
@@ -155,7 +153,7 @@ public class OncHistoryUploadService {
                 continue;
             }
 
-            int participantId = getParticipantIdFromElasticDoc(ptpData);
+            int participantId = getParticipantIdFromElasticDoc(ptpData, rec.getParticipantTextId());
             try {
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
                 rec.setDdpParticipantId(participant.getDdpParticipantId().orElseThrow());
@@ -181,8 +179,7 @@ public class OncHistoryUploadService {
         return medIds;
     }
 
-    private int getParticipantIdFromElasticDoc(ElasticSearchParticipantDto ptpData) {
-        String shortId = ptpData.getProfile().get().getHruid();
+    private int getParticipantIdFromElasticDoc(ElasticSearchParticipantDto ptpData, String shortId) {
         Optional<Dsm> dsm = ptpData.getDsm();
         if (dsm.isEmpty()) {
             throw new DsmInternalError("Dsm object is empty for shortId " + shortId);
