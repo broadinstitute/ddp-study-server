@@ -37,7 +37,7 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
     }
 
     /**
-     * Given a participant short ID return a participant ID
+     * Given a participant short ID return ES participant Data
      * @throws DsmInternalError for bad ES behavior
      * @throws DSMBadRequestException when no participant ID is found for short ID
      */
