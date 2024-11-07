@@ -187,22 +187,12 @@ public class ElasticSearch implements ElasticSearchable {
 
     @Override
     public ElasticSearch getParticipantsByIds(String esIndex, List<String> participantIds) {
-        BoolQueryBuilder boolQuery = getBoolQueryOfParticipantsId(participantIds);
-        return getElasticSearchParticipants(esIndex, participantIds, boolQuery);
-    }
-
-    public ElasticSearch getParticipantsByShortIds(String esIndex, List<String> participantShortIds) {
-        BoolQueryBuilder boolQuery = getBoolQueryOfParticipantsShortId(participantShortIds);
-        return getElasticSearchParticipants(esIndex, participantShortIds, boolQuery);
-    }
-
-    private ElasticSearch getElasticSearchParticipants(String esIndex, List<String> participantIds, BoolQueryBuilder boolQuery) {
         if (Objects.isNull(esIndex)) {
             return new ElasticSearch();
         }
         SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esIndex));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(boolQuery).sort(sortBy);
+        searchSourceBuilder.query(getBoolQueryOfParticipantsId(participantIds)).sort(sortBy);
         searchSourceBuilder.size(participantIds.size());
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
@@ -360,14 +350,6 @@ public class ElasticSearch implements ElasticSearchable {
         BoolQueryBuilder boolQuery = new BoolQueryBuilder();
         isGuidMap.forEach((booleanId, idValues) -> boolQuery.should(
                 QueryBuilders.termsQuery(booleanId ? ElasticSearchUtil.PROFILE_GUID : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
-        return boolQuery;
-    }
-
-    private BoolQueryBuilder getBoolQueryOfParticipantsShortId(List<String> participantShortIds) {
-        Map<Boolean, List<String>> isHruidMap = participantShortIds.stream().collect(Collectors.partitioningBy(ParticipantUtil::isHruid));
-        BoolQueryBuilder boolQuery = new BoolQueryBuilder();
-        isHruidMap.forEach((booleanId, idValues) -> boolQuery.should(
-                QueryBuilders.termsQuery(ElasticSearchUtil.PROFILE_HRUID, idValues)));
         return boolQuery;
     }
 

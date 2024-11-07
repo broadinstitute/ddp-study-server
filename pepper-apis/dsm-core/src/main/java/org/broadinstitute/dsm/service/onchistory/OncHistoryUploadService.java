@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,8 +33,8 @@ import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
@@ -47,6 +48,7 @@ public class OncHistoryUploadService {
     private String participantIndex;
     private int ddpInstanceId;
     private OncHistoryElasticUpdater elasticUpdater;
+    private final ElasticSearchService elasticSearchService = new ElasticSearchService();
     private boolean initialized;
     protected static final String ID_COLUMN = "RECORD_ID";
 
@@ -107,24 +109,6 @@ public class OncHistoryUploadService {
         validateRows(rows);
         log.info("Validated {} rows for onc history upload", rows.size());
 
-        //error out if any exited participants.
-        ElasticSearch participantsByIds = new ElasticSearch()
-                .getParticipantsByShortIds(new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex(),
-                        rows.stream().map(OncHistoryRecord::getParticipantTextId).collect(Collectors.toList()));
-        List<ElasticSearchParticipantDto> esParticipants = participantsByIds.getEsParticipants();
-        List<String> exitedPtps = new ArrayList<>();
-        for (ElasticSearchParticipantDto esParticipant : esParticipants) {
-            if (esParticipant.getStatus().isPresent() && esParticipant.getStatus().get().startsWith("EXITED")) {
-                exitedPtps.add(esParticipant.getProfile().get().getHruid());
-            }
-        }
-        if (!exitedPtps.isEmpty()) {
-            log.error("Found {} exited participants: {} in Onc History Upload", exitedPtps.size(), exitedPtps);
-            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
-                    + " Please remove onc histories for these withdrawn participants " + exitedPtps
-                    + " from the file and upload it again.");
-        }
-
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows,
                 new ESParticipantIdProvider(realm, participantIndex), true);
@@ -146,17 +130,33 @@ public class OncHistoryUploadService {
     /**
      * Given participant short IDs in uploaded rows, verify the short ID, and get and record associated
      * participant IDs and medical record IDs
+     * verify if any exited participant(s) exists in the list.
      *
      * @throws OncHistoryValidationException for failed verification
      */
     protected Map<Integer, Integer> getParticipantIds(List<OncHistoryRecord> oncHistoryRecords,
                                                       ParticipantIdProvider participantIdProvider, boolean updateElastic) {
         Map<Integer, Integer> medIds = new HashMap<>();
+        List<String> exitedParticipants = new ArrayList<>();
 
         ParticipantDao participantDao = ParticipantDao.of();
 
+        String esIndex = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex();
         for (OncHistoryRecord rec : oncHistoryRecords) {
             int participantId = participantIdProvider.getParticipantIdForShortId(rec.getParticipantTextId());
+            Optional<ElasticSearchParticipantDto> ptpData = elasticSearchService.getParticipantDocumentByShortId(
+                    rec.getParticipantTextId(), esIndex);
+            if (ptpData.isEmpty()) {
+                throw new DSMBadRequestException("Invalid short ID " + rec.getParticipantTextId());
+            }
+            if (ptpData.get().getStatus().isPresent() && ptpData.get().getStatus().get().startsWith("EXITED")) {
+                exitedParticipants.add(rec.getParticipantTextId());
+                log.info("Participant {} is exited, skipping", rec.getParticipantTextId()); //todo
+            }
+
+            if (!exitedParticipants.isEmpty()) {
+                continue; //skip MR verify/creation. continuing to collect any other exited participant hruids.
+            }
 
             try {
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
@@ -173,6 +173,14 @@ public class OncHistoryUploadService {
                     this.realm, updateElastic);
             medIds.put(participantId, medId);
         }
+
+        if (!exitedParticipants.isEmpty()) {
+            log.error("Found {} exited participants: {} in Onc History Upload", exitedParticipants.size(), exitedParticipants);
+            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
+                    + " Please remove onc histories for these withdrawn participants " + exitedParticipants
+                    + " from the file and upload it again.");
+        }
+
         return medIds;
     }
 
