@@ -43,15 +43,15 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
      */
     public ElasticSearchParticipantDto getParticipantDataForShortId(String shortId) {
         ElasticSearchParticipantDto ptpData = elasticSearchService.getParticipantDocumentByShortId(shortId, participantIndex)
-                .orElseThrow(() -> new DSMBadRequestException("No participant found for shortId " + shortId));
-        Dsm dsm = elasticSearchService.getParticipantDsmByShortId(shortId, participantIndex);
+                .orElseThrow(() -> new DSMBadRequestException("No participant found for shortId: " + shortId));
+        Dsm dsm = ptpData.getDsm().orElseThrow(() -> new DsmInternalError("No Dsm data found for shortId: " + shortId));
         Optional<Participant> dsmParticipant = dsm.getParticipant();
         if (dsmParticipant.isEmpty()) {
             throw new DsmInternalError("ES returned empty dsm.participant object for shortId " + shortId);
         }
         Long participantID = dsmParticipant.get().getParticipantId();
         if (participantID == null) {
-            throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);
+            throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId: " + shortId);
         }
         return ptpData;
     }
