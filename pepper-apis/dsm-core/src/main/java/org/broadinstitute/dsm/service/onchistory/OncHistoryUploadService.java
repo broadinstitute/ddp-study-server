@@ -140,7 +140,6 @@ public class OncHistoryUploadService {
 
         ParticipantDao participantDao = ParticipantDao.of();
 
-        //String esIndex = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex();
         for (OncHistoryRecord rec : oncHistoryRecords) {
             ElasticSearchParticipantDto ptpData = participantIdProvider.getParticipantDataForShortId(
                     rec.getParticipantTextId()).orElseThrow(() -> new OncHistoryValidationException("Invalid short ID " + rec.getParticipantTextId()));
