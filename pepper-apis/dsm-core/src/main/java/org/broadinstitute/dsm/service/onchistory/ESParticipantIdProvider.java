@@ -28,6 +28,18 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
      * @throws DSMBadRequestException when no participant ID is found for short ID
      */
     public int getParticipantIdForShortId(String shortId) {
+        //getParticipantDataForShortId does all the validations to make sure participant ID exists
+        return getParticipantDataForShortId(shortId).getDsm().get().getParticipant().get().getParticipantId().intValue();
+    }
+
+    /**
+     * Given a participant short ID return a participant ID
+     * @throws DsmInternalError for bad ES behavior
+     * @throws DSMBadRequestException when no participant ID is found for short ID
+     */
+    public ElasticSearchParticipantDto getParticipantDataForShortId(String shortId) {
+        ElasticSearchParticipantDto ptpData = elasticSearchService.getParticipantDocumentByShortId(shortId, participantIndex)
+                .orElseThrow(() -> new DSMBadRequestException("No participant found for shortId " + shortId));
         Dsm dsm = elasticSearchService.getParticipantDsmByShortId(shortId, participantIndex);
         Optional<Participant> dsmParticipant = dsm.getParticipant();
         if (dsmParticipant.isEmpty()) {
@@ -38,19 +50,10 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
             throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);
         }
         try {
-            return participantID.intValue();
+            return ptpData;
         } catch (Exception e) {
             throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
         }
-    }
-
-    /**
-     * Given a participant short ID return a participant ID
-     * @throws DsmInternalError for bad ES behavior
-     * @throws DSMBadRequestException when no participant ID is found for short ID
-     */
-    public Optional<ElasticSearchParticipantDto> getParticipantDataForShortId(String shortId) {
-        return elasticSearchService.getParticipantDocumentByShortId(shortId, participantIndex);
     }
 
 }

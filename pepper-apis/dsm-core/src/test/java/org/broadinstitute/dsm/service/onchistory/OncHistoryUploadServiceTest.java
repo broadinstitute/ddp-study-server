@@ -431,7 +431,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         }
 
         @Override
-        public Optional<ElasticSearchParticipantDto> getParticipantDataForShortId(String shortId) {
+        public ElasticSearchParticipantDto getParticipantDataForShortId(String shortId) {
             Dsm dsm = new Dsm();
             Participant participant = new Participant();
             participant.setParticipantId(shortIdToId.get(shortId).longValue());
@@ -444,7 +444,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
             ElasticSearchParticipantDto dto = new ElasticSearchParticipantDto.Builder()
                     .withDsm(dsm)
                     .withStatus(participantStatus).build();
-            return Optional.of(dto);
+            return dto;
         }
 
     }

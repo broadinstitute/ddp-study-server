@@ -11,5 +11,5 @@ public interface ParticipantIdProvider {
      */
     int getParticipantIdForShortId(String shortId);
 
-    Optional<ElasticSearchParticipantDto> getParticipantDataForShortId(String shortId);
+    ElasticSearchParticipantDto getParticipantDataForShortId(String shortId);
 }
