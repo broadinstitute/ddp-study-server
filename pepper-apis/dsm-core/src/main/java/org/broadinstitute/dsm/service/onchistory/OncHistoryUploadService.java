@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
@@ -31,6 +33,7 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.service.elastic.ElasticSearchService;
@@ -153,10 +156,8 @@ public class OncHistoryUploadService {
                 continue;
             }
 
-            int participantId;
+            int participantId = getParticipantIdFromElasticDoc(ptpData);
             try {
-                participantId = ptpData.getDsm().get().getParticipant().get().getParticipantId().intValue();
-                log.info("Found participant ID {} for short ID {}", participantId, rec.getParticipantTextId());
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
                 rec.setDdpParticipantId(participant.getDdpParticipantId().orElseThrow());
             } catch (Exception e) {
@@ -175,11 +176,32 @@ public class OncHistoryUploadService {
         if (!exitedParticipants.isEmpty()) {
             log.error("Found {} exited participants: {} in Onc History Upload", exitedParticipants.size(), exitedParticipants);
             throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
-                    + " Please remove onc histories for these withdrawn participants " + exitedParticipants
-                    + " from the file and upload it again.");
+                    + "Please remove onc histories for these withdrawn participants from the file and upload it again: " + exitedParticipants);
         }
 
         return medIds;
+    }
+
+    private int getParticipantIdFromElasticDoc(ElasticSearchParticipantDto ptpData) {
+        String shortId = ptpData.getProfile().get().getHruid();
+        Optional<Dsm> dsm = ptpData.getDsm();
+        if (dsm.isEmpty()) {
+            throw new DsmInternalError("Dsm object is empty for shortId " + shortId);
+        }
+
+        Optional<Participant> dsmParticipant = dsm.get().getParticipant();
+        if (dsmParticipant.isEmpty()) {
+            throw new DsmInternalError("ES returned empty dsm.participant object for shortId " + shortId);
+        }
+        Long participantID = dsmParticipant.get().getParticipantId();
+        if (participantID == null) {
+            throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);
+        }
+        try {
+            return participantID.intValue();
+        } catch (Exception e) {
+            throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
+        }
     }
 
     /**
@@ -410,4 +432,6 @@ public class OncHistoryUploadService {
     protected Map<String, OncHistoryUploadColumn> getStudyColumns() {
         return studyColumns;
     }
+
+
 }
