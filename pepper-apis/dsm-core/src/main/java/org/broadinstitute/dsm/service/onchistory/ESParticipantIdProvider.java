@@ -53,11 +53,7 @@ public class ESParticipantIdProvider implements ParticipantIdProvider {
         if (participantID == null) {
             throw new DsmInternalError("ES returned empty dsm.participant.participantId object for shortId " + shortId);
         }
-        try {
-            return ptpData;
-        } catch (Exception e) {
-            throw new DsmInternalError("Invalid dsm.participant.participantId for shortId " + shortId);
-        }
+        return ptpData;
     }
 
 }
