@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -143,26 +142,25 @@ public class OncHistoryUploadService {
 
         String esIndex = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex();
         for (OncHistoryRecord rec : oncHistoryRecords) {
-            int participantId = participantIdProvider.getParticipantIdForShortId(rec.getParticipantTextId());
-            Optional<ElasticSearchParticipantDto> ptpData = elasticSearchService.getParticipantDocumentByShortId(
-                    rec.getParticipantTextId(), esIndex);
-            if (ptpData.isEmpty()) {
-                throw new OncHistoryValidationException("Invalid short ID " + rec.getParticipantTextId());
-            }
-            if (ptpData.get().getStatus().isPresent() && ptpData.get().getStatus().get().startsWith("EXITED")) {
+            ElasticSearchParticipantDto ptpData = elasticSearchService.getParticipantDocumentByShortId(
+                    rec.getParticipantTextId(), esIndex).orElseThrow(() -> new OncHistoryValidationException("Invalid short ID " + rec.getParticipantTextId()));
+            if (ptpData.getStatus().isPresent() && ptpData.getStatus().get().startsWith("EXITED")) {
                 exitedParticipants.add(rec.getParticipantTextId());
-                log.info("Participant {} is exited, skipping", rec.getParticipantTextId()); //todo
             }
 
             if (!exitedParticipants.isEmpty()) {
-                continue; //skip MR verify/creation. continuing to collect any other exited participant hruids.
+                //skip MR verify/creation. continuing to collect any other exited participant hruids.
+                continue;
             }
 
+            int participantId;
             try {
+                participantId = ptpData.getDsm().get().getParticipant().get().getParticipantId().intValue();
+                log.info("Found participant ID {} for short ID {}", participantId, rec.getParticipantTextId());
                 ParticipantDto participant = participantDao.get(participantId).orElseThrow();
                 rec.setDdpParticipantId(participant.getDdpParticipantId().orElseThrow());
             } catch (Exception e) {
-                throw new DsmInternalError("Participant not found for id " + participantId, e);
+                throw new DsmInternalError("Failed to get Participant/Participant Id for " + rec.getParticipantTextId(), e);
             }
 
             rec.setParticipantId(participantId);
