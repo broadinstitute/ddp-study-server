@@ -74,7 +74,8 @@ public class PancanEscRedirectRemoval implements CustomTask {
         int updatePancanAngioRedirectPex(@Bind("workflowTransitionId") long workflowTransitionId);
 
         @SqlUpdate("update expression  "
-                + "set expression_text = REPLACE(expression_text, '\"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\"', '\"esc-removed\"')  "
+                + "set expression_text = REPLACE(expression_text, "
+                + "'\"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\"', '\"esc-removed\"')  "
                 + "where expression_text like '%\"C_GASTRO_ESOPHAGEAL_CANCER\", \"C_GASTRO_GASTRIC_STOMACH_CANCER\"%' ")
         int updatePancanAngioRedirectPex();
 
