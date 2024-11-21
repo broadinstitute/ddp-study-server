@@ -46,8 +46,10 @@ public class PancanLmsRedirectUpdate implements CustomTask {
 
         @SqlUpdate("update expression  set expression_text = REPLACE(expression_text, \n"
                 + "'children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_S_LEIOMYO\")', \n"
-                + "'children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")')  \n"
-                + "where expression_text like '%children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasOptionStartsWith(\"C_SARCOMAS_S_LEIOMYO\")%' ")
+                + "'children[\"PRIMARY_CANCER_ADD_CHILD\"].answers.hasAnyOption(\"C_SARCOMAS_S_LEIOMYO_LMS_SARCOMA\", "
+                + " \"C_GYNECOLOGIC_UTERINE_LEIOMYOSARCOMA\", \"C_SARCOMA_CUTANEOUS_LEIMYOSARCOMA\")')  \n"
+                + "where expression_text like '%children[\"PRIMARY_CANCER_ADD_CHILD\"]."
+                + "answers.hasOptionStartsWith(\"C_SARCOMAS_S_LEIOMYO\")%' ")
         int updatePancanLmsRedirectPex();
 
     }
