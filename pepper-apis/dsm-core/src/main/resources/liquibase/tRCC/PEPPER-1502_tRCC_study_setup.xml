@@ -11,10 +11,10 @@
             <column name="study_guid" value="juniper-trcc"></column>
             <column name="display_name" value="tRCC"></column>
             <column name="is_active" value="0"></column>
-            <column name="bsp_group" value="Endocrine / MPG"></column>
-            <column name="bsp_collection" value="SC-59133"></column>
+            <column name="bsp_group" value="Cancer Genome Analysis"></column>
+            <column name="bsp_collection" value="SC-47951"></column>
             <column name="bsp_organism" value="1"></column>
-            <column name="collaborator_id_prefix" value="CS"></column>
+            <column name="collaborator_id_prefix" value="CMIProject"></column>
             <column name="billing_Reference" value="8201079"></column>
             <column name="is_active" value="1"></column>
         </insert>
