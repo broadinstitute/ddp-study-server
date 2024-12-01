@@ -5,6 +5,18 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
+    <changeSet author="sampath" id="kit_type-insert-blood">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM kit_type WHERE kit_type_name = 'BLOOD' and bsp_material_type = 'Whole Blood Streck Cell-Free Preserved';
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="BLOOD"/>
+            <column name="bsp_material_type" value="Whole Blood Streck Cell-Free Preserved"/>
+        </insert>
+    </changeSet>
+
     <changeSet id="PEPPER-1502_trcc_setup" author="sampath">
         <insert tableName="ddp_instance">
             <column name="instance_name" value="tRCC"></column>
