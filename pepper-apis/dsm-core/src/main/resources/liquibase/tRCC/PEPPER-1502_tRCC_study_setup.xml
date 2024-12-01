@@ -41,14 +41,6 @@
             <column name="return_address_phone" value="(651) 602-2045"></column>
         </insert>
 
-        <insert tableName="kit_dimension">
-            <column name="kit_width" value="6.5"></column>
-            <column name="kit_height" value="2.5"></column>
-            <column name="kit_length" value="4.5"></column>
-            <column name="kit_weight" value="4.8"></column>
-            <column name="kit_description" value="trcc saliva kit"></column>
-        </insert>
-
         <sql>
             INSERT INTO ddp_kit_request_settings (
                 ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id, kit_label_length
@@ -62,8 +54,23 @@
                                                               LEFT JOIN ddp_instance realm ON realm.ddp_instance_id = settings.ddp_instance_id
                         WHERE realm.instance_name = 'mmrf'
                     )),
-                    (SELECT kit_dimension_id FROM kit_dimension WHERE kit_description = 'trcc saliva kit'),
+                    (SELECT kit_dimension_id FROM kit_dimension WHERE kit_description = 'saliva box'),
                     14
+        </sql>
+        <sql>
+            INSERT INTO ddp_kit_request_settings (
+                ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id
+            )
+            SELECT
+                    (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = 'trcc'),
+                    (SELECT kit_type_id FROM kit_type WHERE bsp_material_type = 'Whole Blood Streck Cell-Free Preserved' and display_name is null),
+                    (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(617) 724-2725'),
+                    (SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service = 'FEDEX_2_DAY' AND carrier_service_id NOT IN (
+                        SELECT carrier_service_to_id FROM ddp_kit_request_settings settings
+                                                              LEFT JOIN ddp_instance realm ON realm.ddp_instance_id = settings.ddp_instance_id
+                        WHERE realm.instance_name = 'mmrf'
+                    )),
+                    (SELECT kit_dimension_id FROM kit_dimension WHERE kit_description = 'blood box')
         </sql>
 
         <sql>
