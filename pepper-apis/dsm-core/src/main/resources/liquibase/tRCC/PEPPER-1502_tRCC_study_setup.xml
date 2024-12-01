@@ -8,7 +8,7 @@
     <changeSet author="sampath" id="kit_type-insert-blood">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM kit_type WHERE kit_type_name = 'BLOOD' and bsp_material_type = 'Whole Blood Streck Cell-Free Preserved';
+                SELECT COUNT(*) FROM kit_type WHERE kit_type_name = 'BLOOD' and bsp_material_type = 'Whole Blood Streck Cell-Free Preserved' and display_name is null;
             </sqlCheck>
         </preConditions>
         <insert tableName="kit_type">
@@ -69,13 +69,14 @@
                     (SELECT kit_dimension_id FROM kit_dimension WHERE kit_description = 'saliva box'),
                     14
         </sql>
+
         <sql>
             INSERT INTO ddp_kit_request_settings (
                 ddp_instance_id, kit_type_id, kit_return_id, carrier_service_to_id, kit_dimension_id
             )
             SELECT
                     (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = 'trcc'),
-                    (SELECT kit_type_id FROM kit_type WHERE bsp_material_type = 'Whole Blood Streck Cell-Free Preserved' and display_name is null),
+                    (SELECT kit_type_id FROM kit_type WHERE kit_type_name = 'BLOOD' and bsp_material_type = 'Whole Blood Streck Cell-Free Preserved' and display_name is null),
                     (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(617) 724-2725'),
                     (SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service = 'FEDEX_2_DAY' AND carrier_service_id NOT IN (
                         SELECT carrier_service_to_id FROM ddp_kit_request_settings settings
