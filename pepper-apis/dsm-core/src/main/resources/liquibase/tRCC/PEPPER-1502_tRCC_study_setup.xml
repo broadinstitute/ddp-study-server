@@ -59,7 +59,7 @@
             SELECT
                     (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = 'trcc'),
                     (SELECT kit_type_id FROM kit_type WHERE bsp_material_type = 'saliva' AND bsp_receptacle_type = 'Oragene kit'),
-                    (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(617) 724-2725'),
+                    (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(651) 602-2045'),
                     (SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service = 'FEDEX_2_DAY' AND carrier_service_id NOT IN (
                         SELECT carrier_service_to_id FROM ddp_kit_request_settings settings
                                                               LEFT JOIN ddp_instance realm ON realm.ddp_instance_id = settings.ddp_instance_id
@@ -76,7 +76,7 @@
             SELECT
                     (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = 'trcc'),
                     (SELECT kit_type_id FROM kit_type WHERE kit_type_name = 'BLOOD' and bsp_material_type = 'Whole Blood Streck Cell-Free Preserved' and display_name is null),
-                    (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(617) 724-2725'),
+                    (SELECT kit_return_id FROM kit_return_information WHERE return_address_phone = '(651) 602-2045'),
                     (SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service = 'FEDEX_2_DAY' AND carrier_service_id NOT IN (
                         SELECT carrier_service_to_id FROM ddp_kit_request_settings settings
                                                               LEFT JOIN ddp_instance realm ON realm.ddp_instance_id = settings.ddp_instance_id
