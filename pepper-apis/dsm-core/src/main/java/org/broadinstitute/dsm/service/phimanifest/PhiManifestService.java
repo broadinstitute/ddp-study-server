@@ -137,7 +137,11 @@ public class PhiManifestService {
             //handle scenarios where there is no saliva/blood sample order and only tumor orders. Query collaborator Sample Id from kit_request
             if (phiManifest.getCollaboratorParticipantId() == null) {
                 KitDao kitDao = new KitDao();
-                phiManifest.setCollaboratorParticipantId(kitDao.getCollaboratorParticipantId(participant.getParticipantId()));
+                try {
+                    phiManifest.setCollaboratorParticipantId(kitDao.getCollaboratorParticipantId(participant.getParticipantId()));
+                } catch (Exception e) {
+                    log.error("Error while fetching collaborator participant id for participant {} ", participant.getParticipantId(), e);
+                }
             }
         }
 

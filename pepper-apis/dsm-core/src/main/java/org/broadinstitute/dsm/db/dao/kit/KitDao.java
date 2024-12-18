@@ -190,28 +190,19 @@ public class KitDao {
         return booleanCheckFoundAsName(ddpLabel, SQL_IS_BLOOD_KIT_QUERY);
     }
 
-    public String getCollaboratorParticipantId(String ddpParticipantId) {
-        if (StringUtils.isBlank(ddpParticipantId)) {
-            return null;
-        }
-
-        SimpleResult results = inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult("");
+    public String getCollaboratorParticipantId(String ddpParticipantId) throws Exception {
+        return inTransaction(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
                 stmt.setString(1, ddpParticipantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
+                        logger.debug("Found collaborator participant Id {} for ddpParticipant {} ", ddpParticipantId);
+                        return rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
                     }
                 }
-            } catch (SQLException ex) {
-                dbVals.resultException = new DsmInternalError("Error getting collaborator participant Id for participant: " + ddpParticipantId, dbVals.resultException);
             }
-            logger.debug("Found collaborator participant Id {} for ddpParticipant {} ", dbVals.resultValue, ddpParticipantId);
-            return dbVals;
+            return null;
         });
-
-        return results.resultValue.toString();
     }
 
     public Boolean hasTrackingScan(String kitLabel) {
