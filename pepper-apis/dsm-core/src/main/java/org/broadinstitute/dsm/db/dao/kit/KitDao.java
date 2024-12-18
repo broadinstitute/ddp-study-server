@@ -64,6 +64,10 @@ public class KitDao {
             + "LEFT JOIN kit_type kt on (kt.kit_type_id = request.kit_type_id) "
             + "WHERE ddp_label = ?";
 
+    private static final String SQL_GET_COLLABORATOR_PARTICIPANT_ID =
+            "select r.bsp_collaborator_participant_id from ddp_kit_request r "
+            + " where r.ddp_participant_id = ? limit 1";
+
     private static final String SQL_HAS_KIT_TRACKING = "SELECT 1 AS found "
             + "from "
             + "(SELECT 1 FROM "
@@ -184,6 +188,30 @@ public class KitDao {
 
     public Boolean isBloodKit(String ddpLabel) {
         return booleanCheckFoundAsName(ddpLabel, SQL_IS_BLOOD_KIT_QUERY);
+    }
+
+    public String getCollaboratorParticipantId(String ddpParticipantId) {
+        if (StringUtils.isBlank(ddpParticipantId)) {
+            return null;
+        }
+
+        SimpleResult results = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult("");
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
+                stmt.setString(1, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = new DsmInternalError("Error getting collaborator participant Id ", dbVals.resultException);
+            }
+            logger.debug("Found collaborator participant Id {} for ddpParticipant {} ", dbVals.resultValue, ddpParticipantId);
+            return dbVals;
+        });
+
+        return results.resultValue.toString();
     }
 
     public Boolean hasTrackingScan(String kitLabel) {
