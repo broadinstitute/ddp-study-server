@@ -205,7 +205,7 @@ public class KitDao {
                     }
                 }
             } catch (SQLException ex) {
-                dbVals.resultException = new DsmInternalError("Error getting collaborator participant Id ", dbVals.resultException);
+                dbVals.resultException = new DsmInternalError("Error getting collaborator participant Id for participant: " + ddpParticipantId, dbVals.resultException);
             }
             logger.debug("Found collaborator participant Id {} for ddpParticipant {} ", dbVals.resultValue, ddpParticipantId);
             return dbVals;
