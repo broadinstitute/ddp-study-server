@@ -201,9 +201,6 @@ public class KitDao {
                         return rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
                     }
                 }
-            } catch (SQLException ex) {
-                logger.error("Error getting collaborator participant Id for participant: {}", ddpParticipantId, ex);
-                throw ex;
             }
             return null;
         });
