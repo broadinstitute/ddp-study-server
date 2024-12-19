@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
+import static org.broadinstitute.ddp.db.TransactionWrapper.withTxn;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -191,8 +192,8 @@ public class KitDao {
     }
 
     public String getCollaboratorParticipantId(String ddpParticipantId) throws SQLException {
-        return inTransaction(conn -> {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
+        return withTxn(conn -> {
+            try (PreparedStatement stmt = conn.getConnection().prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
                 stmt.setString(1, ddpParticipantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
