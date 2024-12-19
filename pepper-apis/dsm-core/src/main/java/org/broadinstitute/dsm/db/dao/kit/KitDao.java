@@ -191,9 +191,9 @@ public class KitDao {
         return booleanCheckFoundAsName(ddpLabel, SQL_IS_BLOOD_KIT_QUERY);
     }
 
-    public String getCollaboratorParticipantId(String ddpParticipantId) throws SQLException {
-        return withTxn(conn -> {
-            try (PreparedStatement stmt = conn.getConnection().prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
+    public String getCollaboratorParticipantId(String ddpParticipantId) throws Exception {
+        return withTxn(handle -> {
+            try (PreparedStatement stmt = handle.getConnection().prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
                 stmt.setString(1, ddpParticipantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {

@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.service.phimanifest;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -140,7 +139,7 @@ public class PhiManifestService {
                 KitDao kitDao = new KitDao();
                 try {
                     phiManifest.setCollaboratorParticipantId(kitDao.getCollaboratorParticipantId(participant.getParticipantId()));
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     log.error("Error while fetching collaborator participant id for participant {} ", participant.getParticipantId(), e);
                 }
             }
