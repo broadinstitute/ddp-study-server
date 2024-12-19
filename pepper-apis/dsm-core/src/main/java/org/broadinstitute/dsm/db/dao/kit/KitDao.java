@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.kit;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import static org.broadinstitute.ddp.db.TransactionWrapper.useTxn;
+import static org.broadinstitute.ddp.db.TransactionWrapper.withTxn;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,6 +64,10 @@ public class KitDao {
             + "FROM ddp_kit_request request "
             + "LEFT JOIN kit_type kt on (kt.kit_type_id = request.kit_type_id) "
             + "WHERE ddp_label = ?";
+
+    private static final String SQL_GET_COLLABORATOR_PARTICIPANT_ID =
+            "select r.bsp_collaborator_participant_id from ddp_kit_request r "
+            + " where r.ddp_participant_id = ? limit 1";
 
     private static final String SQL_HAS_KIT_TRACKING = "SELECT 1 AS found "
             + "from "
@@ -184,6 +189,21 @@ public class KitDao {
 
     public Boolean isBloodKit(String ddpLabel) {
         return booleanCheckFoundAsName(ddpLabel, SQL_IS_BLOOD_KIT_QUERY);
+    }
+
+    public String getCollaboratorParticipantId(String ddpParticipantId) throws Exception {
+        return withTxn(handle -> {
+            try (PreparedStatement stmt = handle.getConnection().prepareStatement(SQL_GET_COLLABORATOR_PARTICIPANT_ID)) {
+                stmt.setString(1, ddpParticipantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        logger.debug("Found collaborator participant Id for ddpParticipant {} ", ddpParticipantId);
+                        return rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
+                    }
+                }
+            }
+            return null;
+        });
     }
 
     public Boolean hasTrackingScan(String kitLabel) {

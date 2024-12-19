@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
@@ -133,7 +134,17 @@ public class PhiManifestService {
             phiManifest.setNormalCollaboratorSampleId(kitRequestShipping.getBspCollaboratorSampleId());
             phiManifest.setCollaboratorParticipantId(kitRequestShipping.getBspCollaboratorParticipantId());
             phiManifest.setCollectionDate(kitRequestShipping.getCollectionDate());
+            //handle scenarios where there is no saliva/blood sample order and only tumor orders. Query collaborator Sample Id from kit_request
+            if (phiManifest.getCollaboratorParticipantId() == null) {
+                KitDao kitDao = new KitDao();
+                try {
+                    phiManifest.setCollaboratorParticipantId(kitDao.getCollaboratorParticipantId(participant.getParticipantId()));
+                } catch (Exception e) {
+                    log.error("Error while fetching collaborator participant id for participant {} ", participant.getParticipantId(), e);
+                }
+            }
         }
+
         MercuryOrderDto mercuryOrderDto = orders.get(0);
         phiManifest.setClinicalOrderDate(DateTimeUtil.getDateFromEpoch(mercuryOrderDto.getOrderDate()));
         phiManifest.setClinicalOrderId(mercuryOrderDto.getOrderId());
