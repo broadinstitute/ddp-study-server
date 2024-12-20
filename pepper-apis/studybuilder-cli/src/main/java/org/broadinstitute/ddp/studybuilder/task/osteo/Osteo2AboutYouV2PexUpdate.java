@@ -28,8 +28,8 @@ public class Osteo2AboutYouV2PexUpdate implements CustomTask {
     public void run(Handle handle) {
         SqlHelper helper = handle.attach(SqlHelper.class);
         long expressionId = helper.getAboutYouWhoFillExpressionId();
-        DBUtils.checkUpdate(1, helper.updateExpression(expressionId, "true"));
-        log.info("Updated expression ID: {} with 'true' ", expressionId);
+        DBUtils.checkUpdate(1, helper.updateExpression(expressionId, "!user.studies[\"CMI-OSTEO\"].isGovernedParticipant()"));
+        log.info("Updated expression ID ");
     }
 
     private interface SqlHelper extends SqlObject {
