@@ -134,14 +134,15 @@ public class PhiManifestService {
             phiManifest.setNormalCollaboratorSampleId(kitRequestShipping.getBspCollaboratorSampleId());
             phiManifest.setCollaboratorParticipantId(kitRequestShipping.getBspCollaboratorParticipantId());
             phiManifest.setCollectionDate(kitRequestShipping.getCollectionDate());
-            //handle scenarios where there is no saliva/blood sample order and only tumor orders. Query collaborator Sample Id from kit_request
-            if (phiManifest.getCollaboratorParticipantId() == null) {
-                KitDao kitDao = new KitDao();
-                try {
-                    phiManifest.setCollaboratorParticipantId(kitDao.getCollaboratorParticipantId(participant.getParticipantId()));
-                } catch (Exception e) {
-                    log.error("Error while fetching collaborator participant id for participant {} ", participant.getParticipantId(), e);
-                }
+        }
+
+        //handle scenarios where there is no saliva/blood sample order and only tumor orders. Query collaborator Sample Id from kit_request
+        if (phiManifest.getCollaboratorParticipantId() == null) {
+            KitDao kitDao = new KitDao();
+            try {
+                phiManifest.setCollaboratorParticipantId(kitDao.getCollaboratorParticipantId(participant.getParticipantId()));
+            } catch (Exception e) {
+                log.error("Error while fetching collaborator participant id for participant {} ", participant.getParticipantId(), e);
             }
         }
 
