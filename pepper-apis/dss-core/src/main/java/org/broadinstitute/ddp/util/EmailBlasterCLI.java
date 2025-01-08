@@ -11,6 +11,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -35,7 +36,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_ACTIVITY_INSTANCE_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_GUID;
 
 /**
  * CLI for sending an email template from sendgrid
@@ -61,6 +65,7 @@ public class EmailBlasterCLI {
         options.addOption("f", "sender-name", true, "name of sender");
         options.addOption("s", "study", true, "study guid");
         options.addOption("t", "template-id", true, "sendgrid template id");
+        options.addOption("a", "activity-code", true, "activity code");
         options.addOption("sub", "subject", true, "email subject");
 
         CommandLineParser parser = new DefaultParser();
@@ -83,6 +88,7 @@ public class EmailBlasterCLI {
         String fromEmail = cmd.getOptionValue("e");
         String templateId = cmd.getOptionValue("t");
         String subject = cmd.getOptionValue("sub");
+        String activityCode = cmd.getOptionValue("a");
         File guidsFile = new File(cmd.getOptionValue("g"));
         LOG.debug("passed subject: " + subject);
 
@@ -93,12 +99,12 @@ public class EmailBlasterCLI {
             LOG.error("Could not read " + guidsFile.getAbsolutePath(), e);
             System.exit(-1);
         }
-        new EmailBlasterCLI(sendgridApiKey).sendEmail(fromName, fromEmail, templateId, studyGuid, subject, guids);
+        new EmailBlasterCLI(sendgridApiKey).sendEmail(fromName, fromEmail, templateId, studyGuid, subject, activityCode, guids);
         System.exit(0);
     }
 
     public void sendEmail(String fromName, String fromEmail, String sendgridTemplateId, String studyGuid,
-                          String subject, Collection<String> recipientGuids) {
+                          String subject, String activityCode, Collection<String> recipientGuids) {
 
         final Set<String> auth0UserIds = new TreeSet<>();
         final Map<String, Map<String, String>> personalizationByAuth0Id = new HashMap<>();
@@ -128,6 +134,19 @@ public class EmailBlasterCLI {
                     auth0UserIds.add(userAuth);
                     personalizationByAuth0Id.put(userAuth, new HashMap<>());
                     personalizationByAuth0Id.get(userAuth).put(DDP_PARTICIPANT_FIRST_NAME, userProfile.getFirstName());
+                    personalizationByAuth0Id.get(userAuth).put(DDP_BASE_WEB_URL, studyDto.getWebBaseUrl());
+                    personalizationByAuth0Id.get(userAuth).put(DDP_PARTICIPANT_GUID, userDto.getUserGuid());
+
+                    if (activityCode != null) {
+                        //load activity instance
+                        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
+                        String instanceGuid = activityInstanceDao.getGuidOfLatestInstanceForUserAndActivity(
+                                handle, userDto.getUserGuid(), activityCode,
+                                studyDto.getId()).get();
+                        LOG.debug("Found instance guid: " + instanceGuid);
+                        personalizationByAuth0Id.get(userAuth).put(DDP_ACTIVITY_INSTANCE_GUID, instanceGuid);
+                    }
+
                 } else {
                     noAuthUsers.add(userDto.getUserGuid());
                 }
