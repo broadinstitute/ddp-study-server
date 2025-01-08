@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +61,7 @@ public class EmailBlasterCLI {
         options.addOption("f", "sender-name", true, "name of sender");
         options.addOption("s", "study", true, "study guid");
         options.addOption("t", "template-id", true, "sendgrid template id");
+        options.addOption("sub", "subject", true, "email subject");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -80,7 +82,9 @@ public class EmailBlasterCLI {
         String fromName = cmd.getOptionValue("f");
         String fromEmail = cmd.getOptionValue("e");
         String templateId = cmd.getOptionValue("t");
+        String subject = cmd.getOptionValue("sub");
         File guidsFile = new File(cmd.getOptionValue("g"));
+        LOG.debug("passed subject: " + subject);
 
         List<String> guids = null;
         try {
@@ -89,12 +93,12 @@ public class EmailBlasterCLI {
             LOG.error("Could not read " + guidsFile.getAbsolutePath(), e);
             System.exit(-1);
         }
-        new EmailBlasterCLI(sendgridApiKey).sendEmail(fromName, fromEmail, templateId, studyGuid, guids);
+        new EmailBlasterCLI(sendgridApiKey).sendEmail(fromName, fromEmail, templateId, studyGuid, subject, guids);
         System.exit(0);
     }
 
     public void sendEmail(String fromName, String fromEmail, String sendgridTemplateId, String studyGuid,
-                          Collection<String> recipientGuids) {
+                          String subject, Collection<String> recipientGuids) {
 
         final Set<String> auth0UserIds = new TreeSet<>();
         final Map<String, Map<String, String>> personalizationByAuth0Id = new HashMap<>();
@@ -109,8 +113,14 @@ public class EmailBlasterCLI {
             Auth0ManagementClient mgmtClient = Auth0Util.getManagementClientForDomain(handle, tenantDto.getDomain());
             Auth0Util auth0Util = new Auth0Util(tenantDto.getDomain());
 
+            List<String> noAuthUsers = new ArrayList<>();
             for (String recipientGuid : recipientGuids) {
+                LOG.info("Processing recipient " + recipientGuid);
                 UserDto userDto = userDao.findByUserGuid(recipientGuid);
+                if (userDto == null) {
+                    LOG.error("Could not find user with guid " + recipientGuid);
+                    continue;
+                }
                 UserProfile userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userDto.getUserGuid()).get();
                 // todo add other template vars
                 String userAuth = userDto.getAuth0UserId().orElse(null);
@@ -118,6 +128,8 @@ public class EmailBlasterCLI {
                     auth0UserIds.add(userAuth);
                     personalizationByAuth0Id.put(userAuth, new HashMap<>());
                     personalizationByAuth0Id.get(userAuth).put(DDP_PARTICIPANT_FIRST_NAME, userProfile.getFirstName());
+                } else {
+                    noAuthUsers.add(userDto.getUserGuid());
                 }
             }
 
@@ -129,13 +141,14 @@ public class EmailBlasterCLI {
                     String auth0Id = emailByAuth0Id.getKey();
                     LOG.info("Sending to " + recipient);
                     Map<String, String> templateSubstitutions = personalizationByAuth0Id.get(auth0Id);
-                    SendGridMailUtil.sendEmailMessage(fromName, fromEmail, null, recipient, null, sendgridTemplateId,
+                    SendGridMailUtil.sendEmailMessage(fromName, fromEmail, null, recipient, subject, sendgridTemplateId,
                             templateSubstitutions, sendgridApiKey);
                     LOG.info("Sent to " + recipient);
                 }
             } catch (DDPException e) {
                 LOG.error("Troubling sending email", e);
             }
+            LOG.info("No auth0 user ids for: " + noAuthUsers);
         });
     }
 }
