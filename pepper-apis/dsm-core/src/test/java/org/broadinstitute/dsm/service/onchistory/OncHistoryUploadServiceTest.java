@@ -110,6 +110,11 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     }
 
     @Test
+    public void testLmsWriteToDbNoTissueConsent() {
+        writeToDb(LMS_REALM, "onchistory/lmsOncHistoryNoTissueConsent.txt");
+    }
+
+    @Test
     public void testCreateOncHistoryRecords() {
         setupInstance(DEFAULT_REALM);
         OncHistoryUploadService uploadService =
@@ -186,6 +191,10 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows, shortIdToId, realm);
         if (rows.get(0).getParticipantTextId().startsWith("xyz-exit")) {
             // expecting an exit record and exception which was checked in getParticipantIds
+            return;
+        }
+        if (rows.get(0).getParticipantTextId().startsWith("abc-no-tissue-consent")) {
+            // expecting an non tissue consented record and exception which was checked in getParticipantIds
             return;
         }
         Assert.assertEquals(2, participantMedIds.size());
@@ -351,6 +360,11 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
                 // expecting an exit record and exception
                 Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a withdrawn participant"));
                 return null;
+            } else if (records.get(0).getParticipantTextId().startsWith("abc-no-tissue-consent")) {
+                e.printStackTrace();
+                // expecting an exit record and exception
+                Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample"));
+                return null;
             } else {
                 Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
                 return null;
@@ -436,10 +450,14 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
             Participant participant = new Participant();
             participant.setParticipantId(shortIdToId.get(shortId).longValue());
             dsm.setParticipant(participant);
+            dsm.setHasConsentedToTissueSample(true);
 
             String participantStatus = "ENROLLED";
             if (shortId.startsWith("xyz-exit")) {
                 participantStatus = "EXITED_AFTER_ENROLLMENT";
+            }
+            if (shortId.startsWith("abc-no-tissue-consent")) {
+                dsm.setHasConsentedToTissueSample(false);
             }
             ElasticSearchParticipantDto dto = new ElasticSearchParticipantDto.Builder()
                     .withDsm(dsm)

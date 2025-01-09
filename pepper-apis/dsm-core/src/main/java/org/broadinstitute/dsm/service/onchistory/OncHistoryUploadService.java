@@ -31,6 +31,7 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.exception.DSMBadRequestException;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.files.parser.onchistory.OncHistoryParser;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -134,7 +135,8 @@ public class OncHistoryUploadService {
                                                       ParticipantIdProvider participantIdProvider, boolean updateElastic) {
         Map<Integer, Integer> medIds = new HashMap<>();
         List<String> exitedParticipants = new ArrayList<>();
-
+        List<String> nonTissueConsentedParticipants = new ArrayList<>();
+        //dsm.hasConsentedToTissueSample
         ParticipantDao participantDao = ParticipantDao.of();
 
         for (OncHistoryRecord rec : oncHistoryRecords) {
@@ -149,7 +151,12 @@ public class OncHistoryUploadService {
             }
 
             //since participantIdProvider.getParticipantDataForShortId already made sure participant ID exists.. its ok to get it directly
-            Long ptpId = ptpData.getDsm().get().getParticipant().get().getParticipantId();
+            Dsm dsmData = ptpData.getDsm().get();
+            if (!dsmData.isHasConsentedToTissueSample()) {
+                nonTissueConsentedParticipants.add(rec.getParticipantTextId());
+                continue;
+            }
+            Long ptpId = dsmData.getParticipant().get().getParticipantId();
             int participantId;
             try {
                 participantId = ptpId.intValue();
@@ -172,6 +179,12 @@ public class OncHistoryUploadService {
             log.error("Found {} exited participants: {} in Onc History Upload", exitedParticipants.size(), exitedParticipants);
             throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
                     + "Please remove onc histories for these withdrawn participants from the file and upload it again: " + exitedParticipants);
+        }
+
+        if (!nonTissueConsentedParticipants.isEmpty()) {
+            log.error("Found {} participants: {} in Onc History Upload who did not consent to tissue sample", nonTissueConsentedParticipants.size(), nonTissueConsentedParticipants);
+            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample. "
+                    + "Please remove onc histories for these participants from the file and upload it again: " + nonTissueConsentedParticipants);
         }
 
         return medIds;
