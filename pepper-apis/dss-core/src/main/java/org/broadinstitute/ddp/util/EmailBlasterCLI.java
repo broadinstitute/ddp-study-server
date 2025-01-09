@@ -53,7 +53,7 @@ import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP
  * limitations/expectations:
  * As of now only english, legacy templates are supported
  * self/pediatric guids should be separated into different runs
- * For pediatric participants, the participant (pediatric) guid should be provided. Code will lookup proxy/parent and will get the email.
+ * For pediatric participants, the participant (pediatric) guid should be provided. Code will look up proxy/parent and will get the email.
  * Not all template substitutions are supported. Check the substitutions in the template and add them to the code if needed.
  */
 public class EmailBlasterCLI {
@@ -144,7 +144,7 @@ public class EmailBlasterCLI {
 
                 UserDto proxyUserDto = null;
                 UserProfile userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userDto.getUserGuid()).get();
-                // todo add other template vars if the template requires
+                // todo add other template vars needed by the email template. Just add ALL possible substitutions!!
                 String userAuth = userDto.getAuth0UserId().orElse(null);
                 if (isPediatric) {
                     //find the parent/proxy
