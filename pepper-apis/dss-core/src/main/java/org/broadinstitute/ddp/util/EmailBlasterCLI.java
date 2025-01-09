@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -171,10 +172,16 @@ public class EmailBlasterCLI {
 
                     if (activityCode != null) {
                         //load activity instance
+                        String instanceGuid = null;
                         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
-                        String instanceGuid = activityInstanceDao.getGuidOfLatestInstanceForUserAndActivity(
-                                handle, userDto.getUserGuid(), activityCode,
-                                studyDto.getId()).get();
+                        Optional<String> instanceGuidOpt = activityInstanceDao.getGuidOfLatestInstanceForUserAndActivity(
+                                handle, userDto.getUserGuid(), activityCode, studyDto.getId());
+                        if (instanceGuidOpt.isPresent()) {
+                            instanceGuid = instanceGuidOpt.get();
+                        } else {
+                            LOG.error("No instance GUID found for user {} and activity {}", userDto.getUserGuid(), activityCode);
+                            continue;
+                        }
                         LOG.info("Found instance guid: " + instanceGuid);
                         personalizationByAuth0Id.get(userAuth).put(DDP_ACTIVITY_INSTANCE_GUID, instanceGuid);
                     }
