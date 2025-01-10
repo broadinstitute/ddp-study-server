@@ -179,17 +179,20 @@ public class OncHistoryUploadService {
         if (!exitedParticipants.isEmpty() || !nonTissueConsentedParticipants.isEmpty()) {
             StringBuilder message = new StringBuilder("One or more of the uploaded onc histories is associated with ");
             if (!exitedParticipants.isEmpty() && !nonTissueConsentedParticipants.isEmpty()) {
-                message.append("a withdrawn participant and a participant who did not consent to tissue sample. Please remove onc histories for these participants from the file and upload it again: ")
+                message.append("a withdrawn participant and a participant who did not consent to tissue sample. "
+                                + "Please remove onc histories for these participants from the file and upload it again: ")
                         .append(exitedParticipants)
                         .append(" and ")
                         .append(nonTissueConsentedParticipants);
             }
             if (!exitedParticipants.isEmpty()) {
-                message.append("a withdrawn participant. Please remove onc histories for these withdrawn participants from the file and upload it again: ")
+                message.append("a withdrawn participant. "
+                                + "Please remove onc histories for these withdrawn participants from the file and upload it again: ")
                         .append(exitedParticipants);
             }
             if (!nonTissueConsentedParticipants.isEmpty()) {
-                message.append("a participant who did not consent to tissue sample. Please remove onc histories for these participants from the file and upload it again: ")
+                message.append("a participant who did not consent to tissue sample. "
+                                + "Please remove onc histories for these participants from the file and upload it again: ")
                         .append(nonTissueConsentedParticipants);
             }
             String finalMessage = message.toString();
