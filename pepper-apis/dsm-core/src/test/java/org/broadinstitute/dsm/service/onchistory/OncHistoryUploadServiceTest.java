@@ -100,18 +100,15 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testLmsWriteToDb() {
-        writeToDb(LMS_REALM, "onchistory/lmsOncHistory.txt");
+    public void testLmsWithdrawnParticipant() {
+        setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryExited.txt",
+                "One or more of the uploaded onc histories is associated with a withdrawn participant");
     }
 
     @Test
-    public void testLmsWriteToDbExit() {
-        writeToDb(LMS_REALM, "onchistory/lmsOncHistoryExited.txt");
-    }
-
-    @Test
-    public void testLmsWriteToDbNoTissueConsent() {
-        writeToDb(LMS_REALM, "onchistory/lmsOncHistoryNoTissueConsent.txt");
+    public void testLmsNoTissueConsentParticipant() {
+        setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryNoTissueConsent.txt",
+                "One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample");
     }
 
     @Test
@@ -165,6 +162,36 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         */
     }
 
+    private void setupAndTestExitedOrNotConsentedParticipant(String realm, String testFile, String expectedMessage) {
+        setupInstance(realm);
+        OncHistoryUploadService uploadService =
+                new OncHistoryUploadService(realm, TEST_USER, new CodeStudyColumnsProvider());
+        uploadService.initialize();
+        uploadService.setElasticUpdater(mockElasticUpdater());
+
+        RowReader rowReader = new RowReader();
+        rowReader.read(testFile, uploadService);
+        List<OncHistoryRecord> rows = rowReader.getRows();
+        Assert.assertEquals(2, rows.size());
+
+        Map<String, Integer> shortIdToId = createParticipantsFromRows(rows, realm);
+        try {
+            uploadService.validateRows(rows);
+        } catch (Exception e) {
+            Assert.fail("Exception from OncHistoryUploadService.validateRows: " + e.toString());
+        }
+
+        try {
+            uploadService.getParticipantIds(rows, new TestParticipantIdProvider(shortIdToId), false);
+        } catch (Exception e) {
+            // expecting an exit record / not tissue consented record and exception
+            Assert.assertTrue(e.getMessage().contains(expectedMessage));
+            return;
+        }
+
+        Assert.fail("Expected exception");
+    }
+
     private void writeToDb(String realm, String testFile) {
         setupInstance(realm);
         OncHistoryUploadService uploadService =
@@ -189,14 +216,6 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows, shortIdToId, realm);
-        if (rows.get(0).getParticipantTextId().startsWith("xyz-exit")) {
-            // expecting an exit record and exception which was checked in getParticipantIds
-            return;
-        }
-        if (rows.get(0).getParticipantTextId().startsWith("abc-no-tissue-consent")) {
-            // expecting an non tissue consented record and exception which was checked in getParticipantIds
-            return;
-        }
         Assert.assertEquals(2, participantMedIds.size());
 
         Map<String, OncHistoryUploadColumn> studyColumns = uploadService.getStudyColumns();
@@ -356,18 +375,8 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         try {
             return uploadService.getParticipantIds(records, participantIdProvider, false);
         } catch (Exception e) {
-            if (records.get(0).getParticipantTextId().startsWith("xyz-exit")) {
-                // expecting an exit record and exception
-                Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a withdrawn participant"));
-                return null;
-            } else if (records.get(0).getParticipantTextId().startsWith("abc-no-tissue-consent")) {
-                // expecting an non-tissue-consented record and exception
-                Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample"));
-                return null;
-            } else {
-                Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
-                return null;
-            }
+            Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
+            return null;
         }
     }
 

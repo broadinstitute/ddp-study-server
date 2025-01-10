@@ -184,7 +184,6 @@ public class OncHistoryUploadService {
         }
 
         if (!nonTissueConsentedParticipants.isEmpty()) {
-            nonTissueConsentedParticipants.add("HRUID-2");
             String message = String.format("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample. "
                     + "Please remove onc histories for these participants from the file and upload it again: %s", nonTissueConsentedParticipants);
             log.warn(message);
