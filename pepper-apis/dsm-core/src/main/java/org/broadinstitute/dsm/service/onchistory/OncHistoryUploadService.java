@@ -145,17 +145,8 @@ public class OncHistoryUploadService {
                 exitedParticipants.add(rec.getParticipantTextId());
             }
 
-            if (!exitedParticipants.isEmpty()) {
-                //skip MR verify/creation. continuing to collect any other exited participant hruids.
-                continue;
-            }
-
             //since participantIdProvider.getParticipantDataForShortId already made sure participant ID exists.. its ok to get it directly
             Dsm dsmData = ptpData.getDsm().get();
-            if (!dsmData.isHasConsentedToTissueSample()) {
-                nonTissueConsentedParticipants.add(rec.getParticipantTextId());
-                continue;
-            }
             Long ptpId = dsmData.getParticipant().get().getParticipantId();
             int participantId;
             try {
@@ -170,21 +161,34 @@ public class OncHistoryUploadService {
             if (medIds.containsKey(participantId)) {
                 continue;
             }
+
+            if (!dsmData.isHasConsentedToTissueSample()) {
+                nonTissueConsentedParticipants.add(rec.getParticipantTextId());
+            }
+
+            if (!exitedParticipants.isEmpty() || !nonTissueConsentedParticipants.isEmpty()) {
+                //skip MR verify/creation. continuing to collect any other exited participant or non tissue consented hruids.
+                continue;
+            }
+
             int medId = OncHistoryDetail.verifyOrCreateMedicalRecord(participantId, rec.getDdpParticipantId(),
                     this.realm, updateElastic);
             medIds.put(participantId, medId);
         }
 
         if (!exitedParticipants.isEmpty()) {
-            log.error("Found {} exited participants: {} in Onc History Upload", exitedParticipants.size(), exitedParticipants);
-            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a withdrawn participant. "
-                    + "Please remove onc histories for these withdrawn participants from the file and upload it again: " + exitedParticipants);
+            String message = String.format("One or more of the uploaded onc histories is associated with a withdrawn participant. "
+                    + "Please remove onc histories for these withdrawn participants from the file and upload it again: %s", exitedParticipants);
+            log.warn(message);
+            throw new OncHistoryValidationException(message);
         }
 
         if (!nonTissueConsentedParticipants.isEmpty()) {
-            log.error("Found {} participants: {} in Onc History Upload who did not consent to tissue sample", nonTissueConsentedParticipants.size(), nonTissueConsentedParticipants);
-            throw new OncHistoryValidationException("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample. "
-                    + "Please remove onc histories for these participants from the file and upload it again: " + nonTissueConsentedParticipants);
+            nonTissueConsentedParticipants.add("HRUID-2");
+            String message = String.format("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample. "
+                    + "Please remove onc histories for these participants from the file and upload it again: %s", nonTissueConsentedParticipants);
+            log.warn(message);
+            throw new OncHistoryValidationException(message);
         }
 
         return medIds;

@@ -361,8 +361,7 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
                 Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a withdrawn participant"));
                 return null;
             } else if (records.get(0).getParticipantTextId().startsWith("abc-no-tissue-consent")) {
-                e.printStackTrace();
-                // expecting an exit record and exception
+                // expecting an non-tissue-consented record and exception
                 Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample"));
                 return null;
             } else {
