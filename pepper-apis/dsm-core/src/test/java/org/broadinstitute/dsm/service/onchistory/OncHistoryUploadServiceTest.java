@@ -194,13 +194,12 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
         try {
             uploadService.getParticipantIds(rows, new TestParticipantIdProvider(shortIdToId), false);
+            Assert.fail("Expected exception");
         } catch (Exception e) {
             // expecting an exit record / not tissue consented record and exception
             Assert.assertTrue(e.getMessage().contains(expectedMessage));
-            return;
         }
 
-        Assert.fail("Expected exception");
     }
 
     private void writeToDb(String realm, String testFile) {
