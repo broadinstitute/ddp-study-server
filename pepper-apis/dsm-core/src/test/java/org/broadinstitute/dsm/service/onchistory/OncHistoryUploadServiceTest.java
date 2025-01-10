@@ -100,6 +100,11 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     }
 
     @Test
+    public void testLmsWriteToDb() {
+        writeToDb(LMS_REALM, "onchistory/lmsOncHistory.txt");
+    }
+
+    @Test
     public void testLmsWithdrawnParticipant() {
         setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryExited.txt",
                 "One or more of the uploaded onc histories is associated with a withdrawn participant");
