@@ -112,6 +112,12 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     }
 
     @Test
+    public void testLmsWithdrawnAndNoTissueConsentParticipant() {
+        setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryWithdrawnAndNoTissueConsent.txt",
+                "One or more of the uploaded onc histories is associated with a withdrawn participant and a participant who did not consent to tissue sample");
+    }
+
+    @Test
     public void testCreateOncHistoryRecords() {
         setupInstance(DEFAULT_REALM);
         OncHistoryUploadService uploadService =
