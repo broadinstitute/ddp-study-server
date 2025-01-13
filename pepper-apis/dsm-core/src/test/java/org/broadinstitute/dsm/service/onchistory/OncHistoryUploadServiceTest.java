@@ -105,8 +105,21 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testLmsWriteToDbExit() {
-        writeToDb(LMS_REALM, "onchistory/lmsOncHistoryExited.txt");
+    public void testLmsWithdrawnParticipant() {
+        setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryExited.txt",
+                "One or more of the uploaded onc histories is associated with a withdrawn participant");
+    }
+
+    @Test
+    public void testLmsNoTissueConsentParticipant() {
+        setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryNoTissueConsent.txt",
+                "One or more of the uploaded onc histories is associated with a participant who did not consent to tissue sample");
+    }
+
+    @Test
+    public void testLmsWithdrawnAndNoTissueConsentParticipant() {
+        setupAndTestExitedOrNotConsentedParticipant(LMS_REALM, "onchistory/lmsOncHistoryWithdrawnAndNoTissueConsent.txt",
+                "One or more of the uploaded onc histories is associated with a withdrawn participant and a participant who did not consent to tissue sample");
     }
 
     @Test
@@ -160,6 +173,35 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         */
     }
 
+    private void setupAndTestExitedOrNotConsentedParticipant(String realm, String testFile, String expectedMessage) {
+        setupInstance(realm);
+        OncHistoryUploadService uploadService =
+                new OncHistoryUploadService(realm, TEST_USER, new CodeStudyColumnsProvider());
+        uploadService.initialize();
+        uploadService.setElasticUpdater(mockElasticUpdater());
+
+        RowReader rowReader = new RowReader();
+        rowReader.read(testFile, uploadService);
+        List<OncHistoryRecord> rows = rowReader.getRows();
+        Assert.assertEquals(2, rows.size());
+
+        Map<String, Integer> shortIdToId = createParticipantsFromRows(rows, realm);
+        try {
+            uploadService.validateRows(rows);
+        } catch (Exception e) {
+            Assert.fail("Exception from OncHistoryUploadService.validateRows: " + e.toString());
+        }
+
+        try {
+            uploadService.getParticipantIds(rows, new TestParticipantIdProvider(shortIdToId), false);
+            Assert.fail("Expected exception");
+        } catch (Exception e) {
+            // expecting an exit record / not tissue consented record and exception
+            Assert.assertTrue(e.getMessage().contains(expectedMessage));
+        }
+
+    }
+
     private void writeToDb(String realm, String testFile) {
         setupInstance(realm);
         OncHistoryUploadService uploadService =
@@ -184,10 +226,6 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
 
         // verify each participant ID for the study and get an associated medical record ID
         Map<Integer, Integer> participantMedIds = getParticipantIds(rows, shortIdToId, realm);
-        if (rows.get(0).getParticipantTextId().startsWith("xyz-exit")) {
-            // expecting an exit record and exception which was checked in getParticipantIds
-            return;
-        }
         Assert.assertEquals(2, participantMedIds.size());
 
         Map<String, OncHistoryUploadColumn> studyColumns = uploadService.getStudyColumns();
@@ -347,14 +385,8 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
         try {
             return uploadService.getParticipantIds(records, participantIdProvider, false);
         } catch (Exception e) {
-            if (records.get(0).getParticipantTextId().startsWith("xyz-exit")) {
-                // expecting an exit record and exception
-                Assert.assertTrue(e.getMessage().contains("One or more of the uploaded onc histories is associated with a withdrawn participant"));
-                return null;
-            } else {
-                Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
-                return null;
-            }
+            Assert.fail("Exception from OncHistoryUploadService.getParticipantIds: " + e.toString());
+            return null;
         }
     }
 
@@ -436,10 +468,14 @@ public class OncHistoryUploadServiceTest extends DbTxnBaseTest {
             Participant participant = new Participant();
             participant.setParticipantId(shortIdToId.get(shortId).longValue());
             dsm.setParticipant(participant);
+            dsm.setHasConsentedToTissueSample(true);
 
             String participantStatus = "ENROLLED";
             if (shortId.startsWith("xyz-exit")) {
                 participantStatus = "EXITED_AFTER_ENROLLMENT";
+            }
+            if (shortId.startsWith("abc-no-tissue-consent")) {
+                dsm.setHasConsentedToTissueSample(false);
             }
             ElasticSearchParticipantDto dto = new ElasticSearchParticipantDto.Builder()
                     .withDsm(dsm)
