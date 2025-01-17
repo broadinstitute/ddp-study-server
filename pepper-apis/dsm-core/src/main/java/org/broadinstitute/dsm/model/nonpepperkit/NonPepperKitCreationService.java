@@ -35,6 +35,7 @@ public class NonPepperKitCreationService {
 
     public KitResponse createNonPepperKit(JuniperKitRequest juniperKitRequest, String kitTypeName, EasyPostUtil easyPostUtil,
                                           DDPInstance ddpInstance) {
+        log.info("Juniper create kit request for participant: {}", juniperKitRequest.getJuniperParticipantID());
         if (StringUtils.isBlank(juniperKitRequest.getJuniperParticipantID())) {
             return KitResponse.makeKitResponseError(KitResponse.ErrorMessage.MISSING_JUNIPER_PARTICIPANT_ID,
                     juniperKitRequest.getJuniperKitId(),

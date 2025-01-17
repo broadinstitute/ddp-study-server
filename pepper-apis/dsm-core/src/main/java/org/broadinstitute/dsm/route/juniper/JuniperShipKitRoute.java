@@ -31,6 +31,8 @@ public class JuniperShipKitRoute implements Route {
     public KitResponse createNonPepperKit(Request request, Response response) {
         try {
             ShipKitRequest shipKitRequest = new Gson().fromJson(request.body(), ShipKitRequest.class);
+            log.info("juniper kit create request for study: {} .. participant: {}", shipKitRequest.getJuniperStudyGUID(),
+                    shipKitRequest.getJuniperKitRequest().getJuniperParticipantID());
 
             JuniperKitRequest juniperKitRequest = shipKitRequest.getJuniperKitRequest();
             if (juniperKitRequest == null) {
@@ -81,6 +83,7 @@ public class JuniperShipKitRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) {
+        log.info("Received juniper request to create a new kit");
         return createNonPepperKit(request, response);
     }
 }
