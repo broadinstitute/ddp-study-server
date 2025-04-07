@@ -154,7 +154,8 @@ public class WorkflowService {
         JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
         StudyDto study = studyDao.findByStudyGuid(studyGuid);
         if (null == study) {
-            throw new NoSuchElementException("Could not find study :" + studyGuid);
+            //fall back to studyGuid
+            return studyGuid;
         }
 
         String preferredLanguageCode = null;
