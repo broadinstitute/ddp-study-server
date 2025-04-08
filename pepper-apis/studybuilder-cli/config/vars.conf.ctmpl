@@ -38,6 +38,7 @@
     "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
     "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
     "escRedirectUrl": "{{$conf.escRedirectUrl}}",
+    "trccRedirectUrl": "{{$conf.trccRedirectUrl}}",
     "lmsRedirectUrl": "{{$conf.lmsRedirectUrl}}"
 {{end}}
 
