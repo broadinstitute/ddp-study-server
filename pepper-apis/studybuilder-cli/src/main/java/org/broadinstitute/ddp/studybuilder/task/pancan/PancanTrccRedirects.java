@@ -87,9 +87,14 @@ public class PancanTrccRedirects implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
 
+        //update only expressions related to NON study redirect
         @SqlUpdate("update expression\n"
                 + "set expression_text = REPLACE(expression_text, :currentExpr, :newExpr) "
-                + "where expression_text like :searchExpr")
+                + "where expression_text like :searchExpr "
+                + "and expression_id NOT IN "
+                + " (select wt.precondition_expression_id from workflow_transition wt , workflow_study_redirect_state ns "
+                + " where ns.workflow_state_id = wt.next_state_id)"
+        )
         int updatePancanTrccBlockPex(@Bind("searchExpr") String searchExpr, @Bind("currentExpr") String currentExpr,
                                      @Bind("newExpr") String newExpr);
 
