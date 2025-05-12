@@ -54,10 +54,10 @@ public class PancanStudyRedirectRemovalSupport implements CustomTask {
 
         sqlHelper = handle.attach(SqlHelper.class);
 
-        //find and delete the MPC study redirect workflow transition
-        long workflowTransitionId = sqlHelper.findPancanProstateStudyRedirectWorkflowId(studyGuid);
+        //find and delete the passed <studyGuid> redirect workflow transition from pancan
+        long workflowTransitionId = sqlHelper.findPancanStudyRedirectWorkflowId(studyGuid);
         DBUtils.checkDelete(1, sqlHelper.deletePancanStudyRedirectWorkflow(workflowTransitionId));
-        log.info("Deleted workflow transition with ID: {}", workflowTransitionId);
+        log.info("Deleted workflow transition with ID:{} to study: {} from pancan.", workflowTransitionId, studyGuid);
 
         //update pex expressions to remove studyGuid redirect
         if (searchPexExpr != null && currentPexExpr != null && newPexExpr != null) {
@@ -84,7 +84,7 @@ public class PancanStudyRedirectRemovalSupport implements CustomTask {
                 + " and trans.is_active "
                 + " and next_state_type.workflow_state_type_code = 'STUDY_REDIRECT' "
                 + " and study_guid = :studyGuid")
-        long findPancanProstateStudyRedirectWorkflowId(@Bind("studyGuid") String studyGuid);
+        long findPancanStudyRedirectWorkflowId(@Bind("studyGuid") String studyGuid);
 
         @SqlUpdate("delete workflow_transition  "
                 + "from workflow_transition "
