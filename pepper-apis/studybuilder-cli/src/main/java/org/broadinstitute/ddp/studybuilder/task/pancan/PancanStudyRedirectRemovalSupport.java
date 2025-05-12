@@ -49,7 +49,7 @@ public class PancanStudyRedirectRemovalSupport implements CustomTask {
     public void run(Handle handle) {
         var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
         if (!studyDto.getGuid().equals("cmi-pancan")) {
-            throw new DDPException("This task is only for the study: " + studyGuid);
+            throw new DDPException("This task is only for the study cmi-pancan ");
         }
 
         sqlHelper = handle.attach(SqlHelper.class);
