@@ -21,6 +21,7 @@ select policy.study_governance_policy_id,
 
 queryAllPolicies() ::= <<
 <select_all_policies()>
+where study.guid NOT IN ('cmi-brain')
 order by policy.study_governance_policy_id asc, aom.execution_order asc
 >>
 
