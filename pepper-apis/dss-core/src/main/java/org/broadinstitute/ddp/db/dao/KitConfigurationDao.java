@@ -111,7 +111,7 @@ public interface KitConfigurationDao extends SqlObject {
             + " s.guid as study_guid"
             + " from kit_configuration as kc, umbrella_study s"
             + " where s.umbrella_study_id = kc.study_id "
-            + " and s.guid in ('CMI-OSTEO', 'cmi-lms', 'cmi-pancan', 'brugada')")
+            + " and s.guid not in ('ANGIO', 'cmi-mbc', 'cmi-mpc', 'cmi-esc', 'cmi-brain', 'singular', 'testboston')")
     @RegisterConstructorMapper(KitConfigurationDto.class)
     List<KitConfigurationDto> getKitConfigurationDtos();
 
