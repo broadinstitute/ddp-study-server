@@ -108,8 +108,10 @@ public interface KitConfigurationDao extends SqlObject {
     }
 
     @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id, kc.needs_approval,"
-            + "       (select guid from umbrella_study where umbrella_study_id = kc.study_id) as study_guid"
-            + "  from kit_configuration as kc")
+            + " s.guid as study_guid"
+            + " from kit_configuration as kc, umbrella_study s"
+            + " where s.umbrella_study_id = kc.study_id "
+            + " and s.guid in ('CMI-OSTEO', 'cmi-lms', 'cmi-pancan', 'brugada')")
     @RegisterConstructorMapper(KitConfigurationDto.class)
     List<KitConfigurationDto> getKitConfigurationDtos();
 
