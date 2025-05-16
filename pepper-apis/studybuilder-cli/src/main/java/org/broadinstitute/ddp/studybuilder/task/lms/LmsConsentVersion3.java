@@ -98,7 +98,7 @@ public class LmsConsentVersion3 implements CustomTask {
     }
 
     private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, ActivityVersionDto version3) {
-        log.info("Version : {} Rev start..{}..Rev Tag: {}..Rev End:{} " , version3.getRevId(), version3.getRevStart(),
+        log.info("Version : {} Rev start..{}..Rev Tag: {}..Rev End:{} ", version3.getRevId(), version3.getRevStart(),
                 version3.getVersionTag(), version3.getRevEnd());
         updateAdultVariables(handle, meta, version3, dataCfg);
     }
@@ -120,8 +120,8 @@ public class LmsConsentVersion3 implements CustomTask {
 
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
         log.info("Translation for var: {} .. list size: {}", tmplVarId, transList.size());
-        Translation currTranslation = transList.get(transList.size()-1);
-        log.info("Translation : {} : Rev Id: {}" , currTranslation.getText(), currTranslation.getRevisionId());
+        Translation currTranslation = transList.get(transList.size() - 1);
+        log.info("Translation : {} : Rev Id: {}", currTranslation.getText(), currTranslation.getRevisionId());
 
         long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
         long[] revIds = {newFullNameSubRevId};
