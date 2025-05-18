@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 //NOTE: As of now this class supports only revisioning an activity with ONLY existing variable names versioned
+//Only Template variables of block content template, question prompt template and block group title templates are supported
 //If new variables need to be added/deleted, new blocks, sections versioned.. all that is NOT supported
 
 @Slf4j
@@ -124,10 +125,23 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
     private void revisionAdultVariableTranslation(String varName, String newTemplateText,
                                                   RevisionMetadata meta, ActivityVersionDto version3) {
         log.info("Revisioning and updating template variable: {} .. \n New Text: {} ", varName, newTemplateText);
-        Long tmplVarId = sqlHelper.findVariableIdByNameAndActivityId(varName, version3.getActivityId());
+        Long tmplVarId = sqlHelper.findBlockTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
 
+        if (tmplVarId == null) {
+            log.warn("NO Template Variable found with name: {}. Checking in Block Group Header Template Variable", varName);
+            tmplVarId = sqlHelper.findBlockGroupTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
+        }
+
+        if (tmplVarId == null) {
+            log.warn("NO Template Variable found with name: {}. Checking in Question prompt Template Variable", varName);
+            tmplVarId = sqlHelper.findQuestionPromptTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
+            if (tmplVarId == null) {
+                throw new DDPException("Template variable NOT found with name : " + varName + " and study activityId: " + version3.getActivityId()
+                        + " . Checked Body template vars and question prompt template vars");
+            }
+        }
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-        log.info("Translation for var: {} .. list size: {}", tmplVarId, transList.size());
+        log.info("Translations count for var: {} .. list size: {}", tmplVarId, transList.size());
         Translation currTranslation = transList.get(transList.size() - 1);
         log.info("Translation : {} : Rev Id: {}", currTranslation.getText(), currTranslation.getRevisionId());
 
@@ -146,7 +160,7 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         List<Long> findTemplateVariableIdByVariableNames(@Bind("variable_name") String variableName);
 
         @SqlQuery("select tv.template_variable_id from block_content as bt"
-                + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
+                + "  join template as tmpl on tmpl.template_id = bt.body_template_id "
                 + "  join template_variable tv on tv.template_id = tmpl.template_id "
                 + " where tv.variable_name = :variableName"
                 + "   and bt.block_id in (select fsb.block_id"
@@ -158,8 +172,32 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
                 + "                         from form_activity__form_section as fafs"
                 + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
                 + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
-                + "                        where fafs.form_activity_id = :activityId)")
-        Long findVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
+                + "                        where fafs.form_activity_id = :activityId) order by tv.template_variable_id desc")
+        Long findBlockTemplateVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
+
+
+        @SqlQuery("select tv.template_variable_id from block_group_header as bgh"
+                + "  join template as tmpl on tmpl.template_id = bgh.title_template_id "
+                + "  join template_variable tv on tv.template_id = tmpl.template_id "
+                + " where tv.variable_name = :variableName"
+                + "   and bgh.block_id in (select fsb.block_id"
+                + "                         from form_activity__form_section as fafs"
+                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + "                        where fafs.form_activity_id = :activityId"
+                + "                        union"
+                + "                       select bn.nested_block_id"
+                + "                         from form_activity__form_section as fafs"
+                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
+                + "                        where fafs.form_activity_id = :activityId) order by tv.template_variable_id desc")
+        Long findBlockGroupTemplateVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
+
+        @SqlQuery("select tv.template_variable_id from question as q"
+                + "  join template as tmpl on tmpl.template_id = q.question_prompt_template_id"
+                + "  join template_variable tv on tv.template_id = tmpl.template_id "
+                + " where tv.variable_name = :variableName"
+                + "   and q.study_activity_id = :activityId order by tv.template_variable_id desc")
+        Long findQuestionPromptTemplateVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
     }
 
 }
