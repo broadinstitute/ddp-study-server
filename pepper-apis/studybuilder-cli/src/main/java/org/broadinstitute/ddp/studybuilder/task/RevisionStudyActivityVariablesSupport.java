@@ -143,7 +143,7 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
         log.info("Translations count for var: {} .. list size: {}", tmplVarId, transList.size());
         Translation currTranslation = transList.get(transList.size() - 1);
-        log.info("Translation : {} : Rev Id: {}", currTranslation.getText(), currTranslation.getRevisionId());
+        log.info("Current Translation : {} : Rev Id: {}", currTranslation.getText(), currTranslation.getRevisionId());
 
         long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
         long[] revIds = {newFullNameSubRevId};
