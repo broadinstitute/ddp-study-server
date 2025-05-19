@@ -3,7 +3,9 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
@@ -12,6 +14,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
@@ -50,11 +53,21 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
     private JdbiRevision jdbiRevision;
     private String studyGuid;
     private String activityCode;
+    private String activityTitle;
+
+    private ActivityI18nDao activityI18nDao;
 
     public RevisionStudyActivityVariablesSupport(String studyGuid, String activityCode, String dataFilePath) {
         this.studyGuid = studyGuid;
         this.activityCode = activityCode;
         this.dataFile = dataFilePath;
+    }
+
+    public RevisionStudyActivityVariablesSupport(String studyGuid, String activityCode, String dataFilePath, String activityTitle) {
+        this.studyGuid = studyGuid;
+        this.activityCode = activityCode;
+        this.dataFile = dataFilePath;
+        this.activityTitle = activityTitle;
     }
 
     @Override
@@ -93,9 +106,14 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         this.sectionBlockDao = handle.attach(SectionBlockDao.class);
         this.jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         this.jdbiRevision = handle.attach(JdbiRevision.class);
+        this.activityI18nDao = handle.attach(ActivityI18nDao.class);
 
-        ActivityVersionDto version3ForConsent = getNewVersion(handle, studyDto, metaConsent, activityCode);
-        runActivityUpdate(handle, metaConsent, version3ForConsent);
+        ActivityVersionDto newActivityVer = getNewVersion(handle, studyDto, metaConsent, activityCode);
+        //revision activity Title
+        if (StringUtils.isNotBlank(this.activityTitle)) {
+            revisionActivityTitle(newActivityVer.getActivityId(), this.activityCode, this.activityTitle, newActivityVer.getRevId());
+        }
+        runActivityUpdate(handle, metaConsent, newActivityVer);
     }
 
     private ActivityVersionDto getNewVersion(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
@@ -151,6 +169,25 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
         log.info("Revisioned and updated template variable: {}", tmplVarId);
 
+    }
+
+    private void revisionActivityTitle(long activityId, String activityCode, String title, long revisionId) {
+        ActivityI18nDetail i18nDetail = activityI18nDao
+                .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli())
+                .iterator().next();
+        var newI18nDetail = new ActivityI18nDetail(
+                i18nDetail.getId(),
+                i18nDetail.getActivityId(),
+                i18nDetail.getLangCodeId(),
+                i18nDetail.getIsoLangCode(),
+                i18nDetail.getName(),
+                i18nDetail.getSecondName(),
+                title,
+                i18nDetail.getSubtitle(),
+                i18nDetail.getDescription(),
+                revisionId);
+        activityI18nDao.insertDetails(List.of(newI18nDetail));
+        log.info("Revisioned translatedTitle for activity {}", activityCode);
     }
 
     private interface SqlHelper extends SqlObject {
