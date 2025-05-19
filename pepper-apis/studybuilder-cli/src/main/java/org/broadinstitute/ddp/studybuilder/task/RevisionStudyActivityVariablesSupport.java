@@ -136,8 +136,8 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
             log.warn("NO Template Variable found with name: {}. Checking in Question prompt Template Variable", varName);
             tmplVarId = sqlHelper.findQuestionPromptTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
             if (tmplVarId == null) {
-                throw new DDPException("Template variable NOT found with name : " + varName + " and study activityId: " + version3.getActivityId()
-                        + " . Checked Body template vars and question prompt template vars");
+                throw new DDPException("Template variable NOT found with name : " + varName + " and study activityId: "
+                        + version3.getActivityId() + ". Checked Body template vars and question prompt template vars");
             }
         }
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
@@ -190,14 +190,16 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
                 + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
                 + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
                 + "                        where fafs.form_activity_id = :activityId) order by tv.template_variable_id desc")
-        Long findBlockGroupTemplateVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
+        Long findBlockGroupTemplateVariableIdByNameAndActivityId(
+                @Bind("variableName") String variableName, @Bind("activityId") Long activityId);
 
         @SqlQuery("select tv.template_variable_id from question as q"
                 + "  join template as tmpl on tmpl.template_id = q.question_prompt_template_id"
                 + "  join template_variable tv on tv.template_id = tmpl.template_id "
                 + " where tv.variable_name = :variableName"
                 + "   and q.study_activity_id = :activityId order by tv.template_variable_id desc")
-        Long findQuestionPromptTemplateVariableIdByNameAndActivityId(@Bind("variableName") String variableName, @Bind("activityId") Long activityId);
+        Long findQuestionPromptTemplateVariableIdByNameAndActivityId(
+                @Bind("variableName") String variableName, @Bind("activityId") Long activityId);
     }
 
 }
