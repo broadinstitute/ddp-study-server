@@ -53,6 +53,7 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
     private JdbiRevision jdbiRevision;
     private String studyGuid;
     private String activityCode;
+    private String activityName;
     private String activityTitle;
 
     private ActivityI18nDao activityI18nDao;
@@ -63,10 +64,12 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         this.dataFile = dataFilePath;
     }
 
-    public RevisionStudyActivityVariablesSupport(String studyGuid, String activityCode, String dataFilePath, String activityTitle) {
+    public RevisionStudyActivityVariablesSupport(String studyGuid, String activityCode, String dataFilePath,
+            String activityName, String activityTitle) {
         this.studyGuid = studyGuid;
         this.activityCode = activityCode;
         this.dataFile = dataFilePath;
+        this.activityName = activityName;
         this.activityTitle = activityTitle;
     }
 
@@ -111,7 +114,9 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         ActivityVersionDto newActivityVer = getNewVersion(handle, studyDto, metaConsent, activityCode);
         //revision activity Title
         if (StringUtils.isNotBlank(this.activityTitle)) {
-            revisionActivityTitle(newActivityVer.getActivityId(), this.activityCode, this.activityTitle, newActivityVer.getRevId());
+            log.info("Revisioning activity Title: {} ", this.activityTitle);
+            revisionActivityTitle(newActivityVer.getActivityId(), this.activityCode,
+                    this.activityName, this.activityTitle, newActivityVer.getRevId());
         }
         runActivityUpdate(handle, metaConsent, newActivityVer);
     }
@@ -171,7 +176,7 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
 
     }
 
-    private void revisionActivityTitle(long activityId, String activityCode, String title, long revisionId) {
+    private void revisionActivityTitle(long activityId, String activityCode, String name, String title, long revisionId) {
         ActivityI18nDetail i18nDetail = activityI18nDao
                 .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli())
                 .iterator().next();
@@ -180,14 +185,14 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
                 i18nDetail.getActivityId(),
                 i18nDetail.getLangCodeId(),
                 i18nDetail.getIsoLangCode(),
-                i18nDetail.getName(),
+                name,
                 i18nDetail.getSecondName(),
                 title,
                 i18nDetail.getSubtitle(),
                 i18nDetail.getDescription(),
                 revisionId);
         activityI18nDao.insertDetails(List.of(newI18nDetail));
-        log.info("Revisioned translatedTitle for activity {}", activityCode);
+        log.info("Revisioned translatedTitle & Name for activity {}", activityCode);
     }
 
     private interface SqlHelper extends SqlObject {
