@@ -191,7 +191,7 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
                 i18nDetail.getDescription(),
                 revisionId);
         activityI18nDao.insertDetails(List.of(newI18nDetail));
-        log.info("Revisioned translatedTitle for activity {}", activityCode);
+        log.info("Revisioned translatedTitle & Name for activity {}", activityCode);
     }
 
     private interface SqlHelper extends SqlObject {
