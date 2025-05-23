@@ -115,7 +115,8 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         //revision activity Title
         if (StringUtils.isNotBlank(this.activityTitle)) {
             log.info("Revisioning activity Title: {} ", this.activityTitle);
-            revisionActivityTitle(newActivityVer.getActivityId(), this.activityCode, this.activityName, this.activityTitle, newActivityVer.getRevId());
+            revisionActivityTitle(newActivityVer.getActivityId(), this.activityCode,
+                    this.activityName, this.activityTitle, newActivityVer.getRevId());
         }
         runActivityUpdate(handle, metaConsent, newActivityVer);
     }
