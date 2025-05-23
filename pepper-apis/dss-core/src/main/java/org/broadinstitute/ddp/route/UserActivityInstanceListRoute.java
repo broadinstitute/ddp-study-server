@@ -53,7 +53,7 @@ public class UserActivityInstanceListRoute implements Route {
             var found = RouteUtil.findUserAndStudyOrHalt(handle, userGuid, studyGuid);
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             List<ActivityInstanceSummary> summaries = service.listTranslatedInstanceSummaries(
-                    handle, userGuid, studyGuid, "en"
+                    handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
             );
             if (!isStudyAdmin) {
                 // Study admins are allowed to view all the data, so if they're NOT admin then do filtering.
