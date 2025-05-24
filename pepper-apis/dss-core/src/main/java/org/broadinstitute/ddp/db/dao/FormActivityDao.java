@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -270,7 +271,7 @@ public interface FormActivityDao extends SqlObject {
                 secondNames.add(new Translation(isoLangCode, detail.getSecondName()));
             }
             if (detail.getTitle() != null) {
-                titles.add(new Translation(isoLangCode, detail.getTitle()));
+                titles.add(new Translation(detail.getId(), isoLangCode, detail.getTitle(), detail.getRevisionId()));
             }
             if (detail.getSubtitle() != null) {
                 subtitles.add(new Translation(isoLangCode, detail.getSubtitle()));
@@ -279,6 +280,12 @@ public interface FormActivityDao extends SqlObject {
                 descriptions.add(new Translation(isoLangCode, detail.getDescription()));
             }
         });
+
+        if (titles.size() > 1) {
+            //sort titles by latest first
+            titles.sort(Comparator.comparing(a -> a.getId().orElse(null), Comparator
+                    .nullsLast(Long::compareTo).reversed()));
+        }
         builder.addNames(names);
         builder.addSecondNames(secondNames);
         builder.addTitles(titles);
