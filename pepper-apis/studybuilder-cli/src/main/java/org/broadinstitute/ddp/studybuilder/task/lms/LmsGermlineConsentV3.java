@@ -11,7 +11,7 @@ public class LmsGermlineConsentV3 extends RevisionStudyActivityVariablesSupport 
     private static final String ACTIVITY_CODE = "GERMLINE_CONSENT_ADDENDUM";
     private static final String ACTIVITY_NAME = "Learning About Your DNA with Genome Medical and Invitae";
     private static final String ACTIVITY_TITLE =
-            "Additional Consent & Assent:<br> Learning More About Your DNA with Genome Medical and Invitae";
+            "Consent Form Addendum:<br> Learning More About Your DNA with Genome Medical and Invitae";
 
 
     public LmsGermlineConsentV3() {

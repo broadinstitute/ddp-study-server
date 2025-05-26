@@ -11,7 +11,7 @@ public class LmsGermlineConsentPediatricV3 extends RevisionStudyActivityVariable
     private static final String ACTIVITY_CODE = "GERMLINE_CONSENT_ADDENDUM_PEDIATRIC";
     private static final String ACTIVITY_NAME = "Learning About Your Child’s DNA with Genome Medical and Invitae";
     private static final String ACTIVITY_TITLE =
-            "Additional Consent & Assent:<br> Learning More About Your Child's DNA with Genome Medical and Invitae";
+            "Consent Form Addendum:<br> Learning More About Your Child's DNA with Genome Medical and Invitae";
 
     public LmsGermlineConsentPediatricV3() {
         super(STUDY_LMS, ACTIVITY_CODE, DATA_FILE, ACTIVITY_NAME, ACTIVITY_TITLE);
