@@ -146,33 +146,38 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
 
 
     private void revisionAdultVariableTranslation(String varName, String newTemplateText,
-                                                  RevisionMetadata meta, ActivityVersionDto version3) {
+                                                  RevisionMetadata meta, ActivityVersionDto newVersion) {
         log.info("Revisioning and updating template variable: {} .. \n New Text: {} ", varName, newTemplateText);
-        Long tmplVarId = sqlHelper.findBlockTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
+        Long tmplVarId = sqlHelper.findBlockTemplateVariableIdByNameAndActivityId(varName, newVersion.getActivityId());
 
         if (tmplVarId == null) {
             log.warn("NO Template Variable found with name: {}. Checking in Block Group Header Template Variable", varName);
-            tmplVarId = sqlHelper.findBlockGroupTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
+            tmplVarId = sqlHelper.findBlockGroupTemplateVariableIdByNameAndActivityId(varName, newVersion.getActivityId());
         }
 
         if (tmplVarId == null) {
             log.warn("NO Template Variable found with name: {}. Checking in Question prompt Template Variable", varName);
-            tmplVarId = sqlHelper.findQuestionPromptTemplateVariableIdByNameAndActivityId(varName, version3.getActivityId());
+            tmplVarId = sqlHelper.findQuestionPromptTemplateVariableIdByNameAndActivityId(varName, newVersion.getActivityId());
             if (tmplVarId == null) {
                 throw new DDPException("Template variable NOT found with name : " + varName + " and study activityId: "
-                        + version3.getActivityId() + ". Checked Body template vars and question prompt template vars");
+                        + newVersion.getActivityId() + ". Checked Body template vars and question prompt template vars");
             }
         }
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
         log.info("Translations count for var: {} .. list size: {}", tmplVarId, transList.size());
+        if (transList.size() > 2) {
+            //todo .. if multiple.. probably revisioned multiple times or multiple languages.. need to be handled
+            //maybe check if > 1
+            log.warn("WATCHOUT:::: variable: {} revisioned multiple times OR multiple languages.. Check manually and handle it", varName);
+        }
         Translation currTranslation = transList.get(transList.size() - 1);
         log.info("Current Translation : {} : Rev Id: {}", currTranslation.getText(), currTranslation.getRevisionId());
 
-        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
-        long[] revIds = {newFullNameSubRevId};
+        long terminatedRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+        long[] revIds = {terminatedRevId};
         jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version3.getRevId(), tmplVarId);
-        log.info("Revisioned and updated template variable: {}", tmplVarId);
+        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newVersion.getRevId(), tmplVarId);
+        log.info("Revisioned with revId: {} and updated template variable ID: {} .. name: {} ", newVersion.getRevId(), tmplVarId, varName);
 
     }
 
