@@ -174,6 +174,7 @@ public class RevisionStudyActivityVariablesSupport implements CustomTask {
         log.info("Current Translation : {} : Rev Id: {}", currTranslation.getText(), currTranslation.getRevisionId());
 
         long terminatedRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+        //todo .. why copy and terminate rather than just terminate !!
         long[] revIds = {terminatedRevId};
         jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
         jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newVersion.getRevId(), tmplVarId);
