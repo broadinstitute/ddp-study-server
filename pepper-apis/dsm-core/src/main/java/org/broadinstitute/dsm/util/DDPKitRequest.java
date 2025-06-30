@@ -92,7 +92,7 @@ public class DDPKitRequest {
                                                             } else {
                                                                 KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail,
                                                                         kitType.getKitTypeId(), kitRequestSettings,
-                                                                        collaboratorParticipantId, null, null, ddpInstance, null);
+                                                                        collaboratorParticipantId, null, null, ddpInstance, null, kitDetail.getSexAtBirth());
                                                             }
                                                         } else {
                                                             logger.error(
@@ -149,7 +149,7 @@ public class DDPKitRequest {
                         subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter,
                         subKit.getKitTypeId(), kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(),
                         externalOrderNumber, uploadReason, ddpInstance, subCounter == 0 ? subKitsDdpLabel : subKitsDdpLabel + "_"
-                                + subCounter);
+                                + subCounter, kitDetail.getSexAtBirth());
                 subCounter = subCounter + 1;
             }
         }

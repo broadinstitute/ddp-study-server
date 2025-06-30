@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -808,6 +809,7 @@ public class DBTestUtil {
                 stmt.setObject(11, null);
                 stmt.setLong(12, ordered);
                 stmt.setObject(13, "SHIPPED");
+                stmt.setNull(14, Types.VARCHAR);
                 stmt.executeUpdate();
 
                 int kitRequestKey = -1;
