@@ -36,7 +36,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                     + "carrier_service cs ON (krs.carrier_service_to_id = cs.carrier_service_id)";
 
     public static final String SQL_GET_KIT_LABEL =
-            "select kit_label from ddp_kit where dsm_kit_request_id = ?";
+            "select kit_label from ddp_kit where dsm_kit_request_id = ? and kit_label is not null";
 
     public static final String BY_INSTANCE_ID = " WHERE kr.ddp_instance_id = ?";
 
@@ -119,12 +119,17 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_LABEL)) {
                 stmt.setLong(1, dsmKitRequestId);
+                int rowcount = 0;
                 try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
+                    while (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.KIT_LABEL);
-                    } else {
+                        rowcount++;
+                    }
+                    if (rowcount == 0) {
                         dbVals.resultValue = null;
-                        dbVals.resultException = new DsmInternalError("No kit found for dsm_kit_request_id " + dsmKitRequestId);
+                        dbVals.resultException = new DsmInternalError("No kit request found for dsm_kit_request_id " + dsmKitRequestId);
+                    } else if (rowcount > 1) {
+                        dbVals.resultException = new DsmInternalError("Multiple kit requests found for dsm_kit_request_id " + dsmKitRequestId);
                     }
                 }
             } catch (SQLException ex) {

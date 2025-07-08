@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.DbTxnBaseTest;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 public class KitDaoTest extends DbTxnBaseTest {
 
     private static final KitDao kitDao = new KitDao();
+    private static final KitRequestDao kitRequestDao = new KitRequestDao();
 
     private static final UserAdminTestUtil userAdminTestUtil = new UserAdminTestUtil();
 
@@ -63,7 +65,7 @@ public class KitDaoTest extends DbTxnBaseTest {
 
     private static Integer participantId;
 
-    private static Integer kitRequestId;
+    private static final List<Integer> kitRequestIds = new ArrayList<>();
 
     private static Integer kitTypeId;
 
@@ -104,18 +106,24 @@ public class KitDaoTest extends DbTxnBaseTest {
                         .build();
         participantId = new ParticipantDao().create(participantDto);
 
-        kitReq = new KitRequestShipping(ddpInstanceId);
+        kitReq = createKit(KIT_NAME, ddpInstanceId, participantDto);
+        kitId = kitDao.insertKit(kitReq);
+    }
+
+    private static KitRequestShipping createKit(String kitName, int ddpInstanceId, ParticipantDto participantDto) {
+        KitRequestShipping kitReq = new KitRequestShipping(ddpInstanceId);
         kitReq.setDdpParticipantId(participantDto.getDdpParticipantId().orElse(""));
         kitReq.setParticipantId(PARTICIPANT_ID);
-        kitReq.setKitLabel(KIT_NAME);
-        kitReq.setDdpLabel(KIT_NAME);
+        kitReq.setKitLabel(kitName);
+        kitReq.setDdpLabel(kitName);
         kitReq.setCreatedDate(System.currentTimeMillis());
-        kitReq.setDdpKitRequestId(KIT_NAME);
+        kitReq.setDdpKitRequestId(kitName);
         kitReq.setKitTypeId(Long.toString(kitTypeId));
         kitReq.setBspCollaboratorParticipantId(HRUID);
-        kitRequestId = kitDao.insertKitRequest(kitReq);
+        Integer kitRequestId = kitDao.insertKitRequest(kitReq);
         kitReq.setDsmKitRequestId(kitRequestId);
-        kitId = kitDao.insertKit(kitReq);
+        kitRequestIds.add(kitRequestId);
+        return kitReq;
     }
 
     @AfterClass
@@ -125,7 +133,7 @@ public class KitDaoTest extends DbTxnBaseTest {
             participantDao.delete(participantId);
         }
         kitDao.deleteKitTrackingByKitLabel(KIT_NAME);
-        if (kitId != null) {
+        for (Integer kitRequestId: kitRequestIds) {
             kitDao.deleteKitRequestShipping(kitRequestId);
         }
         if (kitTypeId != null) {
@@ -251,5 +259,18 @@ public class KitDaoTest extends DbTxnBaseTest {
         kitDao.deleteKitTrackingByKitLabel(kitLabel);
     }
 
+    @Test
+    public void testXxx() {
+        // create a second kit that references the same request, but has a null label
+        kitReq.setKitLabel(null);
+        Integer kitId = kitDao.insertKit(kitReq);
 
+        try {
+            String barcode = kitRequestDao.getKitLabelFromDsmKitRequestId(kitRequestIds.get(0));
+            Assert.assertEquals(KIT_NAME, barcode);
+        } finally {
+            // clean up the second kit
+            kitDao.deleteKit(kitId);
+        }
+    }
 }

@@ -515,6 +515,19 @@ public class KitDao {
         return (int) simpleResult.resultValue;
     }
 
+    /**
+     * For testing: Deletes a kit but not the kit request
+     */
+    public int deleteKit(int kitId) {
+        return inTransaction(conn -> {
+            try {
+                return deleteKit(conn, kitId);
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error deleting kit with id: " + kitId, e);
+            }
+        });
+    }
+
     private int deleteKit(Connection conn, int kitId) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
             stmt.setInt(1, kitId);
