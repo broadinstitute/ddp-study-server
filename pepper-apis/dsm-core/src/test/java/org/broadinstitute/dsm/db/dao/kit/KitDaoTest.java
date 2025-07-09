@@ -260,11 +260,10 @@ public class KitDaoTest extends DbTxnBaseTest {
     }
 
     @Test
-    public void testXxx() {
+    public void testGetKitLabel() {
         // create a second kit that references the same request, but has a null label
         kitReq.setKitLabel(null);
         Integer kitId = kitDao.insertKit(kitReq);
-
         try {
             String barcode = kitRequestDao.getKitLabelFromDsmKitRequestId(kitRequestIds.get(0));
             Assert.assertEquals(KIT_NAME, barcode);

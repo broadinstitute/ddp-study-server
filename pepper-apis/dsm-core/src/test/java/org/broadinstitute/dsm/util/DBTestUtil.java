@@ -22,10 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -616,6 +615,30 @@ public class DBTestUtil {
         }
         return (String) results.resultValue;
     }
+
+    public static List<String> getStringsFromQuery(String selectQuery, List<String> strings, String returnColumn) {
+        return inTransaction((conn) -> {
+            try (PreparedStatement stmt = conn.prepareStatement(selectQuery)) {
+                int counter = 1;
+                if (strings != null) {
+                    for (String string : strings) {
+                        stmt.setString(counter, string);
+                        counter++;
+                    }
+                }
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<String> results = new ArrayList<>();
+                    while (rs.next()) {
+                        results.add(rs.getString(returnColumn));
+                    }
+                    return results;
+                }
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error in getStringsFromQuery", e);
+            }
+        });
+    }
+
 
     public static void executeQueryWStrings(String query, List<String> strings) {
         inTransaction((conn) -> {
