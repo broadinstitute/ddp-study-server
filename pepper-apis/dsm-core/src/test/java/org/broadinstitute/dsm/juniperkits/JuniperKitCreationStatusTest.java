@@ -237,7 +237,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 + "\"skipAddressValidation\":false,"
                 + "\"juniperStudyID\":\"Juniper-test-guid\", "
                 + "\"sexAtBirth\":\"F\""
-                + "\"}";
+                + "}";
 
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }
