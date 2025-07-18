@@ -156,6 +156,7 @@ public class KitDao {
     private static final String SQL_DELETE_KIT_REQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
 
     private static final String SQL_DELETE_KIT = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
+    private static final String SQL_DELETE_KIT_BY_REQUEST_ID = "DELETE FROM ddp_kit WHERE dsm_kit_request_id = ?";
 
     private static final String SQL_NUM_KITS_BY_LABEL = "select count(1) from ddp_kit WHERE dsm_kit_request_id = "
             + "(SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) and deactivated_date is null";
@@ -515,12 +516,30 @@ public class KitDao {
         return (int) simpleResult.resultValue;
     }
 
-    private int deleteKit(Connection conn, int kitId) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
-            stmt.setInt(1, kitId);
+    /**
+     * For testing: Deletes a kit but not the kit request
+     */
+    public int deleteKit(int kitId) {
+        return inTransaction(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
+                stmt.setInt(1, kitId);
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new DsmInternalError("No kit found with id: %d".formatted(kitId));
+                }
+                return rowsAffected;
+            } catch (SQLException e) {
+                throw new DsmInternalError("Error deleting kit with id: " + kitId, e);
+            }
+        });
+    }
+
+    private int deleteKitByRequestId(Connection conn, int kitRequestId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_BY_REQUEST_ID)) {
+            stmt.setInt(1, kitRequestId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
-                throw new DsmInternalError("No kit found with id: %d".formatted(kitId));
+                throw new DsmInternalError("No kit found with kit request id: %d".formatted(kitRequestId));
             }
             return rowsAffected;
         }
@@ -870,7 +889,7 @@ public class KitDao {
     public int deleteKitRequestShipping(int dsmKitRequestId) {
         return inTransaction(conn -> {
             try {
-                int rowsAffected = deleteKit(conn, dsmKitRequestId);
+                int rowsAffected = deleteKitByRequestId(conn, dsmKitRequestId);
                 deleteKitRequest(conn, dsmKitRequestId);
                 //deletes in the ddp_kit can affect more rows than in ddp_kit_request, because kit reactivation creates more records
                 //of the same kit in the ddp_kit table
