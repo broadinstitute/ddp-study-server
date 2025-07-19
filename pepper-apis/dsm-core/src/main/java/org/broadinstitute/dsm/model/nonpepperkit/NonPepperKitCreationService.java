@@ -236,7 +236,7 @@ public class NonPepperKitCreationService {
                         KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
                                 participantID, collaboratorParticipantId, collaboratorSampleId, userId, addressId,
                                 errorMessage, kit.getExternalOrderNumber(), false, null, ddpInstance, bspCollaboratorSampleType,
-                                null, kit.isReturnOnly(), kit.getReturnTrackingId(), kit.getKitLabel(), scanDate, "U");
+                                null, kit.isReturnOnly(), kit.getReturnTrackingId(), kit.getKitLabel(), scanDate, sexAtBirth);
                 log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
             } catch (Exception e) {
                 transactionResults.resultException = e;
