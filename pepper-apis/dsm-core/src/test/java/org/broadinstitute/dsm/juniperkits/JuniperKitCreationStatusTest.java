@@ -130,6 +130,13 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     }
 
     @Test
+    public void testSexAtBirth() {
+        int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
+        Assert.assertEquals("F", juniperTestKit.getSexAtBirth());
+    }
+
+    @Test
     public void testReturnOnlyKit() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
@@ -150,8 +157,8 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         createNonPepperTestKit(juniperTestKit);
         KitResponse kitResponse = nonPepperStatusKitService.getKitsBasedOnParticipantId(juniperTestKit.getJuniperParticipantID());
         verifyStatusKitResponse(kitResponse, juniperTestKit, rand, KitCurrentStatus.KIT_WITHOUT_LABEL.getValue());
-
     }
+
     /**
      * this method creates the juniperTestKitRequest in the database  by calling
      * `NonPepperKitCreationService.createNonPepperKit` and verifies the response is as expected
@@ -217,6 +224,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
         Assert.assertEquals(expectedStatus, nonPepperKitStatus.getCurrentStatus());
         Assert.assertNotNull(nonPepperKitStatus.getCollaboratorParticipantId());
         Assert.assertNotNull(nonPepperKitStatus.getCollaboratorSampleId());
+        Assert.assertEquals(juniperTestKit.getSexAtBirth(), nonPepperKitStatus.getSexAtBirth());
     }
 
     private JuniperKitRequest generateJuniperKitRequest(int random) {
@@ -234,7 +242,9 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 + "\"juniperKitId\":\"JuniperTestKitId_" + random + "\","
                 + "\"juniperParticipantID\":\"" + participantId + random + "\","
                 + "\"skipAddressValidation\":false,"
-                + "\"juniperStudyID\":\"Juniper-test-guid\"}";
+                + "\"juniperStudyID\":\"Juniper-test-guid\", "
+                + "\"sexAtBirth\":\"F\""
+                + "}";
 
         return new Gson().fromJson(json, JuniperKitRequest.class);
     }

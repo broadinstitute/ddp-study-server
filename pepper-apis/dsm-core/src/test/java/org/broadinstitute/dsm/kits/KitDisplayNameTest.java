@@ -49,7 +49,7 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     @Test
     public void testKitWithDisplayName() {
         int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto,
-                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kitTestUtil.getKitTypeId(), false);
+                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kitTestUtil.getKitTypeId(), false, null);
         KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
         List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm(instanceName, KitRequestShipping.OVERVIEW,
                 KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME);
