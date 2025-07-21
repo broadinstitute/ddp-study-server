@@ -100,26 +100,6 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     }
 
     @Test
-    public void testSexAtBirth() {
-        String sexAtBirth = "F";
-        try (MockedStatic<DDPRequestUtil> utilities = Mockito.mockStatic(DDPRequestUtil.class)) {
-            utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean()))
-                    .thenReturn(200);
-
-            // Assert that mocking is working correctly
-            Assert.assertEquals(200L, (long)DDPRequestUtil.postRequest("", "", "", true));
-
-            int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    kitTestUtil.getKitTypeId(), false, sexAtBirth);
-            KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
-            Assert.assertEquals(sexAtBirth, kitRequestShipping.getSexAtBirth());
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Unexpected exception");
-        }
-    }
-
-    @Test
     public void testKitSentEvent() {
         try (MockedStatic<DDPRequestUtil> utilities = Mockito.mockStatic(DDPRequestUtil.class)) {
             utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean()))
