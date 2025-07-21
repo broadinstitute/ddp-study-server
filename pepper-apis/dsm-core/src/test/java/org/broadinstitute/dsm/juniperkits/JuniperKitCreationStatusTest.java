@@ -130,6 +130,13 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
     }
 
     @Test
+    public void testSexAtBirth() {
+        int rand = new Random().nextInt() & Integer.MAX_VALUE;
+        JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
+        Assert.assertEquals("F", juniperTestKit.getSexAtBirth());
+    }
+
+    @Test
     public void testReturnOnlyKit() {
         int rand = new Random().nextInt() & Integer.MAX_VALUE;
         JuniperKitRequest juniperTestKit = generateJuniperKitRequest(rand);
