@@ -247,6 +247,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                         .withCurrentStatus(calculateCurrentStatus(foundKitResults).getValue())
                         .withCollaboratorParticipantId(foundKitResults.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
                         .withCollaboratorSampleId(foundKitResults.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
+                        .withSexAtBirth(foundKitResults.getString(DBConstants.SEX_AT_BIRTH))
                         .build();
             } catch (SQLException e) {
                 throw new DsmInternalError("Error building the NonPepperKitStatusDto object from resultSet", e);

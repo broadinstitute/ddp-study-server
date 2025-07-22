@@ -32,6 +32,7 @@ public class NonPepperKitStatusDto {
     private final String currentStatus;
     private String collaboratorParticipantId;
     private String collaboratorSampleId;
+    private String sexAtBirth;
 
     /**
      * Creates a NonPepperKitStatusDto from a builder
@@ -60,6 +61,7 @@ public class NonPepperKitStatusDto {
         this.collaboratorParticipantId = builder.collaboratorParticipantId;
         this.collaboratorSampleId = builder.collaboratorSampleId;
         this.mfBarcode = builder.mfBarcode;
+        this.sexAtBirth = builder.sexAtBirth;
     }
 
     public static class Builder {
@@ -87,6 +89,7 @@ public class NonPepperKitStatusDto {
         private String currentStatus;
         private String collaboratorParticipantId;
         private String collaboratorSampleId;
+        private String sexAtBirth;
 
         public Builder withJuniperKitId(String juniperKitId) {
             this.juniperKitId = juniperKitId;
@@ -200,6 +203,11 @@ public class NonPepperKitStatusDto {
 
         public Builder withCollaboratorSampleId(String collaboratorSampleId) {
             this.collaboratorSampleId = collaboratorSampleId;
+            return this;
+        }
+
+        public Builder withSexAtBirth(String sexAtBirth) {
+            this.sexAtBirth = sexAtBirth;
             return this;
         }
 

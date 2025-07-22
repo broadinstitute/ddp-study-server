@@ -37,6 +37,9 @@ public class KitRequest {
     @DbDateConversion(SqlDateConverter.EPOCH)
     private Long externalOrderDate;
 
+    @ColumnName(DBConstants.SEX_AT_BIRTH)
+    private String sexAtBirth;
+
     public KitRequest() {
     }
 

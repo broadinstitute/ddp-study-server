@@ -19,6 +19,7 @@ public class BSPKitDto {
     private String notificationRecipient;
     private String kitTypeName;
     private String collectionDate;
+    private String sexAtBirth;
 
     public BSPKitDto(String instanceName,
                      String baseUrl,

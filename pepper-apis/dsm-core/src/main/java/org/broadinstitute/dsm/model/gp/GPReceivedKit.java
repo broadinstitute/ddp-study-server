@@ -77,7 +77,7 @@ public class GPReceivedKit {
         logger.info("Returning info for kit w/ label " + kitLabel + " for " + bspKitQueryResult.getInstanceName());
         logger.info("Kit returned has sample id " + bspSampleId);
         return Optional.of(
-                new KitInfo(bspKitQueryResult.getBspCollection(), bspOrganism, "U", bspParticipantId, bspSampleId, bspMaterialType,
+                new KitInfo(bspKitQueryResult.getBspCollection(), bspOrganism, bspKitQueryResult.getSexAtBirth(), bspParticipantId, bspSampleId, bspMaterialType,
                         bspReceptacleType, ddpInstance.getName(), bspKitQueryResult.getKitTypeName(), collectionDate));
 
     }
