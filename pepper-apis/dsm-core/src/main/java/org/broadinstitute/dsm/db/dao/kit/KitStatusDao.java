@@ -63,7 +63,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                     list.add(builder.build(rs, users));
                 }
             } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()));
+                dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()), ex);
             }
             return dbVals;
         });
