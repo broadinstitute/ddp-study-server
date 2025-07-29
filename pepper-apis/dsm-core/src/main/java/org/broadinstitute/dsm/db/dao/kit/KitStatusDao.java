@@ -147,9 +147,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                 } else if (isNewKit(foundKitResults) || isEasyPostLabelTriggeredKit(foundKitResults)) {
                     return KitCurrentStatus.KIT_WITHOUT_LABEL;
                 } else {
-                    log.error(String.format("Unable to determine the current status of kit %s",
-                            foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID)));
-                    return null;
+                    return KitCurrentStatus.UNKNOWN;
                 }
             } catch (SQLException e) {
                 throw new DsmInternalError(e);
