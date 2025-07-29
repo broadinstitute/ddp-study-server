@@ -9,7 +9,9 @@ public enum KitCurrentStatus {
     RECEIVED("Received"),
     SENT("Sent"),
     KIT_WITHOUT_LABEL("Kit Without Label"),
-    DEACTIVATED("Deactivated");
+    DEACTIVATED("Deactivated"),
+    UNKNOWN("Unknown");
+
     private final String value;
 
     KitCurrentStatus(String name) {
