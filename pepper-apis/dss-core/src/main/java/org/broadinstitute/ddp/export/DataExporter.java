@@ -1043,7 +1043,8 @@ public class DataExporter {
     private PdfConfigInfo getOsteoReleaseV3PdfConfigIfNeeded(
             List<PdfConfigInfo> studyConfigs, Map<String, Set<String>> userActivityVersions) {
         PdfConfigInfo releasePdfConfig = null;
-        if (userActivityVersions.containsKey(RELEASE_SELF) && userActivityVersions.get(RELEASE_SELF).contains(VERSION_3)) {
+        if ((userActivityVersions.containsKey(RELEASE_SELF) && userActivityVersions.get(RELEASE_SELF).contains(VERSION_3))
+        || (userActivityVersions.containsKey(RELEASE_MINOR) && userActivityVersions.get(RELEASE_MINOR).contains(VERSION_3))) {
             if (userActivityVersions.containsKey(CONSENT) && userActivityVersions.get(CONSENT).contains(VERSION_4)) {
                 releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
                         pdfConfigInfo.getConfigName().equals(OSTEO_RELEASE)).findFirst().orElse(null);
