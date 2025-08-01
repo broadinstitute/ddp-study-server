@@ -11,12 +11,19 @@ import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE_ASSENT;
 import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE_PEDIATRIC;
 import static org.broadinstitute.ddp.constants.Constants.MEDICAL_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_GUID;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.OS_MEDICAL_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
 import static org.broadinstitute.ddp.constants.Constants.PARENTAL_CONSENT;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE_MINOR;
 import static org.broadinstitute.ddp.constants.Constants.VERSION_1;
 import static org.broadinstitute.ddp.constants.Constants.VERSION_2;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_3;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_4;
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.export.ExportUtil.hideProtectedValue;
@@ -984,6 +991,13 @@ public class DataExporter {
                 userPdfConfigs.add(lmsReleasePdfConfigV2);
             }
         }
+        //osteo special case to handle scenarios where osteo user consented-v4 but had release-v3
+        if (!studyConfigs.isEmpty() && studyConfigs.get(0).getStudyGuid().equalsIgnoreCase(OSTEO_GUID)) {
+            PdfConfigInfo osteoReleasePdfConfigV3 = getOsteoReleaseV3PdfConfigIfNeeded(studyConfigs, userActivityVersions);
+            if (osteoReleasePdfConfigV3 != null && !userPdfConfigs.contains(osteoReleasePdfConfigV3)) {
+                userPdfConfigs.add(osteoReleasePdfConfigV3);
+            }
+        }
         return userPdfConfigs;
     }
 
@@ -1021,6 +1035,25 @@ public class DataExporter {
             } else if (userActivityVersions.containsKey(CONSENT_ASSENT) && userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_1)) {
                 releasePdfConfig = studyConfigs.stream().filter(
                         pdfConfigInfo -> pdfConfigInfo.getConfigName().equals(LMS_RELEASE_ASSENT)).findFirst().orElse(null);
+            }
+        }
+        return releasePdfConfig;
+    }
+
+    private PdfConfigInfo getOsteoReleaseV3PdfConfigIfNeeded(
+            List<PdfConfigInfo> studyConfigs, Map<String, Set<String>> userActivityVersions) {
+        PdfConfigInfo releasePdfConfig = null;
+        if (userActivityVersions.containsKey(OS_MEDICAL_RELEASE) && userActivityVersions.get(OS_MEDICAL_RELEASE).contains(VERSION_3)) {
+            if (userActivityVersions.containsKey(CONSENT) && userActivityVersions.get(CONSENT).contains(VERSION_4)) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
+                        pdfConfigInfo.getConfigName().equals(OSTEO_RELEASE)).findFirst().orElse(null);
+            } else if (userActivityVersions.containsKey(PARENTAL_CONSENT)
+                    && userActivityVersions.get(PARENTAL_CONSENT).contains(VERSION_4)) {
+                releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
+                        pdfConfigInfo.getConfigName().equals(OSTEO_RELEASE_PARENTAL)).findFirst().orElse(null);
+            } else if (userActivityVersions.containsKey(CONSENT_ASSENT) && userActivityVersions.get(CONSENT_ASSENT).contains(VERSION_4)) {
+                releasePdfConfig = studyConfigs.stream().filter(
+                        pdfConfigInfo -> pdfConfigInfo.getConfigName().equals(OSTEO_RELEASE_ASSENT)).findFirst().orElse(null);
             }
         }
         return releasePdfConfig;
