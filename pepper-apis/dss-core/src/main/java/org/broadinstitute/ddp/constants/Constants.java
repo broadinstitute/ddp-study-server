@@ -15,7 +15,7 @@ public class Constants {
     public static final String LMS_RELEASE_ASSENT = "lmsproject-release-pediatric-assent";
     public static final String RELEASE = "RELEASE";
     public static final String MEDICAL_RELEASE = "MEDICAL_RELEASE";
-    public static final String OS_MEDICAL_RELEASE = "RELEASE_SELF";
+    public static final String RELEASE_SELF = "RELEASE_SELF";
     public static final String CONSENT = "CONSENT";
     public static final String VERSION_1 = "v1";
     public static final String VERSION_2 = "v2";

@@ -94,7 +94,7 @@ import static org.broadinstitute.ddp.constants.Constants.OSTEO_GUID;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_ASSENT;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_PARENTAL;
-import static org.broadinstitute.ddp.constants.Constants.OS_MEDICAL_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.RELEASE_SELF;
 import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE_MINOR;
@@ -379,7 +379,7 @@ public class PdfGenerationService {
     private void handleOsteoReleaseV3(PdfConfiguration config, Map<String, Set<String>> acceptedActivityVersions) {
         if (config.getStudyGuid().equalsIgnoreCase(OSTEO_GUID)) {
             if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE)
-                    && acceptedActivityVersions.get(OS_MEDICAL_RELEASE).contains(VERSION_3)) {
+                    && acceptedActivityVersions.get(RELEASE_SELF).contains(VERSION_3)) {
                 acceptedActivityVersions.get(CONSENT).add(VERSION_4);
             } else if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE_PARENTAL)
                     && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_3)

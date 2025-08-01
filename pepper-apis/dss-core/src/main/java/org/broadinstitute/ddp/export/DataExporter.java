@@ -15,7 +15,7 @@ import static org.broadinstitute.ddp.constants.Constants.OSTEO_GUID;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_ASSENT;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_PARENTAL;
-import static org.broadinstitute.ddp.constants.Constants.OS_MEDICAL_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.RELEASE_SELF;
 import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
 import static org.broadinstitute.ddp.constants.Constants.PARENTAL_CONSENT;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE;
@@ -1043,7 +1043,7 @@ public class DataExporter {
     private PdfConfigInfo getOsteoReleaseV3PdfConfigIfNeeded(
             List<PdfConfigInfo> studyConfigs, Map<String, Set<String>> userActivityVersions) {
         PdfConfigInfo releasePdfConfig = null;
-        if (userActivityVersions.containsKey(OS_MEDICAL_RELEASE) && userActivityVersions.get(OS_MEDICAL_RELEASE).contains(VERSION_3)) {
+        if (userActivityVersions.containsKey(RELEASE_SELF) && userActivityVersions.get(RELEASE_SELF).contains(VERSION_3)) {
             if (userActivityVersions.containsKey(CONSENT) && userActivityVersions.get(CONSENT).contains(VERSION_4)) {
                 releasePdfConfig = studyConfigs.stream().filter(pdfConfigInfo ->
                         pdfConfigInfo.getConfigName().equals(OSTEO_RELEASE)).findFirst().orElse(null);
