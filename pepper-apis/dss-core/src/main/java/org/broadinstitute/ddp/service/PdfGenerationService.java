@@ -92,6 +92,7 @@ import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_ASSEN
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_PARENTAL;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_GUID;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_ASSENT;
 import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_PARENTAL;
 import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE;
@@ -383,7 +384,7 @@ public class PdfGenerationService {
                     && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_3)
                     && acceptedActivityVersions.containsKey(CONSENT_PARENTAL)) {
                 acceptedActivityVersions.get(CONSENT_PARENTAL).add(VERSION_4);
-            } else if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE_PARENTAL)
+            } else if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE_ASSENT)
                     && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_3)
                     && acceptedActivityVersions.containsKey(CONSENT_ASSENT)) {
                 acceptedActivityVersions.get(CONSENT_ASSENT).add(VERSION_4);
