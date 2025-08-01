@@ -3,6 +3,10 @@ package org.broadinstitute.ddp.constants;
 public class Constants {
     public static final String PANCAN_GUID = "cmi-pancan";
     public static final String LMS_GUID = "cmi-lms";
+    public static final String OSTEO_GUID = "cmi-osteo";
+    public static final String OSTEO_RELEASE = "osproject-release";
+    public static final String OSTEO_RELEASE_PARENTAL = "osteo-release-parental";
+    public static final String OSTEO_RELEASE_ASSENT = "osproject-release-consent-assent";
     public static final String COUNTMEIN_RELEASE = "countmein-release";
     public static final String COUNTMEIN_RELEASE_PARENTAL = "countmein-release-parental";
     public static final String COUNTMEIN_RELEASE_ASSENT = "countmein-release-assent";
@@ -11,9 +15,11 @@ public class Constants {
     public static final String LMS_RELEASE_ASSENT = "lmsproject-release-pediatric-assent";
     public static final String RELEASE = "RELEASE";
     public static final String MEDICAL_RELEASE = "MEDICAL_RELEASE";
-    public static final String VERSION_2 = "v2";
     public static final String CONSENT = "CONSENT";
     public static final String VERSION_1 = "v1";
+    public static final String VERSION_2 = "v2";
+    public static final String VERSION_3 = "v3";
+    public static final String VERSION_4 = "v4";
     public static final String RELEASE_MINOR = "RELEASE_MINOR";
     public static final String CONSENT_PARENTAL = "CONSENT_PARENTAL";
     public static final String CONSENT_ASSENT = "CONSENT_ASSENT";
