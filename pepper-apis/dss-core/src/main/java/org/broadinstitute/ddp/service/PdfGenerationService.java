@@ -90,11 +90,20 @@ import static org.broadinstitute.ddp.constants.Constants.CONSENT_PARENTAL;
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_ASSENT;
 import static org.broadinstitute.ddp.constants.Constants.COUNTMEIN_RELEASE_PARENTAL;
+import static org.broadinstitute.ddp.constants.Constants.LMS_GUID;
+import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE_ASSENT;
+import static org.broadinstitute.ddp.constants.Constants.LMS_RELEASE_PEDIATRIC;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_GUID;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE;
+import static org.broadinstitute.ddp.constants.Constants.OSTEO_RELEASE_PARENTAL;
 import static org.broadinstitute.ddp.constants.Constants.PANCAN_GUID;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE;
 import static org.broadinstitute.ddp.constants.Constants.RELEASE_MINOR;
 import static org.broadinstitute.ddp.constants.Constants.VERSION_1;
 import static org.broadinstitute.ddp.constants.Constants.VERSION_2;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_3;
+import static org.broadinstitute.ddp.constants.Constants.VERSION_4;
 
 @Slf4j
 public class PdfGenerationService {
@@ -332,6 +341,10 @@ public class PdfGenerationService {
 
             //special case for pancan release v2 completed user who consented v1, add consent-v1 for consent signature substitution
             handlePancanReleaseV2(config, acceptedActivityVersions);
+            //special case for osteo release v3 completed user who consented v4, add consent-v4 for consent signature substitution
+            handleOsteoReleaseV3(config, acceptedActivityVersions);
+            //special case for LMS release v2 completed user who consented v3, add consent-v3 for consent signature substitution
+            handleLmsReleaseV2(config, acceptedActivityVersions);
 
             for (Map.Entry<String, Set<String>> entry : acceptedActivityVersions.entrySet()) {
                 String activityCode = entry.getKey();
@@ -363,6 +376,40 @@ public class PdfGenerationService {
                     && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)
                     && acceptedActivityVersions.containsKey(CONSENT_ASSENT)) {
                 acceptedActivityVersions.get(CONSENT_ASSENT).add(VERSION_1);
+            }
+        }
+    }
+
+    private void handleOsteoReleaseV3(PdfConfiguration config, Map<String, Set<String>> acceptedActivityVersions) {
+        if (config.getStudyGuid().equalsIgnoreCase(OSTEO_GUID)) {
+            if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE)
+                    && acceptedActivityVersions.get(RELEASE).contains(VERSION_3)) {
+                acceptedActivityVersions.get(CONSENT).add(VERSION_4);
+            } else if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE_PARENTAL)
+                    && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_3)
+                    && acceptedActivityVersions.containsKey(CONSENT_PARENTAL)) {
+                acceptedActivityVersions.get(CONSENT_PARENTAL).add(VERSION_4);
+            } else if (config.getConfigName().equalsIgnoreCase(OSTEO_RELEASE_PARENTAL)
+                    && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_3)
+                    && acceptedActivityVersions.containsKey(CONSENT_ASSENT)) {
+                acceptedActivityVersions.get(CONSENT_ASSENT).add(VERSION_4);
+            }
+        }
+    }
+
+    private void handleLmsReleaseV2(PdfConfiguration config, Map<String, Set<String>> acceptedActivityVersions) {
+        if (config.getStudyGuid().equalsIgnoreCase(LMS_GUID)) {
+            if (config.getConfigName().equalsIgnoreCase(LMS_RELEASE)
+                    && acceptedActivityVersions.get(RELEASE).contains(VERSION_2)) {
+                acceptedActivityVersions.get(CONSENT).add(VERSION_3);
+            } else if (config.getConfigName().equalsIgnoreCase(LMS_RELEASE_PEDIATRIC)
+                    && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)
+                    && acceptedActivityVersions.containsKey(CONSENT_PARENTAL)) {
+                acceptedActivityVersions.get(CONSENT_PARENTAL).add(VERSION_3);
+            } else if (config.getConfigName().equalsIgnoreCase(LMS_RELEASE_ASSENT)
+                    && acceptedActivityVersions.get(RELEASE_MINOR).contains(VERSION_2)
+                    && acceptedActivityVersions.containsKey(CONSENT_ASSENT)) {
+                acceptedActivityVersions.get(CONSENT_ASSENT).add(VERSION_3);
             }
         }
     }
