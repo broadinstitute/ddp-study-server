@@ -5,7 +5,7 @@ public class Constants {
     public static final String LMS_GUID = "cmi-lms";
     public static final String OSTEO_GUID = "cmi-osteo";
     public static final String OSTEO_RELEASE = "osproject-release";
-    public static final String OSTEO_RELEASE_PARENTAL = "osteo-release-parental";
+    public static final String OSTEO_RELEASE_PARENTAL = "osproject-release-parental";
     public static final String OSTEO_RELEASE_ASSENT = "osproject-release-consent-assent";
     public static final String COUNTMEIN_RELEASE = "countmein-release";
     public static final String COUNTMEIN_RELEASE_PARENTAL = "countmein-release-parental";
