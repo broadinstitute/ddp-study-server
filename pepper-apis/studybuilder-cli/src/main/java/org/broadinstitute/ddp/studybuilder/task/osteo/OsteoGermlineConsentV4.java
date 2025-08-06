@@ -19,13 +19,13 @@ public class OsteoGermlineConsentV4 extends RevisionStudyActivityVariablesSuppor
     private static final String ACTIVITY_TITLE_ES =
             "Anexo al formulario de consentimiento:<br>Aprenda sobre su ADN con Genome Medical e Invitae";
     private static Map<String, String> languageTitleMap = new HashMap<>() {{
-        put("en", ACTIVITY_TITLE);
-        put("es", ACTIVITY_TITLE_ES);
-    }};
+            put("en", ACTIVITY_TITLE);
+            put("es", ACTIVITY_TITLE_ES);
+        }};
     private static Map<String, String> languageNameMap = new HashMap<>() {{
-        put("en", ACTIVITY_NAME);
-        put("es", ACTIVITY_NAME_ES);
-    }};
+            put("en", ACTIVITY_NAME);
+            put("es", ACTIVITY_NAME_ES);
+        }};
 
     public OsteoGermlineConsentV4() {
         super(STUDY_OSTEO, ACTIVITY_CODE, DATA_FILE, languageNameMap, languageTitleMap);
