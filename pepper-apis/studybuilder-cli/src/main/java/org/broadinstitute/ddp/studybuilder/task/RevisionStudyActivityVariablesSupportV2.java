@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -34,6 +33,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 //NOTE: As of now this class supports only revisioning an activity with ONLY existing variable names versioned
 //Only Template variables of block content template, question prompt template and block group title templates are supported
@@ -59,7 +59,8 @@ public class RevisionStudyActivityVariablesSupportV2 implements CustomTask {
     private String activityCode;
     private String activityName;
     private String activityTitle;
-
+    private Map<String, String> languageNameMap = null;
+    private Map<String, String> languageTitleMap = null;
     private ActivityI18nDao activityI18nDao;
 
     public RevisionStudyActivityVariablesSupportV2(String studyGuid, String activityCode, String dataFilePath) {
@@ -69,12 +70,12 @@ public class RevisionStudyActivityVariablesSupportV2 implements CustomTask {
     }
 
     public RevisionStudyActivityVariablesSupportV2(String studyGuid, String activityCode, String dataFilePath,
-                                                   String activityName, String activityTitle) {
+                                                   Map<String, String> languageNameMap, Map<String, String> languageTitleMap) {
         this.studyGuid = studyGuid;
         this.activityCode = activityCode;
         this.dataFile = dataFilePath;
-        this.activityName = activityName;
-        this.activityTitle = activityTitle;
+        this.languageNameMap = languageNameMap;
+        this.languageTitleMap = languageTitleMap;
     }
 
     @Override
@@ -117,10 +118,10 @@ public class RevisionStudyActivityVariablesSupportV2 implements CustomTask {
 
         ActivityVersionDto newActivityVer = getNewVersion(handle, studyDto, metaConsent, activityCode);
         //revision activity Title
-        if (StringUtils.isNotBlank(this.activityTitle)) {
+        if (this.languageTitleMap != null) {
             log.info("Revisioning activity Title: {} ", this.activityTitle);
             revisionActivityTitle(newActivityVer.getActivityId(), this.activityCode,
-                    this.activityName, this.activityTitle, newActivityVer.getRevId());
+                    this.languageNameMap, this.languageTitleMap, newActivityVer.getRevId());
         }
         runActivityUpdate(handle, metaConsent, newActivityVer);
     }
@@ -208,22 +209,29 @@ public class RevisionStudyActivityVariablesSupportV2 implements CustomTask {
 
     }
 
-    private void revisionActivityTitle(long activityId, String activityCode, String name, String title, long revisionId) {
-        ActivityI18nDetail i18nDetail = activityI18nDao
-                .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli())
-                .iterator().next();
-        var newI18nDetail = new ActivityI18nDetail(
-                i18nDetail.getId(),
-                i18nDetail.getActivityId(),
-                i18nDetail.getLangCodeId(),
-                i18nDetail.getIsoLangCode(),
-                name,
-                i18nDetail.getSecondName(),
-                title,
-                i18nDetail.getSubtitle(),
-                i18nDetail.getDescription(),
-                revisionId);
-        activityI18nDao.insertDetails(List.of(newI18nDetail));
+    private void revisionActivityTitle(long activityId, String activityCode, Map<String, String> languageNameMap,
+                                       Map<String, String> languageTitleMap, long revisionId) {
+        List<ActivityI18nDetail> i18nDetailList = activityI18nDao
+                .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli());
+
+        for (ActivityI18nDetail  i18nDetail : i18nDetailList) {
+            if (languageTitleMap.containsKey(i18nDetail.getIsoLangCode())) {
+                var newI18nDetail = new ActivityI18nDetail(
+                        i18nDetail.getId(),
+                        i18nDetail.getActivityId(),
+                        i18nDetail.getLangCodeId(),
+                        i18nDetail.getIsoLangCode(),
+                        languageNameMap.get(i18nDetail.getIsoLangCode()),
+                        i18nDetail.getSecondName(),
+                        languageTitleMap.get(i18nDetail.getIsoLangCode()),
+                        i18nDetail.getSubtitle(),
+                        i18nDetail.getDescription(),
+                        revisionId);
+                activityI18nDao.insertDetails(List.of(newI18nDetail));
+            } else {
+                log.warn("Failed to find title translation for language: {}", i18nDetail.getIsoLangCode());
+            }
+        }
         log.info("Revisioned translatedTitle & Name for activity {}", activityCode);
     }
 
