@@ -195,7 +195,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public static final String INSERT_KIT_REQUEST = "insert into ddp_kit_request (ddp_instance_id,  ddp_kit_request_id, kit_type_id,"
             + "  ddp_participant_id, bsp_collaborator_participant_id, bsp_collaborator_sample_id, ddp_label, created_by, created_date,"
-            + " external_order_number, upload_reason) values (?,?,?,?,?,?,?,?,?,?,?)";
+            + " external_order_number, upload_reason, sex_at_birth) values (?,?,?,?,?,?,?,?,?,?,?,?)";
     public static final String DEACTIVATION_REASON = "Generated Express";
     public static final String UPLOADED = "uploaded";
     private static final Logger logger = LoggerFactory.getLogger(KitRequestShipping.class);
@@ -917,17 +917,17 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     //adding kit request to db (called by hourly job to add kits into DSM)
     public static void addKitRequests(@NonNull String instanceId, @NonNull KitDetail kitDetail, @NonNull int kitTypeId,
                                       @NonNull KitRequestSettings kitRequestSettings, String collaboratorParticipantId,
-                                      String externalOrderNumber, String uploadReason, DDPInstance ddpInstance, String subkitsDdpLabel) {
+                                      String externalOrderNumber, String uploadReason, DDPInstance ddpInstance, String subkitsDdpLabel, String sexAtBirth) {
         addKitRequests(instanceId, kitDetail.getKitType(), kitDetail.getParticipantId(), kitDetail.getKitRequestId(), kitTypeId,
                 kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason, ddpInstance,
-                subkitsDdpLabel);
+                subkitsDdpLabel, sexAtBirth);
     }
 
     //adding kit request to db (called by hourly job to add kits into DSM)
     public static void addKitRequests(@NonNull String instanceId, @NonNull String kitType, @NonNull String participantId,
                                       @NonNull String kitRequestId, @NonNull int kitTypeId, @NonNull KitRequestSettings kitRequestSettings,
                                       String collaboratorParticipantId, boolean needsApproval, String externalOrderNumber,
-                                      String uploadReason, DDPInstance ddpInstance, String subkitsDdpLabel) {
+                                      String uploadReason, DDPInstance ddpInstance, String subkitsDdpLabel, String sexAtBirth) {
         inTransaction(conn -> {
             String errorMessage = "";
             String collaboratorSampleId = null;
@@ -948,7 +948,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             }
             writeRequest(conn, instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId,
                     "SYSTEM", null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance,
-                    bspCollaboratorSampleType, subkitsDdpLabel, false, null, null, null);
+                    bspCollaboratorSampleType, subkitsDdpLabel, false, null, null, null, sexAtBirth);
             return null;
         });
     }
@@ -968,7 +968,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance, String kitTypeName,
                                       String subKitddpLabel, boolean isReturnOnly, String returnTrackingId,
-                                      String kitLabel, Long scanDate) {
+                                      String kitLabel, Long scanDate, String sexAtBirth) {
         String ddpLabel = StringUtils.isBlank(subKitddpLabel)
                 ? (StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()) : subKitddpLabel;
 
@@ -986,6 +986,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             insertKitRequest.setObject(10,
                     StringUtils.isNotBlank(externalOrderNumber) ? externalOrderNumber : null); //external_order_number
             insertKitRequest.setString(11, uploadReason); //upload reason
+            insertKitRequest.setObject(12, StringUtils.isNotBlank(sexAtBirth) ? sexAtBirth : null);
             insertKitRequest.executeUpdate();
             try (ResultSet rs = insertKitRequest.getGeneratedKeys()) {
                 if (rs.next()) {

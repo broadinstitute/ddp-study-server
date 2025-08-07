@@ -63,7 +63,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                     list.add(builder.build(rs, users));
                 }
             } catch (Exception ex) {
-                dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()));
+                dbVals.resultException = new Exception(String.format("Error getting kits for %s", ddpInstance.getDdpInstanceId()), ex);
             }
             return dbVals;
         });
@@ -130,6 +130,9 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
 
     private static class BuildNonPepperKitStatusDto {
         private static KitCurrentStatus calculateCurrentStatus(ResultSet foundKitResults) {
+            if (foundKitResults == null) {
+                return KitCurrentStatus.UNKNOWN;
+            }
             try {
                 if (isDeactivatedKit(foundKitResults)) {
                     return KitCurrentStatus.DEACTIVATED;
@@ -144,9 +147,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                 } else if (isNewKit(foundKitResults) || isEasyPostLabelTriggeredKit(foundKitResults)) {
                     return KitCurrentStatus.KIT_WITHOUT_LABEL;
                 } else {
-                    log.error(String.format("Unable to determine the current status of kit %s",
-                            foundKitResults.getString(DBConstants.DDP_KIT_REQUEST_ID)));
-                    return null;
+                    return KitCurrentStatus.UNKNOWN;
                 }
             } catch (SQLException e) {
                 throw new DsmInternalError(e);
@@ -247,6 +248,7 @@ public class KitStatusDao implements Dao<NonPepperKitStatusDto> {
                         .withCurrentStatus(calculateCurrentStatus(foundKitResults).getValue())
                         .withCollaboratorParticipantId(foundKitResults.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID))
                         .withCollaboratorSampleId(foundKitResults.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID))
+                        .withSexAtBirth(foundKitResults.getString(DBConstants.SEX_AT_BIRTH))
                         .build();
             } catch (SQLException e) {
                 throw new DsmInternalError("Error building the NonPepperKitStatusDto object from resultSet", e);

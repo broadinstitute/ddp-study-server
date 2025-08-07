@@ -154,6 +154,7 @@ public class DBConstants {
     public static final String KIT_LABEL_PREFIX = "kit_label_prefix";
     public static final String KIT_LABEL_LENGTH = "kit_label_length";
     public static final String HAS_CARE_OF = "has_care_of";
+    public static final String SEX_AT_BIRTH = "sex_at_birth";
 
     public static final String ONC_HISTORY_ID = "onc_history_id";
 
