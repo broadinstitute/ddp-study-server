@@ -153,7 +153,7 @@ public class RevisionStudyActivityVariablesSupportV2 implements CustomTask {
 
     private void revisionVariableTranslation(TemplateVariable tmplVar,
                                                   RevisionMetadata meta, ActivityVersionDto newVersion) {
-        log.info("Revisioning and updating template variable: {} .. \n New en Text: {} ", tmplVar.getTranslation("en").get().getText());
+        log.info("Revisioning and updating template variable: {} .. \n New EN Text: {} ", tmplVar.getName(), tmplVar.getTranslation("en").get().getText());
         String varName = tmplVar.getName();
         Long tmplVarId = sqlHelper.findBlockTemplateVariableIdByNameAndActivityId(varName, newVersion.getActivityId());
 
