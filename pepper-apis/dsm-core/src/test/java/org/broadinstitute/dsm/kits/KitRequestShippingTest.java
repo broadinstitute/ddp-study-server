@@ -163,7 +163,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
                 // generate new sample ids without legacy kits and parse the suffix
                 int parsedSalivaKitNumberWithoutLegacyKits = parseKitCountFromGeneratedSampleId(salivaSampleWithoutLegacyKits);
-                int parsedBloodKitNumberWithoutLegacyKits; parseKitCountFromGeneratedSampleId(bloodSampleWithoutLegacyKits);
+                int parsedBloodKitNumberWithoutLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleWithoutLegacyKits);
 
                 // now set legacy kit values and generate new sample ids.  the new sample id suffixes
                 // should be the old suffix count plus however many kits of the given type are in
@@ -181,11 +181,12 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 int parsedBloodKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleIncludingLegacyKits);
 
                 Assert.assertEquals(parsedSalivaKitNumberIncludingLegacyKits, parsedSalivaKitNumberWithoutLegacyKits + numLegacySalivaKits);
-                Assert.assertEquals(parsedBloodKitNumberIncludingLegacyKits, parsedBloodKitNumberIncludingLegacyKits + numLegacyBloodKits);
+                Assert.assertEquals(parsedBloodKitNumberIncludingLegacyKits, parsedBloodKitNumberWithoutLegacyKits + numLegacyBloodKits);
 
             } finally {
                 ddpInstance.setLegacyKits(originalLegacyKits);
             }
+            return null;
         });
 
     }
