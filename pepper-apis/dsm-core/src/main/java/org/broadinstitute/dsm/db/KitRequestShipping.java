@@ -1316,7 +1316,22 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 collaboratorSampleId += "_" + type;
             }
 
-            int counter = getKitCounter(conn, collaboratorSampleId, kitTypeId);
+            int counter = 0;
+
+            DDPInstance.LegacyKits legacyKits = ddpInstance.getLegacyKits();
+            DDPInstance.LegacyKits.LegacyKitSummary legacyKitsForParticipant = null;
+            if (legacyKits != null) {
+                legacyKitsForParticipant = legacyKits.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
+            }
+            if (legacyKitsForParticipant != null) {
+                // If we're creating a kit for a participant that has had kits generated from previous systems that did not
+                // track kits via DSM, set the counter to match the number of kits the participant got for the given
+                // kit type in the previous system.  Any newly created kits will increment the counter again below, so this is
+                // an initial offset.
+                counter = legacyKitsForParticipant.getNumberOfKitsForKitTypeId(kitTypeId);
+            } else {
+                counter = getKitCounter(conn, collaboratorSampleId, kitTypeId);
+            }
 
             if  (ddpInstance.isMigratedDDP() && collaboratorParticipantId.contains("_")) {
                 String participantId = collaboratorParticipantId.split("_")[1];
@@ -1837,6 +1852,18 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             // if kit uploaded with a gen2 legacy id, then use that id to generate the collaborator id
             return handleGen2MigratedKit(instanceId, ddpParticipantId, shortId, collaboratorIdPrefix,
                     collaboratorParticipantLengthOverwrite);
+        }
+
+        DDPInstance.LegacyKits legacyKits = ddpInstance.getLegacyKits();
+        if (legacyKits != null) {
+            // if this study has kits that were not processed by DSM, set the collab participant id
+            // to whatever has been used previously so that downstream data can be rolled up to the same
+            // participant
+            DDPInstance.LegacyKits.LegacyKitSummary legacyKitsSummary = legacyKits.getKitSummaryByDDPParticipantId(ddpParticipantId);
+            String existingCollabParticipantId = legacyKitsSummary.getCollaboratorParticipantId();
+            if (StringUtils.isNotBlank(existingCollabParticipantId)) {
+                return existingCollabParticipantId;
+            }
         }
         return generateCollaboratorParticipantId(shortId, ddpParticipantId, collaboratorIdPrefix, collaboratorParticipantLengthOverwrite);
     }

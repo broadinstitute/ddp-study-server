@@ -8,7 +8,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -99,6 +101,7 @@ public class DDPInstance {
     private final String displayName;
     private InstanceSettings instanceSettings;
     private final String studyGuid;
+    private LegacyKits legacyKits;
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -531,5 +534,83 @@ public class DDPInstance {
 
     public boolean isRgp() {
         return DBConstants.RGP.equalsIgnoreCase(this.getStudyGuid());
+    }
+
+
+    /**
+     * For older studies (A-T, for example), kits created prior to juniper used a one-off participant id generator specific to A-T.  To ensure
+     * consistent participant id naming for sequencing data that was generated prior to juniper, we use the legacy participant id.
+     */
+    public LegacyKits getLegacyKits() {
+        // todo arz query via new legacy_kits table
+
+        /*
+        if (legacyKits == null) {
+            legacyKits = queryLegacyKitsFromDb();
+        }
+        */
+        return legacyKits;
+    }
+
+    /**
+     * Only use this for testing.  Use {@link #getLegacyKits()} in
+     * production code.
+     */
+    @VisibleForTesting
+    public void setLegacyKits(LegacyKits legacyKits) {
+        this.legacyKits = legacyKits;
+    }
+
+    public static class LegacyKits {
+
+        private Map<String, LegacyKitSummary> legacyKitsByDDPParticipantId = new HashMap<>();
+
+        private Map<String, LegacyKitSummary> legacyKitsByCollabParticipantId = new HashMap<>();
+
+        public LegacyKits(List<LegacyKitSummary> legacyKitSummaries) {
+            for (LegacyKitSummary legacyKitSummary : legacyKitSummaries) {
+                legacyKitsByCollabParticipantId.put(legacyKitSummary.getCollaboratorParticipantId(), legacyKitSummary);
+                legacyKitsByDDPParticipantId.put(legacyKitSummary.getDDPParticipantId(), legacyKitSummary);
+            }
+        }
+
+        public LegacyKitSummary getKitSummaryByDDPParticipantId(String ddpParticipantId) {
+            return legacyKitsByDDPParticipantId.get(ddpParticipantId);
+        }
+
+        public LegacyKitSummary getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
+            return legacyKitsByCollabParticipantId.get(collabParticipantId);
+        }
+
+        public static class LegacyKitSummary {
+
+            private String collaboratorParticipantId;
+
+            private String ddpParticipantId;
+
+            private Map<Integer, Integer> numKitsByType = new HashMap<>();
+
+            public LegacyKitSummary(String ddpParticipantId, String collaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
+                this.ddpParticipantId = ddpParticipantId;
+                this.collaboratorParticipantId = collaboratorParticipantId;
+                this.numKitsByType = numKitsByType;
+            }
+
+            public int getNumberOfKitsForKitTypeId(int kitTypeId) {
+                return numKitsByType.getOrDefault(kitTypeId, 0);
+            }
+
+            /**
+             * Returns the collaborator participant id used
+             * for the legacy kits
+             */
+            public String getCollaboratorParticipantId() {
+                return collaboratorParticipantId;
+            }
+
+            public String getDDPParticipantId() {
+                return ddpParticipantId;
+            }
+        }
     }
 }

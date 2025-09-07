@@ -178,7 +178,7 @@ public class NonPepperKitCreationService {
                                       String externalOrderNumber, String juniperKitRequestId,
                                       String userId, String returnShipmentTrackingLabel,
                                       boolean returnOnly, String kitLabel, String sexAtBirth, SimpleResult transactionResults) throws DsmInternalError {
-        String collaboratorSampleId = null;
+        String collaboratorSampleId = null; // collaborator sample id is the id of the physical sample that GP will work with, tracked in BSP/Mercury
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
         Long scanDate = null;
@@ -200,53 +200,33 @@ public class NonPepperKitCreationService {
             throw new DsmInternalError("EasyPost addressId could not be received for " + kit.getJuniperKitId(), e);
         }
 
-        if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-            // Not needed now but in general, we don't check for overwrite length for an external shipper
-            try {
-                // collaborator sample id is the id of the physical sample that GP will work with.
-                collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
-                                ddpInstance);
-                KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), juniperKitRequestId,
-                        kitTypeId,
-                        kit.getParticipantId().trim(), collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber,
-                        false, null, ddpInstance, bspCollaboratorSampleType, null, returnOnly, returnShipmentTrackingLabel, kitLabel, scanDate, sexAtBirth);
-                kit.setExternalOrderNumber(externalOrderNumber);
-            } catch (Exception e) {
-                transactionResults.resultException = e;
-            }
-        } else {
-            // trying to generate collaboratorSampleId based on collaboratorParticipantId --
-            // it will be skipped if study did not have the config to get a collaboratorParticipantId
-            if (kitRequestSettings.getCollaboratorSampleTypeOverwrite() != null) {
-                bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
-            }
-            if (StringUtils.isNotBlank(collaboratorParticipantId)) {
-                collaboratorSampleId =
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
-                                ddpInstance);
-                if (collaboratorSampleId == null) {
-                    errorMessage += "collaboratorSampleId was too long ";
-                }
-            }
-
-            String participantID = kit.getJuniperParticipantID();
-            try {
-                String dsmKitRequestId =
-                        KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
-                                participantID, collaboratorParticipantId, collaboratorSampleId, userId, addressId,
-                                errorMessage, kit.getExternalOrderNumber(), false, null, ddpInstance, bspCollaboratorSampleType,
-                                null, kit.isReturnOnly(), kit.getReturnTrackingId(), kit.getKitLabel(), scanDate, sexAtBirth);
-                log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
-            } catch (Exception e) {
-                transactionResults.resultException = e;
-            }
-
+        if (kitRequestSettings.getCollaboratorSampleTypeOverwrite() != null) {
+            bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
         }
+        if (StringUtils.isNotBlank(collaboratorParticipantId)) {
+            collaboratorSampleId =
+                    KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId,
+                            ddpInstance);
+            if (collaboratorSampleId == null) {
+                errorMessage += "collaboratorSampleId was too long ";
+            }
+        }
+
+        String participantID = kit.getJuniperParticipantID();
+        try {
+            String dsmKitRequestId =
+                    KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), juniperKitRequestId, kitTypeId,
+                            participantID, collaboratorParticipantId, collaboratorSampleId, userId, addressId,
+                            errorMessage, kit.getExternalOrderNumber(), false, null, ddpInstance, bspCollaboratorSampleType,
+                            null, kit.isReturnOnly(), kit.getReturnTrackingId(), kit.getKitLabel(), scanDate, sexAtBirth);
+            log.info("Created new kit in DSM with dsm_kit_request_id {} for JuniperKitId {}", dsmKitRequestId, juniperKitRequestId);
+        } catch (Exception e) {
+            transactionResults.resultException = e;
+        }
+
         if (transactionResults.resultException != null) {
             throw new DsmInternalError(transactionResults.resultException);
         }
-
     }
 
 }
