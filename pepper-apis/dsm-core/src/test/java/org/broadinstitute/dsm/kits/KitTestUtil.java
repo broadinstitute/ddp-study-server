@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,7 +91,7 @@ public class KitTestUtil {
     protected Integer kitDimensionId;
     protected Integer kitReturnId;
     protected  Integer carrierId;
-    protected Set<Integer> ddpKitRequestSettingsIds;
+    protected Set<Integer> ddpKitRequestSettingsIds = new HashSet<>();
     protected String instanceName;
     protected  String groupName;
     protected String studyGuid;
