@@ -323,10 +323,6 @@ public class KitTestUtil {
             kitTypeId = createKitType(conn, kitTypeName, displayName);
         }
         kitTypeIds.put(kitTypeName, kitTypeId);
-
-        if (kitTypeIds.get(kitTypeName) == null) {
-            throw new RuntimeException("Kit type " + kitTypeName + " not found");
-        }
     }
 
     private Integer createKitType(Connection conn, String kitTypeName, String displayName) throws SQLException {
@@ -531,10 +527,14 @@ public class KitTestUtil {
 
     public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
                                            String userId) {
+        return createKitRequestShipping(kitRequestShipping, ddpInstance, userId, getSingleKitTypeId());
+    }
 
+    public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
+                                           String userId, Integer kitTypeId) {
         return TransactionWrapper.inTransaction(conn ->
                 KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(),
-                        getSingleKitTypeId(), kitRequestShipping.getDdpParticipantId(),
+                        kitTypeId, kitRequestShipping.getDdpParticipantId(),
                         kitRequestShipping.getBspCollaboratorParticipantId(), kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false,
                         null, ddpInstance, getSingleKitTypeName(), null, false, kitRequestShipping.getTrackingReturnId(), kitRequestShipping.getKitLabel(), null, "U"));
     }
