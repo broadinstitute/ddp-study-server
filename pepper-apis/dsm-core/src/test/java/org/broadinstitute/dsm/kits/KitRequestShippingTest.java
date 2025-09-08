@@ -201,7 +201,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         String shortId = "SHORT3838";
         String ddpParticipantId = "PTP3838291";
         String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
-        DDPInstance.LegacyKits.LegacyKitSummary legacyKits = new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Collections.emptyMap());
+        DDPInstance.LegacyKits.LegacyKitSummary legacyKits = new DDPInstance.LegacyKits.LegacyKitSummary(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
 
         try {
             String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);

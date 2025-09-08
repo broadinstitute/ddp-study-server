@@ -543,7 +543,7 @@ public class DDPInstance {
      * For older studies (A-T, for example), kits created prior to juniper used a one-off participant id generator specific to A-T.  To ensure
      * consistent participant id naming for sequencing data that was generated prior to juniper, we use the legacy participant id.
      */
-    public LegacyKits getLegacyKits() {
+    public LegacyKits getLegacyKits() { // todo arz rename to indicate this study was on pepper and now on juniper vs. was on datstat and now on pepper
         // todo arz query via new legacy_kits table
 
         /*
@@ -573,7 +573,7 @@ public class DDPInstance {
         public LegacyKits(List<LegacyKitSummary> legacyKitSummaries) {
             for (LegacyKitSummary legacyKitSummary : legacyKitSummaries) {
                 legacyKitsByCollabParticipantId.put(legacyKitSummary.getCollaboratorParticipantId(), legacyKitSummary);
-                legacyKitsByShortId.put(legacyKitSummary.getDDPParticipantId(), legacyKitSummary);
+                legacyKitsByShortId.put(legacyKitSummary.getShortId(), legacyKitSummary);
             }
         }
 
@@ -602,12 +602,12 @@ public class DDPInstance {
 
             private String collaboratorParticipantId;
 
-            private String ddpParticipantId;
+            private String shortId;
 
             private Map<Integer, Integer> numKitsByType = new HashMap<>();
 
-            public LegacyKitSummary(String ddpParticipantId, String collaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
-                this.ddpParticipantId = ddpParticipantId;
+            public LegacyKitSummary(String shortId, String collaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
+                this.shortId = shortId;
                 this.collaboratorParticipantId = collaboratorParticipantId;
                 this.numKitsByType = numKitsByType;
             }
@@ -624,8 +624,8 @@ public class DDPInstance {
                 return collaboratorParticipantId;
             }
 
-            public String getDDPParticipantId() {
-                return ddpParticipantId;
+            public String getShortId() {
+                return shortId;
             }
         }
     }
