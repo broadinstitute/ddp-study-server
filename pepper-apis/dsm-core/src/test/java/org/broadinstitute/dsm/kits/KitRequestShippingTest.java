@@ -133,7 +133,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         int indexOfRightMostUnderscore = sampleId.lastIndexOf("_");
         int count = -1;
         if (indexOfRightMostUnderscore > -1) {
-            count = Integer.parseInt(sampleId.substring(indexOfRightMostUnderscore) + 1);
+            count = Integer.parseInt(sampleId.substring(indexOfRightMostUnderscore + 1));
         }
         return count;
     }

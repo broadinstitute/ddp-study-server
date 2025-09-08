@@ -108,7 +108,7 @@ public class DDPInstance {
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
                        boolean migratedDDP, String billingReference, String participantIndexES, String activityDefinitionIndexES,
                        String usersIndexES, String researchProject, String displayName, String mercuryOrderCreator,
-                       InstanceSettings instanceSettings, String studyGuid, LegacyKits legacyKits) {
+                       InstanceSettings instanceSettings, String studyGuid) {
         this.ddpInstanceId = ddpInstanceId;
         this.name = name;
         this.baseUrl = baseUrl;
@@ -128,11 +128,6 @@ public class DDPInstance {
         this.displayName = displayName;
         this.instanceSettings = instanceSettings;
         this.studyGuid = studyGuid;
-        if (legacyKits == null) {
-            this.legacyKits = new LegacyKits(Collections.emptyList());
-        } else {
-            this.legacyKits = legacyKits;
-        }
     }
 
 
@@ -430,7 +425,7 @@ public class DDPInstance {
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
                 rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
-                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID), null);
+                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID));
     }
 
     private static DDPInstance getDDPInstanceFormResultSet(@NonNull ResultSet rs) throws SQLException {
@@ -447,7 +442,7 @@ public class DDPInstance {
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
                 rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
-                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID), null);
+                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID));
     }
 
     //assumption: base url of pepper studies will always end like: dsm/studies/<STUDYNAME>
