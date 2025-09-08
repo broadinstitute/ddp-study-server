@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import liquibase.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
@@ -127,17 +128,16 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     /**
      * Given a generated bsp sample id, parse the sample count.  The sample count
      * is the right-most int, and represents the number of samples for a given
-     * kit type for a given participant.
+     * kit type for a given participant.  Returns -1 if there is no kit count
+     * in the sample id.
      */
     private int parseKitCountFromGeneratedSampleId(String sampleId) {
         int indexOfRightMostUnderscore = sampleId.lastIndexOf("_");
         int count = -1;
         if (indexOfRightMostUnderscore > -1) {
             String kitCount = sampleId.substring(indexOfRightMostUnderscore + 1);
-            try {
+            if (StringUtil.isNumeric(kitCount)) {
                 count = Integer.parseInt(kitCount);
-            } catch (NumberFormatException e) {
-                throw new RuntimeException("Could not parse kitCount from sampleId " + sampleId + " with kit count " + kitCount, e);
             }
         }
         return count;
@@ -153,40 +153,28 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         String shortId = "SHORT3838";
         String ddpParticipantId = "PTP3838291";
         String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
-        String collabParticipantId = "FOO_456";
         int numLegacyBloodKits = 3;
         int numLegacySalivaKits = 1;
+
         DDPInstance.LegacyKits originalLegacyKits = ddpInstance.getLegacyKits();
-        ddpInstance.setLegacyKits(new DDPInstance.LegacyKits(Collections.emptyList()));
+        // with legacy kits, suffix kit type count should be the number of legacy kits of that type plus one
+
+        List<DDPInstance.LegacyKits.LegacyKitSummary> legacyKitSummaries = List.of(
+                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(1, numLegacyBloodKits)),
+                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(2, numLegacySalivaKits)));
+        DDPInstance.LegacyKits legacyKits = new DDPInstance.LegacyKits(legacyKitSummaries);
+        ddpInstance.setLegacyKits(legacyKits);
 
         TransactionWrapper.inTransaction(conn -> {
             try {
-                // with legacy kits, suffix kit type count should be the number of legacy kits plus whatever
-                // the suffix was when generating sample ids without legacy kits
-                String bloodSampleWithoutLegacyKits = KitRequestShipping.generateBspSampleID(conn, collabParticipantId, "BLOOD", 1, ddpInstance);
-                String salivaSampleWithoutLegacyKits = KitRequestShipping.generateBspSampleID(conn, collabParticipantId, "SALIVA", 2, ddpInstance);
-
-                // generate new sample ids without legacy kits and parse the suffix
-                int parsedSalivaKitNumberWithoutLegacyKits = parseKitCountFromGeneratedSampleId(salivaSampleWithoutLegacyKits);
-                int parsedBloodKitNumberWithoutLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleWithoutLegacyKits);
-
-                // now set legacy kit values and generate new sample ids.  the new sample id suffixes
-                // should be the old suffix count plus however many kits of the given type are in
-                // the legacyKits object
-                List<DDPInstance.LegacyKits.LegacyKitSummary> legacyKitSummaries = List.of(
-                        new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(1, numLegacyBloodKits)),
-                        new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(2, numLegacySalivaKits)));
-
-                DDPInstance.LegacyKits legacyKits = new DDPInstance.LegacyKits(legacyKitSummaries);
-
-                String bloodSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, collabParticipantId, "BLOOD", 1, ddpInstance);
-                String salivaSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, collabParticipantId, "SALIVA", 2, ddpInstance);
+                String bloodSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, "BLOOD", 1, ddpInstance);
+                String salivaSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, "SALIVA", 2, ddpInstance);
 
                 int parsedSalivaKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(salivaSampleIncludingLegacyKits);
                 int parsedBloodKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleIncludingLegacyKits);
 
-                Assert.assertEquals(parsedSalivaKitNumberIncludingLegacyKits, parsedSalivaKitNumberWithoutLegacyKits + numLegacySalivaKits);
-                Assert.assertEquals(parsedBloodKitNumberIncludingLegacyKits, parsedBloodKitNumberWithoutLegacyKits + numLegacyBloodKits);
+                Assert.assertEquals(3, parsedSalivaKitNumberIncludingLegacyKits);
+                Assert.assertEquals(2, parsedBloodKitNumberIncludingLegacyKits);
 
             } finally {
                 ddpInstance.setLegacyKits(originalLegacyKits);
@@ -209,11 +197,13 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         DDPInstance.LegacyKits.LegacyKitSummary legacyKits = new DDPInstance.LegacyKits.LegacyKitSummary(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
 
         try {
+            // if there is legacy kit information, the collaborator participant id should be the collab participant id from the legacy kit data
             String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             Assert.assertEquals(legacyCollaboratorParticipantId, collaboratorParticipantId);
 
             ddpInstance.setLegacyKits(new DDPInstance.LegacyKits(Collections.emptyList()));
 
+            // if there's no legacy kit information, the collaborator participant id should be the [prefix]_[shortid]
             collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             Assert.assertEquals(collaboratorParticipantId, ddpInstance.getCollaboratorIdPrefix() + "_" + shortId);
 
