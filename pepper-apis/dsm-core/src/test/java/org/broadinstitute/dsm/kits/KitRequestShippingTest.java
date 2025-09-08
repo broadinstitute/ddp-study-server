@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.kits;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -166,16 +167,32 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
         TransactionWrapper.inTransaction(conn -> {
             try {
-                String salivaSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
+                String generatedSampleId = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
 
-                int parsedSalivaKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(salivaSampleIncludingLegacyKits);
+                int parsedSalivaKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(generatedSampleId);
 
                 // Sample names for first kits do not have a numeric suffix.  Subsequent kits do, starting at 1.
                 // So the 2nd kit has a suffix of 2, the 3rd kit has a suffix of 3, etc.
-                Assert.assertEquals("Unexpected kit count for " + salivaSampleIncludingLegacyKits, numLegacyKits + 1, parsedSalivaKitNumberIncludingLegacyKits);
+                Assert.assertEquals("Unexpected kit count for " + generatedSampleId, numLegacyKits + 1, parsedSalivaKitNumberIncludingLegacyKits);
 
                 // todo arz write a kit request the way juniper will, then verify that the
                 // kit count is the legacy offset + new kit
+
+                KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
+                        .withDdpParticipantId(ddpParticipantId)
+                        .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
+                        .withBspCollaboratorSampleId(generatedSampleId)
+                        .withKitTypeName("SALIVA")
+                        .withDdpKitRequestId(Instant.now() + generatedSampleId)
+                        .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
+
+                String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+
+                String secondGeneratedSampleId = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
+                int parsed2ndSalivaKitNumber = parseKitCountFromGeneratedSampleId(generatedSampleId);
+
+                Assert.assertEquals("Unexpected kit count for " + secondGeneratedSampleId, numLegacyKits + 2, parsed2ndSalivaKitNumber);
+
 
             } finally {
                 ddpInstance.setLegacyKits(originalLegacyKits);
