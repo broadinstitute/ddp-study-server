@@ -65,6 +65,8 @@ public class JuniperShipKitRoute implements Route {
             }
 
             EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
+            // todo arz load legacy kit data for the instance
+            // DDPInstance.loadLegacyKitsFromDb();
             KitResponse kitResponse =
                     this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getKitType(), easyPostUtil,
                             ddpInstance);

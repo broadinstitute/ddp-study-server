@@ -102,7 +102,8 @@ public class DDPInstance {
     private final String displayName;
     private InstanceSettings instanceSettings;
     private final String studyGuid;
-    private LegacyKits legacyKits = new LegacyKits(Collections.emptyList());
+    // marked final to avoid state management complexity with lombok Builder
+    private final LegacyKits legacyKits = new LegacyKits(Collections.emptyList());
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -559,7 +560,8 @@ public class DDPInstance {
      */
     @VisibleForTesting
     public void setLegacyKits(LegacyKits legacyKits) {
-        this.legacyKits = legacyKits;
+        // legacyKits is final to avoid state management complexity from this class's use of lombok builder
+        this.legacyKits.initFrom(legacyKits);
     }
 
     public static class LegacyKits {
@@ -581,6 +583,19 @@ public class DDPInstance {
 
         public LegacyKitSummary getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
             return legacyKitsByCollabParticipantId.get(collabParticipantId);
+        }
+
+        public void clear() {
+            this.legacyKitsByCollabParticipantId.clear();
+            this.legacyKitsByShortId.clear();
+        }
+
+        public void initFrom(LegacyKits copyFrom) {
+            clear();
+            if (copyFrom != null) {
+                legacyKitsByShortId.putAll(copyFrom.legacyKitsByShortId);
+                legacyKitsByCollabParticipantId.putAll(copyFrom.legacyKitsByCollabParticipantId);
+            }
         }
 
         public static class LegacyKitSummary {
