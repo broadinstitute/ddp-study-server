@@ -173,8 +173,10 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 int parsedSalivaKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(salivaSampleIncludingLegacyKits);
                 int parsedBloodKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleIncludingLegacyKits);
 
-                Assert.assertEquals(3, parsedSalivaKitNumberIncludingLegacyKits);
-                Assert.assertEquals(2, parsedBloodKitNumberIncludingLegacyKits);
+                // Sample names for first kits do not have a numeric suffix,  Subsequent kits do, starting at 1.
+                // So the 2nd kit has a suffix of 1, the 3rd kit has a suffix of 2, etc.
+                Assert.assertEquals(2, parsedSalivaKitNumberIncludingLegacyKits);
+                Assert.assertEquals(1, parsedBloodKitNumberIncludingLegacyKits);
 
             } finally {
                 ddpInstance.setLegacyKits(originalLegacyKits);
@@ -198,6 +200,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
         try {
             // if there is legacy kit information, the collaborator participant id should be the collab participant id from the legacy kit data
+            ddpInstance.setLegacyKits(new DDPInstance.LegacyKits(Collections.singletonList(legacyKits)));
             String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             Assert.assertEquals(legacyCollaboratorParticipantId, collaboratorParticipantId);
 
