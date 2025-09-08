@@ -14,13 +14,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import com.easypost.model.Address;
 import com.easypost.model.Parcel;
@@ -84,31 +79,28 @@ public class KitTestUtil {
                     + " VALUES (?, ?, ?, ?, ?) ;";
 
     protected UserAdminTestUtil adminUtil = new UserAdminTestUtil();
-    private Set<KitType> kitTypes;
-    private Map<KitType, Integer> kitTypeIds = new HashMap<>();
     protected Integer ddpInstanceId;
     protected Integer ddpGroupId;
     protected Integer ddpInstanceGroupId;
+    protected Integer kitTypeId;
     protected Integer kitDimensionId;
     protected Integer kitReturnId;
     protected  Integer carrierId;
-    protected Set<Integer> ddpKitRequestSettingsIds = new HashSet<>();
+    protected Integer ddpKitRequestSettingsId;
     protected String instanceName;
     protected  String groupName;
     protected String studyGuid;
     protected String userWithKitShippingAccess;
     protected NotificationUtil notificationUtil;
+    private String kitTypeDisplayName;
     public List<Integer> ddpInstanceRoleIdList = new ArrayList<>();
     List<String> createdKitIds = new ArrayList<>();
     private boolean isJuniperStudy = false;
+    private String kitTypeName;
     private String collaboratorPrefix;
     private String esIndex;
     private Integer instanceRoleId;
     private Integer ddpInstanceRoleId;
-
-    public static final KitType SALIVA = new KitType("SALIVA", "SALIVA");
-
-    public static final KitType BLOOD = new KitType("BLOOD", "BLOOD");
 
     @Getter
     @Mock
@@ -134,35 +126,20 @@ public class KitTestUtil {
      * @param studyGuid study-guid for study
      * @param collaboratorPrefix prefix for collaborator id for kits
      * @param groupName name of the study group
-     * @param kitType what kind of kit the study will use, such as SALIVA or BLOOD
+     * @param kitTypeName name of the kit type, for example "SALIVA"
+     * @param kitTypeDisplayName display name of the kit type, for example "Saliva"
      * @param esIndex ES index for the study
      * @param isJuniperStudy boolean to indicate if the study is a Juniper study and will have features specific to Juniper studies
      * */
     public KitTestUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                       KitType kitType, String esIndex, boolean isJuniperStudy) {
-        this(instanceName, studyGuid, collaboratorPrefix, groupName, Set.of(kitType), esIndex, isJuniperStudy);
-    }
-
-    /**
-     * Constructor for KitTestUtil, after creating an instance of this class, call {@link #setupInstanceAndSettings}
-     * If creating a Juniper study, set the  isJuniperStudy to true and the esIndex will be set null.
-     * If deleting the data, call {@link #deleteGeneratedData}
-     *
-     * @param instanceName name of the instance
-     * @param studyGuid study-guid for study
-     * @param collaboratorPrefix prefix for collaborator id for kits
-     * @param groupName name of the study group
-     * @param kitTypes what kind of kits the study will use, such as SALIVA or BLOOD
-     * @param esIndex ES index for the study
-     * @param isJuniperStudy boolean to indicate if the study is a Juniper study and will have features specific to Juniper studies
-     * */
-    public KitTestUtil(String instanceName, String studyGuid, String collaboratorPrefix, String groupName,
-                       Set<KitType> kitTypes, String esIndex, boolean isJuniperStudy) {
+                       String kitTypeName, String kitTypeDisplayName, String esIndex, boolean isJuniperStudy) {
         this.instanceName = instanceName;
         this.studyGuid = studyGuid;
         this.groupName = groupName;
         this.collaboratorPrefix = collaboratorPrefix;
-        this.kitTypes = kitTypes;
+        this.kitTypeName = kitTypeName;
+        this.kitTypeDisplayName = kitTypeDisplayName;
+
         this.isJuniperStudy = isJuniperStudy;
         if (!this.isJuniperStudy) {
             this.esIndex = esIndex;
@@ -171,9 +148,6 @@ public class KitTestUtil {
             log.info("Juniper study, not setting ES index");
         }
     }
-
-    // todo arz constructore with multiple kit types, accessor for getting kit type ids by name
-    // have single calls error out if called with multiple kit types
 
     /**
      * Will delete all the data that was created for the instance and settings
@@ -186,9 +160,7 @@ public class KitTestUtil {
                 delete(conn, "event_type", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "EVENT_QUEUE", "ddp_instance_id", ddpInstanceId);
                 delete(conn, "kit_return_information", "kit_return_id", kitReturnId);
-                for (Integer ddpKitRequestSettingsId : ddpKitRequestSettingsIds) {
-                    delete(conn, "ddp_kit_request_settings", "ddp_kit_request_settings_id", ddpKitRequestSettingsId);
-                }
+                delete(conn, "ddp_kit_request_settings", "ddp_kit_request_settings_id", ddpKitRequestSettingsId);
                 delete(conn, "carrier_service", "carrier_service_id", carrierId);
                 delete(conn, "kit_dimension", "kit_dimension_id", kitDimensionId);
                 ddpInstanceRoleIdList.forEach(ddpInstanceRoleId -> {
@@ -226,13 +198,11 @@ public class KitTestUtil {
                     Integer ptInstanceRoleId = getPtNotifInstanceRole(conn);
                     ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, ptInstanceRoleId));
                 }
-                for (KitType kitType : kitTypes) {
-                    initKitType(conn, kitType);
-                }
+                kitTypeId = getKitTypeId(conn, kitTypeName, kitTypeDisplayName, true);
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
                 carrierId = createCarrierInformation(conn);
-                ddpKitRequestSettingsIds = createKitRequestSettingsInformation(conn);
+                ddpKitRequestSettingsId = createKitRequestSettingsInformation(conn);
                 adminUtil.setStudyAdminAndRoles(generateUserEmail(), USER_ADMIN_ROLE,
                         Arrays.asList(KIT_SHIPPING));
 
@@ -276,52 +246,28 @@ public class KitTestUtil {
         return getPrimaryKey(rs, "instance_role");
     }
 
-    /**
-     * If there's only one kit type id, returns it.  Otherwise, throws exception.
-     */
-    public Integer getSingleKitTypeId() {
-        if (kitTypeIds.size() == 1) {
-            return kitTypeIds.values().iterator().next();
-        } else {
-            throw new RuntimeException("There are multiple kit types in use.  Please indicate which kit type.");
-        }
-    }
-
-    /**
-     * If there's only one kit type, returns it.  Otherwise, throws an exception
-     */
-    public String getSingleKitTypeName() {
-        if (kitTypeIds.size() == 1) {
-            return kitTypeIds.keySet().iterator().next().getKitTypeName();
-        } else {
-            throw new RuntimeException("There are multiple kit types in use.  Please indicate which kit type.");
-        }
-    }
-
-    public Integer getKitTypeIdForKit(String kitTypeName) {
-        return kitTypeIds.get(kitTypeName);
-    }
-
-    private void initKitType(Connection conn, KitType kitType)
+    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
             throws SQLException {
-        if (kitTypeIds.containsKey(kitType)) {
-            return;
+        if (kitTypeId != null && isExistingKit) {
+            return kitTypeId;
         }
         String query = SELECT_KIT_TYPE_ID;
-        if (StringUtils.isNotBlank(kitType.getDisplayName())) {
+        if (StringUtils.isNotBlank(displayName)) {
             query = query.concat(SELECT_BY_DISPLAY_NAME);
         }
         PreparedStatement stmt = conn.prepareStatement(query);
-        stmt.setString(1, kitType.getKitTypeName());
-        if (StringUtils.isNotBlank(kitType.getDisplayName())) {
-            stmt.setString(2, kitType.getDisplayName());
+        stmt.setString(1, kitTypeName);
+        if (StringUtils.isNotBlank(displayName)) {
+            stmt.setString(2, displayName);
         }
         ResultSet rs = stmt.executeQuery();
-        Integer kitTypeId = null;
-        if (!rs.next()) {
-            kitTypeId = createKitType(conn, kitType.getKitTypeName(), kitType.getDisplayName());
-            kitTypeIds.put(kitType, kitTypeId);
+        if (rs.next()) {
+            return rs.getInt(1);
         }
+        if (kitTypeId == null) {
+            kitTypeId = createKitType(conn, kitTypeName, displayName);
+        }
+        return kitTypeId;
     }
 
     private Integer createKitType(Connection conn, String kitTypeName, String displayName) throws SQLException {
@@ -389,26 +335,22 @@ public class KitTestUtil {
         return getPrimaryKey(rs, "carrier_service");
     }
 
-    protected Set<Integer> createKitRequestSettingsInformation(Connection conn) throws SQLException {
-        if (ddpKitRequestSettingsIds != null) {
-            return ddpKitRequestSettingsIds;
+    protected Integer createKitRequestSettingsInformation(Connection conn) throws SQLException {
+        if (ddpKitRequestSettingsId != null) {
+            return ddpKitRequestSettingsId;
         }
-        if (ddpInstanceId == null || kitTypeIds.isEmpty() || kitReturnId == null || carrierId == null || kitDimensionId == null) {
+        if (ddpInstanceId == null || kitTypeId == null || kitReturnId == null || carrierId == null || kitDimensionId == null) {
             throw new DsmInternalError("required settings have not been set up");
         }
-
-        for (Integer kitTypeId: kitTypeIds.values()) {
-            PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
-            stmt.setInt(1, ddpInstanceId);
-            stmt.setInt(2, kitTypeId);
-            stmt.setInt(3, kitReturnId);
-            stmt.setInt(4, carrierId);
-            stmt.setInt(5, kitDimensionId);
-            stmt.executeUpdate();
-            ResultSet rs = stmt.getGeneratedKeys();
-            ddpKitRequestSettingsIds.add(getPrimaryKey(rs, "ddp_kit_request_settings"));
-        }
-        return ddpKitRequestSettingsIds;
+        PreparedStatement stmt = conn.prepareStatement(INSERT_DDP_KIT_REQUEST_SETTINGS, Statement.RETURN_GENERATED_KEYS);
+        stmt.setInt(1, ddpInstanceId);
+        stmt.setInt(2, kitTypeId);
+        stmt.setInt(3, kitReturnId);
+        stmt.setInt(4, carrierId);
+        stmt.setInt(5, kitDimensionId);
+        stmt.executeUpdate();
+        ResultSet rs = stmt.getGeneratedKeys();
+        return getPrimaryKey(rs, "ddp_kit_request_settings");
     }
 
     public void changeKitToQueue(String participantId, EasyPostUtil mockEasyPostUtil) {
@@ -526,11 +468,7 @@ public class KitTestUtil {
 
     public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
                                            String userId) {
-        return createKitRequestShipping(kitRequestShipping, ddpInstance, userId, getSingleKitTypeName(), getSingleKitTypeId());
-    }
 
-    public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
-                                           String userId, String kitTypeName, Integer kitTypeId) {
         return TransactionWrapper.inTransaction(conn ->
                 KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(),
                         kitTypeId, kitRequestShipping.getDdpParticipantId(),
@@ -549,7 +487,7 @@ public class KitTestUtil {
                 if (nullKitType) {
                     stmt.setNull(4, Types.INTEGER);
                 } else {
-                    stmt.setInt(4, getSingleKitTypeId());
+                    stmt.setInt(4, kitTypeId);
                 }
                 stmt.setString(5, eventType);
                 stmt.executeUpdate();
@@ -575,43 +513,6 @@ public class KitTestUtil {
     public void setEsIndex(String esIndex) {
         this.esIndex = esIndex;
         new DDPInstanceDao().updateEsParticipantIndex(ddpInstanceId, esIndex);
-    }
-
-    public static class KitType {
-
-        private String kitTypeName;
-
-        private String displayName;
-
-        public KitType(String kitTypeName, String displayName) {
-            this.kitTypeName = kitTypeName;
-            this.displayName = displayName;
-        }
-
-        public String getKitTypeName() {
-            return kitTypeName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)  {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            KitType kitType = (KitType) o;
-            return Objects.equals(kitTypeName, kitType.kitTypeName) && Objects.equals(displayName, kitType.displayName);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(kitTypeName, displayName);
-        }
     }
 }
 

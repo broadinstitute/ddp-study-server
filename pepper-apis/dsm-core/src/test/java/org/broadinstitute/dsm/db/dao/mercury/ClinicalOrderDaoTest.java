@@ -81,7 +81,8 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         studyInstanceName = "ClinOrdTest" + nameAppend;
         String studyGroup = "ClinOrdTest" + nameAppend;
 
-        kitTestUtil = new KitTestUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup, KitTestUtil.SALIVA, null, false);
+        kitTestUtil = new KitTestUtil(studyInstanceName, studyInstanceName, "CinOrdTest", studyGroup,
+                "SALIVA", "SALIVA", null, false);
         kitTestUtil.setupInstanceAndSettings();
         userId = kitTestUtil.getAdminUtil().createTestUser(generateUserEmail(), Arrays.asList(KIT_SHIPPING, PT_LIST_VIEW));
 
@@ -152,7 +153,7 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
         String order1Barcode = "testtestBarcode";
 
         MercuryOrderDto orderDto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order1Barcode,
-                kitTestUtil.getSingleKitTypeId(), ddpInstanceId, tissueId);
+                kitTestUtil.getKitTypeId(), ddpInstanceId, tissueId);
 
         Map<Integer, Collection<ClinicalOrderDto>> ordersByTissue =
                 clinicalOrderDao.getClinicalOrdersForTissueIds(tissueIds);
@@ -177,14 +178,14 @@ public class ClinicalOrderDaoTest extends DbTxnBaseTest {
 
         ddpInstanceId = kitTestUtil.getAdminUtil().getDdpInstanceId();
         MercuryOrderDto orderDto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order1Barcode,
-                kitTestUtil.getSingleKitTypeId(), ddpInstanceId, tissueWithOrder);
+                kitTestUtil.getKitTypeId(), ddpInstanceId, tissueWithOrder);
 
         log.info("Created order {} for tissue {} and sample {}", orderDto.getMercurySequencingId(), tissueWithOrder,
                 sampleWithOrder);
 
         String order2Barcode = "TestBarcode2";
         MercuryOrderDto order2Dto = mercuryOrderTestUtil.createMercuryOrder(ddpParticipantId, order2Barcode,
-                kitTestUtil.getSingleKitTypeId(), ddpInstanceId, tissueWithOrder);
+                kitTestUtil.getKitTypeId(), ddpInstanceId, tissueWithOrder);
         log.info("Created order {} for tissue {} and sample {}", order2Dto.getMercurySequencingId(), tissueWithOrder,
                 sampleWithOrder);
 

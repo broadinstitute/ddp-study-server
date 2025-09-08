@@ -19,7 +19,8 @@ import org.junit.Test;
 public class KitDisplayNameTest extends DbTxnBaseTest {
     private static final String instanceName = "kit_test_instance";
     private static KitTestUtil kitTestUtil = new KitTestUtil(instanceName, instanceName,
-            "some_prefix", "kit_test_group", new KitTestUtil.KitType(KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME), null, false);
+            "some_prefix", "kit_test_group", KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME,
+            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null, false);
 
     private static KitShippingTestUtil kitShippingTestUtil;
     private static DDPInstanceDto ddpInstanceDto;
@@ -48,7 +49,7 @@ public class KitDisplayNameTest extends DbTxnBaseTest {
     @Test
     public void testKitWithDisplayName() {
         int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto,
-                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kitTestUtil.getSingleKitTypeId(), false, null);
+                KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME, kitTestUtil.getKitTypeId(), false, null);
         KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
         List<KitRequestShipping> kits = KitRequestShipping.getKitRequestsByRealm(instanceName, KitRequestShipping.OVERVIEW,
                 KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME);

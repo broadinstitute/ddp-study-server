@@ -47,7 +47,8 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        kitTestUtil = new KitTestUtil(instanceName, instanceName, "UpdateCollab", instanceName, KitTestUtil.SALIVA, esIndex, false);
+        kitTestUtil = new KitTestUtil(instanceName, instanceName, "UpdateCollab", instanceName, "SALIVA", null, esIndex,
+                false);
         kitTestUtil.setupInstanceAndSettings();
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
         legacyParticipantPair = TestParticipantUtil.createLegacyParticipant(ddpParticipantId, participantCounter++, ddpInstanceDto,
@@ -59,7 +60,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 .withBspCollaboratorParticipantId(oldCollaboratorParticipantId)
                 .withDdpKitRequestId(ddpKitRequestId)
                 .withKitTypeName("SALIVA")
-                .withKitTypeId(String.valueOf(kitTestUtil.getSingleKitTypeId())).build();
+                .withKitTypeId(String.valueOf(kitTestUtil.getKitTypeId())).build();
 
         String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
@@ -110,7 +111,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 .withBspCollaboratorParticipantId(collaboratorParticipantId)
                 .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT1")
                 .withKitTypeName("SALIVA")
-                .withKitTypeId(String.valueOf(kitTestUtil.getSingleKitTypeId())).build();
+                .withKitTypeId(String.valueOf(kitTestUtil.getKitTypeId())).build();
         String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId);
         String dupCollaboratorSampleId = "DUP_COLLABORATOR_SAMPLE_ID";
@@ -120,7 +121,7 @@ public class UpdateKitToLegacyIdServiceTest extends DbAndElasticBaseTest {
                 .withBspCollaboratorParticipantId(collaboratorParticipantId)
                 .withDdpKitRequestId("KIT_REQ_ID_DUP_KIT2")
                 .withKitTypeName("SALIVA")
-                .withKitTypeId(String.valueOf(kitTestUtil.getSingleKitTypeId())).build();
+                .withKitTypeId(String.valueOf(kitTestUtil.getKitTypeId())).build();
         String dsmKitRequestId2 = kitTestUtil.createKitRequestShipping(kitRequestShipping2, DDPInstance.from(ddpInstanceDto), "100");
         createdKits.add(dsmKitRequestId2);
 
