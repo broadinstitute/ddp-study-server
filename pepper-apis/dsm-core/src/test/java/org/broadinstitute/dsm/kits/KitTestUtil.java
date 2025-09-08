@@ -527,16 +527,16 @@ public class KitTestUtil {
 
     public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
                                            String userId) {
-        return createKitRequestShipping(kitRequestShipping, ddpInstance, userId, getSingleKitTypeId());
+        return createKitRequestShipping(kitRequestShipping, ddpInstance, userId, getSingleKitTypeName(), getSingleKitTypeId());
     }
 
     public String createKitRequestShipping(KitRequestShipping kitRequestShipping, DDPInstance ddpInstance,
-                                           String userId, Integer kitTypeId) {
+                                           String userId, String kitTypeName, Integer kitTypeId) {
         return TransactionWrapper.inTransaction(conn ->
                 KitRequestShipping.writeRequest(conn, ddpInstance.getDdpInstanceId(), kitRequestShipping.getDdpKitRequestId(),
                         kitTypeId, kitRequestShipping.getDdpParticipantId(),
                         kitRequestShipping.getBspCollaboratorParticipantId(), kitRequestShipping.getBspCollaboratorSampleId(), userId, null, null, null, false,
-                        null, ddpInstance, getSingleKitTypeName(), null, false, kitRequestShipping.getTrackingReturnId(), kitRequestShipping.getKitLabel(), null, "U"));
+                        null, ddpInstance, kitTypeName, null, false, kitRequestShipping.getTrackingReturnId(), kitRequestShipping.getKitLabel(), null, "U"));
     }
 
     public void createEventsForDDPInstance(String eventName, String eventType, String eventDescription, boolean nullKitType) {

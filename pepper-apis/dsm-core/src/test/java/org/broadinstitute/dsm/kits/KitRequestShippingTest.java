@@ -171,11 +171,10 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         Integer salivaKitTypeId = kitTestUtil.getKitTypeIdForKit(salivaKitTypeName);
 
         List<DDPInstance.LegacyKits.LegacyKitSummary> legacyKitSummaries = List.of(
-                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(bloodKitTypeId, numLegacyBloodKits)),
-                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(salivaKitTypeId, numLegacySalivaKits)));
+                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId,
+                        Map.of(bloodKitTypeId, numLegacyBloodKits, salivaKitTypeId, numLegacySalivaKits)));
         DDPInstance.LegacyKits legacyKits = new DDPInstance.LegacyKits(legacyKitSummaries);
         ddpInstance.setLegacyKits(legacyKits);
-
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -186,9 +185,9 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 int parsedBloodKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleIncludingLegacyKits);
 
                 // Sample names for first kits do not have a numeric suffix.  Subsequent kits do, starting at 1.
-                // So the 2nd kit has a suffix of 1, the 3rd kit has a suffix of 2, etc.
-                Assert.assertEquals("Unexpected kit count for " + salivaSampleIncludingLegacyKits, 2, parsedSalivaKitNumberIncludingLegacyKits);
-                Assert.assertEquals("Unexpected kit count for " + bloodSampleIncludingLegacyKits, 1, parsedBloodKitNumberIncludingLegacyKits);
+                // So the 2nd kit has a suffix of 2, the 3rd kit has a suffix of 3, etc.
+                Assert.assertEquals("Unexpected kit count for " + salivaSampleIncludingLegacyKits, numLegacySalivaKits + 1, parsedSalivaKitNumberIncludingLegacyKits);
+                Assert.assertEquals("Unexpected kit count for " + bloodSampleIncludingLegacyKits, numLegacyBloodKits + 1, parsedBloodKitNumberIncludingLegacyKits);
 
                 // todo arz write a kit request the way juniper will, then verify that the
                 // kit count is the legacy offset + new kit
@@ -321,7 +320,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit")
                     .withKitTypeId(String.valueOf(salivaKitTypeId)).build();
 
-            String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100", kitTestUtil.getKitTypeIdForKit("SALIVA"));
+            String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100", "SALIVA", kitTestUtil.getKitTypeIdForKit("SALIVA"));
             createdKits.add(dsmKitRequestId);
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
