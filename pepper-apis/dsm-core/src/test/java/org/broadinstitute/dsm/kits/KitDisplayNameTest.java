@@ -19,8 +19,7 @@ import org.junit.Test;
 public class KitDisplayNameTest extends DbTxnBaseTest {
     private static final String instanceName = "kit_test_instance";
     private static KitTestUtil kitTestUtil = new KitTestUtil(instanceName, instanceName,
-            "some_prefix", "kit_test_group", KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_NAME,
-            KitRequestShippingTest.BLOOD_RNA_KIT_TYPE_DISPLAY_NAME, null, false);
+            "some_prefix", "kit_test_group", KitTestUtil.BLOOD, null, false);
 
     private static KitShippingTestUtil kitShippingTestUtil;
     private static DDPInstanceDto ddpInstanceDto;
