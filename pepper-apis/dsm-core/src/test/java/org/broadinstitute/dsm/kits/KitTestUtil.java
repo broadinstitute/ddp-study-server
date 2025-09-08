@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -84,7 +85,7 @@ public class KitTestUtil {
 
     protected UserAdminTestUtil adminUtil = new UserAdminTestUtil();
     private Set<KitType> kitTypes;
-    private Map<String, Integer> kitTypeIds = new HashMap<>();
+    private Map<KitType, Integer> kitTypeIds = new HashMap<>();
     protected Integer ddpInstanceId;
     protected Integer ddpGroupId;
     protected Integer ddpInstanceGroupId;
@@ -226,7 +227,7 @@ public class KitTestUtil {
                     ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, ptInstanceRoleId));
                 }
                 for (KitType kitType : kitTypes) {
-                    initKitType(conn, kitType.getKitTypeName(), kitType.getDisplayName());
+                    initKitType(conn, kitType);
                 }
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
@@ -301,28 +302,26 @@ public class KitTestUtil {
         return kitTypeIds.get(kitTypeName);
     }
 
-    private void initKitType(Connection conn, String kitTypeName, String displayName)
+    private void initKitType(Connection conn, KitType kitType)
             throws SQLException {
-        if (kitTypeIds.containsKey(kitTypeName)) {
+        if (kitTypeIds.containsKey(kitType)) {
             return;
         }
         String query = SELECT_KIT_TYPE_ID;
-        if (StringUtils.isNotBlank(displayName)) {
+        if (StringUtils.isNotBlank(kitType.getDisplayName())) {
             query = query.concat(SELECT_BY_DISPLAY_NAME);
         }
         PreparedStatement stmt = conn.prepareStatement(query);
-        stmt.setString(1, kitTypeName);
-        if (StringUtils.isNotBlank(displayName)) {
-            stmt.setString(2, displayName);
+        stmt.setString(1, kitType.getKitTypeName());
+        if (StringUtils.isNotBlank(kitType.getDisplayName())) {
+            stmt.setString(2, kitType.getDisplayName());
         }
         ResultSet rs = stmt.executeQuery();
         Integer kitTypeId = null;
-        if (rs.next()) {
-            kitTypeId = rs.getInt(1);
-        } else {
-            kitTypeId = createKitType(conn, kitTypeName, displayName);
+        if (!rs.next()) {
+            kitTypeId = createKitType(conn, kitType.getKitTypeName(), kitType.getDisplayName());
+            kitTypeIds.put(kitType, kitTypeId);
         }
-        kitTypeIds.put(kitTypeName, kitTypeId);
     }
 
     private Integer createKitType(Connection conn, String kitTypeName, String displayName) throws SQLException {
@@ -597,6 +596,22 @@ public class KitTestUtil {
             return displayName;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)  {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            KitType kitType = (KitType) o;
+            return Objects.equals(kitTypeName, kitType.kitTypeName) && Objects.equals(displayName, kitType.displayName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(kitTypeName, displayName);
+        }
     }
 }
 

@@ -256,7 +256,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withKitTypeId(String.valueOf(salivaKitTypeId)).build();
 
             String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100",
-                    kitTestUtil.getKitTypeIdForKit("SALIVA"));
+                    "SALIVA", kitTestUtil.getKitTypeIdForKit("SALIVA"));
             createdKits.add(dsmKitRequestId);
 
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
