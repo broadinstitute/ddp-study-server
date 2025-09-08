@@ -259,7 +259,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     ddpParticipantId, kitRequestShipping.getDdpKitRequestId()), never());
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Unexpected exception");
+            Assert.fail("Unexpected exception " + e.getMessage());
         }
     }
 

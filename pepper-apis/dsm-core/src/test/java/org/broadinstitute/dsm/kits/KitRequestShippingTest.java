@@ -133,7 +133,12 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         int indexOfRightMostUnderscore = sampleId.lastIndexOf("_");
         int count = -1;
         if (indexOfRightMostUnderscore > -1) {
-            count = Integer.parseInt(sampleId.substring(indexOfRightMostUnderscore + 1));
+            String kitCount = sampleId.substring(indexOfRightMostUnderscore + 1);
+            try {
+                count = Integer.parseInt(kitCount);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Could not parse kitCount from sampleId " + sampleId + " with kit count " + kitCount, e);
+            }
         }
         return count;
     }
