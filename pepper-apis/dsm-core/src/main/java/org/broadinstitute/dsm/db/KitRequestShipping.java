@@ -1860,9 +1860,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             // to whatever has been used previously so that downstream data can be rolled up to the same
             // participant
             DDPInstance.LegacyKits.LegacyKitSummary legacyKitsSummary = legacyKits.getKitSummaryByShortId(shortId);
-            String existingCollabParticipantId = legacyKitsSummary.getCollaboratorParticipantId();
-            if (StringUtils.isNotBlank(existingCollabParticipantId)) {
-                return existingCollabParticipantId;
+            if (legacyKitsSummary != null) {
+                String existingCollabParticipantId = legacyKitsSummary.getCollaboratorParticipantId();
+                if (StringUtils.isNotBlank(existingCollabParticipantId)) {
+                    return existingCollabParticipantId;
+                }
             }
         }
         return generateCollaboratorParticipantId(shortId, ddpParticipantId, collaboratorIdPrefix, collaboratorParticipantLengthOverwrite);
