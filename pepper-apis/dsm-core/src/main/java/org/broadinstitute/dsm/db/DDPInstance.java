@@ -102,7 +102,7 @@ public class DDPInstance {
     private InstanceSettings instanceSettings;
     private final String studyGuid;
     // marked final to avoid state management complexity with lombok Builder
-    private final LegacyKits legacyKits;
+    private final LegacyKits legacyKits = new LegacyKits(new ArrayList<>());
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -128,7 +128,7 @@ public class DDPInstance {
         this.displayName = displayName;
         this.instanceSettings = instanceSettings;
         this.studyGuid = studyGuid;
-        this.legacyKits = legacyKits;
+        this.legacyKits.initFrom(legacyKits);
     }
 
 
@@ -152,7 +152,6 @@ public class DDPInstance {
         this.mercuryOrderCreator = null;
         this.displayName = null;
         this.studyGuid = null;
-        this.legacyKits = null;
     }
 
     /**
