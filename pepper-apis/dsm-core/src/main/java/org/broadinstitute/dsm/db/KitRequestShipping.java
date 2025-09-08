@@ -1859,7 +1859,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             // if this study has kits that were not processed by DSM, set the collab participant id
             // to whatever has been used previously so that downstream data can be rolled up to the same
             // participant
-            DDPInstance.LegacyKits.LegacyKitSummary legacyKitsSummary = legacyKits.getKitSummaryByDDPParticipantId(ddpParticipantId);
+            DDPInstance.LegacyKits.LegacyKitSummary legacyKitsSummary = legacyKits.getKitSummaryByShortId(shortId);
             String existingCollabParticipantId = legacyKitsSummary.getCollaboratorParticipantId();
             if (StringUtils.isNotBlank(existingCollabParticipantId)) {
                 return existingCollabParticipantId;

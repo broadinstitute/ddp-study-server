@@ -133,7 +133,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         int indexOfRightMostUnderscore = sampleId.lastIndexOf("_");
         int count = -1;
         if (indexOfRightMostUnderscore > -1) {
-            count = Integer.parseInt(sampleId.substring(indexOfRightMostUnderscore));
+            count = Integer.parseInt(sampleId.substring(indexOfRightMostUnderscore) + 1);
         }
         return count;
     }
@@ -205,7 +205,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
         try {
             String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
-            Assert.assertEquals(legacyKits.getDDPParticipantId(), collaboratorParticipantId);
+            Assert.assertEquals(legacyCollaboratorParticipantId, collaboratorParticipantId);
 
             ddpInstance.setLegacyKits(new DDPInstance.LegacyKits(Collections.emptyList()));
 

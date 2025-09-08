@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +102,7 @@ public class DDPInstance {
     private final String displayName;
     private InstanceSettings instanceSettings;
     private final String studyGuid;
-    private LegacyKits legacyKits;
+    private LegacyKits legacyKits = new LegacyKits(Collections.emptyList());
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -127,6 +128,11 @@ public class DDPInstance {
         this.displayName = displayName;
         this.instanceSettings = instanceSettings;
         this.studyGuid = studyGuid;
+        if (legacyKits == null) {
+            this.legacyKits = new LegacyKits(Collections.emptyList());
+        } else {
+            this.legacyKits = legacyKits;
+        }
     }
 
 
@@ -563,19 +569,19 @@ public class DDPInstance {
 
     public static class LegacyKits {
 
-        private Map<String, LegacyKitSummary> legacyKitsByDDPParticipantId = new HashMap<>();
+        private Map<String, LegacyKitSummary> legacyKitsByShortId = new HashMap<>();
 
         private Map<String, LegacyKitSummary> legacyKitsByCollabParticipantId = new HashMap<>();
 
         public LegacyKits(List<LegacyKitSummary> legacyKitSummaries) {
             for (LegacyKitSummary legacyKitSummary : legacyKitSummaries) {
                 legacyKitsByCollabParticipantId.put(legacyKitSummary.getCollaboratorParticipantId(), legacyKitSummary);
-                legacyKitsByDDPParticipantId.put(legacyKitSummary.getDDPParticipantId(), legacyKitSummary);
+                legacyKitsByShortId.put(legacyKitSummary.getDDPParticipantId(), legacyKitSummary);
             }
         }
 
-        public LegacyKitSummary getKitSummaryByDDPParticipantId(String ddpParticipantId) {
-            return legacyKitsByDDPParticipantId.get(ddpParticipantId);
+        public LegacyKitSummary getKitSummaryByShortId(String shortId) {
+            return legacyKitsByShortId.get(shortId);
         }
 
         public LegacyKitSummary getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
