@@ -292,7 +292,7 @@ public class KitTestUtil {
      */
     public String getSingleKitTypeName() {
         if (kitTypeIds.size() == 1) {
-            return kitTypeIds.keySet().iterator().next();
+            return kitTypeIds.keySet().iterator().next().getKitTypeName();
         } else {
             throw new RuntimeException("There are multiple kit types in use.  Please indicate which kit type.");
         }
