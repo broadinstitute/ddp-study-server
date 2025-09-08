@@ -54,7 +54,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        kitTestUtil = new KitTestUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, Set.of(KitTestUtil.SALIVA, KitTestUtil.BLOOD), esIndex, false);
+        kitTestUtil = new KitTestUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, Set.of(new KitTestUtil.KitType("SALIVA", null), KitTestUtil.BLOOD), esIndex, false);
         kitTestUtil.setupInstanceAndSettings();
         ddpInstanceDao.setMigratedDdp(kitTestUtil.ddpInstanceId, true);
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
