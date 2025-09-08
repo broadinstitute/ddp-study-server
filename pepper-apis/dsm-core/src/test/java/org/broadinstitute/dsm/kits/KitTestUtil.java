@@ -305,7 +305,6 @@ public class KitTestUtil {
         if (kitTypeIds.containsKey(kitTypeName) && isExistingKit) {
             return getKitTypeIdForKit(kitTypeName);
         }
-        Integer kitTypeId = null;
         String query = SELECT_KIT_TYPE_ID;
         if (StringUtils.isNotBlank(displayName)) {
             query = query.concat(SELECT_BY_DISPLAY_NAME);
@@ -316,10 +315,13 @@ public class KitTestUtil {
             stmt.setString(2, displayName);
         }
         ResultSet rs = stmt.executeQuery();
+        Integer kitTypeId = null;
         if (rs.next()) {
             kitTypeId = rs.getInt(1);
-            kitTypeIds.put(kitTypeName, kitTypeId);
+        } else {
+            kitTypeId = createKitType(conn, kitTypeName, displayName);
         }
+        kitTypeIds.put(kitTypeName, kitTypeId);
         return getKitTypeIdForKit(kitTypeName);
     }
 
