@@ -226,7 +226,7 @@ public class KitTestUtil {
                     ddpInstanceRoleIdList.add(createDdpInstanceRole(conn, ptInstanceRoleId));
                 }
                 for (KitType kitType : kitTypes) {
-                    kitTypeIds.put(kitType.getKitTypeName(), getKitTypeId(conn, kitType.getKitTypeName(), kitType.getDisplayName(), true));
+                    initKitType(conn, kitType.getKitTypeName(), kitType.getDisplayName());
                 }
                 kitDimensionId = createKitDimension(conn);
                 kitReturnId = createKitReturnInformation(conn);
@@ -301,10 +301,10 @@ public class KitTestUtil {
         return kitTypeIds.get(kitTypeName);
     }
 
-    private Integer getKitTypeId(Connection conn, String kitTypeName, String displayName, boolean isExistingKit)
+    private void initKitType(Connection conn, String kitTypeName, String displayName)
             throws SQLException {
-        if (kitTypeIds.containsKey(kitTypeName) && isExistingKit) {
-            return getKitTypeIdForKit(kitTypeName);
+        if (kitTypeIds.containsKey(kitTypeName)) {
+            return;
         }
         String query = SELECT_KIT_TYPE_ID;
         if (StringUtils.isNotBlank(displayName)) {
@@ -323,7 +323,10 @@ public class KitTestUtil {
             kitTypeId = createKitType(conn, kitTypeName, displayName);
         }
         kitTypeIds.put(kitTypeName, kitTypeId);
-        return getKitTypeIdForKit(kitTypeName);
+
+        if (kitTypeIds.get(kitTypeName) == null) {
+            throw new RuntimeException("Kit type " + kitTypeName + " not found");
+        }
     }
 
     private Integer createKitType(Connection conn, String kitTypeName, String displayName) throws SQLException {
