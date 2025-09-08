@@ -72,7 +72,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
     public static void setUp() {
         esIndex = ElasticTestUtil.createIndex(INSTANCE_NAME, "elastic/lmsMappings.json", null);
         kitShippingTestUtil = new KitShippingTestUtil(TEST_USER, "EVENT");
-        kitTestUtil = new KitTestUtil(INSTANCE_NAME, INSTANCE_GUID, "event_test_prefix", "event-group", "SALIVA", "SALIVA", esIndex,
+        kitTestUtil = new KitTestUtil(INSTANCE_NAME, INSTANCE_GUID, "event_test_prefix", "event-group", KitTestUtil.SALIVA, esIndex,
                  false);
         kitTestUtil.setupInstanceAndSettings();
         // set DSM's config to the test setup's config
@@ -109,7 +109,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             Assert.assertEquals(200L, (long)DDPRequestUtil.postRequest("", "", "", true));
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    kitTestUtil.getKitTypeId(), false, null);
+                    kitTestUtil.getSingleKitTypeId(), false, null);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL";
             List<ScanResult> scanResultList = kitTestUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
@@ -176,7 +176,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             Assert.assertEquals(500L, (long)DDPRequestUtil.postRequest("", "", "", true));
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    kitTestUtil.getKitTypeId(), false, null);
+                    kitTestUtil.getSingleKitTypeId(), false, null);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_2";
             kitTestUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
@@ -204,7 +204,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     any())).thenThrow(exception);
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    kitTestUtil.getKitTypeId(), false, null);
+                    kitTestUtil.getSingleKitTypeId(), false, null);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_3";
             kitTestUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
@@ -243,7 +243,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
                     });
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    kitTestUtil.getKitTypeId(), false, null);
+                    kitTestUtil.getSingleKitTypeId(), false, null);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_4";
             kitTestUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);
@@ -272,7 +272,7 @@ public class EventServiceTest extends DbAndElasticBaseTest {
             utilities.when(() -> DDPRequestUtil.postRequest(anyString(), any(), anyString(), anyBoolean())).thenReturn(200);
 
             int kitRequestId = kitShippingTestUtil.createTestKitShippingWithKitType(participantDto, ddpInstanceDto, SALIVA,
-                    kitTestUtil.getKitTypeId(), false, null);
+                    kitTestUtil.getSingleKitTypeId(), false, null);
             KitRequestShipping kitRequestShipping = KitDao.getKitRequest(kitRequestId).orElseThrow();
             String kitLabel = "EVENT_KIT_LABEL_5";
             kitTestUtil.changeKitRequestShippingToSent(kitRequestShipping, kitLabel);

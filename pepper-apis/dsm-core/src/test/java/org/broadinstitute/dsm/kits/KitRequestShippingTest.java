@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import liquibase.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,11 +48,13 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static KitTestUtil kitTestUtil;
     private static List<ParticipantDto> participants = new ArrayList<>();
     private static List<String> createdKits = new ArrayList<>();
+    private static Integer salivaKitTypeId;
+    private static Integer bloodKitTypeId;
 
     @BeforeClass
     public static void doFirst() {
         esIndex = ElasticTestUtil.createIndex(instanceName, "elastic/lmsMappings.json", null);
-        kitTestUtil = new KitTestUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, "SALIVA", null, esIndex, false);
+        kitTestUtil = new KitTestUtil(instanceName, instanceName, collaboratorIdPrefix, instanceName, Set.of(KitTestUtil.SALIVA, KitTestUtil.BLOOD), esIndex, false);
         kitTestUtil.setupInstanceAndSettings();
         ddpInstanceDao.setMigratedDdp(kitTestUtil.ddpInstanceId, true);
         ddpInstanceDto = ddpInstanceDao.getDDPInstanceByInstanceName(instanceName).orElseThrow();
@@ -70,6 +73,9 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         notLegacyParticipant = TestParticipantUtil.createParticipantWithEsProfile(notLegacyParticipantGuid, profile, ddpInstanceDto);
         notLegacyParticipantGuid = notLegacyParticipant.getRequiredDdpParticipantId();
         participants.add(notLegacyParticipant);
+
+        bloodKitTypeId = kitTestUtil.getKitTypeIdForKit(KitTestUtil.BLOOD.getKitTypeName());
+        salivaKitTypeId = kitTestUtil.getKitTypeIdForKit(KitTestUtil.SALIVA.getKitTypeName());
     }
 
     @AfterClass
@@ -160,23 +166,30 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         // with legacy kits, suffix kit type count should be the number of legacy kits of that type plus one
 
         List<DDPInstance.LegacyKits.LegacyKitSummary> legacyKitSummaries = List.of(
-                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(1, numLegacyBloodKits)),
-                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(2, numLegacySalivaKits)));
+                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(2, numLegacyBloodKits)),
+                new DDPInstance.LegacyKits.LegacyKitSummary(ddpParticipantId, legacyCollaboratorParticipantId, Map.of(1, numLegacySalivaKits)));
         DDPInstance.LegacyKits legacyKits = new DDPInstance.LegacyKits(legacyKitSummaries);
         ddpInstance.setLegacyKits(legacyKits);
+        String bloodKitTypeName = KitTestUtil.BLOOD.getKitTypeName();
+        String salivaKitTypeName = KitTestUtil.SALIVA.getKitTypeName();
+        Integer bloodKitTypeId = kitTestUtil.getKitTypeIdForKit(bloodKitTypeName);
+        Integer salivaKitTypeId = kitTestUtil.getKitTypeIdForKit(salivaKitTypeName);
 
         TransactionWrapper.inTransaction(conn -> {
             try {
-                String bloodSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, "BLOOD", 1, ddpInstance);
-                String salivaSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, "SALIVA", 2, ddpInstance);
+                String bloodSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, bloodKitTypeName, bloodKitTypeId, ddpInstance);
+                String salivaSampleIncludingLegacyKits = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, salivaKitTypeName, salivaKitTypeId, ddpInstance);
 
                 int parsedSalivaKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(salivaSampleIncludingLegacyKits);
                 int parsedBloodKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(bloodSampleIncludingLegacyKits);
 
-                // Sample names for first kits do not have a numeric suffix,  Subsequent kits do, starting at 1.
+                // Sample names for first kits do not have a numeric suffix.  Subsequent kits do, starting at 1.
                 // So the 2nd kit has a suffix of 1, the 3rd kit has a suffix of 2, etc.
                 Assert.assertEquals(2, parsedSalivaKitNumberIncludingLegacyKits);
                 Assert.assertEquals(1, parsedBloodKitNumberIncludingLegacyKits);
+
+                // todo arz write a kit request the way juniper will, then verify that the
+                // kit count is the legacy offset + new kit
 
             } finally {
                 ddpInstance.setLegacyKits(originalLegacyKits);
@@ -225,7 +238,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId, ddpInstance);
+                    salivaKitTypeId, ddpInstance);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
@@ -239,7 +252,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withBspCollaboratorSampleId(legacyCollaboratorSampleId)
                     .withKitTypeName("SALIVA")
                     .withDdpKitRequestId("0001_Kit")
-                    .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
+                    .withKitTypeId(String.valueOf(salivaKitTypeId)).build();
 
             String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
             createdKits.add(dsmKitRequestId);
@@ -247,7 +260,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId, ddpInstance);
+                    salivaKitTypeId, ddpInstance);
 
             String expectedCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA_2";
 
@@ -264,14 +277,14 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withBspCollaboratorSampleId(collaboratorSampleId + "_2")
                     .withKitTypeName("SALIVA")
                     .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit2")
-                    .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
+                    .withKitTypeId(String.valueOf(salivaKitTypeId)).build();
 
             createdKits.add(kitTestUtil.createKitRequestShipping(pepperKitRequestShipping, ddpInstance, "100"));
 
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     legacyParticipant.getRequiredDdpParticipantId(), shortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId, ddpInstance);
+                    salivaKitTypeId, ddpInstance);
 
             expectedCollaboratorSampleId =  legacyCollaboratorParticipantId + "_SALIVA_3";
 
@@ -292,7 +305,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
             String nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
             String nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId, ddpInstance);
+                    salivaKitTypeId, ddpInstance);
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(collaboratorSampleId, nextCollaboratorSampleId);
 
@@ -303,14 +316,14 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                     .withBspCollaboratorSampleId(collaboratorSampleId)
                     .withKitTypeName("SALIVA")
                     .withDdpKitRequestId(notLegacyParticipantShortId + "_Kit")
-                    .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
+                    .withKitTypeId(String.valueOf(salivaKitTypeId)).build();
 
             String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
             createdKits.add(dsmKitRequestId);
             nextCollaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance,
                     notLegacyParticipantGuid, notLegacyParticipantShortId, "0");
             nextCollaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId, ddpInstance);
+                    salivaKitTypeId, ddpInstance);
             String expectedNextCollaboratorSampleId = "PROJ_" + notLegacyParticipantShortId + "_SALIVA_2";
             Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
             Assert.assertEquals(expectedNextCollaboratorSampleId, nextCollaboratorSampleId);
@@ -340,7 +353,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 notHruidParticipantGuid, notHruidId, "0");
         String nextCollaboratorSampleId = (String) TransactionWrapper.inTransaction(conn -> {
             String sampleId = KitRequestShipping.generateBspSampleID(conn, nextCollaboratorParticipantId, "SALIVA",
-                    kitTestUtil.kitTypeId, ddpInstance);
+                    salivaKitTypeId, ddpInstance);
             return new SimpleResult(sampleId);
         }).resultValue;
         Assert.assertEquals(collaboratorParticipantId, nextCollaboratorParticipantId);
