@@ -183,7 +183,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                         .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
                         .withBspCollaboratorSampleId(generatedSampleId)
                         .withKitTypeName("SALIVA")
-                        .withDdpKitRequestId(Instant.now() + generatedSampleId)
+                        .withDdpKitRequestId(System.currentTimeMillis() + generatedSampleId)
                         .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
 
                 String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
