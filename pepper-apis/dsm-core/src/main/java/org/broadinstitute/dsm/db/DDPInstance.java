@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,13 +102,13 @@ public class DDPInstance {
     private InstanceSettings instanceSettings;
     private final String studyGuid;
     // marked final to avoid state management complexity with lombok Builder
-    private final LegacyKits legacyKits = new LegacyKits(Collections.emptyList());
+    private final LegacyKits legacyKits;
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
                        boolean migratedDDP, String billingReference, String participantIndexES, String activityDefinitionIndexES,
                        String usersIndexES, String researchProject, String displayName, String mercuryOrderCreator,
-                       InstanceSettings instanceSettings, String studyGuid) {
+                       InstanceSettings instanceSettings, String studyGuid, LegacyKits legacyKits) {
         this.ddpInstanceId = ddpInstanceId;
         this.name = name;
         this.baseUrl = baseUrl;
@@ -129,6 +128,7 @@ public class DDPInstance {
         this.displayName = displayName;
         this.instanceSettings = instanceSettings;
         this.studyGuid = studyGuid;
+        this.legacyKits = legacyKits;
     }
 
 
@@ -152,6 +152,7 @@ public class DDPInstance {
         this.mercuryOrderCreator = null;
         this.displayName = null;
         this.studyGuid = null;
+        this.legacyKits = null;
     }
 
     /**
@@ -426,7 +427,7 @@ public class DDPInstance {
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
                 rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
-                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID));
+                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID), null);
     }
 
     private static DDPInstance getDDPInstanceFormResultSet(@NonNull ResultSet rs) throws SQLException {
@@ -443,7 +444,7 @@ public class DDPInstance {
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
                 rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
-                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID));
+                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), null, rs.getString(DBConstants.STUDY_GUID), null);
     }
 
     //assumption: base url of pepper studies will always end like: dsm/studies/<STUDYNAME>
@@ -560,7 +561,6 @@ public class DDPInstance {
      */
     @VisibleForTesting
     public void setLegacyKits(LegacyKits legacyKits) {
-        // legacyKits is final to avoid state management complexity from this class's use of lombok builder
         this.legacyKits.initFrom(legacyKits);
     }
 
