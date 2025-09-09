@@ -105,6 +105,12 @@ public class DDPInstance {
     private InstanceSettings instanceSettings;
     private final String studyGuid;
 
+    /**
+     * Sample id offsets control the number at which to start
+     * the sample id suffix when generating sample ids
+     * for kits.  In the absence of this value, the suffix will
+     * start at 0.
+     */
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
     private final LegacyKits legacyKits = new LegacyKits(new ArrayList<>());
@@ -548,6 +554,10 @@ public class DDPInstance {
      * consistent participant id naming for sequencing data that was generated prior to juniper, we use the legacy participant id.
      */
     public LegacyKits getLegacyKits() { // todo arz rename to indicate this study was on pepper and now on juniper vs. was on datstat and now on pepper
+        return legacyKits;  // getLegacyKitsForJuniper kitCounterOffsets
+    }
+
+    public void loadLegacyKitsFromDb() {
         // todo arz query via new legacy_kits table
 
         /*
@@ -555,7 +565,6 @@ public class DDPInstance {
             legacyKits = queryLegacyKitsFromDb();
         }
         */
-        return legacyKits;
     }
 
     /**

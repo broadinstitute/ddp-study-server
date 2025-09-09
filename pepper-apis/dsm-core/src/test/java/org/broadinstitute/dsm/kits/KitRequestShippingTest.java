@@ -82,13 +82,13 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         participants.forEach(participantDto ->
                 TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
         createdKits.forEach(dsmKitRequestId -> kitTestUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
-        kitTestUtil.deleteGeneratedData();
         for (Integer dsmKitRequestId : dsmKitRequestIds) {
             int deleteCount = kitDao.deleteKitRequestShipping(dsmKitRequestId);
             if (deleteCount != 1) {
                 throw new DsmInternalError("Failed to delete kit request with id " + dsmKitRequestId);
             }
         }
+        kitTestUtil.deleteGeneratedData();
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.deleteIndex(esIndex);
     }
