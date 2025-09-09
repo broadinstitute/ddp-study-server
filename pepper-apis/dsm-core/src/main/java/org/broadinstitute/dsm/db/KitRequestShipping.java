@@ -1319,16 +1319,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             int counter = 0;
 
             SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
-            SampleCounterOffset legacyKitsForParticipant = null;
+            SampleCounterOffset sampleCounterOffset = null;
             if (sampleCounterOffsets != null) {
-                legacyKitsForParticipant = sampleCounterOffsets.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
+                sampleCounterOffset = sampleCounterOffsets.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
             }
-            if (legacyKitsForParticipant != null) {
+            if (sampleCounterOffset != null) {
                 // If we're creating a kit for a participant that has had kits generated from previous systems that did not
                 // track kits via DSM, set the counter to match the number of kits the participant got for the given
                 // kit type in the previous system.  Any newly created kits will increment the counter again below, so this is
                 // an initial offset.
-                counter = legacyKitsForParticipant.getSampleCounterOffsetForKitTypeId(kitTypeId);
+                counter = sampleCounterOffset.getSampleCounterOffsetForKitTypeId(kitTypeId);
             }
             counter += getKitCounter(conn, collaboratorSampleId, kitTypeId);
 
