@@ -14,9 +14,12 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -101,7 +104,9 @@ public class DDPInstance {
     private final String displayName;
     private InstanceSettings instanceSettings;
     private final String studyGuid;
-    // marked final to avoid state management complexity with lombok Builder
+
+    @Getter(value = AccessLevel.NONE)
+    @Setter(value = AccessLevel.NONE)
     private final LegacyKits legacyKits = new LegacyKits(new ArrayList<>());
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
