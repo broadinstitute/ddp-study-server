@@ -1318,8 +1318,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             int counter = 0;
 
-            DDPInstance.SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
-            DDPInstance.SampleCounterOffsets.SampleCounterOffset legacyKitsForParticipant = null;
+            SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+            SampleCounterOffset legacyKitsForParticipant = null;
             if (sampleCounterOffsets != null) {
                 legacyKitsForParticipant = sampleCounterOffsets.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
             }
@@ -1853,12 +1853,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     collaboratorParticipantLengthOverwrite);
         }
 
-        DDPInstance.SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
         if (sampleCounterOffsets != null) {
-            // if this study has kits that were not processed by DSM, set the collab participant id
-            // to whatever has been used previously so that downstream data can be rolled up to the same
-            // participant
-            DDPInstance.SampleCounterOffsets.SampleCounterOffset legacyKitsSummary = sampleCounterOffsets.getKitSummaryByShortId(shortId);
+            // if this study is using sample kit offsets, use them.
+            SampleCounterOffset legacyKitsSummary = sampleCounterOffsets.getKitSummaryByShortId(shortId);
             if (legacyKitsSummary != null) {
                 String existingCollabParticipantId = legacyKitsSummary.getLegacyCollaboratorParticipantId();
                 if (StringUtils.isNotBlank(existingCollabParticipantId)) {

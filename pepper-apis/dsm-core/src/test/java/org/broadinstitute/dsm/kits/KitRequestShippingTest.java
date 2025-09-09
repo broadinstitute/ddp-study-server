@@ -11,6 +11,8 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.SampleCounterOffset;
+import org.broadinstitute.dsm.db.SampleCounterOffsets;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -164,14 +166,14 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         String ddpParticipantId = "PTP3838291";
         String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
         int numLegacyKits = 2;
-        DDPInstance.SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
         // with legacy kits, suffix kit type count should be the number of legacy kits of that type plus one
 
 
-        List<DDPInstance.SampleCounterOffsets.SampleCounterOffset> legacyKitSummaries = List.of(
-                new DDPInstance.SampleCounterOffsets.SampleCounterOffset(shortId, legacyCollaboratorParticipantId,
+        List<SampleCounterOffset> legacyKitSummaries = List.of(
+                new SampleCounterOffset(shortId, legacyCollaboratorParticipantId,
                         Map.of(kitTestUtil.kitTypeId, numLegacyKits)));
-        DDPInstance.SampleCounterOffsets sampleCounterOffsets = new DDPInstance.SampleCounterOffsets(legacyKitSummaries);
+        SampleCounterOffsets sampleCounterOffsets = new SampleCounterOffsets(legacyKitSummaries);
         ddpInstance.setSampleCounterOffsets(sampleCounterOffsets);
 
         TransactionWrapper.inTransaction(conn -> {
@@ -218,19 +220,19 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
      */
     @Test
     public void testGetCollaboratorParticipantIdWithLegacyKits() {
-        DDPInstance.SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
         String shortId = "SHORT3838";
         String ddpParticipantId = "PTP3838291";
         String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
-        DDPInstance.SampleCounterOffsets.SampleCounterOffset legacyKits = new DDPInstance.SampleCounterOffsets.SampleCounterOffset(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
+        SampleCounterOffset legacyKits = new SampleCounterOffset(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
 
         try {
             // if there is legacy kit information, the collaborator participant id should be the collab participant id from the legacy kit data
-            ddpInstance.setSampleCounterOffsets(new DDPInstance.SampleCounterOffsets(Collections.singletonList(legacyKits)));
+            ddpInstance.setSampleCounterOffsets(new SampleCounterOffsets(Collections.singletonList(legacyKits)));
             String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             Assert.assertEquals(legacyCollaboratorParticipantId, collaboratorParticipantId);
 
-            ddpInstance.setSampleCounterOffsets(new DDPInstance.SampleCounterOffsets(Collections.emptyList()));
+            ddpInstance.setSampleCounterOffsets(new SampleCounterOffsets(Collections.emptyList()));
 
             // if there's no legacy kit information, the collaborator participant id should be the [prefix]_[shortid]
             collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);

@@ -8,9 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -576,82 +574,4 @@ public class DDPInstance {
         this.sampleCounterOffsets.initFrom(sampleCounterOffsets);
     }
 
-    // todo arz move out of this class
-    /**
-     * Sample counter offsets control the number at which to start
-     * the sample id suffix when generating sample ids
-     * for kits.  In the absence of this value, the suffix will
-     * start at 0.
-     */
-    public static class SampleCounterOffsets {
-
-        private final Map<String, SampleCounterOffset> sampleCounterOffsetsByShortId = new HashMap<>();
-
-        private final Map<String, SampleCounterOffset> sampleCounterOffsetsByCollabParticipantId = new HashMap<>();
-
-        public SampleCounterOffsets(List<SampleCounterOffset> sampleCounterOffsets) {
-            for (SampleCounterOffset sampleCounterOffset : sampleCounterOffsets) {
-                sampleCounterOffsetsByCollabParticipantId.put(sampleCounterOffset.getLegacyCollaboratorParticipantId(), sampleCounterOffset);
-                sampleCounterOffsetsByShortId.put(sampleCounterOffset.getShortId(), sampleCounterOffset);
-            }
-        }
-
-        public void clear() {
-            this.sampleCounterOffsetsByCollabParticipantId.clear();
-            this.sampleCounterOffsetsByShortId.clear();
-        }
-
-        public void initFrom(SampleCounterOffsets copyFrom) {
-            clear();
-            if (copyFrom != null) {
-                sampleCounterOffsetsByShortId.putAll(copyFrom.sampleCounterOffsetsByShortId);
-                sampleCounterOffsetsByCollabParticipantId.putAll(copyFrom.sampleCounterOffsetsByCollabParticipantId);
-            }
-        }
-
-        public SampleCounterOffset getKitSummaryByShortId(String shortId) {
-            return sampleCounterOffsetsByShortId.get(shortId);
-        }
-
-        public SampleCounterOffset getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
-            return sampleCounterOffsetsByCollabParticipantId.get(collabParticipantId);
-        }
-
-        /**
-         * Each kit type can have its own offset for a participant.  In addition,
-         * the offset can declare a collaboratorParticipantId, which can be used
-         * instead of the prefix + hruid based naming for participants whose
-         * kits predate DSM.
-         */
-        public static class SampleCounterOffset {
-
-            private String legacyCollaboratorParticipantId;
-
-            private String shortId;
-
-            private Map<Integer, Integer> numKitsByType = new HashMap<>();
-
-            public SampleCounterOffset(String shortId, String legacyCollaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
-                this.shortId = shortId;
-                this.legacyCollaboratorParticipantId = legacyCollaboratorParticipantId;
-                this.numKitsByType = numKitsByType;
-            }
-
-            public int getNumberOfKitsForKitTypeId(int kitTypeId) {
-                return numKitsByType.getOrDefault(kitTypeId, 0);
-            }
-
-            /**
-             * If set, this is the collaborator participant id to use
-             * for kits.
-             */
-            public String getLegacyCollaboratorParticipantId() {
-                return legacyCollaboratorParticipantId;
-            }
-
-            public String getShortId() {
-                return shortId;
-            }
-        }
-    }
 }
