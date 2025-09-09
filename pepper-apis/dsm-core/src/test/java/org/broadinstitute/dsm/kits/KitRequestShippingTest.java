@@ -189,7 +189,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
 
                 String secondGeneratedSampleId = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
-                int parsed2ndSalivaKitNumber = parseKitCountFromGeneratedSampleId(generatedSampleId);
+                int parsed2ndSalivaKitNumber = parseKitCountFromGeneratedSampleId(secondGeneratedSampleId);
 
                 Assert.assertEquals("Unexpected kit count for " + secondGeneratedSampleId, numLegacyKits + 2, parsed2ndSalivaKitNumber);
 
