@@ -1328,7 +1328,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 // track kits via DSM, set the counter to match the number of kits the participant got for the given
                 // kit type in the previous system.  Any newly created kits will increment the counter again below, so this is
                 // an initial offset.
-                counter = legacyKitsForParticipant.getNumberOfKitsForKitTypeId(kitTypeId);
+                counter = legacyKitsForParticipant.getSampleCounterOffsetForKitTypeId(kitTypeId);
             }
             counter += getKitCounter(conn, collaboratorSampleId, kitTypeId);
 

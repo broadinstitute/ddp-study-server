@@ -15,16 +15,17 @@ public class SampleCounterOffset {
 
     private String shortId;
 
-    private Map<Integer, Integer> numKitsByType = new HashMap<>();
+    // key is the kit type id, value is the sample counter offset for that kit type
+    private Map<Integer, Integer> sampleCounterBySampleTypeId = new HashMap<>();
 
     public SampleCounterOffset(String shortId, String legacyCollaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
         this.shortId = shortId;
         this.legacyCollaboratorParticipantId = legacyCollaboratorParticipantId;
-        this.numKitsByType = numKitsByType;
+        this.sampleCounterBySampleTypeId = numKitsByType;
     }
 
-    public int getNumberOfKitsForKitTypeId(int kitTypeId) {
-        return numKitsByType.getOrDefault(kitTypeId, 0);
+    public int getSampleCounterOffsetForKitTypeId(int kitTypeId) {
+        return sampleCounterBySampleTypeId.getOrDefault(kitTypeId, 0);
     }
 
     /**
@@ -37,5 +38,9 @@ public class SampleCounterOffset {
 
     public String getShortId() {
         return shortId;
+    }
+
+    public void setSampleCounterOffsetForKitTypeId(Integer kitTypeId, Integer offset) {
+        sampleCounterBySampleTypeId.put(kitTypeId, offset);
     }
 }

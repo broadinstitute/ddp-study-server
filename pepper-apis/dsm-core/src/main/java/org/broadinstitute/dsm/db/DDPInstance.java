@@ -555,21 +555,6 @@ public class DDPInstance {
         return sampleCounterOffsets;
     }
 
-    public void loadLegacyKitsFromDb() {
-        // todo arz query via new legacy_kits table
-
-        /*
-        if (sampleCounterOffsets == null) {
-            sampleCounterOffsets = queryLegacyKitsFromDb();
-        }
-        */
-    }
-
-    /**
-     * Only use this for testing.  Use {@link #getSampleCounterOffsets()} in
-     * production code.
-     */
-    @VisibleForTesting
     public void setSampleCounterOffsets(SampleCounterOffsets sampleCounterOffsets) {
         this.sampleCounterOffsets.initFrom(sampleCounterOffsets);
     }

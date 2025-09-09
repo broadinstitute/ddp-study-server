@@ -4,7 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.SampleCounterOffsets;
+import org.broadinstitute.dsm.db.dao.ddp.instance.SampleCounterOffsetDao;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.nonpepperkit.JuniperKitRequest;
 import org.broadinstitute.dsm.model.nonpepperkit.KitResponse;
 import org.broadinstitute.dsm.model.nonpepperkit.NonPepperKitCreationService;
@@ -14,6 +18,8 @@ import org.broadinstitute.dsm.util.EasyPostUtil;
 import spark.Request;
 import spark.Response;
 import spark.Route;
+
+import java.sql.SQLException;
 
 /**
  * This is the route that is called by Juniper to create a new kit in DSM
@@ -65,8 +71,17 @@ public class JuniperShipKitRoute implements Route {
             }
 
             EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
-            // todo arz load legacy kit data for the instance
-            // DDPInstance.loadLegacyKitsFromDb();
+
+            // load the sample counter offsets if any are configured for juniper
+            TransactionWrapper.inTransaction(conn -> {
+                try {
+                    ddpInstance.setSampleCounterOffsets(new SampleCounterOffsets(SampleCounterOffsetDao.querySampleCounterOffsetsForInstance(conn, ddpInstance.getDdpInstanceIdAsInt())));
+                } catch (SQLException e) {
+                    throw new DsmInternalError("Could not query sample counter offsets for ddp instance " + ddpInstance.getDdpInstanceId(), e);
+                }
+                return null;
+            });
+
             KitResponse kitResponse =
                     this.kitCreationService.createNonPepperKit(juniperKitRequest, shipKitRequest.getKitType(), easyPostUtil,
                             ddpInstance);
