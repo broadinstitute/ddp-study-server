@@ -1329,9 +1329,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 // kit type in the previous system.  Any newly created kits will increment the counter again below, so this is
                 // an initial offset.
                 counter = legacyKitsForParticipant.getNumberOfKitsForKitTypeId(kitTypeId);
-            } else {
-                counter = getKitCounter(conn, collaboratorSampleId, kitTypeId);
             }
+            counter += getKitCounter(conn, collaboratorSampleId, kitTypeId);
 
             if  (ddpInstance.isMigratedDDP() && collaboratorParticipantId.contains("_")) {
                 String participantId = collaboratorParticipantId.split("_")[1];

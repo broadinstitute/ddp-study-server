@@ -13,8 +13,10 @@ import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -46,6 +48,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static int participantCounter = 0;
     private static Pair<ParticipantDto, String> legacyParticipantPair;
     private static KitTestUtil kitTestUtil;
+    private static final KitDao kitDao = new KitDao();
+    private static final List<Integer> dsmKitRequestIds = new ArrayList<>();
     private static List<ParticipantDto> participants = new ArrayList<>();
     private static List<String> createdKits = new ArrayList<>();
 
@@ -79,6 +83,12 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
         createdKits.forEach(dsmKitRequestId -> kitTestUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
         kitTestUtil.deleteGeneratedData();
+        for (Integer dsmKitRequestId : dsmKitRequestIds) {
+            int deleteCount = kitDao.deleteKitRequestShipping(dsmKitRequestId);
+            if (deleteCount != 1) {
+                throw new DsmInternalError("Failed to delete kit request with id " + dsmKitRequestId);
+            }
+        }
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.deleteIndex(esIndex);
     }
@@ -187,6 +197,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                         .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
 
                 String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+                dsmKitRequestIds.add(Integer.parseInt(dsmKitRequestId));
 
                 String secondGeneratedSampleId = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
                 int parsed2ndSalivaKitNumber = parseKitCountFromGeneratedSampleId(secondGeneratedSampleId);
