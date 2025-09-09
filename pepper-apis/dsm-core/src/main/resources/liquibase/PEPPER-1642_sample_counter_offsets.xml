@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="andrew" id="PEPPER-1642_sample_counter_offsets">
+        <createTable tableName="sample_counter_offset">
+            <column name="sample_counter_offset_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="sample_counter_offset_pk" nullable="false"/>
+            </column>
+            <column name="ddp_instance_id" type="int">
+                <constraints nullable="false" foreignKeyName="sample_counter_ddp_instance_id_fk"
+                             referencedTableName="ddp_instance" referencedColumnNames="ddp_instance_id"/>
+            </column>
+            <column name="kit_type_id" type="int">
+                <constraints nullable="false" foreignKeyName="sample_counter_kit_type_fk"
+                             referencedTableName="kit_type" referencedColumnNames="kit_type_id"/>
+            </column>
+            <column name="legacy_collaborator_participant_id" type="varchar(200)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="participant_short_code" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="offset" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+                columnNames="ddp_instance_id,kit_type_id,participant_short_code"
+                constraintName="sample_counter_offset_uk"
+                tableName="sample_counter_offset"/>
+    </changeSet>
+</databaseChangeLog>

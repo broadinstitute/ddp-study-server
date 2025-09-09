@@ -156,4 +156,5 @@
     <include file="liquibase/PEPPER-1554_scad_rename.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/tRCC/PEPPER-1502_tRCC_study_setup.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/PEPPER-1627_AddSexAtBirthToKitRequest.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/PEPPER-1642_sample_counter_offsets.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
