@@ -1318,10 +1318,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             int counter = 0;
 
-            DDPInstance.LegacyKits legacyKits = ddpInstance.getLegacyKits();
-            DDPInstance.LegacyKits.LegacyKitSummary legacyKitsForParticipant = null;
-            if (legacyKits != null) {
-                legacyKitsForParticipant = legacyKits.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
+            DDPInstance.SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+            DDPInstance.SampleCounterOffsets.SampleCounterOffset legacyKitsForParticipant = null;
+            if (sampleCounterOffsets != null) {
+                legacyKitsForParticipant = sampleCounterOffsets.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
             }
             if (legacyKitsForParticipant != null) {
                 // If we're creating a kit for a participant that has had kits generated from previous systems that did not
@@ -1853,14 +1853,14 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     collaboratorParticipantLengthOverwrite);
         }
 
-        DDPInstance.LegacyKits legacyKits = ddpInstance.getLegacyKits();
-        if (legacyKits != null) {
+        DDPInstance.SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        if (sampleCounterOffsets != null) {
             // if this study has kits that were not processed by DSM, set the collab participant id
             // to whatever has been used previously so that downstream data can be rolled up to the same
             // participant
-            DDPInstance.LegacyKits.LegacyKitSummary legacyKitsSummary = legacyKits.getKitSummaryByShortId(shortId);
+            DDPInstance.SampleCounterOffsets.SampleCounterOffset legacyKitsSummary = sampleCounterOffsets.getKitSummaryByShortId(shortId);
             if (legacyKitsSummary != null) {
-                String existingCollabParticipantId = legacyKitsSummary.getCollaboratorParticipantId();
+                String existingCollabParticipantId = legacyKitsSummary.getLegacyCollaboratorParticipantId();
                 if (StringUtils.isNotBlank(existingCollabParticipantId)) {
                     return existingCollabParticipantId;
                 }

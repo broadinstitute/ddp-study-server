@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.kits;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -165,15 +164,15 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         String ddpParticipantId = "PTP3838291";
         String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
         int numLegacyKits = 2;
-        DDPInstance.LegacyKits originalLegacyKits = ddpInstance.getLegacyKits();
+        DDPInstance.SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
         // with legacy kits, suffix kit type count should be the number of legacy kits of that type plus one
 
 
-        List<DDPInstance.LegacyKits.LegacyKitSummary> legacyKitSummaries = List.of(
-                new DDPInstance.LegacyKits.LegacyKitSummary(shortId, legacyCollaboratorParticipantId,
+        List<DDPInstance.SampleCounterOffsets.SampleCounterOffset> legacyKitSummaries = List.of(
+                new DDPInstance.SampleCounterOffsets.SampleCounterOffset(shortId, legacyCollaboratorParticipantId,
                         Map.of(kitTestUtil.kitTypeId, numLegacyKits)));
-        DDPInstance.LegacyKits legacyKits = new DDPInstance.LegacyKits(legacyKitSummaries);
-        ddpInstance.setLegacyKits(legacyKits);
+        DDPInstance.SampleCounterOffsets sampleCounterOffsets = new DDPInstance.SampleCounterOffsets(legacyKitSummaries);
+        ddpInstance.setSampleCounterOffsets(sampleCounterOffsets);
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -206,7 +205,7 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
 
             } finally {
-                ddpInstance.setLegacyKits(originalLegacyKits);
+                ddpInstance.setSampleCounterOffsets(originalSampleCounterOffsets);
             }
             return null;
         });
@@ -219,26 +218,26 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
      */
     @Test
     public void testGetCollaboratorParticipantIdWithLegacyKits() {
-        DDPInstance.LegacyKits originalLegacyKits = ddpInstance.getLegacyKits();
+        DDPInstance.SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
         String shortId = "SHORT3838";
         String ddpParticipantId = "PTP3838291";
         String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
-        DDPInstance.LegacyKits.LegacyKitSummary legacyKits = new DDPInstance.LegacyKits.LegacyKitSummary(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
+        DDPInstance.SampleCounterOffsets.SampleCounterOffset legacyKits = new DDPInstance.SampleCounterOffsets.SampleCounterOffset(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
 
         try {
             // if there is legacy kit information, the collaborator participant id should be the collab participant id from the legacy kit data
-            ddpInstance.setLegacyKits(new DDPInstance.LegacyKits(Collections.singletonList(legacyKits)));
+            ddpInstance.setSampleCounterOffsets(new DDPInstance.SampleCounterOffsets(Collections.singletonList(legacyKits)));
             String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             Assert.assertEquals(legacyCollaboratorParticipantId, collaboratorParticipantId);
 
-            ddpInstance.setLegacyKits(new DDPInstance.LegacyKits(Collections.emptyList()));
+            ddpInstance.setSampleCounterOffsets(new DDPInstance.SampleCounterOffsets(Collections.emptyList()));
 
             // if there's no legacy kit information, the collaborator participant id should be the [prefix]_[shortid]
             collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
             Assert.assertEquals(collaboratorParticipantId, ddpInstance.getCollaboratorIdPrefix() + "_" + shortId);
 
         } finally {
-            ddpInstance.setLegacyKits(originalLegacyKits);
+            ddpInstance.setSampleCounterOffsets(originalSampleCounterOffsets);
         }
     }
 

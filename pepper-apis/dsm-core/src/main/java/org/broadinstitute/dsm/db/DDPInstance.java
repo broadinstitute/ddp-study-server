@@ -113,7 +113,7 @@ public class DDPInstance {
      */
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
-    private final LegacyKits legacyKits = new LegacyKits(new ArrayList<>());
+    private final SampleCounterOffsets sampleCounterOffsets = new SampleCounterOffsets(new ArrayList<>());
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -551,76 +551,88 @@ public class DDPInstance {
 
     /**
      * For older studies (A-T, for example), kits created prior to juniper used a one-off participant id generator specific to A-T.  To ensure
-     * consistent participant id naming for sequencing data that was generated prior to juniper, we use the legacy participant id.
+     * consistent participant id and sample id naming for sequencing data that was generated prior to juniper, we use the legacy participant id.
      */
-    public LegacyKits getLegacyKits() { // todo arz rename to indicate this study was on pepper and now on juniper vs. was on datstat and now on pepper
-        return legacyKits;  // getLegacyKitsForJuniper kitCounterOffsets
+    public SampleCounterOffsets getSampleCounterOffsets() {
+        return sampleCounterOffsets;
     }
 
     public void loadLegacyKitsFromDb() {
         // todo arz query via new legacy_kits table
 
         /*
-        if (legacyKits == null) {
-            legacyKits = queryLegacyKitsFromDb();
+        if (sampleCounterOffsets == null) {
+            sampleCounterOffsets = queryLegacyKitsFromDb();
         }
         */
     }
 
     /**
-     * Only use this for testing.  Use {@link #getLegacyKits()} in
+     * Only use this for testing.  Use {@link #getSampleCounterOffsets()} in
      * production code.
      */
     @VisibleForTesting
-    public void setLegacyKits(LegacyKits legacyKits) {
-        this.legacyKits.initFrom(legacyKits);
+    public void setSampleCounterOffsets(SampleCounterOffsets sampleCounterOffsets) {
+        this.sampleCounterOffsets.initFrom(sampleCounterOffsets);
     }
 
-    public static class LegacyKits {
+    /**
+     * Sample counter offsets control the number at which to start
+     * the sample id suffix when generating sample ids
+     * for kits.  In the absence of this value, the suffix will
+     * start at 0.
+     */
+    public static class SampleCounterOffsets {
 
-        private Map<String, LegacyKitSummary> legacyKitsByShortId = new HashMap<>();
+        private Map<String, SampleCounterOffset> sampleCounterOffsetsByShortId = new HashMap<>();
 
-        private Map<String, LegacyKitSummary> legacyKitsByCollabParticipantId = new HashMap<>();
+        private Map<String, SampleCounterOffset> sampleCounterOffsetsByCollabParticipantId = new HashMap<>();
 
-        public LegacyKits(List<LegacyKitSummary> legacyKitSummaries) {
-            for (LegacyKitSummary legacyKitSummary : legacyKitSummaries) {
-                legacyKitsByCollabParticipantId.put(legacyKitSummary.getCollaboratorParticipantId(), legacyKitSummary);
-                legacyKitsByShortId.put(legacyKitSummary.getShortId(), legacyKitSummary);
+        public SampleCounterOffsets(List<SampleCounterOffset> sampleCounterOffsets) {
+            for (SampleCounterOffset sampleCounterOffset : sampleCounterOffsets) {
+                sampleCounterOffsetsByCollabParticipantId.put(sampleCounterOffset.getLegacyCollaboratorParticipantId(), sampleCounterOffset);
+                sampleCounterOffsetsByShortId.put(sampleCounterOffset.getShortId(), sampleCounterOffset);
             }
         }
 
-        public LegacyKitSummary getKitSummaryByShortId(String shortId) {
-            return legacyKitsByShortId.get(shortId);
+        public SampleCounterOffset getKitSummaryByShortId(String shortId) {
+            return sampleCounterOffsetsByShortId.get(shortId);
         }
 
-        public LegacyKitSummary getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
-            return legacyKitsByCollabParticipantId.get(collabParticipantId);
+        public SampleCounterOffset getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
+            return sampleCounterOffsetsByCollabParticipantId.get(collabParticipantId);
         }
 
         public void clear() {
-            this.legacyKitsByCollabParticipantId.clear();
-            this.legacyKitsByShortId.clear();
+            this.sampleCounterOffsetsByCollabParticipantId.clear();
+            this.sampleCounterOffsetsByShortId.clear();
         }
 
-        public void initFrom(LegacyKits copyFrom) {
+        public void initFrom(SampleCounterOffsets copyFrom) {
             clear();
             if (copyFrom != null) {
-                legacyKitsByShortId.putAll(copyFrom.legacyKitsByShortId);
-                legacyKitsByCollabParticipantId.putAll(copyFrom.legacyKitsByCollabParticipantId);
+                sampleCounterOffsetsByShortId.putAll(copyFrom.sampleCounterOffsetsByShortId);
+                sampleCounterOffsetsByCollabParticipantId.putAll(copyFrom.sampleCounterOffsetsByCollabParticipantId);
             }
         }
 
-        public static class LegacyKitSummary {
+        /**
+         * Each kit type can have its own offset for a participant.  In addition,
+         * the offset can declare a collaboratorParticipantId, which can be used
+         * instead of the prefix + hruid based naming for participants whose
+         * kits predate DSM.
+         */
+        public static class SampleCounterOffset {
 
-            private String collaboratorParticipantId;
+            private String legacyCollaboratorParticipantId;
 
             private String shortId;
 
             private Map<Integer, Integer> numKitsByType = new HashMap<>();
 
-            public LegacyKitSummary(String shortId, String collaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
+            public SampleCounterOffset(String shortId, String legacyCollaboratorParticipantId, Map<Integer, Integer> numKitsByType) {
                 this.shortId = shortId;
-                this.collaboratorParticipantId = collaboratorParticipantId;
+                this.legacyCollaboratorParticipantId = legacyCollaboratorParticipantId;
                 this.numKitsByType = numKitsByType;
             }
 
@@ -629,11 +641,11 @@ public class DDPInstance {
             }
 
             /**
-             * Returns the collaborator participant id used
-             * for the legacy kits
+             * If set, this is the collaborator participant id to use
+             * for kits.
              */
-            public String getCollaboratorParticipantId() {
-                return collaboratorParticipantId;
+            public String getLegacyCollaboratorParticipantId() {
+                return legacyCollaboratorParticipantId;
             }
 
             public String getShortId() {
