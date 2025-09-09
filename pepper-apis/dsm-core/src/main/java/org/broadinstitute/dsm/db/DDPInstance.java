@@ -113,7 +113,7 @@ public class DDPInstance {
      */
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
-    private final SampleCounterOffsets sampleCounterOffsets = new SampleCounterOffsets(new ArrayList<>());
+    private SampleCounterOffsets sampleCounterOffsets = new SampleCounterOffsets(new ArrayList<>());
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -573,9 +573,10 @@ public class DDPInstance {
      */
     @VisibleForTesting
     public void setSampleCounterOffsets(SampleCounterOffsets sampleCounterOffsets) {
-        this.sampleCounterOffsets.initFrom(sampleCounterOffsets);
+        this.sampleCounterOffsets = sampleCounterOffsets;
     }
 
+    // todo arz move out of this class
     /**
      * Sample counter offsets control the number at which to start
      * the sample id suffix when generating sample ids
@@ -601,19 +602,6 @@ public class DDPInstance {
 
         public SampleCounterOffset getKitSummaryByCollaboratorParticipantId(String collabParticipantId) {
             return sampleCounterOffsetsByCollabParticipantId.get(collabParticipantId);
-        }
-
-        public void clear() {
-            this.sampleCounterOffsetsByCollabParticipantId.clear();
-            this.sampleCounterOffsetsByShortId.clear();
-        }
-
-        public void initFrom(SampleCounterOffsets copyFrom) {
-            clear();
-            if (copyFrom != null) {
-                sampleCounterOffsetsByShortId.putAll(copyFrom.sampleCounterOffsetsByShortId);
-                sampleCounterOffsetsByCollabParticipantId.putAll(copyFrom.sampleCounterOffsetsByCollabParticipantId);
-            }
         }
 
         /**
