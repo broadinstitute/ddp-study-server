@@ -12,11 +12,15 @@ import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.dao.ddp.instance.SampleCounterOffsetDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.Value;
@@ -28,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 @Data
 @Builder(toBuilder = true, setterPrefix = "with")
+@AllArgsConstructor
 public class DDPInstance {
 
     public static final String SQL_SELECT_ALL_ACTIVE_REALMS =
@@ -99,6 +104,15 @@ public class DDPInstance {
     private final String displayName;
     private InstanceSettings instanceSettings;
     private final String studyGuid;
+
+    /**
+     * Sample id offsets control the number at which to start
+     * the sample id suffix when generating sample ids
+     * for kits.  In the absence of this value, the suffix will
+     * start at 0.
+     */
+    @Getter(value = AccessLevel.NONE)
+    private SampleCounterOffsets sampleCounterOffsets;
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -532,4 +546,25 @@ public class DDPInstance {
     public boolean isRgp() {
         return DBConstants.RGP.equalsIgnoreCase(this.getStudyGuid());
     }
+
+    /**
+     * For older studies (A-T, for example), kits created prior to juniper
+     * used a one-off participant id generator specific to A-T.  To ensure
+     * consistent participant id and sample id naming
+     * for sequencing data that was generated prior to juniper,
+     * use the sample counter offsets.
+     */
+    public SampleCounterOffsets getSampleCounterOffsets() {
+        if (sampleCounterOffsets == null) {
+            sampleCounterOffsets = TransactionWrapper.inTransaction(conn -> {
+                try {
+                    return new SampleCounterOffsets(SampleCounterOffsetDao.querySampleCounterOffsetsForInstance(conn, getDdpInstanceIdAsInt()));
+                } catch (SQLException e) {
+                    throw new DsmInternalError("Could not load sample counter offsets for ddp instance " + ddpInstanceId, e);
+                }
+            });
+        }
+        return sampleCounterOffsets;
+    }
+
 }

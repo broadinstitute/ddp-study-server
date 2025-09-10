@@ -593,4 +593,9 @@ public class DBConstants {
     public static final String ERROR_MESSAGE = "message";
     public static final String RETURN_TRACKING_NUMBER = "return_tracking_number";
     public static final String TRACKING_SCAN_BY = "tracking_scan_by";
+
+    // kit counter offsets
+    public static final String PARTICIPANT_SHORT_CODE = "participant_short_code";
+    public static final String LEGACY_COLLABORATOR_PARTICIPANT_ID = "legacy_collaborator_participant_id";
+    public static final String KIT_COUNTER_OFFSET = "offset";
 }
