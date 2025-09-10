@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +38,8 @@ public class SampleCounterOffsetDao {
 
                     SampleCounterOffset offsetForShortCode = getOffsetForShortCode(participantShortCode, offsets);
                     if (offsetForShortCode == null) {
-                        Map<Integer, Integer> offsetsByKitTypeId = Map.of(kitTypeId, offset);
+                        Map<Integer, Integer> offsetsByKitTypeId = new HashMap<>();
+                        offsetsByKitTypeId.put(kitTypeId, offset);
                         offsetForShortCode = new SampleCounterOffset(participantShortCode, collaboratorParticipantId, offsetsByKitTypeId);
                         offsets.add(offsetForShortCode);
                     }
