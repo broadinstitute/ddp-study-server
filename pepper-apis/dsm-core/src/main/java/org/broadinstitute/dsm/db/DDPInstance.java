@@ -111,7 +111,8 @@ public class DDPInstance {
      */
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
-    private final SampleCounterOffsets sampleCounterOffsets = new SampleCounterOffsets(new ArrayList<>());
+    @Builder.Default
+    private SampleCounterOffsets sampleCounterOffsets = null;
 
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
@@ -556,6 +557,7 @@ public class DDPInstance {
     }
 
     public void setSampleCounterOffsets(SampleCounterOffsets sampleCounterOffsets) {
+        this.sampleCounterOffsets = new SampleCounterOffsets(new ArrayList<>());
         this.sampleCounterOffsets.initFrom(sampleCounterOffsets);
     }
 

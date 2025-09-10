@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.ddp.instance;
 
 import org.broadinstitute.dsm.db.SampleCounterOffset;
 import org.broadinstitute.dsm.exception.DsmInternalError;
+import org.broadinstitute.dsm.statics.DBConstants;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.dsm.statics.DBConstants.KIT_COUNTER_OFFSET;
+import static org.broadinstitute.dsm.statics.DBConstants.LEGACY_COLLABORATOR_PARTICIPANT_ID;
+import static org.broadinstitute.dsm.statics.DBConstants.PARTICIPANT_SHORT_CODE;
+
 public class SampleCounterOffsetDao {
 
     private static final String QUERY_ALL_OFFSETS_FOR_INSTANCE =
@@ -19,16 +24,17 @@ public class SampleCounterOffsetDao {
             + "where o.ddp_instance_id = i.ddp_instance_id and kt.kit_type_id = o.kit_type_id "
             + "and i.ddp_instance_id = ?";
 
+    // todo arz write test
     public static List<SampleCounterOffset> querySampleCounterOffsetsForInstance(Connection conn, int ddpInstanceId) throws SQLException {
         final List<SampleCounterOffset> offsets = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(QUERY_ALL_OFFSETS_FOR_INSTANCE)) {
             stmt.setInt(1, ddpInstanceId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    String participantShortCode = rs.getString("participant_short_code");
-                    String collaboratorParticipantId = rs.getString("collaborator_participant_id");
-                    Integer kitTypeId = rs.getInt("kit_type_id");
-                    Integer offset = rs.getInt("offset");
+                    String participantShortCode = rs.getString(PARTICIPANT_SHORT_CODE);
+                    String collaboratorParticipantId = rs.getString(LEGACY_COLLABORATOR_PARTICIPANT_ID);
+                    Integer kitTypeId = rs.getInt(DBConstants.KIT_TYPE_ID);
+                    Integer offset = rs.getInt(KIT_COUNTER_OFFSET);
 
                     SampleCounterOffset offsetForShortCode = getOffsetForShortCode(participantShortCode, offsets);
                     if (offsetForShortCode == null) {
