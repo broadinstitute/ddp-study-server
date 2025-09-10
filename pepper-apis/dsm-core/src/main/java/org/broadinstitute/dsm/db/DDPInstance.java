@@ -18,7 +18,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.ddp.instance.SampleCounterOffsetDao;
@@ -547,7 +546,6 @@ public class DDPInstance {
     public boolean isRgp() {
         return DBConstants.RGP.equalsIgnoreCase(this.getStudyGuid());
     }
-
 
     /**
      * For older studies (A-T, for example), kits created prior to juniper

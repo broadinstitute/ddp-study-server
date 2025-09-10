@@ -186,9 +186,6 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 // So the 2nd kit has a suffix of 2, the 3rd kit has a suffix of 3, etc.
                 Assert.assertEquals("Unexpected kit count for " + generatedSampleId, numLegacyKits + 1, parsedSalivaKitNumberIncludingLegacyKits);
 
-                // todo arz write a kit request the way juniper will, then verify that the
-                // kit count is the legacy offset + new kit
-
                 KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
                         .withDdpParticipantId(ddpParticipantId)
                         .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
@@ -204,8 +201,6 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
                 int parsed2ndSalivaKitNumber = parseKitCountFromGeneratedSampleId(secondGeneratedSampleId);
 
                 Assert.assertEquals("Unexpected kit count for " + secondGeneratedSampleId, numLegacyKits + 2, parsed2ndSalivaKitNumber);
-
-
             } finally {
                 ddpInstance.setSampleCounterOffsets(originalSampleCounterOffsets);
             }
