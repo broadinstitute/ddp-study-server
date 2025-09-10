@@ -13,6 +13,7 @@ import java.util.List;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 @Data
 @Builder(toBuilder = true, setterPrefix = "with")
+@AllArgsConstructor()
 public class DDPInstance {
 
     public static final String SQL_SELECT_ALL_ACTIVE_REALMS =
