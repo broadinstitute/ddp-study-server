@@ -23,19 +23,6 @@ public class SampleCounterOffsets {
         }
     }
 
-    public void clear() {
-        this.sampleCounterOffsetsByCollabParticipantId.clear();
-        this.sampleCounterOffsetsByShortId.clear();
-    }
-
-    public void initFrom(SampleCounterOffsets copyFrom) {
-        clear();
-        if (copyFrom != null) {
-            sampleCounterOffsetsByShortId.putAll(copyFrom.sampleCounterOffsetsByShortId);
-            sampleCounterOffsetsByCollabParticipantId.putAll(copyFrom.sampleCounterOffsetsByCollabParticipantId);
-        }
-    }
-
     public SampleCounterOffset getKitSummaryByShortId(String shortId) {
         return sampleCounterOffsetsByShortId.get(shortId);
     }

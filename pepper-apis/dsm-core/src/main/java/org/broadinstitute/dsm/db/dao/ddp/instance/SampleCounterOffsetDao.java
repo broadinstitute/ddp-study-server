@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,6 @@ public class SampleCounterOffsetDao {
             + "where o.ddp_instance_id = i.ddp_instance_id and kt.kit_type_id = o.kit_type_id "
             + "and i.ddp_instance_id = ?";
 
-    // todo arz write test
     public static List<SampleCounterOffset> querySampleCounterOffsetsForInstance(Connection conn, int ddpInstanceId) throws SQLException {
         final List<SampleCounterOffset> offsets = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(QUERY_ALL_OFFSETS_FOR_INSTANCE)) {
@@ -65,4 +65,22 @@ public class SampleCounterOffsetDao {
         }
         return null;
     }
+
+    public static void deleteSampleCounterOffsets(Connection conn, Collection<SampleCounterOffset> offsets, int ddpInstanceId) throws SQLException {
+        for (SampleCounterOffset offset : offsets) {
+            for (Integer kitTypeId : offset.getKitTypeIds()) {
+                try (PreparedStatement deleteStmt = conn.prepareStatement(DELETE_OFFSET)) {
+                    deleteStmt.setInt(1, ddpInstanceId);
+                    deleteStmt.setInt(2, kitTypeId);
+                    deleteStmt.setString(3, offset.getShortId());
+
+                    int rowCount = deleteStmt.executeUpdate();
+                    if (rowCount != 1) {
+                        throw new DsmInternalError("Deleted " + rowCount + " rows for sample counter offset " + offset);
+                    }
+                }
+            }
+        }
+    }
+
 }
