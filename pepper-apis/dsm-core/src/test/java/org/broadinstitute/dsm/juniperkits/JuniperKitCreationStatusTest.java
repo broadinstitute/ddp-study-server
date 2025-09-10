@@ -80,6 +80,7 @@ public class JuniperKitCreationStatusTest extends DbTxnBaseTest {
                 new KitTestUtil(instanceName, instanceGuid, "JuniperTestProject",  "Juniper-Group", "SALIVA", "SALIVA", null, true);
         juniperKitUtil.setupInstanceAndSettings();
         ddpInstance = DDPInstance.getDDPInstanceWithRoleByStudyGuid(instanceGuid, DBConstants.JUNIPER_STUDY_INSTANCE_ROLE);
+
     }
 
     @AfterClass

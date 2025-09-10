@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.service;
 
 import static org.broadinstitute.dsm.service.EventService.MAX_TRIES;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
