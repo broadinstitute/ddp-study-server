@@ -21,7 +21,7 @@ public class SampleCounterOffsetDao {
 
     private static final String QUERY_ALL_OFFSETS_FOR_INSTANCE =
             "select o.participant_short_code, o.legacy_collaborator_participant_id, o.kit_type_id, o.offset "
-            + "from sample_counter_offsets o, ddp_instance i, kit_type kt "
+            + "from sample_counter_offset o, ddp_instance i, kit_type kt "
             + "where o.ddp_instance_id = i.ddp_instance_id and kt.kit_type_id = o.kit_type_id "
             + "and i.ddp_instance_id = ?";
 
