@@ -66,21 +66,4 @@ public class SampleCounterOffsetDao {
         return null;
     }
 
-    public static void deleteSampleCounterOffsets(Connection conn, Collection<SampleCounterOffset> offsets, int ddpInstanceId) throws SQLException {
-        for (SampleCounterOffset offset : offsets) {
-            for (Integer kitTypeId : offset.getKitTypeIds()) {
-                try (PreparedStatement deleteStmt = conn.prepareStatement(DELETE_OFFSET)) {
-                    deleteStmt.setInt(1, ddpInstanceId);
-                    deleteStmt.setInt(2, kitTypeId);
-                    deleteStmt.setString(3, offset.getShortId());
-
-                    int rowCount = deleteStmt.executeUpdate();
-                    if (rowCount != 1) {
-                        throw new DsmInternalError("Deleted " + rowCount + " rows for sample counter offset " + offset);
-                    }
-                }
-            }
-        }
-    }
-
 }
