@@ -18,7 +18,7 @@ public class SampleCounterOffsets {
 
     public SampleCounterOffsets(List<SampleCounterOffset> sampleCounterOffsets) {
         for (SampleCounterOffset sampleCounterOffset : sampleCounterOffsets) {
-            sampleCounterOffsetsByCollabParticipantId.put(sampleCounterOffset.getLegacyCollaboratorParticipantId(), sampleCounterOffset);
+            sampleCounterOffsetsByCollabParticipantId.put(sampleCounterOffset.getCollaboratorSampleId(), sampleCounterOffset);
             sampleCounterOffsetsByShortId.put(sampleCounterOffset.getShortId(), sampleCounterOffset);
         }
     }
