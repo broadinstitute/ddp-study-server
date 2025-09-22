@@ -25,7 +25,7 @@ public class SampleCounterOffsetDao {
             + "where o.ddp_instance_id = i.ddp_instance_id and kt.kit_type_id = o.kit_type_id "
             + "and i.ddp_instance_id = ?";
 
-    public static List<SampleCounterOffset> querySampleCounterOffsetsForInstance(Connection conn, int ddpInstanceId) throws SQLException {
+    public static List<SampleCounterOffset> getSampleCounterOffsetsForInstance(Connection conn, int ddpInstanceId) throws SQLException {
         final List<SampleCounterOffset> offsets = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(QUERY_ALL_OFFSETS_FOR_INSTANCE)) {
             stmt.setInt(1, ddpInstanceId);
@@ -37,6 +37,7 @@ public class SampleCounterOffsetDao {
                     Integer offset = rs.getInt(KIT_COUNTER_OFFSET);
 
                     SampleCounterOffset offsetForShortCode = getOffsetForShortCode(participantShortCode, offsets);
+                    // there is at most one offset per participant short id + kit type in the context of a ddp_instance
                     if (offsetForShortCode == null) {
                         Map<Integer, Integer> offsetsByKitTypeId = new HashMap<>();
                         offsetsByKitTypeId.put(kitTypeId, offset);
@@ -52,9 +53,9 @@ public class SampleCounterOffsetDao {
 
     /**
      * Return the counter offset for the given shortcode in the given
-     * list of shortcodes
+     * list of offsets
      */
-    public static SampleCounterOffset getOffsetForShortCode(String participantShortCode, List<SampleCounterOffset> offsets) {
+    private static SampleCounterOffset getOffsetForShortCode(String participantShortCode, List<SampleCounterOffset> offsets) {
         SampleCounterOffset foundOffset = null;
         for (SampleCounterOffset offset : offsets) {
             if (participantShortCode.equals(offset.getShortId())) {
