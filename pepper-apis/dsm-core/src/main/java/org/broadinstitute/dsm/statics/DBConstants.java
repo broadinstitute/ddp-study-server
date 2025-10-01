@@ -593,4 +593,5 @@ public class DBConstants {
     public static final String ERROR_MESSAGE = "message";
     public static final String RETURN_TRACKING_NUMBER = "return_tracking_number";
     public static final String TRACKING_SCAN_BY = "tracking_scan_by";
+
 }

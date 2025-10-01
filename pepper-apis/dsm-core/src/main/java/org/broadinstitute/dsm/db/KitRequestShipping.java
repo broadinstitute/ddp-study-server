@@ -1316,7 +1316,21 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                 collaboratorSampleId += "_" + type;
             }
 
-            int counter = getKitCounter(conn, collaboratorSampleId, kitTypeId);
+            int counter = 0;
+
+            SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+            SampleCounterOffset sampleCounterOffset = null;
+            if (sampleCounterOffsets != null) {
+                sampleCounterOffset = sampleCounterOffsets.getKitSummaryByCollaboratorParticipantId(collaboratorParticipantId);
+            }
+            if (sampleCounterOffset != null) {
+                // If we're creating a kit for a participant that has had kits generated from previous systems that did not
+                // track kits via DSM, set the counter to match the number of kits the participant got for the given
+                // kit type in the previous system.  Any newly created kits will increment the counter again below, so this is
+                // an initial offset.
+                counter = sampleCounterOffset.getSampleCounterOffsetForKitTypeId(kitTypeId);
+            }
+            counter += getKitCounter(conn, collaboratorSampleId, kitTypeId);
 
             if  (ddpInstance.isMigratedDDP() && collaboratorParticipantId.contains("_")) {
                 String participantId = collaboratorParticipantId.split("_")[1];
@@ -1837,6 +1851,18 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             // if kit uploaded with a gen2 legacy id, then use that id to generate the collaborator id
             return handleGen2MigratedKit(instanceId, ddpParticipantId, shortId, collaboratorIdPrefix,
                     collaboratorParticipantLengthOverwrite);
+        }
+
+        SampleCounterOffsets sampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        if (sampleCounterOffsets != null) {
+            // if this study is using sample kit offsets, use them if you have them for the participant
+            SampleCounterOffset sampleCounterOffset = sampleCounterOffsets.getKitSummaryByShortId(shortId);
+            if (sampleCounterOffset != null) {
+                String existingCollabParticipantId = sampleCounterOffset.getCollaboratorSampleId();
+                if (StringUtils.isNotBlank(existingCollabParticipantId)) {
+                    return existingCollabParticipantId;
+                }
+            }
         }
         return generateCollaboratorParticipantId(shortId, ddpParticipantId, collaboratorIdPrefix, collaboratorParticipantLengthOverwrite);
     }

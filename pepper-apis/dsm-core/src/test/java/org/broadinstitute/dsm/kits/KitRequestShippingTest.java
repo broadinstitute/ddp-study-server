@@ -1,16 +1,23 @@
 package org.broadinstitute.dsm.kits;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import liquibase.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.DbAndElasticBaseTest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.SampleCounterOffset;
+import org.broadinstitute.dsm.db.SampleCounterOffsets;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.util.ElasticTestUtil;
 import org.broadinstitute.dsm.util.TestParticipantUtil;
@@ -42,6 +49,8 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
     private static int participantCounter = 0;
     private static Pair<ParticipantDto, String> legacyParticipantPair;
     private static KitTestUtil kitTestUtil;
+    private static final KitDao kitDao = new KitDao();
+    private static final List<Integer> dsmKitRequestIds = new ArrayList<>();
     private static List<ParticipantDto> participants = new ArrayList<>();
     private static List<String> createdKits = new ArrayList<>();
 
@@ -74,6 +83,12 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
         participants.forEach(participantDto ->
                 TestParticipantUtil.deleteParticipant(participantDto.getRequiredParticipantId()));
         createdKits.forEach(dsmKitRequestId -> kitTestUtil.deleteKitRequestShipping((Integer.parseInt(dsmKitRequestId))));
+        for (Integer dsmKitRequestId : dsmKitRequestIds) {
+            int deleteCount = kitDao.deleteKitRequestShipping(dsmKitRequestId);
+            if (deleteCount != 1) {
+                throw new DsmInternalError("Failed to delete kit request with id " + dsmKitRequestId);
+            }
+        }
         kitTestUtil.deleteGeneratedData();
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
         ElasticTestUtil.deleteIndex(esIndex);
@@ -120,6 +135,107 @@ public class KitRequestShippingTest extends DbAndElasticBaseTest {
 
         shipping.setBspCollaboratorParticipantId(null);
         Assert.assertFalse(shipping.hasBSPCollaboratorParticipantId());
+    }
+
+    /**
+     * Given a generated bsp sample id, parse the sample count.  The sample count
+     * is the right-most int, and represents the number of samples for a given
+     * kit type for a given participant.  Returns -1 if there is no kit count
+     * in the sample id.
+     */
+    private int parseKitCountFromGeneratedSampleId(String sampleId) {
+        int indexOfRightMostUnderscore = sampleId.lastIndexOf("_");
+        int count = -1;
+        if (indexOfRightMostUnderscore > -1) {
+            String kitCount = sampleId.substring(indexOfRightMostUnderscore + 1);
+            if (StringUtil.isNumeric(kitCount)) {
+                count = Integer.parseInt(kitCount);
+            }
+        }
+        return count;
+    }
+
+
+    /**
+     * Verify that the kit-type specific kit counter suffix in the sample id takes into account
+     * the legacy kits when creating a new sample id.
+     */
+    @Test
+    public void testGenerateBspSampleIdForJuniperParticipantWithLegacyKits() {
+        String shortId = "SHORT3838";
+        String ddpParticipantId = "PTP3838291";
+        String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
+        int numLegacyKits = 2;
+        SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        // with legacy kits, suffix kit type count should be the number of legacy kits of that type plus one
+
+
+        List<SampleCounterOffset> legacyKitSummaries = List.of(
+                new SampleCounterOffset(shortId, legacyCollaboratorParticipantId,
+                        Map.of(kitTestUtil.kitTypeId, numLegacyKits)));
+        SampleCounterOffsets sampleCounterOffsets = new SampleCounterOffsets(legacyKitSummaries);
+        ddpInstance.setSampleCounterOffsets(sampleCounterOffsets);
+
+        TransactionWrapper.inTransaction(conn -> {
+            try {
+                String generatedSampleId = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
+
+                int parsedSalivaKitNumberIncludingLegacyKits = parseKitCountFromGeneratedSampleId(generatedSampleId);
+
+                // Sample names for first kits do not have a numeric suffix.  Subsequent kits do, starting at 1.
+                // So the 2nd kit has a suffix of 2, the 3rd kit has a suffix of 3, etc.
+                Assert.assertEquals("Unexpected kit count for " + generatedSampleId, numLegacyKits + 1, parsedSalivaKitNumberIncludingLegacyKits);
+
+                KitRequestShipping kitRequestShipping =  KitRequestShipping.builder()
+                        .withDdpParticipantId(ddpParticipantId)
+                        .withBspCollaboratorParticipantId(legacyCollaboratorParticipantId)
+                        .withBspCollaboratorSampleId(generatedSampleId)
+                        .withKitTypeName("SALIVA")
+                        .withDdpKitRequestId(System.currentTimeMillis() + generatedSampleId)
+                        .withKitTypeId(String.valueOf(kitTestUtil.kitTypeId)).build();
+
+                String dsmKitRequestId = kitTestUtil.createKitRequestShipping(kitRequestShipping, ddpInstance, "100");
+                dsmKitRequestIds.add(Integer.parseInt(dsmKitRequestId));
+
+                String secondGeneratedSampleId = KitRequestShipping.generateBspSampleID(conn, legacyCollaboratorParticipantId, kitTestUtil.getKitTypeName(), kitTestUtil.getKitTypeId(), ddpInstance);
+                int parsed2ndSalivaKitNumber = parseKitCountFromGeneratedSampleId(secondGeneratedSampleId);
+
+                Assert.assertEquals("Unexpected kit count for " + secondGeneratedSampleId, numLegacyKits + 2, parsed2ndSalivaKitNumber);
+            } finally {
+                ddpInstance.setSampleCounterOffsets(originalSampleCounterOffsets);
+            }
+            return null;
+        });
+
+    }
+
+    /**
+     * Verify that when a ddp instance has legacy kits, the legacy participant
+     * id is used.
+     */
+    @Test
+    public void testGetCollaboratorParticipantIdWithLegacyKits() {
+        SampleCounterOffsets originalSampleCounterOffsets = ddpInstance.getSampleCounterOffsets();
+        String shortId = "SHORT3838";
+        String ddpParticipantId = "PTP3838291";
+        String legacyCollaboratorParticipantId = "LEGACY_FOO_456";
+        SampleCounterOffset legacyKits = new SampleCounterOffset(shortId, legacyCollaboratorParticipantId, Collections.emptyMap());
+
+        try {
+            // if there is legacy kit information, the collaborator participant id should be the collab participant id from the legacy kit data
+            ddpInstance.setSampleCounterOffsets(new SampleCounterOffsets(Collections.singletonList(legacyKits)));
+            String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
+            Assert.assertEquals(legacyCollaboratorParticipantId, collaboratorParticipantId);
+
+            ddpInstance.setSampleCounterOffsets(new SampleCounterOffsets(Collections.emptyList()));
+
+            // if there's no legacy kit information, the collaborator participant id should be the [prefix]_[shortid]
+            collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance, ddpParticipantId, shortId, null);
+            Assert.assertEquals(collaboratorParticipantId, ddpInstance.getCollaboratorIdPrefix() + "_" + shortId);
+
+        } finally {
+            ddpInstance.setSampleCounterOffsets(originalSampleCounterOffsets);
+        }
     }
 
     @Test
