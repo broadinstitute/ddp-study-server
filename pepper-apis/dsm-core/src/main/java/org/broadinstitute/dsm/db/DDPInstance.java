@@ -558,7 +558,7 @@ public class DDPInstance {
         if (sampleCounterOffsets == null) {
             sampleCounterOffsets = TransactionWrapper.inTransaction(conn -> {
                 try {
-                    return new SampleCounterOffsets(SampleCounterOffsetDao.getSampleCounterOffsetsForInstance(conn, getDdpInstanceIdAsInt()));
+                    return new SampleCounterOffsets(SampleCounterOffsetDao.querySampleCounterOffsetsForInstance(conn, getDdpInstanceIdAsInt()));
                 } catch (SQLException e) {
                     throw new DsmInternalError("Could not load sample counter offsets for ddp instance " + ddpInstanceId, e);
                 }
