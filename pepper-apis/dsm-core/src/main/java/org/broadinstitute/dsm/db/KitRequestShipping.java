@@ -1858,7 +1858,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             // if this study is using sample kit offsets, use them if you have them for the participant
             SampleCounterOffset sampleCounterOffset = sampleCounterOffsets.getKitSummaryByShortId(shortId);
             if (sampleCounterOffset != null) {
-                String existingCollabParticipantId = sampleCounterOffset.getCollaboratorSampleId();
+                String existingCollabParticipantId = sampleCounterOffset.getCollaboratorParticipantIdId();
                 if (StringUtils.isNotBlank(existingCollabParticipantId)) {
                     return existingCollabParticipantId;
                 }
