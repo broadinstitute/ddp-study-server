@@ -13,11 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.dsm.statics.DBConstants.KIT_COUNTER_OFFSET;
-import static org.broadinstitute.dsm.statics.DBConstants.LEGACY_COLLABORATOR_PARTICIPANT_ID;
-import static org.broadinstitute.dsm.statics.DBConstants.PARTICIPANT_SHORT_CODE;
 
 public class SampleCounterOffsetDao {
+
+    private static final String PARTICIPANT_SHORT_CODE = "participant_short_code";
+    private static final String LEGACY_COLLABORATOR_PARTICIPANT_ID = "legacy_collaborator_participant_id";
+    private static final String KIT_COUNTER_OFFSET = "offset";
 
     private static final String QUERY_ALL_OFFSETS_FOR_INSTANCE =
             "select o.participant_short_code, o.legacy_collaborator_participant_id, o.kit_type_id, o.offset "
