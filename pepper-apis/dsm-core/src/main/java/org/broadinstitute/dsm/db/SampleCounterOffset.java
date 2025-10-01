@@ -17,16 +17,16 @@ import java.util.Map;
  */
 public class SampleCounterOffset {
 
-    private String collaboratorSampleId;
+    private String collaboratorParticipantId;
 
     private String shortId;
 
     // key is the kit type id, value is the sample counter offset for that kit type
     private Map<Integer, Integer> offestsByKitType = new HashMap<>();
 
-    public SampleCounterOffset(String shortId, String collaboratorSampleId, Map<Integer, Integer> offestsByKitType) {
+    public SampleCounterOffset(String shortId, String collaboratorParticipantId, Map<Integer, Integer> offestsByKitType) {
         this.shortId = shortId;
-        this.collaboratorSampleId = collaboratorSampleId;
+        this.collaboratorParticipantId = collaboratorParticipantId;
         this.offestsByKitType = offestsByKitType;
     }
 
@@ -38,8 +38,8 @@ public class SampleCounterOffset {
      * If set, this is the collaborator participant id to use
      * for kits.
      */
-    public String getCollaboratorSampleId() {
-        return collaboratorSampleId;
+    public String getCollaboratorParticipantIdId() {
+        return collaboratorParticipantId;
     }
 
     public String getShortId() {
