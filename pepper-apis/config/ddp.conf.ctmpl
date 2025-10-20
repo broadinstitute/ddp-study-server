@@ -1,7 +1,7 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
-{{with $conf := secret (printf "secret/pepper/%s/%s/conf" $environment $version)}}
-{{with $nginx := index $conf.Data "nginx"}}
+{{with $response := secret (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $conf := $response.Data}}
 
 # ddp nginx configuration
 {{$documentationHost := env "DOCS_PROXIED_HOST"}}
@@ -20,7 +20,7 @@ upstream documentation_server {
 }
 {{end}}
 
-limit_req_zone $http_x_forwarded_for zone=api_limit:16m rate={{$nginx.apiLimitRate}};
+limit_req_zone $http_x_forwarded_for zone=api_limit:16m rate={{$conf.nginx.apiLimitRate}};
 
 server {
 
@@ -49,7 +49,7 @@ server {
     ssl_certificate_key /app/config/pepper-cert.key;
 
     location /pepper/ {
-        limit_req zone=api_limit burst={{$nginx.apiLimitBurst}} nodelay;
+        limit_req zone=api_limit burst={{$conf.nginx.apiLimitBurst}} nodelay;
         limit_req_status 429;
         proxy_pass "http://api_server/pepper/";
         include /app/config/waf.conf;
