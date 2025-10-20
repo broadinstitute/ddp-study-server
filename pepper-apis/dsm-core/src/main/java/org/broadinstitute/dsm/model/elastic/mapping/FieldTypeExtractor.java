@@ -7,15 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
 import org.elasticsearch.client.indices.GetFieldMappingsResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
 
+    private static final Logger logger = LoggerFactory.getLogger(FieldTypeExtractor.class);
     private static final Map<String, String> cachedFieldTypes = new HashMap<>();
     public static final int FIELDS_MAPPING_FETCH_SIZE = 50;
 
@@ -26,14 +28,15 @@ public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
     public Map<String, String> extract() {
         if (isFieldsNotCached()) {
             Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapping = getMapping().get(index);
-            if (mapping == null) {
-                throw new DsmInternalError("No mapping found for index " + index);
+            if (mapping != null) {
+                Map<String, String> fieldTypeMapping = new HashMap<>();
+                for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetadata> entry : mapping.entrySet()) {
+                    fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
+                }
+                cachedFieldTypes.putAll(fieldTypeMapping);
+            } else {
+                logger.warn("No mapping found for index {}", index);
             }
-            Map<String, String> fieldTypeMapping = new HashMap<>();
-            for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetadata> entry : mapping.entrySet()) {
-                fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
-            }
-            cachedFieldTypes.putAll(fieldTypeMapping);
         }
         return cachedFieldTypes;
     }
