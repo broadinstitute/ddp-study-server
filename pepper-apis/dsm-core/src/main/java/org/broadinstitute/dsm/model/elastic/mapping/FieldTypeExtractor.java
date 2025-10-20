@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.dsm.exception.DsmInternalError;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RequestOptions;
@@ -25,6 +26,9 @@ public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
     public Map<String, String> extract() {
         if (isFieldsNotCached()) {
             Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapping = getMapping().get(index);
+            if (mapping == null) {
+                throw new DsmInternalError("No mapping found for index " + index);
+            }
             Map<String, String> fieldTypeMapping = new HashMap<>();
             for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetadata> entry : mapping.entrySet()) {
                 fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
