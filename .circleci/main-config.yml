@@ -58,7 +58,7 @@ executors:
           MYSQL_DATABASE: test_db
           MYSQL_USER: user
           MYSQL_PASSWORD: passw0rd
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+      - image: docker.elastic.co/elasticsearch/elasticsearch:8.19.5
         environment:
           # Note: for this test-only container, we do not enable security since it adds an unnecessary
           # layer of complexity
