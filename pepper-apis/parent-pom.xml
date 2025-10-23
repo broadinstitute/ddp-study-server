@@ -18,7 +18,7 @@
         <itext.version>7.1.4</itext.version>
         <itext.licensekey.version>3.0.3</itext.licensekey.version>
         <liquibase.version>4.8.0</liquibase.version>
-        <elasticsearch.version>8.19.5</elasticsearch.version>
+        <elasticsearch.version>7.17.10</elasticsearch.version>
         <logback.version>1.4.14</logback.version>
         <jackson.version>2.12.1</jackson.version>
         <gson.version>2.10.1</gson.version>
