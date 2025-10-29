@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestHighLevelClientBuilder;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -93,7 +94,7 @@ public final class ElasticsearchServiceUtil {
                     }
                     return httpClientBuilder;
                 });
-        esClient = new RestHighLevelClient(builder);
+        esClient = new RestHighLevelClientBuilder(builder.build()).setApiCompatibilityMode(true).build();
 
         ES_CLIENTS.put(key, esClient);
         log.info("Created new Elasticsearch client for URL: {}", url);
