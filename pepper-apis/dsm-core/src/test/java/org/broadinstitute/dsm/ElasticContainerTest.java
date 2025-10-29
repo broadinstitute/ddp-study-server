@@ -15,6 +15,7 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestHighLevelClientBuilder;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.xcontent.XContentType;
@@ -58,8 +59,6 @@ public class ElasticContainerTest extends ElasticBaseTest {
     private RestHighLevelClient getClient(String url) throws MalformedURLException {
         URL parsedUrl = new URL(url);
 
-        return new RestHighLevelClient(
-                RestClient.builder(
-                        new HttpHost(parsedUrl.getHost(), parsedUrl.getPort(), "http")));
+        return new RestHighLevelClientBuilder(RestClient.builder(new HttpHost(parsedUrl.getHost(), parsedUrl.getPort(), "http")).build()).setApiCompatibilityMode(true).build();
     }
 }

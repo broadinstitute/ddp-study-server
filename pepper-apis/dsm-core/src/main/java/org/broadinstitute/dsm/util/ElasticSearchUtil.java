@@ -199,8 +199,7 @@ public class ElasticSearchUtil {
 
             // no password indicates a local/test ES instance
             if (StringUtils.isBlank(password)) {
-                return new RestHighLevelClient(
-                        RestClient.builder(new HttpHost(url.getHost(), url.getPort(), "http")));
+                return new RestHighLevelClientBuilder(RestClient.builder(new HttpHost(url.getHost(), url.getPort(), "http")).build()).setApiCompatibilityMode(true).build();
             }
 
             final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
