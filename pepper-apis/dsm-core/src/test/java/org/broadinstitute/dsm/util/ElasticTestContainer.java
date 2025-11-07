@@ -15,7 +15,7 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 @Slf4j
 public class ElasticTestContainer {
 
-    private static final String ELASTIC_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.19.5";
+    private static final String ELASTIC_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.19.6";
     private static ElasticsearchContainer container;
     private static boolean initialized = false;
 
