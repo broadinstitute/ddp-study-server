@@ -56,6 +56,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestHighLevelClientBuilder;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
 import org.elasticsearch.common.Strings;
@@ -198,8 +199,7 @@ public class ElasticSearchUtil {
 
             // no password indicates a local/test ES instance
             if (StringUtils.isBlank(password)) {
-                return new RestHighLevelClient(
-                        RestClient.builder(new HttpHost(url.getHost(), url.getPort(), "http")));
+                return new RestHighLevelClientBuilder(RestClient.builder(new HttpHost(url.getHost(), url.getPort(), "http")).build()).setApiCompatibilityMode(true).build();
             }
 
             final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
@@ -220,8 +220,7 @@ public class ElasticSearchUtil {
                         }
                         return httpClientBuilder;
                     });
-
-            return new RestHighLevelClient(builder);
+            return new RestHighLevelClientBuilder(builder.build()).setApiCompatibilityMode(true).build();
         } catch (MalformedURLException e) {
             throw new DsmInternalError("Invalid ES client URL: " + baseUrl, e);
         }
