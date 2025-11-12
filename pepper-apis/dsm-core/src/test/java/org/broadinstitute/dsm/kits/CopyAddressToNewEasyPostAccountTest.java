@@ -37,8 +37,8 @@ public class CopyAddressToNewEasyPostAccountTest {
 
     public static void main(String[] args) throws Exception {
         CopyAddressToNewEasyPostAccountTest copier = new CopyAddressToNewEasyPostAccountTest();
-
-        copier.copyAddressIdFromOldAccountToNewAccount(3164, "adr_5d81b118dab611eca269ac1f6b0a0d1e");
+        copier.copyAddressIdFromOldAccountToNewAccount(1312, "adr_19e9ecc4033611efa8c2ac1f6bc539ae");
+        copier.copyAddressIdFromOldAccountToNewAccount(1278, "adr_19e9ecc4033611efa8c2ac1f6bc539ae");
     }
 
     // todo move me to a test, run with list of kit request ids
