@@ -41,8 +41,6 @@ public class CopyAddressToNewEasyPostAccountTest {
 
     public static void main(String[] args) throws Exception {
         CopyAddressToNewEasyPostAccountTest copier = new CopyAddressToNewEasyPostAccountTest();
-        copier.lookupAddressWithNewAccount("adr_71a25ffec18311f0975eac1f6bc53342");
-        copier.copyAddressIdFromOldAccountToNewAccount(160716, "adr_71a25ffec18311f0975eac1f6bc53342");
     }
 
     private void lookupAddressWithNewAccount(String addressId) throws EasyPostException {
