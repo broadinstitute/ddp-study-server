@@ -346,7 +346,7 @@ public class EasyPostUtil {
             // if we're looking up a shipment using an api key for an account that did not create
             // the shipment, we'll get a 404.  retry with the legacy account's api key
             if (easyPostException.getMessage().contains("NOT_FOUND")) {
-                logger.info("Querying shipment {} with legacy easypost API key", shipmentId);
+                logger.info("Retrying shipment {} with legacy easypost API key", shipmentId);
                 shipment = Shipment.retrieve(shipmentId, EasyPostUtil.getLegacyEasyPostApiKey());
             } else {
                 throw easyPostException;

@@ -161,6 +161,9 @@ public class KitUtil {
     private static final String EASYPOST_FAILURE_STATUS = "failure";
     private static final String EASYPOST_RETURN_SENDER_STATUS = "return_to_sender";
     private static final String EASYPOST_ERROR_STATUS = "error";
+    // don't request shipping updates from kits that are > 18 months
+    private static final String AND_KIT_TOO_OLD = " AND request_created_on > DATE_SUB(sysdate(), interval 18 month) ";
+    private static final String AND_KIT_NOT_RECEIVED = " AND receive_date IS NULL ";
 
     /**
      * createLabel buys shipments for the kit and updates their label url in the db
@@ -580,7 +583,7 @@ public class KitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    KitDao.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID + QueryExtension.KIT_TOO_OLD + QueryExtension.KIT_STATUS_RECEIVED)) {
+                    KitDao.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID + AND_KIT_TOO_OLD + AND_KIT_NOT_RECEIVED)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

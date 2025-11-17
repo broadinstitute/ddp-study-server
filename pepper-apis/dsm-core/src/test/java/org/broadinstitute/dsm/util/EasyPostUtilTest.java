@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.util;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
+import com.easypost.model.Shipment;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,7 +23,10 @@ public class EasyPostUtilTest {
     }
 
     @Test
-    public void testRetryShipmentWithLegacyAccount() {
-        somehow load this
+    public void testRetryShipmentWithLegacyAccount() throws Exception {
+        // this shipment was created with the legacy easypost account.  it should be accessible
+        // via getShipment's retry with the legacy easypost account.
+        Shipment shipment = easyPostUtil.getShipment("shp_428f62fbafe84b33a4b5d9685981390a");
+        Assert.assertTrue(shipment != null);
     }
 }
