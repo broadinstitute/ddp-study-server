@@ -43,12 +43,6 @@ public class CopyAddressToNewEasyPostAccountTest {
         CopyAddressToNewEasyPostAccountTest copier = new CopyAddressToNewEasyPostAccountTest();
     }
 
-    private void lookupAddressWithNewAccount(String addressId) throws EasyPostException {
-        EasyPost.apiKey = currentAccountKey;
-        Address address = Address.retrieve(addressId);
-        logger.info("Address: " + address);
-    }
-
     public void copyAddressIdFromOldAccountToNewAccount(int dsmKitId, String oldToAddressId) throws Exception {
         EasyPost.apiKey = oldAccountKey;
         Address oldAddress = Address.retrieve(oldToAddressId);
