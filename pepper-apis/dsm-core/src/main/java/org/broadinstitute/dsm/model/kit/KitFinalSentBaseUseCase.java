@@ -57,8 +57,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
                             ddpLabel, new PutToNestedScriptBuilder()).export();
                 }
             } catch (Exception e) {
-                logger.error(String.format("Error updating ddp label for kit with ddpLabel: %s", ddpLabel));
-                e.printStackTrace();
+                logger.warn(String.format("Error updating ES ddp label for kit with ddpLabel: %s", ddpLabel), e);
             }
         }
     }
