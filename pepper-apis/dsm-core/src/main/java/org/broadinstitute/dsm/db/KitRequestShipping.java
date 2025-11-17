@@ -1129,7 +1129,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             KitRequestShipping kitRequestShipping = new KitRequestShipping(null, dsmKitId, null, null, null, null);
             kitRequestShipping.setLabelDate(labelDate);
-            upsertUpdatedKitInfoIntoES(ddpInstanceDto, kitRequestShipping, dsmKitId);
+            //upsertUpdatedKitInfoIntoES(ddpInstanceDto, kitRequestShipping, dsmKitId);
         }
     }
 
@@ -1224,7 +1224,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             logger.error("Error updating kit w/ dsm_kit_id " + dsmKitId, results.resultException);
         } else {
             logger.info("Updated kit w/ dsm_kit_id " + dsmKitId);
-            upsertUpdatedKitInfoIntoES(ddpInstanceDto, kitRequestShipping, dsmKitId);
+            //upsertUpdatedKitInfoIntoES(ddpInstanceDto, kitRequestShipping, dsmKitId);
         }
     }
 
