@@ -49,7 +49,6 @@ public class CopyAddressToNewEasyPostAccountTest {
         logger.info("Address: " + address);
     }
 
-    // todo move me to a test, run with list of kit request ids
     public void copyAddressIdFromOldAccountToNewAccount(int dsmKitId, String oldToAddressId) throws Exception {
         EasyPost.apiKey = oldAccountKey;
         Address oldAddress = Address.retrieve(oldToAddressId);
@@ -70,7 +69,6 @@ public class CopyAddressToNewEasyPostAccountTest {
         toAddressMap.put("phone", oldAddress.getPhone());
         toAddressMap.put("residential", true);
         newAddress = Address.create(toAddressMap);
-
 
         logger.info("Old address {} is being replaced with new address {} for kit id {}.", oldToAddressId, newAddress.getId(), dsmKitId);
 
