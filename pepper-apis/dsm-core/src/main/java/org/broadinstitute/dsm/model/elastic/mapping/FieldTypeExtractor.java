@@ -7,12 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
 import org.elasticsearch.client.indices.GetFieldMappingsResponse;
 
+@Slf4j
 public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
 
     private static final Map<String, String> cachedFieldTypes = new HashMap<>();
@@ -24,12 +27,18 @@ public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
     @Override
     public Map<String, String> extract() {
         if (isFieldsNotCached()) {
+            log.info("querying mapping for {}", index);
             Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapping = getMapping().get(index);
-            Map<String, String> fieldTypeMapping = new HashMap<>();
-            for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetadata> entry : mapping.entrySet()) {
-                fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
+            if (mapping != null) {
+                log.info("Found mappings for {}: {}", index, StringUtils.join(mapping.keySet(), ","));
+                Map<String, String> fieldTypeMapping = new HashMap<>();
+                for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetadata> entry : mapping.entrySet()) {
+                    fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
+                }
+                cachedFieldTypes.putAll(fieldTypeMapping);
+            } else {
+                log.info("No mappings found for {}", index);
             }
-            cachedFieldTypes.putAll(fieldTypeMapping);
         }
         return cachedFieldTypes;
     }
