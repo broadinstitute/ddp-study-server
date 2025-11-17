@@ -64,11 +64,14 @@ public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
         request.indices(index);
         String[] fields = this.notCachedFields().toArray(new String[] {});
         int fieldsSize = fields.length;
+        log.info("Fetching mapping fields for index {}", index);
         for (int i = 0; i < fieldsSize; i += FIELDS_MAPPING_FETCH_SIZE) {
             int toIndex = calculateToIndex(fieldsSize, i);
             request.fields(Arrays.asList(fields).subList(i, toIndex).toArray(new String[] {}));
             try {
-                result.putAll(ElasticSearchUtil.getClientInstance().indices().getFieldMapping(request, RequestOptions.DEFAULT).mappings());
+                GetFieldMappingsResponse mappings = ElasticSearchUtil.getClientInstance().indices().getFieldMapping(request, RequestOptions.DEFAULT);
+                log.info("Got {} mappings for index {}", fieldsSize, index);
+                result.putAll(mappings.mappings());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
