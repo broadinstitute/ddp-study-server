@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import com.easypost.EasyPost;
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Shipment;
@@ -515,6 +516,7 @@ public class KitUtil {
 
                     for (KitRequestShipping kitRequest : kitRequestShippingList) {
                         if (StringUtils.isNotBlank(kitRequest.getEasypostToId()) && kitRequest.getEasypostToId().startsWith("shp_")) {
+                            logger.info("Looking up status of shipment {}", kitRequest.getEasypostToId());
                             try {
                                 Shipment shipment = easyPostUtil.getShipment(kitRequest.getEasypostToId());
                                 Tracker tracker = shipment.getTracker();
@@ -578,7 +580,7 @@ public class KitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    KitDao.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID)) {
+                    KitDao.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID + QueryExtension.KIT_TOO_OLD + QueryExtension.KIT_STATUS_RECEIVED)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

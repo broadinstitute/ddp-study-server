@@ -20,4 +20,9 @@ public class EasyPostUtilTest {
             Assert.fail(e.getMessage());
         }
     }
+
+    @Test
+    public void testRetryShipmentWithLegacyAccount() {
+        somehow load this
+    }
 }

@@ -152,6 +152,18 @@ public class EasyPostUtil {
         return new EasypostLabelRate(express, normal);
     }
 
+    /**
+     * Returns the "old" easypost API key.  This key was used prior to merging
+     * the pepper-specific easypost account into GPKM's easypost account.  Use
+     * this key to look up shipment and tracking information for kits that were ordered
+     * prior to November 15, 2025.  If API calls to easypost return 404s and "NOT_FOUND",
+     * it's likely that the new API key is being used to query data that was written
+     * by the legacy API key.
+     */
+    public static String getLegacyEasyPostApiKey() {
+        return ConfigManager.getInstance().getConfig().getString("legacyEasyPostApiKey");
+    }
+
     public Shipment buyShipment(@NonNull String carrier, String carrierId, String service, @NonNull Address toAddress,
                                 @NonNull Address fromAddress,
                                 @NonNull Parcel parcel, String billingReference, CustomsInfo customsInfo) throws EasyPostException {
@@ -327,7 +339,20 @@ public class EasyPostUtil {
     }
 
     public Shipment getShipment(String shipmentId) throws EasyPostException {
-        return Shipment.retrieve(shipmentId);
+        Shipment shipment = null;
+        try {
+            shipment = Shipment.retrieve(shipmentId);
+        } catch (EasyPostException easyPostException) {
+            // if we're looking up a shipment using an api key for an account that did not create
+            // the shipment, we'll get a 404.  retry with the legacy account's api key
+            if (easyPostException.getMessage().contains("NOT_FOUND")) {
+                logger.info("Querying shipment {} with legacy easypost API key", shipmentId);
+                shipment = Shipment.retrieve(shipmentId, EasyPostUtil.getLegacyEasyPostApiKey());
+            } else {
+                throw easyPostException;
+            }
+        }
+        return shipment;
     }
 
     /**

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.kits;
 
 import com.easypost.EasyPost;
+import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 
 import org.slf4j.Logger;
@@ -35,16 +36,23 @@ public class CopyAddressToNewEasyPostAccountTest {
     private static final Logger logger = LoggerFactory.getLogger(CopyAddressToNewEasyPostAccountTest.class);
 
 
+    private final String currentAccountKey = System.getenv("currentEasyPostApiKey");
+    private final String oldAccountKey = System.getenv("oldEasyPostApiKey");
+
     public static void main(String[] args) throws Exception {
         CopyAddressToNewEasyPostAccountTest copier = new CopyAddressToNewEasyPostAccountTest();
-        copier.copyAddressIdFromOldAccountToNewAccount(1312, "adr_19e9ecc4033611efa8c2ac1f6bc539ae");
-        copier.copyAddressIdFromOldAccountToNewAccount(1278, "adr_19e9ecc4033611efa8c2ac1f6bc539ae");
+        copier.lookupAddressWithNewAccount("adr_71a25ffec18311f0975eac1f6bc53342");
+        copier.copyAddressIdFromOldAccountToNewAccount(160716, "adr_71a25ffec18311f0975eac1f6bc53342");
+    }
+
+    private void lookupAddressWithNewAccount(String addressId) throws EasyPostException {
+        EasyPost.apiKey = currentAccountKey;
+        Address address = Address.retrieve(addressId);
+        logger.info("Address: " + address);
     }
 
     // todo move me to a test, run with list of kit request ids
     public void copyAddressIdFromOldAccountToNewAccount(int dsmKitId, String oldToAddressId) throws Exception {
-        String currentAccountKey = System.getenv("currentEasyPostApiKey");
-        String oldAccountKey = System.getenv("oldEasyPostApiKey");
         EasyPost.apiKey = oldAccountKey;
         Address oldAddress = Address.retrieve(oldToAddressId);
         Address newAddress = null;
