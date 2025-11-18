@@ -347,12 +347,7 @@ public class EasyPostUtil {
             // the shipment, we'll get a 404.  retry with the legacy account's api key
             if (easyPostException.getMessage().contains("NOT_FOUND")) {
                 logger.info("Retrying shipment {} with legacy easypost API key", shipmentId);
-                String legacyApiKey = EasyPostUtil.getLegacyEasyPostApiKey();
-                if (StringUtils.isNotBlank(legacyApiKey)) {
-                    shipment = Shipment.retrieve(shipmentId, legacyApiKey);
-                } else {
-                    throw easyPostException;
-                }
+                shipment = Shipment.retrieve(shipmentId, EasyPostUtil.getLegacyEasyPostApiKey());
             } else {
                 throw easyPostException;
             }
