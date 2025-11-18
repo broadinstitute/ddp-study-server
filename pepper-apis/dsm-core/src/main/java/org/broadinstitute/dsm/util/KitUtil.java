@@ -510,6 +510,7 @@ public class KitUtil {
         for (DDPInstance ddpInstance : ddpInstanceList) {
             if (ddpInstance.isHasRole()) {
                 //get list of kits for given ddp
+                logger.info("Checking status of kits for {}", ddpInstance.getName());
                 List<KitRequestShipping> kitRequestShippingList = getKitRequestsToCheckStatus(ddpInstance.getName());
                 EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
                 SimpleResult results = inTransaction((conn) -> {
