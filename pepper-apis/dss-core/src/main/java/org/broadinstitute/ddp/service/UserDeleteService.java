@@ -132,8 +132,7 @@ public class UserDeleteService {
                     objToStr(whoDeleted),
                     objToStr(comment));
         } catch (Throwable e) {
-            log.error(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()), e);
-            throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()));
+            throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()), e);
         }
     }
 
@@ -182,8 +181,6 @@ public class UserDeleteService {
         if (fullDelete) {
             deleteAuth0User(user, auth0ManagementClient);
         }
-
-        dataSyncRequest(handle, userCollectedData);
     }
 
     private void deleteKitRequests(Handle handle, User user) {
