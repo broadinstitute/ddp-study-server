@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import com.easypost.EasyPost;
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Shipment;
@@ -160,6 +161,9 @@ public class KitUtil {
     private static final String EASYPOST_FAILURE_STATUS = "failure";
     private static final String EASYPOST_RETURN_SENDER_STATUS = "return_to_sender";
     private static final String EASYPOST_ERROR_STATUS = "error";
+    // don't request shipping updates from kits that are > 18 months
+    private static final String AND_KIT_TOO_OLD = " AND request_created_on > DATE_SUB(sysdate(), interval 18 month) ";
+    private static final String AND_KIT_NOT_RECEIVED = " AND receive_date IS NULL ";
 
     /**
      * createLabel buys shipments for the kit and updates their label url in the db
@@ -506,6 +510,7 @@ public class KitUtil {
         for (DDPInstance ddpInstance : ddpInstanceList) {
             if (ddpInstance.isHasRole()) {
                 //get list of kits for given ddp
+                logger.info("Checking status of kits for {}", ddpInstance.getName());
                 List<KitRequestShipping> kitRequestShippingList = getKitRequestsToCheckStatus(ddpInstance.getName());
                 EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
                 SimpleResult results = inTransaction((conn) -> {
@@ -515,6 +520,7 @@ public class KitUtil {
 
                     for (KitRequestShipping kitRequest : kitRequestShippingList) {
                         if (StringUtils.isNotBlank(kitRequest.getEasypostToId()) && kitRequest.getEasypostToId().startsWith("shp_")) {
+                            logger.info("Looking up status of shipment {}", kitRequest.getEasypostToId());
                             try {
                                 Shipment shipment = easyPostUtil.getShipment(kitRequest.getEasypostToId());
                                 Tracker tracker = shipment.getTracker();
@@ -578,7 +584,7 @@ public class KitUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    KitDao.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID)) {
+                    KitDao.SQL_SELECT_KIT_REQUEST + QueryExtension.BY_REALM + AND_EASYPOST_TO_ID + AND_KIT_TOO_OLD + AND_KIT_NOT_RECEIVED)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -628,8 +634,7 @@ public class KitUtil {
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                     ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
-            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
-            e.printStackTrace();
+            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId), e);
         }
 
         return dbVals;

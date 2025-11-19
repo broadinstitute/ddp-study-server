@@ -7,6 +7,7 @@ public class ApplicationConfigConstants {
     public static final String INSTANCE_NAME = "instanceName";
     public static final String TOKEN_SECRET = "tokenSecret";
     public static final String EASYPOST_API_KEY = "easyPostApiKey";
+    public static final String EASYPOST_LEGACY_API_KEY = "legacyEasyPostApiKey";
 
     //external shipper configuration
     public static final String EXTERNAL_SHIPPER = "externalShipper";

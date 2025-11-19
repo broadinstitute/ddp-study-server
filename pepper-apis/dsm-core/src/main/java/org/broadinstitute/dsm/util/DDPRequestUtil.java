@@ -320,11 +320,13 @@ public class DDPRequestUtil {
     public static void makeNonStandardPDF(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId, @NonNull String userId,
                                           @NonNull String reason) {
         Object pdfs = new MiscPDFDownload().returnPDFS(ddpParticipantId, ddpInstance.getName());
-        List<Map<String, String>> pdfList = (List<Map<String, String>>) pdfs;
-        long time = System.currentTimeMillis();
-        for (Map<String, String> pdf : pdfList) {
-            DDPRequestUtil.savePDFsInBucket(ddpInstance.getBaseUrl(), ddpInstance.getName(), ddpParticipantId,
-                    ddpInstance.isHasAuth0Token(), "/pdfs/" + pdf.get("configName"), time, userId, reason);
+        if (pdfs != null) {
+            List<Map<String, String>> pdfList = (List<Map<String, String>>) pdfs;
+            long time = System.currentTimeMillis();
+            for (Map<String, String> pdf : pdfList) {
+                DDPRequestUtil.savePDFsInBucket(ddpInstance.getBaseUrl(), ddpInstance.getName(), ddpParticipantId,
+                        ddpInstance.isHasAuth0Token(), "/pdfs/" + pdf.get("configName"), time, userId, reason);
+            }
         }
     }
 

@@ -87,6 +87,8 @@ public class EasyPostUtil {
     private final String restrictionComments = "restriction_comments";
     private final String customsItems = "customs_items";
 
+    private static String legacyApiKey;
+
     /**
      * Creates a new one, setting singleton {@link EasyPost#apiKey}
      * to the given apikey.  Beware that other instantiations
@@ -100,6 +102,18 @@ public class EasyPostUtil {
         } else {
             throw new DsmInternalError("No apiKey given, cannot communicate with EasyPost.");
         }
+    }
+
+    /**
+     * Sets the "old" easypost API key.  This key was used prior to merging
+     * the pepper-specific easypost account into GPKM's easypost account.  Use
+     * this key to look up shipment and tracking information for kits that were ordered
+     * prior to November 15, 2025.  If API calls to easypost return 404s and "NOT_FOUND",
+     * it's likely that the new API key is being used to query data that was written
+     * by the legacy API key.
+     */
+    public static void setLegacyApiKey(String apiKey) {
+        legacyApiKey = apiKey;
     }
 
     /**
@@ -327,7 +341,25 @@ public class EasyPostUtil {
     }
 
     public Shipment getShipment(String shipmentId) throws EasyPostException {
-        return Shipment.retrieve(shipmentId);
+        Shipment shipment = null;
+        try {
+            shipment = Shipment.retrieve(shipmentId);
+        } catch (EasyPostException easyPostException) {
+            // if we're looking up a shipment using an api key for an account that did not create
+            // the shipment, we'll get a 404.  retry with the legacy account's api key
+            if (easyPostException.getMessage().contains("NOT_FOUND")) {
+                logger.info("Shipment {} not found", shipmentId);
+                if (StringUtils.isNotBlank(legacyApiKey)) {
+                    logger.info("Retrying shipment {} with legacy easypost API key", shipmentId);
+                    shipment = Shipment.retrieve(shipmentId, legacyApiKey);
+                } else {
+                    throw easyPostException;
+                }
+            } else {
+                throw easyPostException;
+            }
+        }
+        return shipment;
     }
 
     /**

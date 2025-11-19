@@ -2,6 +2,9 @@ package org.broadinstitute.dsm.util;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
+import com.easypost.model.Shipment;
+import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,5 +22,14 @@ public class EasyPostUtilTest {
         } catch (EasyPostException e) {
             Assert.fail(e.getMessage());
         }
+    }
+
+    @Test
+    public void testRetryShipmentWithLegacyAccount() throws Exception {
+        // this shipment was created with the legacy easypost account.  it should be accessible
+        // via getShipment's retry with the legacy easypost account.
+        EasyPostUtil.setLegacyApiKey(ConfigManager.getInstance().getConfig().getString(ApplicationConfigConstants.EASYPOST_LEGACY_API_KEY));
+        Shipment shipment = easyPostUtil.getShipment("shp_428f62fbafe84b33a4b5d9685981390a");
+        Assert.assertTrue(shipment != null);
     }
 }

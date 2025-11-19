@@ -38,7 +38,7 @@ public class KitDao {
                     + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, "
                     + "req.dsm_kit_request_id, req.ddp_kit_request_id,"
                     + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
-                    + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
+                    + "req.external_response, kt.no_return, req.created_by, from_unixtime(req.created_date/1000) as request_created_on FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
                     + "WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request "
                     + "LEFT JOIN (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, "
                     + "kit.label_url_return, kit.tracking_to_id, "
