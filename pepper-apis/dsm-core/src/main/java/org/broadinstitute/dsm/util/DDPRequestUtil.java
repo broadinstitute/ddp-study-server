@@ -322,9 +322,11 @@ public class DDPRequestUtil {
         Object pdfs = new MiscPDFDownload().returnPDFS(ddpParticipantId, ddpInstance.getName());
         List<Map<String, String>> pdfList = (List<Map<String, String>>) pdfs;
         long time = System.currentTimeMillis();
-        for (Map<String, String> pdf : pdfList) {
-            DDPRequestUtil.savePDFsInBucket(ddpInstance.getBaseUrl(), ddpInstance.getName(), ddpParticipantId,
-                    ddpInstance.isHasAuth0Token(), "/pdfs/" + pdf.get("configName"), time, userId, reason);
+        if (pdfList != null) {
+            for (Map<String, String> pdf : pdfList) {
+                DDPRequestUtil.savePDFsInBucket(ddpInstance.getBaseUrl(), ddpInstance.getName(), ddpParticipantId,
+                        ddpInstance.isHasAuth0Token(), "/pdfs/" + pdf.get("configName"), time, userId, reason);
+            }
         }
     }
 
