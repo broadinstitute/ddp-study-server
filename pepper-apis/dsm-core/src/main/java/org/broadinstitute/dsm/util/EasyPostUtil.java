@@ -398,8 +398,8 @@ public class EasyPostUtil {
         try {
             resource = retrievable.retrieve(resourceId, EasyPost.apiKey);
         } catch (EasyPostException easyPostException) {
-            // if we're looking up a shipment using an api key for an account that did not create
-            // the shipment, we'll get a 404.  retry with the legacy account's api key
+            // if we're looking up a resource using an api key for an account that did not create
+            // the resource, we'll get a 404.  retry with the legacy account's api key
             if (easyPostException.getMessage().contains("NOT_FOUND")) {
                 logger.info("Resource {} not found", resourceId);
                 if (StringUtils.isNotBlank(legacyApiKey)) {
