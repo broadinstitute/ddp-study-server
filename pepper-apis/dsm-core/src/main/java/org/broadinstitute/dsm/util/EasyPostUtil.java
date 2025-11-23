@@ -336,30 +336,12 @@ public class EasyPostUtil {
         return ((JsonObject) (new JsonParser().parse(json))).get(value).getAsString();
     }
 
-    public Address getAddress(String addressId) throws EasyPostException {
-        return Address.retrieve(addressId);
+    public Shipment getShipment(String shipmentId) throws EasyPostException {
+        return retrieveAndRetryWithLegacyApiKey((resourceId, apiKey) -> Shipment.retrieve(resourceId, apiKey), shipmentId);
     }
 
-    public Shipment getShipment(String shipmentId) throws EasyPostException {
-        Shipment shipment = null;
-        try {
-            shipment = Shipment.retrieve(shipmentId);
-        } catch (EasyPostException easyPostException) {
-            // if we're looking up a shipment using an api key for an account that did not create
-            // the shipment, we'll get a 404.  retry with the legacy account's api key
-            if (easyPostException.getMessage().contains("NOT_FOUND")) {
-                logger.info("Shipment {} not found", shipmentId);
-                if (StringUtils.isNotBlank(legacyApiKey)) {
-                    logger.info("Retrying shipment {} with legacy easypost API key", shipmentId);
-                    shipment = Shipment.retrieve(shipmentId, legacyApiKey);
-                } else {
-                    throw easyPostException;
-                }
-            } else {
-                throw easyPostException;
-            }
-        }
-        return shipment;
+    public Address getAddress(String addressId) throws EasyPostException {
+        return retrieveAndRetryWithLegacyApiKey((resourceId, apiKey) -> Address.retrieve(resourceId, apiKey), addressId);
     }
 
     /**
@@ -396,5 +378,39 @@ public class EasyPostUtil {
             return deliveryAddress.getId();
         }
         throw new DSMBadRequestException(String.format("Address is not valid %s", juniperKitRequest.getJuniperKitId()));
+    }
+
+    /**
+     * Encapsulates the common retrieve() method for easy post resources that
+     * can be attempted with the current api key and the legacy api key
+     */
+    private interface EasyPostRetrievable<T extends com.easypost.net.EasyPostResource> {
+
+        T retrieve(String resourceId, String apiKey) throws EasyPostException;
+    }
+
+    /**
+     * Attempts to retrieve() the given resource.  If it isn't found, another attempt is
+     * made using the legacy api key.
+     */
+    private <T extends com.easypost.net.EasyPostResource> T retrieveAndRetryWithLegacyApiKey(EasyPostRetrievable<T> retrievable, String resourceId) throws EasyPostException {
+        T resource = null;
+        try {
+            resource = retrievable.retrieve(resourceId, EasyPost.apiKey);
+        } catch (EasyPostException easyPostException) {
+            // if we're looking up a resource using an api key for an account that did not create
+            // the resource, we'll get a 404.  retry with the legacy account's api key
+            if (easyPostException.getMessage().contains("NOT_FOUND")) {
+                if (StringUtils.isNotBlank(legacyApiKey)) {
+                    logger.info("Retrying resource {} with legacy easypost API key", resourceId);
+                    resource = retrievable.retrieve(resourceId, legacyApiKey);
+                } else {
+                    throw easyPostException;
+                }
+            } else {
+                throw easyPostException;
+            }
+        }
+        return resource;
     }
 }
