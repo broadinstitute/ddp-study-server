@@ -567,7 +567,7 @@ public class KitUtil {
                                     }
                                 }
                             } catch (EasyPostException epe) {
-                                logger.error("Couldn't get shipment information from Easypost ", epe);
+                                logger.error("Couldn't get shipment information from Easypost for shipment ", epe);
                             }
 
                         }
