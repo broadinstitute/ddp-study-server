@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class EasyPostUtilTest {
 
-    private EasyPostUtil easyPostUtil =  EasyPostUtil.initializeEasyPostFromTypeSafeConfig();
+    private EasyPostUtil easyPostUtil = EasyPostUtil.initializeEasyPostFromTypeSafeConfig();
 
     @Test
     public void testNullAddress2() {
@@ -25,11 +25,14 @@ public class EasyPostUtilTest {
     }
 
     @Test
-    public void testRetryShipmentWithLegacyAccount() throws Exception {
-        // this shipment was created with the legacy easypost account.  it should be accessible
+    public void testRetryShipmentAndAddressWithLegacyAccount() throws Exception {
+        // these resources were created with the legacy easypost account.  they should be accessible
         // via getShipment's retry with the legacy easypost account.
         EasyPostUtil.setLegacyApiKey(ConfigManager.getInstance().getConfig().getString(ApplicationConfigConstants.EASYPOST_LEGACY_API_KEY));
         Shipment shipment = easyPostUtil.getShipment("shp_428f62fbafe84b33a4b5d9685981390a");
         Assert.assertTrue(shipment != null);
+
+        Address address = easyPostUtil.getAddress("adr_43b68f903d4e11f089ddac1f6bc539aa");
+        Assert.assertTrue(address != null);
     }
 }
