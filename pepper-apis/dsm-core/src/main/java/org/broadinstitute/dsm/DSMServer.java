@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm;
 
+import static org.broadinstitute.dsm.statics.ApplicationConfigConstants.EASYPOST_LEGACY_API_KEY;
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static spark.Spark.afterAfter;
@@ -143,6 +144,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DSMConfig;
+import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.JavaHeapDumper;
 import org.broadinstitute.dsm.util.JsonNullTransformer;
@@ -264,6 +266,12 @@ public class DSMServer {
             try {
                 logger.info("Starting up DSM");
                 DSMConfig.setConfig(cfg);
+                if (cfg.hasPath(EASYPOST_LEGACY_API_KEY)) {
+                    EasyPostUtil.setLegacyApiKey(cfg.getString(EASYPOST_LEGACY_API_KEY));
+                    logger.info("Using legacy easypost API key {} ", cfg.getString(EASYPOST_LEGACY_API_KEY));
+                } else {
+                    logger.info("No legacy easypost API key configured");
+                }
                 DSMServer server = new DSMServer();
                 server.configureServer(cfg);
                 isReady.set(true);

@@ -510,6 +510,7 @@ public class KitUtil {
         for (DDPInstance ddpInstance : ddpInstanceList) {
             if (ddpInstance.isHasRole()) {
                 //get list of kits for given ddp
+                logger.info("Checking status of kits for {}", ddpInstance.getName());
                 List<KitRequestShipping> kitRequestShippingList = getKitRequestsToCheckStatus(ddpInstance.getName());
                 EasyPostUtil easyPostUtil = EasyPostUtil.fromInstanceName(ddpInstance.getName());
                 SimpleResult results = inTransaction((conn) -> {
@@ -566,7 +567,7 @@ public class KitUtil {
                                     }
                                 }
                             } catch (EasyPostException epe) {
-                                logger.error("Couldn't get shipment information from Easypost ", epe);
+                                logger.error("Couldn't get shipment information from Easypost for shipment ", epe);
                             }
 
                         }
@@ -633,8 +634,7 @@ public class KitUtil {
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                     ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
-            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
-            e.printStackTrace();
+            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId), e);
         }
 
         return dbVals;
