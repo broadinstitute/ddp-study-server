@@ -1004,7 +1004,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             KitRequestShipping kitRequestShipping = (KitRequestShipping) dbVals.resultValue;
             SimpleResult simpleResultKitWriting = writeNewKit(conn, kitRequestShipping.getDsmKitRequestId(),
                     addressIdTo, errorMessage, needsApproval, isReturnOnly, returnTrackingId, kitLabel, scanDate);
-            kitRequestShipping.setDsmKitId(((Integer)simpleResultKitWriting.resultValue).longValue());
+            kitRequestShipping.setDsmKitId((Long)simpleResultKitWriting.resultValue);
             dbVals.resultValue = kitRequestShipping;
         }
 
@@ -1049,7 +1049,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private static SimpleResult writeNewKit(Connection conn, int kitRequestId, String addressIdTo, String errorMessage,
                                             boolean needsApproval, boolean isComplete, String returnTrackingId,
                                             String kitLabel, Long scanDate) {
-        SimpleResult dbVals = new SimpleResult(0);
+        SimpleResult dbVals = new SimpleResult(0L);
         try (PreparedStatement insertKit = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
             insertKit.setInt(1, kitRequestId);
             if (StringUtils.isNotBlank(addressIdTo)) {
