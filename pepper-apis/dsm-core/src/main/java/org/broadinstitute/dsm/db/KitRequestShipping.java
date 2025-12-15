@@ -1004,7 +1004,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             KitRequestShipping kitRequestShipping = (KitRequestShipping) dbVals.resultValue;
             SimpleResult simpleResultKitWriting = writeNewKit(conn, kitRequestShipping.getDsmKitRequestId(),
                     addressIdTo, errorMessage, needsApproval, isReturnOnly, returnTrackingId, kitLabel, scanDate);
-            kitRequestShipping.setDsmKitId((Long) simpleResultKitWriting.resultValue);
+            kitRequestShipping.setDsmKitId(((Integer)simpleResultKitWriting.resultValue).longValue());
             dbVals.resultValue = kitRequestShipping;
         }
 
