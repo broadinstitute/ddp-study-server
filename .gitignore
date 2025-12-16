@@ -116,3 +116,4 @@ output/
 target/
 output-config/
 output-build-config/
+.sonar-token
